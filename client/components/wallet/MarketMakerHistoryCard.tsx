@@ -18,16 +18,25 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
   const [allOrders, setAllOrders] = useState<BotOrder[]>([]);
 
   useEffect(() => {
-    const currentSession = botOrdersStorage.getCurrentSession();
-    setSession(currentSession);
+    const updateOrders = () => {
+      const currentSession = botOrdersStorage.getCurrentSession();
+      setSession(currentSession);
 
-    if (currentSession) {
-      const combined = [
-        ...currentSession.buyOrders,
-        ...currentSession.sellOrders,
-      ].sort((a, b) => b.timestamp - a.timestamp);
-      setAllOrders(combined);
-    }
+      if (currentSession) {
+        const combined = [
+          ...currentSession.buyOrders,
+          ...currentSession.sellOrders,
+        ].sort((a, b) => b.timestamp - a.timestamp);
+        setAllOrders(combined);
+      }
+    };
+
+    updateOrders();
+
+    // Auto-refresh orders every 3 seconds to show execution updates
+    const refreshInterval = setInterval(updateOrders, 3000);
+
+    return () => clearInterval(refreshInterval);
   }, [selectedToken]);
 
   if (!session || allOrders.length === 0) {

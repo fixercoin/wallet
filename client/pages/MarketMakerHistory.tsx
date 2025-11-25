@@ -349,7 +349,7 @@ export default function MarketMakerHistory() {
       </div>
 
       {sessions.length === 0 ? (
-        <Card>
+        <Card className="bg-transparent border border-gray-700/50">
           <CardContent className="pt-6">
             <div className="text-center text-gray-400 text-sm py-8">
               No bot sessions yet. Start a market maker bot to see history here.
@@ -363,7 +363,7 @@ export default function MarketMakerHistory() {
             return (
               <Card
                 key={session.id}
-                className="cursor-pointer hover:border-green-500/50 transition-colors"
+                className="cursor-pointer bg-transparent border border-gray-700/50 hover:border-green-500/50 transition-colors"
                 onClick={() => handleSessionClick(session)}
               >
                 <CardContent className="pt-4">

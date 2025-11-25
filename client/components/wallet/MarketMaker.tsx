@@ -546,7 +546,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       : parseFloat(currentOrder.amount) <= tokenBalance;
 
   return (
-    <div className="w-full md:max-w-lg mx-auto px-1 md:px-4 relative z-0 pt-8">
+    <div className="w-full md:max-w-lg mx-auto px-0 md:px-4 relative z-0 pt-8">
       {wallet && !wallet.secretKey && (
         <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
           <p className="text-sm text-amber-900 font-medium">

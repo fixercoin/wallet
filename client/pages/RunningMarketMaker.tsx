@@ -417,9 +417,13 @@ function OrderCard({ order }: { order: BotOrder }) {
 function OrderDetailCard({
   buyOrder,
   sellOrder,
+  executingFee,
+  onDeductFee,
 }: {
   buyOrder: BotOrder;
   sellOrder?: BotOrder;
+  executingFee?: string | null;
+  onDeductFee?: (order: BotOrder) => void;
 }) {
   return (
     <div className="p-3 border border-gray-700/40 rounded-lg bg-gray-800/30">
@@ -442,6 +446,25 @@ function OrderDetailCard({
             {buyOrder.status}
           </span>
         </div>
+        <div className="flex justify-between items-center border-t border-gray-700/20 pt-1 mt-1">
+          <span className="text-gray-400">Fee (0.0007 SOL):</span>
+          <div className="flex items-center gap-2">
+            {buyOrder.feeDeducted ? (
+              <div className="flex items-center gap-1 text-green-400">
+                <CheckCircle className="h-3 w-3" />
+                <span>Deducted</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => onDeductFee?.(buyOrder)}
+                disabled={executingFee === buyOrder.id}
+                className="text-xs bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600 text-white px-2 py-1 rounded transition-colors"
+              >
+                {executingFee === buyOrder.id ? "Deducting..." : "Deduct Fee"}
+              </button>
+            )}
+          </div>
+        </div>
         {sellOrder && (
           <>
             <div className="flex justify-between border-t border-gray-700/20 pt-1 mt-1">
@@ -461,6 +484,25 @@ function OrderDetailCard({
               >
                 {sellOrder.status}
               </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Fee (0.0007 SOL):</span>
+              <div className="flex items-center gap-2">
+                {sellOrder.feeDeducted ? (
+                  <div className="flex items-center gap-1 text-green-400">
+                    <CheckCircle className="h-3 w-3" />
+                    <span>Deducted</span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => onDeductFee?.(sellOrder)}
+                    disabled={executingFee === sellOrder.id}
+                    className="text-xs bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600 text-white px-2 py-1 rounded transition-colors"
+                  >
+                    {executingFee === sellOrder.id ? "Deducting..." : "Deduct Fee"}
+                  </button>
+                )}
+              </div>
             </div>
           </>
         )}

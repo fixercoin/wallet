@@ -75,42 +75,49 @@ export default function RunningMarketMaker() {
   const checkAndConvertPendingOrders = useCallback(() => {
     if (!session || !currentPrice) return;
 
-    const updatedSession = { ...session };
+    const allSessions = botOrdersStorage.getAllSessions();
+    const currentSession = allSessions.find((s) => s.id === sessionId);
+    if (!currentSession) return;
+
     let modified = false;
 
-    for (const buyOrder of updatedSession.buyOrders) {
+    for (const buyOrder of currentSession.buyOrders) {
       if (
         buyOrder.status === "completed" &&
-        !updatedSession.sellOrders.find((s) => s.id.includes(buyOrder.id))
+        buyOrder.tokenAmount &&
+        buyOrder.tokenAmount > 0
       ) {
-        if (currentPrice >= buyOrder.targetSellPrice) {
-          const sellOrder = botOrdersStorage.addSellOrder(
+        const hasSellOrder = currentSession.sellOrders.some(
+          (s) =>
+            s.type === "sell" &&
+            s.buyPrice === buyOrder.buyPrice &&
+            Math.abs(s.timestamp - buyOrder.timestamp) < 1000,
+        );
+
+        if (!hasSellOrder && currentPrice >= buyOrder.targetSellPrice) {
+          botOrdersStorage.addSellOrder(
             sessionId,
             buyOrder.id,
             currentPrice,
-            buyOrder.tokenAmount || 0,
+            buyOrder.tokenAmount,
           );
+          modified = true;
 
-          if (sellOrder) {
-            modified = true;
-            toast({
-              title: "Sell Order Auto-Converted",
-              description: `Buy order #${buyOrder.id.slice(0, 8)} converted to sell at ${currentPrice.toFixed(8)}`,
-            });
-          }
+          toast({
+            title: "Sell Order Auto-Converted",
+            description: `Buy order converted to sell at ${currentPrice.toFixed(8)}`,
+          });
         }
       }
     }
 
     if (modified) {
-      const allSessions = botOrdersStorage.getAllSessions();
-      const idx = allSessions.findIndex((s) => s.id === sessionId);
-      if (idx >= 0) {
-        const refreshedSession = allSessions[idx];
-        setSession(refreshedSession);
+      const updatedSession = botOrdersStorage.getCurrentSession();
+      if (updatedSession) {
+        setSession(updatedSession);
       }
     }
-  }, [session, currentPrice, sessionId, toast]);
+  }, [sessionId, currentPrice, toast]);
 
   const handlePauseResume = () => {
     if (!session) return;

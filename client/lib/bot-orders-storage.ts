@@ -220,6 +220,32 @@ export const botOrdersStorage = {
     }
   },
 
+  markFeeDeducted: (
+    sessionId: string,
+    orderId: string,
+    feeSignature: string,
+  ): boolean => {
+    try {
+      const sessions = botOrdersStorage.getAllSessions();
+      const session = sessions.find((s) => s.id === sessionId);
+      if (!session) return false;
+
+      const order =
+        session.buyOrders.find((o) => o.id === orderId) ||
+        session.sellOrders.find((o) => o.id === orderId);
+
+      if (!order) return false;
+
+      order.feeDeducted = true;
+      order.feeSignature = feeSignature;
+      botOrdersStorage.saveSession(session);
+      return true;
+    } catch (error) {
+      console.error("Error marking fee deducted:", error);
+      return false;
+    }
+  },
+
   deleteSession: (sessionId: string): void => {
     try {
       const sessions = botOrdersStorage.getAllSessions();

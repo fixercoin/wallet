@@ -101,7 +101,7 @@ export default function MarketMakerHistory() {
           </div>
         </div>
 
-        <Card className="mb-6">
+        <Card className="mb-6 bg-transparent border border-gray-700/50">
           <CardContent className="pt-6">
             <div className="space-y-3">
               <div className="flex justify-between items-center text-sm">
@@ -138,7 +138,29 @@ export default function MarketMakerHistory() {
           </CardContent>
         </Card>
 
-        <Card className="mb-6">
+        <Card className="mb-6 bg-transparent border border-gray-700/50">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="text-xs text-gray-400 mb-2 uppercase tracking-wider">Live Price</div>
+                <div className="text-2xl font-bold text-green-400">
+                  ${sessionPrices[selectedSession.id] ? formatPrice(sessionPrices[selectedSession.id]) : "Loading..."}
+                </div>
+              </div>
+              {sessionPrices[selectedSession.id] && (
+                <div className="text-center border-t border-gray-700/50 pt-3">
+                  <div className="text-xs text-gray-400 mb-2 uppercase tracking-wider">Target Price</div>
+                  <div className="text-2xl font-bold text-emerald-300">
+                    ${formatPrice(sessionPrices[selectedSession.id] + selectedSession.priceSpread)}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2">Spread: ${formatPrice(selectedSession.priceSpread)}</div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6 bg-transparent border border-gray-700/50">
           <CardContent className="pt-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
@@ -158,7 +180,7 @@ export default function MarketMakerHistory() {
         </Card>
 
         {stats.totalProfit !== 0 && (
-          <Card className="mb-6">
+          <Card className="mb-6 bg-transparent border border-gray-700/50">
             <CardContent className="pt-6">
               <div className="text-center">
                 <div className="text-xs text-gray-400 mb-2">Total Profit</div>
@@ -181,7 +203,7 @@ export default function MarketMakerHistory() {
             </h3>
             <div className="space-y-2">
               {selectedSession.buyOrders.map((order) => (
-                <Card
+                <Card className="bg-transparent border-blue-500/20 hover:border-blue-500/50 transition-colors"
                   key={order.id}
                   className="cursor-pointer hover:border-blue-500/50 transition-colors"
                   onClick={() => handleOrderClick(selectedSession, order)}
@@ -238,7 +260,7 @@ export default function MarketMakerHistory() {
             </h3>
             <div className="space-y-2">
               {selectedSession.sellOrders.map((order) => (
-                <Card
+                <Card className="bg-transparent border-green-500/20 hover:border-green-500/50 transition-colors"
                   key={order.id}
                   className="cursor-pointer hover:border-green-500/50 transition-colors"
                   onClick={() => handleOrderClick(selectedSession, order)}
@@ -298,7 +320,7 @@ export default function MarketMakerHistory() {
 
         {selectedSession.buyOrders.length === 0 &&
           selectedSession.sellOrders.length === 0 && (
-            <Card>
+            <Card className="bg-transparent border border-gray-700/50">
               <CardContent className="pt-6">
                 <div className="text-center text-gray-400 text-sm">
                   No orders for this session yet

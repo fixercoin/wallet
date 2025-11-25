@@ -8,7 +8,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { botOrdersStorage, BotSession, BotOrder } from "@/lib/bot-orders-storage";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { feeTransfer } from "@/lib/fee-transfer";
-import { rpcCall } from "@/lib/rpc-utils";
+import { Keypair, PublicKey } from "@solana/web3.js";
 
 export default function RunningMarketMaker() {
   const { sessionId = "" } = useParams();

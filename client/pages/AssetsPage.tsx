@@ -142,8 +142,8 @@ export default function AssetsPage() {
               <div key={token.mint} className="w-full">
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
-                    <div className="w-full px-4 py-3 rounded-none sm:rounded-[2px] flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="w-full px-4 py-3 rounded-none sm:rounded-[2px] flex items-center justify-between gap-3 min-w-0">
+                      <div className="flex items-center gap-3 min-w-0">
                         <p
                           className="font-semibold text-white whitespace-nowrap"
                           style={{ fontSize: "11px" }}

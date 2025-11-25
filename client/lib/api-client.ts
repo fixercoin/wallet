@@ -1,6 +1,9 @@
-// Production deployment defaults
-const CLOUDFLARE_WORKER_BASE =
-  "https://fixorium-proxy.khanbabusargodha.workers.dev";
+// API base resolution prefers env (VITE_API_BASE_URL or VITE_API_URL),
+// then defaults to the Cloudflare Worker domain
+
+// Track which API base is currently working
+let workingApiBase: string | null = null;
+let lastFailureTime: Record<string, number> = {};
 
 const normalizeBase = (value: string | null | undefined): string => {
   if (!value) return "";
@@ -10,52 +13,22 @@ const normalizeBase = (value: string | null | undefined): string => {
 };
 
 const determineBase = (): string => {
-  const envBase = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
-  if (envBase) return envBase;
-
-  // Development: localhost uses local Express backend
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname === "localhost"
-  ) {
-    return "";
+  // Try primary env var
+  const envBasePrimary = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
+  if (envBasePrimary) {
+    return envBasePrimary;
   }
 
-  // Production on Netlify: use local /api (proxied to netlify functions)
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname.includes("netlify.app")
-  ) {
-    return "";
+  // Try alternative env var
+  const envBaseAlt = normalizeBase((import.meta as any)?.env?.VITE_API_URL);
+  if (envBaseAlt) {
+    return envBaseAlt;
   }
 
-  // Production on Cloudflare Pages: use Cloudflare Worker
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname.includes("pages.dev")
-  ) {
-    return CLOUDFLARE_WORKER_BASE;
-  }
+  if (workingApiBase) return workingApiBase;
 
-  // Custom domain deployment (fixorium.com.pk):
-  // - If at wallet.fixorium.com.pk (Cloudflare domain with worker route), use local /api
-  // - Otherwise use Cloudflare Worker proxy
-  if (
-    typeof window !== "undefined" &&
-    (window.location.hostname.includes("fixorium.com.pk") ||
-      window.location.hostname.includes("fixorium.com"))
-  ) {
-    // If the app is deployed at wallet.fixorium.com.pk with Cloudflare Worker routing /api/*,
-    // use empty base to hit local /api endpoints (which route to the worker)
-    if (window.location.hostname === "wallet.fixorium.com.pk") {
-      return "";
-    }
-    // For other fixorium subdomains, use the Cloudflare Worker proxy
-    return CLOUDFLARE_WORKER_BASE;
-  }
-
-  // Fallback to Cloudflare Worker
-  return CLOUDFLARE_WORKER_BASE;
+  // Default to relative /api (served by the same origin - for SPA on Worker)
+  return "";
 };
 
 let cachedBase: string | null = null;
@@ -65,6 +38,20 @@ export const getApiBaseUrl = (): string => {
     cachedBase = determineBase();
   }
   return cachedBase;
+};
+
+// Mark an API base as failed for a period
+export const markApiBaseFailed = (base: string): void => {
+  lastFailureTime[base] = Date.now();
+  workingApiBase = null; // Reset working base so we try alternatives
+};
+
+// Check if an API base should be retried
+const canRetryApiBase = (base: string): boolean => {
+  const lastFailure = lastFailureTime[base];
+  if (!lastFailure) return true;
+  // Retry after 30 seconds of being marked as failed
+  return Date.now() - lastFailure > 30000;
 };
 
 export const resolveApiUrl = (path: string): string => {
@@ -79,9 +66,69 @@ export const resolveApiUrl = (path: string): string => {
       ? normalizedPath
       : `/api${normalizedPath}`;
   }
-  // When base is set (e.g., https://wallet.fixorium.com.pk/api), don't duplicate /api
-  if (normalizedPath.startsWith("/api/")) {
-    return `${base}${normalizedPath.substring(4)}`; // Remove /api prefix from path
+
+  const baseNorm = base.replace(/\/+$/, "");
+  // If base already includes /api at the end, avoid duplicating it
+  if (baseNorm.endsWith("/api")) {
+    const pathWithoutApi = normalizedPath.startsWith("/api")
+      ? normalizedPath.substring(4)
+      : normalizedPath;
+    return `${baseNorm}${pathWithoutApi}`;
   }
-  return `${base}${normalizedPath}`;
+
+  // Otherwise, append the full normalizedPath
+  return `${baseNorm}${normalizedPath}`;
+};
+
+// Get API key from environment variables
+export const getApiKey = (): string | null => {
+  return (import.meta.env.VITE_API_KEY || null) as string | null;
+};
+
+// Helper to add API key header to requests
+export const getApiHeaders = (
+  additionalHeaders?: Record<string, string>,
+): Record<string, string> => {
+  const headers: Record<string, string> = {
+    ...additionalHeaders,
+  };
+
+  const apiKey = getApiKey();
+  if (apiKey) {
+    headers["x-api-key"] = apiKey;
+  }
+
+  return headers;
+};
+
+// Fetch wrapper with automatic fallback support
+export const fetchWithFallback = async (
+  path: string,
+  options?: RequestInit,
+): Promise<Response> => {
+  const url = resolveApiUrl(path);
+  const currentBase = getApiBaseUrl();
+
+  try {
+    const mergedHeaders = getApiHeaders(
+      (options?.headers as Record<string, string>) || {},
+    );
+
+    const response = await fetch(url, {
+      ...options,
+      headers: mergedHeaders,
+      // Add timeout if not present
+      signal: options?.signal || AbortSignal.timeout?.(30000),
+    });
+
+    // If successful, mark this base as working
+    if (response.ok) {
+      workingApiBase = currentBase;
+    }
+
+    return response;
+  } catch (error) {
+    // No external fallback; surface the error to caller
+    throw error as any;
+  }
 };

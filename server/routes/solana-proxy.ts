@@ -3,17 +3,18 @@ import { RequestHandler } from "express";
 const RPC_ENDPOINTS = [
   // Prefer environment-configured RPC first
   process.env.SOLANA_RPC_URL || "",
-  // Provider-specific overrides
+  // Provider-specific overrides (only add if configured)
   process.env.ALCHEMY_RPC_URL || "",
   process.env.HELIUS_RPC_URL || "",
   process.env.MORALIS_RPC_URL || "",
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
     : "",
-  // Fallback public endpoints (prefer more reliable public node providers first)
+  // Fallback public endpoints (reliable, no authentication required)
   "https://solana.publicnode.com",
   "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
+  "https://solana-rpc.publicnode.com",
 ].filter(Boolean);
 
 // Track rate-limited endpoints with cooldown periods

@@ -14,6 +14,8 @@ import {
   isValidPhoneNumber,
 } from "@/lib/otp-utils";
 import type { OTPSession } from "@/lib/otp-utils";
+import { sendSMS, getMessages } from "@/lib/fake-sms";
+import { useToast } from "@/hooks/use-toast";
 
 interface SendOTPVerificationProps {
   transactionAmount: string;
@@ -41,6 +43,11 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
   const [otpSession, setOtpSession] = useState<OTPSession | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [smsPreview, setSmsPreview] = useState<{
+    body: string;
+    ts: number;
+  } | null>(null);
+  const { toast } = useToast();
 
   // Countdown timer for OTP expiry
   useEffect(() => {
@@ -79,8 +86,18 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
       setIsProcessing(true);
       const session = createOTPSession(phoneNumber);
 
-      // In production, you would send OTP via SMS here
-      // For now, we store it in session and display it (for demo purposes)
+      // Send via fake SMS service (demo-only)
+      try {
+        const msg = sendSMS(
+          session.phoneNumber,
+          `Your Fixorium verification code is ${session.code}`,
+        );
+        setSmsPreview({ body: msg.body, ts: msg.ts });
+      } catch (e) {
+        console.warn("Failed to send fake SMS", e);
+      }
+
+      // Store session and progress to OTP step
       console.log(`[OTP Demo] Code: ${session.code}`);
 
       storeOTPSession(session);
@@ -88,6 +105,12 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
       setTimeRemaining(getOTPTimeRemaining(session));
       setStep("otp");
       setOtpCode("");
+
+      // Notify user (demo)
+      toast({
+        title: "OTP Sent",
+        description: `Sent to ${maskPhoneNumber(session.phoneNumber)}`,
+      });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to generate OTP code",
@@ -290,6 +313,18 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
                       displayed here)
                     </p>
                   </div>
+
+                  {/* Sent SMS preview (demo fake SMS inbox) */}
+                  {smsPreview && (
+                    <div className="bg-white/5 border border-gray-200 rounded-lg p-3 mt-2">
+                      <p className="text-xs text-gray-700">
+                        <strong>SMS Inbox (demo):</strong>
+                      </p>
+                      <p className="text-sm text-gray-900 font-mono mt-1">
+                        {smsPreview.body}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <p className="text-xs text-gray-600">

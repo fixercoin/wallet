@@ -690,6 +690,28 @@ export async function createServer(): Promise<express.Application> {
     });
   });
 
+  // Root endpoint
+  app.get("/", (req, res) => {
+    res.json({
+      status: "ok",
+      message: "Fixorium Wallet API",
+      version: "1.0.0",
+      timestamp: new Date().toISOString(),
+      info: "Frontend is served from Vite dev server at http://localhost:5173 in development mode",
+      endpoints: {
+        health: "/health",
+        api: "/api",
+        api_health: "/api/health",
+        ping: "/api/ping",
+        wallet: "/api/wallet/balance",
+        balance: "/api/balance",
+        quote: "/api/quote",
+        swap: "/api/swap/execute",
+        orders: "/api/orders",
+      },
+    });
+  });
+
   // Root API endpoint
   app.get("/api", (req, res) => {
     res.json({

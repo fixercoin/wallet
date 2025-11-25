@@ -160,18 +160,19 @@ class TokenPairPricingService {
       // Get SOL price in USD
       const solPrice = await this.getSolPrice();
 
-      // Get the SOL/TOKEN pair ratio
-      const tokensPerSol = await this.getSolPairPrice(config.mint);
+      // Get the SOL pair price (how many SOL to buy 1 token)
+      const priceInSol = await this.getSolPairPrice(config.mint);
 
-      if (!tokensPerSol || tokensPerSol <= 0) {
+      if (!priceInSol || priceInSol <= 0) {
         console.warn(
           `Could not determine SOL pair for ${symbol}, using fallback`,
         );
         return this.getFallbackPriceData(symbol, solPrice);
       }
 
-      // Calculate token price in USD
-      const derivedPrice = solPrice / tokensPerSol;
+      // Calculate token price in USD by multiplying SOL price by the SOL ratio
+      // derivedPrice = (how many SOL per token) * (SOL price in USD)
+      const derivedPrice = priceInSol * solPrice;
 
       // Fetch additional metadata from DexScreener
       const tokenData = await dexscreenerAPI.getTokenByMint(config.mint);
@@ -180,7 +181,7 @@ class TokenPairPricingService {
         tokenAddress: config.mint,
         tokenSymbol: symbol,
         solPrice,
-        pairRatio: tokensPerSol,
+        pairRatio: 1 / priceInSol, // How many tokens per 1 SOL
         derivedPrice: derivedPrice > 0 ? derivedPrice : FALLBACK_PRICES[symbol],
         priceChange24h: tokenData?.priceChange?.h24 || 0,
         volume24h: tokenData?.volume?.h24 || 0,
@@ -195,7 +196,7 @@ class TokenPairPricingService {
       });
 
       console.log(
-        `${symbol} derived price: $${priceData.derivedPrice.toFixed(8)} (1 SOL = ${tokensPerSol.toFixed(2)} ${symbol})`,
+        `${symbol} derived price: $${priceData.derivedPrice.toFixed(8)} (1 ${symbol} = ${priceInSol.toFixed(8)} SOL, SOL = $${solPrice.toFixed(2)})`,
       );
 
       return priceData;

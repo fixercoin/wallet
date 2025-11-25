@@ -170,18 +170,28 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     <div className="w-full md:max-w-lg mx-auto px-4 relative z-0 pt-8">
       <div className="rounded-none border-0 bg-transparent">
         <div className="space-y-6 p-6 relative">
-          <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onBack}
-              className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div className="font-semibold text-sm text-white uppercase">
-              Fixorium Market Maker
+          <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2 justify-between">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onBack}
+                className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div className="font-semibold text-sm text-white uppercase">
+                Fixorium Market Maker
+              </div>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/market-maker/history")}
+              className="text-xs h-7 px-2 border-gray-700 text-gray-300 hover:text-white rounded-md"
+            >
+              History
+            </Button>
           </div>
 
           <div className="space-y-2">

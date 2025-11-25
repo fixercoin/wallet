@@ -26,7 +26,7 @@ const TOKEN_CONFIGS: Record<
   FIXERCOIN: {
     name: "FIXERCOIN",
     mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
-    spread: 0.00002,
+    spread: 0.000002,
     decimals: 6,
   },
   SOL: {

@@ -77,60 +77,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const solBalance = solToken?.balance || 0;
   const tokenBalance = selectedTokenBalance?.balance || 0;
 
-  const fetchLivePrice = useCallback(async () => {
-    setIsFetchingPrice(true);
-    try {
-      let price = 0;
-
-      if (selectedToken === "FIXERCOIN") {
-        const priceData = await fixercoinPriceService.getFixercoinPrice();
-        if (priceData && priceData.price > 0) {
-          price = priceData.price;
-        }
-      } else if (selectedToken === "SOL") {
-        const solToken = await dexscreenerAPI.getTokenByMint(
-          "So11111111111111111111111111111111111111112",
-        );
-        if (solToken && solToken.priceUsd) {
-          price = parseFloat(solToken.priceUsd);
-        }
-      }
-
-      if (price > 0) {
-        const orderToUpdate = orderMode === "BUY" ? buyOrder : sellOrder;
-        const priceStr = price.toFixed(8);
-
-        if (orderMode === "BUY") {
-          const amount = (parseFloat(orderToUpdate.total) / price).toFixed(8);
-          setBuyOrder({
-            price: priceStr,
-            amount: amount,
-            total: orderToUpdate.total,
-          });
-        } else {
-          const amount = (parseFloat(orderToUpdate.total) / price).toFixed(8);
-          setSellOrder({
-            price: priceStr,
-            amount: amount,
-            total: orderToUpdate.total,
-          });
-        }
-
-        console.log(
-          `[MarketMaker] Fetched live price for ${selectedToken}: ${priceStr}`,
-        );
-      }
-    } catch (error) {
-      console.error("[MarketMaker] Error fetching price:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch live price",
-        variant: "destructive",
-      });
-    } finally {
-      setIsFetchingPrice(false);
-    }
-  }, [selectedToken, orderMode, buyOrder.total, sellOrder.total, toast]);
 
   const calculateAmountFromTotal = useCallback(
     (totalSol: string, price: string) => {

@@ -455,14 +455,14 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         ESTIMATED {selectedToken}
                       </Label>
                     </div>
-                    <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
+                    <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-medium">
                       {buyOrder.amount || "0"}
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label className="text-gray-600 text-xs font-semibold">
-                      AVAILABLE SOL
+                      AVAILABLE {selectedToken === "SOL" ? "USDC" : "SOL"}
                     </Label>
                     <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
                       <span
@@ -528,14 +528,14 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         ESTIMATED SOL
                       </Label>
                     </div>
-                    <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
+                    <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-medium">
                       {sellOrder.total || "0"}
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label className="text-gray-600 text-xs font-semibold">
-                      AVAILABLE {selectedToken}
+                      AVAILABLE {selectedToken === "SOL" ? "USDC" : selectedToken}
                     </Label>
                     <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
                       <span

@@ -43,17 +43,27 @@ export default function RunningMarketMaker() {
 
   useEffect(() => {
     const loadSession = () => {
-      const allSessions = botOrdersStorage.getAllSessions();
-      const found = allSessions.find((s) => s.id === sessionId);
-      if (found) {
-        setSession(found);
+      try {
+        const allSessions = botOrdersStorage.getAllSessions();
+        console.log("[RunningMarketMaker] All sessions:", allSessions);
+        console.log("[RunningMarketMaker] Looking for sessionId:", sessionId);
+        const found = allSessions.find((s) => s.id === sessionId);
+        if (found) {
+          console.log("[RunningMarketMaker] Session found:", found);
+          setSession(found);
+          setLoading(false);
+        } else {
+          console.log("[RunningMarketMaker] Session NOT found");
+          toast({
+            title: "Session Not Found",
+            description: "The bot session could not be found.",
+            variant: "destructive",
+          });
+          setTimeout(() => navigate("/"), 1500);
+        }
+      } catch (error) {
+        console.error("[RunningMarketMaker] Error loading session:", error);
         setLoading(false);
-      } else {
-        toast({
-          title: "Session Not Found",
-          variant: "destructive",
-        });
-        navigate("/");
       }
     };
 

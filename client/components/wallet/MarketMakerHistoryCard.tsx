@@ -66,7 +66,7 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
 
   if (!session || allOrders.length === 0) {
     return (
-      <div className="bg-transparent border border-gray-700 rounded-lg p-4">
+      <div className="bg-transparent border border-gray-700 rounded-lg p-4 w-full">
         <div className="text-center text-gray-400 text-sm py-4">
           <Clock className="h-5 w-5 mx-auto mb-2 opacity-50" />
           No order history yet
@@ -82,8 +82,8 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
     return price.toFixed(2);
   };
 
-  const formatAmount = (amount: number): string => {
-    return amount.toFixed(8);
+  const formatAmount = (amount: number, decimals: number = 2): string => {
+    return amount.toFixed(decimals);
   };
 
   const getStatusBadge = (status: string) => {
@@ -112,8 +112,8 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
   };
 
   return (
-    <Card className="bg-transparent border border-gray-700 rounded-lg">
-      <CardContent className="pt-6 pb-4 px-6">
+    <Card className="bg-transparent border border-gray-700 rounded-lg w-full">
+      <CardContent className="pt-6 pb-4 px-6 w-full">
         <div className="space-y-4">
           <div className="font-semibold text-sm text-white uppercase px-2">
             Recent Executions
@@ -167,9 +167,9 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
                     </div>
                     <div className="text-white font-semibold">
                       {order.type === "buy"
-                        ? formatAmount(order.solAmount)
+                        ? formatAmount(order.solAmount, 4)
                         : order.tokenAmount
-                          ? formatAmount(order.tokenAmount)
+                          ? formatAmount(order.tokenAmount, 2)
                           : "0"}
                     </div>
                   </div>
@@ -191,7 +191,7 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
                         SOL Received
                       </div>
                       <div className="text-white font-semibold">
-                        {formatAmount(order.solAmount)}
+                        {formatAmount(order.solAmount, 4)}
                       </div>
                     </div>
                   )}

@@ -600,18 +600,6 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             </div>
           </div>
 
-          <div className="px-4 py-1">
-            <img
-              src="https://cdn.builder.io/api/v1/image/assets%2Fda3497f314c34a2c8eb8f1661abc2abb%2Fbec39b40cec8489498071e011c6d3778?format=webp&width=800"
-              alt="Burn tokens animation"
-              className="w-full mx-auto rounded-lg"
-              style={{
-                backgroundColor: "transparent",
-                mixBlendMode: "lighten",
-              }}
-            />
-          </div>
-
           <div className="px-4 pb-6 space-y-5">
             <div className="space-y-4">
               <div>
@@ -651,34 +639,25 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
 
               {selectedToken ? (
                 <Card className="rounded-lg border border-gray-300/30 bg-transparent px-4">
-                  <CardContent className="pt-4 px-0 space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-gray-300">
-                          Selected token
-                        </p>
-                        <p className="text-lg font-semibold text-white">
-                          {selectedToken.symbol ||
-                            selectedToken.mint.slice(0, 6)}{" "}
-                          ·{" "}
-                          {formatNumber(
-                            selectedToken.balance,
-                            selectedToken.decimals ?? 0,
-                            selectedToken.symbol,
-                          )}
-                        </p>
-                      </div>
-                      <div className="text-right text-[11px] text-gray-300">
-                        <p>Mint address</p>
-                        <a
-                          className="font-medium text-orange-500 underline-offset-4 hover:underline"
-                          href={`https://solscan.io/token/${selectedToken.mint}`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          {shortenAddress(selectedToken.mint, 6)}
-                        </a>
-                      </div>
+                  <CardContent className="pt-4 pb-4 px-0">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-[10px] font-semibold text-white">
+                        {selectedToken.symbol || selectedToken.mint.slice(0, 6)}{" "}
+                        ·{" "}
+                        {formatNumber(
+                          selectedToken.balance,
+                          selectedToken.decimals ?? 0,
+                          selectedToken.symbol,
+                        )}
+                      </p>
+                      <a
+                        className="font-medium text-orange-500 underline-offset-4 hover:underline text-[10px] flex-shrink-0"
+                        href={`https://solscan.io/token/${selectedToken.mint}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {shortenAddress(selectedToken.mint, 6)}
+                      </a>
                     </div>
                   </CardContent>
                 </Card>

@@ -26,7 +26,7 @@ const TOKEN_CONFIGS: Record<
   FIXERCOIN: {
     name: "FIXERCOIN",
     mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
-    spread: 0.000002,
+    spread: 0.00002,
     decimals: 6,
   },
   SOL: {
@@ -44,7 +44,14 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   const [selectedToken, setSelectedToken] = useState<TokenType>("FIXERCOIN");
   const [numberOfMakers, setNumberOfMakers] = useState("5");
-  const [orderAmount, setOrderAmount] = useState("0.02");
+  const [orderAmount, setOrderAmount] = useState(() => {
+    try {
+      const lastSession = localStorage.getItem("bot_last_order_amount");
+      return lastSession || "0.02";
+    } catch {
+      return "0.02";
+    }
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   const tokenConfig = TOKEN_CONFIGS[selectedToken];
@@ -62,8 +69,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       return "Number of makers must be between 1 and 1000";
 
     const amount = parseFloat(orderAmount);
-    if (isNaN(amount) || amount < 0.01)
-      return "Order amount must be at least 0.01 SOL";
+    if (isNaN(amount) || amount <= 0)
+      return "Order amount must be greater than 0 SOL";
 
     return null;
   }, [numberOfMakers, orderAmount]);
@@ -122,14 +129,31 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         tokenConfig.spread,
       );
 
+      console.log("[MarketMaker] Created session:", session);
       botOrdersStorage.saveSession(session);
+
+      try {
+        localStorage.setItem("bot_last_order_amount", orderAmount);
+      } catch (storageError) {
+        console.error(
+          "Error saving order amount to localStorage:",
+          storageError,
+        );
+      }
+
+      console.log("[MarketMaker] Session saved, checking storage...");
+      const allSessions = botOrdersStorage.getAllSessions();
+      console.log("[MarketMaker] All sessions after save:", allSessions);
 
       toast({
         title: "Bot Started",
         description: `Market maker bot started with ${numMakers} makers`,
       });
 
-      navigate(`/market-maker/running/${session.id}`);
+      setTimeout(() => {
+        console.log("[MarketMaker] Navigating to bot:", session.id);
+        navigate(`/market-maker/running/${session.id}`);
+      }, 100);
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       toast({
@@ -203,11 +227,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               <Input
                 type="number"
                 step="0.001"
-                min="0.01"
                 value={orderAmount}
                 onChange={(e) => setOrderAmount(e.target.value)}
                 className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-                placeholder="Minimum 0.01 SOL"
+                placeholder="Enter order amount"
               />
               <span className="text-sm text-gray-600">◎</span>
             </div>
@@ -219,18 +242,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             </Label>
             <div className="bg-transparent border border-green-500/50 rounded-lg px-4 py-3 flex items-center justify-center">
               <span className="text-sm font-semibold text-green-400">
-                {selectedToken === "FIXERCOIN" ? "+0.00000200" : "+2"}{" "}
+                {selectedToken === "FIXERCOIN" ? "+0.0000200" : "+2"}{" "}
                 {selectedToken}
               </span>
-            </div>
-          </div>
-
-          <div className="p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
-            <div className="text-xs text-blue-300">
-              <p className="font-semibold mb-1">Fee Structure:</p>
-              <p>• 0.0007 SOL per buy trade execution</p>
-              <p>• 0.0007 SOL per sell trade execution</p>
-              <p>• Fees deducted when trade is executed</p>
             </div>
           </div>
 

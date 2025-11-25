@@ -112,7 +112,7 @@ export const botOrdersStorage = {
         tokenMint: session.tokenMint,
         buyPrice,
         targetSellPrice:
-          session.token === "FIXERCOIN" ? buyPrice + 0.000002 : buyPrice + 2,
+          session.token === "FIXERCOIN" ? buyPrice + 0.00002 : buyPrice + 2,
         timestamp: Date.now(),
         status: "pending",
         solAmount,

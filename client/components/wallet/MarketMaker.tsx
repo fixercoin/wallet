@@ -67,7 +67,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   const tokenConfig = TOKEN_CONFIGS[selectedToken];
 
-  // Fetch live price on component mount or token change
+  // Fetch live price on component mount or token change, and set up polling
   useEffect(() => {
     const fetchPrices = async () => {
       setIsFetchingPrice(true);
@@ -118,6 +118,15 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     };
 
     fetchPrices();
+
+    // Set up polling to refresh prices every 30 seconds
+    const priceRefreshInterval = setInterval(() => {
+      fetchPrices();
+    }, 30000);
+
+    return () => {
+      clearInterval(priceRefreshInterval);
+    };
   }, [selectedToken]);
 
   const solToken = useMemo(

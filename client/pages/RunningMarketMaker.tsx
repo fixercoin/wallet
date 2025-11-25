@@ -293,11 +293,14 @@ export default function RunningMarketMaker() {
     (o) => o.status === "completed",
   );
 
+  console.log("[RunningMarketMaker] Rendering. Session:", session, "Loading:", loading);
+
   if (!session) {
     return (
       <div className="w-full md:max-w-lg mx-auto px-4 py-6 min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center text-white">
           <div className="text-lg font-semibold mb-2">Loading bot session...</div>
+          <div className="text-sm text-gray-400">Session ID: {sessionId}</div>
           <div className="text-sm text-gray-400">Please wait</div>
         </div>
       </div>

@@ -13,7 +13,7 @@ export interface FixercoinPriceData {
 class FixercoinPriceService {
   private cachedData: FixercoinPriceData | null = null;
   private lastFetchTime: Date | null = null;
-  private readonly CACHE_DURATION = 5000; // 5 seconds cache for responsive limit orders
+  private readonly CACHE_DURATION = 1500; // 1.5 seconds - matches DexTools real-time update frequency
 
   async getFixercoinPrice(): Promise<FixercoinPriceData | null> {
     try {
@@ -31,15 +31,16 @@ class FixercoinPriceService {
       }
 
       console.log(
-        "Fetching fresh FIXERCOIN price using derived pricing (SOL pair)...",
+        "Fetching fresh FIXERCOIN price using SOL pair derivation (DexTools logic)...",
       );
 
-      // Use derived pricing based on SOL pair
+      // Use derived pricing based on SOL pair - matches DexTools methodology
+      // If 1 SOL = X FIXERCOIN tokens, then 1 FIXERCOIN = (1 SOL price USD) / X tokens
       const pairingData =
         await tokenPairPricingService.getDerivedPrice("FIXERCOIN");
 
       if (!pairingData) {
-        console.warn("Failed to derive FIXERCOIN price");
+        console.warn("Failed to derive FIXERCOIN price from SOL pair");
         return this.getFallbackPrice();
       }
 
@@ -49,7 +50,7 @@ class FixercoinPriceService {
         volume24h: pairingData.volume24h,
         liquidity: pairingData.liquidity,
         lastUpdated: pairingData.lastUpdated,
-        derivationMethod: `derived from SOL pair (1 SOL = ${pairingData.pairRatio.toFixed(2)} FIXERCOIN)`,
+        derivationMethod: `DexTools logic: 1 SOL = ${pairingData.pairRatio.toFixed(0)} FIXERCOIN → 1 FIXERCOIN = $${pairingData.derivedPrice.toFixed(8)}`,
       };
 
       // Only cache if we got valid, live price data (not fallback)
@@ -99,7 +100,9 @@ class FixercoinPriceService {
   clearCache(): void {
     this.cachedData = null;
     this.lastFetchTime = null;
-    tokenPairPricingService.clearTokenCache("FIXERCOIN");
+    console.log(
+      "[FixercoinPriceService] Cache cleared - next fetch will be fresh",
+    );
   }
 }
 

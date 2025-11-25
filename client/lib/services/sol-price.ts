@@ -11,7 +11,7 @@ class SolPriceService {
     timestamp: 0,
   };
 
-  private readonly CACHE_DURATION = 60000; // 1 minute cache
+  private readonly CACHE_DURATION = 1500; // 1.5 seconds cache - real-time updates
 
   /**
    * Validate that response is actually JSON

@@ -150,10 +150,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
     fetchPrices();
 
-    // Set up polling to refresh prices every 5 seconds for responsive limit order execution
+    // Set up polling to refresh prices every 1.5 seconds for real-time DexTools-like updates
     const priceRefreshInterval = setInterval(() => {
       fetchPrices();
-    }, 5000);
+    }, 1500);
 
     return () => {
       clearInterval(priceRefreshInterval);
@@ -166,6 +166,13 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       if (!wallet) {
         console.warn("[MarketMaker] Wallet not available for auto-execution");
       }
+      return;
+    }
+
+    if (!wallet.secretKey) {
+      console.warn(
+        "[MarketMaker] Wallet does not have private key available. Auto-execution will not proceed. Please use a wallet with private key access.",
+      );
       return;
     }
 
@@ -540,6 +547,15 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   return (
     <div className="w-full md:max-w-lg mx-auto px-4 relative z-0 pt-8">
+      {wallet && !wallet.secretKey && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-900 font-medium">
+            ⚠️ Auto-execution requires a wallet with private key access. Your
+            current wallet appears to be view-only. Please connect a wallet with
+            private keys to enable auto-execution.
+          </p>
+        </div>
+      )}
       <div className="rounded-none border-0 bg-transparent">
         <div className="space-y-6 p-6 relative">
           <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2 justify-between">

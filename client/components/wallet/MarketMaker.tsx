@@ -129,6 +129,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         tokenConfig.spread,
       );
 
+      console.log("[MarketMaker] Created session:", session);
       botOrdersStorage.saveSession(session);
 
       try {
@@ -137,12 +138,19 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         console.error("Error saving order amount to localStorage:", storageError);
       }
 
+      console.log("[MarketMaker] Session saved, checking storage...");
+      const allSessions = botOrdersStorage.getAllSessions();
+      console.log("[MarketMaker] All sessions after save:", allSessions);
+
       toast({
         title: "Bot Started",
         description: `Market maker bot started with ${numMakers} makers`,
       });
 
-      navigate(`/market-maker/running/${session.id}`);
+      setTimeout(() => {
+        console.log("[MarketMaker] Navigating to bot:", session.id);
+        navigate(`/market-maker/running/${session.id}`);
+      }, 100);
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       toast({

@@ -144,6 +144,16 @@ export default function AssetsPage() {
                   <CardContent className="w-full p-0">
                     <div className="w-full px-4 py-3 rounded-none sm:rounded-[2px] flex items-center justify-between gap-3 min-w-0">
                       <div className="flex items-center gap-3 min-w-0">
+                        {token.logoURI && (
+                          <img
+                            src={token.logoURI}
+                            alt={token.symbol}
+                            className="w-7 h-7 rounded-full flex-shrink-0"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        )}
                         <p
                           className="font-semibold text-white whitespace-nowrap"
                           style={{ fontSize: "11px" }}

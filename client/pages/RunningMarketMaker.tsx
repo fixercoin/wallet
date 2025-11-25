@@ -25,7 +25,7 @@ export default function RunningMarketMaker() {
   const { sessionId = "" } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { wallet, tokens } = useWallet();
+  const { wallet, tokens = [] } = useWallet() || { wallet: null, tokens: [] };
 
   const [session, setSession] = useState<BotSession | null>(null);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);

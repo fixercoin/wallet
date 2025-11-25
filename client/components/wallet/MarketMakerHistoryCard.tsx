@@ -167,9 +167,9 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
                     </div>
                     <div className="text-white font-semibold">
                       {order.type === "buy"
-                        ? formatAmount(order.solAmount)
+                        ? formatAmount(order.solAmount, 4)
                         : order.tokenAmount
-                          ? formatAmount(order.tokenAmount)
+                          ? formatAmount(order.tokenAmount, 2)
                           : "0"}
                     </div>
                   </div>

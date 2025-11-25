@@ -185,9 +185,15 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   };
 
   const handleSellAmountChange = (value: string) => {
-    const estimatedTotal = livePrice
-      ? (parseFloat(value) * livePrice).toFixed(8)
-      : "0";
+    let estimatedTotal = "0";
+
+    if (livePrice && livePrice > 0 && solPrice && solPrice > 0) {
+      // Calculate: (Token Amount * Token Price in USD) / SOL Price in USD
+      const tokenAmount = parseFloat(value) || 0;
+      const solAmount = (tokenAmount * livePrice) / solPrice;
+      estimatedTotal = solAmount.toFixed(8);
+    }
+
     setSellOrder({
       ...sellOrder,
       amount: value,

@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { solPriceService } from "@/lib/services/sol-price";
+import { MarketMakerHistoryCard } from "./MarketMakerHistoryCard";
 
 interface MarketMakerProps {
   onBack: () => void;

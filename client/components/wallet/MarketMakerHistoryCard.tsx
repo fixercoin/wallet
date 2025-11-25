@@ -112,8 +112,8 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
   };
 
   return (
-    <Card className="bg-transparent border border-gray-700 rounded-lg">
-      <CardContent className="pt-6 pb-4 px-6">
+    <Card className="bg-transparent border border-gray-700 rounded-lg w-full">
+      <CardContent className="pt-6 pb-4 px-6 w-full">
         <div className="space-y-4">
           <div className="font-semibold text-sm text-white uppercase px-2">
             Recent Executions

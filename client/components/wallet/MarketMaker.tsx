@@ -77,47 +77,135 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const solBalance = solToken?.balance || 0;
   const tokenBalance = selectedTokenBalance?.balance || 0;
 
-  const calculateBuyTotal = useCallback((price: string, amount: string) => {
-    const p = parseFloat(price) || 0;
-    const a = parseFloat(amount) || 0;
-    return (p * a).toFixed(8);
-  }, []);
+  const fetchLivePrice = useCallback(async () => {
+    setIsFetchingPrice(true);
+    try {
+      let price = 0;
 
-  const calculateSellTotal = useCallback((price: string, amount: string) => {
-    const p = parseFloat(price) || 0;
-    const a = parseFloat(amount) || 0;
-    return (p * a).toFixed(8);
-  }, []);
+      if (selectedToken === "FIXERCOIN") {
+        const priceData = await fixercoinPriceService.getFixercoinPrice();
+        if (priceData && priceData.price > 0) {
+          price = priceData.price;
+        }
+      } else if (selectedToken === "SOL") {
+        const solToken = await dexscreenerAPI.getTokenByMint(
+          "So11111111111111111111111111111111111111112",
+        );
+        if (solToken && solToken.priceUsd) {
+          price = parseFloat(solToken.priceUsd);
+        }
+      }
+
+      if (price > 0) {
+        const orderToUpdate = orderMode === "BUY" ? buyOrder : sellOrder;
+        const priceStr = price.toFixed(8);
+
+        if (orderMode === "BUY") {
+          const amount = (parseFloat(orderToUpdate.total) / price).toFixed(8);
+          setBuyOrder({
+            price: priceStr,
+            amount: amount,
+            total: orderToUpdate.total,
+          });
+        } else {
+          const amount = (parseFloat(orderToUpdate.total) / price).toFixed(8);
+          setSellOrder({
+            price: priceStr,
+            amount: amount,
+            total: orderToUpdate.total,
+          });
+        }
+
+        console.log(
+          `[MarketMaker] Fetched live price for ${selectedToken}: ${priceStr}`,
+        );
+      }
+    } catch (error) {
+      console.error("[MarketMaker] Error fetching price:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch live price",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFetchingPrice(false);
+    }
+  }, [selectedToken, orderMode, buyOrder.total, sellOrder.total, toast]);
+
+  const calculateAmountFromTotal = useCallback(
+    (totalSol: string, price: string) => {
+      const total = parseFloat(totalSol) || 0;
+      const p = parseFloat(price) || 0;
+      if (p <= 0) return "0";
+      return (total / p).toFixed(8);
+    },
+    [],
+  );
+
+  const calculateTotalFromAmountPrice = useCallback(
+    (price: string, amount: string) => {
+      const p = parseFloat(price) || 0;
+      const a = parseFloat(amount) || 0;
+      return (p * a).toFixed(8);
+    },
+    [],
+  );
 
   const handleBuyPriceChange = (value: string) => {
+    const amount = calculateAmountFromTotal(buyOrder.total, value);
     setBuyOrder({
       ...buyOrder,
       price: value,
-      total: calculateBuyTotal(value, buyOrder.amount),
+      amount: amount,
     });
   };
 
+  const handleBuyTotalChange = async (value: string) => {
+    setBuyOrder({
+      ...buyOrder,
+      total: value,
+    });
+
+    if (value && parseFloat(value) > 0) {
+      await fetchLivePrice();
+    }
+  };
+
   const handleBuyAmountChange = (value: string) => {
+    const total = calculateTotalFromAmountPrice(buyOrder.price, value);
     setBuyOrder({
       ...buyOrder,
       amount: value,
-      total: calculateBuyTotal(buyOrder.price, value),
+      total: total,
     });
   };
 
   const handleSellPriceChange = (value: string) => {
+    const amount = calculateAmountFromTotal(sellOrder.total, value);
     setSellOrder({
       ...sellOrder,
       price: value,
-      total: calculateSellTotal(value, sellOrder.amount),
+      amount: amount,
     });
   };
 
+  const handleSellTotalChange = async (value: string) => {
+    setSellOrder({
+      ...sellOrder,
+      total: value,
+    });
+
+    if (value && parseFloat(value) > 0) {
+      await fetchLivePrice();
+    }
+  };
+
   const handleSellAmountChange = (value: string) => {
+    const total = calculateTotalFromAmountPrice(sellOrder.price, value);
     setSellOrder({
       ...sellOrder,
       amount: value,
-      total: calculateSellTotal(sellOrder.price, value),
+      total: total,
     });
   };
 

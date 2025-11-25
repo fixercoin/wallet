@@ -391,6 +391,25 @@ export default function MarketMakerHistory() {
                       </span>
                     </div>
 
+                    {sessionPrices[session.id] && (
+                      <div className="border-t border-gray-700/50 pt-3 mt-3">
+                        <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                          <div className="text-center">
+                            <div className="text-gray-400 mb-1">Live Price</div>
+                            <div className="font-semibold text-green-400">
+                              ${formatPrice(sessionPrices[session.id])}
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-gray-400 mb-1">Target Price</div>
+                            <div className="font-semibold text-emerald-300">
+                              ${formatPrice(sessionPrices[session.id] + session.priceSpread)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-3 gap-2 text-xs mt-3 border-t border-gray-700 pt-3">
                       <div className="text-center">
                         <div className="text-gray-400 mb-1">Makers</div>

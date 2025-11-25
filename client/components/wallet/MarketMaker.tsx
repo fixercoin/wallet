@@ -254,27 +254,16 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div className="font-semibold text-sm text-white uppercase">
-                Fixorium Market Maker
+                Fixorium Limit Orders
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/market-maker/history")}
-              className="text-xs h-7 px-2 border-gray-700 text-gray-300 hover:text-white rounded-md"
-            >
-              History
-            </Button>
           </div>
 
           <div className="space-y-2">
             <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Token Address
+              Token
             </Label>
-            <Select
-              value={selectedToken}
-              onValueChange={(value) => setSelectedToken(value as TokenType)}
-            >
+            <Select value={selectedToken} onValueChange={setSelectedToken}>
               <SelectTrigger className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900">
                 <SelectValue />
               </SelectTrigger>
@@ -288,78 +277,143 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Number of Makers
-            </Label>
-            <Input
-              type="number"
-              min="1"
-              max="1000"
-              value={numberOfMakers}
-              onChange={(e) => setNumberOfMakers(e.target.value)}
-              className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-            />
-          </div>
+          <div className="space-y-4">
+            <div className="bg-transparent border border-blue-500/50 rounded-lg p-4">
+              <h3 className="text-blue-400 font-semibold text-sm uppercase mb-4">
+                Buy Limit Order
+              </h3>
 
-          <div className="space-y-2">
-            <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Order Amount (SOL)
-            </Label>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                step="0.001"
-                value={orderAmount}
-                onChange={(e) => setOrderAmount(e.target.value)}
-                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-                placeholder="Enter order amount"
-              />
-              <span className="text-sm text-gray-600">◎</span>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label className="text-gray-600 text-xs font-semibold">
+                    Price ({selectedToken} per SOL)
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.00000001"
+                    value={buyOrder.price}
+                    onChange={(e) => handleBuyPriceChange(e.target.value)}
+                    className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-blue-400 transition-colors placeholder:text-gray-400 caret-gray-900"
+                    placeholder="Enter price"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-gray-600 text-xs font-semibold">
+                    Amount ({selectedToken})
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={buyOrder.amount}
+                    onChange={(e) => handleBuyAmountChange(e.target.value)}
+                    className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-blue-400 transition-colors placeholder:text-gray-400 caret-gray-900"
+                    placeholder="Enter amount"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-gray-600 text-xs font-semibold">
+                    Total (SOL)
+                  </Label>
+                  <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
+                    {buyOrder.total}
+                  </div>
+                </div>
+
+                <div className="p-3 bg-transparent border border-gray-700 rounded-lg">
+                  <div className="text-gray-300 text-xs font-semibold">
+                    Available SOL:{" "}
+                    <span
+                      className={
+                        parseFloat(buyOrder.total) <= solBalance
+                          ? "text-green-400"
+                          : "text-red-400"
+                      }
+                    >
+                      {solBalance.toFixed(8)}
+                    </span>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handlePlaceBuyOrder}
+                  disabled={isBuyLoading}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase py-3 rounded-lg"
+                >
+                  {isBuyLoading ? "Placing..." : "Place Buy Order"}
+                </Button>
+              </div>
+            </div>
+
+            <div className="bg-transparent border border-red-500/50 rounded-lg p-4">
+              <h3 className="text-red-400 font-semibold text-sm uppercase mb-4">
+                Sell Limit Order
+              </h3>
+
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label className="text-gray-600 text-xs font-semibold">
+                    Price ({selectedToken} per SOL)
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.00000001"
+                    value={sellOrder.price}
+                    onChange={(e) => handleSellPriceChange(e.target.value)}
+                    className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-red-400 transition-colors placeholder:text-gray-400 caret-gray-900"
+                    placeholder="Enter price"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-gray-600 text-xs font-semibold">
+                    Amount ({selectedToken})
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={sellOrder.amount}
+                    onChange={(e) => handleSellAmountChange(e.target.value)}
+                    className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-red-400 transition-colors placeholder:text-gray-400 caret-gray-900"
+                    placeholder="Enter amount"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-gray-600 text-xs font-semibold">
+                    Total (SOL)
+                  </Label>
+                  <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
+                    {sellOrder.total}
+                  </div>
+                </div>
+
+                <div className="p-3 bg-transparent border border-gray-700 rounded-lg">
+                  <div className="text-gray-300 text-xs font-semibold">
+                    Available {selectedToken}:{" "}
+                    <span
+                      className={
+                        parseFloat(sellOrder.amount) <= tokenBalance
+                          ? "text-green-400"
+                          : "text-red-400"
+                      }
+                    >
+                      {tokenBalance.toFixed(8)}
+                    </span>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handlePlaceSellOrder}
+                  disabled={isSellLoading}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white font-bold uppercase py-3 rounded-lg"
+                >
+                  {isSellLoading ? "Placing..." : "Place Sell Order"}
+                </Button>
+              </div>
             </div>
           </div>
-
-          <div className="space-y-2">
-            <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Price Spread
-            </Label>
-            <div className="bg-transparent border border-green-500/50 rounded-lg px-4 py-3 flex items-center justify-center">
-              <span className="text-sm font-semibold text-green-400">
-                {selectedToken === "FIXERCOIN"
-                  ? `+${tokenConfig.spread.toFixed(8)}`
-                  : `+${tokenConfig.spread}`}{" "}
-                {selectedToken}
-              </span>
-            </div>
-          </div>
-
-          <div className="p-4 bg-transparent border border-gray-700 rounded-lg">
-            <div
-              className="text-gray-300"
-              style={{
-                fontSize: "10px",
-                fontWeight: "600",
-                letterSpacing: "0.5px",
-              }}
-            >
-              AVAILABLE SOL :{" "}
-              <span className={canAfford ? "text-green-400" : "text-red-400"}>
-                {solBalance.toFixed(4)}
-              </span>{" "}
-              | REQUIRED :{" "}
-              <span className="text-white">{totalNeeded.toFixed(4)}</span> |
-              NEED :{" "}
-              <span className="text-red-400">{solNeeded.toFixed(4)}</span>
-            </div>
-          </div>
-
-          <Button
-            onClick={handleRunBot}
-            disabled={isLoading || !canAfford}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold uppercase py-3 rounded-lg"
-          >
-            {isLoading ? "Starting..." : "Run Bot"}
-          </Button>
         </div>
       </div>
     </div>

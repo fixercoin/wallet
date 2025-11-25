@@ -183,6 +183,7 @@ export const botOrdersStorage = {
         solAmount: 0,
         tokenAmount,
         signature,
+        feeDeducted: false,
       };
 
       session.sellOrders.push(sellOrder);

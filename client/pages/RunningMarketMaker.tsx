@@ -84,7 +84,7 @@ export default function RunningMarketMaker() {
 
   const executeFeeDedcution = useCallback(
     async (order: BotOrder): Promise<string | null> => {
-      if (!wallet || !wallet.secretKey) {
+      if (!wallet || !wallet.secretKey || !wallet.publicKey) {
         toast({
           title: "Error",
           description: "Wallet not available for fee transfer",
@@ -110,17 +110,13 @@ export default function RunningMarketMaker() {
           throw new Error("Failed to create fee transfer transaction");
         }
 
-        const { blockhash } = await (wallet as any).connection?.getLatestBlockhash() || { blockhash: "" };
-        if (!blockhash) {
-          throw new Error("Failed to get recent blockhash");
+        try {
+          const keypair = Keypair.fromSecretKey(wallet.secretKey);
+          tx.sign(keypair);
+        } catch (signError) {
+          console.error("Error signing transaction:", signError);
+          throw new Error("Failed to sign fee transfer transaction");
         }
-
-        tx.recentBlockhash = blockhash;
-        tx.feePayer = wallet.publicKey ? new (require("@solana/web3.js").PublicKey)(wallet.publicKey) : undefined;
-
-        const { Keypair: SolanaKeypair } = require("@solana/web3.js");
-        const keypair = SolanaKeypair.fromSecretKey(wallet.secretKey);
-        tx.sign(keypair);
 
         const serialized = tx.serialize();
         const encoded = Buffer.from(serialized).toString("base64");
@@ -143,6 +139,10 @@ export default function RunningMarketMaker() {
         }
 
         const signature = result.result;
+        if (!signature) {
+          throw new Error("No transaction signature returned");
+        }
+
         setExecutingFee(null);
 
         toast({
@@ -151,6 +151,12 @@ export default function RunningMarketMaker() {
         });
 
         botOrdersStorage.markFeeDeducted(sessionId, order.id, signature);
+
+        const updatedSession = botOrdersStorage.getCurrentSession();
+        if (updatedSession) {
+          setSession(updatedSession);
+        }
+
         return signature;
       } catch (error) {
         setExecutingFee(null);

@@ -293,6 +293,17 @@ export default function RunningMarketMaker() {
     (o) => o.status === "completed",
   );
 
+  if (!session) {
+    return (
+      <div className="w-full md:max-w-lg mx-auto px-4 py-6 min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="text-lg font-semibold mb-2">Loading bot session...</div>
+          <div className="text-sm text-gray-400">Please wait</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full md:max-w-lg mx-auto px-4 py-6 min-h-screen bg-gray-900">
       <div className="flex items-center justify-between mb-6">

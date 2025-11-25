@@ -350,13 +350,13 @@ export default function RunningMarketMaker() {
             <div className="text-2xl font-bold text-green-400">
               {currentPrice
                 ? (session.token === "FIXERCOIN"
-                    ? currentPrice + 0.000002
+                    ? currentPrice + 0.00002
                     : currentPrice + 2
                   ).toFixed(8)
                 : "Loading..."}
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              Spread: {session.token === "FIXERCOIN" ? "+0.00000200" : "+2"}
+              Spread: {session.token === "FIXERCOIN" ? "+0.0000200" : "+2"}
             </div>
           </CardContent>
         </Card>

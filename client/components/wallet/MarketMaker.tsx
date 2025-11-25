@@ -343,7 +343,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div className="font-semibold text-sm text-white uppercase">
-                Fixorium Limit Orders
+                ADVANCE TRADE
               </div>
             </div>
           </div>

@@ -173,6 +173,58 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   // Declare wallet first before using it in useEffect
   const wallet = wallets.find((w) => w.publicKey === activePublicKey) || null;
 
+  // Ensure wallet has a proper secretKey format for operations that require signing
+  const ensureWalletSecretKey = (w: WalletData | null): WalletData | null => {
+    if (!w) return null;
+
+    if (!w.secretKey) {
+      console.warn(
+        `[WalletContext] Wallet ${w.publicKey} does not have a secretKey. It may be a view-only wallet or improperly loaded.`
+      );
+      return w;
+    }
+
+    // Ensure secretKey is Uint8Array
+    if (w.secretKey instanceof Uint8Array) {
+      return w;
+    }
+
+    try {
+      let secretKeyArray: Uint8Array;
+      if (Array.isArray(w.secretKey)) {
+        secretKeyArray = Uint8Array.from(w.secretKey);
+      } else if (typeof w.secretKey === "object") {
+        const vals = Object.values(w.secretKey).filter(
+          (v) => typeof v === "number"
+        ) as number[];
+        if (vals.length > 0) {
+          secretKeyArray = Uint8Array.from(vals);
+        } else {
+          console.warn(
+            `[WalletContext] Could not extract numeric values from secretKey object`
+          );
+          return w;
+        }
+      } else {
+        console.warn(
+          `[WalletContext] Unexpected secretKey type: ${typeof w.secretKey}`
+        );
+        return w;
+      }
+
+      return {
+        ...w,
+        secretKey: secretKeyArray,
+      };
+    } catch (e) {
+      console.error(
+        `[WalletContext] Failed to ensure secretKey format for wallet ${w.publicKey}:`,
+        e
+      );
+      return w;
+    }
+  };
+
   // Sync wallet with Fixorium provider
   useEffect(() => {
     const provider = providerRef.current ?? ensureFixoriumProvider();

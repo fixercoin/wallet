@@ -34,6 +34,12 @@ const TOKEN_CONFIGS: Record<
     name: "LOCKER",
     pairAddress: undefined,
   },
+  FXM: {
+    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+    symbol: "FXM",
+    name: "FXM",
+    pairAddress: undefined,
+  },
 };
 
 const SOL_MINT = "So11111111111111111111111111111111111111112";

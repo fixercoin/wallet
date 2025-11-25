@@ -432,7 +432,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
               <Button
                 onClick={handlePlaceOrder}
-                disabled={isLoading || !canAffordCurrent || isFetchingPrice || !currentOrder.price || !currentOrder.amount}
+                disabled={isLoading || !canAffordCurrent || !currentOrder.price || !currentOrder.amount}
                 className={`w-full font-bold uppercase py-3 rounded-lg transition-colors text-white ${
                   orderMode === "BUY"
                     ? "bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"

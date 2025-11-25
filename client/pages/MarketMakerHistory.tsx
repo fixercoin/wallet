@@ -37,6 +37,13 @@ export default function MarketMakerHistory() {
     }
   };
 
+  const formatTokenPrice = (price: number, token: string): string => {
+    if (token === "FIXERCOIN") {
+      return price.toFixed(8);
+    }
+    return price.toFixed(2);
+  };
+
   const formatPrice = (price: number): string => {
     return price.toFixed(2);
   };

@@ -215,17 +215,19 @@ class TokenPairPricingService {
   }
 
   /**
-   * Get both FIXERCOIN and LOCKER prices
+   * Get FIXERCOIN, LOCKER, and FXM prices
    */
   async getAllDerivedPrices(): Promise<Record<string, PairPricingData | null>> {
-    const [fixercoinData, lockerData] = await Promise.all([
+    const [fixercoinData, lockerData, fxmData] = await Promise.all([
       this.getDerivedPrice("FIXERCOIN"),
       this.getDerivedPrice("LOCKER"),
+      this.getDerivedPrice("FXM"),
     ]);
 
     return {
       FIXERCOIN: fixercoinData,
       LOCKER: lockerData,
+      FXM: fxmData,
     };
   }
 

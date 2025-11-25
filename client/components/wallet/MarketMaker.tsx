@@ -60,7 +60,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     total: "0.02",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [isFetchingPrice, setIsFetchingPrice] = useState(false);
 
   const tokenConfig = TOKEN_CONFIGS[selectedToken];
 

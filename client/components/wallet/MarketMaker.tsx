@@ -150,10 +150,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
     fetchPrices();
 
-    // Set up polling to refresh prices every 30 seconds
+    // Set up polling to refresh prices every 5 seconds for responsive limit order execution
     const priceRefreshInterval = setInterval(() => {
       fetchPrices();
-    }, 30000);
+    }, 5000);
 
     return () => {
       clearInterval(priceRefreshInterval);

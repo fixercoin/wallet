@@ -822,15 +822,10 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                       value={token.mint}
                       className="text-white"
                     >
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm text-white">
-                          {token.symbol || token.name || token.mint.slice(0, 6)}
-                        </span>
-                        <span className="text-[10px] text-gray-300 uppercase">
-                          Balance:{" "}
-                          {formatTokenAmount(token.balance || 0, token.symbol)}
-                        </span>
-                      </div>
+                      <span className="font-medium text-sm text-white">
+                        {token.symbol || token.name || token.mint.slice(0, 6)} :{" "}
+                        {formatTokenAmount(token.balance || 0, token.symbol)}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -655,7 +655,6 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                         </p>
                       </div>
                       <div className="text-right text-[10px] text-gray-300">
-                        <p>Mint address</p>
                         <a
                           className="font-medium text-orange-500 underline-offset-4 hover:underline text-[10px]"
                           href={`https://solscan.io/token/${selectedToken.mint}`}

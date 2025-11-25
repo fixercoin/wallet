@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,8 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
+import { dexscreenerAPI } from "@/lib/services/dexscreener";
 
 interface MarketMakerProps {
   onBack: () => void;

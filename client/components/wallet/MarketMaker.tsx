@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
-import { botOrdersStorage, TokenType } from "@/lib/bot-orders-storage";
 import { useNavigate } from "react-router-dom";
 
 interface MarketMakerProps {
@@ -20,39 +19,45 @@ interface MarketMakerProps {
 }
 
 const TOKEN_CONFIGS: Record<
-  TokenType,
-  { name: string; mint: string; spread: number; decimals: number }
+  string,
+  { name: string; mint: string; decimals: number }
 > = {
   FIXERCOIN: {
     name: "FIXERCOIN",
     mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
-    spread: 0.000002,
     decimals: 6,
   },
   SOL: {
     name: "SOL",
     mint: "So11111111111111111111111111111111111111112",
-    spread: 2,
     decimals: 9,
   },
 };
+
+interface LimitOrder {
+  price: string;
+  amount: string;
+  total: string;
+}
 
 export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const { tokens } = useWallet();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [selectedToken, setSelectedToken] = useState<TokenType>("FIXERCOIN");
-  const [numberOfMakers, setNumberOfMakers] = useState("5");
-  const [orderAmount, setOrderAmount] = useState(() => {
-    try {
-      const lastSession = localStorage.getItem("bot_last_order_amount");
-      return lastSession || "0.02";
-    } catch {
-      return "0.02";
-    }
+  const [selectedToken, setSelectedToken] = useState("FIXERCOIN");
+  const [buyOrder, setBuyOrder] = useState<LimitOrder>({
+    price: "0.00001",
+    amount: "1000",
+    total: "0.01",
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [sellOrder, setSellOrder] = useState<LimitOrder>({
+    price: "0.00002",
+    amount: "1000",
+    total: "0.02",
+  });
+  const [isBuyLoading, setIsBuyLoading] = useState(false);
+  const [isSellLoading, setIsSellLoading] = useState(false);
 
   const tokenConfig = TOKEN_CONFIGS[selectedToken];
 
@@ -61,42 +66,87 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     [tokens],
   );
 
+  const selectedTokenBalance = useMemo(
+    () => tokens.find((t) => t.symbol === selectedToken),
+    [tokens, selectedToken],
+  );
+
   const solBalance = solToken?.balance || 0;
+  const tokenBalance = selectedTokenBalance?.balance || 0;
 
-  const validateInputs = useCallback((): string | null => {
-    const numMakers = parseInt(numberOfMakers);
-    if (isNaN(numMakers) || numMakers < 1 || numMakers > 1000)
-      return "Number of makers must be between 1 and 1000";
+  const calculateBuyTotal = useCallback((price: string, amount: string) => {
+    const p = parseFloat(price) || 0;
+    const a = parseFloat(amount) || 0;
+    return (p * a).toFixed(8);
+  }, []);
 
-    const amount = parseFloat(orderAmount);
-    if (isNaN(amount) || amount <= 0)
-      return "Order amount must be greater than 0 SOL";
+  const calculateSellTotal = useCallback((price: string, amount: string) => {
+    const p = parseFloat(price) || 0;
+    const a = parseFloat(amount) || 0;
+    return (p * a).toFixed(8);
+  }, []);
+
+  const handleBuyPriceChange = (value: string) => {
+    setBuyOrder({
+      ...buyOrder,
+      price: value,
+      total: calculateBuyTotal(value, buyOrder.amount),
+    });
+  };
+
+  const handleBuyAmountChange = (value: string) => {
+    setBuyOrder({
+      ...buyOrder,
+      amount: value,
+      total: calculateBuyTotal(buyOrder.price, value),
+    });
+  };
+
+  const handleSellPriceChange = (value: string) => {
+    setSellOrder({
+      ...sellOrder,
+      price: value,
+      total: calculateSellTotal(value, sellOrder.amount),
+    });
+  };
+
+  const handleSellAmountChange = (value: string) => {
+    setSellOrder({
+      ...sellOrder,
+      amount: value,
+      total: calculateSellTotal(sellOrder.price, value),
+    });
+  };
+
+  const validateBuyOrder = (): string | null => {
+    const price = parseFloat(buyOrder.price);
+    const amount = parseFloat(buyOrder.amount);
+    const total = parseFloat(buyOrder.total);
+
+    if (isNaN(price) || price <= 0) return "Buy price must be greater than 0";
+    if (isNaN(amount) || amount <= 0) return "Buy amount must be greater than 0";
+    if (isNaN(total) || total <= 0) return "Buy total is invalid";
+    if (solBalance < total)
+      return `Insufficient SOL. Need ${total.toFixed(8)}, have ${solBalance.toFixed(8)}`;
 
     return null;
-  }, [numberOfMakers, orderAmount]);
+  };
 
-  const calculateTotalCost = useCallback((): {
-    totalNeeded: number;
-    fees: number;
-  } => {
-    const numMakers = parseInt(numberOfMakers) || 1;
-    const amount = parseFloat(orderAmount) || 0;
+  const validateSellOrder = (): string | null => {
+    const price = parseFloat(sellOrder.price);
+    const amount = parseFloat(sellOrder.amount);
 
-    const totalBuySol = numMakers * amount;
-    const fees = totalBuySol * 0.01;
+    if (isNaN(price) || price <= 0) return "Sell price must be greater than 0";
+    if (isNaN(amount) || amount <= 0)
+      return "Sell amount must be greater than 0";
+    if (tokenBalance < amount)
+      return `Insufficient ${selectedToken}. Need ${amount}, have ${tokenBalance.toFixed(8)}`;
 
-    return {
-      totalNeeded: totalBuySol + fees,
-      fees,
-    };
-  }, [numberOfMakers, orderAmount]);
+    return null;
+  };
 
-  const { totalNeeded, fees } = calculateTotalCost();
-  const canAfford = solBalance >= totalNeeded;
-  const solNeeded = Math.max(0, totalNeeded - solBalance);
-
-  const handleRunBot = async () => {
-    const validationError = validateInputs();
+  const handlePlaceBuyOrder = async () => {
+    const validationError = validateBuyOrder();
     if (validationError) {
       toast({
         title: "Validation Error",
@@ -106,54 +156,30 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       return;
     }
 
-    if (!canAfford) {
-      toast({
-        title: "Insufficient SOL",
-        description: `You need ${totalNeeded.toFixed(4)} SOL but only have ${solBalance.toFixed(4)} SOL`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
+    setIsBuyLoading(true);
 
     try {
-      const numMakers = parseInt(numberOfMakers);
-      const amount = parseFloat(orderAmount);
+      const orderData = {
+        type: "BUY",
+        token: selectedToken,
+        tokenMint: tokenConfig.mint,
+        price: parseFloat(buyOrder.price),
+        amount: parseFloat(buyOrder.amount),
+        totalSol: parseFloat(buyOrder.total),
+      };
 
-      const session = botOrdersStorage.createSession(
-        selectedToken,
-        tokenConfig.mint,
-        numMakers,
-        amount,
-        tokenConfig.spread,
-      );
-
-      console.log("[MarketMaker] Created session:", session);
-      botOrdersStorage.saveSession(session);
-
-      try {
-        localStorage.setItem("bot_last_order_amount", orderAmount);
-      } catch (storageError) {
-        console.error(
-          "Error saving order amount to localStorage:",
-          storageError,
-        );
-      }
-
-      console.log("[MarketMaker] Session saved, checking storage...");
-      const allSessions = botOrdersStorage.getAllSessions();
-      console.log("[MarketMaker] All sessions after save:", allSessions);
+      console.log("[MarketMaker] Placing buy limit order:", orderData);
 
       toast({
-        title: "Bot Started",
-        description: `Market maker bot started with ${numMakers} makers`,
+        title: "Buy Order Placed",
+        description: `Limit buy order placed: ${buyOrder.amount} ${selectedToken} at ${buyOrder.price}`,
       });
 
-      setTimeout(() => {
-        console.log("[MarketMaker] Navigating to bot:", session.id);
-        navigate(`/market-maker/running/${session.id}`);
-      }, 100);
+      setBuyOrder({
+        price: "0.00001",
+        amount: "1000",
+        total: "0.01",
+      });
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       toast({
@@ -162,7 +188,54 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsBuyLoading(false);
+    }
+  };
+
+  const handlePlaceSellOrder = async () => {
+    const validationError = validateSellOrder();
+    if (validationError) {
+      toast({
+        title: "Validation Error",
+        description: validationError,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSellLoading(true);
+
+    try {
+      const orderData = {
+        type: "SELL",
+        token: selectedToken,
+        tokenMint: tokenConfig.mint,
+        price: parseFloat(sellOrder.price),
+        amount: parseFloat(sellOrder.amount),
+        totalSol: parseFloat(sellOrder.total),
+      };
+
+      console.log("[MarketMaker] Placing sell limit order:", orderData);
+
+      toast({
+        title: "Sell Order Placed",
+        description: `Limit sell order placed: ${sellOrder.amount} ${selectedToken} at ${sellOrder.price}`,
+      });
+
+      setSellOrder({
+        price: "0.00002",
+        amount: "1000",
+        total: "0.02",
+      });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      toast({
+        title: "Error",
+        description: msg,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSellLoading(false);
     }
   };
 

@@ -952,10 +952,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
                     <div
-                      className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-3"
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-3 min-w-0"
                       onClick={() => handleTokenCardClick(token)}
                     >
-                      <div className="flex items-center gap-3 flex-1">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Avatar className="h-8 w-8 flex-shrink-0">
                           <AvatarImage src={token.logoURI} alt={token.symbol} />
                           <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-xs">
@@ -966,7 +966,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <p className="text-xs font-semibold text-white whitespace-nowrap truncate">
                             {token.symbol}
                           </p>
-                          <p className="text-xs text-gray-300 whitespace-nowrap">
+                          <p className="text-xs text-gray-300 whitespace-nowrap flex-shrink-0">
                             $
                             {typeof token.price === "number" &&
                             isFinite(token.price)

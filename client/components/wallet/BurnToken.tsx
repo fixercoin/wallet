@@ -626,19 +626,14 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                   <SelectContent className="bg-gray-700 border border-black text-white">
                     {splTokens.map((token) => (
                       <SelectItem key={token.mint} value={token.mint}>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium">
-                            {token.symbol || token.mint.slice(0, 6)}
-                          </span>
-                          <span className="text-[10px] text-gray-600 uppercase">
-                            Balance:{" "}
-                            {formatNumber(
-                              token.balance,
-                              token.decimals ?? 0,
-                              token.symbol,
-                            )}
-                          </span>
-                        </div>
+                        <span className="text-sm font-medium">
+                          {token.symbol || token.mint.slice(0, 6)} :{" "}
+                          {formatNumber(
+                            token.balance,
+                            token.decimals ?? 0,
+                            token.symbol,
+                          )}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>

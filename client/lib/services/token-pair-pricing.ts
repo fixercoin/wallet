@@ -50,7 +50,7 @@ class TokenPairPricingService {
     string,
     { data: PairPricingData; expiresAt: number }
   >();
-  private readonly CACHE_DURATION = 60000; // 1 minute
+  private readonly CACHE_DURATION = 1500; // 1.5 seconds - match DexTools real-time updates
 
   /**
    * Get SOL price in USD from reliable dedicated service

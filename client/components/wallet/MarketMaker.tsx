@@ -405,17 +405,17 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-gray-600 text-xs font-semibold">
-                        Target Limit ({selectedToken})
+                        TARGET LIMIT ({selectedToken})
                       </Label>
                       <div className="flex items-center gap-1 text-xs text-gray-400">
                         {isFetchingPrice ? (
                           <>
                             <Loader className="w-3 h-3 animate-spin" />
-                            Fetching...
+                            FETCHING...
                           </>
                         ) : livePrice ? (
                           <>
-                            Live:{" "}
+                            LIVE:{" "}
                             <span className="text-blue-400 font-semibold">
                               {livePrice.toFixed(8)}
                             </span>
@@ -480,17 +480,17 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-gray-600 text-xs font-semibold">
-                        Target Limit ({selectedToken})
+                        TARGET LIMIT ({selectedToken})
                       </Label>
                       <div className="flex items-center gap-1 text-xs text-gray-400">
                         {isFetchingPrice ? (
                           <>
                             <Loader className="w-3 h-3 animate-spin" />
-                            Fetching...
+                            FETCHING...
                           </>
                         ) : livePrice ? (
                           <>
-                            Live:{" "}
+                            LIVE:{" "}
                             <span className="text-red-400 font-semibold">
                               {livePrice.toFixed(8)}
                             </span>
@@ -504,13 +504,13 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       value={sellOrder.price}
                       onChange={(e) => handleSellPriceChange(e.target.value)}
                       className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-red-400`}
-                      placeholder="Enter target price"
+                      placeholder="ENTER TARGET PRICE"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label className="text-gray-600 text-xs font-semibold">
-                      {selectedToken} Amount
+                      {selectedToken} AMOUNT
                     </Label>
                     <Input
                       type="number"
@@ -518,18 +518,15 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       value={sellOrder.amount}
                       onChange={(e) => handleSellAmountChange(e.target.value)}
                       className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-red-400`}
-                      placeholder="Enter amount to sell"
+                      placeholder="ENTER AMOUNT TO SELL"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-gray-600 text-xs font-semibold">
-                        Estimated SOL
+                        ESTIMATED SOL
                       </Label>
-                      <span className="text-xs text-gray-500">
-                        (at live price)
-                      </span>
                     </div>
                     <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
                       {sellOrder.total || "0"}
@@ -538,7 +535,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
                   <div className="space-y-2">
                     <Label className="text-gray-600 text-xs font-semibold">
-                      Available {selectedToken}
+                      AVAILABLE {selectedToken}
                     </Label>
                     <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
                       <span
@@ -568,8 +565,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 }`}
               >
                 {isLoading
-                  ? "Placing..."
-                  : `Place ${orderMode === "BUY" ? "Buy" : "Sell"} Order`}
+                  ? "PLACING..."
+                  : `PLACE ${orderMode === "BUY" ? "BUY" : "SELL"} ORDER`}
               </Button>
             </div>
           </div>

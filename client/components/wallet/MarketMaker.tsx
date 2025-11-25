@@ -160,6 +160,124 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     };
   }, [selectedToken]);
 
+  // Auto-execution effect: check and execute pending orders when price matches
+  useEffect(() => {
+    if (!session || !livePrice || !wallet) return;
+
+    const checkAndExecute = async () => {
+      try {
+        const currentSession = botOrdersStorage.getCurrentSession();
+        if (!currentSession) return;
+
+        const pendingBuyOrders = currentSession.buyOrders.filter(
+          (o) => o.status === "pending",
+        );
+        const pendingSellOrders = currentSession.sellOrders.filter(
+          (o) => o.status === "pending",
+        );
+
+        if (pendingBuyOrders.length === 0 && pendingSellOrders.length === 0) {
+          return;
+        }
+
+        console.log(
+          `[MarketMaker] Checking ${pendingBuyOrders.length + pendingSellOrders.length} pending orders at price ${livePrice}`,
+        );
+
+        // Check buy orders
+        for (const order of pendingBuyOrders) {
+          if (livePrice <= order.buyPrice && !executingOrders.has(order.id)) {
+            console.log(
+              `[MarketMaker] Price match for BUY order: ${livePrice} <= ${order.buyPrice}`,
+            );
+            setExecutingOrders((prev) => new Set([...prev, order.id]));
+
+            const result = await executeLimitOrder(
+              currentSession,
+              order,
+              livePrice,
+              wallet,
+            );
+
+            setExecutingOrders((prev) => {
+              const next = new Set(prev);
+              next.delete(order.id);
+              return next;
+            });
+
+            if (result.success) {
+              toast({
+                title: "Buy Order Executed",
+                description: `Successfully bought ${result.order?.tokenAmount?.toFixed(6) || "tokens"}`,
+              });
+              // Reload session
+              const updatedSession = botOrdersStorage.getCurrentSession();
+              if (updatedSession) {
+                setSession(updatedSession);
+              }
+            } else {
+              console.error("[MarketMaker] Buy order execution failed:", result);
+              // Don't show error toast for every check - only log
+            }
+          }
+        }
+
+        // Check sell orders
+        for (const order of pendingSellOrders) {
+          if (
+            livePrice >= order.targetSellPrice &&
+            !executingOrders.has(order.id)
+          ) {
+            console.log(
+              `[MarketMaker] Price match for SELL order: ${livePrice} >= ${order.targetSellPrice}`,
+            );
+            setExecutingOrders((prev) => new Set([...prev, order.id]));
+
+            const result = await executeLimitOrder(
+              currentSession,
+              order,
+              livePrice,
+              wallet,
+            );
+
+            setExecutingOrders((prev) => {
+              const next = new Set(prev);
+              next.delete(order.id);
+              return next;
+            });
+
+            if (result.success) {
+              toast({
+                title: "Sell Order Executed",
+                description: `Successfully sold ${result.order?.tokenAmount?.toFixed(6) || "tokens"} for ${result.order?.solAmount?.toFixed(6) || "SOL"}`,
+              });
+              // Reload session
+              const updatedSession = botOrdersStorage.getCurrentSession();
+              if (updatedSession) {
+                setSession(updatedSession);
+              }
+            } else {
+              console.error("[MarketMaker] Sell order execution failed:", result);
+              // Don't show error toast for every check - only log
+            }
+          }
+        }
+      } catch (error) {
+        console.error("[MarketMaker] Error in auto-execution check:", error);
+      }
+    };
+
+    // Check for order execution every 10 seconds
+    const executionInterval = setInterval(checkAndExecute, 10000);
+
+    // Also check immediately on price change
+    checkAndExecute();
+
+    return () => {
+      clearInterval(executionInterval);
+    };
+  }, [session, livePrice, wallet, toast, executingOrders]);
+
   const solToken = useMemo(
     () => tokens.find((t) => t.symbol === "SOL"),
     [tokens],

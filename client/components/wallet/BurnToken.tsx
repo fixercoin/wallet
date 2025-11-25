@@ -600,7 +600,6 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             </div>
           </div>
 
-
           <div className="px-4 pb-6 space-y-5">
             <div className="space-y-4">
               <div>
@@ -643,8 +642,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                   <CardContent className="pt-4 pb-4 px-0">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-[10px] font-semibold text-white">
-                        {selectedToken.symbol ||
-                          selectedToken.mint.slice(0, 6)}{" "}
+                        {selectedToken.symbol || selectedToken.mint.slice(0, 6)}{" "}
                         ·{" "}
                         {formatNumber(
                           selectedToken.balance,

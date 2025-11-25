@@ -364,9 +364,23 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               {orderMode === "BUY" ? (
                 <>
                   <div className="space-y-2">
-                    <Label className="text-gray-600 text-xs font-semibold">
-                      Target Limit ({selectedToken})
-                    </Label>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-600 text-xs font-semibold">
+                        Target Limit ({selectedToken})
+                      </Label>
+                      <div className="flex items-center gap-1 text-xs text-gray-400">
+                        {isFetchingPrice ? (
+                          <>
+                            <Loader className="w-3 h-3 animate-spin" />
+                            Fetching...
+                          </>
+                        ) : livePrice ? (
+                          <>
+                            Live: <span className="text-blue-400 font-semibold">{livePrice.toFixed(8)}</span>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
                     <Input
                       type="number"
                       step="0.00000001"

@@ -123,17 +123,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     });
   };
 
-  const handleSellTotalChange = async (value: string) => {
-    setSellOrder({
-      ...sellOrder,
-      total: value,
-    });
-
-    if (value && parseFloat(value) > 0) {
-      await fetchLivePrice();
-    }
-  };
-
   const handleSellAmountChange = (value: string) => {
     const total = calculateTotalFromAmountPrice(sellOrder.price, value);
     setSellOrder({

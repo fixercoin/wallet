@@ -681,8 +681,25 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
               lockerData,
             );
           }
+
+          if (
+            fxmData &&
+            fxmData.price > 0 &&
+            isFinite(fxmData.price)
+          ) {
+            prices[fxmMint] = fxmData.price;
+            changeMap[fxmMint] = fxmData.priceChange24h;
+            console.log(
+              `[WalletContext] ✅ FXM price: $${fxmData.price.toFixed(8)} (24h: ${fxmData.priceChange24h.toFixed(2)}%) via ${fxmData.derivationMethod}`,
+            );
+          } else {
+            console.warn(
+              `[WalletContext] ⚠️ FXM price fetch resulted in invalid price:`,
+              fxmData,
+            );
+          }
         } catch (e) {
-          console.warn("❌ Failed to fetch FIXERCOIN/LOCKER prices:", e);
+          console.warn("❌ Failed to fetch FIXERCOIN/LOCKER/FXM prices:", e);
         }
 
         // Ensure SOL price is always present - if birdeye didn't return it, fetch from dedicated endpoint

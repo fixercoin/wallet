@@ -154,20 +154,20 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   };
 
   const handleSellPriceChange = (value: string) => {
-    const amount = calculateAmountFromTotal(sellOrder.total, value);
     setSellOrder({
       ...sellOrder,
       price: value,
-      amount: amount,
     });
   };
 
   const handleSellAmountChange = (value: string) => {
-    const total = calculateTotalFromAmountPrice(sellOrder.price, value);
+    const estimatedTotal = livePrice
+      ? (parseFloat(value) * livePrice).toFixed(8)
+      : "0";
     setSellOrder({
       ...sellOrder,
       amount: value,
-      total: total,
+      total: estimatedTotal,
     });
   };
 

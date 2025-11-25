@@ -592,7 +592,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             </Select>
           </div>
 
-          <div className="bg-transparent border border-gray-700 rounded-lg p-4 w-full">
+          <div className="bg-transparent border border-gray-700 rounded-lg p-3 md:p-4 w-full">
             <div className="flex gap-2 mb-6 w-full">
               <Button
                 onClick={() => setOrderMode("BUY")}

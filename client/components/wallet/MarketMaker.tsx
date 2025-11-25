@@ -556,8 +556,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           </p>
         </div>
       )}
-      <div className="rounded-none border-0 bg-transparent">
-        <div className="space-y-6 p-6 relative">
+      <div className="rounded-none border-0 bg-transparent w-full">
+        <div className="space-y-6 p-4 md:p-6 relative w-full">
           <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2 justify-between">
             <div className="flex items-center gap-3">
               <Button

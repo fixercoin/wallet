@@ -584,6 +584,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               </Button>
             </div>
           </div>
+
+          <div className="mt-8">
+            <MarketMakerHistoryCard selectedToken={selectedToken} />
+          </div>
         </div>
       </div>
     </div>

@@ -54,7 +54,7 @@ interface LimitOrder {
 }
 
 export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
-  const { tokens } = useWallet();
+  const { tokens, wallet } = useWallet();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -74,6 +74,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const [livePrice, setLivePrice] = useState<number | null>(null);
   const [solPrice, setSolPrice] = useState<number | null>(null);
   const [isFetchingPrice, setIsFetchingPrice] = useState(false);
+  const [session, setSession] = useState<BotSession | null>(null);
+  const [executingOrders, setExecutingOrders] = useState<Set<string>>(
+    new Set(),
+  );
 
   const tokenConfig = TOKEN_CONFIGS[selectedToken];
 

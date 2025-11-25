@@ -26,7 +26,7 @@ const TOKEN_CONFIGS: Record<
   FIXERCOIN: {
     name: "FIXERCOIN",
     mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
-    spread: 0.000002,
+    spread: 0.00002,
     decimals: 6,
   },
   SOL: {
@@ -44,7 +44,14 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   const [selectedToken, setSelectedToken] = useState<TokenType>("FIXERCOIN");
   const [numberOfMakers, setNumberOfMakers] = useState("5");
-  const [orderAmount, setOrderAmount] = useState("0.02");
+  const [orderAmount, setOrderAmount] = useState(() => {
+    try {
+      const lastSession = localStorage.getItem("bot_last_order_amount");
+      return lastSession || "0.02";
+    } catch {
+      return "0.02";
+    }
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   const tokenConfig = TOKEN_CONFIGS[selectedToken];
@@ -123,6 +130,12 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       );
 
       botOrdersStorage.saveSession(session);
+
+      try {
+        localStorage.setItem("bot_last_order_amount", orderAmount);
+      } catch (storageError) {
+        console.error("Error saving order amount to localStorage:", storageError);
+      }
 
       toast({
         title: "Bot Started",
@@ -219,7 +232,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             </Label>
             <div className="bg-transparent border border-green-500/50 rounded-lg px-4 py-3 flex items-center justify-center">
               <span className="text-sm font-semibold text-green-400">
-                {selectedToken === "FIXERCOIN" ? "+0.00000200" : "+2"}{" "}
+                {selectedToken === "FIXERCOIN" ? "+0.0000200" : "+2"}{" "}
                 {selectedToken}
               </span>
             </div>

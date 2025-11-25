@@ -44,8 +44,11 @@ export default function RunningMarketMaker() {
   };
 
   useEffect(() => {
-    console.log("[RunningMarketMaker] Component mounted. SessionID:", sessionId);
-    
+    console.log(
+      "[RunningMarketMaker] Component mounted. SessionID:",
+      sessionId,
+    );
+
     if (!sessionId) {
       console.error("[RunningMarketMaker] No sessionId in URL");
       toast({
@@ -62,14 +65,17 @@ export default function RunningMarketMaker() {
     console.log("[RunningMarketMaker] Looking for sessionId:", sessionId);
 
     const found = allSessions.find((s) => s.id === sessionId);
-    
+
     if (found) {
       console.log("[RunningMarketMaker] Session found:", found);
       setSession(found);
       setLoading(false);
     } else {
       console.log("[RunningMarketMaker] Session NOT found!");
-      console.log("[RunningMarketMaker] Available IDs:", allSessions.map(s => s.id));
+      console.log(
+        "[RunningMarketMaker] Available IDs:",
+        allSessions.map((s) => s.id),
+      );
       setLoading(false);
       toast({
         title: "Session Not Found",
@@ -136,13 +142,20 @@ export default function RunningMarketMaker() {
     navigate("/");
   };
 
-  console.log("[RunningMarketMaker] Rendering. Session:", !!session, "Loading:", loading);
+  console.log(
+    "[RunningMarketMaker] Rendering. Session:",
+    !!session,
+    "Loading:",
+    loading,
+  );
 
   if (loading) {
     return (
       <div className="w-full md:max-w-lg mx-auto px-4 py-6 min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center text-white">
-          <div className="text-lg font-semibold mb-2">Loading bot session...</div>
+          <div className="text-lg font-semibold mb-2">
+            Loading bot session...
+          </div>
           <div className="text-sm text-gray-400">Session ID: {sessionId}</div>
           <div className="text-sm text-gray-400">Please wait</div>
         </div>
@@ -155,9 +168,15 @@ export default function RunningMarketMaker() {
       <div className="w-full md:max-w-lg mx-auto px-4 py-6 min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center text-white">
           <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-          <div className="text-lg font-semibold mb-2 text-red-400">Session Not Found</div>
-          <div className="text-sm text-gray-400">The bot session could not be loaded</div>
-          <div className="text-sm text-gray-400 mt-4">Redirecting to home...</div>
+          <div className="text-lg font-semibold mb-2 text-red-400">
+            Session Not Found
+          </div>
+          <div className="text-sm text-gray-400">
+            The bot session could not be loaded
+          </div>
+          <div className="text-sm text-gray-400 mt-4">
+            Redirecting to home...
+          </div>
         </div>
       </div>
     );
@@ -216,17 +235,25 @@ export default function RunningMarketMaker() {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-400">Number of Makers</span>
-              <span className="font-semibold text-white">{session.numberOfMakers}</span>
+              <span className="font-semibold text-white">
+                {session.numberOfMakers}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-400">Order Amount</span>
-              <span className="font-semibold text-white">{session.orderAmount.toFixed(4)} SOL</span>
+              <span className="font-semibold text-white">
+                {session.orderAmount.toFixed(4)} SOL
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-400">Status</span>
-              <span className={`font-semibold uppercase text-sm ${
-                session.status === "running" ? "text-green-400" : "text-yellow-400"
-              }`}>
+              <span
+                className={`font-semibold uppercase text-sm ${
+                  session.status === "running"
+                    ? "text-green-400"
+                    : "text-yellow-400"
+                }`}
+              >
                 {session.status}
               </span>
             </div>
@@ -255,11 +282,15 @@ export default function RunningMarketMaker() {
           <div className="space-y-2">
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-400">Buy Orders</span>
-              <span className="font-semibold text-white">{session.buyOrders.length}</span>
+              <span className="font-semibold text-white">
+                {session.buyOrders.length}
+              </span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-400">Sell Orders</span>
-              <span className="font-semibold text-white">{session.sellOrders.length}</span>
+              <span className="font-semibold text-white">
+                {session.sellOrders.length}
+              </span>
             </div>
           </div>
         </CardContent>

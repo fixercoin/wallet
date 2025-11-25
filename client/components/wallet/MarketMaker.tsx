@@ -135,7 +135,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       try {
         localStorage.setItem("bot_last_order_amount", orderAmount);
       } catch (storageError) {
-        console.error("Error saving order amount to localStorage:", storageError);
+        console.error(
+          "Error saving order amount to localStorage:",
+          storageError,
+        );
       }
 
       console.log("[MarketMaker] Session saved, checking storage...");

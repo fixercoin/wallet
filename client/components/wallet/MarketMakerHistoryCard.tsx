@@ -82,8 +82,8 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
     return price.toFixed(2);
   };
 
-  const formatAmount = (amount: number): string => {
-    return amount.toFixed(8);
+  const formatAmount = (amount: number, decimals: number = 2): string => {
+    return amount.toFixed(decimals);
   };
 
   const getStatusBadge = (status: string) => {

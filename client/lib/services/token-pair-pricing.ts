@@ -101,7 +101,7 @@ class TokenPairPricingService {
   }
 
   /**
-   * Get the SOL pair price (how many tokens per 1 SOL)
+   * Get the SOL pair price (how many SOL needed to buy 1 token)
    */
   private async getSolPairPrice(tokenMint: string): Promise<number | null> {
     try {
@@ -113,34 +113,19 @@ class TokenPairPricingService {
         return null;
       }
 
-      // Look for a pair that quotes in SOL
-      // Get the price in USD, then calculate against SOL
-      if (tokenData.priceUsd) {
-        // priceUsd is the direct price
-        // But we want to find the SOL pair specifically
-        // DexScreener returns priceUsd which is already in USD
-        // To get SOL/TOKEN ratio, we can derive it from liquidity or look at pairs
-        const priceUsd = parseFloat(tokenData.priceUsd);
+      // Use priceNative which is the price in SOL (the native pair token on Solana)
+      // priceNative = how many SOL you need to buy 1 token
+      if (tokenData.priceNative) {
+        const priceInSol = parseFloat(tokenData.priceNative);
 
-        // Get SOL price
-        const solPrice = await this.getSolPrice();
-
-        // Calculate how many tokens per 1 SOL
-        // If token is $0.001 and SOL is $176, then 1 SOL = 176,000 tokens
-        if (
-          priceUsd > 0 &&
-          isFinite(priceUsd) &&
-          solPrice > 0 &&
-          isFinite(solPrice)
-        ) {
-          const tokensPerSol = solPrice / priceUsd;
+        if (priceInSol > 0 && isFinite(priceInSol)) {
           console.log(
-            `${tokenMint}: 1 SOL = ${tokensPerSol.toFixed(2)} tokens`,
+            `${tokenMint}: priceNative=${priceInSol.toFixed(8)} SOL (1 token = ${priceInSol.toFixed(8)} SOL)`,
           );
-          return tokensPerSol;
+          return priceInSol; // Return the SOL price directly
         } else {
           console.warn(
-            `Invalid price data for ${tokenMint}: priceUsd=${priceUsd}, solPrice=${solPrice}`,
+            `Invalid priceNative for ${tokenMint}: ${priceInSol}`,
           );
         }
       }

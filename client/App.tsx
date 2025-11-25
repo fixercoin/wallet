@@ -140,6 +140,7 @@ import SelectLanguagePage from "./pages/SelectLanguagePage";
 import SelectCurrencyPage from "./pages/SelectCurrencyPage";
 import BurnTokenPage from "./pages/BurnTokenPage";
 import RunningMarketMaker from "./pages/RunningMarketMaker";
+import MarketMakerHistory from "./pages/MarketMakerHistory";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 
@@ -179,6 +180,7 @@ function AppRoutes() {
         path="/market-maker/running/:sessionId"
         element={<RunningMarketMaker />}
       />
+      <Route path="/market-maker/history" element={<MarketMakerHistory />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

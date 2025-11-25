@@ -276,7 +276,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     return () => {
       clearInterval(executionInterval);
     };
-  }, [session, livePrice, wallet, toast, executingOrders]);
+  }, [session, livePrice, wallet, toast]);
 
   const solToken = useMemo(
     () => tokens.find((t) => t.symbol === "SOL"),

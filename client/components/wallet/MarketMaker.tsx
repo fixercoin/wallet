@@ -239,6 +239,12 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     }
   };
 
+  const currentOrder = orderMode === "BUY" ? buyOrder : sellOrder;
+  const canAffordCurrent =
+    orderMode === "BUY"
+      ? parseFloat(currentOrder.total) <= solBalance
+      : parseFloat(currentOrder.amount) <= tokenBalance;
+
   return (
     <div className="w-full md:max-w-lg mx-auto px-4 relative z-0 pt-8">
       <div className="rounded-none border-0 bg-transparent">
@@ -277,141 +283,125 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             </Select>
           </div>
 
-          <div className="space-y-4">
-            <div className="bg-transparent border border-blue-500/50 rounded-lg p-4">
-              <h3 className="text-blue-400 font-semibold text-sm uppercase mb-4">
-                Buy Limit Order
-              </h3>
-
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label className="text-gray-600 text-xs font-semibold">
-                    Price ({selectedToken} per SOL)
-                  </Label>
-                  <Input
-                    type="number"
-                    step="0.00000001"
-                    value={buyOrder.price}
-                    onChange={(e) => handleBuyPriceChange(e.target.value)}
-                    className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-blue-400 transition-colors placeholder:text-gray-400 caret-gray-900"
-                    placeholder="Enter price"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-gray-600 text-xs font-semibold">
-                    Amount ({selectedToken})
-                  </Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={buyOrder.amount}
-                    onChange={(e) => handleBuyAmountChange(e.target.value)}
-                    className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-blue-400 transition-colors placeholder:text-gray-400 caret-gray-900"
-                    placeholder="Enter amount"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-gray-600 text-xs font-semibold">
-                    Total (SOL)
-                  </Label>
-                  <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
-                    {buyOrder.total}
-                  </div>
-                </div>
-
-                <div className="p-3 bg-transparent border border-gray-700 rounded-lg">
-                  <div className="text-gray-300 text-xs font-semibold">
-                    Available SOL:{" "}
-                    <span
-                      className={
-                        parseFloat(buyOrder.total) <= solBalance
-                          ? "text-green-400"
-                          : "text-red-400"
-                      }
-                    >
-                      {solBalance.toFixed(8)}
-                    </span>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handlePlaceBuyOrder}
-                  disabled={isBuyLoading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase py-3 rounded-lg"
-                >
-                  {isBuyLoading ? "Placing..." : "Place Buy Order"}
-                </Button>
-              </div>
+          <div className="bg-transparent border border-gray-700 rounded-lg p-4">
+            <div className="flex gap-2 mb-6">
+              <Button
+                onClick={() => setOrderMode("BUY")}
+                className={`flex-1 font-bold uppercase py-2 rounded-lg transition-colors ${
+                  orderMode === "BUY"
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-transparent border border-gray-700 text-gray-400 hover:text-white"
+                }`}
+              >
+                Buy
+              </Button>
+              <Button
+                onClick={() => setOrderMode("SELL")}
+                className={`flex-1 font-bold uppercase py-2 rounded-lg transition-colors ${
+                  orderMode === "SELL"
+                    ? "bg-red-600 hover:bg-red-700 text-white"
+                    : "bg-transparent border border-gray-700 text-gray-400 hover:text-white"
+                }`}
+              >
+                Sell
+              </Button>
             </div>
 
-            <div className="bg-transparent border border-red-500/50 rounded-lg p-4">
-              <h3 className="text-red-400 font-semibold text-sm uppercase mb-4">
-                Sell Limit Order
-              </h3>
-
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label className="text-gray-600 text-xs font-semibold">
-                    Price ({selectedToken} per SOL)
-                  </Label>
-                  <Input
-                    type="number"
-                    step="0.00000001"
-                    value={sellOrder.price}
-                    onChange={(e) => handleSellPriceChange(e.target.value)}
-                    className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-red-400 transition-colors placeholder:text-gray-400 caret-gray-900"
-                    placeholder="Enter price"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-gray-600 text-xs font-semibold">
-                    Amount ({selectedToken})
-                  </Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={sellOrder.amount}
-                    onChange={(e) => handleSellAmountChange(e.target.value)}
-                    className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-red-400 transition-colors placeholder:text-gray-400 caret-gray-900"
-                    placeholder="Enter amount"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-gray-600 text-xs font-semibold">
-                    Total (SOL)
-                  </Label>
-                  <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
-                    {sellOrder.total}
-                  </div>
-                </div>
-
-                <div className="p-3 bg-transparent border border-gray-700 rounded-lg">
-                  <div className="text-gray-300 text-xs font-semibold">
-                    Available {selectedToken}:{" "}
-                    <span
-                      className={
-                        parseFloat(sellOrder.amount) <= tokenBalance
-                          ? "text-green-400"
-                          : "text-red-400"
-                      }
-                    >
-                      {tokenBalance.toFixed(8)}
-                    </span>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handlePlaceSellOrder}
-                  disabled={isSellLoading}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white font-bold uppercase py-3 rounded-lg"
-                >
-                  {isSellLoading ? "Placing..." : "Place Sell Order"}
-                </Button>
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label className="text-gray-600 text-xs font-semibold">
+                  Price ({selectedToken} per SOL)
+                </Label>
+                <Input
+                  type="number"
+                  step="0.00000001"
+                  value={currentOrder.price}
+                  onChange={(e) =>
+                    orderMode === "BUY"
+                      ? handleBuyPriceChange(e.target.value)
+                      : handleSellPriceChange(e.target.value)
+                  }
+                  className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 ${
+                    orderMode === "BUY"
+                      ? "focus:border-blue-400"
+                      : "focus:border-red-400"
+                  }`}
+                  placeholder="Enter price"
+                />
               </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-600 text-xs font-semibold">
+                  Amount ({selectedToken})
+                </Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={currentOrder.amount}
+                  onChange={(e) =>
+                    orderMode === "BUY"
+                      ? handleBuyAmountChange(e.target.value)
+                      : handleSellAmountChange(e.target.value)
+                  }
+                  className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 ${
+                    orderMode === "BUY"
+                      ? "focus:border-blue-400"
+                      : "focus:border-red-400"
+                  }`}
+                  placeholder="Enter amount"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-600 text-xs font-semibold">
+                  Total (SOL)
+                </Label>
+                <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
+                  {currentOrder.total}
+                </div>
+              </div>
+
+              <div className="p-3 bg-transparent border border-gray-700 rounded-lg">
+                <div className="text-gray-300 text-xs font-semibold">
+                  {orderMode === "BUY" ? (
+                    <>
+                      Available SOL:{" "}
+                      <span
+                        className={
+                          canAffordCurrent ? "text-green-400" : "text-red-400"
+                        }
+                      >
+                        {solBalance.toFixed(8)}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      Available {selectedToken}:{" "}
+                      <span
+                        className={
+                          canAffordCurrent ? "text-green-400" : "text-red-400"
+                        }
+                      >
+                        {tokenBalance.toFixed(8)}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <Button
+                onClick={handlePlaceOrder}
+                disabled={isLoading || !canAffordCurrent}
+                className={`w-full font-bold uppercase py-3 rounded-lg transition-colors text-white ${
+                  orderMode === "BUY"
+                    ? "bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
+                    : "bg-red-600 hover:bg-red-700 disabled:bg-red-400"
+                }`}
+              >
+                {isLoading
+                  ? "Placing..."
+                  : `Place ${orderMode === "BUY" ? "Buy" : "Sell"} Order`}
+              </Button>
             </div>
           </div>
         </div>

@@ -121,7 +121,10 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
 
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {allOrders.slice(0, 10).map((order) => (
-              <div key={order.id} className="px-2 py-2 border-b border-gray-700/50 last:border-b-0">
+              <div
+                key={order.id}
+                className="px-2 py-2 border-b border-gray-700/50 last:border-b-0"
+              >
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2 flex-1">
                     {order.type === "buy" ? (
@@ -173,7 +176,9 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
 
                   {order.type === "sell" && order.actualSellPrice && (
                     <div>
-                      <div className="text-gray-400 text-xs mb-1">Sell Price</div>
+                      <div className="text-gray-400 text-xs mb-1">
+                        Sell Price
+                      </div>
                       <div className="text-white font-semibold">
                         {formatPrice(order.actualSellPrice)}
                       </div>
@@ -182,7 +187,9 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
 
                   {order.type === "sell" && order.solAmount && (
                     <div>
-                      <div className="text-gray-400 text-xs mb-1">SOL Received</div>
+                      <div className="text-gray-400 text-xs mb-1">
+                        SOL Received
+                      </div>
                       <div className="text-white font-semibold">
                         {formatAmount(order.solAmount)}
                       </div>
@@ -191,7 +198,9 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
 
                   {order.signature && (
                     <div className="col-span-2">
-                      <div className="text-gray-400 text-xs mb-1">Transaction</div>
+                      <div className="text-gray-400 text-xs mb-1">
+                        Transaction
+                      </div>
                       <div className="text-white font-mono text-xs truncate">
                         {order.signature.substring(0, 16)}...
                       </div>

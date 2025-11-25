@@ -226,7 +226,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 setSession(updatedSession);
               }
             } else {
-              console.error("[MarketMaker] Buy order execution failed:", result);
+              console.error(
+                "[MarketMaker] Buy order execution failed:",
+                result,
+              );
               // Don't show error toast for every check - only log
             }
           }
@@ -267,7 +270,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 setSession(updatedSession);
               }
             } else {
-              console.error("[MarketMaker] Sell order execution failed:", result);
+              console.error(
+                "[MarketMaker] Sell order execution failed:",
+                result,
+              );
               // Don't show error toast for every check - only log
             }
           }

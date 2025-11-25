@@ -13,7 +13,10 @@ interface ExecutionResult {
   order?: BotOrder;
 }
 
-async function sendSignedTx(txBase64: string, keypair: Keypair): Promise<string> {
+async function sendSignedTx(
+  txBase64: string,
+  keypair: Keypair,
+): Promise<string> {
   try {
     const buf = bytesFromBase64(txBase64);
     const vtx = VersionedTransaction.deserialize(buf);
@@ -91,7 +94,10 @@ export async function executeLimitOrder(
     } else if (Array.isArray(wallet.secretKey)) {
       secretKeyArray = new Uint8Array(wallet.secretKey);
     } else {
-      console.error("[MarketMakerExecutor] Invalid secretKey format:", wallet.secretKey);
+      console.error(
+        "[MarketMakerExecutor] Invalid secretKey format:",
+        wallet.secretKey,
+      );
       return {
         success: false,
         error: "Invalid wallet secret key format",
@@ -243,10 +249,7 @@ export async function checkAndExecutePendingOrders(
 
   // Check buy orders
   for (const buyOrder of session.buyOrders) {
-    if (
-      buyOrder.status === "pending" &&
-      currentPrice <= buyOrder.buyPrice
-    ) {
+    if (buyOrder.status === "pending" && currentPrice <= buyOrder.buyPrice) {
       const result = await executeLimitOrder(
         session,
         buyOrder,

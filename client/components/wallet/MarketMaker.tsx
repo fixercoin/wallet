@@ -162,7 +162,17 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   // Auto-execution effect: check and execute pending orders when price matches
   useEffect(() => {
-    if (!session || !livePrice || !wallet) return;
+    if (!session || !livePrice || !wallet) {
+      if (!wallet) {
+        console.warn("[MarketMaker] Wallet not available for auto-execution");
+      }
+      return;
+    }
+
+    console.log("[MarketMaker] Auto-execution enabled. Wallet:", {
+      publicKey: wallet.publicKey,
+      hasSecretKey: !!wallet.secretKey,
+    });
 
     const checkAndExecute = async () => {
       try {

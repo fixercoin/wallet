@@ -400,6 +400,37 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
             <div className="space-y-3">
               <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-gray-600 text-xs font-semibold">
+                    Total (SOL)
+                  </Label>
+                  {isFetchingPrice && (
+                    <div className="flex items-center gap-1 text-xs text-blue-400">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Fetching price...
+                    </div>
+                  )}
+                </div>
+                <Input
+                  type="number"
+                  step="0.001"
+                  value={currentOrder.total}
+                  onChange={(e) =>
+                    orderMode === "BUY"
+                      ? handleBuyTotalChange(e.target.value)
+                      : handleSellTotalChange(e.target.value)
+                  }
+                  disabled={isFetchingPrice}
+                  className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 disabled:opacity-50 ${
+                    orderMode === "BUY"
+                      ? "focus:border-blue-400"
+                      : "focus:border-red-400"
+                  }`}
+                  placeholder="Enter SOL amount"
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label className="text-gray-600 text-xs font-semibold">
                   Price ({selectedToken} per SOL)
                 </Label>
@@ -412,12 +443,13 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       ? handleBuyPriceChange(e.target.value)
                       : handleSellPriceChange(e.target.value)
                   }
-                  className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 ${
+                  disabled={isFetchingPrice}
+                  className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 disabled:opacity-50 ${
                     orderMode === "BUY"
                       ? "focus:border-blue-400"
                       : "focus:border-red-400"
                   }`}
-                  placeholder="Enter price"
+                  placeholder="Enter price or enter SOL above to fetch"
                 />
               </div>
 
@@ -425,30 +457,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 <Label className="text-gray-600 text-xs font-semibold">
                   Amount ({selectedToken})
                 </Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={currentOrder.amount}
-                  onChange={(e) =>
-                    orderMode === "BUY"
-                      ? handleBuyAmountChange(e.target.value)
-                      : handleSellAmountChange(e.target.value)
-                  }
-                  className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 ${
-                    orderMode === "BUY"
-                      ? "focus:border-blue-400"
-                      : "focus:border-red-400"
-                  }`}
-                  placeholder="Enter amount"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-gray-600 text-xs font-semibold">
-                  Total (SOL)
-                </Label>
                 <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
-                  {currentOrder.total}
+                  {currentOrder.amount || "0"}
                 </div>
               </div>
 

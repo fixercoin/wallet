@@ -138,7 +138,16 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
                       </div>
                     </div>
                   </div>
-                  {getStatusBadge(order.status)}
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(order.status)}
+                    <button
+                      onClick={() => handleDeleteOrder(order.id, order.type)}
+                      className="p-1 hover:bg-red-500/20 rounded transition-colors flex-shrink-0"
+                      title="Delete order"
+                    >
+                      <X className="h-4 w-4 text-red-400 hover:text-red-300" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-xs">

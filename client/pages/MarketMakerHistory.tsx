@@ -163,9 +163,9 @@ export default function MarketMakerHistory() {
                 <div className="text-center border-t border-gray-700/50 pt-3">
                   <div className="text-xs text-gray-400 mb-2 uppercase tracking-wider">Target Price</div>
                   <div className="text-2xl font-bold text-emerald-300">
-                    ${formatTokenPrice(sessionPrices[selectedSession.id] + selectedSession.priceSpread, selectedSession.token)}
+                    ${formatTokenPrice(sessionPrices[selectedSession.id] + TOKEN_CONFIGS[selectedSession.token].spread, selectedSession.token)}
                   </div>
-                  <div className="text-xs text-gray-500 mt-2">Spread: ${formatTokenPrice(selectedSession.priceSpread, selectedSession.token)}</div>
+                  <div className="text-xs text-gray-500 mt-2">Spread: ${formatTokenPrice(TOKEN_CONFIGS[selectedSession.token].spread, selectedSession.token)}</div>
                 </div>
               )}
             </div>
@@ -415,7 +415,7 @@ export default function MarketMakerHistory() {
                           <div className="text-center">
                             <div className="text-gray-400 mb-1">Target Price</div>
                             <div className="font-semibold text-emerald-300">
-                              ${formatTokenPrice(sessionPrices[session.id] + session.priceSpread, session.token)}
+                              ${formatTokenPrice(sessionPrices[session.id] + TOKEN_CONFIGS[session.token].spread, session.token)}
                             </div>
                           </div>
                         </div>

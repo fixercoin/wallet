@@ -246,9 +246,8 @@ export default function MarketMakerHistory() {
             <div className="space-y-2">
               {selectedSession.buyOrders.map((order) => (
                 <Card
-                  className="bg-transparent border-blue-500/20 hover:border-blue-500/50 transition-colors"
                   key={order.id}
-                  className="cursor-pointer hover:border-blue-500/50 transition-colors"
+                  className="cursor-pointer bg-transparent border-blue-500/20 hover:border-blue-500/50 transition-colors"
                   onClick={() => handleOrderClick(selectedSession, order)}
                 >
                   <CardContent className="pt-4">
@@ -310,9 +309,8 @@ export default function MarketMakerHistory() {
             <div className="space-y-2">
               {selectedSession.sellOrders.map((order) => (
                 <Card
-                  className="bg-transparent border-green-500/20 hover:border-green-500/50 transition-colors"
                   key={order.id}
-                  className="cursor-pointer hover:border-green-500/50 transition-colors"
+                  className="cursor-pointer bg-transparent border-green-500/20 hover:border-green-500/50 transition-colors"
                   onClick={() => handleOrderClick(selectedSession, order)}
                 >
                   <CardContent className="pt-4">

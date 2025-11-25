@@ -14,6 +14,8 @@ export interface BotOrder {
   tokenAmount?: number;
   signature?: string;
   error?: string;
+  feeDeducted: boolean;
+  feeSignature?: string;
 }
 
 export interface BotSession {

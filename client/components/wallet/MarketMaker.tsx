@@ -393,6 +393,15 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   };
 
   const handlePlaceOrder = async () => {
+    if (!session) {
+      toast({
+        title: "Error",
+        description: "No active session. Please refresh the page.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (orderMode === "BUY") {
       const validationError = validateBuyOrder();
       if (validationError) {
@@ -407,25 +416,35 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       setIsLoading(true);
 
       try {
-        const orderData = {
-          type: "BUY",
-          token: selectedToken,
-          tokenMint: tokenConfig.mint,
-          price: parseFloat(buyOrder.price),
-          amount: parseFloat(buyOrder.amount),
-          totalSol: parseFloat(buyOrder.total),
-        };
+        const buyPrice = parseFloat(buyOrder.price);
+        const solAmount = parseFloat(buyOrder.total);
 
-        console.log("[MarketMaker] Placing buy limit order:", orderData);
+        const newOrder = botOrdersStorage.addBuyOrder(
+          session.id,
+          buyPrice,
+          solAmount,
+        );
+
+        if (!newOrder) {
+          throw new Error("Failed to create buy order");
+        }
+
+        // Update session
+        const updatedSession = botOrdersStorage.getCurrentSession();
+        if (updatedSession) {
+          setSession(updatedSession);
+        }
+
+        console.log("[MarketMaker] Buy order created:", newOrder);
 
         toast({
-          title: "Buy Order Placed",
-          description: `Limit buy order placed: ${buyOrder.amount} ${selectedToken} at ${buyOrder.price}`,
+          title: "Buy Order Created",
+          description: `Waiting for price to drop to ${buyPrice.toFixed(8)}. Current: ${livePrice?.toFixed(8)}`,
         });
 
         setBuyOrder({
-          price: "0.00001",
-          amount: "1000",
+          price: "",
+          amount: "",
           total: "0.01",
         });
       } catch (error) {
@@ -452,25 +471,36 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       setIsLoading(true);
 
       try {
-        const orderData = {
-          type: "SELL",
-          token: selectedToken,
-          tokenMint: tokenConfig.mint,
-          price: parseFloat(sellOrder.price),
-          amount: parseFloat(sellOrder.amount),
-          totalSol: parseFloat(sellOrder.total),
-        };
+        const sellPrice = parseFloat(sellOrder.price);
+        const tokenAmount = parseFloat(sellOrder.amount);
 
-        console.log("[MarketMaker] Placing sell limit order:", orderData);
+        const newOrder = botOrdersStorage.addSellOrder(
+          session.id,
+          "", // buyOrderId - we'll use empty since this is a direct limit sell
+          sellPrice,
+          tokenAmount,
+        );
+
+        if (!newOrder) {
+          throw new Error("Failed to create sell order");
+        }
+
+        // Update session
+        const updatedSession = botOrdersStorage.getCurrentSession();
+        if (updatedSession) {
+          setSession(updatedSession);
+        }
+
+        console.log("[MarketMaker] Sell order created:", newOrder);
 
         toast({
-          title: "Sell Order Placed",
-          description: `Limit sell order placed: ${sellOrder.amount} ${selectedToken} at ${sellOrder.price}`,
+          title: "Sell Order Created",
+          description: `Waiting for price to rise to ${sellPrice.toFixed(8)}. Current: ${livePrice?.toFixed(8)}`,
         });
 
         setSellOrder({
-          price: "0.00002",
-          amount: "1000",
+          price: "",
+          amount: "",
           total: "0.02",
         });
       } catch (error) {

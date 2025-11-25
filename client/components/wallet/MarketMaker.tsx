@@ -359,7 +359,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
           <div className="space-y-2">
             <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Token
+              TOKEN
             </Label>
             <Select value={selectedToken} onValueChange={setSelectedToken}>
               <SelectTrigger className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900">
@@ -385,7 +385,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                     : "bg-transparent border border-gray-700 text-gray-400 hover:text-white"
                 }`}
               >
-                Buy
+                BUY
               </Button>
               <Button
                 onClick={() => setOrderMode("SELL")}
@@ -395,7 +395,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                     : "bg-transparent border border-gray-700 text-gray-400 hover:text-white"
                 }`}
               >
-                Sell
+                SELL
               </Button>
             </div>
 

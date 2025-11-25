@@ -4,16 +4,38 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
 import { botOrdersStorage, BotSession, BotOrder } from "@/lib/bot-orders-storage";
+import { dexscreenerAPI } from "@/lib/services/dexscreener";
 
 export default function MarketMakerHistory() {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState<BotSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<BotSession | null>(null);
+  const [sessionPrices, setSessionPrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const allSessions = botOrdersStorage.getAllSessions();
     setSessions(allSessions.sort((a, b) => b.createdAt - a.createdAt));
+
+    // Fetch live prices for all sessions
+    allSessions.forEach(session => {
+      fetchSessionPrice(session);
+    });
   }, []);
+
+  const fetchSessionPrice = async (session: BotSession) => {
+    try {
+      const token = await dexscreenerAPI.getTokenByMint(session.tokenMint);
+      if (token && token.priceUsd) {
+        const price = parseFloat(token.priceUsd);
+        setSessionPrices(prev => ({
+          ...prev,
+          [session.id]: price
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching price for session:", session.id, error);
+    }
+  };
 
   const formatPrice = (price: number): string => {
     return price.toFixed(2);

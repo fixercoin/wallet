@@ -150,7 +150,8 @@ export default function AssetsPage() {
                             alt={token.symbol}
                             className="w-7 h-7 rounded-full flex-shrink-0"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
+                              (e.target as HTMLImageElement).style.display =
+                                "none";
                             }}
                           />
                         )}

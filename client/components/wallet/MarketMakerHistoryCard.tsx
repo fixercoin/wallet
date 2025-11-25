@@ -191,7 +191,7 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
                         SOL Received
                       </div>
                       <div className="text-white font-semibold">
-                        {formatAmount(order.solAmount)}
+                        {formatAmount(order.solAmount, 4)}
                       </div>
                     </div>
                   )}

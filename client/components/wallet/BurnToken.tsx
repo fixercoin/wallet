@@ -643,9 +643,6 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                   <CardContent className="pt-4 px-0 space-y-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-[10px] uppercase tracking-wide text-gray-300">
-                          Selected token
-                        </p>
                         <p className="text-[10px] font-semibold text-white">
                           {selectedToken.symbol ||
                             selectedToken.mint.slice(0, 6)}{" "}

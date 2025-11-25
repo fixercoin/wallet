@@ -2,10 +2,13 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Pause, Play, X } from "lucide-react";
+import { ArrowLeft, Pause, Play, X, AlertCircle, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useWallet } from "@/contexts/WalletContext";
 import { botOrdersStorage, BotSession, BotOrder } from "@/lib/bot-orders-storage";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
+import { feeTransfer } from "@/lib/fee-transfer";
+import { rpcCall } from "@/lib/rpc-utils";
 
 export default function RunningMarketMaker() {
   const { sessionId = "" } = useParams();

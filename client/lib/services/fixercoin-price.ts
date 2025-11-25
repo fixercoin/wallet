@@ -99,7 +99,7 @@ class FixercoinPriceService {
   clearCache(): void {
     this.cachedData = null;
     this.lastFetchTime = null;
-    tokenPairPricingService.clearTokenCache("FIXERCOIN");
+    console.log("[FixercoinPriceService] Cache cleared - next fetch will be fresh");
   }
 }
 

@@ -81,6 +81,23 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   const tokenConfig = TOKEN_CONFIGS[selectedToken];
 
+  // Initialize or load session on component mount
+  useEffect(() => {
+    let currentSession = botOrdersStorage.getCurrentSession();
+    if (!currentSession) {
+      // Create a new session if one doesn't exist
+      currentSession = botOrdersStorage.createSession(
+        "FIXERCOIN",
+        tokenConfig.mint,
+        1,
+        0.01,
+        0.00002,
+      );
+      botOrdersStorage.saveSession(currentSession);
+    }
+    setSession(currentSession);
+  }, []);
+
   // Fetch live price on component mount or token change, and set up polling
   useEffect(() => {
     const fetchPrices = async () => {

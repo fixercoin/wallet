@@ -139,6 +139,7 @@ import DepositAssetPage from "./pages/DepositAssetPage";
 import SelectLanguagePage from "./pages/SelectLanguagePage";
 import SelectCurrencyPage from "./pages/SelectCurrencyPage";
 import BurnTokenPage from "./pages/BurnTokenPage";
+import RunningMarketMaker from "./pages/RunningMarketMaker";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 
@@ -174,6 +175,7 @@ function AppRoutes() {
       <Route path="/dapps/view" element={<DappView />} />
       <Route path="/select-language" element={<SelectLanguagePage />} />
       <Route path="/select-currency" element={<SelectCurrencyPage />} />
+      <Route path="/market-maker/running/:sessionId" element={<RunningMarketMaker />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

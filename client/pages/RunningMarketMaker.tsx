@@ -22,10 +22,12 @@ import { feeTransfer } from "@/lib/fee-transfer";
 import { Keypair, PublicKey } from "@solana/web3.js";
 
 export default function RunningMarketMaker() {
-  const { sessionId = "" } = useParams();
+  const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { wallet, tokens = [] } = useWallet() || { wallet: null, tokens: [] };
+  const walletContext = useWallet();
+  const wallet = walletContext?.wallet || null;
+  const tokens = walletContext?.tokens || [];
 
   const [session, setSession] = useState<BotSession | null>(null);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
@@ -42,33 +44,45 @@ export default function RunningMarketMaker() {
   };
 
   useEffect(() => {
-    const loadSession = () => {
-      try {
-        const allSessions = botOrdersStorage.getAllSessions();
-        console.log("[RunningMarketMaker] All sessions:", allSessions);
-        console.log("[RunningMarketMaker] Looking for sessionId:", sessionId);
-        const found = allSessions.find((s) => s.id === sessionId);
-        if (found) {
-          console.log("[RunningMarketMaker] Session found:", found);
-          setSession(found);
-          setLoading(false);
-        } else {
-          console.log("[RunningMarketMaker] Session NOT found");
-          toast({
-            title: "Session Not Found",
-            description: "The bot session could not be found.",
-            variant: "destructive",
-          });
-          setTimeout(() => navigate("/"), 1500);
-        }
-      } catch (error) {
-        console.error("[RunningMarketMaker] Error loading session:", error);
-        setLoading(false);
-      }
-    };
+    console.log("[RunningMarketMaker] Component mounted. SessionID:", sessionId);
+    
+    if (!sessionId) {
+      console.error("[RunningMarketMaker] No sessionId in URL");
+      toast({
+        title: "Invalid Session",
+        description: "No session ID provided",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
 
-    loadSession();
+    const allSessions = botOrdersStorage.getAllSessions();
+    console.log("[RunningMarketMaker] All sessions in storage:", allSessions);
+    console.log("[RunningMarketMaker] Looking for sessionId:", sessionId);
+
+    const found = allSessions.find((s) => s.id === sessionId);
+    
+    if (found) {
+      console.log("[RunningMarketMaker] Session found:", found);
+      setSession(found);
+      setLoading(false);
+    } else {
+      console.log("[RunningMarketMaker] Session NOT found!");
+      console.log("[RunningMarketMaker] Available IDs:", allSessions.map(s => s.id));
+      setLoading(false);
+      toast({
+        title: "Session Not Found",
+        description: `Could not find session: ${sessionId}`,
+        variant: "destructive",
+      });
+      setTimeout(() => navigate("/"), 2000);
+    }
   }, [sessionId, navigate, toast]);
+
+  const checkAndConvertPendingOrders = useCallback(() => {
+    if (!session || !currentPrice) return;
+  }, [session, currentPrice]);
 
   useEffect(() => {
     if (!session) return;
@@ -100,208 +114,50 @@ export default function RunningMarketMaker() {
     };
   }, [session, checkAndConvertPendingOrders]);
 
-  const executeFeeDedcution = useCallback(
-    async (order: BotOrder): Promise<string | null> => {
-      if (!wallet || !wallet.secretKey || !wallet.publicKey) {
-        toast({
-          title: "Error",
-          description: "Wallet not available for fee transfer",
-          variant: "destructive",
-        });
-        return null;
-      }
-
-      if (!feeTransfer.hasEnoughSolForFee(solBalance, order.solAmount)) {
-        toast({
-          title: "Insufficient SOL",
-          description: `Need ${feeTransfer.getTotalSolNeeded(order.solAmount).toFixed(4)} SOL for trade + fee, but only have ${solBalance.toFixed(4)} SOL`,
-          variant: "destructive",
-        });
-        return null;
-      }
-
-      try {
-        setExecutingFee(order.id);
-
-        const tx = feeTransfer.createFeeTransferTx(wallet);
-        if (!tx) {
-          throw new Error("Failed to create fee transfer transaction");
-        }
-
-        try {
-          const keypair = Keypair.fromSecretKey(wallet.secretKey);
-          tx.sign(keypair);
-        } catch (signError) {
-          console.error("Error signing transaction:", signError);
-          throw new Error("Failed to sign fee transfer transaction");
-        }
-
-        const serialized = tx.serialize();
-        const encoded = Buffer.from(serialized).toString("base64");
-
-        const apiUrl =
-          (process.env.REACT_APP_API_URL || "").replace(/\/$/, "") + "/api/rpc";
-        const response = await fetch(apiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            jsonrpc: "2.0",
-            id: 1,
-            method: "sendTransaction",
-            params: [encoded, { encoding: "base64" }],
-          }),
-        });
-
-        const result = await response.json();
-        if (result.error) {
-          throw new Error(result.error.message || "Fee transfer failed");
-        }
-
-        const signature = result.result;
-        if (!signature) {
-          throw new Error("No transaction signature returned");
-        }
-
-        setExecutingFee(null);
-
-        toast({
-          title: "Fee Deducted",
-          description: `0.0007 SOL transferred for trade execution`,
-        });
-
-        botOrdersStorage.markFeeDeducted(sessionId, order.id, signature);
-
-        const updatedSession = botOrdersStorage.getCurrentSession();
-        if (updatedSession) {
-          setSession(updatedSession);
-        }
-
-        return signature;
-      } catch (error) {
-        setExecutingFee(null);
-        const msg = error instanceof Error ? error.message : String(error);
-        toast({
-          title: "Fee Transfer Failed",
-          description: msg,
-          variant: "destructive",
-        });
-        return null;
-      }
-    },
-    [wallet, solBalance, sessionId, toast],
-  );
-
-  const checkAndConvertPendingOrders = useCallback(() => {
-    if (!session || !currentPrice) return;
-
-    const allSessions = botOrdersStorage.getAllSessions();
-    const currentSession = allSessions.find((s) => s.id === sessionId);
-    if (!currentSession) return;
-
-    let modified = false;
-
-    for (const buyOrder of currentSession.buyOrders) {
-      if (
-        buyOrder.status === "completed" &&
-        buyOrder.tokenAmount &&
-        buyOrder.tokenAmount > 0
-      ) {
-        const hasSellOrder = currentSession.sellOrders.some(
-          (s) =>
-            s.type === "sell" &&
-            s.buyPrice === buyOrder.buyPrice &&
-            Math.abs(s.timestamp - buyOrder.timestamp) < 1000,
-        );
-
-        if (!hasSellOrder && currentPrice >= buyOrder.targetSellPrice) {
-          botOrdersStorage.addSellOrder(
-            sessionId,
-            buyOrder.id,
-            currentPrice,
-            buyOrder.tokenAmount,
-          );
-          modified = true;
-
-          toast({
-            title: "Sell Order Auto-Converted",
-            description: `Buy order converted to sell at ${currentPrice.toFixed(8)}`,
-          });
-        }
-      }
-    }
-
-    if (modified) {
-      const updatedSession = botOrdersStorage.getCurrentSession();
-      if (updatedSession) {
-        setSession(updatedSession);
-      }
-    }
-  }, [sessionId, currentPrice, toast]);
-
   const handlePauseResume = () => {
     if (!session) return;
-
-    const updatedSession = { ...session };
-    updatedSession.status =
-      updatedSession.status === "running" ? "paused" : "running";
-    botOrdersStorage.saveSession(updatedSession);
-    setSession(updatedSession);
-
-    toast({
-      title: updatedSession.status === "running" ? "Bot Resumed" : "Bot Paused",
-    });
+    if (session.status === "running") {
+      session.status = "paused";
+    } else {
+      session.status = "running";
+    }
+    botOrdersStorage.saveSession(session);
+    setSession({ ...session });
   };
 
   const handleStopBot = () => {
     if (!session) return;
-
-    if (
-      window.confirm(
-        "Are you sure you want to stop this bot? This action cannot be undone.",
-      )
-    ) {
-      botOrdersStorage.deleteSession(sessionId);
-      toast({
-        title: "Bot Stopped",
-        description: "The market maker bot has been stopped",
-      });
-      navigate(-1);
-    }
+    session.status = "stopped";
+    botOrdersStorage.saveSession(session);
+    toast({
+      title: "Bot Stopped",
+      description: "Market maker bot has been stopped",
+    });
+    navigate("/");
   };
 
-  if (loading || !session) {
-    return (
-      <div className="w-full md:max-w-lg mx-auto px-4 py-8 min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-48 h-48 mx-auto mb-4 flex items-center justify-center">
-            <div className="w-48 h-48 border-4 border-green-500/20 border-t-green-500 rounded-full animate-spin" />
-          </div>
-          <p className="text-gray-400">Loading bot...</p>
-        </div>
-      </div>
-    );
-  }
+  console.log("[RunningMarketMaker] Rendering. Session:", !!session, "Loading:", loading);
 
-  const tokenConfig = TOKEN_CONFIGS[session.token] || {
-    symbol: session.token,
-    decimals: 9,
-  };
-  const pendingBuyOrders = session.buyOrders.filter(
-    (o) => o.status === "pending",
-  );
-  const completedBuyOrders = session.buyOrders.filter(
-    (o) => o.status === "completed",
-  );
-
-  console.log("[RunningMarketMaker] Rendering. Session:", session, "Loading:", loading);
-
-  if (!session) {
+  if (loading) {
     return (
       <div className="w-full md:max-w-lg mx-auto px-4 py-6 min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center text-white">
           <div className="text-lg font-semibold mb-2">Loading bot session...</div>
           <div className="text-sm text-gray-400">Session ID: {sessionId}</div>
           <div className="text-sm text-gray-400">Please wait</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="w-full md:max-w-lg mx-auto px-4 py-6 min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center text-white">
+          <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+          <div className="text-lg font-semibold mb-2 text-red-400">Session Not Found</div>
+          <div className="text-sm text-gray-400">The bot session could not be loaded</div>
+          <div className="text-sm text-gray-400 mt-4">Redirecting to home...</div>
         </div>
       </div>
     );
@@ -351,203 +207,63 @@ export default function RunningMarketMaker() {
         <div className="w-48 h-48 border-4 border-green-500/20 border-t-green-500 rounded-full animate-spin" />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 mb-8">
-        <Card className="border border-gray-700/40 bg-gradient-to-br from-gray-800 via-gray-800 to-gray-700">
-          <CardContent className="p-4">
-            <div className="text-xs text-gray-400 uppercase mb-2">
-              Order Buy Price
-            </div>
-            <div className="text-2xl font-bold text-white">
-              {currentPrice ? currentPrice.toFixed(8) : "Loading..."}
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              {tokenConfig.symbol} Price
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-gray-700/40 bg-gradient-to-br from-gray-800 via-gray-800 to-gray-700">
-          <CardContent className="p-4">
-            <div className="text-xs text-gray-400 uppercase mb-2">
-              Target Sell Price
-            </div>
-            <div className="text-2xl font-bold text-green-400">
-              {currentPrice
-                ? (session.token === "FIXERCOIN"
-                    ? currentPrice + 0.00002
-                    : currentPrice + 2
-                  ).toFixed(8)
-                : "Loading..."}
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              Spread: {session.token === "FIXERCOIN" ? "+0.0000200" : "+2"}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-sm font-semibold text-white mb-2">
-            Pending Buy Orders ({pendingBuyOrders.length})
-          </h3>
-          {pendingBuyOrders.length === 0 ? (
-            <p className="text-xs text-gray-500">No pending orders</p>
-          ) : (
-            <div className="space-y-2">
-              {pendingBuyOrders.map((order) => (
-                <OrderCard key={order.id} order={order} />
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div>
-          <h3 className="text-sm font-semibold text-white mb-2">
-            Completed Buy Orders ({completedBuyOrders.length})
-          </h3>
-          {completedBuyOrders.length === 0 ? (
-            <p className="text-xs text-gray-500">No completed orders</p>
-          ) : (
-            <div className="space-y-2">
-              {completedBuyOrders.map((order) => {
-                const correspondingSell = session.sellOrders.find((s) =>
-                  s.id.includes(order.id),
-                );
-                return (
-                  <OrderDetailCard
-                    key={order.id}
-                    buyOrder={order}
-                    sellOrder={correspondingSell}
-                    executingFee={executingFee}
-                    onDeductFee={executeFeeDedcution}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function OrderCard({ order }: { order: BotOrder }) {
-  return (
-    <div className="p-3 border border-gray-700/40 rounded-lg bg-gray-800/30">
-      <div className="flex justify-between items-start gap-2">
-        <div className="flex-1 text-xs">
-          <div className="text-gray-300 font-mono">#{order.id.slice(0, 8)}</div>
-          <div className="text-gray-500 mt-1">
-            Buy @ {order.buyPrice.toFixed(8)}
-          </div>
-          <div className="text-gray-500">
-            Amount: {order.solAmount.toFixed(4)} SOL
-          </div>
-        </div>
-        <span className="text-xs font-semibold px-2 py-1 rounded bg-yellow-500/20 text-yellow-400 whitespace-nowrap">
-          Pending
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function OrderDetailCard({
-  buyOrder,
-  sellOrder,
-  executingFee,
-  onDeductFee,
-}: {
-  buyOrder: BotOrder;
-  sellOrder?: BotOrder;
-  executingFee?: string | null;
-  onDeductFee?: (order: BotOrder) => void;
-}) {
-  return (
-    <div className="p-3 border border-gray-700/40 rounded-lg bg-gray-800/30">
-      <div className="text-xs space-y-1">
-        <div className="flex justify-between">
-          <span className="text-gray-400">Buy Order:</span>
-          <span className="text-gray-300 font-mono">
-            #{buyOrder.id.slice(0, 8)}
-          </span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-400">Status:</span>
-          <span
-            className={`font-semibold ${
-              buyOrder.status === "completed"
-                ? "text-green-400"
-                : "text-yellow-400"
-            }`}
-          >
-            {buyOrder.status}
-          </span>
-        </div>
-        <div className="flex justify-between items-center border-t border-gray-700/20 pt-1 mt-1">
-          <span className="text-gray-400">Fee (0.0007 SOL):</span>
-          <div className="flex items-center gap-2">
-            {buyOrder.feeDeducted ? (
-              <div className="flex items-center gap-1 text-green-400">
-                <CheckCircle className="h-3 w-3" />
-                <span>Deducted</span>
-              </div>
-            ) : (
-              <button
-                onClick={() => onDeductFee?.(buyOrder)}
-                disabled={executingFee === buyOrder.id}
-                className="text-xs bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600 text-white px-2 py-1 rounded transition-colors"
-              >
-                {executingFee === buyOrder.id ? "Deducting..." : "Deduct Fee"}
-              </button>
-            )}
-          </div>
-        </div>
-        {sellOrder && (
-          <>
-            <div className="flex justify-between border-t border-gray-700/20 pt-1 mt-1">
-              <span className="text-gray-400">Sell Order:</span>
-              <span className="text-gray-300 font-mono">
-                #{sellOrder.id.slice(0, 8)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Status:</span>
-              <span
-                className={`font-semibold ${
-                  sellOrder.status === "completed"
-                    ? "text-green-400"
-                    : "text-yellow-400"
-                }`}
-              >
-                {sellOrder.status}
-              </span>
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-400">Token</span>
+              <span className="font-semibold text-white">{session.token}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-400">Fee (0.0007 SOL):</span>
-              <div className="flex items-center gap-2">
-                {sellOrder.feeDeducted ? (
-                  <div className="flex items-center gap-1 text-green-400">
-                    <CheckCircle className="h-3 w-3" />
-                    <span>Deducted</span>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => onDeductFee?.(sellOrder)}
-                    disabled={executingFee === sellOrder.id}
-                    className="text-xs bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600 text-white px-2 py-1 rounded transition-colors"
-                  >
-                    {executingFee === sellOrder.id
-                      ? "Deducting..."
-                      : "Deduct Fee"}
-                  </button>
-                )}
-              </div>
+              <span className="text-sm text-gray-400">Number of Makers</span>
+              <span className="font-semibold text-white">{session.numberOfMakers}</span>
             </div>
-          </>
-        )}
-      </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-400">Order Amount</span>
+              <span className="font-semibold text-white">{session.orderAmount.toFixed(4)} SOL</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-400">Status</span>
+              <span className={`font-semibold uppercase text-sm ${
+                session.status === "running" ? "text-green-400" : "text-yellow-400"
+              }`}>
+                {session.status}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="space-y-2 text-center">
+            <div className="text-sm text-gray-400">Current Price</div>
+            <div className="text-2xl font-bold text-green-400">
+              {currentPrice ? `$${currentPrice.toFixed(8)}` : "Loading..."}
+            </div>
+            {currentPrice && (
+              <div className="text-xs text-gray-500 mt-2">
+                Spread: +{session.priceSpread.toFixed(8)}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-400">Buy Orders</span>
+              <span className="font-semibold text-white">{session.buyOrders.length}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-400">Sell Orders</span>
+              <span className="font-semibold text-white">{session.sellOrders.length}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

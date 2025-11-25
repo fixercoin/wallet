@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,160 +11,322 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
-import { botOrdersStorage, TokenType } from "@/lib/bot-orders-storage";
+import { ArrowLeft, Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
+import { dexscreenerAPI } from "@/lib/services/dexscreener";
+import { solPriceService } from "@/lib/services/sol-price";
 
 interface MarketMakerProps {
   onBack: () => void;
 }
 
 const TOKEN_CONFIGS: Record<
-  TokenType,
-  { name: string; mint: string; spread: number; decimals: number }
+  string,
+  { name: string; mint: string; decimals: number }
 > = {
   FIXERCOIN: {
     name: "FIXERCOIN",
     mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
-    spread: 0.000002,
     decimals: 6,
   },
   SOL: {
     name: "SOL",
     mint: "So11111111111111111111111111111111111111112",
-    spread: 2,
     decimals: 9,
   },
 };
+
+interface LimitOrder {
+  price: string;
+  amount: string;
+  total: string;
+}
 
 export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const { tokens } = useWallet();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [selectedToken, setSelectedToken] = useState<TokenType>("FIXERCOIN");
-  const [numberOfMakers, setNumberOfMakers] = useState("5");
-  const [orderAmount, setOrderAmount] = useState(() => {
-    try {
-      const lastSession = localStorage.getItem("bot_last_order_amount");
-      return lastSession || "0.02";
-    } catch {
-      return "0.02";
-    }
+  const [selectedToken, setSelectedToken] = useState("FIXERCOIN");
+  const [orderMode, setOrderMode] = useState<"BUY" | "SELL">("BUY");
+  const [buyOrder, setBuyOrder] = useState<LimitOrder>({
+    price: "",
+    amount: "",
+    total: "0.01",
+  });
+  const [sellOrder, setSellOrder] = useState<LimitOrder>({
+    price: "",
+    amount: "",
+    total: "0.02",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [livePrice, setLivePrice] = useState<number | null>(null);
+  const [solPrice, setSolPrice] = useState<number | null>(null);
+  const [isFetchingPrice, setIsFetchingPrice] = useState(false);
 
   const tokenConfig = TOKEN_CONFIGS[selectedToken];
+
+  // Fetch live price on component mount or token change
+  useEffect(() => {
+    const fetchPrices = async () => {
+      setIsFetchingPrice(true);
+      try {
+        let tokenPrice: number | null = null;
+        let solPriceUsd: number | null = null;
+
+        if (selectedToken === "FIXERCOIN") {
+          const priceData = await fixercoinPriceService.getFixercoinPrice();
+          if (priceData && priceData.price > 0) {
+            tokenPrice = priceData.price;
+          }
+        } else if (selectedToken === "SOL") {
+          const solToken = await dexscreenerAPI.getTokenByMint(
+            "So11111111111111111111111111111111111111112",
+          );
+          if (solToken && solToken.priceUsd) {
+            tokenPrice = parseFloat(solToken.priceUsd);
+          }
+        }
+
+        // Always fetch SOL price for calculation
+        try {
+          const solPriceData = await solPriceService.getSolPrice();
+          if (solPriceData && solPriceData.price > 0) {
+            solPriceUsd = solPriceData.price;
+          }
+        } catch (error) {
+          console.error("[MarketMaker] Error fetching SOL price:", error);
+        }
+
+        if (tokenPrice && tokenPrice > 0) {
+          setLivePrice(tokenPrice);
+          console.log(
+            `[MarketMaker] Fetched live price for ${selectedToken}: ${tokenPrice}`,
+          );
+        }
+
+        if (solPriceUsd && solPriceUsd > 0) {
+          setSolPrice(solPriceUsd);
+          console.log(`[MarketMaker] Fetched SOL price: ${solPriceUsd}`);
+        }
+      } catch (error) {
+        console.error("[MarketMaker] Error fetching prices:", error);
+      } finally {
+        setIsFetchingPrice(false);
+      }
+    };
+
+    fetchPrices();
+  }, [selectedToken]);
 
   const solToken = useMemo(
     () => tokens.find((t) => t.symbol === "SOL"),
     [tokens],
   );
 
+  const selectedTokenBalance = useMemo(
+    () => tokens.find((t) => t.symbol === selectedToken),
+    [tokens, selectedToken],
+  );
+
   const solBalance = solToken?.balance || 0;
+  const tokenBalance = selectedTokenBalance?.balance || 0;
 
-  const validateInputs = useCallback((): string | null => {
-    const numMakers = parseInt(numberOfMakers);
-    if (isNaN(numMakers) || numMakers < 1 || numMakers > 1000)
-      return "Number of makers must be between 1 and 1000";
+  const calculateAmountFromTotal = useCallback(
+    (totalSol: string, price: string) => {
+      const total = parseFloat(totalSol) || 0;
+      const p = parseFloat(price) || 0;
+      if (p <= 0) return "0";
+      return (total / p).toFixed(8);
+    },
+    [],
+  );
 
-    const amount = parseFloat(orderAmount);
+  const calculateTotalFromAmountPrice = useCallback(
+    (price: string, amount: string) => {
+      const p = parseFloat(price) || 0;
+      const a = parseFloat(amount) || 0;
+      return (p * a).toFixed(8);
+    },
+    [],
+  );
+
+  const handleBuyTargetPriceChange = (value: string) => {
+    setBuyOrder({
+      ...buyOrder,
+      price: value,
+    });
+  };
+
+  const handleBuySolAmountChange = (value: string) => {
+    let estimatedAmount = "0";
+
+    if (livePrice && livePrice > 0 && solPrice && solPrice > 0) {
+      // Calculate: (SOL Amount * SOL Price in USD) / Token Price in USD
+      const solAmount = parseFloat(value) || 0;
+      const tokenAmount = (solAmount * solPrice) / livePrice;
+      estimatedAmount = tokenAmount.toFixed(8);
+    }
+
+    setBuyOrder({
+      ...buyOrder,
+      total: value,
+      amount: estimatedAmount,
+    });
+  };
+
+  const handleSellPriceChange = (value: string) => {
+    setSellOrder({
+      ...sellOrder,
+      price: value,
+    });
+  };
+
+  const handleSellAmountChange = (value: string) => {
+    let estimatedTotal = "0";
+
+    if (livePrice && livePrice > 0 && solPrice && solPrice > 0) {
+      // Calculate: (Token Amount * Token Price in USD) / SOL Price in USD
+      const tokenAmount = parseFloat(value) || 0;
+      const solAmount = (tokenAmount * livePrice) / solPrice;
+      estimatedTotal = solAmount.toFixed(8);
+    }
+
+    setSellOrder({
+      ...sellOrder,
+      amount: value,
+      total: estimatedTotal,
+    });
+  };
+
+  const validateBuyOrder = (): string | null => {
+    const price = parseFloat(buyOrder.price);
+    const amount = parseFloat(buyOrder.amount);
+    const total = parseFloat(buyOrder.total);
+
+    if (isNaN(price) || price <= 0) return "Buy price must be greater than 0";
     if (isNaN(amount) || amount <= 0)
-      return "Order amount must be greater than 0 SOL";
+      return "Buy amount must be greater than 0";
+    if (isNaN(total) || total <= 0) return "Buy total is invalid";
+    if (solBalance < total)
+      return `Insufficient SOL. Need ${total.toFixed(8)}, have ${solBalance.toFixed(8)}`;
 
     return null;
-  }, [numberOfMakers, orderAmount]);
+  };
 
-  const calculateTotalCost = useCallback((): {
-    totalNeeded: number;
-    fees: number;
-  } => {
-    const numMakers = parseInt(numberOfMakers) || 1;
-    const amount = parseFloat(orderAmount) || 0;
+  const validateSellOrder = (): string | null => {
+    const price = parseFloat(sellOrder.price);
+    const amount = parseFloat(sellOrder.amount);
 
-    const totalBuySol = numMakers * amount;
-    const fees = totalBuySol * 0.01;
+    if (isNaN(price) || price <= 0) return "Sell price must be greater than 0";
+    if (isNaN(amount) || amount <= 0)
+      return "Sell amount must be greater than 0";
+    if (tokenBalance < amount)
+      return `Insufficient ${selectedToken}. Need ${amount}, have ${tokenBalance.toFixed(8)}`;
 
-    return {
-      totalNeeded: totalBuySol + fees,
-      fees,
-    };
-  }, [numberOfMakers, orderAmount]);
+    return null;
+  };
 
-  const { totalNeeded, fees } = calculateTotalCost();
-  const canAfford = solBalance >= totalNeeded;
-  const solNeeded = Math.max(0, totalNeeded - solBalance);
-
-  const handleRunBot = async () => {
-    const validationError = validateInputs();
-    if (validationError) {
-      toast({
-        title: "Validation Error",
-        description: validationError,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!canAfford) {
-      toast({
-        title: "Insufficient SOL",
-        description: `You need ${totalNeeded.toFixed(4)} SOL but only have ${solBalance.toFixed(4)} SOL`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const numMakers = parseInt(numberOfMakers);
-      const amount = parseFloat(orderAmount);
-
-      const session = botOrdersStorage.createSession(
-        selectedToken,
-        tokenConfig.mint,
-        numMakers,
-        amount,
-        tokenConfig.spread,
-      );
-
-      console.log("[MarketMaker] Created session:", session);
-      botOrdersStorage.saveSession(session);
-
-      try {
-        localStorage.setItem("bot_last_order_amount", orderAmount);
-      } catch (storageError) {
-        console.error(
-          "Error saving order amount to localStorage:",
-          storageError,
-        );
+  const handlePlaceOrder = async () => {
+    if (orderMode === "BUY") {
+      const validationError = validateBuyOrder();
+      if (validationError) {
+        toast({
+          title: "Validation Error",
+          description: validationError,
+          variant: "destructive",
+        });
+        return;
       }
 
-      console.log("[MarketMaker] Session saved, checking storage...");
-      const allSessions = botOrdersStorage.getAllSessions();
-      console.log("[MarketMaker] All sessions after save:", allSessions);
+      setIsLoading(true);
 
-      toast({
-        title: "Bot Started",
-        description: `Market maker bot started with ${numMakers} makers`,
-      });
+      try {
+        const orderData = {
+          type: "BUY",
+          token: selectedToken,
+          tokenMint: tokenConfig.mint,
+          price: parseFloat(buyOrder.price),
+          amount: parseFloat(buyOrder.amount),
+          totalSol: parseFloat(buyOrder.total),
+        };
 
-      setTimeout(() => {
-        console.log("[MarketMaker] Navigating to bot:", session.id);
-        navigate(`/market-maker/running/${session.id}`);
-      }, 100);
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      toast({
-        title: "Error",
-        description: msg,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+        console.log("[MarketMaker] Placing buy limit order:", orderData);
+
+        toast({
+          title: "Buy Order Placed",
+          description: `Limit buy order placed: ${buyOrder.amount} ${selectedToken} at ${buyOrder.price}`,
+        });
+
+        setBuyOrder({
+          price: "0.00001",
+          amount: "1000",
+          total: "0.01",
+        });
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        toast({
+          title: "Error",
+          description: msg,
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      const validationError = validateSellOrder();
+      if (validationError) {
+        toast({
+          title: "Validation Error",
+          description: validationError,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const orderData = {
+          type: "SELL",
+          token: selectedToken,
+          tokenMint: tokenConfig.mint,
+          price: parseFloat(sellOrder.price),
+          amount: parseFloat(sellOrder.amount),
+          totalSol: parseFloat(sellOrder.total),
+        };
+
+        console.log("[MarketMaker] Placing sell limit order:", orderData);
+
+        toast({
+          title: "Sell Order Placed",
+          description: `Limit sell order placed: ${sellOrder.amount} ${selectedToken} at ${sellOrder.price}`,
+        });
+
+        setSellOrder({
+          price: "0.00002",
+          amount: "1000",
+          total: "0.02",
+        });
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        toast({
+          title: "Error",
+          description: msg,
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
+
+  const currentOrder = orderMode === "BUY" ? buyOrder : sellOrder;
+  const canAffordCurrent =
+    orderMode === "BUY"
+      ? parseFloat(currentOrder.total) <= solBalance
+      : parseFloat(currentOrder.amount) <= tokenBalance;
 
   return (
     <div className="w-full md:max-w-lg mx-auto px-4 relative z-0 pt-8">
@@ -181,27 +343,16 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div className="font-semibold text-sm text-white uppercase">
-                Fixorium Market Maker
+                Fixorium Limit Orders
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/market-maker/history")}
-              className="text-xs h-7 px-2 border-gray-700 text-gray-300 hover:text-white rounded-md"
-            >
-              History
-            </Button>
           </div>
 
           <div className="space-y-2">
             <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Token Address
+              Token
             </Label>
-            <Select
-              value={selectedToken}
-              onValueChange={(value) => setSelectedToken(value as TokenType)}
-            >
+            <Select value={selectedToken} onValueChange={setSelectedToken}>
               <SelectTrigger className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900">
                 <SelectValue />
               </SelectTrigger>
@@ -215,78 +366,207 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Number of Makers
-            </Label>
-            <Input
-              type="number"
-              min="1"
-              max="1000"
-              value={numberOfMakers}
-              onChange={(e) => setNumberOfMakers(e.target.value)}
-              className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-            />
-          </div>
+          <div className="bg-transparent border border-gray-700 rounded-lg p-4">
+            <div className="flex gap-2 mb-6">
+              <Button
+                onClick={() => setOrderMode("BUY")}
+                className={`flex-1 font-bold uppercase py-2 rounded-lg transition-colors ${
+                  orderMode === "BUY"
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-transparent border border-gray-700 text-gray-400 hover:text-white"
+                }`}
+              >
+                Buy
+              </Button>
+              <Button
+                onClick={() => setOrderMode("SELL")}
+                className={`flex-1 font-bold uppercase py-2 rounded-lg transition-colors ${
+                  orderMode === "SELL"
+                    ? "bg-red-600 hover:bg-red-700 text-white"
+                    : "bg-transparent border border-gray-700 text-gray-400 hover:text-white"
+                }`}
+              >
+                Sell
+              </Button>
+            </div>
 
-          <div className="space-y-2">
-            <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Order Amount (SOL)
-            </Label>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                step="0.001"
-                value={orderAmount}
-                onChange={(e) => setOrderAmount(e.target.value)}
-                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-                placeholder="Enter order amount"
-              />
-              <span className="text-sm text-gray-600">◎</span>
+            <div className="space-y-3">
+              {orderMode === "BUY" ? (
+                <>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-600 text-xs font-semibold">
+                        Target Limit ({selectedToken})
+                      </Label>
+                      <div className="flex items-center gap-1 text-xs text-gray-400">
+                        {isFetchingPrice ? (
+                          <>
+                            <Loader className="w-3 h-3 animate-spin" />
+                            Fetching...
+                          </>
+                        ) : livePrice ? (
+                          <>
+                            Live:{" "}
+                            <span className="text-blue-400 font-semibold">
+                              {livePrice.toFixed(8)}
+                            </span>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+                    <Input
+                      type="number"
+                      step="0.00000001"
+                      value={buyOrder.price}
+                      onChange={(e) =>
+                        handleBuyTargetPriceChange(e.target.value)
+                      }
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-blue-400`}
+                      placeholder="Enter target price"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-gray-600 text-xs font-semibold">
+                      SOL Amount
+                    </Label>
+                    <Input
+                      type="number"
+                      step="0.001"
+                      value={buyOrder.total}
+                      onChange={(e) => handleBuySolAmountChange(e.target.value)}
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-blue-400`}
+                      placeholder="Enter SOL amount"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-600 text-xs font-semibold">
+                        Estimated {selectedToken}
+                      </Label>
+                      <span className="text-xs text-gray-500">
+                        (at live price)
+                      </span>
+                    </div>
+                    <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
+                      {buyOrder.amount || "0"}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-gray-600 text-xs font-semibold">
+                      Available SOL
+                    </Label>
+                    <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
+                      <span
+                        className={
+                          canAffordCurrent ? "text-green-400" : "text-red-400"
+                        }
+                      >
+                        {solBalance.toFixed(8)}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-600 text-xs font-semibold">
+                        Target Limit ({selectedToken})
+                      </Label>
+                      <div className="flex items-center gap-1 text-xs text-gray-400">
+                        {isFetchingPrice ? (
+                          <>
+                            <Loader className="w-3 h-3 animate-spin" />
+                            Fetching...
+                          </>
+                        ) : livePrice ? (
+                          <>
+                            Live:{" "}
+                            <span className="text-red-400 font-semibold">
+                              {livePrice.toFixed(8)}
+                            </span>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+                    <Input
+                      type="number"
+                      step="0.00000001"
+                      value={sellOrder.price}
+                      onChange={(e) => handleSellPriceChange(e.target.value)}
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-red-400`}
+                      placeholder="Enter target price"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-gray-600 text-xs font-semibold">
+                      {selectedToken} Amount
+                    </Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={sellOrder.amount}
+                      onChange={(e) => handleSellAmountChange(e.target.value)}
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-red-400`}
+                      placeholder="Enter amount to sell"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-600 text-xs font-semibold">
+                        Estimated SOL
+                      </Label>
+                      <span className="text-xs text-gray-500">
+                        (at live price)
+                      </span>
+                    </div>
+                    <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
+                      {sellOrder.total || "0"}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-gray-600 text-xs font-semibold">
+                      Available {selectedToken}
+                    </Label>
+                    <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
+                      <span
+                        className={
+                          canAffordCurrent ? "text-green-400" : "text-red-400"
+                        }
+                      >
+                        {tokenBalance.toFixed(8)}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <Button
+                onClick={handlePlaceOrder}
+                disabled={
+                  isLoading ||
+                  !canAffordCurrent ||
+                  !currentOrder.price ||
+                  !currentOrder.amount
+                }
+                className={`w-full font-bold uppercase py-3 rounded-lg transition-colors text-white ${
+                  orderMode === "BUY"
+                    ? "bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
+                    : "bg-red-600 hover:bg-red-700 disabled:bg-red-400"
+                }`}
+              >
+                {isLoading
+                  ? "Placing..."
+                  : `Place ${orderMode === "BUY" ? "Buy" : "Sell"} Order`}
+              </Button>
             </div>
           </div>
-
-          <div className="space-y-2">
-            <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Price Spread
-            </Label>
-            <div className="bg-transparent border border-green-500/50 rounded-lg px-4 py-3 flex items-center justify-center">
-              <span className="text-sm font-semibold text-green-400">
-                {selectedToken === "FIXERCOIN"
-                  ? `+${tokenConfig.spread.toFixed(8)}`
-                  : `+${tokenConfig.spread}`}{" "}
-                {selectedToken}
-              </span>
-            </div>
-          </div>
-
-          <div className="p-4 bg-transparent border border-gray-700 rounded-lg">
-            <div
-              className="text-gray-300"
-              style={{
-                fontSize: "10px",
-                fontWeight: "600",
-                letterSpacing: "0.5px",
-              }}
-            >
-              AVAILABLE SOL :{" "}
-              <span className={canAfford ? "text-green-400" : "text-red-400"}>
-                {solBalance.toFixed(4)}
-              </span>{" "}
-              | REQUIRED :{" "}
-              <span className="text-white">{totalNeeded.toFixed(4)}</span> |
-              NEED :{" "}
-              <span className="text-red-400">{solNeeded.toFixed(4)}</span>
-            </div>
-          </div>
-
-          <Button
-            onClick={handleRunBot}
-            disabled={isLoading || !canAfford}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold uppercase py-3 rounded-lg"
-          >
-            {isLoading ? "Starting..." : "Run Bot"}
-          </Button>
         </div>
       </div>
     </div>

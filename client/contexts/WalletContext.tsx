@@ -636,14 +636,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         });
 
-        // Fetch FIXERCOIN and LOCKER prices using specialized services
+        // Fetch FIXERCOIN, LOCKER, and FXM prices using specialized services
         const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
         const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+        const fxmMint = "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump";
 
         try {
-          const [fixercoinData, lockerData] = await Promise.all([
+          const [fixercoinData, lockerData, fxmData] = await Promise.all([
             fixercoinPriceService.getFixercoinPrice(),
             lockerPriceService.getLockerPrice(),
+            fxmPriceService.getFXMPrice(),
           ]);
 
           if (

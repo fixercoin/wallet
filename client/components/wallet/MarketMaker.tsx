@@ -431,13 +431,13 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         handleBuyTargetPriceChange(e.target.value)
                       }
                       className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-blue-400`}
-                      placeholder="Enter target price"
+                      placeholder="ENTER TARGET PRICE"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label className="text-gray-600 text-xs font-semibold">
-                      SOL Amount
+                      SOL AMOUNT
                     </Label>
                     <Input
                       type="number"
@@ -445,18 +445,15 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       value={buyOrder.total}
                       onChange={(e) => handleBuySolAmountChange(e.target.value)}
                       className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-blue-400`}
-                      placeholder="Enter SOL amount"
+                      placeholder="ENTER SOL AMOUNT"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-gray-600 text-xs font-semibold">
-                        Estimated {selectedToken}
+                        ESTIMATED {selectedToken}
                       </Label>
-                      <span className="text-xs text-gray-500">
-                        (at live price)
-                      </span>
                     </div>
                     <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
                       {buyOrder.amount || "0"}
@@ -465,7 +462,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
                   <div className="space-y-2">
                     <Label className="text-gray-600 text-xs font-semibold">
-                      Available SOL
+                      AVAILABLE SOL
                     </Label>
                     <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
                       <span

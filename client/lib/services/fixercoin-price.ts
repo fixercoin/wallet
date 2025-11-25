@@ -13,7 +13,7 @@ export interface FixercoinPriceData {
 class FixercoinPriceService {
   private cachedData: FixercoinPriceData | null = null;
   private lastFetchTime: Date | null = null;
-  private readonly CACHE_DURATION = 2000; // 2 seconds cache for responsive limit orders - shorter for real-time accuracy
+  private readonly CACHE_DURATION = 1500; // 1.5 seconds - matches DexTools real-time update frequency
 
   async getFixercoinPrice(): Promise<FixercoinPriceData | null> {
     try {

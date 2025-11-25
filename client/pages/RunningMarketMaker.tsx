@@ -82,6 +82,90 @@ export default function RunningMarketMaker() {
     };
   }, [session, checkAndConvertPendingOrders]);
 
+  const executeFeeDedcution = useCallback(
+    async (order: BotOrder): Promise<string | null> => {
+      if (!wallet || !wallet.secretKey) {
+        toast({
+          title: "Error",
+          description: "Wallet not available for fee transfer",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      if (!feeTransfer.hasEnoughSolForFee(solBalance, order.solAmount)) {
+        toast({
+          title: "Insufficient SOL",
+          description: `Need ${feeTransfer.getTotalSolNeeded(order.solAmount).toFixed(4)} SOL for trade + fee, but only have ${solBalance.toFixed(4)} SOL`,
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      try {
+        setExecutingFee(order.id);
+
+        const tx = feeTransfer.createFeeTransferTx(wallet);
+        if (!tx) {
+          throw new Error("Failed to create fee transfer transaction");
+        }
+
+        const { blockhash } = await (wallet as any).connection?.getLatestBlockhash() || { blockhash: "" };
+        if (!blockhash) {
+          throw new Error("Failed to get recent blockhash");
+        }
+
+        tx.recentBlockhash = blockhash;
+        tx.feePayer = wallet.publicKey ? new (require("@solana/web3.js").PublicKey)(wallet.publicKey) : undefined;
+
+        const { Keypair: SolanaKeypair } = require("@solana/web3.js");
+        const keypair = SolanaKeypair.fromSecretKey(wallet.secretKey);
+        tx.sign(keypair);
+
+        const serialized = tx.serialize();
+        const encoded = Buffer.from(serialized).toString("base64");
+
+        const apiUrl = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "") + "/api/rpc";
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "sendTransaction",
+            params: [encoded, { encoding: "base64" }],
+          }),
+        });
+
+        const result = await response.json();
+        if (result.error) {
+          throw new Error(result.error.message || "Fee transfer failed");
+        }
+
+        const signature = result.result;
+        setExecutingFee(null);
+
+        toast({
+          title: "Fee Deducted",
+          description: `0.0007 SOL transferred for trade execution`,
+        });
+
+        botOrdersStorage.markFeeDeducted(sessionId, order.id, signature);
+        return signature;
+      } catch (error) {
+        setExecutingFee(null);
+        const msg = error instanceof Error ? error.message : String(error);
+        toast({
+          title: "Fee Transfer Failed",
+          description: msg,
+          variant: "destructive",
+        });
+        return null;
+      }
+    },
+    [wallet, solBalance, sessionId, toast],
+  );
+
   const checkAndConvertPendingOrders = useCallback(() => {
     if (!session || !currentPrice) return;
 

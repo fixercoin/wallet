@@ -406,9 +406,12 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-gray-600 text-xs font-semibold">
-                      Estimated {selectedToken}
-                    </Label>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-600 text-xs font-semibold">
+                        Estimated {selectedToken}
+                      </Label>
+                      <span className="text-xs text-gray-500">(at live price)</span>
+                    </div>
                     <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-medium">
                       {buyOrder.amount || "0"}
                     </div>

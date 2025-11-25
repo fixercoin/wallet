@@ -145,97 +145,97 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     return null;
   };
 
-  const handlePlaceBuyOrder = async () => {
-    const validationError = validateBuyOrder();
-    if (validationError) {
-      toast({
-        title: "Validation Error",
-        description: validationError,
-        variant: "destructive",
-      });
-      return;
-    }
+  const handlePlaceOrder = async () => {
+    if (orderMode === "BUY") {
+      const validationError = validateBuyOrder();
+      if (validationError) {
+        toast({
+          title: "Validation Error",
+          description: validationError,
+          variant: "destructive",
+        });
+        return;
+      }
 
-    setIsBuyLoading(true);
+      setIsLoading(true);
 
-    try {
-      const orderData = {
-        type: "BUY",
-        token: selectedToken,
-        tokenMint: tokenConfig.mint,
-        price: parseFloat(buyOrder.price),
-        amount: parseFloat(buyOrder.amount),
-        totalSol: parseFloat(buyOrder.total),
-      };
+      try {
+        const orderData = {
+          type: "BUY",
+          token: selectedToken,
+          tokenMint: tokenConfig.mint,
+          price: parseFloat(buyOrder.price),
+          amount: parseFloat(buyOrder.amount),
+          totalSol: parseFloat(buyOrder.total),
+        };
 
-      console.log("[MarketMaker] Placing buy limit order:", orderData);
+        console.log("[MarketMaker] Placing buy limit order:", orderData);
 
-      toast({
-        title: "Buy Order Placed",
-        description: `Limit buy order placed: ${buyOrder.amount} ${selectedToken} at ${buyOrder.price}`,
-      });
+        toast({
+          title: "Buy Order Placed",
+          description: `Limit buy order placed: ${buyOrder.amount} ${selectedToken} at ${buyOrder.price}`,
+        });
 
-      setBuyOrder({
-        price: "0.00001",
-        amount: "1000",
-        total: "0.01",
-      });
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      toast({
-        title: "Error",
-        description: msg,
-        variant: "destructive",
-      });
-    } finally {
-      setIsBuyLoading(false);
-    }
-  };
+        setBuyOrder({
+          price: "0.00001",
+          amount: "1000",
+          total: "0.01",
+        });
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        toast({
+          title: "Error",
+          description: msg,
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      const validationError = validateSellOrder();
+      if (validationError) {
+        toast({
+          title: "Validation Error",
+          description: validationError,
+          variant: "destructive",
+        });
+        return;
+      }
 
-  const handlePlaceSellOrder = async () => {
-    const validationError = validateSellOrder();
-    if (validationError) {
-      toast({
-        title: "Validation Error",
-        description: validationError,
-        variant: "destructive",
-      });
-      return;
-    }
+      setIsLoading(true);
 
-    setIsSellLoading(true);
+      try {
+        const orderData = {
+          type: "SELL",
+          token: selectedToken,
+          tokenMint: tokenConfig.mint,
+          price: parseFloat(sellOrder.price),
+          amount: parseFloat(sellOrder.amount),
+          totalSol: parseFloat(sellOrder.total),
+        };
 
-    try {
-      const orderData = {
-        type: "SELL",
-        token: selectedToken,
-        tokenMint: tokenConfig.mint,
-        price: parseFloat(sellOrder.price),
-        amount: parseFloat(sellOrder.amount),
-        totalSol: parseFloat(sellOrder.total),
-      };
+        console.log("[MarketMaker] Placing sell limit order:", orderData);
 
-      console.log("[MarketMaker] Placing sell limit order:", orderData);
+        toast({
+          title: "Sell Order Placed",
+          description: `Limit sell order placed: ${sellOrder.amount} ${selectedToken} at ${sellOrder.price}`,
+        });
 
-      toast({
-        title: "Sell Order Placed",
-        description: `Limit sell order placed: ${sellOrder.amount} ${selectedToken} at ${sellOrder.price}`,
-      });
-
-      setSellOrder({
-        price: "0.00002",
-        amount: "1000",
-        total: "0.02",
-      });
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      toast({
-        title: "Error",
-        description: msg,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSellLoading(false);
+        setSellOrder({
+          price: "0.00002",
+          amount: "1000",
+          total: "0.02",
+        });
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        toast({
+          title: "Error",
+          description: msg,
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 

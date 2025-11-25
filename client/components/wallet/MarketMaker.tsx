@@ -134,12 +134,18 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     [tokens],
   );
 
+  const usdcToken = useMemo(
+    () => tokens.find((t) => t.symbol === "USDC"),
+    [tokens],
+  );
+
   const selectedTokenBalance = useMemo(
     () => tokens.find((t) => t.symbol === selectedToken),
     [tokens, selectedToken],
   );
 
   const solBalance = solToken?.balance || 0;
+  const usdcBalance = usdcToken?.balance || 0;
   const tokenBalance = selectedTokenBalance?.balance || 0;
 
   const calculateAmountFromTotal = useCallback(

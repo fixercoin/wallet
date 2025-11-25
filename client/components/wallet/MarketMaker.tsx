@@ -17,6 +17,15 @@ import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { solPriceService } from "@/lib/services/sol-price";
 import { MarketMakerHistoryCard } from "./MarketMakerHistoryCard";
+import {
+  botOrdersStorage,
+  BotSession,
+  BotOrder,
+} from "@/lib/bot-orders-storage";
+import {
+  executeLimitOrder,
+  checkAndExecutePendingOrders,
+} from "@/lib/market-maker-executor";
 
 interface MarketMakerProps {
   onBack: () => void;

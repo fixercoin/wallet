@@ -69,8 +69,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       return "Number of makers must be between 1 and 1000";
 
     const amount = parseFloat(orderAmount);
-    if (isNaN(amount) || amount < 0.01)
-      return "Order amount must be at least 0.01 SOL";
+    if (isNaN(amount) || amount <= 0)
+      return "Order amount must be greater than 0 SOL";
 
     return null;
   }, [numberOfMakers, orderAmount]);
@@ -216,11 +216,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
               <Input
                 type="number"
                 step="0.001"
-                min="0.01"
                 value={orderAmount}
                 onChange={(e) => setOrderAmount(e.target.value)}
                 className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-                placeholder="Minimum 0.01 SOL"
+                placeholder="Enter order amount"
               />
               <span className="text-sm text-gray-600">◎</span>
             </div>

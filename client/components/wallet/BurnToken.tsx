@@ -600,17 +600,6 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
             </div>
           </div>
 
-          <div className="px-4 py-1">
-            <img
-              src="https://cdn.builder.io/api/v1/image/assets%2Fda3497f314c34a2c8eb8f1661abc2abb%2Fbec39b40cec8489498071e011c6d3778?format=webp&width=800"
-              alt="Burn tokens animation"
-              className="w-full mx-auto rounded-lg"
-              style={{
-                backgroundColor: "transparent",
-                mixBlendMode: "lighten",
-              }}
-            />
-          </div>
 
           <div className="px-4 pb-6 space-y-5">
             <div className="space-y-4">

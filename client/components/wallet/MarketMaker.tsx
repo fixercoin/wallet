@@ -46,6 +46,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const navigate = useNavigate();
 
   const [selectedToken, setSelectedToken] = useState("FIXERCOIN");
+  const [orderMode, setOrderMode] = useState<"BUY" | "SELL">("BUY");
   const [buyOrder, setBuyOrder] = useState<LimitOrder>({
     price: "0.00001",
     amount: "1000",
@@ -56,8 +57,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     amount: "1000",
     total: "0.02",
   });
-  const [isBuyLoading, setIsBuyLoading] = useState(false);
-  const [isSellLoading, setIsSellLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const tokenConfig = TOKEN_CONFIGS[selectedToken];
 

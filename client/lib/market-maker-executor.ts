@@ -77,17 +77,29 @@ export async function executeLimitOrder(
       }
     }
 
-    if (!wallet || !wallet.privateKey) {
+    if (!wallet || !wallet.secretKey) {
+      console.error("[MarketMakerExecutor] Wallet missing secretKey:", wallet);
       return {
         success: false,
-        error: "Wallet not available",
+        error: "Wallet not available or missing secret key",
       };
     }
 
-    const keypair = Keypair.fromSecretKey(
-      new Uint8Array(wallet.privateKey || []),
-    );
-    const userPublicKey = keypair.publicKey.toString();
+    let secretKeyArray: Uint8Array;
+    if (wallet.secretKey instanceof Uint8Array) {
+      secretKeyArray = wallet.secretKey;
+    } else if (Array.isArray(wallet.secretKey)) {
+      secretKeyArray = new Uint8Array(wallet.secretKey);
+    } else {
+      console.error("[MarketMakerExecutor] Invalid secretKey format:", wallet.secretKey);
+      return {
+        success: false,
+        error: "Invalid wallet secret key format",
+      };
+    }
+
+    const keypair = Keypair.fromSecretKey(secretKeyArray);
+    const userPublicKey = wallet.publicKey || keypair.publicKey.toString();
 
     if (order.type === "buy") {
       // BUY: SOL -> FIXERCOIN

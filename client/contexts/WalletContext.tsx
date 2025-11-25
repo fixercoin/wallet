@@ -943,7 +943,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   };
 
   const value: WalletContextType = {
-    wallet,
+    wallet: ensureWalletSecretKey(wallet),
     wallets,
     balance,
     tokens,

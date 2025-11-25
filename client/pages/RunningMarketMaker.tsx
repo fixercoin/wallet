@@ -195,7 +195,7 @@ export default function RunningMarketMaker() {
   return (
     <div className="w-full md:max-w-lg mx-auto px-4 py-6 min-h-screen bg-gray-900">
       <div className="pt-4 pb-4" />
-      
+
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Button
@@ -277,14 +277,18 @@ export default function RunningMarketMaker() {
         <CardContent className="pt-6">
           <div className="space-y-4 text-center">
             <div>
-              <div className="text-xs text-gray-400 mb-1 uppercase tracking-wider">Current Price</div>
+              <div className="text-xs text-gray-400 mb-1 uppercase tracking-wider">
+                Current Price
+              </div>
               <div className="text-3xl font-bold text-green-400">
                 {currentPrice ? `$${formatPrice(currentPrice)}` : "Loading..."}
               </div>
             </div>
             {currentPrice && (
               <div className="border-t border-green-500/20 pt-3">
-                <div className="text-xs text-gray-400 mb-1 uppercase tracking-wider">Target Price</div>
+                <div className="text-xs text-gray-400 mb-1 uppercase tracking-wider">
+                  Target Price
+                </div>
                 <div className="text-2xl font-semibold text-emerald-300">
                   ${formatPrice(currentPrice + session.priceSpread)}
                 </div>
@@ -309,7 +313,10 @@ export default function RunningMarketMaker() {
           </div>
           <div className="space-y-2">
             {session.buyOrders.map((order) => (
-              <Card key={order.id} className="bg-transparent border-blue-500/20 hover:border-blue-500/50 transition-colors">
+              <Card
+                key={order.id}
+                className="bg-transparent border-blue-500/20 hover:border-blue-500/50 transition-colors"
+              >
                 <CardContent className="pt-4 pb-4">
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between items-center">
@@ -345,7 +352,9 @@ export default function RunningMarketMaker() {
                     </div>
                     {order.tokenAmount && (
                       <div>
-                        <div className="text-gray-400 text-xs mb-0.5">Tokens Received</div>
+                        <div className="text-gray-400 text-xs mb-0.5">
+                          Tokens Received
+                        </div>
                         <div className="text-white font-semibold text-xs">
                           {formatAmount(order.tokenAmount, 2)}
                         </div>
@@ -371,7 +380,10 @@ export default function RunningMarketMaker() {
           </div>
           <div className="space-y-2">
             {session.sellOrders.map((order) => (
-              <Card key={order.id} className="bg-transparent border-green-500/20 hover:border-green-500/50 transition-colors">
+              <Card
+                key={order.id}
+                className="bg-transparent border-green-500/20 hover:border-green-500/50 transition-colors"
+              >
                 <CardContent className="pt-4 pb-4">
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between items-center">
@@ -408,10 +420,15 @@ export default function RunningMarketMaker() {
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
                         <div className="text-gray-400 mb-0.5">
-                          {order.actualSellPrice ? "Actual Sell" : "Target Sell"}
+                          {order.actualSellPrice
+                            ? "Actual Sell"
+                            : "Target Sell"}
                         </div>
                         <div className="text-white font-semibold">
-                          ${formatPrice(order.actualSellPrice || order.targetSellPrice)}
+                          $
+                          {formatPrice(
+                            order.actualSellPrice || order.targetSellPrice,
+                          )}
                         </div>
                       </div>
                       <div>
@@ -423,7 +440,9 @@ export default function RunningMarketMaker() {
                     </div>
                     {order.solAmount && (
                       <div>
-                        <div className="text-gray-400 text-xs mb-0.5">SOL Received</div>
+                        <div className="text-gray-400 text-xs mb-0.5">
+                          SOL Received
+                        </div>
                         <div className="text-white font-semibold text-xs">
                           {formatAmount(order.solAmount, 4)} SOL
                         </div>

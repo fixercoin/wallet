@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
-import { botOrdersStorage, BotSession, BotOrder, TokenType } from "@/lib/bot-orders-storage";
+import {
+  botOrdersStorage,
+  BotSession,
+  BotOrder,
+  TokenType,
+} from "@/lib/bot-orders-storage";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 
 const TOKEN_CONFIGS: Record<TokenType, { spread: number }> = {
@@ -14,15 +19,19 @@ const TOKEN_CONFIGS: Record<TokenType, { spread: number }> = {
 export default function MarketMakerHistory() {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState<BotSession[]>([]);
-  const [selectedSession, setSelectedSession] = useState<BotSession | null>(null);
-  const [sessionPrices, setSessionPrices] = useState<Record<string, number>>({});
+  const [selectedSession, setSelectedSession] = useState<BotSession | null>(
+    null,
+  );
+  const [sessionPrices, setSessionPrices] = useState<Record<string, number>>(
+    {},
+  );
 
   useEffect(() => {
     const allSessions = botOrdersStorage.getAllSessions();
     setSessions(allSessions.sort((a, b) => b.createdAt - a.createdAt));
 
     // Fetch live prices for all sessions
-    allSessions.forEach(session => {
+    allSessions.forEach((session) => {
       fetchSessionPrice(session);
     });
   }, []);
@@ -32,9 +41,9 @@ export default function MarketMakerHistory() {
       const token = await dexscreenerAPI.getTokenByMint(session.tokenMint);
       if (token && token.priceUsd) {
         const price = parseFloat(token.priceUsd);
-        setSessionPrices(prev => ({
+        setSessionPrices((prev) => ({
           ...prev,
-          [session.id]: price
+          [session.id]: price,
         }));
       }
     } catch (error) {
@@ -154,18 +163,39 @@ export default function MarketMakerHistory() {
           <CardContent className="pt-6">
             <div className="space-y-4">
               <div className="text-center">
-                <div className="text-xs text-gray-400 mb-2 uppercase tracking-wider">Live Price</div>
+                <div className="text-xs text-gray-400 mb-2 uppercase tracking-wider">
+                  Live Price
+                </div>
                 <div className="text-2xl font-bold text-green-400">
-                  ${sessionPrices[selectedSession.id] ? formatTokenPrice(sessionPrices[selectedSession.id], selectedSession.token) : "Loading..."}
+                  $
+                  {sessionPrices[selectedSession.id]
+                    ? formatTokenPrice(
+                        sessionPrices[selectedSession.id],
+                        selectedSession.token,
+                      )
+                    : "Loading..."}
                 </div>
               </div>
               {sessionPrices[selectedSession.id] && (
                 <div className="text-center border-t border-gray-700/50 pt-3">
-                  <div className="text-xs text-gray-400 mb-2 uppercase tracking-wider">Target Price</div>
-                  <div className="text-2xl font-bold text-emerald-300">
-                    ${formatTokenPrice(sessionPrices[selectedSession.id] + TOKEN_CONFIGS[selectedSession.token].spread, selectedSession.token)}
+                  <div className="text-xs text-gray-400 mb-2 uppercase tracking-wider">
+                    Target Price
                   </div>
-                  <div className="text-xs text-gray-500 mt-2">Spread: ${formatTokenPrice(TOKEN_CONFIGS[selectedSession.token].spread, selectedSession.token)}</div>
+                  <div className="text-2xl font-bold text-emerald-300">
+                    $
+                    {formatTokenPrice(
+                      sessionPrices[selectedSession.id] +
+                        TOKEN_CONFIGS[selectedSession.token].spread,
+                      selectedSession.token,
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2">
+                    Spread: $
+                    {formatTokenPrice(
+                      TOKEN_CONFIGS[selectedSession.token].spread,
+                      selectedSession.token,
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -215,7 +245,8 @@ export default function MarketMakerHistory() {
             </h3>
             <div className="space-y-2">
               {selectedSession.buyOrders.map((order) => (
-                <Card className="bg-transparent border-blue-500/20 hover:border-blue-500/50 transition-colors"
+                <Card
+                  className="bg-transparent border-blue-500/20 hover:border-blue-500/50 transition-colors"
                   key={order.id}
                   className="cursor-pointer hover:border-blue-500/50 transition-colors"
                   onClick={() => handleOrderClick(selectedSession, order)}
@@ -225,7 +256,9 @@ export default function MarketMakerHistory() {
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <TrendingDown className="h-4 w-4 text-blue-400" />
-                          <span className="text-gray-400">Order {order.id.slice(-6)}</span>
+                          <span className="text-gray-400">
+                            Order {order.id.slice(-6)}
+                          </span>
                         </div>
                         <span
                           className={`text-xs font-semibold uppercase ${
@@ -240,7 +273,11 @@ export default function MarketMakerHistory() {
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-400">Price</span>
                         <span className="text-white">
-                          ${formatTokenPrice(order.buyPrice, selectedSession.token)}
+                          $
+                          {formatTokenPrice(
+                            order.buyPrice,
+                            selectedSession.token,
+                          )}
                         </span>
                       </div>
                       <div className="flex justify-between text-xs">
@@ -272,7 +309,8 @@ export default function MarketMakerHistory() {
             </h3>
             <div className="space-y-2">
               {selectedSession.sellOrders.map((order) => (
-                <Card className="bg-transparent border-green-500/20 hover:border-green-500/50 transition-colors"
+                <Card
+                  className="bg-transparent border-green-500/20 hover:border-green-500/50 transition-colors"
                   key={order.id}
                   className="cursor-pointer hover:border-green-500/50 transition-colors"
                   onClick={() => handleOrderClick(selectedSession, order)}
@@ -282,7 +320,9 @@ export default function MarketMakerHistory() {
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <TrendingUp className="h-4 w-4 text-green-400" />
-                          <span className="text-gray-400">Order {order.id.slice(-6)}</span>
+                          <span className="text-gray-400">
+                            Order {order.id.slice(-6)}
+                          </span>
                         </div>
                         <span
                           className={`text-xs font-semibold uppercase ${
@@ -297,13 +337,21 @@ export default function MarketMakerHistory() {
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-400">Buy Price</span>
                         <span className="text-white">
-                          ${formatTokenPrice(order.buyPrice, selectedSession.token)}
+                          $
+                          {formatTokenPrice(
+                            order.buyPrice,
+                            selectedSession.token,
+                          )}
                         </span>
                       </div>
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-400">Sell Price</span>
                         <span className="text-white">
-                          ${formatTokenPrice(order.actualSellPrice || order.targetSellPrice, selectedSession.token)}
+                          $
+                          {formatTokenPrice(
+                            order.actualSellPrice || order.targetSellPrice,
+                            selectedSession.token,
+                          )}
                         </span>
                       </div>
                       {order.tokenAmount && (
@@ -409,13 +457,24 @@ export default function MarketMakerHistory() {
                           <div className="text-center">
                             <div className="text-gray-400 mb-1">Live Price</div>
                             <div className="font-semibold text-green-400">
-                              ${formatTokenPrice(sessionPrices[session.id], session.token)}
+                              $
+                              {formatTokenPrice(
+                                sessionPrices[session.id],
+                                session.token,
+                              )}
                             </div>
                           </div>
                           <div className="text-center">
-                            <div className="text-gray-400 mb-1">Target Price</div>
+                            <div className="text-gray-400 mb-1">
+                              Target Price
+                            </div>
                             <div className="font-semibold text-emerald-300">
-                              ${formatTokenPrice(sessionPrices[session.id] + TOKEN_CONFIGS[session.token].spread, session.token)}
+                              $
+                              {formatTokenPrice(
+                                sessionPrices[session.id] +
+                                  TOKEN_CONFIGS[session.token].spread,
+                                session.token,
+                              )}
                             </div>
                           </div>
                         </div>

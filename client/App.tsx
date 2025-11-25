@@ -180,10 +180,7 @@ function AppRoutes() {
         path="/market-maker/running/:sessionId"
         element={<RunningMarketMaker />}
       />
-      <Route
-        path="/market-maker/history"
-        element={<MarketMakerHistory />}
-      />
+      <Route path="/market-maker/history" element={<MarketMakerHistory />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

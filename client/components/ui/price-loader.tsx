@@ -2,22 +2,27 @@ import React from "react";
 
 export const PriceLoader: React.FC = () => {
   return (
-    <div className="inline-flex items-center gap-1">
+    <div className="inline-flex items-center">
       <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
+        @keyframes pulse-breath {
+          0%, 100% {
+            opacity: 0.4;
+          }
+          50% {
+            opacity: 1;
+          }
         }
-        .price-spinner {
+        .price-pulse {
           display: inline-block;
-          width: 12px;
-          height: 12px;
-          border: 2px solid #4a5568;
-          border-top-color: #999999;
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
+          background: linear-gradient(90deg, #4a5568 0%, #6b7280 50%, #4a5568 100%);
+          background-size: 200% 100%;
+          animation: pulse-breath 2s ease-in-out infinite;
+          height: 1em;
+          width: 2.5em;
+          border-radius: 3px;
         }
       `}</style>
-      <div className="price-spinner"></div>
+      <div className="price-pulse"></div>
     </div>
   );
 };

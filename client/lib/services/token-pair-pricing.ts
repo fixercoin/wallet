@@ -197,11 +197,46 @@ class TokenPairPricingService {
       const solPrice = await this.getSolPrice();
 
       // Get the SOL pair price (how many SOL to buy 1 token)
-      const priceInSol = await this.getSolPairPrice(config.mint);
+      let priceInSol = await this.getSolPairPrice(config.mint);
 
+      // If no SOL pair found, try direct USD price from DexScreener
       if (!priceInSol || priceInSol <= 0) {
         console.warn(
-          `Could not determine SOL pair for ${symbol}, using fallback`,
+          `Could not determine SOL pair for ${symbol}, trying direct USD price...`,
+        );
+        const directUsdPrice = await this.getDirectUsdPrice(config.mint);
+
+        if (directUsdPrice && directUsdPrice > 0 && isFinite(directUsdPrice)) {
+          // Use direct USD price, fetching additional metadata from DexScreener
+          const tokenData = await dexscreenerAPI.getTokenByMint(config.mint);
+
+          const priceData: PairPricingData = {
+            tokenAddress: config.mint,
+            tokenSymbol: symbol,
+            solPrice,
+            pairRatio: solPrice / directUsdPrice, // How many tokens per 1 SOL
+            derivedPrice: directUsdPrice,
+            priceChange24h: tokenData?.priceChange?.h24 || 0,
+            volume24h: tokenData?.volume?.h24 || 0,
+            liquidity: tokenData?.liquidity?.usd || 0,
+            lastUpdated: new Date(),
+          };
+
+          // Cache the result
+          this.cache.set(config.mint, {
+            data: priceData,
+            expiresAt: Date.now() + this.CACHE_DURATION,
+          });
+
+          console.log(
+            `${symbol} direct USD price: $${priceData.derivedPrice.toFixed(8)}`,
+          );
+
+          return priceData;
+        }
+
+        console.warn(
+          `Could not determine price (SOL pair or USD price) for ${symbol}, using fallback`,
         );
         return this.getFallbackPriceData(symbol, solPrice);
       }

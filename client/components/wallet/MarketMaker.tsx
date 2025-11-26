@@ -17,6 +17,7 @@ import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { solPriceService } from "@/lib/services/sol-price";
 import { MarketMakerHistoryCard } from "./MarketMakerHistoryCard";
+import { PriceLoader } from "@/components/ui/price-loader";
 import {
   botOrdersStorage,
   BotSession,

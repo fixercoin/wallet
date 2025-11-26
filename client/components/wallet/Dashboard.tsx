@@ -749,8 +749,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             alt="Balance background"
             className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
             style={{
-              backgroundImage: "linear-gradient(to bottom right, #1a1a1a, #2a2a2a, #3a3a3a)",
-              backgroundBlendMode: "darken"
+              backgroundColor: "#1f1f1f"
             }}
           />
           <div className="relative z-10">

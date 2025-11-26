@@ -941,12 +941,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         Amount ({selectedSymbol})
                       </Label>
                       <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                        Balance:{" "}
                         {(Math.floor(selectedBalance * 1000) / 1000).toLocaleString(undefined, {
                           minimumFractionDigits: 3,
                           maximumFractionDigits: 3,
-                        })}{" "}
-                        {selectedSymbol}
+                        })}
                       </span>
                     </div>
                     <Input

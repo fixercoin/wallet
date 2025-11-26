@@ -118,8 +118,7 @@ class FXMPriceService {
       return null;
     } catch (error) {
       console.error("Error fetching FXM price:", error);
-      // Don't cache fallback prices - force retry next time
-      return this.getFallbackPrice();
+      return null;
     }
   }
 

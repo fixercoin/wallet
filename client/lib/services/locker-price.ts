@@ -39,8 +39,8 @@ class LockerPriceService {
         await tokenPairPricingService.getDerivedPrice("LOCKER");
 
       if (!pairingData) {
-        console.warn("Failed to derive LOCKER price");
-        return this.getFallbackPrice();
+        console.warn("Failed to derive LOCKER price - service unavailable");
+        return null;
       }
 
       const priceData: LockerPriceData = {
@@ -66,15 +66,13 @@ class LockerPriceService {
         return priceData;
       } else {
         console.warn(
-          "Invalid price data from derivation, using fallback (not cached)",
+          "Invalid price data from derivation - returning null",
         );
-        // Don't cache fallback prices so they retry on next call
-        return this.getFallbackPrice();
+        return null;
       }
     } catch (error) {
       console.error("Error fetching LOCKER price:", error);
-      // Don't cache fallback prices - force retry next time
-      return this.getFallbackPrice();
+      return null;
     }
   }
 

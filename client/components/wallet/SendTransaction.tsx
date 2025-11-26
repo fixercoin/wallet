@@ -805,17 +805,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   const formatAmount = (value: string): string => {
     const num = parseFloat(value);
-    if (isNaN(num)) return "0.00";
-    if (selectedSymbol === "FIXERCOIN" || selectedSymbol === "LOCKER") {
-      return num.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-    }
-    const fractionDigits = 6;
+    if (isNaN(num)) return "0.000";
     return num.toLocaleString(undefined, {
-      minimumFractionDigits: Math.min(2, fractionDigits),
-      maximumFractionDigits: fractionDigits,
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
     });
   };
 
@@ -911,11 +904,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                             <div className="flex items-center justify-between w-full">
                               <span className="font-medium text-white">
                                 {t.symbol} ~{" "}
-                                {(t.symbol === "SOL"
-                                  ? balance
-                                  : t.balance || 0
+                                {(
+                                  Math.floor(
+                                    (t.symbol === "SOL"
+                                      ? balance
+                                      : t.balance || 0) * 1000,
+                                  ) / 1000
                                 ).toLocaleString(undefined, {
-                                  maximumFractionDigits: 8,
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3,
                                 })}
                               </span>
                             </div>
@@ -947,14 +944,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         htmlFor="amount"
                         className="text-[hsl(var(--foreground))] uppercase"
                       >
-                        Amount ({selectedSymbol})
+                        {selectedSymbol}
                       </Label>
                       <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                        Balance:{" "}
-                        {selectedBalance.toLocaleString(undefined, {
-                          maximumFractionDigits: 8,
-                        })}{" "}
-                        {selectedSymbol}
+                        {(
+                          Math.floor(selectedBalance * 1000) / 1000
+                        ).toLocaleString(undefined, {
+                          minimumFractionDigits: 3,
+                          maximumFractionDigits: 3,
+                        })}
                       </span>
                     </div>
                     <Input

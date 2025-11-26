@@ -163,7 +163,7 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
 
                   <div>
                     <div className="text-gray-400 text-xs mb-1">
-                      {order.type === "buy" ? "SOL Amount" : "Token Amount"}
+                      {order.type === "buy" ? "USDC Amount" : "Token Amount"}
                     </div>
                     <div className="text-white font-semibold">
                       {order.type === "buy"
@@ -188,7 +188,7 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
                   {order.type === "sell" && order.solAmount && (
                     <div>
                       <div className="text-gray-400 text-xs mb-1">
-                        SOL Received
+                        USDC Received
                       </div>
                       <div className="text-white font-semibold">
                         {formatAmount(order.solAmount, 4)}

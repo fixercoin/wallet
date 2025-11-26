@@ -63,6 +63,7 @@ import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
 import { TokenSearch } from "./TokenSearch";
+import { PriceLoader } from "@/components/ui/price-loader";
 
 const QUEST_TASKS = [
   {
@@ -618,7 +619,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* About */}
               <p className="text-xs text-gray-300 leading-relaxed">
                 A community challenge inside the Fixorium Wallet. Complete
-                simple tasks, earn rewards, and join random prize draws — all
+                simple tasks, earn rewards, and join random prize draws ��� all
                 directly from your wallet.
               </p>
 
@@ -999,22 +1000,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           })}
                         </p>
 
-                        <p
-                          className="text-xs font-semibold whitespace-nowrap token-price-blink"
-                          style={{
-                            color: "#ffffff",
-                          }}
-                        >
-                          $
+                        <div className="text-xs font-semibold whitespace-nowrap">
                           {typeof token.price === "number" &&
-                          isFinite(token.price)
-                            ? token.price.toFixed(
+                          isFinite(token.price) ? (
+                            <span style={{ color: "#ffffff" }}>
+                              $
+                              {token.price.toFixed(
                                 ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
-                              )
-                            : ["SOL", "USDC"].includes(token.symbol)
-                              ? "0.00"
-                              : "0.00000000"}
-                        </p>
+                              )}
+                            </span>
+                          ) : [
+                              "SOL",
+                              "USDC",
+                              "FIXERCOIN",
+                              "LOCKER",
+                              "FXM",
+                            ].includes(token.symbol) ? (
+                            <PriceLoader />
+                          ) : (
+                            <span style={{ color: "#999999" }}>
+                              $0.00000000
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>

@@ -113,32 +113,26 @@ class FXMPriceService {
       }
 
       console.warn(
-        "Failed to fetch FXM price from all sources, using fallback",
+        "Failed to fetch FXM price from all sources - service unavailable",
       );
-      return this.getFallbackPrice();
+      return null;
     } catch (error) {
       console.error("Error fetching FXM price:", error);
-      // Don't cache fallback prices - force retry next time
-      return this.getFallbackPrice();
+      return null;
     }
   }
 
-  private getFallbackPrice(): FXMPriceData {
-    console.log("Using fallback FXM price: $0.000003567 (hardcoded)");
-    return {
-      price: 0.000003567,
-      priceChange24h: 0,
-      volume24h: 0,
-      lastUpdated: new Date(),
-      derivationMethod: "hardcoded fallback",
-      isFallback: true,
-    };
+  private getFallbackPrice(): FXMPriceData | null {
+    console.log(
+      "FXM price service unavailable - returning null to show loading state",
+    );
+    return null;
   }
 
   // Get just the price number for quick access
   async getPrice(): Promise<number> {
     const data = await this.getFXMPrice();
-    return data?.price || 0.000003567;
+    return data?.price || 0;
   }
 
   // Get the price with derivation method info

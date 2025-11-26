@@ -41,8 +41,10 @@ class FixercoinPriceService {
         await tokenPairPricingService.getDerivedPrice("FIXERCOIN");
 
       if (!pairingData) {
-        console.warn("Failed to derive FIXERCOIN price from SOL pair");
-        return this.getFallbackPrice();
+        console.warn(
+          "Failed to derive FIXERCOIN price from SOL pair - service unavailable",
+        );
+        return null;
       }
 
       const priceData: FixercoinPriceData = {
@@ -67,35 +69,26 @@ class FixercoinPriceService {
         );
         return priceData;
       } else {
-        console.warn(
-          "Invalid price data from derivation, using fallback (not cached)",
-        );
-        // Don't cache fallback prices so they retry on next call
-        return this.getFallbackPrice();
+        console.warn("Invalid price data from derivation - returning null");
+        return null;
       }
     } catch (error) {
       console.error("Error fetching FIXERCOIN price:", error);
-      // Don't cache fallback prices - force retry next time
-      return this.getFallbackPrice();
+      return null;
     }
   }
 
-  private getFallbackPrice(): FixercoinPriceData {
-    console.log("Using fallback FIXERCOIN price");
-    return {
-      price: 0.00008139,
-      priceChange24h: 0,
-      volume24h: 0,
-      lastUpdated: new Date(),
-      derivationMethod: "fallback",
-      isFallback: true,
-    };
+  private getFallbackPrice(): FixercoinPriceData | null {
+    console.log(
+      "FIXERCOIN price service unavailable - returning null to show loading state",
+    );
+    return null;
   }
 
   // Get just the price number for quick access
   async getPrice(): Promise<number> {
     const data = await this.getFixercoinPrice();
-    return data?.price || 0.00008139;
+    return data?.price || 0;
   }
 
   // Clear cache to force fresh fetch

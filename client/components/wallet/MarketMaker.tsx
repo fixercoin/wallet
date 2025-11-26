@@ -17,6 +17,7 @@ import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { solPriceService } from "@/lib/services/sol-price";
 import { MarketMakerHistoryCard } from "./MarketMakerHistoryCard";
+import { PriceLoader } from "@/components/ui/price-loader";
 import {
   botOrdersStorage,
   BotSession,
@@ -631,10 +632,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       </Label>
                       <div className="flex items-center gap-1 text-xs text-gray-400">
                         {isFetchingPrice ? (
-                          <>
-                            <Loader className="w-3 h-3 animate-spin" />
-                            FETCHING...
-                          </>
+                          <PriceLoader />
                         ) : livePrice ? (
                           <>
                             LIVE:{" "}

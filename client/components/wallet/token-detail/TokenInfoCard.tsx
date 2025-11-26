@@ -102,7 +102,9 @@ export const TokenInfoCard: React.FC<TokenInfoCardProps> = ({ token }) => {
               </p>
             ) : (
               <div className="font-medium py-1">
-                {["FIXERCOIN", "LOCKER", "FXM"].includes(token.symbol) ? (
+                {["SOL", "USDC", "FIXERCOIN", "LOCKER", "FXM"].includes(
+                  token.symbol,
+                ) ? (
                   <PriceLoader />
                 ) : (
                   <p className="text-gray-400">—</p>

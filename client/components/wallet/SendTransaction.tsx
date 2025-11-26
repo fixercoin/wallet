@@ -890,6 +890,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
           .express-p2p-page [class*="border"] {
             border-width: 2px !important;
           }
+          .express-p2p-page > div > div > div[class*="border-gray"] {
+            border: none !important;
+          }
         }
       `}</style>
       <div className="flex-1 flex items-center justify-center relative z-20">

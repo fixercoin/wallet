@@ -990,17 +990,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <p className="text-xs font-semibold text-white whitespace-nowrap">
+                          $
+                          {tokenBalance.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+
                         <p
                           className="text-xs font-semibold whitespace-nowrap token-price-blink"
                           style={{
-                            color:
-                              typeof token.priceChange24h === "number" &&
-                              isFinite(token.priceChange24h)
-                                ? token.priceChange24h >= 0
-                                  ? "#4ade80"
-                                  : "#f87171"
-                                : "#ffffff",
+                            color: "#ffffff",
                           }}
                         >
                           $
@@ -1013,30 +1015,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               ? "0.00"
                               : "0.00000000"}
                         </p>
-                      </div>
-
-                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <p className="text-xs font-semibold text-white whitespace-nowrap">
-                          $
-                          {tokenBalance.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p>
-
-                        {typeof token.priceChange24h === "number" &&
-                        isFinite(token.priceChange24h) ? (
-                          <p
-                            className={`text-xs font-medium whitespace-nowrap ${token.priceChange24h >= 0 ? "text-green-400" : "text-red-400"}`}
-                          >
-                            {token.priceChange24h >= 0 ? "+" : ""}
-                            {token.priceChange24h.toFixed(2)}%
-                          </p>
-                        ) : (
-                          <p className="text-xs font-medium text-gray-400 whitespace-nowrap">
-                            N/A
-                          </p>
-                        )}
                       </div>
                     </div>
                   </CardContent>

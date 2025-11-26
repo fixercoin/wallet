@@ -314,7 +314,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       // Use shorter interval (5s) when tab is visible for more responsive updates
       // Longer interval (30s) when tab is hidden to conserve battery on mobile
       const interval =
-        document.hidden || document.visibilityState === "hidden" ? 30000 : 10000;
+        document.hidden || document.visibilityState === "hidden"
+          ? 30000
+          : 10000;
 
       refreshIntervalRef.current = setInterval(async () => {
         try {

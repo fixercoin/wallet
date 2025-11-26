@@ -123,7 +123,9 @@ class FXMPriceService {
   }
 
   private getFallbackPrice(): FXMPriceData | null {
-    console.log("FXM price service unavailable - returning null to show loading state");
+    console.log(
+      "FXM price service unavailable - returning null to show loading state",
+    );
     return null;
   }
 

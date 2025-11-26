@@ -209,12 +209,18 @@ export default function AssetsPage() {
                                     : 8,
                                 )}
                               </span>
-                            ) : ["SOL", "USDC", "FIXERCOIN", "LOCKER", "FXM"].includes(
-                                token.symbol,
-                              ) ? (
+                            ) : [
+                                "SOL",
+                                "USDC",
+                                "FIXERCOIN",
+                                "LOCKER",
+                                "FXM",
+                              ].includes(token.symbol) ? (
                               <PriceLoader />
                             ) : (
-                              <span style={{ color: "#999999" }}>$0.00000000</span>
+                              <span style={{ color: "#999999" }}>
+                                $0.00000000
+                              </span>
                             )}
                           </div>
                         </div>

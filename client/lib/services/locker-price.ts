@@ -65,9 +65,7 @@ class LockerPriceService {
         );
         return priceData;
       } else {
-        console.warn(
-          "Invalid price data from derivation - returning null",
-        );
+        console.warn("Invalid price data from derivation - returning null");
         return null;
       }
     } catch (error) {
@@ -77,7 +75,9 @@ class LockerPriceService {
   }
 
   private getFallbackPrice(): LockerPriceData | null {
-    console.log("LOCKER price service unavailable - returning null to show loading state");
+    console.log(
+      "LOCKER price service unavailable - returning null to show loading state",
+    );
     return null;
   }
 

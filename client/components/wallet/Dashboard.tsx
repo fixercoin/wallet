@@ -1004,16 +1004,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           {typeof token.price === "number" &&
                           isFinite(token.price) ? (
                             <span style={{ color: "#ffffff" }}>
-                              ${token.price.toFixed(
+                              $
+                              {token.price.toFixed(
                                 ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
                               )}
                             </span>
-                          ) : ["SOL", "USDC", "FIXERCOIN", "LOCKER", "FXM"].includes(
-                              token.symbol,
-                            ) ? (
+                          ) : [
+                              "SOL",
+                              "USDC",
+                              "FIXERCOIN",
+                              "LOCKER",
+                              "FXM",
+                            ].includes(token.symbol) ? (
                             <PriceLoader />
                           ) : (
-                            <span style={{ color: "#999999" }}>$0.00000000</span>
+                            <span style={{ color: "#999999" }}>
+                              $0.00000000
+                            </span>
                           )}
                         </div>
                       </div>

@@ -41,7 +41,9 @@ class FixercoinPriceService {
         await tokenPairPricingService.getDerivedPrice("FIXERCOIN");
 
       if (!pairingData) {
-        console.warn("Failed to derive FIXERCOIN price from SOL pair - service unavailable");
+        console.warn(
+          "Failed to derive FIXERCOIN price from SOL pair - service unavailable",
+        );
         return null;
       }
 
@@ -67,9 +69,7 @@ class FixercoinPriceService {
         );
         return priceData;
       } else {
-        console.warn(
-          "Invalid price data from derivation - returning null",
-        );
+        console.warn("Invalid price data from derivation - returning null");
         return null;
       }
     } catch (error) {
@@ -79,7 +79,9 @@ class FixercoinPriceService {
   }
 
   private getFallbackPrice(): FixercoinPriceData | null {
-    console.log("FIXERCOIN price service unavailable - returning null to show loading state");
+    console.log(
+      "FIXERCOIN price service unavailable - returning null to show loading state",
+    );
     return null;
   }
 

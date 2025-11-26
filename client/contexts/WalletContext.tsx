@@ -309,16 +309,37 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       clearInterval(refreshIntervalRef.current);
     }
 
-    // Setup periodic refresh every 10 seconds
-    refreshIntervalRef.current = setInterval(async () => {
-      try {
-        await refreshBalance();
-        await new Promise((r) => setTimeout(r, 500));
-        await refreshTokens();
-      } catch (err) {
-        console.error("[WalletContext] Error in periodic refresh:", err);
+    // Setup periodic refresh every 10 seconds (adaptive based on visibility)
+    const setupRefreshInterval = () => {
+      // Use shorter interval (5s) when tab is visible for more responsive updates
+      // Longer interval (30s) when tab is hidden to conserve battery on mobile
+      const interval =
+        document.hidden || document.visibilityState === "hidden"
+          ? 30000
+          : 10000;
+
+      refreshIntervalRef.current = setInterval(async () => {
+        try {
+          await refreshBalance();
+          await new Promise((r) => setTimeout(r, 500));
+          await refreshTokens();
+        } catch (err) {
+          console.error("[WalletContext] Error in periodic refresh:", err);
+        }
+      }, interval);
+    };
+
+    setupRefreshInterval();
+
+    // Handle visibility changes to adjust polling frequency
+    const handleVisibilityChange = () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
       }
-    }, 10000);
+      setupRefreshInterval();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     // Cleanup on unmount or wallet change
     return () => {
@@ -326,6 +347,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         clearInterval(refreshIntervalRef.current);
         refreshIntervalRef.current = null;
       }
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [wallet?.publicKey]);
 

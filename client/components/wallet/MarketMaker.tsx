@@ -627,7 +627,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-gray-600 text-xs font-semibold">
-                        TARGET LIMIT ({selectedToken})
+                        TARGET LIMIT (FIXERCOIN)
                       </Label>
                       <div className="flex items-center gap-1 text-xs text-gray-400">
                         {isFetchingPrice ? (

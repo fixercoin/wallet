@@ -191,7 +191,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const shareOnX = () => {
-    const text = encodeURIComponent("Fixercoin updates ��� #Fixercoin");
+    const text = encodeURIComponent("Fixercoin updates ����� #Fixercoin");
     const shareUrl = encodeURIComponent("https://fixorium.com.pk");
     const intent = `https://twitter.com/intent/tweet?text=${text}&url=${shareUrl}`;
     try {
@@ -796,36 +796,32 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   title="Refresh"
                   disabled={isLoading}
                 >
-                  {isLoading ? (
-                    <svg
-                      className="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <style>{`
-                        @keyframes spin {
-                          0% { transform: rotate(0deg); }
-                          100% { transform: rotate(360deg); }
-                        }
-                        .dot-spinner {
-                          animation: spin 1.2s linear infinite;
-                          transform-origin: center;
-                        }
-                      `}</style>
-                      <g className="dot-spinner">
-                        <circle cx="12" cy="2" r="1.5" fill="white" />
-                        <circle cx="19.07" cy="4.93" r="1.5" fill="white" opacity="0.9" />
-                        <circle cx="22" cy="12" r="1.5" fill="white" opacity="0.8" />
-                        <circle cx="19.07" cy="19.07" r="1.5" fill="white" opacity="0.7" />
-                        <circle cx="12" cy="22" r="1.5" fill="white" opacity="0.6" />
-                        <circle cx="4.93" cy="19.07" r="1.5" fill="white" opacity="0.5" />
-                        <circle cx="2" cy="12" r="1.5" fill="white" opacity="0.4" />
-                        <circle cx="4.93" cy="4.93" r="1.5" fill="white" opacity="0.3" />
-                      </g>
-                    </svg>
-                  ) : (
-                    <RefreshCw className="h-4 w-4" />
-                  )}
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <style>{`
+                      @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                      }
+                      .dot-spinner {
+                        animation: spin 1.2s linear infinite;
+                        transform-origin: center;
+                      }
+                    `}</style>
+                    <g className="dot-spinner">
+                      <circle cx="12" cy="2" r="1.5" fill="currentColor" />
+                      <circle cx="19.07" cy="4.93" r="1.5" fill="currentColor" opacity="0.9" />
+                      <circle cx="22" cy="12" r="1.5" fill="currentColor" opacity="0.8" />
+                      <circle cx="19.07" cy="19.07" r="1.5" fill="currentColor" opacity="0.7" />
+                      <circle cx="12" cy="22" r="1.5" fill="currentColor" opacity="0.6" />
+                      <circle cx="4.93" cy="19.07" r="1.5" fill="currentColor" opacity="0.5" />
+                      <circle cx="2" cy="12" r="1.5" fill="currentColor" opacity="0.4" />
+                      <circle cx="4.93" cy="4.93" r="1.5" fill="currentColor" opacity="0.3" />
+                    </g>
+                  </svg>
                 </Button>
                 <Button
                   onClick={onLock}

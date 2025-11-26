@@ -773,6 +773,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <Wallet className="h-4 w-4" />
                     <span>MY-WALLET</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => onLock()}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Lock className="h-4 w-4" />
+                    <span>LOCK TOKENS</span>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onSelect={() => navigate("/wallet/history")}

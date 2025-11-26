@@ -977,7 +977,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4 flex-shrink-0">
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
                         <p className="text-xs font-semibold text-white whitespace-nowrap">
                           $
                           {tokenBalance.toLocaleString(undefined, {
@@ -988,21 +988,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                         {typeof token.priceChange24h === "number" &&
                         isFinite(token.priceChange24h) ? (
-                          <Button
-                            className={`h-auto px-2 py-0.5 rounded-[3px] font-medium text-xs bg-transparent hover:bg-white/10 border transition-colors whitespace-nowrap ${token.priceChange24h >= 0 ? "border-green-400 text-green-400 hover:text-green-300" : "border-red-400 text-red-400 hover:text-red-300"}`}
-                            variant="ghost"
+                          <p
+                            className={`text-xs font-medium whitespace-nowrap ${token.priceChange24h >= 0 ? "text-green-400" : "text-red-400"}`}
                           >
                             {token.priceChange24h >= 0 ? "+" : ""}
                             {token.priceChange24h.toFixed(2)}%
-                          </Button>
+                          </p>
                         ) : (
-                          <Button
-                            className="h-auto px-2 py-0.5 rounded-[3px] font-medium text-xs bg-transparent hover:bg-white/10 border border-gray-500 text-gray-400 whitespace-nowrap"
-                            variant="ghost"
-                            disabled
-                          >
+                          <p className="text-xs font-medium text-gray-400 whitespace-nowrap">
                             N/A
-                          </Button>
+                          </p>
                         )}
                       </div>
                     </div>

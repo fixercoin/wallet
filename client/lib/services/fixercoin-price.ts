@@ -8,6 +8,7 @@ export interface FixercoinPriceData {
   liquidity?: number;
   lastUpdated: Date;
   derivationMethod?: string;
+  isFallback?: boolean;
 }
 
 class FixercoinPriceService {

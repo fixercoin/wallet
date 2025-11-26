@@ -88,10 +88,10 @@ export const TokenInfoCard: React.FC<TokenInfoCardProps> = ({ token }) => {
           </div>
         </div>
 
-        {token.price && (
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-700">
-            <div>
-              <span className="text-sm text-gray-400">Current Price</span>
+        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-700">
+          <div>
+            <span className="text-sm text-gray-400">Current Price</span>
+            {token.price ? (
               <p className="text-white font-medium">
                 $
                 {token.price.toLocaleString(undefined, {
@@ -99,22 +99,28 @@ export const TokenInfoCard: React.FC<TokenInfoCardProps> = ({ token }) => {
                   maximumFractionDigits: 6,
                 })}
               </p>
-            </div>
-            <div>
-              <span className="text-sm text-gray-400">24h Change</span>
-              {typeof token.priceChange24h === "number" &&
-              isFinite(token.priceChange24h) ? (
-                <p
-                  className={`font-medium ${token.priceChange24h >= 0 ? "text-green-400" : "text-red-400"}`}
-                >
-                  {token.priceChange24h.toFixed(2)}%
-                </p>
-              ) : (
-                <p className="font-medium text-gray-400">—</p>
-              )}
-            </div>
+            ) : (
+              <p className="text-gray-400 font-medium">
+                {["FIXERCOIN", "LOCKER", "FXM"].includes(token.symbol)
+                  ? "Loading price..."
+                  : "—"}
+              </p>
+            )}
           </div>
-        )}
+          <div>
+            <span className="text-sm text-gray-400">24h Change</span>
+            {typeof token.priceChange24h === "number" &&
+            isFinite(token.priceChange24h) ? (
+              <p
+                className={`font-medium ${token.priceChange24h >= 0 ? "text-green-400" : "text-red-400"}`}
+              >
+                {token.priceChange24h.toFixed(2)}%
+              </p>
+            ) : (
+              <p className="font-medium text-gray-400">—</p>
+            )}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
+import { PriceLoader } from "@/components/ui/price-loader";
 
 export default function AssetsPage() {
   const navigate = useNavigate();

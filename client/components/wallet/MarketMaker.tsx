@@ -40,6 +40,11 @@ const TOKEN_CONFIGS: Record<
     mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
     decimals: 6,
   },
+  USDC: {
+    name: "USDC",
+    mint: "EPjFWaLb3odccVLd7wfL9K3JWuWKq6PPczQkfCW2eKi",
+    decimals: 6,
+  },
   SOL: {
     name: "SOL",
     mint: "So11111111111111111111111111111111111111112",
@@ -346,13 +351,13 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     });
   };
 
-  const handleBuySolAmountChange = (value: string) => {
+  const handleBuyUsdcAmountChange = (value: string) => {
     let estimatedAmount = "0";
 
-    if (livePrice && livePrice > 0 && solPrice && solPrice > 0) {
-      // Calculate: (SOL Amount * SOL Price in USD) / Token Price in USD
-      const solAmount = parseFloat(value) || 0;
-      const tokenAmount = (solAmount * solPrice) / livePrice;
+    if (livePrice && livePrice > 0) {
+      // Calculate: USDC Amount / Token Price in USD
+      const usdcAmount = parseFloat(value) || 0;
+      const tokenAmount = usdcAmount / livePrice;
       estimatedAmount = tokenAmount.toFixed(8);
     }
 
@@ -373,11 +378,11 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const handleSellAmountChange = (value: string) => {
     let estimatedTotal = "0";
 
-    if (livePrice && livePrice > 0 && solPrice && solPrice > 0) {
-      // Calculate: (Token Amount * Token Price in USD) / SOL Price in USD
+    if (livePrice && livePrice > 0) {
+      // Calculate: Token Amount * Token Price in USD
       const tokenAmount = parseFloat(value) || 0;
-      const solAmount = (tokenAmount * livePrice) / solPrice;
-      estimatedTotal = solAmount.toFixed(8);
+      const usdcAmount = tokenAmount * livePrice;
+      estimatedTotal = usdcAmount.toFixed(8);
     }
 
     setSellOrder({
@@ -396,8 +401,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     if (isNaN(amount) || amount <= 0)
       return "Buy amount must be greater than 0";
     if (isNaN(total) || total <= 0) return "Buy total is invalid";
-    if (solBalance < total)
-      return `Insufficient SOL. Need ${total.toFixed(8)}, have ${solBalance.toFixed(8)}`;
+    if (usdcBalance < total)
+      return `Insufficient USDC. Need ${total.toFixed(8)}, have ${usdcBalance.toFixed(8)}`;
 
     return null;
   };
@@ -542,7 +547,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const currentOrder = orderMode === "BUY" ? buyOrder : sellOrder;
   const canAffordCurrent =
     orderMode === "BUY"
-      ? parseFloat(currentOrder.total) <= solBalance
+      ? parseFloat(currentOrder.total) <= usdcBalance
       : parseFloat(currentOrder.amount) <= tokenBalance;
 
   return (
@@ -654,15 +659,15 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
                   <div className="space-y-2">
                     <Label className="text-gray-600 text-xs font-semibold">
-                      SOL AMOUNT
+                      USDC AMOUNT
                     </Label>
                     <Input
                       type="number"
-                      step="0.001"
+                      step="0.01"
                       value={buyOrder.total}
-                      onChange={(e) => handleBuySolAmountChange(e.target.value)}
+                      onChange={(e) => handleBuyUsdcAmountChange(e.target.value)}
                       className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-blue-400`}
-                      placeholder="ENTER SOL AMOUNT"
+                      placeholder="ENTER USDC AMOUNT"
                     />
                   </div>
 
@@ -679,7 +684,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
                   <div className="space-y-2">
                     <Label className="text-gray-600 text-xs font-semibold">
-                      AVAILABLE {selectedToken === "SOL" ? "USDC" : "SOL"}
+                      AVAILABLE USDC
                     </Label>
                     <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-medium">
                       <span
@@ -687,10 +692,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                           canAffordCurrent ? "text-green-400" : "text-red-400"
                         }
                       >
-                        {(selectedToken === "SOL"
-                          ? usdcBalance
-                          : solBalance
-                        ).toFixed(8)}
+                        {usdcBalance.toFixed(8)}
                       </span>
                     </div>
                   </div>
@@ -745,7 +747,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-gray-600 text-xs font-semibold">
-                        ESTIMATED SOL
+                        ESTIMATED USDC
                       </Label>
                     </div>
                     <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-medium">
@@ -755,8 +757,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
                   <div className="space-y-2">
                     <Label className="text-gray-600 text-xs font-semibold">
-                      AVAILABLE{" "}
-                      {selectedToken === "SOL" ? "USDC" : selectedToken}
+                      AVAILABLE FIXERCOIN
                     </Label>
                     <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-medium">
                       <span
@@ -764,10 +765,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                           canAffordCurrent ? "text-green-400" : "text-red-400"
                         }
                       >
-                        {(selectedToken === "SOL"
-                          ? usdcBalance
-                          : tokenBalance
-                        ).toFixed(8)}
+                        {tokenBalance.toFixed(8)}
                       </span>
                     </div>
                   </div>

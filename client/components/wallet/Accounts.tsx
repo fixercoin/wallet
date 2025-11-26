@@ -22,7 +22,17 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
-      <div className="w-full md:max-w-lg mx-auto py-2 px-0 sm:px-4">
+      <style>{`
+        @media (max-width: 768px) {
+          .express-p2p-page input,
+          .express-p2p-page select,
+          .express-p2p-page button[class*="border"],
+          .express-p2p-page [class*="border"] {
+            border-width: 2px !important;
+          }
+        }
+      `}</style>
+      <div className="w-full md:max-w-lg mx-auto py-2 px-0 md:px-4">
         <div className="mb-1 rounded-none sm:rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden mx-0">
           <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
             <Button

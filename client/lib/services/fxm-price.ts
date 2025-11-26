@@ -1,4 +1,6 @@
 import { tokenPairPricingService } from "./token-pair-pricing";
+import { birdeyeAPI } from "./birdeye";
+import { pumpFunPriceService } from "./pump-fun-price";
 
 export interface FXMPriceData {
   price: number;
@@ -9,6 +11,8 @@ export interface FXMPriceData {
   derivationMethod?: string;
   isFallback?: boolean;
 }
+
+const FXM_MINT = "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump";
 
 class FXMPriceService {
   private cachedData: FXMPriceData | null = null;
@@ -21,7 +25,8 @@ class FXMPriceService {
       if (
         this.cachedData &&
         this.lastFetchTime &&
-        this.cachedData.derivationMethod !== "fallback"
+        this.cachedData.derivationMethod !== "fallback" &&
+        this.cachedData.derivationMethod !== "hardcoded fallback"
       ) {
         const timeSinceLastFetch = Date.now() - this.lastFetchTime.getTime();
         if (timeSinceLastFetch < this.CACHE_DURATION) {
@@ -34,42 +39,83 @@ class FXMPriceService {
         "Fetching fresh FXM price using derived pricing (SOL pair)...",
       );
 
-      // Use derived pricing based on SOL pair
+      // Try derived pricing based on SOL pair first
       const pairingData = await tokenPairPricingService.getDerivedPrice("FXM");
 
-      if (!pairingData) {
-        console.warn("Failed to derive FXM price");
-        return this.getFallbackPrice();
-      }
-
-      const priceData: FXMPriceData = {
-        price: pairingData.derivedPrice,
-        priceChange24h: pairingData.priceChange24h,
-        volume24h: pairingData.volume24h,
-        liquidity: pairingData.liquidity,
-        lastUpdated: pairingData.lastUpdated,
-        derivationMethod: `derived from SOL pair (1 SOL = ${pairingData.pairRatio.toFixed(0)} FXM)`,
-      };
-
-      // Only cache if we got valid, live price data (not fallback)
       if (
-        priceData.price > 0 &&
-        isFinite(priceData.price) &&
-        pairingData.derivedPrice > 0
+        pairingData &&
+        pairingData.derivedPrice > 0 &&
+        isFinite(pairingData.derivedPrice)
       ) {
+        const priceData: FXMPriceData = {
+          price: pairingData.derivedPrice,
+          priceChange24h: pairingData.priceChange24h,
+          volume24h: pairingData.volume24h,
+          liquidity: pairingData.liquidity,
+          lastUpdated: pairingData.lastUpdated,
+          derivationMethod: `derived from SOL pair (1 SOL = ${pairingData.pairRatio.toFixed(0)} FXM)`,
+        };
+
         this.cachedData = priceData;
         this.lastFetchTime = new Date();
         console.log(
           `✅ FXM price updated: $${priceData.price.toFixed(8)} (${priceData.derivationMethod})`,
         );
         return priceData;
-      } else {
-        console.warn(
-          "Invalid price data from derivation, using fallback (not cached)",
-        );
-        // Don't cache fallback prices so they retry on next call
-        return this.getFallbackPrice();
       }
+
+      // Fallback to Birdeye API if SOL pair derivation failed
+      console.log("SOL pair derivation failed for FXM, trying Birdeye API...");
+      const birdeyeToken = await birdeyeAPI.getTokenByMint(FXM_MINT);
+
+      if (
+        birdeyeToken &&
+        birdeyeToken.priceUsd &&
+        isFinite(birdeyeToken.priceUsd) &&
+        birdeyeToken.priceUsd > 0
+      ) {
+        const priceData: FXMPriceData = {
+          price: birdeyeToken.priceUsd,
+          priceChange24h: birdeyeToken.priceChange?.h24 || 0,
+          volume24h: birdeyeToken.volume?.h24 || 0,
+          liquidity: birdeyeToken.liquidity?.usd,
+          lastUpdated: new Date(),
+          derivationMethod: `fetched from Birdeye API`,
+        };
+
+        this.cachedData = priceData;
+        this.lastFetchTime = new Date();
+        console.log(
+          `✅ FXM price updated from Birdeye: $${priceData.price.toFixed(8)}`,
+        );
+        return priceData;
+      }
+
+      // Fallback to Pump.fun API (since FXM is a pump.fun token)
+      console.log("Birdeye failed for FXM, trying Pump.fun API...");
+      const pumpFunPrice = await pumpFunPriceService.getTokenPrice(FXM_MINT);
+
+      if (pumpFunPrice && pumpFunPrice > 0 && isFinite(pumpFunPrice)) {
+        const priceData: FXMPriceData = {
+          price: pumpFunPrice,
+          priceChange24h: 0,
+          volume24h: 0,
+          lastUpdated: new Date(),
+          derivationMethod: `fetched from Pump.fun API (bonding curve price)`,
+        };
+
+        this.cachedData = priceData;
+        this.lastFetchTime = new Date();
+        console.log(
+          `✅ FXM price updated from Pump.fun: $${priceData.price.toFixed(8)}`,
+        );
+        return priceData;
+      }
+
+      console.warn(
+        "Failed to fetch FXM price from all sources, using fallback",
+      );
+      return this.getFallbackPrice();
     } catch (error) {
       console.error("Error fetching FXM price:", error);
       // Don't cache fallback prices - force retry next time
@@ -78,13 +124,13 @@ class FXMPriceService {
   }
 
   private getFallbackPrice(): FXMPriceData {
-    console.log("Using fallback FXM price");
+    console.log("Using fallback FXM price: $0.000003567 (hardcoded)");
     return {
       price: 0.000003567,
       priceChange24h: 0,
       volume24h: 0,
       lastUpdated: new Date(),
-      derivationMethod: "fallback",
+      derivationMethod: "hardcoded fallback",
       isFallback: true,
     };
   }
@@ -93,6 +139,18 @@ class FXMPriceService {
   async getPrice(): Promise<number> {
     const data = await this.getFXMPrice();
     return data?.price || 0.000003567;
+  }
+
+  // Get the price with derivation method info
+  async getFXMPriceWithMethod(): Promise<{
+    price: number;
+    derivationMethod: string;
+  }> {
+    const data = await this.getFXMPrice();
+    return {
+      price: data?.price || 0.000003567,
+      derivationMethod: data?.derivationMethod || "hardcoded fallback",
+    };
   }
 
   // Clear cache to force fresh fetch

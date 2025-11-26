@@ -162,17 +162,22 @@ export default function AssetsPage() {
                     <CardContent className="w-full p-0">
                       <div className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-4">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          {token.logoURI && (
-                            <img
-                              src={token.logoURI}
-                              alt={token.symbol}
-                              className="w-10 h-10 rounded-full flex-shrink-0"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display =
-                                  "none";
-                              }}
-                            />
-                          )}
+                          <div className="relative w-10 h-10 flex-shrink-0">
+                            {token.logoURI && (
+                              <img
+                                src={token.logoURI}
+                                alt={token.symbol}
+                                className="w-10 h-10 rounded-full object-cover absolute inset-0"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display =
+                                    "none";
+                                }}
+                              />
+                            )}
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-yellow-600 flex items-center justify-center text-white text-xs font-bold">
+                              {token.symbol.slice(0, 2).toUpperCase()}
+                            </div>
+                          </div>
                           <div className="flex flex-col min-w-0">
                             <p className="text-xs font-semibold text-white truncate uppercase">
                               {token.name}
@@ -183,17 +188,19 @@ export default function AssetsPage() {
                           </div>
                         </div>
 
-                        <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          <p className="text-xs font-semibold text-white whitespace-nowrap">
+                            $
+                            {tokenBalance.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
+
                           <p
                             className="text-xs font-semibold whitespace-nowrap token-price-blink"
                             style={{
-                              color:
-                                typeof token.priceChange24h === "number" &&
-                                isFinite(token.priceChange24h)
-                                  ? token.priceChange24h >= 0
-                                    ? "#4ade80"
-                                    : "#f87171"
-                                  : "#ffffff",
+                              color: "#ffffff",
                             }}
                           >
                             $
@@ -208,30 +215,6 @@ export default function AssetsPage() {
                                 ? "0.00"
                                 : "0.00000000"}
                           </p>
-                        </div>
-
-                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                          <p className="text-xs font-semibold text-white whitespace-nowrap">
-                            $
-                            {tokenBalance.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </p>
-
-                          {typeof token.priceChange24h === "number" &&
-                          isFinite(token.priceChange24h) ? (
-                            <p
-                              className={`text-xs font-medium whitespace-nowrap ${token.priceChange24h >= 0 ? "text-green-400" : "text-red-400"}`}
-                            >
-                              {token.priceChange24h >= 0 ? "+" : ""}
-                              {token.priceChange24h.toFixed(2)}%
-                            </p>
-                          ) : (
-                            <p className="text-xs font-medium text-gray-400 whitespace-nowrap">
-                              N/A
-                            </p>
-                          )}
                         </div>
                       </div>
                     </CardContent>

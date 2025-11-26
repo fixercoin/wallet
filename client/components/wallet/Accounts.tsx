@@ -30,6 +30,9 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
           .express-p2p-page [class*="border"] {
             border-width: 2px !important;
           }
+          .express-p2p-page [class*="border-gray-300"] {
+            border: none !important;
+          }
         }
       `}</style>
       <div className="w-full md:max-w-lg mx-auto py-2 px-0 md:px-4">

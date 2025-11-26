@@ -86,7 +86,7 @@ class FixercoinPriceService {
   // Get just the price number for quick access
   async getPrice(): Promise<number> {
     const data = await this.getFixercoinPrice();
-    return data?.price || 0.00008139;
+    return data?.price || 0;
   }
 
   // Clear cache to force fresh fetch

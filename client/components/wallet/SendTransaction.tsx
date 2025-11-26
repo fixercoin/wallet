@@ -915,7 +915,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                                   ? balance
                                   : t.balance || 0
                                 ).toLocaleString(undefined, {
-                                  maximumFractionDigits: 8,
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3,
                                 })}
                               </span>
                             </div>
@@ -952,7 +953,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       <span className="text-sm text-[hsl(var(--muted-foreground))]">
                         Balance:{" "}
                         {selectedBalance.toLocaleString(undefined, {
-                          maximumFractionDigits: 8,
+                          minimumFractionDigits: 3,
+                          maximumFractionDigits: 3,
                         })}{" "}
                         {selectedSymbol}
                       </span>

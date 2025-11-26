@@ -960,19 +960,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-4"
                       onClick={() => handleTokenCardClick(token)}
                     >
-                      <div className="flex flex-col items-start flex-shrink-0 min-w-max">
-                        <p className="text-xs text-gray-300 whitespace-nowrap">
-                          Balance
-                        </p>
-                        <p className="text-xs font-semibold text-white whitespace-nowrap">
-                          $
-                          {tokenBalance.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p>
-                      </div>
-
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Avatar className="h-10 w-10 flex-shrink-0">
                           <AvatarImage src={token.logoURI} alt={token.symbol} />
@@ -990,7 +977,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex-shrink-0">
+                      <div className="flex items-center gap-4 flex-shrink-0">
+                        <div className="flex flex-col items-end">
+                          <p className="text-xs text-gray-300 whitespace-nowrap">
+                            Balance
+                          </p>
+                          <p className="text-xs font-semibold text-white whitespace-nowrap">
+                            $
+                            {tokenBalance.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
+                        </div>
+
                         {typeof token.priceChange24h === "number" &&
                         isFinite(token.priceChange24h) ? (
                           <Button

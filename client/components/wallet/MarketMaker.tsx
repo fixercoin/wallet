@@ -665,7 +665,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       type="number"
                       step="0.01"
                       value={buyOrder.total}
-                      onChange={(e) => handleBuyUsdcAmountChange(e.target.value)}
+                      onChange={(e) =>
+                        handleBuyUsdcAmountChange(e.target.value)
+                      }
                       className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-blue-400`}
                       placeholder="ENTER USDC AMOUNT"
                     />

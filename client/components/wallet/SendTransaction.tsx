@@ -904,7 +904,13 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                             <div className="flex items-center justify-between w-full">
                               <span className="font-medium text-white">
                                 {t.symbol} ~{" "}
-                                {(Math.floor((t.symbol === "SOL" ? balance : t.balance || 0) * 1000) / 1000).toLocaleString(undefined, {
+                                {(
+                                  Math.floor(
+                                    (t.symbol === "SOL"
+                                      ? balance
+                                      : t.balance || 0) * 1000,
+                                  ) / 1000
+                                ).toLocaleString(undefined, {
                                   minimumFractionDigits: 3,
                                   maximumFractionDigits: 3,
                                 })}
@@ -941,7 +947,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         {selectedSymbol}
                       </Label>
                       <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                        {(Math.floor(selectedBalance * 1000) / 1000).toLocaleString(undefined, {
+                        {(
+                          Math.floor(selectedBalance * 1000) / 1000
+                        ).toLocaleString(undefined, {
                           minimumFractionDigits: 3,
                           maximumFractionDigits: 3,
                         })}

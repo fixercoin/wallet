@@ -173,7 +173,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
 
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 md:px-4 pt-2 md:pt-6 pb-6 relative z-20">
         <div>
-          <div className="mt-6 mb-1 p-6 border-0 bg-transparent relative mx-0">
+          <div className="mt-0 md:mt-6 mb-1 p-6 border-0 bg-transparent relative mx-0">
             <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
               <Button
                 variant="ghost"

@@ -80,16 +80,9 @@ class FixercoinPriceService {
     }
   }
 
-  private getFallbackPrice(): FixercoinPriceData {
-    console.log("Using fallback FIXERCOIN price");
-    return {
-      price: 0.00008139,
-      priceChange24h: 0,
-      volume24h: 0,
-      lastUpdated: new Date(),
-      derivationMethod: "fallback",
-      isFallback: true,
-    };
+  private getFallbackPrice(): FixercoinPriceData | null {
+    console.log("FIXERCOIN price service unavailable - returning null to show loading state");
+    return null;
   }
 
   // Get just the price number for quick access

@@ -702,7 +702,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-gray-600 text-xs font-semibold">
-                        TARGET LIMIT ({selectedToken})
+                        TARGET LIMIT (FIXERCOIN)
                       </Label>
                       <div className="flex items-center gap-1 text-xs text-gray-400">
                         {isFetchingPrice ? (
@@ -732,7 +732,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
                   <div className="space-y-2">
                     <Label className="text-gray-600 text-xs font-semibold">
-                      {selectedToken} AMOUNT
+                      FIXERCOIN AMOUNT
                     </Label>
                     <Input
                       type="number"
@@ -740,7 +740,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       value={sellOrder.amount}
                       onChange={(e) => handleSellAmountChange(e.target.value)}
                       className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-red-400`}
-                      placeholder="ENTER AMOUNT TO SELL"
+                      placeholder="ENTER FIXERCOIN AMOUNT"
                     />
                   </div>
 

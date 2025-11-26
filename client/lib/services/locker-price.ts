@@ -7,6 +7,7 @@ export interface LockerPriceData {
   liquidity?: number;
   lastUpdated: Date;
   derivationMethod?: string;
+  isFallback?: boolean;
 }
 
 class LockerPriceService {
@@ -85,6 +86,7 @@ class LockerPriceService {
       volume24h: 0,
       lastUpdated: new Date(),
       derivationMethod: "fallback",
+      isFallback: true,
     };
   }
 

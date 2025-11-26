@@ -162,8 +162,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
         @media (max-width: 768px) {
           .express-p2p-page input,
           .express-p2p-page select,
-          .express-p2p-page button[class*="border"],
-          .express-p2p-page [class*="border"] {
+          .express-p2p-page button[class*="border"] {
             border-width: 2px !important;
           }
         }
@@ -188,7 +187,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               <div className="font-medium text-sm text-gray-900">ACCOUNTS</div>
             </div>
             <div className="space-y-3 md:space-y-6 px-4 sm:px-6">
-              <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-lg md:border md:border-gray-300/30">
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between p-4 rounded-none transition-colors">
                     <div className="min-w-0 w-full">
@@ -229,7 +228,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Card>
 
               {/* Recovery Phrase Card */}
-              <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-lg md:border md:border-gray-300/30">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {
@@ -295,7 +294,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Card>
 
               {/* Private Key Card */}
-              <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-lg md:border md:border-gray-300/30">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {
@@ -351,7 +350,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Card>
 
               {/* Helpline Card */}
-              <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-lg md:border md:border-gray-300/30">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-[hsl(var(--foreground))]">

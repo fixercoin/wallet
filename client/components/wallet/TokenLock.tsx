@@ -781,8 +781,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         @media (max-width: 768px) {
           .express-p2p-page input,
           .express-p2p-page select,
-          .express-p2p-page button[class*="border"],
-          .express-p2p-page [class*="border"] {
+          .express-p2p-page button[class*="border"] {
             border-width: 2px !important;
           }
         }

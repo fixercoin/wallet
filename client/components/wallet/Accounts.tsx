@@ -26,8 +26,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
         @media (max-width: 768px) {
           .express-p2p-page input,
           .express-p2p-page select,
-          .express-p2p-page button[class*="border"],
-          .express-p2p-page [class*="border"] {
+          .express-p2p-page button[class*="border"] {
             border-width: 2px !important;
           }
         }
@@ -55,7 +54,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 ACTIVE WALLET
               </div>
               <div className="w-full">
-                <div className="bg-transparent border border-gray-300/30 rounded-lg p-4 flex flex-row items-center justify-between gap-2">
+                <div className="bg-transparent md:border md:border-gray-300/30 rounded-lg p-4 flex flex-row items-center justify-between gap-2">
                   <span className="font-mono text-xs text-gray-900 truncate flex-1 min-w-0">
                     {wallet ? shortenAddress(wallet.publicKey, 6) : "NO WALLET"}
                   </span>
@@ -87,7 +86,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 {wallets.map((w) => (
                   <div key={w.publicKey}>
                     {editingKey === w.publicKey ? (
-                      <div className="w-full p-3 bg-transparent border border-gray-300/30 rounded-lg flex flex-row items-center gap-2">
+                      <div className="w-full p-3 bg-transparent md:border md:border-gray-300/30 rounded-lg flex flex-row items-center gap-2">
                         <Input
                           value={labelInput}
                           onChange={(e) => setLabelInput(e.target.value)}

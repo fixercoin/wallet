@@ -8,6 +8,7 @@ export interface FixercoinPriceData {
   liquidity?: number;
   lastUpdated: Date;
   derivationMethod?: string;
+  isFallback?: boolean;
 }
 
 class FixercoinPriceService {
@@ -87,6 +88,7 @@ class FixercoinPriceService {
       volume24h: 0,
       lastUpdated: new Date(),
       derivationMethod: "fallback",
+      isFallback: true,
     };
   }
 

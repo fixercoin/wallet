@@ -21,10 +21,10 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
   };
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col items-center">
-      <div className="w-full py-6">
-        <div className="mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden w-full">
-          <div className="flex items-center gap-3 px-4 py-3">
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+      <div className="w-full md:max-w-lg mx-auto py-2 px-0 sm:px-4">
+        <div className="mb-1 rounded-none sm:rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden mx-0">
+          <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
             <Button
               variant="ghost"
               size="icon"
@@ -39,7 +39,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
             </h1>
           </div>
 
-          <div className="px-4 pb-4 space-y-4 w-full">
+          <div className="px-4 sm:px-6 pb-4 space-y-4 w-full">
             <div>
               <div className="text-sm mb-2 text-[hsl(var(--muted-foreground))] uppercase">
                 ACTIVE WALLET

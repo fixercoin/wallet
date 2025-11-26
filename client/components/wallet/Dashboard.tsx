@@ -987,7 +987,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </div>
 
                       <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                        <p className="text-xs font-semibold text-white whitespace-nowrap token-price-blink">
+                        <p className={`text-xs font-semibold whitespace-nowrap token-price-blink ${
+                          typeof token.priceChange24h === "number" && isFinite(token.priceChange24h)
+                            ? token.priceChange24h >= 0
+                              ? "text-green-400"
+                              : "text-red-400"
+                            : "text-white"
+                        }`}>
                           $
                           {typeof token.price === "number" && isFinite(token.price)
                             ? token.price.toFixed(

@@ -162,19 +162,21 @@ export default function AssetsPage() {
                     <CardContent className="w-full p-0">
                       <div className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-4">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          {token.logoURI && (
-                            <img
-                              src={token.logoURI}
-                              alt={token.symbol}
-                              className="w-10 h-10 rounded-full flex-shrink-0 object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display =
-                                  "none";
-                              }}
-                            />
-                          )}
-                          <div className="w-10 h-10 rounded-full flex-shrink-0 bg-gradient-to-br from-orange-500 to-yellow-600 flex items-center justify-center text-white text-xs font-bold">
-                            {token.symbol.slice(0, 2).toUpperCase()}
+                          <div className="relative w-10 h-10 flex-shrink-0">
+                            {token.logoURI && (
+                              <img
+                                src={token.logoURI}
+                                alt={token.symbol}
+                                className="w-10 h-10 rounded-full object-cover absolute inset-0"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display =
+                                    "none";
+                                }}
+                              />
+                            )}
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-yellow-600 flex items-center justify-center text-white text-xs font-bold">
+                              {token.symbol.slice(0, 2).toUpperCase()}
+                            </div>
                           </div>
                           <div className="flex flex-col min-w-0">
                             <p className="text-xs font-semibold text-white truncate uppercase">

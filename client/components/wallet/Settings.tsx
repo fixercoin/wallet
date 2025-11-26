@@ -234,7 +234,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Card>
 
               {/* Recovery Phrase Card */}
-              <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-lg md:border md:border-gray-300/30">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {

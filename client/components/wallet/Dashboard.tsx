@@ -21,7 +21,6 @@ import {
   Bell,
   X,
   Clock,
-  Zap,
 } from "lucide-react";
 import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import {

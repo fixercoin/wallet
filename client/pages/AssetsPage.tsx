@@ -43,15 +43,15 @@ export default function AssetsPage() {
 
     const absAmount = Math.abs(amount);
     if (absAmount >= 1000000) {
-      return (amount / 1000000).toFixed(2).replace(/\.?0+$/, "") + "m";
+      return (amount / 1000000).toFixed(2) + " m";
     }
     if (absAmount >= 1000) {
-      return (amount / 1000).toFixed(2).replace(/\.?0+$/, "") + "k";
+      return (amount / 1000).toFixed(2) + " k";
     }
     if (absAmount >= 1) {
-      return amount.toFixed(2).replace(/\.?0+$/, "");
+      return amount.toFixed(2);
     }
-    return amount.toFixed(6).replace(/\.?0+$/, "");
+    return amount.toFixed(6);
   };
 
   const sortedTokens = useMemo(() => {

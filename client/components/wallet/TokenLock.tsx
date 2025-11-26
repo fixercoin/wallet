@@ -788,7 +788,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
         }
       `}</style>
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 md:px-4 py-6 space-y-3 relative z-20">
-        <div className="mt-6 mb-1 rounded-[2px] p-6 border-0 bg-transparent relative overflow-hidden text-gray-900">
+        <div className="mt-6 mb-1 p-6 border-0 bg-transparent relative text-gray-900">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"

@@ -280,9 +280,9 @@ export default function MarketMakerHistory() {
                         </span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-400">Amount</span>
+                        <span className="text-gray-400">Amount (USDC)</span>
                         <span className="text-white">
-                          {formatAmount(order.solAmount, 4)} SOL
+                          {formatAmount(order.solAmount, 4)}
                         </span>
                       </div>
                       {order.tokenAmount && (

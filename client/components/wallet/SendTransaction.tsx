@@ -892,7 +892,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }
       `}</style>
       <div className="flex-1 flex items-center justify-center relative z-20">
-        <div className="w-full md:max-w-lg lg:max-w-lg px-0 md:px-4 pt-2 md:pt-6 pb-6">
+        <div className="w-full md:max-w-lg lg:max-w-lg px-0 md:px-4 pt-0 md:pt-6 pb-6">
           <div className="border-0 bg-transparent">
             <div className="space-y-6 p-6">
               <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">

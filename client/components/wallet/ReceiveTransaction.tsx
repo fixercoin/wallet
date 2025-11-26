@@ -41,10 +41,10 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
   };
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
-      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-4 py-6 relative z-20">
-        <div className="rounded-[2px] border-0 bg-transparent overflow-hidden">
-          <div className="p-6 space-y-6 text-gray-900">
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col items-center">
+      <div className="w-full py-6 relative z-20">
+        <div className="rounded-[2px] border-0 bg-transparent overflow-hidden w-full">
+          <div className="p-4 space-y-6 text-gray-900">
             <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
               <Button
                 variant="ghost"

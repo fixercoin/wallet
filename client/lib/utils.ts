@@ -45,7 +45,7 @@ export function formatAmountCompact(
       (amount / 1_000_000).toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      }) + "M"
+      }) + " M"
     );
   }
 
@@ -54,7 +54,7 @@ export function formatAmountCompact(
       (amount / 1_000).toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      }) + "K"
+      }) + " K"
     );
   }
 

@@ -580,8 +580,18 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden capitalize">
-      <div className="w-full md:max-w-lg mx-auto px-4 py-6 relative z-20">
-        <div className="rounded-2xl border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
+      <style>{`
+        @media (max-width: 768px) {
+          .express-p2p-page input,
+          .express-p2p-page select,
+          .express-p2p-page button[class*="border"],
+          .express-p2p-page [class*="border"] {
+            border-width: 2px !important;
+          }
+        }
+      `}</style>
+      <div className="w-full md:max-w-lg mx-auto px-0 md:px-4 py-6 relative z-20">
+        <div className="border-0 bg-transparent">
           <div className="flex items-center gap-3 px-4 py-3">
             <Button
               variant="ghost"

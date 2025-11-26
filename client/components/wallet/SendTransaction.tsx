@@ -815,6 +815,16 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   if (step === "success") {
     return (
       <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4 relative z-0">
+        <style>{`
+          @media (max-width: 768px) {
+            .express-p2p-page input,
+            .express-p2p-page select,
+            .express-p2p-page button[class*="border"],
+            .express-p2p-page [class*="border"] {
+              border-width: 2px !important;
+            }
+          }
+        `}</style>
         <SuccessDialog onContinue={handleNewTransaction} />
       </div>
     );
@@ -823,6 +833,16 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   if (step === "sending") {
     return (
       <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4 relative z-0">
+        <style>{`
+          @media (max-width: 768px) {
+            .express-p2p-page input,
+            .express-p2p-page select,
+            .express-p2p-page button[class*="border"],
+            .express-p2p-page [class*="border"] {
+              border-width: 2px !important;
+            }
+          }
+        `}</style>
         <div className="text-center space-y-6 max-w-sm">
           <div className="flex justify-center">
             <div className="relative">
@@ -862,9 +882,19 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col">
+      <style>{`
+        @media (max-width: 768px) {
+          .express-p2p-page input,
+          .express-p2p-page select,
+          .express-p2p-page button[class*="border"],
+          .express-p2p-page [class*="border"] {
+            border-width: 2px !important;
+          }
+        }
+      `}</style>
       <div className="flex-1 flex items-center justify-center relative z-20">
-        <div className="w-full md:max-w-lg lg:max-w-lg px-4 py-6">
-          <div className="rounded-[2px] border-0 bg-transparent overflow-hidden">
+        <div className="w-full md:max-w-lg lg:max-w-lg px-0 md:px-4 py-6">
+          <div className="border-0 bg-transparent">
             <div className="space-y-6 p-6">
               <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
                 <Button

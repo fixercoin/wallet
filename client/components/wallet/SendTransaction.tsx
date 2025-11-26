@@ -938,7 +938,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         htmlFor="amount"
                         className="text-[hsl(var(--foreground))] uppercase"
                       >
-                        Amount ({selectedSymbol})
+                        {selectedSymbol}
                       </Label>
                       <span className="text-sm text-[hsl(var(--muted-foreground))]">
                         {(Math.floor(selectedBalance * 1000) / 1000).toLocaleString(undefined, {

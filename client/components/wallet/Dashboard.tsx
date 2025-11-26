@@ -945,6 +945,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         )}
 
+        <style>{`
+          @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+          }
+          .token-price-blink {
+            animation: blink 1.2s ease-in-out infinite;
+          }
+        `}</style>
+
         <div className="w-full space-y-0">
           {sortedTokens.map((token, index) => {
             const tokenBalance =
@@ -956,15 +966,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div key={token.mint} className="w-full">
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
-                    <style>{`
-                      @keyframes blink {
-                        0%, 100% { opacity: 1; }
-                        50% { opacity: 0.4; }
-                      }
-                      .token-price-blink {
-                        animation: blink 1.2s ease-in-out infinite;
-                      }
-                    `}</style>
                     <div
                       className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-4"
                       onClick={() => handleTokenCardClick(token)}

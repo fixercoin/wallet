@@ -90,13 +90,13 @@ class FXMPriceService {
   }
 
   private getFallbackPrice(): FXMPriceData {
-    console.log("Using fallback FXM price");
+    console.log("Using fallback FXM price: $0.000003567 (hardcoded)");
     return {
       price: 0.000003567,
       priceChange24h: 0,
       volume24h: 0,
       lastUpdated: new Date(),
-      derivationMethod: "fallback",
+      derivationMethod: "hardcoded fallback",
       isFallback: true,
     };
   }
@@ -105,6 +105,18 @@ class FXMPriceService {
   async getPrice(): Promise<number> {
     const data = await this.getFXMPrice();
     return data?.price || 0.000003567;
+  }
+
+  // Get the price with derivation method info
+  async getFXMPriceWithMethod(): Promise<{
+    price: number;
+    derivationMethod: string;
+  }> {
+    const data = await this.getFXMPrice();
+    return {
+      price: data?.price || 0.000003567,
+      derivationMethod: data?.derivationMethod || "hardcoded fallback",
+    };
   }
 
   // Clear cache to force fresh fetch

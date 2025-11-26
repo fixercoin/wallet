@@ -143,6 +143,37 @@ class TokenPairPricingService {
   }
 
   /**
+   * Get direct USD price from DexScreener for tokens without reliable SOL pair
+   */
+  private async getDirectUsdPrice(tokenMint: string): Promise<number | null> {
+    try {
+      const tokenData = await dexscreenerAPI.getTokenByMint(tokenMint);
+
+      if (!tokenData) {
+        return null;
+      }
+
+      if (tokenData.priceUsd) {
+        const priceUsd = parseFloat(tokenData.priceUsd);
+        if (priceUsd > 0 && isFinite(priceUsd)) {
+          console.log(
+            `${tokenMint}: Got direct USD price from DexScreener: $${priceUsd.toFixed(8)}`,
+          );
+          return priceUsd;
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.warn(
+        `Error getting direct USD price for ${tokenMint}:`,
+        error,
+      );
+      return null;
+    }
+  }
+
+  /**
    * Calculate derived price for a token based on its SOL pair
    */
   async getDerivedPrice(symbol: string): Promise<PairPricingData | null> {

@@ -618,7 +618,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* About */}
               <p className="text-xs text-gray-300 leading-relaxed">
                 A community challenge inside the Fixorium Wallet. Complete
-                simple tasks, earn rewards, and join random prize draws — all
+                simple tasks, earn rewards, and join random prize draws ��� all
                 directly from your wallet.
               </p>
 
@@ -1000,20 +1000,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </p>
 
                         <p
-                          className="text-xs font-semibold whitespace-nowrap token-price-blink"
+                          className="text-xs font-semibold whitespace-nowrap"
                           style={{
-                            color: "#ffffff",
+                            color: typeof token.price === "number" && isFinite(token.price) ? "#ffffff" : "#999999",
                           }}
                         >
-                          $
                           {typeof token.price === "number" &&
                           isFinite(token.price)
-                            ? token.price.toFixed(
+                            ? `$${token.price.toFixed(
                                 ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
-                              )
-                            : ["SOL", "USDC"].includes(token.symbol)
-                              ? "0.00"
-                              : "0.00000000"}
+                              )}`
+                            : ["FIXERCOIN", "LOCKER", "FXM"].includes(token.symbol)
+                              ? "Loading price..."
+                              : ["SOL", "USDC"].includes(token.symbol)
+                                ? "$0.00"
+                                : "$0.00000000"}
                         </p>
                       </div>
                     </div>

@@ -1000,23 +1000,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           })}
                         </p>
 
-                        <p
-                          className="text-xs font-semibold whitespace-nowrap"
-                          style={{
-                            color: typeof token.price === "number" && isFinite(token.price) ? "#ffffff" : "#999999",
-                          }}
-                        >
+                        <div className="text-xs font-semibold whitespace-nowrap">
                           {typeof token.price === "number" &&
-                          isFinite(token.price)
-                            ? `$${token.price.toFixed(
+                          isFinite(token.price) ? (
+                            <span style={{ color: "#ffffff" }}>
+                              ${token.price.toFixed(
                                 ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
-                              )}`
-                            : ["FIXERCOIN", "LOCKER", "FXM"].includes(token.symbol)
-                              ? "Loading price..."
-                              : ["SOL", "USDC"].includes(token.symbol)
-                                ? "$0.00"
-                                : "$0.00000000"}
-                        </p>
+                              )}
+                            </span>
+                          ) : ["FIXERCOIN", "LOCKER", "FXM"].includes(token.symbol) ? (
+                            <PriceLoader />
+                          ) : ["SOL", "USDC"].includes(token.symbol) ? (
+                            <span style={{ color: "#999999" }}>$0.00</span>
+                          ) : (
+                            <span style={{ color: "#999999" }}>$0.00000000</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>

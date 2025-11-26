@@ -744,185 +744,197 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2 relative z-20">
         {/* Balance Section */}
         <div className="w-full mt-2 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
-          <div className="flex items-center justify-between mb-2">
-            {/* Dropdown menu - moved to left */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+          <img
+            src="https://cdn.builder.io/api/v1/image/assets%2Fd367d39e72a54a67856f5a4b1ad26231%2F72712c66ffdb407a8f6a17afa66b2ee2?format=webp&width=800"
+            alt="Balance background"
+            className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
+            style={{
+              backgroundColor: "#1f1f1f",
+            }}
+          />
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-2">
+              {/* Dropdown menu - moved to left */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-transparent z-20"
+                    aria-label="Wallet menu"
+                  >
+                    <Menu className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem
+                    onSelect={() => onAccounts?.()}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Wallet className="h-4 w-4" />
+                    <span>MY-WALLET</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => navigate("/wallet/history")}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Clock className="h-4 w-4" />
+                    <span>WALLET HISTORY</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              {/* Action buttons - moved to right */}
+              <div className="flex items-center gap-3">
                 <Button
+                  onClick={onLock}
                   size="sm"
-                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-transparent z-20"
-                  aria-label="Wallet menu"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                  aria-label="Lock"
+                  title="Lock"
                 >
-                  <Menu className="h-4 w-4" />
+                  <Lock className="h-4 w-4" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem
-                  onSelect={() => onAccounts?.()}
-                  className="flex items-center gap-2 text-xs"
+                <Button
+                  onClick={onSettings}
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                  aria-label="Settings"
+                  title="Settings"
                 >
-                  <Wallet className="h-4 w-4" />
-                  <span>MY-WALLET</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={() => navigate("/wallet/history")}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Clock className="h-4 w-4" />
-                  <span>WALLET HISTORY</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            {/* Action buttons - moved to right */}
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={onLock}
-                size="sm"
-                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
-                aria-label="Lock"
-                title="Lock"
-              >
-                <Lock className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={onSettings}
-                size="sm"
-                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
-                aria-label="Settings"
-                title="Settings"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
 
-          <div className="text-center space-y-2 mt-8">
-            {wallet
-              ? (() => {
-                  const total = getTotalPortfolioValue();
-                  const hasAnyBalance =
-                    tokens.some(
-                      (t) => typeof t.balance === "number" && t.balance > 0,
-                    ) ||
-                    (typeof balance === "number" && balance > 0);
-                  if (!hasAnyBalance) {
-                    // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
-                    const usdZero = `0.000 $`;
+            <div className="text-center space-y-2 mt-8">
+              {wallet
+                ? (() => {
+                    const total = getTotalPortfolioValue();
+                    const hasAnyBalance =
+                      tokens.some(
+                        (t) => typeof t.balance === "number" && t.balance > 0,
+                      ) ||
+                      (typeof balance === "number" && balance > 0);
+                    if (!hasAnyBalance) {
+                      // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
+                      const usdZero = `0.000 $`;
+                      return (
+                        <>
+                          <div className="text-3xl font-medium text-gray-900 leading-tight">
+                            {showBalance ? `${usdZero}` : "****"}
+                          </div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            {showBalance ? `+ 0.00 (0.00%)` : "24h: ****"}
+                          </div>
+                        </>
+                      );
+                    }
+
+                    let totalChange24h = 0;
+                    let hasValidPriceChange = false;
+                    tokens.forEach((token) => {
+                      if (
+                        typeof token.balance === "number" &&
+                        typeof token.price === "number" &&
+                        typeof token.priceChange24h === "number" &&
+                        isFinite(token.balance) &&
+                        isFinite(token.price) &&
+                        isFinite(token.priceChange24h) &&
+                        token.balance > 0 &&
+                        token.price > 0
+                      ) {
+                        const currentValue = token.balance * token.price;
+                        const previousPrice =
+                          token.price / (1 + token.priceChange24h / 100);
+                        const previousValue = token.balance * previousPrice;
+                        const change = currentValue - previousValue;
+                        totalChange24h += change;
+                        hasValidPriceChange = true;
+                      }
+                    });
+
+                    const change24hPercent = hasValidPriceChange
+                      ? (totalChange24h / (total - totalChange24h)) * 100
+                      : 0;
+                    const isPositive = totalChange24h >= 0;
+
                     return (
                       <>
                         <div className="text-3xl font-medium text-gray-900 leading-tight">
-                          {showBalance ? `${usdZero}` : "****"}
-                        </div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          {showBalance ? `+ 0.00 (0.00%)` : "24h: ****"}
-                        </div>
-                      </>
-                    );
-                  }
-
-                  let totalChange24h = 0;
-                  let hasValidPriceChange = false;
-                  tokens.forEach((token) => {
-                    if (
-                      typeof token.balance === "number" &&
-                      typeof token.price === "number" &&
-                      typeof token.priceChange24h === "number" &&
-                      isFinite(token.balance) &&
-                      isFinite(token.price) &&
-                      isFinite(token.priceChange24h) &&
-                      token.balance > 0 &&
-                      token.price > 0
-                    ) {
-                      const currentValue = token.balance * token.price;
-                      const previousPrice =
-                        token.price / (1 + token.priceChange24h / 100);
-                      const previousValue = token.balance * previousPrice;
-                      const change = currentValue - previousValue;
-                      totalChange24h += change;
-                      hasValidPriceChange = true;
-                    }
-                  });
-
-                  const change24hPercent = hasValidPriceChange
-                    ? (totalChange24h / (total - totalChange24h)) * 100
-                    : 0;
-                  const isPositive = totalChange24h >= 0;
-
-                  return (
-                    <>
-                      <div className="text-3xl font-medium text-gray-900 leading-tight">
-                        {showBalance
-                          ? `${total.toLocaleString(undefined, {
-                              minimumFractionDigits: 3,
-                              maximumFractionDigits: 3,
-                            })} $`
-                          : "****"}
-                      </div>
-                      {showBalance ? (
-                        <div
-                          className={`text-xs mt-1 ${isPositive ? "text-green-400" : "text-red-400"}`}
-                        >
-                          <span className="font-medium">
-                            {isPositive ? "+" : "-"}{" "}
-                            {Math.abs(totalChange24h).toLocaleString(
-                              undefined,
-                              {
+                          {showBalance
+                            ? `${total.toLocaleString(undefined, {
                                 minimumFractionDigits: 3,
                                 maximumFractionDigits: 3,
-                              },
-                            )}
-                          </span>
-                          <span className="ml-1">
-                            (
-                            {Math.abs(
-                              isFinite(change24hPercent) ? change24hPercent : 0,
-                            ).toFixed(2)}
-                            %)
-                          </span>
+                              })} $`
+                            : "****"}
                         </div>
-                      ) : (
-                        <div className="text-xs text-gray-400 mt-1">****</div>
-                      )}
-                    </>
-                  );
-                })()
-              : "Connect wallet to see balance"}
-          </div>
+                        {showBalance ? (
+                          <div
+                            className={`text-xs mt-1 ${isPositive ? "text-green-400" : "text-red-400"}`}
+                          >
+                            <span className="font-medium">
+                              {isPositive ? "+" : "-"}{" "}
+                              {Math.abs(totalChange24h).toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3,
+                                },
+                              )}
+                            </span>
+                            <span className="ml-1">
+                              (
+                              {Math.abs(
+                                isFinite(change24hPercent)
+                                  ? change24hPercent
+                                  : 0,
+                              ).toFixed(2)}
+                              %)
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-400 mt-1">****</div>
+                        )}
+                      </>
+                    );
+                  })()
+                : "Connect wallet to see balance"}
+            </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-around gap-2 sm:gap-3 mt-6 w-full px-0">
-            <Button
-              onClick={onSend}
-              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
-            >
-              <Send className="h-8 w-8 text-[#22c55e]" />
-              <span>SEND</span>
-            </Button>
+            {/* Action Buttons */}
+            <div className="flex items-center justify-around gap-2 sm:gap-3 mt-6 w-full px-0">
+              <Button
+                onClick={onSend}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <Send className="h-8 w-8 text-[#22c55e]" />
+                <span>SEND</span>
+              </Button>
 
-            <Button
-              onClick={onReceive}
-              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
-            >
-              <Download className="h-8 w-8 text-[#22c55e]" />
-              <span>RECEIVE</span>
-            </Button>
+              <Button
+                onClick={onReceive}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <Download className="h-8 w-8 text-[#22c55e]" />
+                <span>RECEIVE</span>
+              </Button>
 
-            <Button
-              onClick={onSwap}
-              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
-            >
-              <TrendingUp className="h-8 w-8 text-[#22c55e]" />
-              <span>SWAP</span>
-            </Button>
-          </div>
+              <Button
+                onClick={onSwap}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <TrendingUp className="h-8 w-8 text-[#22c55e]" />
+                <span>SWAP</span>
+              </Button>
+            </div>
 
-          {/* Token Search - Under Action Buttons */}
-          <div className="w-full mt-4 px-0">
-            <TokenSearch
-              className="w-full"
-              inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-md"
-            />
+            {/* Token Search - Under Action Buttons */}
+            <div className="w-full mt-4 px-0">
+              <TokenSearch
+                className="w-full"
+                inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-md"
+              />
+            </div>
           </div>
         </div>
 

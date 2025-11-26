@@ -570,7 +570,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 variant="ghost"
                 size="icon"
                 onClick={onBack}
-                className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-green-100 text-green-600 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
@@ -604,7 +604,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 onClick={() => setOrderMode("BUY")}
                 className={`flex-1 font-bold uppercase py-2 rounded-lg transition-colors ${
                   orderMode === "BUY"
-                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    ? "bg-green-600 hover:bg-green-700 text-white"
                     : "bg-transparent border border-gray-700 text-gray-400 hover:text-white"
                 }`}
               >
@@ -614,7 +614,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                 onClick={() => setOrderMode("SELL")}
                 className={`flex-1 font-bold uppercase py-2 rounded-lg transition-colors ${
                   orderMode === "SELL"
-                    ? "bg-red-600 hover:bg-red-700 text-white"
+                    ? "bg-green-600 hover:bg-green-700 text-white"
                     : "bg-transparent border border-gray-700 text-gray-400 hover:text-white"
                 }`}
               >
@@ -636,7 +636,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         ) : livePrice ? (
                           <>
                             LIVE:{" "}
-                            <span className="text-blue-400 font-semibold">
+                            <span className="text-green-400 font-semibold">
                               {livePrice.toFixed(8)}
                             </span>
                           </>
@@ -650,7 +650,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       onChange={(e) =>
                         handleBuyTargetPriceChange(e.target.value)
                       }
-                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-blue-400`}
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-green-400`}
                       placeholder="ENTER TARGET PRICE"
                     />
                   </div>
@@ -666,7 +666,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       onChange={(e) =>
                         handleBuyUsdcAmountChange(e.target.value)
                       }
-                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-blue-400`}
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-green-400`}
                       placeholder="ENTER USDC AMOUNT"
                     />
                   </div>
@@ -713,7 +713,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         ) : livePrice ? (
                           <>
                             LIVE:{" "}
-                            <span className="text-red-400 font-semibold">
+                            <span className="text-green-400 font-semibold">
                               {livePrice.toFixed(8)}
                             </span>
                           </>
@@ -725,7 +725,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       step="0.00000001"
                       value={sellOrder.price}
                       onChange={(e) => handleSellPriceChange(e.target.value)}
-                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-red-400`}
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-green-400`}
                       placeholder="ENTER TARGET PRICE"
                     />
                   </div>
@@ -739,7 +739,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       step="0.01"
                       value={sellOrder.amount}
                       onChange={(e) => handleSellAmountChange(e.target.value)}
-                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-red-400`}
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-green-400`}
                       placeholder="ENTER FIXERCOIN AMOUNT"
                     />
                   </div>
@@ -780,11 +780,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   !currentOrder.price ||
                   !currentOrder.amount
                 }
-                className={`w-full font-bold uppercase py-3 rounded-lg transition-colors text-white ${
-                  orderMode === "BUY"
-                    ? "bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
-                    : "bg-red-600 hover:bg-red-700 disabled:bg-red-400"
-                }`}
+                className={`w-full font-bold uppercase py-3 rounded-lg transition-colors text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400`}
               >
                 {isLoading
                   ? "PLACING..."

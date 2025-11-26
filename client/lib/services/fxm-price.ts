@@ -42,7 +42,11 @@ class FXMPriceService {
       // Try derived pricing based on SOL pair first
       const pairingData = await tokenPairPricingService.getDerivedPrice("FXM");
 
-      if (pairingData && pairingData.derivedPrice > 0 && isFinite(pairingData.derivedPrice)) {
+      if (
+        pairingData &&
+        pairingData.derivedPrice > 0 &&
+        isFinite(pairingData.derivedPrice)
+      ) {
         const priceData: FXMPriceData = {
           price: pairingData.derivedPrice,
           priceChange24h: pairingData.priceChange24h,
@@ -64,7 +68,12 @@ class FXMPriceService {
       console.log("SOL pair derivation failed for FXM, trying Birdeye API...");
       const birdeyeToken = await birdeyeAPI.getTokenByMint(FXM_MINT);
 
-      if (birdeyeToken && birdeyeToken.priceUsd && isFinite(birdeyeToken.priceUsd) && birdeyeToken.priceUsd > 0) {
+      if (
+        birdeyeToken &&
+        birdeyeToken.priceUsd &&
+        isFinite(birdeyeToken.priceUsd) &&
+        birdeyeToken.priceUsd > 0
+      ) {
         const priceData: FXMPriceData = {
           price: birdeyeToken.priceUsd,
           priceChange24h: birdeyeToken.priceChange?.h24 || 0,
@@ -103,7 +112,9 @@ class FXMPriceService {
         return priceData;
       }
 
-      console.warn("Failed to fetch FXM price from all sources, using fallback");
+      console.warn(
+        "Failed to fetch FXM price from all sources, using fallback",
+      );
       return this.getFallbackPrice();
     } catch (error) {
       console.error("Error fetching FXM price:", error);

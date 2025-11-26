@@ -165,10 +165,7 @@ class TokenPairPricingService {
 
       return null;
     } catch (error) {
-      console.warn(
-        `Error getting direct USD price for ${tokenMint}:`,
-        error,
-      );
+      console.warn(`Error getting direct USD price for ${tokenMint}:`, error);
       return null;
     }
   }

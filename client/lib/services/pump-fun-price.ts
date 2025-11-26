@@ -37,12 +37,8 @@ class PumpFunPriceService {
 
       // Calculate price from virtual reserves
       // price = virtualSolReserves / virtualTokenReserves
-      if (
-        token.virtual_sol_reserves > 0 &&
-        token.virtual_token_reserves > 0
-      ) {
-        const price =
-          token.virtual_sol_reserves / token.virtual_token_reserves;
+      if (token.virtual_sol_reserves > 0 && token.virtual_token_reserves > 0) {
+        const price = token.virtual_sol_reserves / token.virtual_token_reserves;
         console.log(
           `[PumpFun] ${mint}: price=$${price.toFixed(8)} (from virtual reserves)`,
         );
@@ -83,9 +79,7 @@ class PumpFunPriceService {
       );
 
       if (!response.ok) {
-        console.warn(
-          `[PumpFun] API returned ${response.status} for ${mint}`,
-        );
+        console.warn(`[PumpFun] API returned ${response.status} for ${mint}`);
         return null;
       }
 

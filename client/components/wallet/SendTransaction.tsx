@@ -815,6 +815,16 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   if (step === "success") {
     return (
       <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4 relative z-0">
+        <style>{`
+          @media (max-width: 768px) {
+            .express-p2p-page input,
+            .express-p2p-page select,
+            .express-p2p-page button[class*="border"],
+            .express-p2p-page [class*="border"] {
+              border-width: 2px !important;
+            }
+          }
+        `}</style>
         <SuccessDialog onContinue={handleNewTransaction} />
       </div>
     );

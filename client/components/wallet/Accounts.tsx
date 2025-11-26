@@ -92,7 +92,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
                 {wallets.map((w) => (
                   <div key={w.publicKey}>
                     {editingKey === w.publicKey ? (
-                      <div className="w-full p-3 bg-transparent border border-gray-300/30 rounded-lg flex flex-row items-center gap-2">
+                      <div className="w-full p-3 bg-transparent md:border md:border-gray-300/30 rounded-lg flex flex-row items-center gap-2">
                         <Input
                           value={labelInput}
                           onChange={(e) => setLabelInput(e.target.value)}

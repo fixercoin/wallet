@@ -1,5 +1,6 @@
 import { tokenPairPricingService } from "./token-pair-pricing";
 import { birdeyeAPI } from "./birdeye";
+import { pumpFunPriceService } from "./pump-fun-price";
 
 export interface FXMPriceData {
   price: number;
@@ -24,7 +25,8 @@ class FXMPriceService {
       if (
         this.cachedData &&
         this.lastFetchTime &&
-        this.cachedData.derivationMethod !== "fallback"
+        this.cachedData.derivationMethod !== "fallback" &&
+        this.cachedData.derivationMethod !== "hardcoded fallback"
       ) {
         const timeSinceLastFetch = Date.now() - this.lastFetchTime.getTime();
         if (timeSinceLastFetch < this.CACHE_DURATION) {
@@ -80,7 +82,28 @@ class FXMPriceService {
         return priceData;
       }
 
-      console.warn("Failed to fetch FXM price from both sources, using fallback");
+      // Fallback to Pump.fun API (since FXM is a pump.fun token)
+      console.log("Birdeye failed for FXM, trying Pump.fun API...");
+      const pumpFunPrice = await pumpFunPriceService.getTokenPrice(FXM_MINT);
+
+      if (pumpFunPrice && pumpFunPrice > 0 && isFinite(pumpFunPrice)) {
+        const priceData: FXMPriceData = {
+          price: pumpFunPrice,
+          priceChange24h: 0,
+          volume24h: 0,
+          lastUpdated: new Date(),
+          derivationMethod: `fetched from Pump.fun API (bonding curve price)`,
+        };
+
+        this.cachedData = priceData;
+        this.lastFetchTime = new Date();
+        console.log(
+          `✅ FXM price updated from Pump.fun: $${priceData.price.toFixed(8)}`,
+        );
+        return priceData;
+      }
+
+      console.warn("Failed to fetch FXM price from all sources, using fallback");
       return this.getFallbackPrice();
     } catch (error) {
       console.error("Error fetching FXM price:", error);

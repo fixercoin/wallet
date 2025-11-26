@@ -50,7 +50,9 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
           .express-p2p-page [class*="border"] {
             border-width: 2px !important;
           }
-          .express-p2p-page > div > div > div[class*="border-gray"] {
+          .express-p2p-page div[class*="border-gray"],
+          .express-p2p-page [class*="border-gray-300"],
+          .express-p2p-page [class*="rounded-lg"][class*="border"] {
             border: none !important;
           }
         }

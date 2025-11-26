@@ -749,7 +749,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             alt="Balance background"
             className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
           />
-          <div className="flex items-center justify-between mb-2">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-2">
             {/* Dropdown menu - moved to left */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -928,6 +929,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               className="w-full"
               inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-md"
             />
+          </div>
           </div>
         </div>
 

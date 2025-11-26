@@ -947,57 +947,63 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         <div className="w-full space-y-0">
           {sortedTokens.map((token, index) => {
+            const tokenBalance =
+              typeof token.balance === "number" && typeof token.price === "number" && isFinite(token.balance) && isFinite(token.price)
+                ? token.balance * token.price
+                : 0;
+
             return (
               <div key={token.mint} className="w-full">
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
                     <div
-                      className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-3 min-w-0"
+                      className="w-full flex flex-col items-center px-4 py-4 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-3"
                       onClick={() => handleTokenCardClick(token)}
                     >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarImage src={token.logoURI} alt={token.symbol} />
-                          <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-xs">
-                            {token.symbol.slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex items-center gap-2 min-w-0">
-                          <p className="text-xs font-semibold text-white whitespace-nowrap truncate">
-                            {token.symbol}
-                          </p>
-                          <p className="text-xs text-gray-300 whitespace-nowrap flex-shrink-0">
-                            $
-                            {typeof token.price === "number" &&
-                            isFinite(token.price)
-                              ? token.price.toFixed(
-                                  ["SOL", "USDC"].includes(token.symbol)
-                                    ? 2
-                                    : 8,
-                                )
-                              : ["SOL", "USDC"].includes(token.symbol)
-                                ? "0.00"
-                                : "0.00000000"}
-                          </p>
-                        </div>
-                      </div>
+                      <Avatar className="h-12 w-12 flex-shrink-0">
+                        <AvatarImage src={token.logoURI} alt={token.symbol} />
+                        <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-sm">
+                          {token.symbol.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <p className="text-sm font-semibold text-white text-center">
+                        {token.name}
+                      </p>
 
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <div className="text-right">
-                          <p className="text-xs font-semibold text-white whitespace-nowrap">
+                      <div className="w-full flex items-start justify-between gap-4 mt-2">
+                        <div className="flex-1">
+                          <p className="text-xs font-semibold text-white">
                             {formatAmountCompact(token.balance, token.symbol)}
                           </p>
+                          <p className="text-xs text-gray-300 mt-1">
+                            $
+                            {tokenBalance.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
                         </div>
-                        {typeof token.priceChange24h === "number" &&
-                        isFinite(token.priceChange24h) ? (
-                          <Button
-                            className={`h-auto px-2 py-0.5 rounded-[3px] font-medium text-xs bg-transparent hover:bg-white/10 border transition-colors ${token.priceChange24h >= 0 ? "border-green-400 text-green-400 hover:text-green-300" : "border-red-400 text-red-400 hover:text-red-300"}`}
-                            variant="ghost"
-                          >
-                            {token.priceChange24h >= 0 ? "+" : ""}
-                            {token.priceChange24h.toFixed(2)}%
-                          </Button>
-                        ) : null}
+
+                        <div className="flex-shrink-0">
+                          {typeof token.priceChange24h === "number" &&
+                          isFinite(token.priceChange24h) ? (
+                            <Button
+                              className={`h-auto px-3 py-1 rounded-[3px] font-medium text-xs bg-transparent hover:bg-white/10 border transition-colors ${token.priceChange24h >= 0 ? "border-green-400 text-green-400 hover:text-green-300" : "border-red-400 text-red-400 hover:text-red-300"}`}
+                              variant="ghost"
+                            >
+                              {token.priceChange24h >= 0 ? "+" : ""}
+                              {token.priceChange24h.toFixed(2)}%
+                            </Button>
+                          ) : (
+                            <Button
+                              className="h-auto px-3 py-1 rounded-[3px] font-medium text-xs bg-transparent hover:bg-white/10 border border-gray-500 text-gray-400"
+                              variant="ghost"
+                              disabled
+                            >
+                              N/A
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>

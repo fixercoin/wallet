@@ -978,18 +978,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </div>
 
                       <div className="flex items-center gap-4 flex-shrink-0">
-                        <div className="flex flex-col items-end">
-                          <p className="text-xs text-gray-300 whitespace-nowrap">
-                            Balance
-                          </p>
-                          <p className="text-xs font-semibold text-white whitespace-nowrap">
-                            $
-                            {tokenBalance.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </p>
-                        </div>
+                        <p className="text-xs font-semibold text-white whitespace-nowrap">
+                          $
+                          {tokenBalance.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
 
                         {typeof token.priceChange24h === "number" &&
                         isFinite(token.priceChange24h) ? (

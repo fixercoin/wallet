@@ -113,9 +113,9 @@ class FXMPriceService {
       }
 
       console.warn(
-        "Failed to fetch FXM price from all sources, using fallback",
+        "Failed to fetch FXM price from all sources - service unavailable",
       );
-      return this.getFallbackPrice();
+      return null;
     } catch (error) {
       console.error("Error fetching FXM price:", error);
       // Don't cache fallback prices - force retry next time

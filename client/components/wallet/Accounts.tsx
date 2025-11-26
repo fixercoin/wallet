@@ -33,7 +33,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
         }
       `}</style>
       <div className="w-full md:max-w-lg mx-auto py-2 px-0 md:px-4">
-        <div className="mb-1 rounded-none sm:rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden mx-0">
+        <div className="mb-1 p-6 border-0 bg-transparent relative mx-0">
           <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
             <Button
               variant="ghost"

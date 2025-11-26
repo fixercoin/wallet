@@ -796,7 +796,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   title="Refresh"
                   disabled={isLoading}
                 >
-                  <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+                  <Zap className="h-4 w-4" />
                 </Button>
                 <Button
                   onClick={onLock}

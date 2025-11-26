@@ -869,10 +869,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col">
-      <div className="flex-1 flex items-center justify-center relative z-20">
-        <div className="w-full px-4 py-6">
-          <div className="rounded-[2px] border-0 bg-transparent overflow-hidden">
-            <div className="space-y-6 p-6">
+      <div className="flex-1 flex items-center justify-center relative z-20 w-full">
+        <div className="w-full py-6">
+          <div className="rounded-[2px] border-0 bg-transparent overflow-hidden w-full">
+            <div className="space-y-6 p-4">
               <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
                 <Button
                   variant="ghost"

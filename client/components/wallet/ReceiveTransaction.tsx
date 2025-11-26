@@ -53,7 +53,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
         }
       `}</style>
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 md:px-4 py-6 relative z-20">
-        <div className="rounded-[2px] border-0 bg-transparent overflow-hidden">
+        <div className="border-0 bg-transparent">
           <div className="p-6 space-y-6 text-gray-900">
             <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
               <Button

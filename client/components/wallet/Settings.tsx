@@ -356,7 +356,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Card>
 
               {/* Helpline Card */}
-              <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
+              <Card className="w-full bg-transparent rounded-lg md:border md:border-gray-300/30">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-[hsl(var(--foreground))]">

@@ -748,6 +748,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
             src="https://cdn.builder.io/api/v1/image/assets%2Fd367d39e72a54a67856f5a4b1ad26231%2Ff37d29962e474fc69b3c939a77abe614?format=webp&width=800"
             alt="Balance background"
             className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
+            style={{
+              backgroundImage: "linear-gradient(to bottom right, #ffffff, #f0fff4, #a7f3d0)",
+              backgroundBlendMode: "lighten"
+            }}
           />
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-2">

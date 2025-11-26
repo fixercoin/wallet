@@ -684,7 +684,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Rewards */}
               <div className="bg-white/5 rounded-lg p-3 border border-[#22c55e]/20">
                 <h3 className="text-sm font-bold text-white mb-3">
-                  �� Rewards
+                  ���� Rewards
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
                   <p>���� {REWARD_PER_TASK} FIXERCOIN per task</p>
@@ -959,10 +959,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <style>{`
                       @keyframes blink {
                         0%, 100% { opacity: 1; }
-                        50% { opacity: 0.5; }
+                        50% { opacity: 0.4; }
                       }
                       .token-price-blink {
-                        animation: blink 1.5s ease-in-out infinite;
+                        animation: blink 1.2s ease-in-out infinite;
                       }
                     `}</style>
                     <div

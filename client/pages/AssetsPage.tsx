@@ -147,77 +147,90 @@ export default function AssetsPage() {
           </div>
         ) : (
           <div className="w-full space-y-0">
-            {sortedTokens.map((token, index) => (
-              <div key={token.mint} className="w-full">
-                <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
-                  <CardContent className="w-full p-0">
-                    <div className="w-full px-4 py-3 rounded-none sm:rounded-[2px] flex items-center justify-between gap-3 min-w-0">
-                      <div className="flex items-center gap-3 min-w-0">
-                        {token.logoURI && (
-                          <img
-                            src={token.logoURI}
-                            alt={token.symbol}
-                            className="w-7 h-7 rounded-full flex-shrink-0"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display =
-                                "none";
-                            }}
-                          />
-                        )}
-                        <p
-                          className="font-semibold text-white whitespace-nowrap"
-                          style={{ fontSize: "11px" }}
-                        >
-                          {token.symbol}
-                        </p>
-                        <p
-                          className="text-green-400 whitespace-nowrap"
-                          style={{ fontSize: "10px" }}
-                        >
-                          {typeof token.price === "number" && token.price > 0
-                            ? `$${formatTokenPriceDisplay(token.price)}`
-                            : "$0.00"}
-                        </p>
+            {sortedTokens.map((token, index) => {
+              const tokenBalance =
+                typeof token.balance === "number" && typeof token.price === "number" && isFinite(token.balance) && isFinite(token.price)
+                  ? token.balance * token.price
+                  : 0;
+
+              return (
+                <div key={token.mint} className="w-full">
+                  <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
+                    <CardContent className="w-full p-0">
+                      <div className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-4">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          {token.logoURI && (
+                            <img
+                              src={token.logoURI}
+                              alt={token.symbol}
+                              className="w-10 h-10 rounded-full flex-shrink-0"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display =
+                                  "none";
+                              }}
+                            />
+                          )}
+                          <div className="flex flex-col min-w-0">
+                            <p className="text-xs font-semibold text-white truncate uppercase">
+                              {token.name}
+                            </p>
+                            <p className="text-xs font-semibold text-white truncate">
+                              {formatTokenAmountCompact(token.balance || 0)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                          <p className={`text-xs font-semibold whitespace-nowrap token-price-blink ${
+                            typeof token.priceChange24h === "number" && isFinite(token.priceChange24h)
+                              ? token.priceChange24h >= 0
+                                ? "text-green-400"
+                                : "text-red-400"
+                              : "text-white"
+                          }`}>
+                            $
+                            {typeof token.price === "number" && isFinite(token.price)
+                              ? token.price.toFixed(
+                                  ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
+                                )
+                              : ["SOL", "USDC"].includes(token.symbol)
+                                ? "0.00"
+                                : "0.00000000"}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          <p className="text-xs font-semibold text-white whitespace-nowrap">
+                            $
+                            {tokenBalance.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
+
+                          {typeof token.priceChange24h === "number" &&
+                          isFinite(token.priceChange24h) ? (
+                            <p
+                              className={`text-xs font-medium whitespace-nowrap ${token.priceChange24h >= 0 ? "text-green-400" : "text-red-400"}`}
+                            >
+                              {token.priceChange24h >= 0 ? "+" : ""}
+                              {token.priceChange24h.toFixed(2)}%
+                            </p>
+                          ) : (
+                            <p className="text-xs font-medium text-gray-400 whitespace-nowrap">
+                              N/A
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <p
-                          className="text-gray-300 whitespace-nowrap font-medium"
-                          style={{ fontSize: "11px" }}
-                        >
-                          {formatTokenAmountCompact(token.balance || 0)}
-                        </p>
-                        <p
-                          className="text-gray-400 whitespace-nowrap"
-                          style={{ fontSize: "10px" }}
-                        >
-                          {typeof token.price === "number" && token.price > 0
-                            ? `$${(token.balance || 0) * token.price > 0 ? formatBalance((token.balance || 0) * token.price) : "0.00"}`
-                            : "$0.00"}
-                        </p>
-                        <button
-                          className={`border rounded px-2 py-1 whitespace-nowrap font-medium transition-all ${
-                            (token.priceChange24h || 0) >= 0
-                              ? "border-green-400 text-green-400 hover:bg-green-400/10"
-                              : "border-red-400 text-red-400 hover:bg-red-400/10"
-                          }`}
-                          style={{
-                            fontSize: "10px",
-                            backgroundColor: "transparent",
-                          }}
-                        >
-                          {typeof token.priceChange24h === "number"
-                            ? `${token.priceChange24h >= 0 ? "+" : ""}${token.priceChange24h.toFixed(2)}%`
-                            : "0.00%"}
-                        </button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                {index < sortedTokens.length - 1 && (
-                  <Separator className="bg-[#14532d]/30" />
-                )}
-              </div>
-            ))}
+                    </CardContent>
+                  </Card>
+                  {index < sortedTokens.length - 1 && (
+                    <Separator className="bg-[#14532d]/30" />
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

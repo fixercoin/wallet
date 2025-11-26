@@ -166,6 +166,9 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
           .express-p2p-page [class*="border"] {
             border-width: 2px !important;
           }
+          .express-p2p-page [class*="border-gray-300"] {
+            border: none !important;
+          }
         }
       `}</style>
       {/* Decorative curved accent background elements */}

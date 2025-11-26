@@ -650,7 +650,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       onChange={(e) =>
                         handleBuyTargetPriceChange(e.target.value)
                       }
-                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-blue-400`}
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-green-400`}
                       placeholder="ENTER TARGET PRICE"
                     />
                   </div>
@@ -666,7 +666,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       onChange={(e) =>
                         handleBuyUsdcAmountChange(e.target.value)
                       }
-                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-blue-400`}
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-green-400`}
                       placeholder="ENTER USDC AMOUNT"
                     />
                   </div>
@@ -725,7 +725,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       step="0.00000001"
                       value={sellOrder.price}
                       onChange={(e) => handleSellPriceChange(e.target.value)}
-                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-red-400`}
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-green-400`}
                       placeholder="ENTER TARGET PRICE"
                     />
                   </div>
@@ -739,7 +739,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       step="0.01"
                       value={sellOrder.amount}
                       onChange={(e) => handleSellAmountChange(e.target.value)}
-                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-red-400`}
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-green-400`}
                       placeholder="ENTER FIXERCOIN AMOUNT"
                     />
                   </div>

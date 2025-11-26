@@ -5,6 +5,7 @@ import { Copy, ExternalLink } from "lucide-react";
 import { TokenInfo, shortenAddress } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { formatTokenAmount } from "@/lib/utils";
+import { PriceLoader } from "@/components/ui/price-loader";
 
 interface TokenInfoCardProps {
   token: TokenInfo;

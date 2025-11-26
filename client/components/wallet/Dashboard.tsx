@@ -796,38 +796,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   title="Refresh"
                   disabled={isLoading}
                 >
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      strokeOpacity="0.2"
-                    />
-                    <style>{`
-                      @keyframes dotRotate {
-                        0% { transform: rotate(0deg) translateY(-10px); }
-                        100% { transform: rotate(360deg) translateY(-10px); }
-                      }
-                      .dot-rotating {
-                        transform-origin: 12px 12px;
-                        animation: dotRotate 2s linear infinite;
-                      }
-                    `}</style>
-                    <g className="dot-rotating">
-                      <circle
-                        cx="12"
-                        cy="2"
-                        r="1.5"
-                        fill="currentColor"
-                      />
-                    </g>
-                  </svg>
+                  <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
                 </Button>
                 <Button
                   onClick={onLock}

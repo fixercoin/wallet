@@ -85,6 +85,7 @@ class FXMPriceService {
       volume24h: 0,
       lastUpdated: new Date(),
       derivationMethod: "fallback",
+      isFallback: true,
     };
   }
 

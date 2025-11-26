@@ -910,6 +910,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           .express-p2p-page [class*="border"] {
             border-width: 2px !important;
           }
+          .express-p2p-page > div > div > div[class*="border-gray"] {
+            border: none !important;
+          }
         }
       `}</style>
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 md:px-4 py-6 relative z-0">

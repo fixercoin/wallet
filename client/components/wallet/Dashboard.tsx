@@ -812,14 +812,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       }
                     `}</style>
                     <g className={isLoading ? "dot-spinner-active" : ""}>
-                      <circle cx="12" cy="2" r="1.5" fill="currentColor" />
-                      <circle cx="19.07" cy="4.93" r="1.5" fill="currentColor" opacity="0.9" />
-                      <circle cx="22" cy="12" r="1.5" fill="currentColor" opacity="0.8" />
-                      <circle cx="19.07" cy="19.07" r="1.5" fill="currentColor" opacity="0.7" />
-                      <circle cx="12" cy="22" r="1.5" fill="currentColor" opacity="0.6" />
-                      <circle cx="4.93" cy="19.07" r="1.5" fill="currentColor" opacity="0.5" />
-                      <circle cx="2" cy="12" r="1.5" fill="currentColor" opacity="0.4" />
-                      <circle cx="4.93" cy="4.93" r="1.5" fill="currentColor" opacity="0.3" />
+                      <circle cx="12" cy="2" r="2.5" fill="currentColor" />
+                      <circle cx="19.07" cy="4.93" r="2.5" fill="currentColor" opacity="0.9" />
+                      <circle cx="22" cy="12" r="2.5" fill="currentColor" opacity="0.8" />
+                      <circle cx="19.07" cy="19.07" r="2.5" fill="currentColor" opacity="0.7" />
+                      <circle cx="12" cy="22" r="2.5" fill="currentColor" opacity="0.6" />
+                      <circle cx="4.93" cy="19.07" r="2.5" fill="currentColor" opacity="0.5" />
+                      <circle cx="2" cy="12" r="2.5" fill="currentColor" opacity="0.4" />
+                      <circle cx="4.93" cy="4.93" r="2.5" fill="currentColor" opacity="0.3" />
                     </g>
                   </svg>
                 </Button>

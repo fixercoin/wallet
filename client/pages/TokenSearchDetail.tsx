@@ -176,14 +176,16 @@ export default function TokenSearchDetail() {
                   <Plus className="h-4 w-4 mr-2" /> Add Token
                 </Button>
               )}
-              <a
-                href={dexToken.url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-[2px] border border-gray-600 px-3 text-sm text-gray-400 hover:bg-gray-700"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </a>
+              {dexToken?.url ? (
+                <a
+                  href={dexToken.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center rounded-[2px] border border-gray-600 px-3 text-sm text-gray-400 hover:bg-gray-700"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              ) : null}
             </div>
           </CardContent>
         </Card>

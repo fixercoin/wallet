@@ -619,8 +619,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* About */}
               <p className="text-xs text-gray-300 leading-relaxed">
                 A community challenge inside the Fixorium Wallet. Complete
-                simple tasks, earn rewards, and join random prize draws ����� all
-                directly from your wallet.
+                simple tasks, earn rewards, and join random prize draws �����
+                all directly from your wallet.
               </p>
 
               {/* How it works */}
@@ -796,11 +796,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   title="Refresh"
                   disabled={isLoading}
                 >
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
                     <style>{`
                       @keyframes spin {
                         0% { transform: rotate(0deg); }
@@ -813,13 +809,55 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     `}</style>
                     <g className={isLoading ? "dot-spinner-active" : ""}>
                       <circle cx="12" cy="2" r="2.5" fill="currentColor" />
-                      <circle cx="19.07" cy="4.93" r="2.5" fill="currentColor" opacity="0.9" />
-                      <circle cx="22" cy="12" r="2.5" fill="currentColor" opacity="0.8" />
-                      <circle cx="19.07" cy="19.07" r="2.5" fill="currentColor" opacity="0.7" />
-                      <circle cx="12" cy="22" r="2.5" fill="currentColor" opacity="0.6" />
-                      <circle cx="4.93" cy="19.07" r="2.5" fill="currentColor" opacity="0.5" />
-                      <circle cx="2" cy="12" r="2.5" fill="currentColor" opacity="0.4" />
-                      <circle cx="4.93" cy="4.93" r="2.5" fill="currentColor" opacity="0.3" />
+                      <circle
+                        cx="19.07"
+                        cy="4.93"
+                        r="2.5"
+                        fill="currentColor"
+                        opacity="0.9"
+                      />
+                      <circle
+                        cx="22"
+                        cy="12"
+                        r="2.5"
+                        fill="currentColor"
+                        opacity="0.8"
+                      />
+                      <circle
+                        cx="19.07"
+                        cy="19.07"
+                        r="2.5"
+                        fill="currentColor"
+                        opacity="0.7"
+                      />
+                      <circle
+                        cx="12"
+                        cy="22"
+                        r="2.5"
+                        fill="currentColor"
+                        opacity="0.6"
+                      />
+                      <circle
+                        cx="4.93"
+                        cy="19.07"
+                        r="2.5"
+                        fill="currentColor"
+                        opacity="0.5"
+                      />
+                      <circle
+                        cx="2"
+                        cy="12"
+                        r="2.5"
+                        fill="currentColor"
+                        opacity="0.4"
+                      />
+                      <circle
+                        cx="4.93"
+                        cy="4.93"
+                        r="2.5"
+                        fill="currentColor"
+                        opacity="0.3"
+                      />
                     </g>
                   </svg>
                 </Button>

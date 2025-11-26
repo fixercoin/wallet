@@ -632,10 +632,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       </Label>
                       <div className="flex items-center gap-1 text-xs text-gray-400">
                         {isFetchingPrice ? (
-                          <>
-                            <Loader className="w-3 h-3 animate-spin" />
-                            FETCHING...
-                          </>
+                          <PriceLoader />
                         ) : livePrice ? (
                           <>
                             LIVE:{" "}

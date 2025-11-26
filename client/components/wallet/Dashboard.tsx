@@ -8,6 +8,7 @@ import {
   Wallet,
   Send,
   Download,
+  RefreshCw,
   Copy,
   ArrowUpRight,
   ArrowDownLeft,

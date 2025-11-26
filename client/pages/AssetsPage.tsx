@@ -175,11 +175,13 @@ export default function AssetsPage() {
                                 }}
                               />
                             )}
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold ${
-                              token.symbol === "FIXERCOIN"
-                                ? "bg-transparent"
-                                : "bg-gradient-to-br from-orange-500 to-yellow-600"
-                            }`}>
+                            <div
+                              className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+                                token.symbol === "FIXERCOIN"
+                                  ? "bg-transparent"
+                                  : "bg-gradient-to-br from-orange-500 to-yellow-600"
+                              }`}
+                            >
                               {token.symbol.slice(0, 2).toUpperCase()}
                             </div>
                           </div>

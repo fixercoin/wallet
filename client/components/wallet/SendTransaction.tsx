@@ -882,6 +882,16 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col">
+      <style>{`
+        @media (max-width: 768px) {
+          .express-p2p-page input,
+          .express-p2p-page select,
+          .express-p2p-page button[class*="border"],
+          .express-p2p-page [class*="border"] {
+            border-width: 2px !important;
+          }
+        }
+      `}</style>
       <div className="flex-1 flex items-center justify-center relative z-20">
         <div className="w-full md:max-w-lg lg:max-w-lg px-4 py-6">
           <div className="rounded-[2px] border-0 bg-transparent overflow-hidden">

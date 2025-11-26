@@ -191,7 +191,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const shareOnX = () => {
-    const text = encodeURIComponent("Fixercoin updates ����� #Fixercoin");
+    const text = encodeURIComponent("Fixercoin updates ��� #Fixercoin");
     const shareUrl = encodeURIComponent("https://fixorium.com.pk");
     const intent = `https://twitter.com/intent/tweet?text=${text}&url=${shareUrl}`;
     try {
@@ -619,7 +619,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* About */}
               <p className="text-xs text-gray-300 leading-relaxed">
                 A community challenge inside the Fixorium Wallet. Complete
-                simple tasks, earn rewards, and join random prize draws ��� all
+                simple tasks, earn rewards, and join random prize draws ����� all
                 directly from your wallet.
               </p>
 
@@ -806,12 +806,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         0% { transform: rotate(0deg); }
                         100% { transform: rotate(360deg); }
                       }
-                      .dot-spinner {
+                      .dot-spinner-active {
                         animation: spin 1.2s linear infinite;
                         transform-origin: center;
                       }
                     `}</style>
-                    <g className="dot-spinner">
+                    <g className={isLoading ? "dot-spinner-active" : ""}>
                       <circle cx="12" cy="2" r="1.5" fill="currentColor" />
                       <circle cx="19.07" cy="4.93" r="1.5" fill="currentColor" opacity="0.9" />
                       <circle cx="22" cy="12" r="1.5" fill="currentColor" opacity="0.8" />

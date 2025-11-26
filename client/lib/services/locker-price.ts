@@ -7,6 +7,7 @@ export interface LockerPriceData {
   liquidity?: number;
   lastUpdated: Date;
   derivationMethod?: string;
+  isFallback?: boolean;
 }
 
 class LockerPriceService {

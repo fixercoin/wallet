@@ -773,6 +773,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <Wallet className="h-4 w-4" />
                     <span>MY-WALLET</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => onLock()}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Lock className="h-4 w-4" />
+                    <span>LOCK TOKENS</span>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onSelect={() => navigate("/wallet/history")}
@@ -860,15 +867,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       />
                     </g>
                   </svg>
-                </Button>
-                <Button
-                  onClick={onLock}
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
-                  aria-label="Lock"
-                  title="Lock"
-                >
-                  <Lock className="h-4 w-4" />
                 </Button>
                 <Button
                   onClick={onSettings}

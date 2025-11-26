@@ -958,7 +958,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="w-full space-y-0">
           {sortedTokens.map((token, index) => {
             const tokenBalance =
-              typeof token.balance === "number" && typeof token.price === "number" && isFinite(token.balance) && isFinite(token.price)
+              typeof token.balance === "number" &&
+              typeof token.price === "number" &&
+              isFinite(token.balance) &&
+              isFinite(token.price)
                 ? token.balance * token.price
                 : 0;
 
@@ -992,15 +995,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           className="text-xs font-semibold whitespace-nowrap token-price-blink"
                           style={{
                             color:
-                              typeof token.priceChange24h === "number" && isFinite(token.priceChange24h)
+                              typeof token.priceChange24h === "number" &&
+                              isFinite(token.priceChange24h)
                                 ? token.priceChange24h >= 0
                                   ? "#4ade80"
                                   : "#f87171"
-                                : "#ffffff"
+                                : "#ffffff",
                           }}
                         >
                           $
-                          {typeof token.price === "number" && isFinite(token.price)
+                          {typeof token.price === "number" &&
+                          isFinite(token.price)
                             ? token.price.toFixed(
                                 ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
                               )

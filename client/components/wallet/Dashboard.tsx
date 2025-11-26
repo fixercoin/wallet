@@ -956,6 +956,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div key={token.mint} className="w-full">
                 <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
+                    <style>{`
+                      @keyframes blink {
+                        0%, 100% { opacity: 1; }
+                        50% { opacity: 0.5; }
+                      }
+                      .token-price-blink {
+                        animation: blink 1.5s ease-in-out infinite;
+                      }
+                    `}</style>
                     <div
                       className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-4"
                       onClick={() => handleTokenCardClick(token)}
@@ -975,6 +984,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             {formatAmountCompact(token.balance, token.symbol)}
                           </p>
                         </div>
+                      </div>
+
+                      <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                        <p className="text-xs font-semibold text-white whitespace-nowrap token-price-blink">
+                          $
+                          {typeof token.price === "number" && isFinite(token.price)
+                            ? token.price.toFixed(
+                                ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
+                              )
+                            : ["SOL", "USDC"].includes(token.symbol)
+                              ? "0.00"
+                              : "0.00000000"}
+                        </p>
                       </div>
 
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">

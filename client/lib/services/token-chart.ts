@@ -18,9 +18,10 @@ export interface CandleDataPoint {
   originalTime?: number;
 }
 
-export type TimeFrame = "1H" | "1D" | "1W" | "1M" | "2M";
+export type TimeFrame = "15M" | "1H" | "1D" | "1W" | "1M" | "2M";
 
 const TIMEFRAME_CONFIGS: Record<TimeFrame, { days: number; points: number }> = {
+  "15M": { days: 1, points: 4 }, // 15 minute intervals (4 candles per hour)
   "1H": { days: 1, points: 60 }, // 1 minute intervals
   "1D": { days: 1, points: 24 }, // 1 hour intervals
   "1W": { days: 7, points: 7 }, // 1 day intervals
@@ -86,6 +87,12 @@ async function fetchCoinGeckoChartData(
       const date = new Date(timestamp);
 
       switch (timeframe) {
+        case "15M":
+          return date.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          });
         case "1H":
           return date.toLocaleTimeString("en-US", {
             hour: "2-digit",
@@ -173,6 +180,12 @@ function generateCandleData(
     const date = new Date(timestamp);
 
     switch (timeframe) {
+      case "15M":
+        return date.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
       case "1H":
         return date.toLocaleTimeString("en-US", {
           hour: "2-digit",
@@ -247,6 +260,8 @@ export function generateFallbackChartData(
   // Calculate time intervals based on timeframe
   const getIntervalMs = (): number => {
     switch (timeframe) {
+      case "15M":
+        return (15 * 60 * 1000); // 15 minutes to ms
       case "1H":
         return (60 / points) * 60 * 1000; // minutes to ms
       case "1D":
@@ -266,6 +281,12 @@ export function generateFallbackChartData(
     const date = new Date(timestamp);
 
     switch (timeframe) {
+      case "15M":
+        return date.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
       case "1H":
         return date.toLocaleTimeString("en-US", {
           hour: "2-digit",

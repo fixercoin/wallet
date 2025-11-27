@@ -14,8 +14,8 @@ export function formatTokenAmount(
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
   if (isNaN(num)) return "0.00";
 
-  // SOL always shows exactly 3 decimal places
-  if (symbol === "SOL") {
+  // SOL and USDC always show exactly 3 decimal places
+  if (symbol === "SOL" || symbol === "USDC") {
     return num.toLocaleString(undefined, {
       minimumFractionDigits: 3,
       maximumFractionDigits: 3,

@@ -43,15 +43,15 @@ export function formatAmountCompact(
 ): string {
   if (!amount || isNaN(amount)) {
     if (symbol === "SOL") {
-      return "0.000 sol";
+      return "0.000 SOL";
     }
-    return symbol ? `0.00 ${symbol.toLowerCase()}` : "0.00";
+    return symbol ? `0.00 ${symbol.toUpperCase()}` : "0.00";
   }
 
   // Only SOL and USDC use full format, all other tokens use abbreviation
   if (["SOL", "USDC"].includes(symbol || "")) {
     const formatted = formatTokenAmount(amount, symbol);
-    return symbol ? `${formatted} ${symbol.toLowerCase()}` : formatted;
+    return symbol ? `${formatted} ${symbol.toUpperCase()}` : formatted;
   }
 
   let formatted = "";
@@ -75,5 +75,5 @@ export function formatAmountCompact(
     return formatTokenAmount(amount, symbol);
   }
 
-  return symbol ? `${formatted} ${symbol.toLowerCase()}` : formatted;
+  return symbol ? `${formatted} ${symbol.toUpperCase()}` : formatted;
 }

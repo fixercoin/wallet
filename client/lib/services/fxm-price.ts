@@ -94,9 +94,14 @@ class FXMPriceService {
 
       // Fallback to Pump.fun API (since FXM is a pump.fun token)
       console.log("Birdeye failed for FXM, trying Pump.fun API...");
-      const pumpFunPriceInSol = await pumpFunPriceService.getTokenPrice(FXM_MINT);
+      const pumpFunPriceInSol =
+        await pumpFunPriceService.getTokenPrice(FXM_MINT);
 
-      if (pumpFunPriceInSol && pumpFunPriceInSol > 0 && isFinite(pumpFunPriceInSol)) {
+      if (
+        pumpFunPriceInSol &&
+        pumpFunPriceInSol > 0 &&
+        isFinite(pumpFunPriceInSol)
+      ) {
         // Pump.fun returns price in SOL, convert to USD
         try {
           const solPriceData = await solPriceService.getSolPrice();
@@ -118,10 +123,7 @@ class FXMPriceService {
           );
           return priceData;
         } catch (error) {
-          console.warn(
-            "Failed to convert Pump.fun SOL price to USD:",
-            error,
-          );
+          console.warn("Failed to convert Pump.fun SOL price to USD:", error);
         }
       }
 

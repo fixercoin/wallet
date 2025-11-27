@@ -195,7 +195,7 @@ export const MarketMakerHistoryCard: React.FC<MarketMakerHistoryCardProps> = ({
                       <div className="text-white font-semibold">
                         {order.outputToken === "USDC"
                           ? formatAmount(order.outputAmount || 0, 6)
-                          : formatAmount(order.solAmount || 0, 9)}
+                          : formatAmount(order.outputAmount || 0, 9)}
                       </div>
                     </div>
                   )}

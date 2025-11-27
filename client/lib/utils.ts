@@ -33,39 +33,35 @@ export function formatAmountCompact(
   amount: number | undefined,
   symbol?: string,
 ): string {
-  if (!amount || isNaN(amount)) return "0.00";
+  if (!amount || isNaN(amount)) {
+    return symbol ? `0.00 ${symbol}` : "0.00";
+  }
 
   // Only SOL and USDC use full format, all other tokens use abbreviation
   if (["SOL", "USDC"].includes(symbol || "")) {
     return formatTokenAmount(amount, symbol);
   }
 
+  let formatted = "";
+
   if (amount >= 1_000_000_000) {
-    return (
-      (amount / 1_000_000_000).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }) + "B"
-    );
+    formatted = (amount / 1_000_000_000).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }) + "B";
+  } else if (amount >= 1_000_000) {
+    formatted = (amount / 1_000_000).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }) + "M";
+  } else if (amount >= 1_000) {
+    formatted = (amount / 1_000).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }) + "K";
+  } else {
+    return formatTokenAmount(amount, symbol);
   }
 
-  if (amount >= 1_000_000) {
-    return (
-      (amount / 1_000_000).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }) + "M"
-    );
-  }
-
-  if (amount >= 1_000) {
-    return (
-      (amount / 1_000).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }) + "K"
-    );
-  }
-
-  return formatTokenAmount(amount, symbol);
+  return symbol ? `${formatted} ${symbol}` : formatted;
 }

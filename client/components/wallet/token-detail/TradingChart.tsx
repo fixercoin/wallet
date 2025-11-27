@@ -1,16 +1,8 @@
 import React, { useEffect, useState, useMemo } from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
 import { Button } from "@/components/ui/button";
 import { TokenInfo } from "@/lib/wallet";
-import { fetchTokenChartData, type TimeFrame, type ChartDataPoint } from "@/lib/services/token-chart";
+import { fetchTokenChartData, type TimeFrame, type CandleDataPoint } from "@/lib/services/token-chart";
+import { CandlestickChart } from "./CandlestickChart";
 
 const TIMEFRAMES: TimeFrame[] = ["1H", "1D", "1W", "1M", "2M"];
 
@@ -18,21 +10,6 @@ interface TradingChartProps {
   token: TokenInfo;
   mint: string;
 }
-
-const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload[0]) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-gray-950 border border-gray-700 rounded px-3 py-2 text-xs shadow-lg">
-        <p className="text-gray-300">{data.time}</p>
-        <p className="text-blue-400 font-semibold">
-          ${data.price.toFixed(8)}
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
 
 export const TradingChart: React.FC<TradingChartProps> = ({ token, mint }) => {
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeFrame>("1D");

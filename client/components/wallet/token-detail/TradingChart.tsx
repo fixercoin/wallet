@@ -40,92 +40,26 @@ export const TradingChart: React.FC<TradingChartProps> = ({ token, mint }) => {
   const [loading, setLoading] = useState(false);
   const [priceChange, setPriceChange] = useState<number | null>(null);
 
-  // Generate mock data based on timeframe and price change percentage
-  const generateMockChartData = (
-    timeframe: TimeFrame,
-    basePrice: number,
-    changePercent: number,
-  ): ChartDataPoint[] => {
-    const pointsMap: Record<TimeFrame, number> = {
-      "1H": 60,
-      "1D": 24,
-      "1W": 7,
-      "1M": 30,
-      "2M": 60,
-    };
-
-    const points = pointsMap[timeframe];
-    const timeLabelsMap: Record<TimeFrame, (i: number) => string> = {
-      "1H": (i) => `${String(i).padStart(2, "0")}:00`,
-      "1D": (i) => `${i}:00`,
-      "1W": (i) => {
-        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        const dayOffset = (new Date().getDay() - 6 + i) % 7;
-        return days[dayOffset];
-      },
-      "1M": (i) => `${i + 1}`,
-      "2M": (i) => `${Math.floor(i / 2) + 1}`,
-    };
-
-    const data: ChartDataPoint[] = [];
-    for (let i = 0; i < points; i++) {
-      const progress = i / (points - 1);
-      // Create a smooth sine wave trend based on the price change
-      const trend =
-        Math.sin((progress - 0.5) * Math.PI) * (changePercent / 100) * 0.5;
-      const noise = (Math.random() - 0.5) * 0.02;
-      const factor = 1 + trend + noise;
-
-      data.push({
-        time: timeLabelsMap[timeframe](i),
-        price: basePrice * factor,
-        originalTime: Date.now() - (points - 1 - i) * 1000,
-      });
-    }
-
-    return data;
-  };
-
   useEffect(() => {
     const loadChartData = async () => {
       setLoading(true);
       try {
-        // Get current price and change from Birdeye
-        const birdeye = await birdeyeAPI.getTokenByMint(mint).catch(() => null);
+        const currentPrice = token.price || 0;
+        const changePercent = token.priceChange24h || 0;
 
-        const currentPrice = token.price || (birdeye?.priceUsd ?? 0);
-        let changePercent =
-          token.priceChange24h !== undefined
-            ? token.priceChange24h
-            : birdeye?.priceChange?.h24 ?? 0;
-
-        // For different timeframes, adjust the change percent for simulation
-        const timeframeChangeMap: Record<TimeFrame, number> = {
-          "1H": (birdeye?.priceChange?.m5 ?? 0) * 12, // Approximate 1H
-          "1D": changePercent,
-          "1W": (birdeye?.priceChange?.h24 ?? 0) * 3, // Rough estimate
-          "1M": (birdeye?.priceChange?.h24 ?? 0) * 7,
-          "2M": (birdeye?.priceChange?.h24 ?? 0) * 14,
-        };
-
-        changePercent = timeframeChangeMap[selectedTimeframe];
-        setPriceChange(changePercent);
-
-        const data = generateMockChartData(
-          selectedTimeframe,
+        // Fetch real historical data
+        const data = await fetchTokenChartData(
+          mint,
           currentPrice,
           changePercent,
+          selectedTimeframe,
         );
+
         setChartData(data);
+        setPriceChange(changePercent);
       } catch (error) {
         console.error("Error loading chart data:", error);
-        // Fallback to mock data
-        const data = generateMockChartData(
-          selectedTimeframe,
-          token.price || 0.0015,
-          token.priceChange24h || -2.92,
-        );
-        setChartData(data);
+        setChartData([]);
       } finally {
         setLoading(false);
       }

@@ -47,12 +47,14 @@ export const TradingChart: React.FC<TradingChartProps> = ({ token, mint }) => {
 
   const minPrice = useMemo(() => {
     if (chartData.length === 0) return 0;
-    return Math.min(...chartData.map((d) => d.price)) * 0.98;
+    const lows = chartData.map((d) => d.low);
+    return Math.min(...lows) * 0.98;
   }, [chartData]);
 
   const maxPrice = useMemo(() => {
     if (chartData.length === 0) return 1;
-    return Math.max(...chartData.map((d) => d.price)) * 1.02;
+    const highs = chartData.map((d) => d.high);
+    return Math.max(...highs) * 1.02;
   }, [chartData]);
 
   const isPositive = priceChange !== null && priceChange >= 0;

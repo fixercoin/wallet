@@ -45,10 +45,10 @@ export default function AssetsPage() {
   ): string => {
     if (!amount || isNaN(amount) || amount === 0) {
       if (symbol === "SOL") {
-        return "0.000 SOL";
+        return "0.0000 SOL";
       }
       if (symbol === "USDC") {
-        return "0.000 USDC";
+        return "0.0000 USDC";
       }
       return symbol ? `0 ${symbol.toUpperCase()}` : "0";
     }
@@ -64,7 +64,7 @@ export default function AssetsPage() {
       formatted = (amount / 1000).toFixed(2) + "K";
     } else if (absAmount >= 1) {
       if (symbol === "SOL" || symbol === "USDC") {
-        formatted = amount.toFixed(3);
+        formatted = amount.toFixed(4);
       } else {
         formatted = amount.toFixed(2);
       }

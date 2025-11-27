@@ -102,11 +102,8 @@ async function fetchCoinGeckoChartData(
       }
     };
 
-    return resampled.map((point) => ({
-      time: formatTime(point[0], timeframe),
-      price: point[1],
-      originalTime: point[0],
-    }));
+    // Generate candlestick data instead of line data
+    return generateCandleData(resampled, TIMEFRAME_CONFIGS[timeframe].points, timeframe) as any;
   } catch (error) {
     console.error(
       `[TokenChart] Error fetching CoinGecko data for ${coinId}:`,

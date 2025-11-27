@@ -474,12 +474,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     setIsLoading(true);
     setError(null);
+    setIsUsingCache(false);
 
     try {
       const newBalance = await getBalance(wallet.publicKey);
       if (typeof newBalance === "number" && !isNaN(newBalance)) {
         setBalance(newBalance);
         balanceRef.current = newBalance;
+        saveBalanceToCache(wallet.publicKey, newBalance);
       } else {
         setBalance(0);
         balanceRef.current = 0;
@@ -487,8 +489,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     } catch (error) {
       console.error("Error refreshing balance:", error);
       setError("Failed to refresh balance");
-      setBalance(0);
-      balanceRef.current = 0;
+
+      // Try to use cached balance as fallback
+      const cachedBalance = getCachedBalance(wallet.publicKey);
+      if (cachedBalance !== null) {
+        console.log("[WalletContext] Using cached balance:", cachedBalance);
+        setBalance(cachedBalance);
+        balanceRef.current = cachedBalance;
+        setIsUsingCache(true);
+      } else {
+        setBalance(0);
+        balanceRef.current = 0;
+      }
     } finally {
       setIsLoading(false);
     }

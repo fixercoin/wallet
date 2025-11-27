@@ -306,6 +306,22 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     // Trigger immediate refresh
     const doRefresh = async () => {
       try {
+        // Try to load cached data first for faster initial display
+        const cachedTokens = getCachedTokens(wallet.publicKey);
+        if (cachedTokens && cachedTokens.length > 0) {
+          console.log("[WalletContext] Loading cached tokens on wallet switch");
+          setTokens(cachedTokens);
+          setIsUsingCache(true);
+        }
+
+        const cachedBalance = getCachedBalance(wallet.publicKey);
+        if (cachedBalance !== null) {
+          console.log("[WalletContext] Loading cached balance on wallet switch");
+          setBalance(cachedBalance);
+          balanceRef.current = cachedBalance;
+        }
+
+        // Then fetch fresh data
         await refreshBalance();
         await new Promise((r) => setTimeout(r, 300));
         await refreshTokens();

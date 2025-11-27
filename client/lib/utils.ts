@@ -45,6 +45,9 @@ export function formatAmountCompact(
     if (symbol === "SOL") {
       return "0.000 SOL";
     }
+    if (symbol === "USDC") {
+      return "0.000 USDC";
+    }
     return symbol ? `0.00 ${symbol.toUpperCase()}` : "0.00";
   }
 

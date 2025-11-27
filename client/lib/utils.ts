@@ -50,7 +50,8 @@ export function formatAmountCompact(
 
   // Only SOL and USDC use full format, all other tokens use abbreviation
   if (["SOL", "USDC"].includes(symbol || "")) {
-    return formatTokenAmount(amount, symbol);
+    const formatted = formatTokenAmount(amount, symbol);
+    return symbol ? `${formatted} ${symbol}` : formatted;
   }
 
   let formatted = "";

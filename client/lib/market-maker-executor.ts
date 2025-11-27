@@ -230,6 +230,10 @@ export async function executeLimitOrder(
       // Update order with completion info
       const outputAmount =
         parseInt(quote.outAmount) / Math.pow(10, outputDecimals);
+      console.log(
+        `[MarketMakerExecutor] Sell order output: ${outputAmount} ${order.outputToken || "SOL"} (quote.outAmount=${quote.outAmount}, decimals=${outputDecimals})`,
+      );
+
       const completed = botOrdersStorage.completeSellOrder(
         session.id,
         order.id,
@@ -249,6 +253,7 @@ export async function executeLimitOrder(
             status: "completed",
             outputAmount,
             signature,
+            outputToken: order.outputToken,
           },
         };
       } else {

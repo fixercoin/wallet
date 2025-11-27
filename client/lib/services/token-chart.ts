@@ -139,6 +139,76 @@ function resamplePrices(
 }
 
 /**
+ * Convert flat price data into OHLC candlestick data
+ */
+function generateCandleData(
+  prices: Array<[number, number]>,
+  numCandles: number,
+  timeframe: TimeFrame,
+): CandleDataPoint[] {
+  if (prices.length === 0) return [];
+
+  const pricesPerCandle = Math.ceil(prices.length / numCandles);
+  const candles: CandleDataPoint[] = [];
+
+  const formatTime = (timestamp: number, timeframe: TimeFrame): string => {
+    const date = new Date(timestamp);
+
+    switch (timeframe) {
+      case "1H":
+        return date.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+      case "1D":
+        return date.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+      case "1W":
+        return date.toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "numeric",
+          day: "numeric",
+        });
+      case "1M":
+        return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      case "2M":
+        return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      default:
+        return date.toLocaleString();
+    }
+  };
+
+  for (let i = 0; i < numCandles; i++) {
+    const start = i * pricesPerCandle;
+    const end = Math.min(start + pricesPerCandle, prices.length);
+    const candlePrices = prices.slice(start, end).map((p) => p[1]);
+
+    if (candlePrices.length === 0) continue;
+
+    const open = candlePrices[0];
+    const close = candlePrices[candlePrices.length - 1];
+    const high = Math.max(...candlePrices);
+    const low = Math.min(...candlePrices);
+    const timestamp = prices[start][0];
+
+    candles.push({
+      time: formatTime(timestamp, timeframe),
+      open,
+      high,
+      low,
+      close,
+      originalTime: timestamp,
+    });
+  }
+
+  return candles;
+}
+
+/**
  * Generate fallback chart data based on price trend
  * Used when real data is not available
  */

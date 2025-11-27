@@ -42,6 +42,9 @@ export function formatAmountCompact(
   symbol?: string,
 ): string {
   if (!amount || isNaN(amount)) {
+    if (symbol === "SOL") {
+      return "0.000 SOL";
+    }
     return symbol ? `0.00 ${symbol}` : "0.00";
   }
 

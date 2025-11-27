@@ -76,6 +76,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     amount: "",
     total: "0.02",
   });
+  const [sellOutputToken, setSellOutputToken] = useState<"SOL" | "USDC">("SOL");
   const [isLoading, setIsLoading] = useState(false);
   const [livePrice, setLivePrice] = useState<number | null>(null);
   const [solPrice, setSolPrice] = useState<number | null>(null);
@@ -273,9 +274,14 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             });
 
             if (result.success) {
+              const outputToken = order.outputToken || "SOL";
+              const outputAmount =
+                outputToken === "USDC"
+                  ? result.order?.outputAmount?.toFixed(6)
+                  : result.order?.solAmount?.toFixed(6);
               toast({
                 title: "Sell Order Executed",
-                description: `Successfully sold ${result.order?.tokenAmount?.toFixed(6) || "tokens"} for ${result.order?.solAmount?.toFixed(6) || "SOL"}`,
+                description: `Successfully sold ${result.order?.tokenAmount?.toFixed(6) || "tokens"} for ${outputAmount || "0"} ${outputToken}`,
               });
               // Reload session
               const updatedSession = botOrdersStorage.getCurrentSession();
@@ -508,6 +514,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           "", // buyOrderId - we'll use empty since this is a direct limit sell
           sellPrice,
           tokenAmount,
+          undefined,
+          sellOutputToken,
         );
 
         if (!newOrder) {
@@ -768,6 +776,26 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         {tokenBalance.toFixed(8)}
                       </span>
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-gray-600 text-xs font-semibold">
+                      RECEIVE IN
+                    </Label>
+                    <Select
+                      value={sellOutputToken}
+                      onValueChange={(value) =>
+                        setSellOutputToken(value as "SOL" | "USDC")
+                      }
+                    >
+                      <SelectTrigger className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="SOL">SOL</SelectItem>
+                        <SelectItem value="USDC">USDC</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </>
               )}

@@ -882,6 +882,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             <div className="text-center space-y-2 mt-8">
+              {isUsingCache && (
+                <div className="text-xs px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-600 inline-block border border-yellow-500/40 mx-auto mb-2">
+                  📡 Offline Mode - Last Synced
+                </div>
+              )}
               {wallet
                 ? (() => {
                     const total = getTotalPortfolioValue();

@@ -8,6 +8,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { TokenInfo } from "@/lib/wallet";
 import { getTokenMetadata, KNOWN_TOKENS } from "@/lib/services/solana-rpc";
+import { TradingChart } from "@/components/wallet/token-detail/TradingChart";
 
 export default function TokenSearchDetail() {
   const { mint = "" } = useParams();
@@ -111,10 +112,21 @@ export default function TokenSearchDetail() {
   const name = dexToken?.baseToken?.name || knownToken?.name || symbol;
   const priceUsd = dexToken?.priceUsd ? parseFloat(dexToken.priceUsd) : 0;
 
+  // Create a TokenInfo object for the TradingChart
+  const tokenInfo: TokenInfo = {
+    mint: tokenMintToCheck,
+    symbol,
+    name,
+    decimals: knownToken?.decimals ?? 9,
+    logoURI: img,
+    price: priceUsd || undefined,
+    priceChange24h: dexToken?.priceChange?.h24,
+  };
+
   return (
     <div className="express-p2p-page dark-theme min-h-screen bg-gray-900 text-white">
-      <div className="w-full md:max-w-lg mx-auto px-4 py-6">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="w-full md:max-w-lg mx-auto px-4 py-6 flex flex-col gap-6">
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
@@ -187,6 +199,13 @@ export default function TokenSearchDetail() {
                 </a>
               ) : null}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Trading Chart */}
+        <Card className="border border-gray-700/40 bg-gradient-to-br from-gray-800 via-gray-800 to-gray-700">
+          <CardContent className="p-4">
+            <TradingChart token={tokenInfo} mint={tokenMintToCheck} />
           </CardContent>
         </Card>
       </div>

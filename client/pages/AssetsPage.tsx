@@ -39,20 +39,37 @@ export default function AssetsPage() {
     });
   };
 
-  const formatTokenAmountCompact = (amount: number | undefined): string => {
-    if (!amount || isNaN(amount) || amount === 0) return "0";
+  const formatTokenAmountCompact = (
+    amount: number | undefined,
+    symbol?: string,
+  ): string => {
+    if (!amount || isNaN(amount) || amount === 0) {
+      if (symbol === "SOL") {
+        return "0.000 SOL";
+      }
+      return symbol ? `0 ${symbol.toUpperCase()}` : "0";
+    }
 
     const absAmount = Math.abs(amount);
-    if (absAmount >= 1000000) {
-      return (amount / 1000000).toFixed(2) + " M";
+    let formatted = "";
+
+    if (absAmount >= 1000000000) {
+      formatted = (amount / 1000000000).toFixed(2) + "B";
+    } else if (absAmount >= 1000000) {
+      formatted = (amount / 1000000).toFixed(2) + "M";
+    } else if (absAmount >= 1000) {
+      formatted = (amount / 1000).toFixed(2) + "K";
+    } else if (absAmount >= 1) {
+      if (symbol === "SOL") {
+        formatted = amount.toFixed(3);
+      } else {
+        formatted = amount.toFixed(2);
+      }
+    } else {
+      formatted = amount.toFixed(6);
     }
-    if (absAmount >= 1000) {
-      return (amount / 1000).toFixed(2) + " K";
-    }
-    if (absAmount >= 1) {
-      return amount.toFixed(2);
-    }
-    return amount.toFixed(6);
+
+    return symbol ? `${formatted} ${symbol.toUpperCase()}` : formatted;
   };
 
   const sortedTokens = useMemo(() => {
@@ -194,8 +211,21 @@ export default function AssetsPage() {
                             <p className="text-xs font-semibold text-white truncate uppercase">
                               {token.name}
                             </p>
-                            <p className="text-xs font-semibold text-white truncate">
-                              {formatTokenAmountCompact(token.balance || 0)}
+                            <p className="text-xs font-semibold text-white truncate flex items-baseline gap-1">
+                              <span>
+                                {
+                                  formatTokenAmountCompact(
+                                    token.balance || 0,
+                                    token.symbol,
+                                  ).split(/\s+/)[0]
+                                }
+                              </span>
+                              <span
+                                className="text-xs"
+                                style={{ fontSize: "0.65rem" }}
+                              >
+                                {token.symbol.toUpperCase()}
+                              </span>
                             </p>
                           </div>
                         </div>

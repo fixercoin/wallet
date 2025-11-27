@@ -961,6 +961,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         setTokens(cachedTokens);
         setIsUsingCache(true);
         setError("Using offline data - last updated earlier");
+
+        // Also load cached balance when using cached tokens
+        const cachedBalance = getCachedBalance(wallet.publicKey);
+        if (cachedBalance !== null) {
+          console.log(
+            "[WalletContext] Also loading cached balance:",
+            cachedBalance,
+          );
+          setBalance(cachedBalance);
+          balanceRef.current = cachedBalance;
+        }
       } else {
         setError(
           `Failed to fetch tokens: ${error instanceof Error ? error.message : String(error)}`,

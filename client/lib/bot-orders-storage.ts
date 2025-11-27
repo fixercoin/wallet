@@ -16,6 +16,8 @@ export interface BotOrder {
   error?: string;
   feeDeducted: boolean;
   feeSignature?: string;
+  outputToken?: "SOL" | "USDC";
+  outputAmount?: number;
 }
 
 export interface BotSession {

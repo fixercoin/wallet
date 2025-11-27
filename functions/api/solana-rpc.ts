@@ -1,26 +1,20 @@
-const RPC_ENDPOINTS = [
-  process.env.HELIUS_API_KEY
-    ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
-    : "",
-  process.env.SOLANA_RPC_URL || "",
-  process.env.HELIUS_RPC_URL || "",
-  process.env.MORALIS_RPC_URL || "",
-  process.env.ALCHEMY_RPC_URL || "",
-].filter(Boolean);
+export async function onRequestPost({ request }) {
+  try {
+    const body = await request.json();
+    const rpc = "https://api.mainnet-beta.solana.com";
 
-async function callRpc(payload: any) {
-  for (const endpoint of RPC_ENDPOINTS) {
-    try {
-      const resp = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (resp.ok) return await resp.json();
-      // If you get a 403, skip to next endpoint
-    } catch (e) {
-      // log error, continue
-    }
+    const response = await fetch(rpc, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    return new Response(await response.text(), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+    });
   }
-  throw new Error("All RPC endpoints failed or blocked.");
 }

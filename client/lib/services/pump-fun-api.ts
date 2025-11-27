@@ -4,7 +4,7 @@
  * Proxies to Pump.fun bonding curve trading endpoints
  */
 
-import { resolveApiUrl } from "@/lib/api-client";
+import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 
 const PUMP_CURVE_PROXY = "/api/pumpfun/curve";
 const PUMP_BUY_PROXY = "/api/pumpfun/buy";
@@ -27,7 +27,7 @@ export async function checkCurveState(mint: string): Promise<boolean> {
     const url = new URL(resolveApiUrl(PUMP_CURVE_PROXY));
     url.searchParams.set("mint", mint);
 
-    const res = await fetch(url.toString(), {
+    const res = await fetchWithFallback(`${PUMP_CURVE_PROXY}?mint=${encodeURIComponent(mint)}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -52,6 +52,8 @@ export interface PumpBuyRequest {
   mint: string;
   amount: number; // lamports (SOL)
   buyer: string; // public key
+  slippageBps?: number; // slippage in basis points (default 350)
+  priorityFeeLamports?: number; // priority fee in lamports (default 10000)
 }
 
 /**
@@ -60,12 +62,16 @@ export interface PumpBuyRequest {
  * @param mint Token mint address
  * @param solAmount Amount in SOL (e.g., 0.5)
  * @param walletPublicKey User's public key
+ * @param slippageBps Optional slippage in basis points (default 350 = 3.5%)
+ * @param priorityFeeLamports Optional priority fee in lamports (default 10000)
  * @returns Unsigned transaction in base64
  */
 export async function pumpBuy(
   mint: string,
   solAmount: number,
   walletPublicKey: string,
+  slippageBps: number = 350,
+  priorityFeeLamports: number = 10000,
 ): Promise<string> {
   try {
     const lamports = Math.floor(solAmount * 1_000_000_000);
@@ -74,9 +80,11 @@ export async function pumpBuy(
       mint,
       amount: lamports,
       buyer: walletPublicKey,
+      slippageBps,
+      priorityFeeLamports,
     };
 
-    const res = await fetch(resolveApiUrl(PUMP_BUY_PROXY), {
+    const res = await fetchWithFallback(PUMP_BUY_PROXY, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody),
@@ -107,6 +115,8 @@ export interface PumpSellRequest {
   mint: string;
   amount: number; // smallest units (token amount * 10^decimals)
   seller: string; // public key
+  slippageBps?: number; // slippage in basis points (default 350)
+  priorityFeeLamports?: number; // priority fee in lamports (default 10000)
 }
 
 /**
@@ -115,21 +125,27 @@ export interface PumpSellRequest {
  * @param mint Token mint address
  * @param tokenAmount Token amount in SMALLEST UNITS (no decimals!)
  * @param walletPublicKey User's public key
+ * @param slippageBps Optional slippage in basis points (default 350 = 3.5%)
+ * @param priorityFeeLamports Optional priority fee in lamports (default 10000)
  * @returns Unsigned transaction in base64
  */
 export async function pumpSell(
   mint: string,
   tokenAmount: number,
   walletPublicKey: string,
+  slippageBps: number = 350,
+  priorityFeeLamports: number = 10000,
 ): Promise<string> {
   try {
     const requestBody: PumpSellRequest = {
       mint,
       amount: tokenAmount, // MUST be in smallest units
       seller: walletPublicKey,
+      slippageBps,
+      priorityFeeLamports,
     };
 
-    const res = await fetch(resolveApiUrl(PUMP_SELL_PROXY), {
+    const res = await fetchWithFallback(PUMP_SELL_PROXY, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody),

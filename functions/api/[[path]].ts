@@ -1063,13 +1063,21 @@ async function handleDexscreenerTokens(url: URL): Promise<Response> {
     // Deduplicate and filter to Solana
     const seen = new Set<string>();
     const pairs = results
-      .filter((p: any) => (p?.chainId || "").toLowerCase() === "solana")
+      .filter((p: any) => {
+        // More flexible chain matching - handle various chainId formats
+        const chainId = (p?.chainId || "").toLowerCase().trim();
+        return chainId === "solana" || chainId === "sol" || !p?.chainId;
+      })
       .filter((p: any) => {
         const key = `${p?.baseToken?.address || ""}:${p?.quoteToken?.address || ""}`;
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
       });
+
+    console.log(
+      `[DexScreener Tokens] Processed ${results.length} results, returning ${pairs.length} Solana pairs`,
+    );
 
     return new Response(JSON.stringify({ schemaVersion, pairs }), {
       headers: CORS_HEADERS,

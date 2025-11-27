@@ -205,7 +205,7 @@ export default function AssetsPage() {
                               {token.name}
                             </p>
                             <p className="text-xs font-semibold text-white truncate">
-                              {formatTokenAmountCompact(token.balance || 0)}
+                              {formatTokenAmountCompact(token.balance || 0, token.symbol)}
                             </p>
                           </div>
                         </div>

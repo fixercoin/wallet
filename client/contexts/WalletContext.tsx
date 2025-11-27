@@ -932,32 +932,43 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       }
     } catch (error) {
       console.error("Error refreshing tokens:", error);
-      setError(
-        `Failed to fetch tokens: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      const fallbackTokens: TokenInfo[] = [
-        {
-          mint: "So11111111111111111111111111111111111111112",
-          symbol: "SOL",
-          name: "Solana",
-          decimals: 9,
-          logoURI:
-            "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-          balance: balance || 0,
-          price: 100,
-        },
-        {
-          mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
-          symbol: "FIXERCOIN",
-          name: "FIXERCOIN",
-          decimals: 6,
-          logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
-          balance: 0,
-          price: 0.000023,
-        },
-      ];
 
-      setTokens(fallbackTokens);
+      // Try to load cached tokens first
+      const cachedTokens = getCachedTokens(wallet.publicKey);
+      if (cachedTokens && cachedTokens.length > 0) {
+        console.log("[WalletContext] Using cached tokens due to network error");
+        setTokens(cachedTokens);
+        setIsUsingCache(true);
+        setError("Using offline data - last updated earlier");
+      } else {
+        setError(
+          `Failed to fetch tokens: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        const fallbackTokens: TokenInfo[] = [
+          {
+            mint: "So11111111111111111111111111111111111111112",
+            symbol: "SOL",
+            name: "Solana",
+            decimals: 9,
+            logoURI:
+              "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+            balance: balance || 0,
+            price: 100,
+          },
+          {
+            mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+            symbol: "FIXERCOIN",
+            name: "FIXERCOIN",
+            decimals: 6,
+            logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
+            balance: 0,
+            price: 0.000023,
+          },
+        ];
+
+        setTokens(fallbackTokens);
+        setIsUsingCache(false);
+      }
     } finally {
       setIsLoading(false);
     }

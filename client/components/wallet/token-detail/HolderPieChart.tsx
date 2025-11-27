@@ -1,4 +1,4 @@
-import React from "recharts";
+import React from "react";
 import { PieChart, Pie, Cell, Legend, ResponsiveContainer, Tooltip } from "recharts";
 import { type HolderData } from "@/lib/services/token-holders";
 

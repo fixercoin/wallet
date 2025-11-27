@@ -141,19 +141,46 @@ export function generateFallbackChartData(
   const config = TIMEFRAME_CONFIGS[timeframe];
   const points = config.points;
 
-  const timeLabelsMap: Record<TimeFrame, (i: number) => string> = {
-    "1H": (i) => `${String(i).padStart(2, "0")}:00`,
-    "1D": (i) => `${i}:00`,
-    "1W": (i) => {
-      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      const dayOffset = (new Date().getDay() - 6 + i) % 7;
-      return days[dayOffset];
-    },
-    "1M": (i) => `Day ${i + 1}`,
-    "2M": (i) => `Day ${i + 1}`,
+  // Calculate time intervals based on timeframe
+  const getIntervalMs = (): number => {
+    switch (timeframe) {
+      case "1H":
+        return (60 / points) * 60 * 1000; // minutes to ms
+      case "1D":
+        return (24 / points) * 60 * 60 * 1000; // hours to ms
+      case "1W":
+        return (7 / points) * 24 * 60 * 60 * 1000; // days to ms
+      case "1M":
+        return (30 / points) * 24 * 60 * 60 * 1000; // days to ms
+      case "2M":
+        return (60 / points) * 24 * 60 * 60 * 1000; // days to ms
+      default:
+        return 60 * 60 * 1000;
+    }
+  };
+
+  const formatTime = (timestamp: number, timeframe: TimeFrame): string => {
+    const date = new Date(timestamp);
+
+    switch (timeframe) {
+      case "1H":
+        return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+      case "1D":
+        return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+      case "1W":
+        return date.toLocaleDateString("en-US", { weekday: "short", month: "numeric", day: "numeric" });
+      case "1M":
+        return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      case "2M":
+        return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      default:
+        return date.toLocaleString();
+    }
   };
 
   const data: ChartDataPoint[] = [];
+  const intervalMs = getIntervalMs();
+  const now = Date.now();
 
   for (let i = 0; i < points; i++) {
     const progress = points > 1 ? i / (points - 1) : 0;
@@ -163,10 +190,12 @@ export function generateFallbackChartData(
     const noise = (Math.random() - 0.5) * 0.01;
     const factor = 1 + trend + noise;
 
+    const timestamp = now - (points - 1 - i) * intervalMs;
+
     data.push({
-      time: timeLabelsMap[timeframe](i),
+      time: formatTime(timestamp, timeframe),
       price: basePrice * Math.max(0.0001, factor), // Avoid zero prices
-      originalTime: Date.now() - (points - 1 - i) * 1000,
+      originalTime: timestamp,
     });
   }
 

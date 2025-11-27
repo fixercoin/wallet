@@ -1103,7 +1103,10 @@ async function handleDexscreenerTokens(url: URL): Promise<Response> {
       const gotMints = Array.from(
         new Set(
           pairs
-            .flatMap((p: any) => [p?.baseToken?.address, p?.quoteToken?.address])
+            .flatMap((p: any) => [
+              p?.baseToken?.address,
+              p?.quoteToken?.address,
+            ])
             .filter(Boolean),
         ),
       );

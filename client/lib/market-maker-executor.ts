@@ -216,7 +216,8 @@ export async function executeLimitOrder(
       const signature = await sendSignedTx(swapTx.swapTransaction, keypair);
 
       // Update order with completion info
-      const outputAmount = parseInt(quote.outAmount) / Math.pow(10, outputDecimals);
+      const outputAmount =
+        parseInt(quote.outAmount) / Math.pow(10, outputDecimals);
       const completed = botOrdersStorage.completeSellOrder(
         session.id,
         order.id,

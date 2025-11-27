@@ -4,7 +4,6 @@ import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
-import { TokenQuickInfoCard } from "./token-detail/TokenQuickInfoCard";
 import { TokenDetailsPanel } from "./token-detail/TokenDetailsPanel";
 
 interface TokenDetailProps {
@@ -103,11 +102,6 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
-        </div>
-
-        {/* Token Quick Info Card - With padding */}
-        <div className="px-4 py-2">
-          <TokenQuickInfoCard token={displayToken} />
         </div>
 
         {/* Token Details Section - Scrollable */}

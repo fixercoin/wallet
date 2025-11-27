@@ -43,20 +43,6 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     setIsLoading(true);
     try {
       await refreshTokens();
-      // reload prices
-      const birdeye = await birdeyeAPI
-        .getTokenByMint(tokenMint)
-        .catch(() => null);
-      if (birdeye?.priceUsd) {
-        const base = parseFloat(String(birdeye.priceUsd));
-        const data = Array.from({ length: 24 }, (_, i) => ({
-          time: `${i}:00`,
-          price: base,
-          volume: birdeye.volume?.h24 || 0,
-        }));
-        setPriceData(data);
-      }
-
       toast({
         title: "Refreshed",
         description: "Token data updated",

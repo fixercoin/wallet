@@ -9,6 +9,7 @@ import {
   Send,
   Download,
   RefreshCw,
+  RotateCw,
   Copy,
   ArrowUpRight,
   ArrowDownLeft,

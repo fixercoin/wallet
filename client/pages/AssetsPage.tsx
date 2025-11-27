@@ -211,8 +211,9 @@ export default function AssetsPage() {
                             <p className="text-xs font-semibold text-white truncate uppercase">
                               {token.name}
                             </p>
-                            <p className="text-xs font-semibold text-white truncate">
-                              {formatTokenAmountCompact(token.balance || 0, token.symbol)}
+                            <p className="text-xs font-semibold text-white truncate flex items-baseline gap-1">
+                              <span>{formatTokenAmountCompact(token.balance || 0, token.symbol).split(/\s+/)[0]}</span>
+                              <span className="text-xs" style={{fontSize: '0.65rem'}}>{token.symbol.toUpperCase()}</span>
                             </p>
                           </div>
                         </div>

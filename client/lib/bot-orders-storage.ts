@@ -161,6 +161,7 @@ export const botOrdersStorage = {
     sellPrice: number,
     tokenAmount: number,
     signature?: string,
+    outputToken: "SOL" | "USDC" = "SOL",
   ): BotOrder | null => {
     try {
       const sessions = botOrdersStorage.getAllSessions();
@@ -193,6 +194,8 @@ export const botOrdersStorage = {
         tokenAmount,
         signature,
         feeDeducted: false,
+        outputToken,
+        outputAmount: 0,
       };
 
       session.sellOrders.push(sellOrder);

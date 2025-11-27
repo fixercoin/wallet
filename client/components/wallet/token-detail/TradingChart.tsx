@@ -13,7 +13,7 @@ interface TradingChartProps {
 
 export const TradingChart: React.FC<TradingChartProps> = ({ token, mint }) => {
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeFrame>("1D");
-  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+  const [chartData, setChartData] = useState<CandleDataPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [priceChange, setPriceChange] = useState<number | null>(null);
 

@@ -14,6 +14,14 @@ export function formatTokenAmount(
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
   if (isNaN(num)) return "0.00";
 
+  // SOL always shows exactly 3 decimal places
+  if (symbol === "SOL") {
+    return num.toLocaleString(undefined, {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
+    });
+  }
+
   // FIXERCOIN and LOCKER always show exactly 2 decimal places
   if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
     return num.toLocaleString(undefined, {

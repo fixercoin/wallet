@@ -216,6 +216,7 @@ export async function executeLimitOrder(
 
       const swapTx = await jupiterV6API.createSwap(quote, userPublicKey, {
         wrapAndUnwrapSol: order.outputToken !== "USDC", // Only wrap/unwrap for SOL
+        useSharedAccounts: order.outputToken === "SOL", // Don't use shared accounts for USDC to ensure account creation
       });
 
       if (!swapTx) {

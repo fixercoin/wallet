@@ -309,7 +309,7 @@ export async function fetchTokenChartData(
   price: number,
   changePercent: number,
   timeframe: TimeFrame,
-): Promise<ChartDataPoint[]> {
+): Promise<CandleDataPoint[]> {
   // Try to get CoinGecko ID for this token
   const coinId = getCoinGeckoId(mint);
 
@@ -318,18 +318,18 @@ export async function fetchTokenChartData(
       const realData = await fetchCoinGeckoChartData(coinId, timeframe);
       if (realData.length > 0) {
         console.log(
-          `[TokenChart] ✅ Fetched real data from CoinGecko for ${coinId} (${timeframe})`,
+          `[TokenChart] ✅ Fetched real candlestick data from CoinGecko for ${coinId} (${timeframe})`,
         );
-        return realData;
+        return realData as any;
       }
     } catch (error) {
       console.error(`[TokenChart] Failed to fetch real data for ${coinId}:`, error);
     }
   }
 
-  // Fallback to synthetic data based on known price change
+  // Fallback to synthetic candlestick data based on known price change
   console.log(
-    `[TokenChart] Using synthetic data for ${mint} (${timeframe}), change: ${changePercent}%`,
+    `[TokenChart] Using synthetic candlestick data for ${mint} (${timeframe}), change: ${changePercent}%`,
   );
   return generateFallbackChartData(price, changePercent, timeframe);
 }

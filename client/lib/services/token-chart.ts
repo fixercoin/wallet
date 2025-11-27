@@ -73,18 +73,28 @@ async function fetchCoinGeckoChartData(
     // Resample to the desired number of points
     const resampled = resamplePrices(prices, config.points);
 
-    // Format for chart
-    const timeLabelsMap: Record<TimeFrame, (i: number, timestamp: number) => string> =
-      {
-        "1H": (i) => new Date(i).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-        "1D": (i) => new Date(i).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-        "1W": (i) => new Date(i).toLocaleDateString("en-US", { weekday: "short" }),
-        "1M": (i) => new Date(i).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        "2M": (i) => new Date(i).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      };
+    // Format for chart based on timeframe
+    const formatTime = (timestamp: number, timeframe: TimeFrame): string => {
+      const date = new Date(timestamp);
+
+      switch (timeframe) {
+        case "1H":
+          return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+        case "1D":
+          return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+        case "1W":
+          return date.toLocaleDateString("en-US", { weekday: "short", month: "numeric", day: "numeric" });
+        case "1M":
+          return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        case "2M":
+          return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        default:
+          return date.toLocaleString();
+      }
+    };
 
     return resampled.map((point) => ({
-      time: timeLabelsMap[timeframe](0, point[0]),
+      time: formatTime(point[0], timeframe),
       price: point[1],
       originalTime: point[0],
     }));

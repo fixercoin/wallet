@@ -40,12 +40,21 @@ export function formatAmountCompact(
     return formatTokenAmount(amount, symbol);
   }
 
+  if (amount >= 1_000_000_000) {
+    return (
+      (amount / 1_000_000_000).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + "B"
+    );
+  }
+
   if (amount >= 1_000_000) {
     return (
       (amount / 1_000_000).toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      }) + "m"
+      }) + "M"
     );
   }
 
@@ -54,7 +63,7 @@ export function formatAmountCompact(
       (amount / 1_000).toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      }) + "k"
+      }) + "K"
     );
   }
 

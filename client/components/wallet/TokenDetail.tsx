@@ -5,7 +5,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { TokenQuickInfoCard } from "./token-detail/TokenQuickInfoCard";
-import { TradingChart } from "./token-detail/TradingChart";
+import { TokenDetailsPanel } from "./token-detail/TokenDetailsPanel";
 
 interface TokenDetailProps {
   tokenMint: string;
@@ -110,9 +110,9 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
           <TokenQuickInfoCard token={displayToken} />
         </div>
 
-        {/* Chart Section - Full width on mobile */}
+        {/* Token Details Section - Scrollable */}
         <div className="px-4 py-4 flex-1 flex flex-col overflow-hidden">
-          <TradingChart token={displayToken} mint={tokenMint} />
+          <TokenDetailsPanel token={displayToken} tokenMint={tokenMint} />
         </div>
 
         {/* QUICK BUY Button - Fixed at bottom with padding */}

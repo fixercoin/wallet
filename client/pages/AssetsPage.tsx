@@ -10,7 +10,7 @@ import { PriceLoader } from "@/components/ui/price-loader";
 
 export default function AssetsPage() {
   const navigate = useNavigate();
-  const { wallet, tokens, isLoading } = useWallet();
+  const { wallet, tokens, isLoading, isUsingCache } = useWallet();
 
   const formatTokenPriceDisplay = (price?: number): string => {
     if (typeof price !== "number" || !isFinite(price)) return "0.00000000";

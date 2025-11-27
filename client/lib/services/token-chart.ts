@@ -9,6 +9,15 @@ export interface ChartDataPoint {
   originalTime?: number;
 }
 
+export interface CandleDataPoint {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  originalTime?: number;
+}
+
 export type TimeFrame = "1H" | "1D" | "1W" | "1M" | "2M";
 
 const TIMEFRAME_CONFIGS: Record<TimeFrame, { days: number; points: number }> =

@@ -45,9 +45,9 @@ export default function AssetsPage() {
   ): string => {
     if (!amount || isNaN(amount) || amount === 0) {
       if (symbol === "SOL") {
-        return "0.000 sol";
+        return "0.000 SOL";
       }
-      return symbol ? `0 ${symbol.toLowerCase()}` : "0";
+      return symbol ? `0 ${symbol.toUpperCase()}` : "0";
     }
 
     const absAmount = Math.abs(amount);
@@ -69,7 +69,7 @@ export default function AssetsPage() {
       formatted = amount.toFixed(6);
     }
 
-    return symbol ? `${formatted} ${symbol.toLowerCase()}` : formatted;
+    return symbol ? `${formatted} ${symbol.toUpperCase()}` : formatted;
   };
 
   const sortedTokens = useMemo(() => {

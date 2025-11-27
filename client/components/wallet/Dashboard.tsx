@@ -904,7 +904,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             {showBalance ? `${usdZero}` : "****"}
                           </div>
                           <div className="text-xs text-green-400 mt-1 font-medium">
-                            {showBalance ? `▲ 0.00 0.00%` : "24h: ****"}
+                            {showBalance ? `+ 0.000 0.00 %` : "24h: ****"}
                           </div>
                         </>
                       );

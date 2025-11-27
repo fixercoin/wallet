@@ -952,7 +952,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <div
                             className={`text-xs mt-1 font-medium ${isPositive ? "text-green-400" : "text-red-400"}`}
                           >
-                            {isPositive ? "▲" : "▼"}{" "}
+                            {isPositive ? "+" : "-"}{" "}
                             {Math.abs(totalChange24h).toLocaleString(
                               undefined,
                               {

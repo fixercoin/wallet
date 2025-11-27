@@ -210,7 +210,7 @@ export const botOrdersStorage = {
   completeSellOrder: (
     sessionId: string,
     orderId: string,
-    solAmount: number,
+    outputAmount: number,
     signature?: string,
   ): boolean => {
     try {
@@ -222,7 +222,12 @@ export const botOrdersStorage = {
       if (!order) return false;
 
       order.status = "completed";
-      order.solAmount = solAmount;
+      // Store in the appropriate field based on output token
+      if (order.outputToken === "USDC") {
+        order.outputAmount = outputAmount;
+      } else {
+        order.solAmount = outputAmount;
+      }
       order.signature = signature;
       botOrdersStorage.saveSession(session);
       return true;

@@ -913,6 +913,23 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         `[Wallet] Price source: ${priceSource} | SOL price: $${prices["So11111111111111111111111111111111111111112"] || "FALLBACK"}`,
       );
       setTokens(enhancedTokens);
+      setIsUsingCache(false);
+
+      // Save tokens and prices to cache for offline support
+      try {
+        const cachedPrices: Record<string, any> = {};
+        Object.entries(prices).forEach(([mint, price]) => {
+          cachedPrices[mint] = {
+            price,
+            priceChange24h: changeMap[mint],
+            timestamp: Date.now(),
+          };
+        });
+        savePricesToCache(cachedPrices);
+        saveTokensToCache(wallet.publicKey, enhancedTokens);
+      } catch (cacheError) {
+        console.warn("[WalletContext] Failed to save to offline cache:", cacheError);
+      }
     } catch (error) {
       console.error("Error refreshing tokens:", error);
       setError(

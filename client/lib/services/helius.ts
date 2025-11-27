@@ -1,4 +1,7 @@
 // Helius API Service for Solana blockchain data
+// Note: This service now uses public RPC endpoints directly instead of proxying through a backend
+import { SOLANA_RPC_URL } from "../../../utils/solanaConfig";
+
 export interface HeliusTokenAccount {
   account: {
     data: {
@@ -84,17 +87,20 @@ const KNOWN_TOKENS: Record<string, TokenMetadata> = {
 
 class HeliusAPI {
   private apiKey: string;
-  private baseUrl: string;
+  private endpoints: string[];
   private lastRequestTime: number = 0;
-  private minRequestInterval: number = 200; // Minimum 200ms between requests
+  private minRequestInterval: number = 100; // Minimum 100ms between requests
   private isRateLimited: boolean = false;
   private rateLimitResetTime: number = 0;
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
-    // Use proxy endpoint instead of direct Helius API
-    // The Solana RPC proxy will handle the actual RPC call
-    this.baseUrl = "/api/solana-rpc";
+    // Use public RPC endpoints directly - no backend proxy needed
+    this.endpoints = [
+      SOLANA_RPC_URL,
+      "https://solana-rpc.publicnode.com/",
+      "https://solana.publicnode.com",
+    ].filter(Boolean);
   }
 
   /**
@@ -130,87 +136,119 @@ class HeliusAPI {
   }
 
   /**
-   * Make a JSON-RPC call to Helius with rate limiting protection
+   * Make a JSON-RPC call to public RPC endpoints with rate limiting protection
+   * No backend proxy needed - calls public endpoints directly
    */
   private async makeRpcCall(
     method: string,
     params: any[] = [],
-    retries = 3,
+    retries = 2,
   ): Promise<any> {
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        // Apply rate limiting protection
-        await this.waitForRateLimit();
+      for (const endpoint of this.endpoints) {
+        try {
+          // Apply rate limiting protection
+          await this.waitForRateLimit();
 
-        console.log(
-          `Helius API call: ${method} (attempt ${attempt + 1}/${retries + 1})`,
-        );
+          console.log(
+            `RPC call: ${method} on ${endpoint.substring(0, 30)}... (attempt ${attempt + 1}/${retries + 1})`,
+          );
 
-        const response = await fetch(this.baseUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "User-Agent": "SolanaWallet/1.0",
-          },
-          body: JSON.stringify({
-            jsonrpc: "2.0",
-            id: Date.now(),
-            method,
-            params,
-          }),
-        });
+          const controller = new AbortController();
+          const timeoutMs = 12000; // 12s timeout
+          const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-        if (!response.ok) {
-          const errorText = await response.text().catch(() => "Unknown error");
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "User-Agent": "SolanaWallet/1.0",
+            },
+            body: JSON.stringify({
+              jsonrpc: "2.0",
+              id: Date.now(),
+              method,
+              params,
+            }),
+            signal: controller.signal,
+          });
 
-          // Handle rate limiting specifically
-          if (response.status === 429) {
-            console.warn(`Helius rate limited on attempt ${attempt + 1}`);
-            this.handleRateLimit();
+          clearTimeout(timeout);
 
-            if (attempt < retries) {
-              // Exponential backoff for rate limits: 5s, 15s, 45s
-              const backoffTime = Math.min(5000 * Math.pow(3, attempt), 45000);
-              console.log(`Rate limit backoff: waiting ${backoffTime}ms`);
-              await new Promise((resolve) => setTimeout(resolve, backoffTime));
-              continue;
+          if (!response.ok) {
+            const errorText = await response
+              .text()
+              .catch(() => "Unknown error");
+
+            // Handle rate limiting specifically
+            if (response.status === 429) {
+              console.warn(`RPC rate limited (429) on ${endpoint}`);
+              this.handleRateLimit();
+
+              if (attempt < retries) {
+                // Exponential backoff for rate limits
+                const backoffTime = Math.min(
+                  3000 * Math.pow(2, attempt),
+                  30000,
+                );
+                console.log(`Rate limit backoff: waiting ${backoffTime}ms`);
+                await new Promise((resolve) =>
+                  setTimeout(resolve, backoffTime),
+                );
+              }
             }
+
+            lastError = new Error(
+              `${response.status} ${response.statusText}: ${errorText}`,
+            );
+            console.warn(
+              `RPC call failed on ${endpoint}: ${lastError.message}`,
+            );
+            continue;
           }
 
-          throw new Error(
-            `Helius API call failed: ${response.status} ${response.statusText}. ${errorText}`,
-          );
+          const data = await response.json();
+
+          if (data.error) {
+            const errorMsg = data.error.message || JSON.stringify(data.error);
+            console.warn(`RPC error on ${endpoint}: ${errorMsg}`);
+            lastError = new Error(errorMsg);
+            continue;
+          }
+
+          console.log(`RPC call successful: ${method}`);
+          return data.result;
+        } catch (error) {
+          const errorMsg =
+            error instanceof Error ? error.message : String(error);
+          const isTimeout =
+            errorMsg.includes("abort") || errorMsg.includes("timeout");
+
+          if (isTimeout) {
+            console.warn(`RPC call timed out on ${endpoint}`);
+          } else {
+            console.warn(`RPC call failed on ${endpoint}: ${errorMsg}`);
+          }
+
+          lastError = error instanceof Error ? error : new Error(errorMsg);
+          continue;
         }
+      }
 
-        const data = await response.json();
-
-        if (data.error) {
-          throw new Error(
-            `Helius RPC error: ${data.error.message} (code: ${data.error.code || "unknown"})`,
-          );
-        }
-
-        console.log(`Helius API call successful: ${method}`);
-        return data.result;
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-
-        if (attempt < retries) {
-          // Standard exponential backoff for other errors: 1s, 2s, 4s
-          const backoffTime = 1000 * Math.pow(2, attempt);
-          console.warn(
-            `Helius API call failed, retrying in ${backoffTime}ms:`,
-            lastError.message,
-          );
-          await new Promise((resolve) => setTimeout(resolve, backoffTime));
-        }
+      // All endpoints failed for this attempt
+      if (attempt < retries) {
+        const backoffTime = 1000 * Math.pow(2, attempt);
+        console.warn(
+          `All RPC endpoints failed (attempt ${attempt + 1}/${retries + 1}), retrying in ${backoffTime}ms`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, backoffTime));
       }
     }
 
     throw new Error(
-      `Helius API call failed after ${retries + 1} attempts: ${lastError?.message || "Unknown error"}`,
+      `RPC call failed after ${retries + 1} attempts across all endpoints: ${lastError?.message || "Unknown error"}`,
     );
   }
 

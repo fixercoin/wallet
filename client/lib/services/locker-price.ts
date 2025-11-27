@@ -7,17 +7,22 @@ export interface LockerPriceData {
   liquidity?: number;
   lastUpdated: Date;
   derivationMethod?: string;
+  isFallback?: boolean;
 }
 
 class LockerPriceService {
   private cachedData: LockerPriceData | null = null;
   private lastFetchTime: Date | null = null;
-  private readonly CACHE_DURATION = 60000; // 1 minute cache
+  private readonly CACHE_DURATION = 250; // 250ms - ensures live price updates every 250ms for real-time display
 
   async getLockerPrice(): Promise<LockerPriceData | null> {
     try {
-      // Check if we have valid cached data
-      if (this.cachedData && this.lastFetchTime) {
+      // Check if we have valid cached data (only from live prices, not fallbacks)
+      if (
+        this.cachedData &&
+        this.lastFetchTime &&
+        this.cachedData.derivationMethod !== "fallback"
+      ) {
         const timeSinceLastFetch = Date.now() - this.lastFetchTime.getTime();
         if (timeSinceLastFetch < this.CACHE_DURATION) {
           console.log("Returning cached LOCKER price data");
@@ -34,8 +39,8 @@ class LockerPriceService {
         await tokenPairPricingService.getDerivedPrice("LOCKER");
 
       if (!pairingData) {
-        console.warn("Failed to derive LOCKER price");
-        return this.getFallbackPrice();
+        console.warn("Failed to derive LOCKER price - service unavailable");
+        return null;
       }
 
       const priceData: LockerPriceData = {
@@ -47,39 +52,39 @@ class LockerPriceService {
         derivationMethod: `derived from SOL pair (1 SOL = ${pairingData.pairRatio.toFixed(0)} LOCKER)`,
       };
 
-      // Only cache if we got valid price data
-      if (priceData.price > 0) {
+      // Only cache if we got valid, live price data (not fallback)
+      if (
+        priceData.price > 0 &&
+        isFinite(priceData.price) &&
+        pairingData.derivedPrice > 0
+      ) {
         this.cachedData = priceData;
         this.lastFetchTime = new Date();
         console.log(
-          `LOCKER price updated: $${priceData.price.toFixed(8)} (${priceData.derivationMethod})`,
+          `✅ LOCKER price updated: $${priceData.price.toFixed(8)} (${priceData.derivationMethod})`,
         );
         return priceData;
       } else {
-        console.warn("Invalid price data from derivation, using fallback");
-        return this.getFallbackPrice();
+        console.warn("Invalid price data from derivation - returning null");
+        return null;
       }
     } catch (error) {
       console.error("Error fetching LOCKER price:", error);
-      return this.getFallbackPrice();
+      return null;
     }
   }
 
-  private getFallbackPrice(): LockerPriceData {
-    console.log("Using fallback LOCKER price");
-    return {
-      price: 0.00001112,
-      priceChange24h: 0,
-      volume24h: 0,
-      lastUpdated: new Date(),
-      derivationMethod: "fallback",
-    };
+  private getFallbackPrice(): LockerPriceData | null {
+    console.log(
+      "LOCKER price service unavailable - returning null to show loading state",
+    );
+    return null;
   }
 
   // Get just the price number for quick access
   async getPrice(): Promise<number> {
     const data = await this.getLockerPrice();
-    return data?.price || 0.00001112;
+    return data?.price || 0;
   }
 
   // Clear cache to force fresh fetch

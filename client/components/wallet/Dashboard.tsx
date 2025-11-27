@@ -795,8 +795,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div className="flex items-center gap-3">
                 <Button
                   onClick={() => {
-                    refreshBalance();
-                    refreshTokens();
+                    window.location.reload();
                   }}
                   size="sm"
                   className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"

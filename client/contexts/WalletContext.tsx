@@ -24,6 +24,16 @@ import { getTokenBalanceForMint } from "@/lib/services/solana-rpc";
 import { getTokenPriceBySol } from "@/lib/services/derived-price";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
+import {
+  savePricesToCache,
+  getCachedPrices,
+  saveBalanceToCache,
+  getCachedBalance,
+  saveTokensToCache,
+  getCachedTokens,
+  isCacheFresh,
+  CACHE_VALIDITY_PRICES,
+} from "@/lib/services/offline-cache";
 
 interface WalletContextType {
   wallet: WalletData | null; // active
@@ -32,6 +42,7 @@ interface WalletContextType {
   tokens: TokenInfo[];
   isLoading: boolean;
   error: string | null;
+  isUsingCache: boolean; // true when displaying cached data due to offline/network error
   setWallet: (wallet: WalletData | null) => void; // set active
   addWallet: (wallet: WalletData) => void; // add and select
   selectWallet: (publicKey: string) => void; // select existing
@@ -62,6 +73,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [tokens, setTokens] = useState<TokenInfo[]>(DEFAULT_TOKENS);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUsingCache, setIsUsingCache] = useState<boolean>(false);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const providerRef = useRef<FixoriumWalletProvider | null>(null);
 
@@ -294,6 +306,24 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     // Trigger immediate refresh
     const doRefresh = async () => {
       try {
+        // Try to load cached data first for faster initial display
+        const cachedTokens = getCachedTokens(wallet.publicKey);
+        if (cachedTokens && cachedTokens.length > 0) {
+          console.log("[WalletContext] Loading cached tokens on wallet switch");
+          setTokens(cachedTokens);
+          setIsUsingCache(true);
+        }
+
+        const cachedBalance = getCachedBalance(wallet.publicKey);
+        if (cachedBalance !== null) {
+          console.log(
+            "[WalletContext] Loading cached balance on wallet switch",
+          );
+          setBalance(cachedBalance);
+          balanceRef.current = cachedBalance;
+        }
+
+        // Then fetch fresh data
         await refreshBalance();
         await new Promise((r) => setTimeout(r, 300));
         await refreshTokens();
@@ -462,12 +492,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     setIsLoading(true);
     setError(null);
+    setIsUsingCache(false);
 
     try {
       const newBalance = await getBalance(wallet.publicKey);
       if (typeof newBalance === "number" && !isNaN(newBalance)) {
         setBalance(newBalance);
         balanceRef.current = newBalance;
+        saveBalanceToCache(wallet.publicKey, newBalance);
       } else {
         setBalance(0);
         balanceRef.current = 0;
@@ -475,8 +507,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     } catch (error) {
       console.error("Error refreshing balance:", error);
       setError("Failed to refresh balance");
-      setBalance(0);
-      balanceRef.current = 0;
+
+      // Try to use cached balance as fallback
+      const cachedBalance = getCachedBalance(wallet.publicKey);
+      if (cachedBalance !== null) {
+        console.log("[WalletContext] Using cached balance:", cachedBalance);
+        setBalance(cachedBalance);
+        balanceRef.current = cachedBalance;
+        setIsUsingCache(true);
+      } else {
+        setBalance(0);
+        balanceRef.current = 0;
+      }
     } finally {
       setIsLoading(false);
     }
@@ -889,34 +931,65 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         `[Wallet] Price source: ${priceSource} | SOL price: $${prices["So11111111111111111111111111111111111111112"] || "FALLBACK"}`,
       );
       setTokens(enhancedTokens);
+      setIsUsingCache(false);
+
+      // Save tokens and prices to cache for offline support
+      try {
+        const cachedPrices: Record<string, any> = {};
+        Object.entries(prices).forEach(([mint, price]) => {
+          cachedPrices[mint] = {
+            price,
+            priceChange24h: changeMap[mint],
+            timestamp: Date.now(),
+          };
+        });
+        savePricesToCache(cachedPrices);
+        saveTokensToCache(wallet.publicKey, enhancedTokens);
+      } catch (cacheError) {
+        console.warn(
+          "[WalletContext] Failed to save to offline cache:",
+          cacheError,
+        );
+      }
     } catch (error) {
       console.error("Error refreshing tokens:", error);
-      setError(
-        `Failed to fetch tokens: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      const fallbackTokens: TokenInfo[] = [
-        {
-          mint: "So11111111111111111111111111111111111111112",
-          symbol: "SOL",
-          name: "Solana",
-          decimals: 9,
-          logoURI:
-            "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-          balance: balance || 0,
-          price: 100,
-        },
-        {
-          mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
-          symbol: "FIXERCOIN",
-          name: "FIXERCOIN",
-          decimals: 6,
-          logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
-          balance: 0,
-          price: 0.000023,
-        },
-      ];
 
-      setTokens(fallbackTokens);
+      // Try to load cached tokens first
+      const cachedTokens = getCachedTokens(wallet.publicKey);
+      if (cachedTokens && cachedTokens.length > 0) {
+        console.log("[WalletContext] Using cached tokens due to network error");
+        setTokens(cachedTokens);
+        setIsUsingCache(true);
+        setError("Using offline data - last updated earlier");
+      } else {
+        setError(
+          `Failed to fetch tokens: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        const fallbackTokens: TokenInfo[] = [
+          {
+            mint: "So11111111111111111111111111111111111111112",
+            symbol: "SOL",
+            name: "Solana",
+            decimals: 9,
+            logoURI:
+              "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+            balance: balance || 0,
+            price: 100,
+          },
+          {
+            mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+            symbol: "FIXERCOIN",
+            name: "FIXERCOIN",
+            decimals: 6,
+            logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
+            balance: 0,
+            price: 0.000023,
+          },
+        ];
+
+        setTokens(fallbackTokens);
+        setIsUsingCache(false);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -994,6 +1067,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     tokens,
     isLoading,
     error,
+    isUsingCache,
     setWallet,
     addWallet,
     selectWallet,

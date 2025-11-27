@@ -113,6 +113,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     balance,
     tokens,
     isLoading,
+    isUsingCache,
     refreshBalance,
     refreshTokens,
     addCustomToken,
@@ -881,6 +882,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             <div className="text-center space-y-2 mt-8">
+              {isUsingCache && (
+                <div className="text-xs px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-600 inline-block border border-yellow-500/40 mx-auto mb-2">
+                  📡 Offline Mode - Last Synced
+                </div>
+              )}
               {wallet
                 ? (() => {
                     const total = getTotalPortfolioValue();
@@ -897,8 +903,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <div className="text-3xl font-medium text-gray-900 leading-tight">
                             {showBalance ? `${usdZero}` : "****"}
                           </div>
-                          <div className="text-xs text-gray-400 mt-1">
-                            {showBalance ? `+ 0.00 (0.00%)` : "24h: ****"}
+                          <div className="text-xs text-green-400 mt-1 font-medium">
+                            {showBalance ? `▲ + 0.000 0.00 %` : "24h: ****"}
                           </div>
                         </>
                       );
@@ -944,27 +950,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                         {showBalance ? (
                           <div
-                            className={`text-xs mt-1 ${isPositive ? "text-green-400" : "text-red-400"}`}
+                            className={`text-xs mt-1 font-medium ${isPositive ? "text-green-400" : "text-red-400"}`}
                           >
-                            <span className="font-medium">
-                              {isPositive ? "+" : "-"}{" "}
-                              {Math.abs(totalChange24h).toLocaleString(
-                                undefined,
-                                {
-                                  minimumFractionDigits: 3,
-                                  maximumFractionDigits: 3,
-                                },
-                              )}
-                            </span>
-                            <span className="ml-1">
-                              (
-                              {Math.abs(
-                                isFinite(change24hPercent)
-                                  ? change24hPercent
-                                  : 0,
-                              ).toFixed(2)}
-                              %)
-                            </span>
+                            {isPositive ? "▲" : "▼"} {isPositive ? "+" : "-"}{" "}
+                            {Math.abs(totalChange24h).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 3,
+                                maximumFractionDigits: 3,
+                              },
+                            )}{" "}
+                            {Math.abs(
+                              isFinite(change24hPercent) ? change24hPercent : 0,
+                            ).toFixed(2)}
+                            %
                           </div>
                         ) : (
                           <div className="text-xs text-gray-400 mt-1">****</div>

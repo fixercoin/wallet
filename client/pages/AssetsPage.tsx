@@ -10,7 +10,7 @@ import { PriceLoader } from "@/components/ui/price-loader";
 
 export default function AssetsPage() {
   const navigate = useNavigate();
-  const { wallet, tokens, isLoading } = useWallet();
+  const { wallet, tokens, isLoading, isUsingCache } = useWallet();
 
   const formatTokenPriceDisplay = (price?: number): string => {
     if (typeof price !== "number" || !isFinite(price)) return "0.00000000";
@@ -120,6 +120,11 @@ export default function AssetsPage() {
           >
             <ArrowLeft size={24} />
           </button>
+          {isUsingCache && (
+            <div className="text-xs px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-600 border border-yellow-500/40 mb-3 inline-flex items-center gap-1.5">
+              <span>📡 Offline Mode - Last Synced</span>
+            </div>
+          )}
           <div className="bg-transparent rounded-lg p-4 border border-[#22c55e]/30 flex items-start justify-between">
             <div>
               <p className="text-xs text-gray-400 mb-1">Total Balance</p>

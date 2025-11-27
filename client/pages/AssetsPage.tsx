@@ -44,6 +44,9 @@ export default function AssetsPage() {
     symbol?: string,
   ): string => {
     if (!amount || isNaN(amount) || amount === 0) {
+      if (symbol === "SOL") {
+        return "0.000 SOL";
+      }
       return symbol ? `0 ${symbol}` : "0";
     }
 
@@ -57,7 +60,11 @@ export default function AssetsPage() {
     } else if (absAmount >= 1000) {
       formatted = (amount / 1000).toFixed(2) + "K";
     } else if (absAmount >= 1) {
-      formatted = amount.toFixed(2);
+      if (symbol === "SOL") {
+        formatted = amount.toFixed(3);
+      } else {
+        formatted = amount.toFixed(2);
+      }
     } else {
       formatted = amount.toFixed(6);
     }

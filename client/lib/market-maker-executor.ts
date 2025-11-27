@@ -66,19 +66,31 @@ export async function executeLimitOrder(
     if (order.type === "buy") {
       // For BUY: execute when current price <= target price
       if (currentPrice > order.buyPrice) {
+        console.log(
+          `[MarketMakerExecutor] Buy price condition not met: ${currentPrice} > ${order.buyPrice}`,
+        );
         return {
           success: false,
           error: `Current price ${currentPrice} is above target ${order.buyPrice}`,
         };
       }
+      console.log(
+        `[MarketMakerExecutor] Buy price condition met: ${currentPrice} <= ${order.buyPrice}`,
+      );
     } else {
-      // For SELL: execute when current price >= target price
+      // For SELL: execute when current price >= target sell price
       if (currentPrice < order.targetSellPrice) {
+        console.log(
+          `[MarketMakerExecutor] Sell price condition not met: ${currentPrice} < ${order.targetSellPrice}`,
+        );
         return {
           success: false,
           error: `Current price ${currentPrice} is below target ${order.targetSellPrice}`,
         };
       }
+      console.log(
+        `[MarketMakerExecutor] Sell price condition met: ${currentPrice} >= ${order.targetSellPrice}`,
+      );
     }
 
     if (!wallet) {
@@ -218,6 +230,10 @@ export async function executeLimitOrder(
       // Update order with completion info
       const outputAmount =
         parseInt(quote.outAmount) / Math.pow(10, outputDecimals);
+      console.log(
+        `[MarketMakerExecutor] Sell order output: ${outputAmount} ${order.outputToken || "SOL"} (quote.outAmount=${quote.outAmount}, decimals=${outputDecimals})`,
+      );
+
       const completed = botOrdersStorage.completeSellOrder(
         session.id,
         order.id,
@@ -237,6 +253,7 @@ export async function executeLimitOrder(
             status: "completed",
             outputAmount,
             signature,
+            outputToken: order.outputToken,
           },
         };
       } else {

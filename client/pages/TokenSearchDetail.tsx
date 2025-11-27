@@ -8,6 +8,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { TokenInfo } from "@/lib/wallet";
 import { getTokenMetadata, KNOWN_TOKENS } from "@/lib/services/solana-rpc";
+import { TradingChart } from "@/components/wallet/token-detail/TradingChart";
 
 export default function TokenSearchDetail() {
   const { mint = "" } = useParams();

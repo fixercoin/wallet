@@ -44,10 +44,10 @@ export default function AssetsPage() {
 
     const absAmount = Math.abs(amount);
     if (absAmount >= 1000000) {
-      return (amount / 1000000).toFixed(2) + " M";
+      return (amount / 1000000).toFixed(2) + "m";
     }
     if (absAmount >= 1000) {
-      return (amount / 1000).toFixed(2) + " K";
+      return (amount / 1000).toFixed(2) + "k";
     }
     if (absAmount >= 1) {
       return amount.toFixed(2);

@@ -6,7 +6,12 @@ import {
   type TimeFrame,
   type CandleDataPoint,
 } from "@/lib/services/token-chart";
+import {
+  fetchTokenHolderData,
+  type HolderData,
+} from "@/lib/services/token-holders";
 import { CandlestickChart } from "./CandlestickChart";
+import { HolderPieChart } from "./HolderPieChart";
 
 const TIMEFRAMES: TimeFrame[] = ["15M", "1H", "1D", "1W", "1M", "2M"];
 
@@ -20,6 +25,8 @@ export const TradingChart: React.FC<TradingChartProps> = ({ token, mint }) => {
   const [chartData, setChartData] = useState<CandleDataPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [priceChange, setPriceChange] = useState<number | null>(null);
+  const [holderData, setHolderData] = useState<HolderData | null>(null);
+  const [holderLoading, setHolderLoading] = useState(false);
 
   useEffect(() => {
     const loadChartData = async () => {
@@ -48,6 +55,24 @@ export const TradingChart: React.FC<TradingChartProps> = ({ token, mint }) => {
 
     loadChartData();
   }, [selectedTimeframe, mint, token]);
+
+  // Load holder data
+  useEffect(() => {
+    const loadHolderData = async () => {
+      setHolderLoading(true);
+      try {
+        const data = await fetchTokenHolderData(mint);
+        setHolderData(data);
+      } catch (error) {
+        console.error("Error loading holder data:", error);
+        setHolderData(null);
+      } finally {
+        setHolderLoading(false);
+      }
+    };
+
+    loadHolderData();
+  }, [mint]);
 
   const minPrice = useMemo(() => {
     if (chartData.length === 0) return 0;
@@ -86,7 +111,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({ token, mint }) => {
         </div>
       </div>
 
-      {/* Chart Section */}
+      {/* Candlestick Chart Section */}
       <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
         <div className="w-full h-64">
           {chartData.length > 0 ? (
@@ -103,6 +128,16 @@ export const TradingChart: React.FC<TradingChartProps> = ({ token, mint }) => {
           )}
         </div>
       </div>
+
+      {/* Holder Pie Chart Section */}
+      {holderData && (
+        <div className="w-full">
+          <h3 className="text-sm font-semibold text-gray-300 mb-3">
+            Token Distribution
+          </h3>
+          <HolderPieChart data={holderData} isLoading={holderLoading} />
+        </div>
+      )}
 
       {/* Timeframe Buttons */}
       <div className="flex gap-2 justify-center flex-wrap">

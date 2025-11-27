@@ -62,11 +62,11 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
             />
           )}
           <div className="flex-1">
-            <h2 className="text-lg font-bold text-white uppercase">{token.name}</h2>
-            <p className="text-sm text-gray-400 uppercase">{token.symbol}</p>
+            <h2 className="text-xs font-bold text-white uppercase">{token.name}</h2>
+            <p className="text-xs text-gray-400 uppercase">{token.symbol}</p>
           </div>
           <span className="bg-blue-500/20 text-blue-300 px-2 py-1 rounded text-xs font-medium uppercase">
-            SPL Token
+            SPL TOKEN
           </span>
         </div>
 
@@ -74,7 +74,7 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
         <div className="space-y-2">
           <p className="text-xs text-gray-400 font-semibold uppercase">CONTRACT ADDRESS</p>
           <div className="flex items-center gap-2 bg-gray-900/50 p-2 rounded border border-gray-700">
-            <code className="text-xs text-gray-300 flex-1 break-all">
+            <code className="text-xs text-gray-300 flex-1 break-all text-xs">
               {shortenAddress(tokenMint)}
             </code>
             <button
@@ -103,14 +103,14 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
 
       {/* Price Information */}
       <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
-        <h3 className="text-sm font-semibold text-gray-300 mb-3 uppercase">
+        <h3 className="text-xs font-semibold text-gray-300 mb-3 uppercase">
           PRICE INFORMATION
         </h3>
         <div className="grid grid-cols-2 gap-3">
           {/* Current Price */}
           <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
             <p className="text-xs text-gray-400 mb-1 uppercase">CURRENT PRICE</p>
-            <p className="text-lg font-bold text-white">
+            <p className="text-xs font-bold text-white">
               ${(token.price || 0).toFixed(8)}
             </p>
           </div>
@@ -119,7 +119,7 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
           <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
             <p className="text-xs text-gray-400 mb-1 uppercase">24H CHANGE</p>
             <p
-              className={`text-lg font-bold ${
+              className={`text-xs font-bold ${
                 (token.priceChange24h || 0) >= 0
                   ? "text-emerald-400"
                   : "text-red-400"
@@ -133,12 +133,12 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
           <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
             <p className="text-xs text-gray-400 mb-1 uppercase">MARKET CAP</p>
             {formatNumber(token.marketCap) ? (
-              <p className="text-sm font-semibold text-white">
+              <p className="text-xs font-semibold text-white">
                 {formatNumber(token.marketCap)}
               </p>
             ) : (
               <div className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                <Loader2 className="w-3 h-3 text-blue-400 animate-spin" />
                 <span className="text-xs text-gray-400">Loading...</span>
               </div>
             )}
@@ -148,12 +148,12 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
           <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
             <p className="text-xs text-gray-400 mb-1 uppercase">24H VOLUME</p>
             {formatNumber(token.volume24h) ? (
-              <p className="text-sm font-semibold text-white">
+              <p className="text-xs font-semibold text-white">
                 {formatNumber(token.volume24h)}
               </p>
             ) : (
               <div className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                <Loader2 className="w-3 h-3 text-blue-400 animate-spin" />
                 <span className="text-xs text-gray-400">Loading...</span>
               </div>
             )}
@@ -163,12 +163,12 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
           <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
             <p className="text-xs text-gray-400 mb-1 uppercase">LIQUIDITY</p>
             {formatNumber(token.liquidity) ? (
-              <p className="text-sm font-semibold text-white">
+              <p className="text-xs font-semibold text-white">
                 {formatNumber(token.liquidity)}
               </p>
             ) : (
               <div className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                <Loader2 className="w-3 h-3 text-blue-400 animate-spin" />
                 <span className="text-xs text-gray-400">Loading...</span>
               </div>
             )}
@@ -177,14 +177,14 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
           {/* Decimals */}
           <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
             <p className="text-xs text-gray-400 mb-1 uppercase">DECIMALS</p>
-            <p className="text-sm font-semibold text-white">{token.decimals}</p>
+            <p className="text-xs font-semibold text-white">{token.decimals}</p>
           </div>
         </div>
       </div>
 
       {/* Token Safety Checks */}
       <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
-        <h3 className="text-sm font-semibold text-gray-300 mb-3 uppercase">
+        <h3 className="text-xs font-semibold text-gray-300 mb-3 uppercase">
           TOKEN SAFETY
         </h3>
         <div className="space-y-2">
@@ -225,7 +225,7 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
 
       {/* Metadata & Links */}
       <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
-        <h3 className="text-sm font-semibold text-gray-300 mb-3 uppercase">
+        <h3 className="text-xs font-semibold text-gray-300 mb-3 uppercase">
           LINKS & RESOURCES
         </h3>
         <div className="space-y-2">
@@ -237,7 +237,7 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
             label="TOKEN INFO"
             url={`https://www.solflare.com/tokens/${tokenMint}`}
           />
-          <div className="text-xs text-gray-400 py-2 uppercase">
+          <div className="text-xs text-gray-400 py-2 uppercase text-xs">
             ADDITIONAL METADATA (WEBSITE, TWITTER, DISCORD, ETC.) WILL APPEAR HERE IF AVAILABLE
           </div>
         </div>
@@ -245,7 +245,7 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
 
       {/* Token Network Info */}
       <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
-        <h3 className="text-sm font-semibold text-gray-300 mb-3 uppercase">NETWORK INFO</h3>
+        <h3 className="text-xs font-semibold text-gray-300 mb-3 uppercase">NETWORK INFO</h3>
         <div className="space-y-2">
           <InfoRow label="NETWORK" value="Solana" />
           <InfoRow label="TOKEN TYPE" value="SPL (Solana Program Library)" />
@@ -321,7 +321,7 @@ const MetadataLink: React.FC<MetadataLinkProps> = ({ label, url }) => {
       rel="noopener noreferrer"
       className="flex items-center gap-2 p-2 rounded bg-gray-900/50 border border-gray-700 hover:border-gray-600 hover:bg-gray-900/80 transition-colors"
     >
-      <span className="text-xs text-gray-300 flex-1">{label}</span>
+      <span className="text-xs text-gray-300 flex-1 text-xs">{label}</span>
       <ExternalLink className="w-3 h-3 text-gray-400" />
     </a>
   );
@@ -335,8 +335,8 @@ interface InfoRowProps {
 const InfoRow: React.FC<InfoRowProps> = ({ label, value }) => {
   return (
     <div className="flex items-center justify-between text-xs">
-      <span className="text-gray-400">{label}</span>
-      <span className="text-gray-200 font-medium">{value}</span>
+      <span className="text-gray-400 text-xs">{label}</span>
+      <span className="text-gray-200 font-medium text-xs">{value}</span>
     </div>
   );
 };

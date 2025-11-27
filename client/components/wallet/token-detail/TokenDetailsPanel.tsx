@@ -62,7 +62,9 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
             />
           )}
           <div className="flex-1">
-            <h2 className="text-xs font-bold text-white uppercase">{token.name}</h2>
+            <h2 className="text-xs font-bold text-white uppercase">
+              {token.name}
+            </h2>
             <p className="text-xs text-gray-400 uppercase">{token.symbol}</p>
           </div>
           <span className="bg-blue-500/20 text-blue-300 px-2 py-1 rounded text-xs font-medium uppercase">
@@ -72,7 +74,9 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
 
         {/* Contract Address */}
         <div className="space-y-2">
-          <p className="text-xs text-gray-400 font-semibold uppercase">CONTRACT ADDRESS</p>
+          <p className="text-xs text-gray-400 font-semibold uppercase">
+            CONTRACT ADDRESS
+          </p>
           <div className="flex items-center gap-2 bg-gray-900/50 p-2 rounded border border-gray-700">
             <code className="text-xs text-gray-300 flex-1 break-all text-xs">
               {shortenAddress(tokenMint)}
@@ -109,7 +113,9 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
         <div className="grid grid-cols-2 gap-3">
           {/* Current Price */}
           <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
-            <p className="text-xs text-gray-400 mb-1 uppercase">CURRENT PRICE</p>
+            <p className="text-xs text-gray-400 mb-1 uppercase">
+              CURRENT PRICE
+            </p>
             <p className="text-xs font-bold text-white">
               ${(token.price || 0).toFixed(8)}
             </p>
@@ -238,14 +244,17 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
             url={`https://www.solflare.com/tokens/${tokenMint}`}
           />
           <div className="text-xs text-gray-400 py-2 uppercase text-xs">
-            ADDITIONAL METADATA (WEBSITE, TWITTER, DISCORD, ETC.) WILL APPEAR HERE IF AVAILABLE
+            ADDITIONAL METADATA (WEBSITE, TWITTER, DISCORD, ETC.) WILL APPEAR
+            HERE IF AVAILABLE
           </div>
         </div>
       </div>
 
       {/* Token Network Info */}
       <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
-        <h3 className="text-xs font-semibold text-gray-300 mb-3 uppercase">NETWORK INFO</h3>
+        <h3 className="text-xs font-semibold text-gray-300 mb-3 uppercase">
+          NETWORK INFO
+        </h3>
         <div className="space-y-2">
           <InfoRow label="NETWORK" value="Solana" />
           <InfoRow label="TOKEN TYPE" value="SPL (Solana Program Library)" />

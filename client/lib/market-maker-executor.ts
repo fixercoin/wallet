@@ -4,6 +4,7 @@ import { botOrdersStorage, BotOrder, BotSession } from "./bot-orders-storage";
 import { bytesFromBase64, base64FromBytes } from "./bytes";
 
 const SOL_MINT = "So11111111111111111111111111111111111111112";
+const USDC_MINT = "EPjFWaLb3odccVLd7wfL9K3JWuWKq6PPczQkfCW2eKi";
 const FIXERCOIN_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
 
 interface ExecutionResult {

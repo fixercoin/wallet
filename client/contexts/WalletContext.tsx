@@ -316,7 +316,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
         const cachedBalance = getCachedBalance(wallet.publicKey);
         if (cachedBalance !== null) {
-          console.log("[WalletContext] Loading cached balance on wallet switch");
+          console.log(
+            "[WalletContext] Loading cached balance on wallet switch",
+          );
           setBalance(cachedBalance);
           balanceRef.current = cachedBalance;
         }
@@ -944,7 +946,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         savePricesToCache(cachedPrices);
         saveTokensToCache(wallet.publicKey, enhancedTokens);
       } catch (cacheError) {
-        console.warn("[WalletContext] Failed to save to offline cache:", cacheError);
+        console.warn(
+          "[WalletContext] Failed to save to offline cache:",
+          cacheError,
+        );
       }
     } catch (error) {
       console.error("Error refreshing tokens:", error);

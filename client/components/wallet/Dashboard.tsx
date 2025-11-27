@@ -961,9 +961,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               },
                             )}{" "}
                             {Math.abs(
-                              isFinite(change24hPercent)
-                                ? change24hPercent
-                                : 0,
+                              isFinite(change24hPercent) ? change24hPercent : 0,
                             ).toFixed(2)}
                             %
                           </div>

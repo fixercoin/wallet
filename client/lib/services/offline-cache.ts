@@ -29,7 +29,8 @@ export interface CachedWalletBalance {
 const CACHE_PREFIX = "offline_cache_";
 const PRICES_KEY = `${CACHE_PREFIX}prices`;
 const BALANCES_KEY = `${CACHE_PREFIX}balances`;
-const TOKENS_KEY = (walletAddress: string) => `${CACHE_PREFIX}tokens_${walletAddress}`;
+const TOKENS_KEY = (walletAddress: string) =>
+  `${CACHE_PREFIX}tokens_${walletAddress}`;
 const CACHE_TIMESTAMP_KEY = `${CACHE_PREFIX}timestamp`;
 
 // Cache validity: 5 minutes for prices/balances, 1 hour for token list
@@ -41,25 +42,29 @@ const CACHE_VALIDITY_TOKENS = 60 * 60 * 1000; // 1 hour
  */
 function isMobileDevice(): boolean {
   if (typeof window === "undefined") return false;
-  
-  const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-  
+
+  const userAgent =
+    navigator.userAgent || navigator.vendor || (window as any).opera;
+
   // Check for mobile user agents
-  const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
+  const mobileRegex =
+    /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
   const isMobileUA = mobileRegex.test(userAgent.toLowerCase());
-  
+
   // Also check viewport width (mobile breakpoint is 768px)
   const isMobileViewport = window.innerWidth < 768;
-  
+
   return isMobileUA || isMobileViewport;
 }
 
 /**
  * Save token prices to localStorage
  */
-export function savePricesToCache(prices: Record<string, CachedPrice>): boolean {
+export function savePricesToCache(
+  prices: Record<string, CachedPrice>,
+): boolean {
   if (!isMobileDevice()) return false;
-  
+
   try {
     localStorage.setItem(PRICES_KEY, JSON.stringify(prices));
     localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
@@ -73,15 +78,17 @@ export function savePricesToCache(prices: Record<string, CachedPrice>): boolean 
 /**
  * Get cached token prices
  */
-export function getCachedPrices(maxAge?: number): Record<string, CachedPrice> | null {
+export function getCachedPrices(
+  maxAge?: number,
+): Record<string, CachedPrice> | null {
   if (!isMobileDevice()) return null;
-  
+
   try {
     const cached = localStorage.getItem(PRICES_KEY);
     if (!cached) return null;
-    
+
     const prices = JSON.parse(cached) as Record<string, CachedPrice>;
-    
+
     // Check if cache is still valid
     if (maxAge) {
       const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
@@ -92,7 +99,7 @@ export function getCachedPrices(maxAge?: number): Record<string, CachedPrice> | 
         }
       }
     }
-    
+
     return prices;
   } catch (error) {
     console.warn("[OfflineCache] Failed to read prices:", error);
@@ -103,9 +110,12 @@ export function getCachedPrices(maxAge?: number): Record<string, CachedPrice> | 
 /**
  * Save wallet balance to cache
  */
-export function saveBalanceToCache(publicKey: string, balance: number): boolean {
+export function saveBalanceToCache(
+  publicKey: string,
+  balance: number,
+): boolean {
   if (!isMobileDevice()) return false;
-  
+
   try {
     const balances = getBalancesFromCache() || {};
     balances[publicKey] = {
@@ -125,15 +135,18 @@ export function saveBalanceToCache(publicKey: string, balance: number): boolean 
 /**
  * Get cached wallet balance
  */
-export function getCachedBalance(publicKey: string, maxAge?: number): number | null {
+export function getCachedBalance(
+  publicKey: string,
+  maxAge?: number,
+): number | null {
   if (!isMobileDevice()) return null;
-  
+
   try {
     const balances = getBalancesFromCache();
     if (!balances || !balances[publicKey]) return null;
-    
+
     const cachedBalance = balances[publicKey];
-    
+
     // Check if cache is still valid
     if (maxAge) {
       const age = Date.now() - cachedBalance.timestamp;
@@ -141,7 +154,7 @@ export function getCachedBalance(publicKey: string, maxAge?: number): number | n
         return null;
       }
     }
-    
+
     return cachedBalance.balance;
   } catch (error) {
     console.warn("[OfflineCache] Failed to read balance:", error);
@@ -164,9 +177,12 @@ function getBalancesFromCache(): Record<string, CachedWalletBalance> | null {
 /**
  * Save tokens for a wallet to cache
  */
-export function saveTokensToCache(walletAddress: string, tokens: CachedToken[]): boolean {
+export function saveTokensToCache(
+  walletAddress: string,
+  tokens: CachedToken[],
+): boolean {
   if (!isMobileDevice()) return false;
-  
+
   try {
     const key = TOKENS_KEY(walletAddress);
     localStorage.setItem(key, JSON.stringify(tokens));
@@ -181,16 +197,19 @@ export function saveTokensToCache(walletAddress: string, tokens: CachedToken[]):
 /**
  * Get cached tokens for a wallet
  */
-export function getCachedTokens(walletAddress: string, maxAge?: number): CachedToken[] | null {
+export function getCachedTokens(
+  walletAddress: string,
+  maxAge?: number,
+): CachedToken[] | null {
   if (!isMobileDevice()) return null;
-  
+
   try {
     const key = TOKENS_KEY(walletAddress);
     const cached = localStorage.getItem(key);
     if (!cached) return null;
-    
+
     const tokens = JSON.parse(cached) as CachedToken[];
-    
+
     // Check if cache is still valid
     if (maxAge) {
       const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
@@ -201,7 +220,7 @@ export function getCachedTokens(walletAddress: string, maxAge?: number): CachedT
         }
       }
     }
-    
+
     return tokens;
   } catch (error) {
     console.warn("[OfflineCache] Failed to read tokens:", error);
@@ -217,16 +236,16 @@ export function mergePrices(
   cachedPrices: Record<string, CachedPrice> | null,
 ): Record<string, number> {
   if (!cachedPrices) return freshPrices;
-  
+
   const merged = { ...freshPrices };
-  
+
   // Only use cached prices for mints that don't have fresh prices
   Object.entries(cachedPrices).forEach(([mint, cachedPrice]) => {
     if (!merged[mint] || merged[mint] <= 0) {
       merged[mint] = cachedPrice.price;
     }
   });
-  
+
   return merged;
 }
 
@@ -240,7 +259,7 @@ export function mergeTokens(
   if (!cachedTokens || freshTokens.length > 0) {
     return freshTokens;
   }
-  
+
   // Only use cached tokens if we have no fresh tokens
   return cachedTokens;
 }
@@ -250,7 +269,7 @@ export function mergeTokens(
  */
 export function isLikelyOffline(): boolean {
   if (!isMobileDevice()) return false;
-  
+
   // Simple check: if we have cached data and no recent updates, we might be offline
   const cachedPrices = getCachedPrices();
   return cachedPrices !== null;
@@ -261,12 +280,12 @@ export function isLikelyOffline(): boolean {
  */
 export function clearOfflineCache(): void {
   if (!isMobileDevice()) return;
-  
+
   try {
     localStorage.removeItem(PRICES_KEY);
     localStorage.removeItem(BALANCES_KEY);
     localStorage.removeItem(CACHE_TIMESTAMP_KEY);
-    
+
     // Clear wallet-specific token caches
     const keys = Object.keys(localStorage);
     keys.forEach((key) => {
@@ -296,10 +315,10 @@ export function getCacheTimestamp(): number | null {
  */
 export function isCacheFresh(maxAge: number = CACHE_VALIDITY_PRICES): boolean {
   if (!isMobileDevice()) return false;
-  
+
   const timestamp = getCacheTimestamp();
   if (!timestamp) return false;
-  
+
   const age = Date.now() - timestamp;
   return age <= maxAge;
 }

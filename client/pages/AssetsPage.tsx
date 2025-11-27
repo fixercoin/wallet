@@ -43,11 +43,14 @@ export default function AssetsPage() {
     if (!amount || isNaN(amount) || amount === 0) return "0";
 
     const absAmount = Math.abs(amount);
+    if (absAmount >= 1000000000) {
+      return (amount / 1000000000).toFixed(2) + "B";
+    }
     if (absAmount >= 1000000) {
-      return (amount / 1000000).toFixed(2) + "m";
+      return (amount / 1000000).toFixed(2) + "M";
     }
     if (absAmount >= 1000) {
-      return (amount / 1000).toFixed(2) + "k";
+      return (amount / 1000).toFixed(2) + "K";
     }
     if (absAmount >= 1) {
       return amount.toFixed(2);

@@ -57,20 +57,23 @@ export function formatAmountCompact(
   let formatted = "";
 
   if (amount >= 1_000_000_000) {
-    formatted = (amount / 1_000_000_000).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }) + "B";
+    formatted =
+      (amount / 1_000_000_000).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + "B";
   } else if (amount >= 1_000_000) {
-    formatted = (amount / 1_000_000).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }) + "M";
+    formatted =
+      (amount / 1_000_000).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + "M";
   } else if (amount >= 1_000) {
-    formatted = (amount / 1_000).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }) + "K";
+    formatted =
+      (amount / 1_000).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + "K";
   } else {
     return formatTokenAmount(amount, symbol);
   }

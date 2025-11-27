@@ -1020,8 +1020,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             {token.name}
                           </p>
                           <p className="text-xs font-semibold text-white truncate flex items-baseline gap-1">
-                            <span>{formatAmountCompact(token.balance, token.symbol).split(/\s+/)[0]}</span>
-                            <span className="text-xs" style={{fontSize: '0.65rem'}}>{token.symbol.toUpperCase()}</span>
+                            <span>
+                              {
+                                formatAmountCompact(
+                                  token.balance,
+                                  token.symbol,
+                                ).split(/\s+/)[0]
+                              }
+                            </span>
+                            <span
+                              className="text-xs"
+                              style={{ fontSize: "0.65rem" }}
+                            >
+                              {token.symbol.toUpperCase()}
+                            </span>
                           </p>
                         </div>
                       </div>

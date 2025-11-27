@@ -965,7 +965,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         // Also load cached balance when using cached tokens
         const cachedBalance = getCachedBalance(wallet.publicKey);
         if (cachedBalance !== null) {
-          console.log("[WalletContext] Also loading cached balance:", cachedBalance);
+          console.log(
+            "[WalletContext] Also loading cached balance:",
+            cachedBalance,
+          );
           setBalance(cachedBalance);
           balanceRef.current = cachedBalance;
         }

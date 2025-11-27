@@ -42,6 +42,7 @@ interface WalletContextType {
   tokens: TokenInfo[];
   isLoading: boolean;
   error: string | null;
+  isUsingCache: boolean; // true when displaying cached data due to offline/network error
   setWallet: (wallet: WalletData | null) => void; // set active
   addWallet: (wallet: WalletData) => void; // add and select
   selectWallet: (publicKey: string) => void; // select existing

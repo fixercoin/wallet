@@ -222,18 +222,11 @@ export const botOrdersStorage = {
       if (!order) return false;
 
       order.status = "completed";
-      // Store in the appropriate field based on output token
-      if (order.outputToken === "USDC") {
-        order.outputAmount = outputAmount;
-        console.log(
-          `[BotOrdersStorage] Completed SELL order with USDC output: ${outputAmount} USDC`,
-        );
-      } else {
-        order.solAmount = outputAmount;
-        console.log(
-          `[BotOrdersStorage] Completed SELL order with SOL output: ${outputAmount} SOL`,
-        );
-      }
+      order.outputAmount = outputAmount;
+      const tokenName = order.outputToken === "USDC" ? "USDC" : "SOL";
+      console.log(
+        `[BotOrdersStorage] Completed SELL order: ${outputAmount} ${tokenName}`,
+      );
       order.signature = signature;
       botOrdersStorage.saveSession(session);
       return true;

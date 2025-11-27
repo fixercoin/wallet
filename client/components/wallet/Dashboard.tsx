@@ -113,6 +113,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     balance,
     tokens,
     isLoading,
+    isUsingCache,
     refreshBalance,
     refreshTokens,
     addCustomToken,

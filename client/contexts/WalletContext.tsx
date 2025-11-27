@@ -73,6 +73,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [tokens, setTokens] = useState<TokenInfo[]>(DEFAULT_TOKENS);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUsingCache, setIsUsingCache] = useState<boolean>(false);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const providerRef = useRef<FixoriumWalletProvider | null>(null);
 

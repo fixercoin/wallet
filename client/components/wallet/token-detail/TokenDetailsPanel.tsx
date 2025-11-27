@@ -215,7 +215,7 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
             href={`https://solscan.io/token/${tokenMint}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 uppercase"
+            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 uppercase text-xs"
           >
             VIEW FULL ANALYSIS ON SOLSCAN
             <ExternalLink className="w-3 h-3" />

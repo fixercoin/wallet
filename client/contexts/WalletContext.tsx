@@ -1046,6 +1046,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     tokens,
     isLoading,
     error,
+    isUsingCache,
     setWallet,
     addWallet,
     selectWallet,

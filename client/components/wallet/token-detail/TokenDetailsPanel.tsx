@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Copy, Check, ExternalLink, CheckCircle } from "lucide-react";
+import { Copy, Check, ExternalLink, CheckCircle, Loader2 } from "lucide-react";
 import { TokenInfo } from "@/lib/wallet";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -32,7 +32,7 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
   };
 
   const formatNumber = (num: number | undefined) => {
-    if (!num) return "N/A";
+    if (!num) return null;
     if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
     if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
     if (num >= 1e3) return `$${(num / 1e3).toFixed(2)}K`;
@@ -62,17 +62,17 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
             />
           )}
           <div className="flex-1">
-            <h2 className="text-lg font-bold text-white">{token.name}</h2>
-            <p className="text-sm text-gray-400">{token.symbol}</p>
+            <h2 className="text-lg font-bold text-white uppercase">{token.name}</h2>
+            <p className="text-sm text-gray-400 uppercase">{token.symbol}</p>
           </div>
-          <span className="bg-blue-500/20 text-blue-300 px-2 py-1 rounded text-xs font-medium">
+          <span className="bg-blue-500/20 text-blue-300 px-2 py-1 rounded text-xs font-medium uppercase">
             SPL Token
           </span>
         </div>
 
         {/* Contract Address */}
         <div className="space-y-2">
-          <p className="text-xs text-gray-400 font-semibold">Contract Address</p>
+          <p className="text-xs text-gray-400 font-semibold uppercase">CONTRACT ADDRESS</p>
           <div className="flex items-center gap-2 bg-gray-900/50 p-2 rounded border border-gray-700">
             <code className="text-xs text-gray-300 flex-1 break-all">
               {shortenAddress(tokenMint)}
@@ -103,13 +103,13 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
 
       {/* Price Information */}
       <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
-        <h3 className="text-sm font-semibold text-gray-300 mb-3">
-          Price Information
+        <h3 className="text-sm font-semibold text-gray-300 mb-3 uppercase">
+          PRICE INFORMATION
         </h3>
         <div className="grid grid-cols-2 gap-3">
           {/* Current Price */}
           <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
-            <p className="text-xs text-gray-400 mb-1">Current Price</p>
+            <p className="text-xs text-gray-400 mb-1 uppercase">CURRENT PRICE</p>
             <p className="text-lg font-bold text-white">
               ${(token.price || 0).toFixed(8)}
             </p>
@@ -117,7 +117,7 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
 
           {/* 24h Change */}
           <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
-            <p className="text-xs text-gray-400 mb-1">24h Change</p>
+            <p className="text-xs text-gray-400 mb-1 uppercase">24H CHANGE</p>
             <p
               className={`text-lg font-bold ${
                 (token.priceChange24h || 0) >= 0
@@ -131,31 +131,52 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
 
           {/* Market Cap */}
           <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
-            <p className="text-xs text-gray-400 mb-1">Market Cap</p>
-            <p className="text-sm font-semibold text-white">
-              {formatNumber(token.marketCap)}
-            </p>
+            <p className="text-xs text-gray-400 mb-1 uppercase">MARKET CAP</p>
+            {formatNumber(token.marketCap) ? (
+              <p className="text-sm font-semibold text-white">
+                {formatNumber(token.marketCap)}
+              </p>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                <span className="text-xs text-gray-400">Loading...</span>
+              </div>
+            )}
           </div>
 
           {/* 24h Volume */}
           <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
-            <p className="text-xs text-gray-400 mb-1">24h Volume</p>
-            <p className="text-sm font-semibold text-white">
-              {formatNumber(token.volume24h)}
-            </p>
+            <p className="text-xs text-gray-400 mb-1 uppercase">24H VOLUME</p>
+            {formatNumber(token.volume24h) ? (
+              <p className="text-sm font-semibold text-white">
+                {formatNumber(token.volume24h)}
+              </p>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                <span className="text-xs text-gray-400">Loading...</span>
+              </div>
+            )}
           </div>
 
           {/* Liquidity */}
           <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
-            <p className="text-xs text-gray-400 mb-1">Liquidity</p>
-            <p className="text-sm font-semibold text-white">
-              {formatNumber(token.liquidity)}
-            </p>
+            <p className="text-xs text-gray-400 mb-1 uppercase">LIQUIDITY</p>
+            {formatNumber(token.liquidity) ? (
+              <p className="text-sm font-semibold text-white">
+                {formatNumber(token.liquidity)}
+              </p>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                <span className="text-xs text-gray-400">Loading...</span>
+              </div>
+            )}
           </div>
 
           {/* Decimals */}
           <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
-            <p className="text-xs text-gray-400 mb-1">Decimals</p>
+            <p className="text-xs text-gray-400 mb-1 uppercase">DECIMALS</p>
             <p className="text-sm font-semibold text-white">{token.decimals}</p>
           </div>
         </div>
@@ -163,29 +184,29 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
 
       {/* Token Safety Checks */}
       <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
-        <h3 className="text-sm font-semibold text-gray-300 mb-3">
-          Token Safety
+        <h3 className="text-sm font-semibold text-gray-300 mb-3 uppercase">
+          TOKEN SAFETY
         </h3>
         <div className="space-y-2">
           <SafetyCheckItem
-            label="Contract Verification"
+            label="CONTRACT VERIFICATION"
             status="verified"
-            description="Verified on Solscan"
+            description="VERIFIED ON SOLSCAN"
           />
           <SafetyCheckItem
-            label="Mint Authority"
+            label="MINT AUTHORITY"
             status="verified"
-            description="Renounced - No longer mintable"
+            description="RENOUNCED - NO LONGER MINTABLE"
           />
           <SafetyCheckItem
-            label="Freeze Authority"
+            label="FREEZE AUTHORITY"
             status="verified"
-            description="Renounced - Accounts cannot be frozen"
+            description="RENOUNCED - ACCOUNTS CANNOT BE FROZEN"
           />
           <SafetyCheckItem
-            label="Top 10 Holders"
+            label="TOP 10 HOLDERS"
             status="info"
-            description="Concentration analysis available"
+            description="CONCENTRATION ANALYSIS AVAILABLE"
           />
         </div>
 
@@ -194,9 +215,9 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
             href={`https://solscan.io/token/${tokenMint}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 uppercase"
           >
-            View full analysis on Solscan
+            VIEW FULL ANALYSIS ON SOLSCAN
             <ExternalLink className="w-3 h-3" />
           </a>
         </div>
@@ -204,33 +225,32 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
 
       {/* Metadata & Links */}
       <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
-        <h3 className="text-sm font-semibold text-gray-300 mb-3">
-          Links & Resources
+        <h3 className="text-sm font-semibold text-gray-300 mb-3 uppercase">
+          LINKS & RESOURCES
         </h3>
         <div className="space-y-2">
           <MetadataLink
-            label="Solscan"
+            label="SOLSCAN"
             url={`https://solscan.io/token/${tokenMint}`}
           />
           <MetadataLink
-            label="Token Info"
+            label="TOKEN INFO"
             url={`https://www.solflare.com/tokens/${tokenMint}`}
           />
-          <div className="text-xs text-gray-400 py-2">
-            Additional metadata (website, Twitter, Discord, etc.) will appear here
-            if available
+          <div className="text-xs text-gray-400 py-2 uppercase">
+            ADDITIONAL METADATA (WEBSITE, TWITTER, DISCORD, ETC.) WILL APPEAR HERE IF AVAILABLE
           </div>
         </div>
       </div>
 
       {/* Token Network Info */}
       <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
-        <h3 className="text-sm font-semibold text-gray-300 mb-3">Network Info</h3>
+        <h3 className="text-sm font-semibold text-gray-300 mb-3 uppercase">NETWORK INFO</h3>
         <div className="space-y-2">
-          <InfoRow label="Network" value="Solana" />
-          <InfoRow label="Token Type" value="SPL (Solana Program Library)" />
-          <InfoRow label="Chain ID" value="Mainnet Beta" />
-          <InfoRow label="Mint Address" value={shortenAddress(tokenMint)} />
+          <InfoRow label="NETWORK" value="Solana" />
+          <InfoRow label="TOKEN TYPE" value="SPL (Solana Program Library)" />
+          <InfoRow label="CHAIN ID" value="Mainnet Beta" />
+          <InfoRow label="MINT ADDRESS" value={shortenAddress(tokenMint)} />
         </div>
       </div>
     </div>

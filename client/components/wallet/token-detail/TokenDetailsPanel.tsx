@@ -283,27 +283,27 @@ const SafetyCheckItem: React.FC<SafetyCheckItemProps> = ({
   return (
     <div className={`p-3 rounded border ${statusBg[status]}`}>
       <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-medium text-gray-300">{label}</p>
+        <p className="text-xs font-medium text-gray-300 text-xs">{label}</p>
         {status === "verified" && (
           <div className="flex items-center gap-1">
-            <CheckCircle className="w-4 h-4 text-emerald-400" />
-            <span className="text-xs font-semibold text-emerald-400">
+            <CheckCircle className="w-3 h-3 text-emerald-400" />
+            <span className="text-xs font-semibold text-emerald-400 text-xs">
               Verified
             </span>
           </div>
         )}
         {status === "unknown" && (
-          <span className="text-xs font-semibold text-yellow-400">
+          <span className="text-xs font-semibold text-yellow-400 text-xs">
             Unknown
           </span>
         )}
         {status === "info" && (
-          <span className="text-xs font-semibold text-blue-400">
+          <span className="text-xs font-semibold text-blue-400 text-xs">
             Info
           </span>
         )}
       </div>
-      <p className="text-xs text-gray-400">{description}</p>
+      <p className="text-xs text-gray-400 text-xs">{description}</p>
     </div>
   );
 };

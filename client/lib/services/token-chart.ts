@@ -20,14 +20,13 @@ export interface CandleDataPoint {
 
 export type TimeFrame = "1H" | "1D" | "1W" | "1M" | "2M";
 
-const TIMEFRAME_CONFIGS: Record<TimeFrame, { days: number; points: number }> =
-  {
-    "1H": { days: 1, points: 60 }, // 1 minute intervals
-    "1D": { days: 1, points: 24 }, // 1 hour intervals
-    "1W": { days: 7, points: 7 }, // 1 day intervals
-    "1M": { days: 30, points: 30 }, // 1 day intervals
-    "2M": { days: 60, points: 60 }, // 1 day intervals
-  };
+const TIMEFRAME_CONFIGS: Record<TimeFrame, { days: number; points: number }> = {
+  "1H": { days: 1, points: 60 }, // 1 minute intervals
+  "1D": { days: 1, points: 24 }, // 1 hour intervals
+  "1W": { days: 7, points: 7 }, // 1 day intervals
+  "1M": { days: 30, points: 30 }, // 1 day intervals
+  "2M": { days: 60, points: 60 }, // 1 day intervals
+};
 
 /**
  * Attempts to get the CoinGecko token ID from a Solana mint address
@@ -88,22 +87,44 @@ async function fetchCoinGeckoChartData(
 
       switch (timeframe) {
         case "1H":
-          return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+          return date.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          });
         case "1D":
-          return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+          return date.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          });
         case "1W":
-          return date.toLocaleDateString("en-US", { weekday: "short", month: "numeric", day: "numeric" });
+          return date.toLocaleDateString("en-US", {
+            weekday: "short",
+            month: "numeric",
+            day: "numeric",
+          });
         case "1M":
-          return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          return date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          });
         case "2M":
-          return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          return date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          });
         default:
           return date.toLocaleString();
       }
     };
 
     // Generate candlestick data instead of line data
-    return generateCandleData(resampled, TIMEFRAME_CONFIGS[timeframe].points, timeframe) as any;
+    return generateCandleData(
+      resampled,
+      TIMEFRAME_CONFIGS[timeframe].points,
+      timeframe,
+    ) as any;
   } catch (error) {
     console.error(
       `[TokenChart] Error fetching CoinGecko data for ${coinId}:`,
@@ -171,9 +192,15 @@ function generateCandleData(
           day: "numeric",
         });
       case "1M":
-        return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        return date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
       case "2M":
-        return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        return date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
       default:
         return date.toLocaleString();
     }
@@ -258,9 +285,15 @@ export function generateFallbackChartData(
           day: "numeric",
         });
       case "1M":
-        return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        return date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
       case "2M":
-        return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        return date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
       default:
         return date.toLocaleString();
     }
@@ -323,7 +356,10 @@ export async function fetchTokenChartData(
         return realData as any;
       }
     } catch (error) {
-      console.error(`[TokenChart] Failed to fetch real data for ${coinId}:`, error);
+      console.error(
+        `[TokenChart] Failed to fetch real data for ${coinId}:`,
+        error,
+      );
     }
   }
 

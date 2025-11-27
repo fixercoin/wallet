@@ -1,5 +1,13 @@
 import React from "react";
-import { ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  ComposedChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { type CandleDataPoint } from "@/lib/services/token-chart";
 
 interface CandlestickChartProps {
@@ -99,7 +107,10 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({
             L: <span className="text-white">${data.low.toFixed(8)}</span>
           </p>
           <p className="text-gray-400">
-            C: <span className={`font-semibold ${data.close >= data.open ? "text-emerald-400" : "text-red-400"}`}>
+            C:{" "}
+            <span
+              className={`font-semibold ${data.close >= data.open ? "text-emerald-400" : "text-red-400"}`}
+            >
               ${data.close.toFixed(8)}
             </span>
           </p>
@@ -111,7 +122,10 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <ComposedChart data={data} margin={{ top: 5, right: 10, left: 5, bottom: 5 }}>
+      <ComposedChart
+        data={data}
+        margin={{ top: 5, right: 10, left: 5, bottom: 5 }}
+      >
         <CartesianGrid
           strokeDasharray="3 3"
           stroke="rgba(107, 114, 128, 0.2)"

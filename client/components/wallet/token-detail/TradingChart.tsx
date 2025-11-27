@@ -1,7 +1,11 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { TokenInfo } from "@/lib/wallet";
-import { fetchTokenChartData, type TimeFrame, type CandleDataPoint } from "@/lib/services/token-chart";
+import {
+  fetchTokenChartData,
+  type TimeFrame,
+  type CandleDataPoint,
+} from "@/lib/services/token-chart";
 import { CandlestickChart } from "./CandlestickChart";
 
 const TIMEFRAMES: TimeFrame[] = ["1H", "1D", "1W", "1M", "2M"];

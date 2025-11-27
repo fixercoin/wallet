@@ -14,11 +14,11 @@ export function formatTokenAmount(
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
   if (isNaN(num)) return "0.00";
 
-  // SOL and USDC always show exactly 3 decimal places
+  // SOL and USDC always show exactly 4 decimal places
   if (symbol === "SOL" || symbol === "USDC") {
     return num.toLocaleString(undefined, {
-      minimumFractionDigits: 3,
-      maximumFractionDigits: 3,
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 4,
     });
   }
 
@@ -43,10 +43,10 @@ export function formatAmountCompact(
 ): string {
   if (!amount || isNaN(amount)) {
     if (symbol === "SOL") {
-      return "0.000 SOL";
+      return "0.0000 SOL";
     }
     if (symbol === "USDC") {
-      return "0.000 USDC";
+      return "0.0000 USDC";
     }
     return symbol ? `0.00 ${symbol.toUpperCase()}` : "0.00";
   }

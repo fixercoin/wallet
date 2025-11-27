@@ -251,12 +251,16 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
         // Check sell orders
         for (const order of pendingSellOrders) {
+          console.log(
+            `[MarketMaker] Checking SELL order: livePrice=${livePrice}, targetSellPrice=${order.targetSellPrice}, match=${livePrice >= order.targetSellPrice}`,
+          );
+
           if (
             livePrice >= order.targetSellPrice &&
             !executingOrders.has(order.id)
           ) {
             console.log(
-              `[MarketMaker] Price match for SELL order: ${livePrice} >= ${order.targetSellPrice}`,
+              `[MarketMaker] Price match for SELL order: ${livePrice} >= ${order.targetSellPrice}. Executing...`,
             );
             setExecutingOrders((prev) => new Set([...prev, order.id]));
 
@@ -291,9 +295,20 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             } else {
               console.error(
                 "[MarketMaker] Sell order execution failed:",
-                result,
+                result.error,
               );
-              // Don't show error toast for every check - only log
+              // Show error toast for wallet-related errors
+              if (
+                result.error &&
+                (result.error.includes("secretKey") ||
+                  result.error.includes("private key"))
+              ) {
+                toast({
+                  title: "Execution Failed",
+                  description: result.error,
+                  variant: "destructive",
+                });
+              }
             }
           }
         }

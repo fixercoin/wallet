@@ -9,23 +9,15 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Button } from "@/components/ui/button";
-import { birdeyeAPI } from "@/lib/services/birdeye";
 import { TokenInfo } from "@/lib/wallet";
+import { fetchTokenChartData, type TimeFrame, type ChartDataPoint } from "@/lib/services/token-chart";
 
-type TimeFrame = "1H" | "1D" | "1W" | "1M" | "2M";
+const TIMEFRAMES: TimeFrame[] = ["1H", "1D", "1W", "1M", "2M"];
 
 interface TradingChartProps {
   token: TokenInfo;
   mint: string;
 }
-
-interface ChartDataPoint {
-  time: string;
-  price: number;
-  originalTime?: number;
-}
-
-const TIMEFRAMES: TimeFrame[] = ["1H", "1D", "1W", "1M", "2M"];
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload[0]) {

@@ -164,10 +164,8 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
         </div>
 
         {/* Chart Section - Full width on mobile */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-hidden">
-            <BuySellLine mint={tokenMint} priceData={priceData} />
-          </div>
+        <div className="px-4 py-4 flex-1 flex flex-col overflow-hidden">
+          <TradingChart token={displayToken} mint={tokenMint} />
         </div>
 
         {/* QUICK BUY Button - Fixed at bottom with padding */}

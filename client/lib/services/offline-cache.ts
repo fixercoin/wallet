@@ -1,6 +1,6 @@
 /**
  * Offline Cache Service
- * Stores token prices, balances, and wallet data in localStorage for offline support on mobile
+ * Stores token prices, balances, and wallet data in localStorage for offline support
  */
 
 export interface CachedPrice {
@@ -63,8 +63,6 @@ function isMobileDevice(): boolean {
 export function savePricesToCache(
   prices: Record<string, CachedPrice>,
 ): boolean {
-  if (!isMobileDevice()) return false;
-
   try {
     localStorage.setItem(PRICES_KEY, JSON.stringify(prices));
     localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
@@ -81,8 +79,6 @@ export function savePricesToCache(
 export function getCachedPrices(
   maxAge?: number,
 ): Record<string, CachedPrice> | null {
-  if (!isMobileDevice()) return null;
-
   try {
     const cached = localStorage.getItem(PRICES_KEY);
     if (!cached) return null;
@@ -114,8 +110,6 @@ export function saveBalanceToCache(
   publicKey: string,
   balance: number,
 ): boolean {
-  if (!isMobileDevice()) return false;
-
   try {
     const balances = getBalancesFromCache() || {};
     balances[publicKey] = {
@@ -139,8 +133,6 @@ export function getCachedBalance(
   publicKey: string,
   maxAge?: number,
 ): number | null {
-  if (!isMobileDevice()) return null;
-
   try {
     const balances = getBalancesFromCache();
     if (!balances || !balances[publicKey]) return null;
@@ -181,8 +173,6 @@ export function saveTokensToCache(
   walletAddress: string,
   tokens: CachedToken[],
 ): boolean {
-  if (!isMobileDevice()) return false;
-
   try {
     const key = TOKENS_KEY(walletAddress);
     localStorage.setItem(key, JSON.stringify(tokens));
@@ -201,8 +191,6 @@ export function getCachedTokens(
   walletAddress: string,
   maxAge?: number,
 ): CachedToken[] | null {
-  if (!isMobileDevice()) return null;
-
   try {
     const key = TOKENS_KEY(walletAddress);
     const cached = localStorage.getItem(key);
@@ -268,8 +256,6 @@ export function mergeTokens(
  * Check if offline (cache-first mode)
  */
 export function isLikelyOffline(): boolean {
-  if (!isMobileDevice()) return false;
-
   // Simple check: if we have cached data and no recent updates, we might be offline
   const cachedPrices = getCachedPrices();
   return cachedPrices !== null;
@@ -279,8 +265,6 @@ export function isLikelyOffline(): boolean {
  * Clear all cached data
  */
 export function clearOfflineCache(): void {
-  if (!isMobileDevice()) return;
-
   try {
     localStorage.removeItem(PRICES_KEY);
     localStorage.removeItem(BALANCES_KEY);
@@ -314,8 +298,6 @@ export function getCacheTimestamp(): number | null {
  * Check if cache is fresh (within validity period)
  */
 export function isCacheFresh(maxAge: number = CACHE_VALIDITY_PRICES): boolean {
-  if (!isMobileDevice()) return false;
-
   const timestamp = getCacheTimestamp();
   if (!timestamp) return false;
 

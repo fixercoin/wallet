@@ -76,6 +76,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     amount: "",
     total: "0.02",
   });
+  const [sellOutputToken, setSellOutputToken] = useState<"SOL" | "USDC">("SOL");
   const [isLoading, setIsLoading] = useState(false);
   const [livePrice, setLivePrice] = useState<number | null>(null);
   const [solPrice, setSolPrice] = useState<number | null>(null);

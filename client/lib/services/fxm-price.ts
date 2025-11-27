@@ -94,23 +94,35 @@ class FXMPriceService {
 
       // Fallback to Pump.fun API (since FXM is a pump.fun token)
       console.log("Birdeye failed for FXM, trying Pump.fun API...");
-      const pumpFunPrice = await pumpFunPriceService.getTokenPrice(FXM_MINT);
+      const pumpFunPriceInSol = await pumpFunPriceService.getTokenPrice(FXM_MINT);
 
-      if (pumpFunPrice && pumpFunPrice > 0 && isFinite(pumpFunPrice)) {
-        const priceData: FXMPriceData = {
-          price: pumpFunPrice,
-          priceChange24h: 0,
-          volume24h: 0,
-          lastUpdated: new Date(),
-          derivationMethod: `fetched from Pump.fun API (bonding curve price)`,
-        };
+      if (pumpFunPriceInSol && pumpFunPriceInSol > 0 && isFinite(pumpFunPriceInSol)) {
+        // Pump.fun returns price in SOL, convert to USD
+        try {
+          const solPriceData = await solPriceService.getSolPrice();
+          const solPrice = solPriceData?.price || 100; // Fallback SOL price if service fails
+          const pumpFunPriceUsd = pumpFunPriceInSol * solPrice;
 
-        this.cachedData = priceData;
-        this.lastFetchTime = new Date();
-        console.log(
-          `✅ FXM price updated from Pump.fun: $${priceData.price.toFixed(8)}`,
-        );
-        return priceData;
+          const priceData: FXMPriceData = {
+            price: pumpFunPriceUsd,
+            priceChange24h: 0,
+            volume24h: 0,
+            lastUpdated: new Date(),
+            derivationMethod: `fetched from Pump.fun API (${pumpFunPriceInSol.toFixed(8)} SOL @ $${solPrice}/SOL)`,
+          };
+
+          this.cachedData = priceData;
+          this.lastFetchTime = new Date();
+          console.log(
+            `✅ FXM price updated from Pump.fun: $${priceData.price.toFixed(8)}`,
+          );
+          return priceData;
+        } catch (error) {
+          console.warn(
+            "Failed to convert Pump.fun SOL price to USD:",
+            error,
+          );
+        }
       }
 
       console.warn(

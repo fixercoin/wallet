@@ -5,7 +5,6 @@ import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { TokenQuickInfoCard } from "./token-detail/TokenQuickInfoCard";
-import { birdeyeAPI } from "@/lib/services/birdeye";
 import { TradingChart } from "./token-detail/TradingChart";
 
 interface TokenDetailProps {

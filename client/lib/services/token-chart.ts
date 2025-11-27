@@ -206,14 +206,14 @@ function generateCandleData(
 }
 
 /**
- * Generate fallback chart data based on price trend
+ * Generate fallback candlestick data based on price trend
  * Used when real data is not available
  */
 export function generateFallbackChartData(
   basePrice: number,
   changePercent: number,
   timeframe: TimeFrame,
-): ChartDataPoint[] {
+): CandleDataPoint[] {
   const config = TIMEFRAME_CONFIGS[timeframe];
   const points = config.points;
 
@@ -240,11 +240,23 @@ export function generateFallbackChartData(
 
     switch (timeframe) {
       case "1H":
-        return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+        return date.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
       case "1D":
-        return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+        return date.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
       case "1W":
-        return date.toLocaleDateString("en-US", { weekday: "short", month: "numeric", day: "numeric" });
+        return date.toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "numeric",
+          day: "numeric",
+        });
       case "1M":
         return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
       case "2M":
@@ -254,7 +266,7 @@ export function generateFallbackChartData(
     }
   };
 
-  const data: ChartDataPoint[] = [];
+  const data: CandleDataPoint[] = [];
   const intervalMs = getIntervalMs();
   const now = Date.now();
 
@@ -263,14 +275,24 @@ export function generateFallbackChartData(
     // Create a smooth curve that trends based on the price change
     const trend =
       Math.sin((progress - 0.5) * Math.PI) * (changePercent / 100) * 0.5;
-    const noise = (Math.random() - 0.5) * 0.01;
-    const factor = 1 + trend + noise;
+    const noise = (Math.random() - 0.5) * 0.02;
 
     const timestamp = now - (points - 1 - i) * intervalMs;
+    const basePrice_adjusted = basePrice * Math.max(0.0001, 1 + trend);
+
+    // Generate OHLC values with realistic variance
+    const volatility = 0.02; // 2% volatility per candle
+    const open = basePrice_adjusted * (1 + (Math.random() - 0.5) * volatility);
+    const close = basePrice_adjusted * (1 + (Math.random() - 0.5) * volatility);
+    const high = Math.max(open, close) * (1 + Math.abs(noise));
+    const low = Math.min(open, close) * (1 - Math.abs(noise));
 
     data.push({
       time: formatTime(timestamp, timeframe),
-      price: basePrice * Math.max(0.0001, factor), // Avoid zero prices
+      open,
+      high,
+      low,
+      close,
       originalTime: timestamp,
     });
   }

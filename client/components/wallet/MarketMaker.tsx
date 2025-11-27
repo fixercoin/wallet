@@ -509,6 +509,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           "", // buyOrderId - we'll use empty since this is a direct limit sell
           sellPrice,
           tokenAmount,
+          undefined,
+          sellOutputToken,
         );
 
         if (!newOrder) {

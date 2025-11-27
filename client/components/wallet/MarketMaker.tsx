@@ -293,11 +293,11 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             });
 
             if (result.success) {
-              const outputToken = order.outputToken || "SOL";
+              const outputToken = result.order?.outputToken || "SOL";
               const outputAmount =
-                outputToken === "USDC"
+                result.order?.outputToken === "USDC"
                   ? result.order?.outputAmount?.toFixed(6)
-                  : result.order?.solAmount?.toFixed(6);
+                  : result.order?.outputAmount?.toFixed(9);
               toast({
                 title: "Sell Order Executed",
                 description: `Successfully sold ${result.order?.tokenAmount?.toFixed(6) || "tokens"} for ${outputAmount || "0"} ${outputToken}`,

@@ -86,38 +86,12 @@ export const TradingChart: React.FC<TradingChartProps> = ({ token, mint }) => {
       <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
         <div className="w-full h-64">
           {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="rgba(107, 114, 128, 0.2)"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="time"
-                  tick={{ fill: "#9ca3af", fontSize: 12 }}
-                  tickLine={{ stroke: "rgba(107, 114, 128, 0.2)" }}
-                  axisLine={{ stroke: "rgba(107, 114, 128, 0.2)" }}
-                />
-                <YAxis
-                  domain={[minPrice, maxPrice]}
-                  tick={{ fill: "#9ca3af", fontSize: 12 }}
-                  tickLine={{ stroke: "rgba(107, 114, 128, 0.2)" }}
-                  axisLine={{ stroke: "rgba(107, 114, 128, 0.2)" }}
-                  tickFormatter={(value) => `$${value.toFixed(6)}`}
-                  width={70}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Line
-                  type="monotone"
-                  dataKey="price"
-                  stroke={isPositive ? "#10b981" : "#ef4444"}
-                  dot={false}
-                  strokeWidth={2}
-                  isAnimationActive={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <CandlestickChart
+              data={chartData}
+              isPositive={isPositive}
+              minPrice={minPrice}
+              maxPrice={maxPrice}
+            />
           ) : (
             <div className="flex items-center justify-center h-full text-gray-400">
               {loading ? "Loading chart..." : "No data available"}

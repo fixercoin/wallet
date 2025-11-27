@@ -8,7 +8,7 @@ import {
 } from "@/lib/services/token-chart";
 import { CandlestickChart } from "./CandlestickChart";
 
-const TIMEFRAMES: TimeFrame[] = ["1H", "1D", "1W", "1M", "2M"];
+const TIMEFRAMES: TimeFrame[] = ["15M", "1H", "1D", "1W", "1M", "2M"];
 
 interface TradingChartProps {
   token: TokenInfo;
@@ -16,7 +16,7 @@ interface TradingChartProps {
 }
 
 export const TradingChart: React.FC<TradingChartProps> = ({ token, mint }) => {
-  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeFrame>("1D");
+  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeFrame>("15M");
   const [chartData, setChartData] = useState<CandleDataPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [priceChange, setPriceChange] = useState<number | null>(null);

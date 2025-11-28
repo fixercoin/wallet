@@ -778,6 +778,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <span>MY-WALLET</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
+                    onSelect={() => onStakeTokens?.()}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Coins className="h-4 w-4" />
+                    <span>STAKE TOKENS</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     onSelect={() => onLock()}
                     className="flex items-center gap-2 text-xs"
                   >

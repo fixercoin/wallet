@@ -1051,9 +1051,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col min-w-0">
-                          <p className="text-xs font-semibold text-white truncate uppercase">
-                            {token.name}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-semibold text-white truncate uppercase">
+                              {token.name}
+                            </p>
+                            {isStaking(token.mint) && (
+                              <span className="text-xs font-semibold text-yellow-500 whitespace-nowrap">
+                                STAKING
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs font-semibold text-white truncate flex items-baseline gap-1">
                             <span>
                               {

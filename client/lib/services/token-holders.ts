@@ -5,10 +5,6 @@
 
 import { makeRpcCall } from "./solana-rpc";
 
-// Helius RPC endpoint for better token holder data
-const HELIUS_RPC_URL =
-  "https://mainnet.helius-rpc.com/?api-key=48e91c19-c676-4c4a-a0dd-a9b4f258d151";
-
 export interface HolderData {
   buyers: number;
   sellers: number;

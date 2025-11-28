@@ -574,8 +574,71 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     }
   };
 
-  const handlePasteSample = () => {
-    // Do not insert placeholder addresses. Provide an empty helper that does nothing.
+  const handleFetchWalletAddresses = async () => {
+    setIsFetchingWallets(true);
+    setRecipientsText("Fetching wallet addresses...");
+
+    try {
+      // Fetch top wallet addresses by activity
+      // Using Solana token program to get active wallet addresses
+      const response = await fetch(resolveApiUrl("/api/solana-rpc"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: Date.now(),
+          method: "getTokenLargestAccounts",
+          params: [selectedMint],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch addresses: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const accounts = (data.result?.value || data.value || []) as Array<{
+        address: string;
+      }>;
+
+      if (accounts.length === 0) {
+        setRecipientsText("");
+        toast({
+          title: "No addresses found",
+          description: "Could not fetch wallet addresses for the selected token.",
+          variant: "default",
+        });
+        return;
+      }
+
+      // Extract addresses and shuffle them for randomness
+      let addresses = accounts
+        .map((acc: any) => acc.address)
+        .filter((addr: string) => addr && addr.length > 0);
+
+      // Shuffle the addresses to get different ones on each click
+      addresses = addresses
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 20);
+
+      const addressesText = addresses.join("\n");
+      setRecipientsText(addressesText);
+      toast({
+        title: "Wallet addresses loaded",
+        description: `Loaded ${addresses.length} real Solana wallet addresses.`,
+      });
+    } catch (error) {
+      console.error("Error fetching wallet addresses:", error);
+      setRecipientsText("");
+      toast({
+        title: "Failed to fetch addresses",
+        description:
+          "Unable to fetch wallet addresses. Please enter addresses manually.",
+        variant: "default",
+      });
+    } finally {
+      setIsFetchingWallets(false);
+    }
   };
 
   const handlePresetTokenSelect = async (tokenMint: string) => {

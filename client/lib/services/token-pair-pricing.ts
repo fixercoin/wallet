@@ -233,14 +233,19 @@ class TokenPairPricingService {
         }
 
         console.warn(
-          `Could not determine price (SOL pair or USD price) for ${symbol}, using fallback`,
+          `Could not determine price (SOL pair or USD price) for ${symbol} - API unavailable`,
         );
-        return this.getFallbackPriceData(symbol, solPrice);
+        return null;
       }
 
       // Calculate token price in USD by multiplying SOL price by the SOL ratio
       // derivedPrice = (how many SOL per token) * (SOL price in USD)
       const derivedPrice = priceInSol * solPrice;
+
+      if (derivedPrice <= 0) {
+        console.warn(`Invalid derived price for ${symbol}: ${derivedPrice}`);
+        return null;
+      }
 
       // Fetch additional metadata from DexScreener
       const tokenData = await dexscreenerAPI.getTokenByMint(config.mint);
@@ -250,7 +255,7 @@ class TokenPairPricingService {
         tokenSymbol: symbol,
         solPrice,
         pairRatio: 1 / priceInSol, // How many tokens per 1 SOL
-        derivedPrice: derivedPrice > 0 ? derivedPrice : FALLBACK_PRICES[symbol],
+        derivedPrice: derivedPrice,
         priceChange24h: tokenData?.priceChange?.h24 || 0,
         volume24h: tokenData?.volume?.h24 || 0,
         liquidity: tokenData?.liquidity?.usd || 0,
@@ -270,8 +275,7 @@ class TokenPairPricingService {
       return priceData;
     } catch (error) {
       console.error(`Error calculating derived price for ${symbol}:`, error);
-      const solPrice = await this.getSolPrice();
-      return this.getFallbackPriceData(symbol, solPrice);
+      return null;
     }
   }
 

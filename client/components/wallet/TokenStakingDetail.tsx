@@ -24,6 +24,13 @@ function calculateReward(amount: number, periodDays: number): number {
   return dailyRate * periodDays;
 }
 
+function formatTokenAmount(amount: number): string {
+  return amount.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 function formatTimeRemaining(ms: number): string {
   const days = Math.floor(ms / (1000 * 60 * 60 * 24));
   const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));

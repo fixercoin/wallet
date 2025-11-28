@@ -105,7 +105,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
     if (Number(stakeAmount) < MIN_STAKE_AMOUNT) {
       toast({
         title: "Minimum Stake Required",
-        description: `Minimum staking amount is ${MIN_STAKE_AMOUNT.toLocaleString()} ${token.symbol}`,
+        description: `Minimum staking amount is ${formatTokenAmount(MIN_STAKE_AMOUNT)} ${token.symbol}`,
         variant: "destructive",
       });
       return;

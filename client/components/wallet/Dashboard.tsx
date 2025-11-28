@@ -817,7 +817,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <circle cx="12" cy="16" r="1" fill="currentColor" />
                     </svg>
                     <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
-                      <span className="text-white text-[9px] font-bold leading-none">!</span>
+                      <span className="text-white text-[9px] font-bold leading-none">
+                        !
+                      </span>
                     </div>
                   </div>
                 ) : (

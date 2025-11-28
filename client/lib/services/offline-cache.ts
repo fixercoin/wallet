@@ -41,7 +41,11 @@ const CACHE_VALIDITY_PRICES = 5 * 60 * 1000; // 5 minutes
 const CACHE_VALIDITY_TOKENS = 60 * 60 * 1000; // 1 hour
 const CACHE_VALIDITY_SERVICE_PRICES = 24 * 60 * 60 * 1000; // 24 hours for service prices
 
-export { CACHE_VALIDITY_PRICES, CACHE_VALIDITY_TOKENS, CACHE_VALIDITY_SERVICE_PRICES };
+export {
+  CACHE_VALIDITY_PRICES,
+  CACHE_VALIDITY_TOKENS,
+  CACHE_VALIDITY_SERVICE_PRICES,
+};
 
 /**
  * Check if device is mobile
@@ -354,10 +358,7 @@ export function getCachedServicePrice(
 
     return data;
   } catch (error) {
-    console.warn(
-      `[OfflineCache] Failed to read ${serviceName} price:`,
-      error,
-    );
+    console.warn(`[OfflineCache] Failed to read ${serviceName} price:`, error);
     return null;
   }
 }
@@ -367,7 +368,10 @@ export function getCachedServicePrice(
  */
 export function setConnectionStatus(isStable: boolean): void {
   try {
-    localStorage.setItem(CONNECTION_STATUS_KEY, JSON.stringify({ isStable, timestamp: Date.now() }));
+    localStorage.setItem(
+      CONNECTION_STATUS_KEY,
+      JSON.stringify({ isStable, timestamp: Date.now() }),
+    );
   } catch (error) {
     console.warn("[OfflineCache] Failed to set connection status:", error);
   }
@@ -376,7 +380,10 @@ export function setConnectionStatus(isStable: boolean): void {
 /**
  * Get current connection status
  */
-export function getConnectionStatus(): { isStable: boolean; isUsingCache: boolean } {
+export function getConnectionStatus(): {
+  isStable: boolean;
+  isUsingCache: boolean;
+} {
   try {
     const cached = localStorage.getItem(CONNECTION_STATUS_KEY);
     if (!cached) {

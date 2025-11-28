@@ -87,6 +87,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     total: 0,
   });
   const [error, setError] = useState<string | null>(null);
+  const [isFetchingWallets, setIsFetchingWallets] = useState(false);
 
   const availableTokens = useMemo(() => {
     const sol = tokens.find((t) => t.symbol === "SOL");

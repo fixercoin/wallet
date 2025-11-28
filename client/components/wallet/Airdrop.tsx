@@ -432,13 +432,23 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 { encoding: "base64" },
               ]);
 
-              // Skip if recipient doesn't have ATA for this token
+              // If recipient doesn't have ATA, create it
               if (!recipientAccountInfo?.value) {
-                console.warn(`Skipping ${r}: no ATA for this token`);
-                continue;
+                console.log(
+                  `Creating ATA for ${r} to receive ${selectedToken?.symbol}`,
+                );
+                // Add instruction to create ATA
+                tx.add(
+                  createAssociatedTokenAccountInstruction(
+                    senderPubkey,
+                    recipientAta,
+                    recipientPubkey,
+                    mint,
+                  ),
+                );
               }
 
-              // Add transfer instruction only if ATA exists
+              // Add transfer instruction
               tx.add(
                 createTransferCheckedInstruction(
                   senderAta,

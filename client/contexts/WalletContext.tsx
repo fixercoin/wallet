@@ -910,6 +910,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         if (!finalPrice || finalPrice <= 0) {
           if (token.symbol === "SOL") {
             finalPrice = 100;
+          } else if (
+            ["FIXERCOIN", "LOCKER", "FXM"].includes(token.symbol)
+          ) {
+            // Keep price as undefined/null for these special tokens so Dashboard shows loading state
+            finalPrice = undefined;
           } else {
             finalPrice = 0;
           }

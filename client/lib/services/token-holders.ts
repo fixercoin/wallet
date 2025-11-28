@@ -112,7 +112,8 @@ function analyzeHolderDistribution(
 
   largestAccounts.forEach((account: any, index: number) => {
     const balance = account.uiAmount || 0;
-    const percentOfTop = topAccountBalance > 0 ? balance / topAccountBalance : 0;
+    const percentOfTop =
+      topAccountBalance > 0 ? balance / topAccountBalance : 0;
 
     // Categorize based on balance relative to largest
     if (percentOfTop > 0.5) {
@@ -149,10 +150,7 @@ function analyzeHolderDistribution(
     sellerCount > 0
       ? Math.round((sellerCount / totalAccounts) * 100)
       : Math.max(1, Math.round(totalAccounts * 0.15));
-  const holderPercent = Math.max(
-    1,
-    100 - buyerPercent - sellerPercent,
-  );
+  const holderPercent = Math.max(1, 100 - buyerPercent - sellerPercent);
 
   return {
     buyers: buyerPercent,
@@ -160,8 +158,7 @@ function analyzeHolderDistribution(
     holders: holderPercent,
     buyerCount: buyerCount || Math.max(1, Math.round(totalAccounts * 0.25)),
     sellerCount: sellerCount || Math.max(1, Math.round(totalAccounts * 0.25)),
-    holderCount:
-      holderCount || Math.max(1, Math.round(totalAccounts * 0.5)),
+    holderCount: holderCount || Math.max(1, Math.round(totalAccounts * 0.5)),
   };
 }
 
@@ -195,9 +192,7 @@ function generateRealisticHolderData(
  * Fetch holder data for a token
  * Returns buyer/seller/holder percentages and counts
  */
-export async function fetchTokenHolderData(
-  mint: string,
-): Promise<HolderData> {
+export async function fetchTokenHolderData(mint: string): Promise<HolderData> {
   try {
     // Get the largest token accounts (top holders)
     const largestAccounts = await getTokenLargestAccounts(mint, 50);
@@ -224,14 +219,14 @@ export async function fetchTokenHolderData(
       largestAccounts.length,
     );
 
-    console.log(
-      `[TokenHolders] Fetched holder data for ${mint}:`,
-      holderData,
-    );
+    console.log(`[TokenHolders] Fetched holder data for ${mint}:`, holderData);
 
     return holderData;
   } catch (error) {
-    console.error(`[TokenHolders] Error fetching holder data for ${mint}:`, error);
+    console.error(
+      `[TokenHolders] Error fetching holder data for ${mint}:`,
+      error,
+    );
 
     // Return reasonable defaults on error
     return {

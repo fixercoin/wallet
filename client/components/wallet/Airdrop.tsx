@@ -551,41 +551,12 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     try {
       // Fetch top wallet addresses by activity
       // Using Solana token program to get active wallet addresses
-      const response = await fetch(resolveApiUrl("/api/solana-rpc"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: Date.now(),
-          method: "getTokenLargestAccounts",
-          params: [selectedMint],
-        }),
-      });
+      // Use client-side makeRpcCall with built-in retry logic
+      const result = await makeRpcCall("getTokenLargestAccounts", [
+        selectedMint,
+      ]);
 
-      let errorMsg = "";
-
-      if (!response.ok) {
-        try {
-          const errorData = await response.json();
-          errorMsg =
-            errorData.error ||
-            errorData.message ||
-            `HTTP ${response.status}: ${response.statusText || "Request failed"}`;
-        } catch {
-          errorMsg = `HTTP ${response.status}: ${response.statusText || "Request failed"}`;
-        }
-        throw new Error(`Failed to fetch addresses: ${errorMsg}`);
-      }
-
-      const data = await response.json();
-
-      // Check for JSON-RPC error response
-      if (data.error) {
-        const rpcErrorMsg = data.error.message || data.error || "Unknown RPC error";
-        throw new Error(`RPC error: ${rpcErrorMsg}`);
-      }
-
-      const accounts = (data.result?.value || data.value || []) as Array<{
+      const accounts = (result?.value || result || []) as Array<{
         address: string;
       }>;
 
@@ -621,7 +592,9 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         error instanceof Error ? error.message : "Unknown error occurred";
       toast({
         title: "Failed to fetch addresses",
-        description: errorMsg || "Unable to fetch wallet addresses. Please enter addresses manually.",
+        description:
+          errorMsg ||
+          "Unable to fetch wallet addresses. Please enter addresses manually.",
         variant: "destructive",
       });
     } finally {

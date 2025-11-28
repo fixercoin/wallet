@@ -110,6 +110,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onAccounts,
   onLock,
   onBurn,
+  onStakeTokens,
 }) => {
   const {
     wallet,

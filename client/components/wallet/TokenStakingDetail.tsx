@@ -145,7 +145,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
       const result = await withdrawStake(stakeId);
       toast({
         title: "Withdrawal Successful",
-        description: `Received ${result.totalAmount} ${token.symbol} including rewards`,
+        description: `Received ${formatTokenAmount(result.totalAmount)} ${token.symbol} including rewards`,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

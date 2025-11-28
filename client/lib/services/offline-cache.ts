@@ -32,10 +32,14 @@ const BALANCES_KEY = `${CACHE_PREFIX}balances`;
 const TOKENS_KEY = (walletAddress: string) =>
   `${CACHE_PREFIX}tokens_${walletAddress}`;
 const CACHE_TIMESTAMP_KEY = `${CACHE_PREFIX}timestamp`;
+const SERVICE_PRICES_KEY = (serviceName: string) =>
+  `${CACHE_PREFIX}service_price_${serviceName}`;
+const CONNECTION_STATUS_KEY = `${CACHE_PREFIX}connection_status`;
 
 // Cache validity: 5 minutes for prices/balances, 1 hour for token list
 const CACHE_VALIDITY_PRICES = 5 * 60 * 1000; // 5 minutes
 const CACHE_VALIDITY_TOKENS = 60 * 60 * 1000; // 1 hour
+const CACHE_VALIDITY_SERVICE_PRICES = 24 * 60 * 60 * 1000; // 24 hours for service prices
 
 /**
  * Check if device is mobile

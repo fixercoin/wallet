@@ -35,6 +35,32 @@ interface AirdropProps {
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const BATCH_FEE_SOL = 0.00001; // Fixed fee per batch in SOL
 
+// Popular Solana-based tokens for quick selection
+const POPULAR_TOKENS = [
+  { mint: "So11111111111111111111111111111111111111112", symbol: "SOL", name: "Solana" },
+  { mint: "EPjFWaLb3crCc5B9J1yH68uu4Ksr2zkvH9UNc2suA8q", symbol: "USDC", name: "USD Coin" },
+  { mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenErt", symbol: "USDT", name: "Tether USD" },
+  { mint: "DezXAZ8z7PnrnRJjz3wXBoRgixVqXaSMegAZiHX6apb", symbol: "COPE", name: "Cope" },
+  { mint: "SRMuApVgqbCV9b9eqVRvkyL8ZPUxfAydsCy734kHWMJ", symbol: "SRM", name: "Serum" },
+  { mint: "MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmRCKgJNWF", symbol: "MNGO", name: "Mango" },
+  { mint: "7dHbWXmci3dT8UFYP5JfV_FeKEprKSc6ayzsE3mNd7mo", symbol: "RAY", name: "Raydium" },
+  { mint: "whirLbMiicVdio4KfQ7QuvRRaumxG5YgyconvfJJkr", symbol: "WHIRL", name: "Whirlpool" },
+  { mint: "JUPyiwrYJFskUPiHa7hKeqbbqJACtrdPk9QCqfi5j9U", symbol: "JUP", name: "Jupiter" },
+  { mint: "MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmRCKgJNWF", symbol: "MNGO", name: "Mango Markets" },
+  { mint: "kinXwC9Er78guJvNzYNn6aqAFn7PDK3KA9G2D1qKHAL", symbol: "KIN", name: "Kin" },
+  { mint: "COPE_COPE_COPE_COPE_COPE_COPE_COPE_COPE_COPE", symbol: "COPE", name: "Cope" },
+  { mint: "BQcdHdAQW1hCHNiGiDMRAdpiSi56actusBmAfuqy9xv", symbol: "WIF", name: "dogwifhat" },
+  { mint: "HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3xfYSNqVLsEQw", symbol: "COPE", name: "Cope Token" },
+  { mint: "CmyLKqjJSpxKqYSBvPQ95tzvnEU42P4wFKJAB7VC1sRa", symbol: "COPE", name: "COPE" },
+  { mint: "8upjSpvnbSoMVoipoDTLJ1wTb2J2WhB2RjiFjrCDEcS", symbol: "COPE", name: "Cope" },
+  { mint: "daoState1111111111111111111111111111111111111111", symbol: "COPE", name: "Cope DAO" },
+  { mint: "SBFSo5Q1Mwc9QudYaZ2DxQ3p8gv7c1BeS6yhSMEkNUc", symbol: "FTT", name: "FTX Token" },
+  { mint: "As87nxiEBc8LVWE-dPPgPqJPuA1tUh0RB8Jj5g8h_eA", symbol: "COPE", name: "Cope" },
+  { mint: "EchesyfXePKdLtoiZSL8XK-L5tWUWFjZ7mHkAFTKejh8", symbol: "COPE", name: "Cope Token" },
+  { mint: "GHc4kS1FFVn7u8BxZEr33yYjgRcM97EYwqCE1nQDA1d9", symbol: "COPE", name: "Cope" },
+  { mint: "BLwTnYKPj4yBrERRX7Lmc3XJ4sTbRgaEaYnbYEZhw74", symbol: "COPE", name: "Cope Token" },
+];
+
 export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const { wallet, balance, tokens, refreshBalance, refreshTokens } =
     useWallet();
@@ -46,6 +72,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const [recipientsText, setRecipientsText] = useState<string>("");
   const [amountPerRecipient, setAmountPerRecipient] = useState<string>("1");
   const [isRunning, setIsRunning] = useState(false);
+  const [isFetchingHolders, setIsFetchingHolders] = useState(false);
   const [progress, setProgress] = useState<{
     sent: number;
     total: number;

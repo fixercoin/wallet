@@ -1020,14 +1020,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </div>
 
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <p className="text-xs font-semibold text-white whitespace-nowrap">
-                          $
-                          {tokenBalance.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p>
-
                         <div className="text-xs font-semibold whitespace-nowrap">
                           {typeof token.price === "number" &&
                           isFinite(token.price) ? (
@@ -1051,6 +1043,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             </span>
                           )}
                         </div>
+
+                        <p className="text-xs font-semibold text-white whitespace-nowrap">
+                          $
+                          {tokenBalance.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
                       </div>
                     </div>
                   </CardContent>

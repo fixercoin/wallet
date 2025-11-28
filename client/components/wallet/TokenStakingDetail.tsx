@@ -114,7 +114,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
     if (Number(stakeAmount) > availableBalance) {
       toast({
         title: "Insufficient Balance",
-        description: `You only have ${availableBalance} ${token.symbol} available`,
+        description: `You only have ${formatTokenAmount(availableBalance)} ${token.symbol} available`,
         variant: "destructive",
       });
       return;

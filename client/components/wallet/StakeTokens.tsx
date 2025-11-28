@@ -11,7 +11,10 @@ interface StakeTokensProps {
   onTokenSelect?: (tokenMint: string) => void;
 }
 
-export const StakeTokens: React.FC<StakeTokensProps> = ({ onBack }) => {
+export const StakeTokens: React.FC<StakeTokensProps> = ({
+  onBack,
+  onTokenSelect,
+}) => {
   const { wallet, tokens } = useWallet();
   const { stakingTokens, toggleStakingToken, isStaking } = useStakingTokens(
     wallet?.publicKey || null

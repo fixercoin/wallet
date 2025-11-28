@@ -47,7 +47,9 @@ export async function fetchTokenHolderAddresses(
 
     if (accounts.length === 0) {
       console.warn(`No holders found for token ${mint}`);
-      return [];
+      throw new Error(
+        "No token accounts found. The RPC endpoint may not have data for this token, or it may not have any holders yet.",
+      );
     }
 
     // Extract the address from each account (it's in the 'address' field)
@@ -56,13 +58,20 @@ export async function fetchTokenHolderAddresses(
       .map((account: any) => account.address)
       .filter((addr: string) => addr && addr.length > 0);
 
+    if (addresses.length === 0) {
+      throw new Error(
+        "Could not extract holder addresses from RPC response. The token data format may not be supported.",
+      );
+    }
+
     console.log(
       `[TokenHolders] Fetched ${addresses.length} holder addresses for ${mint}`,
     );
     return addresses;
   } catch (error) {
-    console.error(`Error fetching holder addresses for ${mint}:`, error);
-    return [];
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error(`Error fetching holder addresses for ${mint}:`, errorMsg);
+    throw error;
   }
 }
 

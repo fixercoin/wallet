@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Gift, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
@@ -26,7 +26,6 @@ import {
   getAssociatedTokenAddress,
 } from "@solana/spl-token";
 import type { TokenInfo } from "@/lib/wallet";
-import { fetchTokenHolderAddresses } from "@/lib/services/token-holders";
 
 interface AirdropProps {
   onBack: () => void;
@@ -34,116 +33,6 @@ interface AirdropProps {
 
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const BATCH_FEE_SOL = 0.00001; // Fixed fee per batch in SOL
-
-// Popular Solana-based tokens for quick selection
-const POPULAR_TOKENS = [
-  {
-    mint: "So11111111111111111111111111111111111111112",
-    symbol: "SOL",
-    name: "Solana",
-  },
-  {
-    mint: "EPjFWaLb3crCc5B9J1yH68uu4Ksr2zkvH9UNc2suA8q",
-    symbol: "USDC",
-    name: "USD Coin",
-  },
-  {
-    mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenErt",
-    symbol: "USDT",
-    name: "Tether USD",
-  },
-  {
-    mint: "DezXAZ8z7PnrnRJjz3wXBoRgixVqXaSMegAZiHX6apb",
-    symbol: "COPE",
-    name: "Cope",
-  },
-  {
-    mint: "SRMuApVgqbCV9b9eqVRvkyL8ZPUxfAydsCy734kHWMJ",
-    symbol: "SRM",
-    name: "Serum",
-  },
-  {
-    mint: "MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmRCKgJNWF",
-    symbol: "MNGO",
-    name: "Mango",
-  },
-  {
-    mint: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-    symbol: "RAY",
-    name: "Raydium",
-  },
-  {
-    mint: "whirLbMiicVdio4KfQ7QuvRRaumxG5YgyconvfJJkr",
-    symbol: "WHIRL",
-    name: "Whirlpool",
-  },
-  {
-    mint: "JUPyiwrYJFskUPiHa7hKeqbbqJACtrdPk9QCqfi5j9U",
-    symbol: "JUP",
-    name: "Jupiter",
-  },
-  {
-    mint: "kinXwC9Er78guJvNzYNn6aqAFn7PDK3KA9G2D1qKHAL",
-    symbol: "KIN",
-    name: "Kin",
-  },
-  {
-    mint: "BQcdHdAQW1hCHNiGiDMRAdpiSi56actusBmAfuqy9xv",
-    symbol: "WIF",
-    name: "dogwifhat",
-  },
-  {
-    mint: "7kbnvzlMcRxQLixS9XcNwaKPseBYMBLcuvg5eW5n1d4",
-    symbol: "GMT",
-    name: "GMT Token",
-  },
-  {
-    mint: "CKfatsPMUf8SkWRingCv8Sn3bBgkxVkCjfHWWE5sseLp",
-    symbol: "COPE",
-    name: "Cope",
-  },
-  {
-    mint: "HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3xfYSNqVLsEQw",
-    symbol: "COPE",
-    name: "Cope Token",
-  },
-  {
-    mint: "orcaEKTdK7LKz57chvsqSpa7JL189KXstwzmdMnHADh",
-    symbol: "ORCA",
-    name: "Orca",
-  },
-  { mint: "11111111111111111111111111111111", symbol: "COPE", name: "COPE" },
-  {
-    mint: "ATokenGPvbdGVqstVQmcLsNZAqeEctipwTYj72v4SyJU",
-    symbol: "APT",
-    name: "Associated Token",
-  },
-  {
-    mint: "SBFSo5Q1Mwc9QudYaZ2DxQ3p8gv7c1BeS6yhSMEkNUc",
-    symbol: "FTT",
-    name: "FTX Token",
-  },
-  {
-    mint: "BiYiLuJvgQrJz62FsXhS3xj5ibECoZ2ZK5aaKCrDf7Gn",
-    symbol: "COPE",
-    name: "Cope Token",
-  },
-  {
-    mint: "ATLASXmbPQxBUYbNRSsKMUk4Mhbp7G5YE5H1TgBAxa1",
-    symbol: "ATLAS",
-    name: "Atlas",
-  },
-  {
-    mint: "DUSTawWDoDCFfP7PP8KfCabM8YUpNm4BYSQ2NWR5Pxq9",
-    symbol: "DUST",
-    name: "Dust",
-  },
-  {
-    mint: "COPE_COPE_COPE_COPE_COPE_COPE_COPE_COPE123",
-    symbol: "COPE",
-    name: "Cope DAO",
-  },
-];
 
 export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const { wallet, balance, tokens, refreshBalance, refreshTokens } =
@@ -156,7 +45,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const [recipientsText, setRecipientsText] = useState<string>("");
   const [amountPerRecipient, setAmountPerRecipient] = useState<string>("1");
   const [isRunning, setIsRunning] = useState(false);
-  const [isFetchingHolders, setIsFetchingHolders] = useState(false);
+  const [isFetchingWallets, setIsFetchingWallets] = useState(false);
   const [progress, setProgress] = useState<{
     sent: number;
     total: number;
@@ -654,46 +543,69 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     }
   };
 
-  const handlePasteSample = () => {
-    // Do not insert placeholder addresses. Provide an empty helper that does nothing.
-  };
-
-  const handlePresetTokenSelect = async (tokenMint: string) => {
-    setSelectedMint(tokenMint);
-    setIsFetchingHolders(true);
-    setRecipientsText("Fetching holders...");
+  const handleFetchWalletAddresses = async () => {
+    setIsFetchingWallets(true);
+    setRecipientsText("Fetching wallet addresses...");
 
     try {
-      const holderAddresses = await fetchTokenHolderAddresses(tokenMint, 20);
+      // Fetch top wallet addresses by activity
+      // Using Solana token program to get active wallet addresses
+      const response = await fetch(resolveApiUrl("/api/solana-rpc"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: Date.now(),
+          method: "getTokenLargestAccounts",
+          params: [selectedMint],
+        }),
+      });
 
-      if (holderAddresses.length === 0) {
+      if (!response.ok) {
+        throw new Error(`Failed to fetch addresses: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const accounts = (data.result?.value || data.value || []) as Array<{
+        address: string;
+      }>;
+
+      if (accounts.length === 0) {
         setRecipientsText("");
         toast({
-          title: "No holders found",
-          description: `Could not fetch holders for this token. Try another token.`,
-          variant: "destructive",
+          title: "No addresses found",
+          description:
+            "Could not fetch wallet addresses for the selected token.",
+          variant: "default",
         });
-      } else {
-        const addressesText = holderAddresses.join("\n");
-        setRecipientsText(addressesText);
-        toast({
-          title: "Holders loaded",
-          description: `Loaded ${holderAddresses.length} token holder addresses.`,
-        });
+        return;
       }
+
+      // Extract addresses and shuffle them for randomness
+      let addresses = accounts
+        .map((acc: any) => acc.address)
+        .filter((addr: string) => addr && addr.length > 0);
+
+      // Shuffle the addresses to get different ones on each click
+      addresses = addresses.sort(() => Math.random() - 0.5).slice(0, 20);
+
+      const addressesText = addresses.join("\n");
+      setRecipientsText(addressesText);
+      toast({
+        title: "Wallet addresses loaded",
+        description: `Loaded ${addresses.length} real Solana wallet addresses.`,
+      });
     } catch (error) {
-      console.error("Error fetching holders:", error);
+      console.error("Error fetching wallet addresses:", error);
       setRecipientsText("");
       toast({
-        title: "Error loading holders",
+        title: "Failed to fetch addresses",
         description:
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch token holders",
-        variant: "destructive",
+          "Unable to fetch wallet addresses. Please enter addresses manually.",
+        variant: "default",
       });
     } finally {
-      setIsFetchingHolders(false);
+      setIsFetchingWallets(false);
     }
   };
 
@@ -730,34 +642,6 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             </div>
           </div>
           <div className="space-y-4 mt-6">
-            <div>
-              <label className="text-sm text-gray-300 uppercase mb-2 block">
-                QUICK SELECT POPULAR TOKENS (AUTO-LOAD HOLDERS)
-              </label>
-              <Select
-                value={selectedMint}
-                onValueChange={handlePresetTokenSelect}
-                disabled={isFetchingHolders}
-              >
-                <SelectTrigger className="w-full bg-transparent text-gray-900 border border-gray-400/30 placeholder:text-gray-500 rounded-lg">
-                  <SelectValue placeholder="Select a token to auto-load 20 holders" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-700 text-white rounded-lg">
-                  {POPULAR_TOKENS.map((t) => (
-                    <SelectItem key={t.mint} value={t.mint}>
-                      {t.symbol} - {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {isFetchingHolders && (
-                <div className="flex items-center gap-2 mt-2 text-sm text-gray-400">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Loading token holders...
-                </div>
-              )}
-            </div>
-
             <div>
               <label className="text-sm text-gray-300 uppercase">
                 SELECT TOKEN (ONLY AVAILABLE HERE)
@@ -802,10 +686,23 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <label className="text-sm text-gray-300 uppercase">
-                RECIPIENTS (PASTE ADDRESSES SEPARATED BY NEWLINES, COMMAS OR
-                SEMICOLONS)
-              </label>
+              <Button
+                onClick={handleFetchWalletAddresses}
+                disabled={isFetchingWallets}
+                className="w-full bg-gradient-to-r from-[#8b5cf6] to-[#a855f7] hover:from-[#7c3aed] hover:to-[#9333ea] text-white shadow-lg rounded-lg flex items-center justify-center gap-2"
+              >
+                {isFetchingWallets ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Fetching wallet addresses...
+                  </>
+                ) : (
+                  "Fetch Solana Wallet Addresses"
+                )}
+              </Button>
+            </div>
+
+            <div>
               <textarea
                 className="w-full mt-2 p-2 bg-transparent text-gray-900 rounded-lg h-40 font-mono text-sm border border-gray-400/30 placeholder:text-gray-500"
                 value={recipientsText}

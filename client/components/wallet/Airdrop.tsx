@@ -561,11 +561,29 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         }),
       });
 
+      let errorMsg = "";
+
       if (!response.ok) {
-        throw new Error(`Failed to fetch addresses: ${response.statusText}`);
+        try {
+          const errorData = await response.json();
+          errorMsg =
+            errorData.error ||
+            errorData.message ||
+            `HTTP ${response.status}: ${response.statusText || "Request failed"}`;
+        } catch {
+          errorMsg = `HTTP ${response.status}: ${response.statusText || "Request failed"}`;
+        }
+        throw new Error(`Failed to fetch addresses: ${errorMsg}`);
       }
 
       const data = await response.json();
+
+      // Check for JSON-RPC error response
+      if (data.error) {
+        const rpcErrorMsg = data.error.message || data.error || "Unknown RPC error";
+        throw new Error(`RPC error: ${rpcErrorMsg}`);
+      }
+
       const accounts = (data.result?.value || data.value || []) as Array<{
         address: string;
       }>;
@@ -598,11 +616,12 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     } catch (error) {
       console.error("Error fetching wallet addresses:", error);
       setRecipientsText("");
+      const errorMsg =
+        error instanceof Error ? error.message : "Unknown error occurred";
       toast({
         title: "Failed to fetch addresses",
-        description:
-          "Unable to fetch wallet addresses. Please enter addresses manually.",
-        variant: "default",
+        description: errorMsg || "Unable to fetch wallet addresses. Please enter addresses manually.",
+        variant: "destructive",
       });
     } finally {
       setIsFetchingWallets(false);

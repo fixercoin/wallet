@@ -289,25 +289,13 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-gray-400">Reward (10% APY)</span>
                     <span className="text-green-400 font-semibold">
-                      +
-                      {calculatedReward.toLocaleString(undefined, {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 6,
-                      })}{" "}
-                      {token.symbol}
+                      +{formatTokenAmount(calculatedReward)} {token.symbol}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-gray-400">Total at End</span>
                     <span className="text-white font-semibold">
-                      {(Number(stakeAmount) + calculatedReward).toLocaleString(
-                        undefined,
-                        {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 6,
-                        },
-                      )}{" "}
-                      {token.symbol}
+                      {formatTokenAmount(Number(stakeAmount) + calculatedReward)} {token.symbol}
                     </span>
                   </div>
                 </div>

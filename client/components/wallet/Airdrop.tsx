@@ -48,6 +48,10 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const [amountPerRecipient, setAmountPerRecipient] = useState<string>("1");
   const [isRunning, setIsRunning] = useState(false);
   const [isFetchingWallets, setIsFetchingWallets] = useState(false);
+  const [isFetchingTokens, setIsFetchingTokens] = useState(false);
+  const [fetchedTokens, setFetchedTokens] = useState<
+    Array<{ mint: string; symbol: string; name?: string; decimals?: number }>
+  >([]);
   const [progress, setProgress] = useState<{
     sent: number;
     total: number;

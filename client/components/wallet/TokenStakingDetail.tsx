@@ -389,13 +389,6 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
           </div>
         )}
 
-        {/* Back Button */}
-        <Button
-          onClick={onBack}
-          className="w-full bg-gray-800 hover:bg-gray-700 text-white uppercase"
-        >
-          BACK TO TOKENS
-        </Button>
       </div>
     </div>
   );

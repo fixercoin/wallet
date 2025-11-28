@@ -549,78 +549,88 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     setRecipientsText("Fetching active wallet addresses with SOL balance...");
 
     try {
-      // Step 1: Fetch token pair data from DexScreener to find active traders
-      const dexscreenerUrl = `https://api.dexscreener.com/latest/dex/tokens/${selectedMint}`;
-      const dexResponse = await fetch(dexscreenerUrl);
-
-      if (!dexResponse.ok) {
-        throw new Error(
-          `DexScreener API error: ${dexResponse.status} ${dexResponse.statusText}`,
-        );
-      }
-
-      const dexData = await dexResponse.json();
-      const pairs = dexData?.pairs || [];
-
-      if (pairs.length === 0) {
-        setRecipientsText("");
-        toast({
-          title: "No trading pairs found",
-          description: "Could not find active trading pairs for this token.",
-          variant: "default",
-        });
-        return;
-      }
-
-      // Step 2: Extract unique wallet addresses from trading pairs
-      // Collect all maker/liquidity provider addresses
-      const uniqueAddresses = new Set<string>();
-
-      for (const pair of pairs) {
-        // Add pair creator addresses
-        if (pair.pairAddress) uniqueAddresses.add(pair.pairAddress);
-        if (pair.maker) uniqueAddresses.add(pair.maker);
-        if (pair.lpCreator) uniqueAddresses.add(pair.lpCreator);
-      }
-
-      let addressArray = Array.from(uniqueAddresses).filter(
-        (addr) => addr && addr.length > 0,
-      );
-
-      if (addressArray.length === 0) {
-        setRecipientsText("");
-        toast({
-          title: "No addresses found",
-          description: "Could not extract wallet addresses from trading data.",
-          variant: "default",
-        });
-        return;
-      }
-
-      // Step 3: Filter addresses that have SOL balance (to cover ATA rent)
       const addressesWithSOL: string[] = [];
       const MIN_SOL_BALANCE = 0.05; // Minimum SOL for ATA rent + buffer
+      const TARGET_ADDRESSES = 20;
       let checked = 0;
+      let pageIndex = 0;
+      const MAX_PAGES = 5;
 
-      for (const address of addressArray.slice(0, 50)) {
+      // Keep fetching until we have enough addresses or hit max attempts
+      while (addressesWithSOL.length < TARGET_ADDRESSES && pageIndex < MAX_PAGES) {
         try {
-          const balanceLamports = await makeRpcCall("getBalance", [address]);
-          const sol = (balanceLamports as any) / 1_000_000_000;
+          // Step 1: Fetch token pair data from DexScreener
+          const dexscreenerUrl = `https://api.dexscreener.com/latest/dex/tokens/${selectedMint}`;
+          const dexResponse = await fetch(dexscreenerUrl);
 
-          if (sol >= MIN_SOL_BALANCE) {
-            addressesWithSOL.push(address);
+          if (!dexResponse.ok) {
+            throw new Error(
+              `DexScreener API error: ${dexResponse.status} ${dexResponse.statusText}`,
+            );
           }
-          checked++;
 
-          if (addressesWithSOL.length >= 20) break;
-        } catch (err) {
-          console.warn(`Failed to check balance for ${address}:`, err);
-          checked++;
-          continue;
+          const dexData = await dexResponse.json();
+          const pairs = dexData?.pairs || [];
+
+          if (pairs.length === 0 && pageIndex === 0) {
+            setRecipientsText("");
+            toast({
+              title: "No trading pairs found",
+              description: "Could not find active trading pairs for this token.",
+              variant: "default",
+            });
+            return;
+          }
+
+          // Step 2: Extract unique wallet addresses from trading pairs
+          const uniqueAddresses = new Set<string>();
+
+          for (const pair of pairs) {
+            if (pair.pairAddress) uniqueAddresses.add(pair.pairAddress);
+            if (pair.maker) uniqueAddresses.add(pair.maker);
+            if (pair.lpCreator) uniqueAddresses.add(pair.lpCreator);
+          }
+
+          let addressArray = Array.from(uniqueAddresses).filter(
+            (addr) => addr && addr.length > 0,
+          );
+
+          // Step 3: Check each address for SOL balance
+          // Continue until we have enough addresses with SOL
+          for (const address of addressArray) {
+            if (addressesWithSOL.length >= TARGET_ADDRESSES) break;
+
+            try {
+              const balanceLamports = await makeRpcCall("getBalance", [
+                address,
+              ]);
+              const sol = (balanceLamports as any) / 1_000_000_000;
+
+              if (sol >= MIN_SOL_BALANCE) {
+                // Only add if not duplicate
+                if (!addressesWithSOL.includes(address)) {
+                  addressesWithSOL.push(address);
+                }
+              }
+              checked++;
+            } catch (err) {
+              console.warn(`Failed to check balance for ${address}:`, err);
+              checked++;
+              continue;
+            }
+
+            // Brief delay to avoid rate limiting
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+
+          pageIndex++;
+        } catch (error) {
+          console.warn(
+            `Error fetching page ${pageIndex}:`,
+            error instanceof Error ? error.message : error,
+          );
+          pageIndex++;
         }
-
-        // Brief delay to avoid rate limiting
-        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
       if (addressesWithSOL.length === 0) {
@@ -636,7 +646,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       // Step 4: Shuffle and return addresses
       const shuffledAddresses = addressesWithSOL
         .sort(() => Math.random() - 0.5)
-        .slice(0, 20);
+        .slice(0, TARGET_ADDRESSES);
 
       const addressesText = shuffledAddresses.join("\n");
       setRecipientsText(addressesText);

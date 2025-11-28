@@ -131,9 +131,41 @@ class FXMPriceService {
       console.warn(
         "Failed to fetch FXM price from all sources - service unavailable",
       );
+
+      // Try to get price from localStorage as fallback
+      const cachedServicePrice = getCachedServicePrice("FXM");
+      if (cachedServicePrice && cachedServicePrice.price > 0) {
+        console.log(
+          `[FXM Price Service] Using localStorage cached price: $${cachedServicePrice.price.toFixed(8)}`,
+        );
+        return {
+          price: cachedServicePrice.price,
+          priceChange24h: cachedServicePrice.priceChange24h ?? 0,
+          volume24h: 0,
+          lastUpdated: new Date(),
+          derivationMethod: "cache",
+          isFallback: true,
+        };
+      }
       return null;
     } catch (error) {
       console.error("Error fetching FXM price:", error);
+
+      // Try to get price from localStorage as fallback on error
+      const cachedServicePrice = getCachedServicePrice("FXM");
+      if (cachedServicePrice && cachedServicePrice.price > 0) {
+        console.log(
+          `[FXM Price Service] Using localStorage cached price on error: $${cachedServicePrice.price.toFixed(8)}`,
+        );
+        return {
+          price: cachedServicePrice.price,
+          priceChange24h: cachedServicePrice.priceChange24h ?? 0,
+          volume24h: 0,
+          lastUpdated: new Date(),
+          derivationMethod: "cache",
+          isFallback: true,
+        };
+      }
       return null;
     }
   }

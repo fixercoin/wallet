@@ -308,3 +308,86 @@ export function isCacheFresh(maxAge: number = CACHE_VALIDITY_PRICES): boolean {
   const age = Date.now() - timestamp;
   return age <= maxAge;
 }
+
+/**
+ * Save a service price to cache (SOL, FIXERCOIN, etc.)
+ */
+export function saveServicePrice(
+  serviceName: string,
+  priceData: { price: number; priceChange24h?: number },
+): boolean {
+  try {
+    const key = SERVICE_PRICES_KEY(serviceName);
+    const cached = {
+      ...priceData,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(key, JSON.stringify(cached));
+    return true;
+  } catch (error) {
+    console.warn(`[OfflineCache] Failed to save ${serviceName} price:`, error);
+    return false;
+  }
+}
+
+/**
+ * Get cached service price (SOL, FIXERCOIN, etc.)
+ */
+export function getCachedServicePrice(
+  serviceName: string,
+): { price: number; priceChange24h?: number; timestamp: number } | null {
+  try {
+    const key = SERVICE_PRICES_KEY(serviceName);
+    const cached = localStorage.getItem(key);
+    if (!cached) return null;
+
+    const data = JSON.parse(cached);
+
+    // Check if cache is within validity period (24 hours)
+    const age = Date.now() - data.timestamp;
+    if (age > CACHE_VALIDITY_SERVICE_PRICES) {
+      localStorage.removeItem(key);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.warn(
+      `[OfflineCache] Failed to read ${serviceName} price:`,
+      error,
+    );
+    return null;
+  }
+}
+
+/**
+ * Check if we're using cached data (offline/unstable connection)
+ */
+export function setConnectionStatus(isStable: boolean): void {
+  try {
+    localStorage.setItem(CONNECTION_STATUS_KEY, JSON.stringify({ isStable, timestamp: Date.now() }));
+  } catch (error) {
+    console.warn("[OfflineCache] Failed to set connection status:", error);
+  }
+}
+
+/**
+ * Get current connection status
+ */
+export function getConnectionStatus(): { isStable: boolean; isUsingCache: boolean } {
+  try {
+    const cached = localStorage.getItem(CONNECTION_STATUS_KEY);
+    if (!cached) {
+      return { isStable: true, isUsingCache: false };
+    }
+
+    const data = JSON.parse(cached);
+    return {
+      isStable: data.isStable ?? true,
+      isUsingCache: !data.isStable,
+    };
+  } catch (error) {
+    console.warn("[OfflineCache] Failed to read connection status:", error);
+    return { isStable: true, isUsingCache: false };
+  }
+}

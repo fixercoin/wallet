@@ -61,8 +61,7 @@ export const StakeTokens: React.FC<StakeTokensProps> = ({
         </div>
 
         <p className="text-xs text-gray-400 mb-4">
-          Select tokens to mark as staking. This will display a "STAKING" indicator
-          on your token cards.
+          Click on any token to stake it. Earn 10% APY on your staked tokens.
         </p>
 
         {/* Token List */}

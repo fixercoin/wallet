@@ -14,6 +14,7 @@ import { TokenLock } from "@/components/wallet/TokenLock";
 import { BurnToken } from "@/components/wallet/BurnToken";
 import { TokenManage } from "@/components/wallet/TokenManage";
 import { StakeTokens } from "@/components/wallet/StakeTokens";
+import { TokenStakingDetail } from "@/components/wallet/TokenStakingDetail";
 
 type Screen =
   | "dashboard"

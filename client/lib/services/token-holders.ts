@@ -23,11 +23,51 @@ export interface HolderData {
 /**
  * Fetch top token holders for a given mint
  * Uses getTokenLargestAccounts to get the largest holders
+ * Tries Helius first for better reliability
  */
 async function getTokenLargestAccounts(
   mint: string,
   limit: number = 100,
 ): Promise<any[]> {
+  // Try Helius API first if available
+  if (HELIUS_RPC_URL) {
+    try {
+      const response = await fetch(HELIUS_RPC_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: Date.now(),
+          method: "getTokenLargestAccounts",
+          params: [mint],
+        }),
+      });
+
+      if (!response.ok) {
+        console.warn(`Helius API returned ${response.status}`);
+      } else {
+        const data = await response.json();
+        if (data.result?.value) {
+          console.log(
+            `[TokenHolders] Fetched ${data.result.value.length} accounts via Helius for ${mint}`,
+          );
+          return data.result.value.slice(0, limit);
+        }
+        if (data.error) {
+          console.warn(`Helius error for ${mint}:`, data.error.message);
+        }
+      }
+    } catch (error) {
+      console.warn(
+        `Helius fetch failed for ${mint}, will try public RPC:`,
+        error,
+      );
+    }
+  }
+
+  // Fallback to public RPC endpoints
   try {
     const result = await makeRpcCall("getTokenLargestAccounts", [mint]);
     const accounts = (result as any)?.value || [];

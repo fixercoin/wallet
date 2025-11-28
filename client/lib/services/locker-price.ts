@@ -73,51 +73,13 @@ class LockerPriceService {
 
         return priceData;
       } else {
-        console.warn("Invalid price data from derivation - trying cache");
-        // Try to get price from localStorage as fallback
-        const cachedServicePrice = getCachedServicePrice("LOCKER");
-        if (cachedServicePrice && cachedServicePrice.price > 0) {
-          console.log(
-            `[LOCKER Price Service] Using localStorage cached price: $${cachedServicePrice.price.toFixed(8)}`,
-          );
-          return {
-            price: cachedServicePrice.price,
-            priceChange24h: cachedServicePrice.priceChange24h ?? 0,
-            volume24h: 0,
-            lastUpdated: new Date(),
-            derivationMethod: "cache",
-            isFallback: true,
-          };
-        }
+        console.warn("Invalid price data from derivation");
         return null;
       }
     } catch (error) {
       console.error("Error fetching LOCKER price:", error);
-
-      // Try to get price from localStorage as fallback on error
-      const cachedServicePrice = getCachedServicePrice("LOCKER");
-      if (cachedServicePrice && cachedServicePrice.price > 0) {
-        console.log(
-          `[LOCKER Price Service] Using localStorage cached price on error: $${cachedServicePrice.price.toFixed(8)}`,
-        );
-        return {
-          price: cachedServicePrice.price,
-          priceChange24h: cachedServicePrice.priceChange24h ?? 0,
-          volume24h: 0,
-          lastUpdated: new Date(),
-          derivationMethod: "cache",
-          isFallback: true,
-        };
-      }
       return null;
     }
-  }
-
-  private getFallbackPrice(): LockerPriceData | null {
-    console.log(
-      "LOCKER price service unavailable - returning null to show loading state",
-    );
-    return null;
   }
 
   // Get just the price number for quick access

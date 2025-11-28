@@ -5,6 +5,11 @@
 
 import { makeRpcCall } from "./solana-rpc";
 
+const HELIUS_RPC_URL =
+  typeof process !== "undefined" && process.env?.HELIUS_RPC_URL
+    ? process.env.HELIUS_RPC_URL
+    : "";
+
 export interface HolderData {
   buyers: number;
   sellers: number;

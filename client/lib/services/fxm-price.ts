@@ -63,6 +63,13 @@ class FXMPriceService {
         console.log(
           `✅ FXM price updated: $${priceData.price.toFixed(8)} (${priceData.derivationMethod})`,
         );
+
+        // Save to localStorage for offline support
+        saveServicePrice("FXM", {
+          price: priceData.price,
+          priceChange24h: priceData.priceChange24h,
+        });
+
         return priceData;
       }
 
@@ -90,6 +97,13 @@ class FXMPriceService {
         console.log(
           `✅ FXM price updated from Birdeye: $${priceData.price.toFixed(8)}`,
         );
+
+        // Save to localStorage for offline support
+        saveServicePrice("FXM", {
+          price: priceData.price,
+          priceChange24h: priceData.priceChange24h,
+        });
+
         return priceData;
       }
 
@@ -122,6 +136,13 @@ class FXMPriceService {
           console.log(
             `✅ FXM price updated from Pump.fun: $${priceData.price.toFixed(8)}`,
           );
+
+          // Save to localStorage for offline support
+          saveServicePrice("FXM", {
+            price: priceData.price,
+            priceChange24h: priceData.priceChange24h,
+          });
+
           return priceData;
         } catch (error) {
           console.warn("Failed to convert Pump.fun SOL price to USD:", error);

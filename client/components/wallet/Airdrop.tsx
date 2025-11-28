@@ -53,11 +53,6 @@ const POPULAR_TOKENS = [
     name: "Tether USD",
   },
   {
-    mint: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-    symbol: "RAY",
-    name: "Raydium",
-  },
-  {
     mint: "JUPyiwrYJFskUPiHa7hKeqbbqJACtrdPk9QCqfi5j9U",
     symbol: "JUP",
     name: "Jupiter",

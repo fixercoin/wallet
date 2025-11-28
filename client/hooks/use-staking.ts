@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "@/contexts/WalletContext";
+import { supabase } from "@/lib/services/supabase";
 
 export interface Stake {
   id: string;
@@ -31,12 +32,6 @@ interface UseStakingReturn {
   refreshStakes: () => Promise<void>;
 }
 
-const STORAGE_KEY = "fixorium_stakes";
-
-function getStorageKey(walletAddress: string): string {
-  return `${STORAGE_KEY}_${walletAddress}`;
-}
-
 function calculateReward(amount: number, periodDays: number): number {
   // 10% APY
   const yearlyReward = amount * 0.1;
@@ -49,8 +44,8 @@ function generateStakeId(): string {
 }
 
 /**
- * Hook to manage staking operations using localStorage
- * Stakes are persisted locally and survive page refreshes
+ * Hook to manage staking operations using Supabase database
+ * Stakes are persisted in Supabase and accessible from any device
  */
 export function useStaking(): UseStakingReturn {
   const { wallet } = useWallet();
@@ -58,7 +53,24 @@ export function useStaking(): UseStakingReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load stakes from localStorage
+  // Map database row to Stake interface
+  const mapRowToStake = (row: any): Stake => ({
+    id: row.id,
+    walletAddress: row.wallet_address,
+    tokenMint: row.token_mint,
+    amount: row.amount,
+    stakePeriodDays: row.stake_period_days,
+    startTime: row.start_time,
+    endTime: row.end_time,
+    rewardAmount: row.reward_amount,
+    status: row.status,
+    withdrawnAt: row.withdrawn_at,
+    createdAt: row.created_at,
+    timeRemainingMs:
+      row.status === "active" ? Math.max(0, row.end_time - Date.now()) : 0,
+  });
+
+  // Load stakes from Supabase
   const refreshStakes = useCallback(async () => {
     if (!wallet?.publicKey) {
       setStakes([]);
@@ -69,10 +81,17 @@ export function useStaking(): UseStakingReturn {
     setError(null);
 
     try {
-      const storageKey = getStorageKey(wallet.publicKey);
-      const stored = localStorage.getItem(storageKey);
-      const loadedStakes = stored ? JSON.parse(stored) : [];
-      setStakes(loadedStakes);
+      const { data, error: fetchError } = await supabase
+        .from("stakes")
+        .select("*")
+        .eq("wallet_address", wallet.publicKey);
+
+      if (fetchError) {
+        throw new Error(fetchError.message);
+      }
+
+      const mappedStakes = (data || []).map(mapRowToStake);
+      setStakes(mappedStakes);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(msg);
@@ -82,7 +101,7 @@ export function useStaking(): UseStakingReturn {
     }
   }, [wallet?.publicKey]);
 
-  // Create new stake and save to localStorage
+  // Create new stake in Supabase
   const createStake = useCallback(
     async (
       tokenMint: string,
@@ -98,35 +117,41 @@ export function useStaking(): UseStakingReturn {
       const now = Date.now();
       const endTime = now + periodDays * 24 * 60 * 60 * 1000;
       const rewardAmount = calculateReward(amount, periodDays);
+      const stakeId = generateStakeId();
 
-      const newStake: Stake = {
-        id: generateStakeId(),
-        walletAddress: wallet.publicKey,
-        tokenMint,
-        amount,
-        stakePeriodDays: periodDays,
-        startTime: now,
-        endTime,
-        rewardAmount,
-        status: "active",
-        createdAt: now,
-        timeRemainingMs: periodDays * 24 * 60 * 60 * 1000,
-      };
+      const { data, error: insertError } = await supabase
+        .from("stakes")
+        .insert({
+          id: stakeId,
+          wallet_address: wallet.publicKey,
+          token_mint: tokenMint,
+          amount,
+          stake_period_days: periodDays,
+          start_time: now,
+          end_time: endTime,
+          reward_amount: rewardAmount,
+          status: "active",
+          created_at: now,
+          updated_at: now,
+        })
+        .select();
 
-      // Add to state
-      const updatedStakes = [...stakes, newStake];
-      setStakes(updatedStakes);
+      if (insertError) {
+        throw new Error(insertError.message);
+      }
 
-      // Persist to localStorage
-      const storageKey = getStorageKey(wallet.publicKey);
-      localStorage.setItem(storageKey, JSON.stringify(updatedStakes));
+      if (!data || data.length === 0) {
+        throw new Error("Failed to create stake");
+      }
 
+      const newStake = mapRowToStake(data[0]);
+      setStakes((prev) => [...prev, newStake]);
       return newStake;
     },
-    [wallet?.publicKey, stakes],
+    [wallet?.publicKey],
   );
 
-  // Withdraw from stake and update localStorage
+  // Withdraw from stake in Supabase
   const withdrawStake = useCallback(
     async (stakeId: string) => {
       if (!wallet?.publicKey) throw new Error("No wallet");
@@ -147,20 +172,31 @@ export function useStaking(): UseStakingReturn {
         throw new Error("Staking period has not ended yet");
       }
 
-      // Update stake status
-      const updatedStakes = stakes.map((s) =>
-        s.id === stakeId
-          ? { ...s, status: "withdrawn" as const, withdrawnAt: now }
-          : s,
-      );
-      setStakes(updatedStakes);
+      const { data, error: updateError } = await supabase
+        .from("stakes")
+        .update({
+          status: "withdrawn",
+          withdrawn_at: now,
+          updated_at: now,
+        })
+        .eq("id", stakeId)
+        .select();
 
-      // Persist to localStorage
-      const storageKey = getStorageKey(wallet.publicKey);
-      localStorage.setItem(storageKey, JSON.stringify(updatedStakes));
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error("Failed to withdraw stake");
+      }
+
+      const updatedStake = mapRowToStake(data[0]);
+      setStakes((prev) =>
+        prev.map((s) => (s.id === stakeId ? updatedStake : s)),
+      );
 
       return {
-        stake: updatedStakes.find((s) => s.id === stakeId) || stake,
+        stake: updatedStake,
         totalAmount: stake.amount + stake.rewardAmount,
       };
     },

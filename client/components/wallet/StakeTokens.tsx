@@ -79,8 +79,8 @@ export const StakeTokens: React.FC<StakeTokensProps> = ({
               >
                 <CardContent className="w-full p-0">
                   <button
-                    onClick={() => toggleStakingToken(token.mint)}
-                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
+                    onClick={() => onTokenSelect?.(token.mint)}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors text-left"
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">

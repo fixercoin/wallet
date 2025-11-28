@@ -13,6 +13,7 @@ import { Accounts } from "@/components/wallet/Accounts";
 import { TokenLock } from "@/components/wallet/TokenLock";
 import { BurnToken } from "@/components/wallet/BurnToken";
 import { TokenManage } from "@/components/wallet/TokenManage";
+import { StakeTokens } from "@/components/wallet/StakeTokens";
 
 type Screen =
   | "dashboard"

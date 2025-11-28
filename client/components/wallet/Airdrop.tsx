@@ -611,43 +611,6 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     }
   };
 
-  const handlePresetTokenSelect = async (tokenMint: string) => {
-    setSelectedMint(tokenMint);
-    setIsFetchingHolders(true);
-    setRecipientsText("Fetching holders...");
-
-    try {
-      const holderAddresses = await fetchTokenHolderAddresses(tokenMint, 20);
-
-      if (holderAddresses.length === 0) {
-        setRecipientsText("");
-        toast({
-          title: "No holders found",
-          description: `Auto-load is not available for this token. Please enter recipient addresses manually.`,
-          variant: "default",
-        });
-      } else {
-        const addressesText = holderAddresses.join("\n");
-        setRecipientsText(addressesText);
-        toast({
-          title: "Holders loaded",
-          description: `Loaded ${holderAddresses.length} token holder addresses.`,
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching holders:", error);
-      setRecipientsText("");
-      toast({
-        title: "Auto-load not available",
-        description:
-          "Unable to auto-load holders for this token. Please enter recipient addresses manually, or try a different token.",
-        variant: "default",
-      });
-    } finally {
-      setIsFetchingHolders(false);
-    }
-  };
-
   const formatTime = (seconds: number): string => {
     if (seconds < 60) return `${seconds}s`;
     const minutes = Math.floor(seconds / 60);

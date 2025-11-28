@@ -69,12 +69,8 @@ export async function fetchTokenHolderAddresses(
     );
     return addresses;
   } catch (error) {
-    const errorMsg =
-      error instanceof Error ? error.message : String(error);
-    console.error(
-      `Error fetching holder addresses for ${mint}:`,
-      errorMsg,
-    );
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error(`Error fetching holder addresses for ${mint}:`, errorMsg);
     throw error;
   }
 }

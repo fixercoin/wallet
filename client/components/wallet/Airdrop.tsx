@@ -574,7 +574,8 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         setRecipientsText("");
         toast({
           title: "No addresses found",
-          description: "Could not fetch wallet addresses for the selected token.",
+          description:
+            "Could not fetch wallet addresses for the selected token.",
           variant: "default",
         });
         return;
@@ -586,9 +587,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         .filter((addr: string) => addr && addr.length > 0);
 
       // Shuffle the addresses to get different ones on each click
-      addresses = addresses
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 20);
+      addresses = addresses.sort(() => Math.random() - 0.5).slice(0, 20);
 
       const addressesText = addresses.join("\n");
       setRecipientsText(addressesText);

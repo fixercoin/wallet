@@ -314,11 +314,16 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
             {/* Start Staking Button */}
             <Button
               onClick={handleStartStaking}
-              disabled={!stakeAmount || isStaking || loading}
-              className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold"
+              disabled={!stakeAmount || Number(stakeAmount) < MIN_STAKE_AMOUNT || isStaking || loading}
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isStaking ? "Processing..." : "Start Staking"}
             </Button>
+            {stakeAmount && Number(stakeAmount) < MIN_STAKE_AMOUNT && (
+              <p className="text-xs text-red-400 mt-2">
+                Minimum stake required: {MIN_STAKE_AMOUNT.toLocaleString()} {token.symbol}
+              </p>
+            )}
           </CardContent>
         </Card>
 

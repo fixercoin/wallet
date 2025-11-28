@@ -338,7 +338,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                           Staked Amount
                         </p>
                         <p className="text-lg font-bold text-white">
-                          {stake.amount} {token.symbol}
+                          {formatTokenAmount(stake.amount)} {token.symbol}
                         </p>
                       </div>
                       <div>
@@ -346,7 +346,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                           Expected Reward
                         </p>
                         <p className="text-lg font-bold text-green-400">
-                          +{stake.rewardAmount.toFixed(6)}
+                          +{formatTokenAmount(stake.rewardAmount)}
                         </p>
                       </div>
                       <div>

@@ -794,16 +794,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </DropdownMenu>
               {/* Connection status and settings - moved to right */}
               <div className="flex items-center gap-3">
-                {isUsingCache ? (
-                  <div
-                    className="h-7 px-2 rounded-md bg-orange-500/10 border border-orange-500/40 flex items-center gap-1.5 text-xs text-orange-600 cursor-default"
-                    title="Connection unstable - using cached prices"
-                    aria-label="Unstable connection"
-                  >
-                    <div className="w-1.5 h-1.5 rounded-full bg-orange-600 animate-pulse" />
-                    <span className="font-medium">Unstable</span>
-                  </div>
-                ) : (
+                {!isUsingCache && (
                   <div
                     className="h-7 px-2 rounded-md bg-green-500/10 border border-green-500/40 flex items-center gap-1.5 text-xs text-green-600 cursor-default"
                     title="Connection stable - using live prices"

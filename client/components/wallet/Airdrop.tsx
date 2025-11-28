@@ -65,12 +65,28 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const [error, setError] = useState<string | null>(null);
 
   const availableTokens = useMemo(() => {
-    const sol = tokens.find((t) => t.symbol === "SOL");
-    const rest = tokens
+    // Combine wallet tokens and fetched tokens, avoiding duplicates
+    const tokenMap = new Map<string, any>();
+
+    // Add wallet tokens first (they have balance info)
+    tokens.forEach((t) => {
+      tokenMap.set(t.mint, t);
+    });
+
+    // Add fetched tokens if not already in wallet
+    fetchedTokens.forEach((t) => {
+      if (!tokenMap.has(t.mint)) {
+        tokenMap.set(t.mint, { ...t, balance: 0 });
+      }
+    });
+
+    const allTokens = Array.from(tokenMap.values());
+    const sol = allTokens.find((t) => t.symbol === "SOL");
+    const rest = allTokens
       .filter((t) => t.symbol !== "SOL")
       .sort((a, b) => (b.balance || 0) - (a.balance || 0));
     return sol ? [sol, ...rest] : rest;
-  }, [tokens]);
+  }, [tokens, fetchedTokens]);
 
   const selectedToken: TokenInfo | undefined = useMemo(
     () => tokens.find((t) => t.mint === selectedMint),

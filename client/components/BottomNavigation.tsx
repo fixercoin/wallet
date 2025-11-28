@@ -33,7 +33,7 @@ export const BottomNavigation = () => {
     { path: "/", label: "HOME", icon: Home },
     { path: "/autobot", label: "ADVANCE TRADE", icon: Rocket },
     { path: "/burn", label: "BURN", icon: Flame },
-    { path: "/airdrop", label: "ARIDROP", icon: Star },
+    { path: "/airdrop", label: "ARIDROP", icon: Coins },
   ];
 
   const isActive = (path: string) => {

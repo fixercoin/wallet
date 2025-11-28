@@ -592,7 +592,10 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       const MAX_PAGES = 5;
 
       // Keep fetching until we have enough addresses or hit max attempts
-      while (addressesWithSOL.length < TARGET_ADDRESSES && pageIndex < MAX_PAGES) {
+      while (
+        addressesWithSOL.length < TARGET_ADDRESSES &&
+        pageIndex < MAX_PAGES
+      ) {
         try {
           // Step 1: Fetch token pair data from DexScreener
           const dexscreenerUrl = `https://api.dexscreener.com/latest/dex/tokens/${selectedMint}`;
@@ -611,7 +614,8 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             setRecipientsText("");
             toast({
               title: "No trading pairs found",
-              description: "Could not find active trading pairs for this token.",
+              description:
+                "Could not find active trading pairs for this token.",
               variant: "default",
             });
             return;

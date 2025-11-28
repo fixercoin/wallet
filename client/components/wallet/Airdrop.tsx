@@ -755,31 +755,20 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <label className="text-sm text-gray-300 uppercase mb-2 block">
-                QUICK SELECT POPULAR TOKENS (AUTO-LOAD HOLDERS)
-              </label>
-              <Select
-                value={selectedMint}
-                onValueChange={handlePresetTokenSelect}
-                disabled={isFetchingHolders}
+              <Button
+                onClick={handleFetchWalletAddresses}
+                disabled={isFetchingWallets}
+                className="w-full bg-gradient-to-r from-[#8b5cf6] to-[#a855f7] hover:from-[#7c3aed] hover:to-[#9333ea] text-white shadow-lg rounded-lg flex items-center justify-center gap-2"
               >
-                <SelectTrigger className="w-full bg-transparent text-gray-900 border border-gray-400/30 placeholder:text-gray-500 rounded-lg">
-                  <SelectValue placeholder="Select a token to auto-load 20 holders" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-700 text-white rounded-lg">
-                  {POPULAR_TOKENS.map((t) => (
-                    <SelectItem key={t.mint} value={t.mint}>
-                      {t.symbol} - {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {isFetchingHolders && (
-                <div className="flex items-center gap-2 mt-2 text-sm text-gray-400">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Loading token holders...
-                </div>
-              )}
+                {isFetchingWallets ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Fetching wallet addresses...
+                  </>
+                ) : (
+                  "Fetch Solana Wallet Addresses"
+                )}
+              </Button>
             </div>
 
             <div>

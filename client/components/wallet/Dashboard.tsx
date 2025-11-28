@@ -794,14 +794,46 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </DropdownMenu>
               {/* Connection status and settings - moved to right */}
               <div className="flex items-center gap-3">
-                {!isUsingCache && (
+                {isUsingCache ? (
                   <div
-                    className="h-7 px-2 rounded-md bg-green-500/10 border border-green-500/40 flex items-center gap-1.5 text-xs text-green-600 cursor-default"
+                    className="h-7 w-7 rounded-md flex items-center justify-center cursor-default relative"
+                    title="Connection unstable - using cached prices"
+                    aria-label="Unstable connection"
+                  >
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="text-gray-400"
+                    >
+                      <path d="M1 9l4 4m4-4l4 4m4-4l4 4M1 5l22 0" />
+                      <path d="M5 9a7 7 0 1 0 14 0" />
+                    </svg>
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center border border-white/20">
+                      <span className="text-white text-[8px] font-bold">!</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="h-7 w-7 rounded-md flex items-center justify-center cursor-default"
                     title="Connection stable - using live prices"
                     aria-label="Stable connection"
                   >
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-600" />
-                    <span className="font-medium">Stable</span>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="text-green-500"
+                    >
+                      <path d="M1 9l4 4m4-4l4 4m4-4l4 4M1 5l22 0" />
+                      <path d="M5 9a7 7 0 1 0 14 0" />
+                    </svg>
                   </div>
                 )}
                 <Button

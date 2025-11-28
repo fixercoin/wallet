@@ -792,32 +792,60 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {/* Action buttons - moved to right */}
+              {/* Connection status and settings - moved to right */}
               <div className="flex items-center gap-3">
-                <Button
-                  onClick={() => {
-                    window.location.reload();
-                  }}
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
-                  aria-label="Refresh"
-                  title="Refresh"
-                  disabled={isLoading}
-                >
-                  <style>{`
-                    @keyframes spin {
-                      0% { transform: rotate(0deg); }
-                      100% { transform: rotate(360deg); }
-                    }
-                    .rotate-cw-active {
-                      animation: spin 1.2s linear infinite;
-                      transform-origin: center;
-                    }
-                  `}</style>
-                  <RotateCw
-                    className={`h-4 w-4 ${isLoading ? "rotate-cw-active" : ""}`}
-                  />
-                </Button>
+                {isUsingCache ? (
+                  <div
+                    className="h-7 w-7 rounded-md flex items-center justify-center cursor-default relative"
+                    title="Connection unstable - using cached prices"
+                    aria-label="Unstable connection"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-gray-500"
+                    >
+                      <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+                      <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+                      <path d="M9 20h6" />
+                      <circle cx="12" cy="16" r="1" fill="currentColor" />
+                    </svg>
+                    <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
+                      <span className="text-white text-[9px] font-bold leading-none">
+                        !
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="h-7 w-7 rounded-md flex items-center justify-center cursor-default"
+                    title="Connection stable - using live prices"
+                    aria-label="Stable connection"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-green-500"
+                    >
+                      <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+                      <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+                      <path d="M9 20h6" />
+                      <circle cx="12" cy="16" r="1" fill="currentColor" />
+                    </svg>
+                  </div>
+                )}
                 <Button
                   onClick={onSettings}
                   size="sm"
@@ -831,11 +859,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             <div className="text-center space-y-2 mt-8">
-              {isUsingCache && (
-                <div className="text-xs px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-600 inline-block border border-yellow-500/40 mx-auto mb-2">
-                  📡 Offline Mode - Last Synced
-                </div>
-              )}
               {wallet
                 ? (() => {
                     const total = getTotalPortfolioValue();
@@ -1039,14 +1062,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </div>
 
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <p className="text-xs font-semibold text-white whitespace-nowrap">
-                          $
-                          {tokenBalance.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p>
-
                         <div className="text-xs font-semibold whitespace-nowrap">
                           {typeof token.price === "number" &&
                           isFinite(token.price) ? (
@@ -1070,6 +1085,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             </span>
                           )}
                         </div>
+
+                        <p className="text-xs font-semibold text-white whitespace-nowrap">
+                          $
+                          {tokenBalance.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
                       </div>
                     </div>
                   </CardContent>

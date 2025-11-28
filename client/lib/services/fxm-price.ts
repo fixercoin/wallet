@@ -2,6 +2,7 @@ import { tokenPairPricingService } from "./token-pair-pricing";
 import { birdeyeAPI } from "./birdeye";
 import { pumpFunPriceService } from "./pump-fun-price";
 import { solPriceService } from "./sol-price";
+import { saveServicePrice, getCachedServicePrice } from "./offline-cache";
 
 export interface FXMPriceData {
   price: number;
@@ -62,6 +63,13 @@ class FXMPriceService {
         console.log(
           `✅ FXM price updated: $${priceData.price.toFixed(8)} (${priceData.derivationMethod})`,
         );
+
+        // Save to localStorage for offline support
+        saveServicePrice("FXM", {
+          price: priceData.price,
+          priceChange24h: priceData.priceChange24h,
+        });
+
         return priceData;
       }
 
@@ -89,6 +97,13 @@ class FXMPriceService {
         console.log(
           `✅ FXM price updated from Birdeye: $${priceData.price.toFixed(8)}`,
         );
+
+        // Save to localStorage for offline support
+        saveServicePrice("FXM", {
+          price: priceData.price,
+          priceChange24h: priceData.priceChange24h,
+        });
+
         return priceData;
       }
 
@@ -121,6 +136,13 @@ class FXMPriceService {
           console.log(
             `✅ FXM price updated from Pump.fun: $${priceData.price.toFixed(8)}`,
           );
+
+          // Save to localStorage for offline support
+          saveServicePrice("FXM", {
+            price: priceData.price,
+            priceChange24h: priceData.priceChange24h,
+          });
+
           return priceData;
         } catch (error) {
           console.warn("Failed to convert Pump.fun SOL price to USD:", error);
@@ -130,9 +152,41 @@ class FXMPriceService {
       console.warn(
         "Failed to fetch FXM price from all sources - service unavailable",
       );
+
+      // Try to get price from localStorage as fallback
+      const cachedServicePrice = getCachedServicePrice("FXM");
+      if (cachedServicePrice && cachedServicePrice.price > 0) {
+        console.log(
+          `[FXM Price Service] Using localStorage cached price: $${cachedServicePrice.price.toFixed(8)}`,
+        );
+        return {
+          price: cachedServicePrice.price,
+          priceChange24h: cachedServicePrice.priceChange24h ?? 0,
+          volume24h: 0,
+          lastUpdated: new Date(),
+          derivationMethod: "cache",
+          isFallback: true,
+        };
+      }
       return null;
     } catch (error) {
       console.error("Error fetching FXM price:", error);
+
+      // Try to get price from localStorage as fallback on error
+      const cachedServicePrice = getCachedServicePrice("FXM");
+      if (cachedServicePrice && cachedServicePrice.price > 0) {
+        console.log(
+          `[FXM Price Service] Using localStorage cached price on error: $${cachedServicePrice.price.toFixed(8)}`,
+        );
+        return {
+          price: cachedServicePrice.price,
+          priceChange24h: cachedServicePrice.priceChange24h ?? 0,
+          volume24h: 0,
+          lastUpdated: new Date(),
+          derivationMethod: "cache",
+          isFallback: true,
+        };
+      }
       return null;
     }
   }

@@ -1,4 +1,5 @@
 import { tokenPairPricingService } from "./token-pair-pricing";
+import { saveServicePrice, getCachedServicePrice } from "./offline-cache";
 
 export interface LockerPriceData {
   price: number;
@@ -63,13 +64,51 @@ class LockerPriceService {
         console.log(
           `✅ LOCKER price updated: $${priceData.price.toFixed(8)} (${priceData.derivationMethod})`,
         );
+
+        // Save to localStorage for offline support
+        saveServicePrice("LOCKER", {
+          price: priceData.price,
+          priceChange24h: priceData.priceChange24h,
+        });
+
         return priceData;
       } else {
-        console.warn("Invalid price data from derivation - returning null");
+        console.warn("Invalid price data from derivation - trying cache");
+        // Try to get price from localStorage as fallback
+        const cachedServicePrice = getCachedServicePrice("LOCKER");
+        if (cachedServicePrice && cachedServicePrice.price > 0) {
+          console.log(
+            `[LOCKER Price Service] Using localStorage cached price: $${cachedServicePrice.price.toFixed(8)}`,
+          );
+          return {
+            price: cachedServicePrice.price,
+            priceChange24h: cachedServicePrice.priceChange24h ?? 0,
+            volume24h: 0,
+            lastUpdated: new Date(),
+            derivationMethod: "cache",
+            isFallback: true,
+          };
+        }
         return null;
       }
     } catch (error) {
       console.error("Error fetching LOCKER price:", error);
+
+      // Try to get price from localStorage as fallback on error
+      const cachedServicePrice = getCachedServicePrice("LOCKER");
+      if (cachedServicePrice && cachedServicePrice.price > 0) {
+        console.log(
+          `[LOCKER Price Service] Using localStorage cached price on error: $${cachedServicePrice.price.toFixed(8)}`,
+        );
+        return {
+          price: cachedServicePrice.price,
+          priceChange24h: cachedServicePrice.priceChange24h ?? 0,
+          volume24h: 0,
+          lastUpdated: new Date(),
+          derivationMethod: "cache",
+          isFallback: true,
+        };
+      }
       return null;
     }
   }

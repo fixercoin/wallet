@@ -68,13 +68,51 @@ class FixercoinPriceService {
         console.log(
           `✅ FIXERCOIN price updated: $${priceData.price.toFixed(8)} (${priceData.derivationMethod})`,
         );
+
+        // Save to localStorage for offline support
+        saveServicePrice("FIXERCOIN", {
+          price: priceData.price,
+          priceChange24h: priceData.priceChange24h,
+        });
+
         return priceData;
       } else {
-        console.warn("Invalid price data from derivation - returning null");
+        console.warn("Invalid price data from derivation - trying cache");
+        // Try to get price from localStorage as fallback
+        const cachedServicePrice = getCachedServicePrice("FIXERCOIN");
+        if (cachedServicePrice && cachedServicePrice.price > 0) {
+          console.log(
+            `[FIXERCOIN Price Service] Using localStorage cached price: $${cachedServicePrice.price.toFixed(8)}`,
+          );
+          return {
+            price: cachedServicePrice.price,
+            priceChange24h: cachedServicePrice.priceChange24h ?? 0,
+            volume24h: 0,
+            lastUpdated: new Date(),
+            derivationMethod: "cache",
+            isFallback: true,
+          };
+        }
         return null;
       }
     } catch (error) {
       console.error("Error fetching FIXERCOIN price:", error);
+
+      // Try to get price from localStorage as fallback on error
+      const cachedServicePrice = getCachedServicePrice("FIXERCOIN");
+      if (cachedServicePrice && cachedServicePrice.price > 0) {
+        console.log(
+          `[FIXERCOIN Price Service] Using localStorage cached price on error: $${cachedServicePrice.price.toFixed(8)}`,
+        );
+        return {
+          price: cachedServicePrice.price,
+          priceChange24h: cachedServicePrice.priceChange24h ?? 0,
+          volume24h: 0,
+          lastUpdated: new Date(),
+          derivationMethod: "cache",
+          isFallback: true,
+        };
+      }
       return null;
     }
   }

@@ -1,3 +1,5 @@
+import { saveServicePrice, getCachedServicePrice } from "./offline-cache";
+
 export interface SolPriceData {
   price: number;
   price_change_24h: number;

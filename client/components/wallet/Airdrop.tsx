@@ -53,29 +53,14 @@ const POPULAR_TOKENS = [
     name: "Tether USD",
   },
   {
-    mint: "DezXAZ8z7PnrnRJjz3wXBoRgixVqXaSMegAZiHX6apb",
-    symbol: "COPE",
-    name: "Cope",
-  },
-  {
     mint: "SRMuApVgqbCV9b9eqVRvkyL8ZPUxfAydsCy734kHWMJ",
     symbol: "SRM",
     name: "Serum",
   },
   {
-    mint: "MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmRCKgJNWF",
-    symbol: "MNGO",
-    name: "Mango",
-  },
-  {
     mint: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
     symbol: "RAY",
     name: "Raydium",
-  },
-  {
-    mint: "whirLbMiicVdio4KfQ7QuvRRaumxG5YgyconvfJJkr",
-    symbol: "WHIRL",
-    name: "Whirlpool",
   },
   {
     mint: "JUPyiwrYJFskUPiHa7hKeqbbqJACtrdPk9QCqfi5j9U",
@@ -93,55 +78,9 @@ const POPULAR_TOKENS = [
     name: "dogwifhat",
   },
   {
-    mint: "7kbnvzlMcRxQLixS9XcNwaKPseBYMBLcuvg5eW5n1d4",
-    symbol: "GMT",
-    name: "GMT Token",
-  },
-  {
-    mint: "CKfatsPMUf8SkWRingCv8Sn3bBgkxVkCjfHWWE5sseLp",
-    symbol: "COPE",
-    name: "Cope",
-  },
-  {
-    mint: "HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3xfYSNqVLsEQw",
-    symbol: "COPE",
-    name: "Cope Token",
-  },
-  {
     mint: "orcaEKTdK7LKz57chvsqSpa7JL189KXstwzmdMnHADh",
     symbol: "ORCA",
     name: "Orca",
-  },
-  { mint: "11111111111111111111111111111111", symbol: "COPE", name: "COPE" },
-  {
-    mint: "ATokenGPvbdGVqstVQmcLsNZAqeEctipwTYj72v4SyJU",
-    symbol: "APT",
-    name: "Associated Token",
-  },
-  {
-    mint: "SBFSo5Q1Mwc9QudYaZ2DxQ3p8gv7c1BeS6yhSMEkNUc",
-    symbol: "FTT",
-    name: "FTX Token",
-  },
-  {
-    mint: "BiYiLuJvgQrJz62FsXhS3xj5ibECoZ2ZK5aaKCrDf7Gn",
-    symbol: "COPE",
-    name: "Cope Token",
-  },
-  {
-    mint: "ATLASXmbPQxBUYbNRSsKMUk4Mhbp7G5YE5H1TgBAxa1",
-    symbol: "ATLAS",
-    name: "Atlas",
-  },
-  {
-    mint: "DUSTawWDoDCFfP7PP8KfCabM8YUpNm4BYSQ2NWR5Pxq9",
-    symbol: "DUST",
-    name: "Dust",
-  },
-  {
-    mint: "COPE_COPE_COPE_COPE_COPE_COPE_COPE_COPE123",
-    symbol: "COPE",
-    name: "Cope DAO",
   },
 ];
 
@@ -670,8 +609,8 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         setRecipientsText("");
         toast({
           title: "No holders found",
-          description: `Could not fetch holders for this token. Try another token.`,
-          variant: "destructive",
+          description: `Could not fetch holders for this token. Try another token or enter recipients manually.`,
+          variant: "default",
         });
       } else {
         const addressesText = holderAddresses.join("\n");
@@ -684,13 +623,16 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     } catch (error) {
       console.error("Error fetching holders:", error);
       setRecipientsText("");
+      const errorMessage =
+        error instanceof Error
+          ? error.message.includes("could not find mint")
+            ? "This token could not be found on the blockchain. Try another token or enter recipients manually."
+            : error.message
+          : "Failed to fetch token holders";
       toast({
-        title: "Error loading holders",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch token holders",
-        variant: "destructive",
+        title: "Could not load holders",
+        description: errorMessage,
+        variant: "default",
       });
     } finally {
       setIsFetchingHolders(false);

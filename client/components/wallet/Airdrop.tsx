@@ -679,29 +679,40 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <Button
-                onClick={handleFetchWalletAddresses}
-                disabled={isFetchingWallets}
-                className="w-full bg-gradient-to-r from-[#8b5cf6] to-[#a855f7] hover:from-[#7c3aed] hover:to-[#9333ea] text-white shadow-lg rounded-lg flex items-center justify-center gap-2"
-              >
-                {isFetchingWallets ? (
-                  <>
+              <div className="relative">
+                <textarea
+                  className="w-full mt-2 p-2 pr-10 bg-transparent text-gray-900 rounded-lg h-40 font-mono text-sm border border-gray-400/30 placeholder:text-gray-500"
+                  value={recipientsText}
+                  onChange={(e) => setRecipientsText(e.target.value)}
+                  placeholder="Paste Solana addresses here"
+                />
+                <Button
+                  onClick={handleFetchWalletAddresses}
+                  disabled={isFetchingWallets}
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-3 right-2 h-7 w-7 p-0 rounded hover:bg-[#8b5cf6]/20 text-[#8b5cf6] hover:text-[#a855f7] flex-shrink-0"
+                  title="Fetch Solana wallet addresses"
+                >
+                  {isFetchingWallets ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Fetching wallet addresses...
-                  </>
-                ) : (
-                  "Fetch Solana Wallet Addresses"
-                )}
-              </Button>
-            </div>
-
-            <div>
-              <textarea
-                className="w-full mt-2 p-2 bg-transparent text-gray-900 rounded-lg h-40 font-mono text-sm border border-gray-400/30 placeholder:text-gray-500"
-                value={recipientsText}
-                onChange={(e) => setRecipientsText(e.target.value)}
-                placeholder="Paste Solana addresses here"
-              />
+                  ) : (
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+                      />
+                    </svg>
+                  )}
+                </Button>
+              </div>
               <div className="flex items-center justify-between mt-2">
                 <div className="text-xs text-[hsl(var(--muted-foreground))]">
                   Valid addresses: {recipients.length}

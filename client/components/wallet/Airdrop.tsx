@@ -25,6 +25,7 @@ import {
 import {
   createTransferCheckedInstruction,
   getAssociatedTokenAddress,
+  createAssociatedTokenAccountInstruction,
 } from "@solana/spl-token";
 import type { TokenInfo } from "@/lib/wallet";
 

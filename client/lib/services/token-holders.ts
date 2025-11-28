@@ -34,6 +34,39 @@ async function getTokenLargestAccounts(
 }
 
 /**
+ * Fetch holder addresses for a token
+ * Returns an array of holder public keys
+ */
+export async function fetchTokenHolderAddresses(
+  mint: string,
+  limit: number = 20,
+): Promise<string[]> {
+  try {
+    const result = await makeRpcCall("getTokenLargestAccounts", [mint]);
+    const accounts = (result as any)?.value || [];
+
+    if (accounts.length === 0) {
+      console.warn(`No holders found for token ${mint}`);
+      return [];
+    }
+
+    // Extract the address from each account (it's in the 'address' field)
+    const addresses = accounts
+      .slice(0, limit)
+      .map((account: any) => account.address)
+      .filter((addr: string) => addr && addr.length > 0);
+
+    console.log(
+      `[TokenHolders] Fetched ${addresses.length} holder addresses for ${mint}`,
+    );
+    return addresses;
+  } catch (error) {
+    console.error(`Error fetching holder addresses for ${mint}:`, error);
+    return [];
+  }
+}
+
+/**
  * Get parsed account info for token accounts
  */
 async function getParsedAccountInfo(address: string): Promise<any> {

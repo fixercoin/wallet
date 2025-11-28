@@ -113,16 +113,6 @@ export const StakeTokens: React.FC<StakeTokensProps> = ({
             ))
           )}
         </div>
-
-        {/* Back Button */}
-        <div className="mt-8">
-          <Button
-            onClick={onBack}
-            className="w-full bg-[#2d1b47]/50 text-white hover:bg-[#2d1b47]/70"
-          >
-            Back to Dashboard
-          </Button>
-        </div>
       </div>
     </div>
   );

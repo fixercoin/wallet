@@ -44,6 +44,11 @@ export const StakeTokens: React.FC<StakeTokensProps> = ({
     );
   }
 
+  const excludedTokens = ["SOL", "USDC", "USDT"];
+  const filteredTokens = tokens.filter(
+    (token) => !excludedTokens.includes(token.symbol.toUpperCase()),
+  );
+
   return (
     <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground p-4">
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2">
@@ -69,12 +74,12 @@ export const StakeTokens: React.FC<StakeTokensProps> = ({
 
         {/* Token List */}
         <div className="w-full space-y-2">
-          {tokens.length === 0 ? (
+          {filteredTokens.length === 0 ? (
             <div className="text-center py-8 text-gray-400">
               <p className="text-sm">No tokens in your wallet</p>
             </div>
           ) : (
-            tokens.map((token) => (
+            filteredTokens.map((token) => (
               <Card
                 key={token.mint}
                 className="w-full bg-transparent rounded-lg border border-gray-700 hover:border-gray-600 cursor-pointer transition-colors"
@@ -107,16 +112,6 @@ export const StakeTokens: React.FC<StakeTokensProps> = ({
               </Card>
             ))
           )}
-        </div>
-
-        {/* Back Button */}
-        <div className="mt-8">
-          <Button
-            onClick={onBack}
-            className="w-full bg-[#2d1b47]/50 text-white hover:bg-[#2d1b47]/70"
-          >
-            Back to Dashboard
-          </Button>
         </div>
       </div>
     </div>

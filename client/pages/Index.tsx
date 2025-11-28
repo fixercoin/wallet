@@ -172,6 +172,7 @@ export default function Index() {
           onAccounts={() => navigateToScreen("accounts")}
           onLock={() => navigateToScreen("lock")}
           onBurn={() => navigateToScreen("burn")}
+          onStakeTokens={() => navigateToScreen("stake-tokens")}
         />
       );
   }

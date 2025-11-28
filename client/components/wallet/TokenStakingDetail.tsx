@@ -312,7 +312,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
             </Button>
             {stakeAmount && Number(stakeAmount) < MIN_STAKE_AMOUNT && (
               <p className="text-xs text-red-400 mt-2">
-                Minimum stake required: {MIN_STAKE_AMOUNT.toLocaleString()} {token.symbol}
+                Minimum stake required: {formatTokenAmount(MIN_STAKE_AMOUNT)} {token.symbol}
               </p>
             )}
           </CardContent>

@@ -344,9 +344,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       // Use 5s interval when tab is visible for more responsive updates
       // Longer interval (30s) when tab is hidden to conserve battery on mobile
       const interval =
-        document.hidden || document.visibilityState === "hidden"
-          ? 30000
-          : 5000;
+        document.hidden || document.visibilityState === "hidden" ? 30000 : 5000;
 
       refreshIntervalRef.current = setInterval(async () => {
         try {
@@ -910,9 +908,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         if (!finalPrice || finalPrice <= 0) {
           if (token.symbol === "SOL") {
             finalPrice = 100;
-          } else if (
-            ["FIXERCOIN", "LOCKER", "FXM"].includes(token.symbol)
-          ) {
+          } else if (["FIXERCOIN", "LOCKER", "FXM"].includes(token.symbol)) {
             // Keep price as undefined/null for these special tokens so Dashboard shows loading state
             finalPrice = undefined;
           } else {

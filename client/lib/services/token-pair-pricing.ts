@@ -296,7 +296,6 @@ class TokenPairPricingService {
     };
   }
 
-
   /**
    * Clear cache to force fresh fetch
    */

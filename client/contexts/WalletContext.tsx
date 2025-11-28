@@ -339,14 +339,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       clearInterval(refreshIntervalRef.current);
     }
 
-    // Setup periodic refresh every 10 seconds (adaptive based on visibility)
+    // Setup periodic refresh every 5 seconds (adaptive based on visibility)
     const setupRefreshInterval = () => {
-      // Use shorter interval (5s) when tab is visible for more responsive updates
+      // Use 5s interval when tab is visible for more responsive updates
       // Longer interval (30s) when tab is hidden to conserve battery on mobile
       const interval =
         document.hidden || document.visibilityState === "hidden"
           ? 30000
-          : 10000;
+          : 5000;
 
       refreshIntervalRef.current = setInterval(async () => {
         try {

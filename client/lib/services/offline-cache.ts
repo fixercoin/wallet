@@ -41,6 +41,8 @@ const CACHE_VALIDITY_PRICES = 5 * 60 * 1000; // 5 minutes
 const CACHE_VALIDITY_TOKENS = 60 * 60 * 1000; // 1 hour
 const CACHE_VALIDITY_SERVICE_PRICES = 24 * 60 * 60 * 1000; // 24 hours for service prices
 
+export { CACHE_VALIDITY_PRICES, CACHE_VALIDITY_TOKENS, CACHE_VALIDITY_SERVICE_PRICES };
+
 /**
  * Check if device is mobile
  */

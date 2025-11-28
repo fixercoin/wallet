@@ -223,11 +223,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-400">AVAILABLE</span>
                 <span className="text-lg font-bold text-white">
-                  {availableBalance.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
-                  {token.symbol}
+                  {formatTokenAmount(availableBalance)} {token.symbol}
                 </span>
               </div>
             </div>

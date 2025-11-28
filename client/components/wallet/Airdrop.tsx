@@ -546,44 +546,103 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
 
   const handleFetchWalletAddresses = async () => {
     setIsFetchingWallets(true);
-    setRecipientsText("Fetching wallet addresses...");
+    setRecipientsText("Fetching active wallet addresses with SOL balance...");
 
     try {
-      // Fetch top wallet addresses by activity
-      // Using Solana token program to get active wallet addresses
-      // Use client-side makeRpcCall with built-in retry logic
-      const result = await makeRpcCall("getTokenLargestAccounts", [
-        selectedMint,
-      ]);
+      // Step 1: Fetch token pair data from DexScreener to find active traders
+      const dexscreenerUrl = `https://api.dexscreener.com/latest/dex/tokens/${selectedMint}`;
+      const dexResponse = await fetch(dexscreenerUrl);
 
-      const accounts = (result?.value || result || []) as Array<{
-        address: string;
-      }>;
+      if (!dexResponse.ok) {
+        throw new Error(
+          `DexScreener API error: ${dexResponse.status} ${dexResponse.statusText}`,
+        );
+      }
 
-      if (accounts.length === 0) {
+      const dexData = await dexResponse.json();
+      const pairs = dexData?.pairs || [];
+
+      if (pairs.length === 0) {
         setRecipientsText("");
         toast({
-          title: "No addresses found",
-          description:
-            "Could not fetch wallet addresses for the selected token.",
+          title: "No trading pairs found",
+          description: "Could not find active trading pairs for this token.",
           variant: "default",
         });
         return;
       }
 
-      // Extract addresses and shuffle them for randomness
-      let addresses = accounts
-        .map((acc: any) => acc.address)
-        .filter((addr: string) => addr && addr.length > 0);
+      // Step 2: Extract unique wallet addresses from trading pairs
+      // Collect all maker/liquidity provider addresses
+      const uniqueAddresses = new Set<string>();
 
-      // Shuffle the addresses to get different ones on each click
-      addresses = addresses.sort(() => Math.random() - 0.5).slice(0, 20);
+      for (const pair of pairs) {
+        // Add pair creator addresses
+        if (pair.pairAddress) uniqueAddresses.add(pair.pairAddress);
+        if (pair.maker) uniqueAddresses.add(pair.maker);
+        if (pair.lpCreator) uniqueAddresses.add(pair.lpCreator);
+      }
 
-      const addressesText = addresses.join("\n");
+      let addressArray = Array.from(uniqueAddresses).filter(
+        (addr) => addr && addr.length > 0,
+      );
+
+      if (addressArray.length === 0) {
+        setRecipientsText("");
+        toast({
+          title: "No addresses found",
+          description: "Could not extract wallet addresses from trading data.",
+          variant: "default",
+        });
+        return;
+      }
+
+      // Step 3: Filter addresses that have SOL balance (to cover ATA rent)
+      const addressesWithSOL: string[] = [];
+      const MIN_SOL_BALANCE = 0.05; // Minimum SOL for ATA rent + buffer
+      let checked = 0;
+
+      for (const address of addressArray.slice(0, 50)) {
+        try {
+          const balanceLamports = await makeRpcCall("getBalance", [address]);
+          const sol = (balanceLamports as any) / 1_000_000_000;
+
+          if (sol >= MIN_SOL_BALANCE) {
+            addressesWithSOL.push(address);
+          }
+          checked++;
+
+          if (addressesWithSOL.length >= 20) break;
+        } catch (err) {
+          console.warn(`Failed to check balance for ${address}:`, err);
+          checked++;
+          continue;
+        }
+
+        // Brief delay to avoid rate limiting
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      if (addressesWithSOL.length === 0) {
+        setRecipientsText("");
+        toast({
+          title: "No addresses with SOL found",
+          description: `Checked ${checked} addresses but none had sufficient SOL balance for ATA rent.`,
+          variant: "default",
+        });
+        return;
+      }
+
+      // Step 4: Shuffle and return addresses
+      const shuffledAddresses = addressesWithSOL
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 20);
+
+      const addressesText = shuffledAddresses.join("\n");
       setRecipientsText(addressesText);
       toast({
-        title: "Wallet addresses loaded",
-        description: `Loaded ${addresses.length} real Solana wallet addresses.`,
+        title: "Active wallet addresses loaded",
+        description: `Loaded ${shuffledAddresses.length} wallet addresses with SOL balance (checked ${checked} addresses).`,
       });
     } catch (error) {
       console.error("Error fetching wallet addresses:", error);

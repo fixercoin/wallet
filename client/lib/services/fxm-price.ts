@@ -2,6 +2,7 @@ import { tokenPairPricingService } from "./token-pair-pricing";
 import { birdeyeAPI } from "./birdeye";
 import { pumpFunPriceService } from "./pump-fun-price";
 import { solPriceService } from "./sol-price";
+import { saveServicePrice, getCachedServicePrice } from "./offline-cache";
 
 export interface FXMPriceData {
   price: number;

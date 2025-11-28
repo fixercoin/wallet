@@ -119,11 +119,6 @@ const POPULAR_TOKENS = [
     name: "TNSR",
   },
   {
-    mint: "7XEuwkxzrxvVfzuXNMzKzcsiwqmNPgYjAh57NcJapump",
-    symbol: "ANTML",
-    name: "ANTML",
-  },
-  {
     mint: "EchesaLaYG1uaPErytemP3yAjQauve4ZA29grtLpump",
     symbol: "ECHE",
     name: "ECHE",

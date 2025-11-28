@@ -23,6 +23,7 @@ import {
   Bell,
   X,
   Clock,
+  Coins,
 } from "lucide-react";
 import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import {
@@ -34,6 +35,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { formatAmountCompact } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useStakingTokens } from "@/hooks/use-staking-tokens";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
 import {
@@ -56,6 +58,7 @@ interface DashboardProps {
   onAccounts?: () => void;
   onLock: () => void;
   onBurn: () => void;
+  onStakeTokens?: () => void;
 }
 
 import { useNavigate } from "react-router-dom";
@@ -108,6 +111,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onAccounts,
   onLock,
   onBurn,
+  onStakeTokens,
 }) => {
   const {
     wallet,
@@ -127,6 +131,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const { isStaking } = useStakingTokens(wallet?.publicKey || null);
 
   // Quest state (per-wallet, persisted locally)
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
@@ -776,6 +781,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <span>MY-WALLET</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
+                    onSelect={() => onStakeTokens?.()}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Coins className="h-4 w-4" />
+                    <span>STAKE TOKENS</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     onSelect={() => onLock()}
                     className="flex items-center gap-2 text-xs"
                   >
@@ -1039,9 +1051,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col min-w-0">
-                          <p className="text-xs font-semibold text-white truncate uppercase">
-                            {token.name}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-semibold text-white truncate uppercase">
+                              {token.name}
+                            </p>
+                            {isStaking(token.mint) && (
+                              <span className="text-xs font-semibold text-yellow-500 whitespace-nowrap">
+                                STAKING
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs font-semibold text-white truncate flex items-baseline gap-1">
                             <span>
                               {

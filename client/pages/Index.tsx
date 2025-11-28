@@ -28,7 +28,8 @@ type Screen =
   | "accounts"
   | "airdrop"
   | "lock"
-  | "burn";
+  | "burn"
+  | "stake-tokens";
 
 interface ScreenState {
   screen: Screen;

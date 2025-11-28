@@ -154,6 +154,9 @@ export default function Index() {
     case "burn":
       return <BurnToken onBack={navigateToDashboard} />;
 
+    case "stake-tokens":
+      return <StakeTokens onBack={navigateToDashboard} />;
+
     case "dashboard":
     default:
       return (

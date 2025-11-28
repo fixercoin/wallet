@@ -67,47 +67,6 @@ const POPULAR_TOKENS = [
     symbol: "WIF",
     name: "dogwifhat",
   },
-  // PumpFun tokens
-  {
-    mint: "DezXAZ8z7PnrnRJjz3wXBoRgixVqXaSMegAZiHX6apb",
-    symbol: "COPE",
-    name: "Cope",
-  },
-  {
-    mint: "BonK7tgMJpeqAkxD4Zr8v9XKxnEXFSmMRyEtkkHJpump",
-    symbol: "BONK",
-    name: "BONK",
-  },
-  {
-    mint: "9n4nbM75f5Ui33ZbPYXn59EJqeZTi2aSzFuNMFvpump",
-    symbol: "SMOG",
-    name: "SMOG",
-  },
-  {
-    mint: "3hMwndSmXHeKfkwBxwNd4inner4adjsJsQaVLgeyypump",
-    symbol: "PUMP",
-    name: "PUMP",
-  },
-  {
-    mint: "6PEWTwCvLKYxGPydmX5CvDhYYvJj3dn6KqduNCp1pump",
-    symbol: "RAYDIUM",
-    name: "RAYDIUM",
-  },
-  {
-    mint: "8qjjD3gKPUq62pnnTDfqU9JFPCpnSZ4PVjYGDq2spump",
-    symbol: "PEPE",
-    name: "PEPE",
-  },
-  {
-    mint: "BXmkLv2RewSsVz5zL6zxdvpkUjFKVzQn8VDLHaLvpump",
-    symbol: "TNSR",
-    name: "TNSR",
-  },
-  {
-    mint: "EchesaLaYG1uaPErytemP3yAjQauve4ZA29grtLpump",
-    symbol: "ECHE",
-    name: "ECHE",
-  },
 ];
 
 export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {

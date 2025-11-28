@@ -167,9 +167,7 @@ export default function Index() {
       );
 
     case "stake-token-detail": {
-      const { wallet } = useWallet();
-      const allTokens = wallet ? tokens : [];
-      const selectedToken = allTokens.find(
+      const selectedToken = tokens.find(
         (t) => t.mint === currentScreen.tokenMint
       );
       if (!selectedToken) {

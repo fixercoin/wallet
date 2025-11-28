@@ -119,17 +119,21 @@ They're already configured in your dev server.
 ## Troubleshooting
 
 **Error: "relation \"stakes\" does not exist"**
+
 - The table hasn't been created yet. Run the SQL from Step 1.
 
 **Error: "permission denied"**
+
 - RLS policies are too restrictive. Run the "Disable RLS" SQL from Step 2.
 
 **Stakes not showing after refresh**
+
 - Check browser console for errors
 - Verify Supabase URL and API key are correct
 - Make sure RLS policies allow your user to read/write data
 
 **Network errors from Cloudflare**
+
 - You'll need to add Supabase environment variables to Cloudflare Pages:
   - Go to Cloudflare Dashboard → Pages → Your Project → Settings → Environment Variables
   - Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`

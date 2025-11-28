@@ -211,7 +211,9 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
               </Avatar>
               <div>
                 <p className="text-sm text-gray-400 uppercase">{token.name}</p>
-                <p className="text-2xl font-bold text-white uppercase">{token.symbol}</p>
+                <p className="text-2xl font-bold text-white uppercase">
+                  {token.symbol}
+                </p>
                 <p className="text-xs text-gray-500 uppercase">
                   PRICE: ${token.price?.toFixed(8) || "N/A"}
                 </p>
@@ -233,7 +235,9 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
         {/* Staking Form */}
         <Card className="w-full bg-gray-900 rounded-lg border border-gray-700 mb-6">
           <CardContent className="p-6">
-            <h2 className="text-sm font-semibold text-white mb-4 uppercase">NEW STAKE</h2>
+            <h2 className="text-sm font-semibold text-white mb-4 uppercase">
+              NEW STAKE
+            </h2>
 
             {/* Amount Input */}
             <div className="mb-6">
@@ -287,15 +291,22 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
               <div className="bg-gray-800/50 rounded-lg p-4 mb-6">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-400 uppercase">REWARD (10% APY)</span>
+                    <span className="text-gray-400 uppercase">
+                      REWARD (10% APY)
+                    </span>
                     <span className="text-green-400 font-semibold">
                       +{formatTokenAmount(calculatedReward)} {token.symbol}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-400 uppercase">TOTAL AT END</span>
+                    <span className="text-gray-400 uppercase">
+                      TOTAL AT END
+                    </span>
                     <span className="text-white font-semibold">
-                      {formatTokenAmount(Number(stakeAmount) + calculatedReward)} {token.symbol}
+                      {formatTokenAmount(
+                        Number(stakeAmount) + calculatedReward,
+                      )}{" "}
+                      {token.symbol}
                     </span>
                   </div>
                 </div>
@@ -305,14 +316,20 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
             {/* Start Staking Button */}
             <Button
               onClick={handleStartStaking}
-              disabled={!stakeAmount || Number(stakeAmount) < MIN_STAKE_AMOUNT || isStaking || loading}
+              disabled={
+                !stakeAmount ||
+                Number(stakeAmount) < MIN_STAKE_AMOUNT ||
+                isStaking ||
+                loading
+              }
               className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold disabled:opacity-50 disabled:cursor-not-allowed uppercase"
             >
               {isStaking ? "PROCESSING..." : "START STAKING"}
             </Button>
             {stakeAmount && Number(stakeAmount) < MIN_STAKE_AMOUNT && (
               <p className="text-xs text-red-400 mt-2 uppercase">
-                MINIMUM STAKE REQUIRED: {formatTokenAmount(MIN_STAKE_AMOUNT)} {token.symbol}
+                MINIMUM STAKE REQUIRED: {formatTokenAmount(MIN_STAKE_AMOUNT)}{" "}
+                {token.symbol}
               </p>
             )}
           </CardContent>
@@ -321,7 +338,9 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
         {/* Active Stakes */}
         {tokenStakes.length > 0 && (
           <div className="space-y-4 mb-6">
-            <h2 className="text-sm font-semibold text-white uppercase">ACTIVE STAKES</h2>
+            <h2 className="text-sm font-semibold text-white uppercase">
+              ACTIVE STAKES
+            </h2>
             {tokenStakes.map((stake) => {
               const timeLeft = Math.max(0, stake.endTime - Date.now());
               const isWithdrawable = timeLeft === 0;
@@ -350,7 +369,9 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-400 mb-1 uppercase">PERIOD</p>
+                        <p className="text-xs text-gray-400 mb-1 uppercase">
+                          PERIOD
+                        </p>
                         <p className="text-sm font-semibold text-white">
                           {stake.stakePeriodDays} days
                         </p>
@@ -388,7 +409,6 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
             })}
           </div>
         )}
-
       </div>
     </div>
   );

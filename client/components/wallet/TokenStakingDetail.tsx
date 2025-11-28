@@ -125,7 +125,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
       await createStake(token.mint, Number(stakeAmount), selectedPeriod);
       toast({
         title: "Staking Started",
-        description: `Successfully staked ${stakeAmount} ${token.symbol}`,
+        description: `Successfully staked ${formatTokenAmount(Number(stakeAmount))} ${token.symbol}`,
       });
       setStakeAmount("");
     } catch (err) {

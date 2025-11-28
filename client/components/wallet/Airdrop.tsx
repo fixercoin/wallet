@@ -650,7 +650,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         setRecipientsText("");
         toast({
           title: "No holders found",
-          description: `Could not fetch holders for this token. Try another token or enter recipients manually.`,
+          description: `Auto-load is not available for this token. Please enter recipient addresses manually.`,
           variant: "default",
         });
       } else {
@@ -664,15 +664,10 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     } catch (error) {
       console.error("Error fetching holders:", error);
       setRecipientsText("");
-      const errorMessage =
-        error instanceof Error
-          ? error.message.includes("could not find mint")
-            ? "This token could not be found on the blockchain. Try another token or enter recipients manually."
-            : error.message
-          : "Failed to fetch token holders";
       toast({
-        title: "Could not load holders",
-        description: errorMessage,
+        title: "Auto-load not available",
+        description:
+          "Unable to auto-load holders for this token. Please enter recipient addresses manually, or try a different token.",
         variant: "default",
       });
     } finally {

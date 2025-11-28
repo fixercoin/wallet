@@ -1,4 +1,5 @@
 import { tokenPairPricingService } from "./token-pair-pricing";
+import { saveServicePrice, getCachedServicePrice } from "./offline-cache";
 
 export interface FixercoinPriceData {
   price: number;

@@ -296,28 +296,6 @@ class TokenPairPricingService {
     };
   }
 
-  /**
-   * Get fallback price data when API fails
-   */
-  private async getFallbackPriceData(
-    symbol: string,
-    solPrice: number,
-  ): Promise<PairPricingData> {
-    const config = TOKEN_CONFIGS[symbol];
-    const fallbackPrice = FALLBACK_PRICES[symbol] || 0.000001;
-
-    return {
-      tokenAddress: config.mint,
-      tokenSymbol: symbol,
-      solPrice,
-      pairRatio: solPrice / fallbackPrice,
-      derivedPrice: fallbackPrice,
-      priceChange24h: 0,
-      volume24h: 0,
-      liquidity: 0,
-      lastUpdated: new Date(),
-    };
-  }
 
   /**
    * Clear cache to force fresh fetch

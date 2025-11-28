@@ -53,11 +53,6 @@ const POPULAR_TOKENS = [
     name: "Tether USD",
   },
   {
-    mint: "SRMuApVgqbCV9b9eqVRvkyL8ZPUxfAydsCy734kHWMJ",
-    symbol: "SRM",
-    name: "Serum",
-  },
-  {
     mint: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
     symbol: "RAY",
     name: "Raydium",
@@ -68,19 +63,9 @@ const POPULAR_TOKENS = [
     name: "Jupiter",
   },
   {
-    mint: "kinXwC9Er78guJvNzYNn6aqAFn7PDK3KA9G2D1qKHAL",
-    symbol: "KIN",
-    name: "Kin",
-  },
-  {
     mint: "BQcdHdAQW1hCHNiGiDMRAdpiSi56actusBmAfuqy9xv",
     symbol: "WIF",
     name: "dogwifhat",
-  },
-  {
-    mint: "orcaEKTdK7LKz57chvsqSpa7JL189KXstwzmdMnHADh",
-    symbol: "ORCA",
-    name: "Orca",
   },
   // PumpFun tokens
   {

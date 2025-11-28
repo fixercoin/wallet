@@ -26,9 +26,11 @@ interface UseStakingReturn {
   createStake: (
     tokenMint: string,
     amount: number,
-    periodDays: number
+    periodDays: number,
   ) => Promise<Stake>;
-  withdrawStake: (stakeId: string) => Promise<{ stake: Stake; totalAmount: number }>;
+  withdrawStake: (
+    stakeId: string,
+  ) => Promise<{ stake: Stake; totalAmount: number }>;
   refreshStakes: () => Promise<void>;
 }
 
@@ -49,7 +51,7 @@ export function useStaking(): UseStakingReturn {
       const sig = nacl.sign.detached(bytes, wallet.secretKey);
       return bs58.encode(sig);
     },
-    [wallet?.secretKey]
+    [wallet?.secretKey],
   );
 
   // Fetch user's stakes
@@ -65,8 +67,8 @@ export function useStaking(): UseStakingReturn {
 
       const res = await fetchWithFallback(
         `${resolveApiUrl("/api/staking")}?wallet=${encodeURIComponent(
-          wallet.publicKey
-        )}&message=${encodeURIComponent(message)}&signature=${encodeURIComponent(signature)}`
+          wallet.publicKey,
+        )}&message=${encodeURIComponent(message)}&signature=${encodeURIComponent(signature)}`,
       );
 
       if (!res.ok) {
@@ -89,29 +91,26 @@ export function useStaking(): UseStakingReturn {
     async (
       tokenMint: string,
       amount: number,
-      periodDays: number
+      periodDays: number,
     ): Promise<Stake> => {
       if (!wallet?.publicKey) throw new Error("No wallet");
 
       const message = `staking-create:${wallet.publicKey}:${tokenMint}:${amount}:${periodDays}:${Date.now()}`;
       const signature = await signMessage(message);
 
-      const res = await fetchWithFallback(
-        resolveApiUrl("/api/staking"),
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "create",
-            wallet: wallet.publicKey,
-            tokenMint,
-            amount,
-            periodDays,
-            message,
-            signature,
-          }),
-        }
-      );
+      const res = await fetchWithFallback(resolveApiUrl("/api/staking"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create",
+          wallet: wallet.publicKey,
+          tokenMint,
+          amount,
+          periodDays,
+          message,
+          signature,
+        }),
+      });
 
       if (!res.ok) {
         const err = await res.text();
@@ -119,13 +118,14 @@ export function useStaking(): UseStakingReturn {
       }
 
       const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Failed to create stake");
+      if (!data.success)
+        throw new Error(data.error || "Failed to create stake");
 
       const newStake = data.stake;
       setStakes((prev) => [...prev, newStake]);
       return newStake;
     },
-    [wallet?.publicKey, signMessage]
+    [wallet?.publicKey, signMessage],
   );
 
   // Withdraw from stake
@@ -136,20 +136,17 @@ export function useStaking(): UseStakingReturn {
       const message = `staking-withdraw:${wallet.publicKey}:${stakeId}:${Date.now()}`;
       const signature = await signMessage(message);
 
-      const res = await fetchWithFallback(
-        resolveApiUrl("/api/staking"),
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "withdraw",
-            wallet: wallet.publicKey,
-            stakeId,
-            message,
-            signature,
-          }),
-        }
-      );
+      const res = await fetchWithFallback(resolveApiUrl("/api/staking"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "withdraw",
+          wallet: wallet.publicKey,
+          stakeId,
+          message,
+          signature,
+        }),
+      });
 
       if (!res.ok) {
         const err = await res.text();
@@ -161,7 +158,9 @@ export function useStaking(): UseStakingReturn {
 
       // Update local state
       setStakes((prev) =>
-        prev.map((s) => (s.id === stakeId ? { ...s, status: "withdrawn" as const } : s))
+        prev.map((s) =>
+          s.id === stakeId ? { ...s, status: "withdrawn" as const } : s,
+        ),
       );
 
       return {
@@ -169,7 +168,7 @@ export function useStaking(): UseStakingReturn {
         totalAmount: data.totalAmount,
       };
     },
-    [wallet?.publicKey, signMessage]
+    [wallet?.publicKey, signMessage],
   );
 
   // Load stakes on mount

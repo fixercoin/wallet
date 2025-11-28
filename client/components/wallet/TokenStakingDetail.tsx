@@ -51,7 +51,9 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
   const [selectedPeriod, setSelectedPeriod] = useState<30 | 60 | 90>(30);
   const [stakeAmount, setStakeAmount] = useState("");
   const [isStaking, setIsStaking] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState<{ [key: string]: string }>({});
+  const [timeRemaining, setTimeRemaining] = useState<{ [key: string]: string }>(
+    {},
+  );
 
   // Get available balance for this token
   const availableBalance = token.balance || 0;
@@ -61,7 +63,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
 
   // Filter stakes for this token
   const tokenStakes = stakes.filter(
-    (stake) => stake.tokenMint === token.mint && stake.status === "active"
+    (stake) => stake.tokenMint === token.mint && stake.status === "active",
   );
 
   // Update timer for active stakes
@@ -148,7 +150,10 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                 No wallet available. Please create or import a wallet first.
               </p>
               <div className="mt-4">
-                <Button onClick={onBack} className="w-full bg-[#2d1b47]/50 text-white">
+                <Button
+                  onClick={onBack}
+                  className="w-full bg-[#2d1b47]/50 text-white"
+                >
                   Back
                 </Button>
               </div>
@@ -172,7 +177,9 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-xl font-semibold text-white">Stake {token.symbol}</h1>
+          <h1 className="text-xl font-semibold text-white">
+            Stake {token.symbol}
+          </h1>
         </div>
 
         {/* Token Card */}
@@ -188,7 +195,9 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
               <div>
                 <p className="text-sm text-gray-400">{token.name}</p>
                 <p className="text-2xl font-bold text-white">{token.symbol}</p>
-                <p className="text-xs text-gray-500">Price: ${token.price?.toFixed(8) || "N/A"}</p>
+                <p className="text-xs text-gray-500">
+                  Price: ${token.price?.toFixed(8) || "N/A"}
+                </p>
               </div>
             </div>
 
@@ -203,7 +212,8 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                   {availableBalance.toLocaleString(undefined, {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 6,
-                  })} {token.symbol}
+                  })}{" "}
+                  {token.symbol}
                 </span>
               </div>
             </div>
@@ -269,19 +279,25 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-gray-400">Reward (10% APY)</span>
                     <span className="text-green-400 font-semibold">
-                      +{calculatedReward.toLocaleString(undefined, {
+                      +
+                      {calculatedReward.toLocaleString(undefined, {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 6,
-                      })} {token.symbol}
+                      })}{" "}
+                      {token.symbol}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-gray-400">Total at End</span>
                     <span className="text-white font-semibold">
-                      {(Number(stakeAmount) + calculatedReward).toLocaleString(undefined, {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 6,
-                      })} {token.symbol}
+                      {(Number(stakeAmount) + calculatedReward).toLocaleString(
+                        undefined,
+                        {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 6,
+                        },
+                      )}{" "}
+                      {token.symbol}
                     </span>
                   </div>
                 </div>
@@ -315,13 +331,17 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                   <CardContent className="p-4">
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
-                        <p className="text-xs text-gray-400 mb-1">Staked Amount</p>
+                        <p className="text-xs text-gray-400 mb-1">
+                          Staked Amount
+                        </p>
                         <p className="text-lg font-bold text-white">
                           {stake.amount} {token.symbol}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-400 mb-1">Expected Reward</p>
+                        <p className="text-xs text-gray-400 mb-1">
+                          Expected Reward
+                        </p>
                         <p className="text-lg font-bold text-green-400">
                           +{stake.rewardAmount.toFixed(6)}
                         </p>

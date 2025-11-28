@@ -17,7 +17,7 @@ export const StakeTokens: React.FC<StakeTokensProps> = ({
 }) => {
   const { wallet, tokens } = useWallet();
   const { stakingTokens, toggleStakingToken, isStaking } = useStakingTokens(
-    wallet?.publicKey || null
+    wallet?.publicKey || null,
   );
 
   if (!wallet) {
@@ -30,7 +30,10 @@ export const StakeTokens: React.FC<StakeTokensProps> = ({
                 No wallet available. Please create or import a wallet first.
               </p>
               <div className="mt-4">
-                <Button onClick={onBack} className="w-full bg-[#2d1b47]/50 text-white">
+                <Button
+                  onClick={onBack}
+                  className="w-full bg-[#2d1b47]/50 text-white"
+                >
                   Back to Dashboard
                 </Button>
               </div>

@@ -29,11 +29,11 @@ function applyCors(headers: Headers) {
   headers.set("Access-Control-Allow-Origin", "*");
   headers.set(
     "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, OPTIONS"
+    "GET, POST, PUT, DELETE, OPTIONS",
   );
   headers.set(
     "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, X-Requested-With"
+    "Content-Type, Authorization, X-Requested-With",
   );
   headers.set("Vary", "Origin");
   return headers;
@@ -41,7 +41,7 @@ function applyCors(headers: Headers) {
 
 function jsonCors(status: number, body: any) {
   const headers = applyCors(
-    new Headers({ "Content-Type": "application/json" })
+    new Headers({ "Content-Type": "application/json" }),
   );
   return new Response(typeof body === "string" ? body : JSON.stringify(body), {
     status,
@@ -63,7 +63,7 @@ function calculateReward(amount: number, periodDays: number): number {
 function verifySignature(
   message: string,
   signature: string,
-  publicKeyStr: string
+  publicKeyStr: string,
 ): boolean {
   try {
     const sig = bs58.decode(signature);
@@ -90,25 +90,19 @@ export const onRequestGet = async ({ request }: { request: Request }) => {
   }
 
   const stakes = Array.from(store.stakes.values()).filter(
-    (stake) => stake.walletAddress === walletAddress
+    (stake) => stake.walletAddress === walletAddress,
   );
 
   return jsonCors(200, {
     stakes: stakes.map((stake) => ({
       ...stake,
       timeRemainingMs:
-        stake.status === "active"
-          ? Math.max(0, stake.endTime - Date.now())
-          : 0,
+        stake.status === "active" ? Math.max(0, stake.endTime - Date.now()) : 0,
     })),
   });
 };
 
-export const onRequestPost = async ({
-  request,
-}: {
-  request: Request;
-}) => {
+export const onRequestPost = async ({ request }: { request: Request }) => {
   const body = await request.json().catch(() => ({}));
 
   const action = body.action;

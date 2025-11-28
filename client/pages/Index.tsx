@@ -168,13 +168,16 @@ export default function Index() {
 
     case "stake-token-detail": {
       const selectedToken = tokens.find(
-        (t) => t.mint === currentScreen.tokenMint
+        (t) => t.mint === currentScreen.tokenMint,
       );
       if (!selectedToken) {
         return <StakeTokens onBack={navigateToDashboard} />;
       }
       return (
-        <TokenStakingDetail token={selectedToken} onBack={navigateToDashboard} />
+        <TokenStakingDetail
+          token={selectedToken}
+          onBack={navigateToDashboard}
+        />
       );
     }
 

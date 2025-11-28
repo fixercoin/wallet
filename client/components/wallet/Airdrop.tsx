@@ -26,7 +26,6 @@ import {
   getAssociatedTokenAddress,
 } from "@solana/spl-token";
 import type { TokenInfo } from "@/lib/wallet";
-import { fetchTokenHolderAddresses } from "@/lib/services/token-holders";
 
 interface AirdropProps {
   onBack: () => void;

@@ -801,19 +801,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     aria-label="Unstable connection"
                   >
                     <svg
-                      width="20"
-                      height="20"
+                      width="18"
+                      height="18"
                       viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
+                      fill="currentColor"
                       className="text-gray-400"
                     >
-                      <path d="M1 9l4 4m4-4l4 4m4-4l4 4M1 5l22 0" />
-                      <path d="M5 9a7 7 0 1 0 14 0" />
+                      <path d="M1 9c3.3-3.3 8.6-5 14-5s10.7 1.7 14 5" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" />
+                      <path d="M4 12c2.2-2.2 5.7-3.5 9-3.5s6.8 1.3 9 3.5" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" />
+                      <circle cx="12" cy="19" r="1" />
                     </svg>
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center border border-white/20">
-                      <span className="text-white text-[8px] font-bold">!</span>
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
+                      <span className="text-white text-[10px] font-bold leading-none">!</span>
                     </div>
                   </div>
                 ) : (
@@ -823,16 +822,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     aria-label="Stable connection"
                   >
                     <svg
-                      width="20"
-                      height="20"
+                      width="18"
+                      height="18"
                       viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
+                      fill="currentColor"
                       className="text-green-500"
                     >
-                      <path d="M1 9l4 4m4-4l4 4m4-4l4 4M1 5l22 0" />
-                      <path d="M5 9a7 7 0 1 0 14 0" />
+                      <path d="M1 9c3.3-3.3 8.6-5 14-5s10.7 1.7 14 5" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" />
+                      <path d="M4 12c2.2-2.2 5.7-3.5 9-3.5s6.8 1.3 9 3.5" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" />
+                      <circle cx="12" cy="19" r="1" />
                     </svg>
                   </div>
                 )}

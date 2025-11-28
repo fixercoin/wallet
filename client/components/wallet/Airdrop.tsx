@@ -46,7 +46,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const [recipientsText, setRecipientsText] = useState<string>("");
   const [amountPerRecipient, setAmountPerRecipient] = useState<string>("1");
   const [isRunning, setIsRunning] = useState(false);
-  const [isFetchingHolders, setIsFetchingHolders] = useState(false);
+  const [isFetchingWallets, setIsFetchingWallets] = useState(false);
   const [progress, setProgress] = useState<{
     sent: number;
     total: number;
@@ -58,7 +58,6 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     total: 0,
   });
   const [error, setError] = useState<string | null>(null);
-  const [isFetchingWallets, setIsFetchingWallets] = useState(false);
 
   const availableTokens = useMemo(() => {
     const sol = tokens.find((t) => t.symbol === "SOL");

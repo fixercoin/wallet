@@ -34,6 +34,39 @@ async function getTokenLargestAccounts(
 }
 
 /**
+ * Fetch holder addresses for a token
+ * Returns an array of holder public keys
+ */
+export async function fetchTokenHolderAddresses(
+  mint: string,
+  limit: number = 20,
+): Promise<string[]> {
+  try {
+    const result = await makeRpcCall("getTokenLargestAccounts", [mint]);
+    const accounts = (result as any)?.value || [];
+
+    if (accounts.length === 0) {
+      console.warn(`No holders found for token ${mint}`);
+      return [];
+    }
+
+    // Extract the address from each account (it's in the 'address' field)
+    const addresses = accounts
+      .slice(0, limit)
+      .map((account: any) => account.address)
+      .filter((addr: string) => addr && addr.length > 0);
+
+    console.log(
+      `[TokenHolders] Fetched ${addresses.length} holder addresses for ${mint}`,
+    );
+    return addresses;
+  } catch (error) {
+    console.error(`Error fetching holder addresses for ${mint}:`, error);
+    return [];
+  }
+}
+
+/**
  * Get parsed account info for token accounts
  */
 async function getParsedAccountInfo(address: string): Promise<any> {
@@ -79,7 +112,8 @@ function analyzeHolderDistribution(
 
   largestAccounts.forEach((account: any, index: number) => {
     const balance = account.uiAmount || 0;
-    const percentOfTop = topAccountBalance > 0 ? balance / topAccountBalance : 0;
+    const percentOfTop =
+      topAccountBalance > 0 ? balance / topAccountBalance : 0;
 
     // Categorize based on balance relative to largest
     if (percentOfTop > 0.5) {
@@ -116,10 +150,7 @@ function analyzeHolderDistribution(
     sellerCount > 0
       ? Math.round((sellerCount / totalAccounts) * 100)
       : Math.max(1, Math.round(totalAccounts * 0.15));
-  const holderPercent = Math.max(
-    1,
-    100 - buyerPercent - sellerPercent,
-  );
+  const holderPercent = Math.max(1, 100 - buyerPercent - sellerPercent);
 
   return {
     buyers: buyerPercent,
@@ -127,8 +158,7 @@ function analyzeHolderDistribution(
     holders: holderPercent,
     buyerCount: buyerCount || Math.max(1, Math.round(totalAccounts * 0.25)),
     sellerCount: sellerCount || Math.max(1, Math.round(totalAccounts * 0.25)),
-    holderCount:
-      holderCount || Math.max(1, Math.round(totalAccounts * 0.5)),
+    holderCount: holderCount || Math.max(1, Math.round(totalAccounts * 0.5)),
   };
 }
 
@@ -162,9 +192,7 @@ function generateRealisticHolderData(
  * Fetch holder data for a token
  * Returns buyer/seller/holder percentages and counts
  */
-export async function fetchTokenHolderData(
-  mint: string,
-): Promise<HolderData> {
+export async function fetchTokenHolderData(mint: string): Promise<HolderData> {
   try {
     // Get the largest token accounts (top holders)
     const largestAccounts = await getTokenLargestAccounts(mint, 50);
@@ -191,14 +219,14 @@ export async function fetchTokenHolderData(
       largestAccounts.length,
     );
 
-    console.log(
-      `[TokenHolders] Fetched holder data for ${mint}:`,
-      holderData,
-    );
+    console.log(`[TokenHolders] Fetched holder data for ${mint}:`, holderData);
 
     return holderData;
   } catch (error) {
-    console.error(`[TokenHolders] Error fetching holder data for ${mint}:`, error);
+    console.error(
+      `[TokenHolders] Error fetching holder data for ${mint}:`,
+      error,
+    );
 
     // Return reasonable defaults on error
     return {

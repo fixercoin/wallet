@@ -1,7 +1,4 @@
 import { tokenPairPricingService } from "./token-pair-pricing";
-import { birdeyeAPI } from "./birdeye";
-import { pumpFunPriceService } from "./pump-fun-price";
-import { solPriceService } from "./sol-price";
 import { saveServicePrice, getCachedServicePrice } from "./offline-cache";
 
 export interface FXMPriceData {
@@ -41,7 +38,7 @@ class FXMPriceService {
         "Fetching fresh FXM price using derived pricing (SOL pair)...",
       );
 
-      // Try derived pricing based on SOL pair first
+      // Try derived pricing based on SOL pair (uses DexScreener and Jupiter, no Birdeye)
       const pairingData = await tokenPairPricingService.getDerivedPrice("FXM");
 
       if (
@@ -73,129 +70,14 @@ class FXMPriceService {
         return priceData;
       }
 
-      // Fallback to Birdeye API if SOL pair derivation failed
-      console.log("SOL pair derivation failed for FXM, trying Birdeye API...");
-      const birdeyeToken = await birdeyeAPI.getTokenByMint(FXM_MINT);
-
-      if (
-        birdeyeToken &&
-        birdeyeToken.priceUsd &&
-        isFinite(birdeyeToken.priceUsd) &&
-        birdeyeToken.priceUsd > 0
-      ) {
-        const priceData: FXMPriceData = {
-          price: birdeyeToken.priceUsd,
-          priceChange24h: birdeyeToken.priceChange?.h24 || 0,
-          volume24h: birdeyeToken.volume?.h24 || 0,
-          liquidity: birdeyeToken.liquidity?.usd,
-          lastUpdated: new Date(),
-          derivationMethod: `fetched from Birdeye API`,
-        };
-
-        this.cachedData = priceData;
-        this.lastFetchTime = new Date();
-        console.log(
-          `✅ FXM price updated from Birdeye: $${priceData.price.toFixed(8)}`,
-        );
-
-        // Save to localStorage for offline support
-        saveServicePrice("FXM", {
-          price: priceData.price,
-          priceChange24h: priceData.priceChange24h,
-        });
-
-        return priceData;
-      }
-
-      // Fallback to Pump.fun API (since FXM is a pump.fun token)
-      console.log("Birdeye failed for FXM, trying Pump.fun API...");
-      const pumpFunPriceInSol =
-        await pumpFunPriceService.getTokenPrice(FXM_MINT);
-
-      if (
-        pumpFunPriceInSol &&
-        pumpFunPriceInSol > 0 &&
-        isFinite(pumpFunPriceInSol)
-      ) {
-        // Pump.fun returns price in SOL, convert to USD
-        try {
-          const solPriceData = await solPriceService.getSolPrice();
-          const solPrice = solPriceData?.price || 100; // Fallback SOL price if service fails
-          const pumpFunPriceUsd = pumpFunPriceInSol * solPrice;
-
-          const priceData: FXMPriceData = {
-            price: pumpFunPriceUsd,
-            priceChange24h: 0,
-            volume24h: 0,
-            lastUpdated: new Date(),
-            derivationMethod: `fetched from Pump.fun API (${pumpFunPriceInSol.toFixed(8)} SOL @ $${solPrice}/SOL)`,
-          };
-
-          this.cachedData = priceData;
-          this.lastFetchTime = new Date();
-          console.log(
-            `✅ FXM price updated from Pump.fun: $${priceData.price.toFixed(8)}`,
-          );
-
-          // Save to localStorage for offline support
-          saveServicePrice("FXM", {
-            price: priceData.price,
-            priceChange24h: priceData.priceChange24h,
-          });
-
-          return priceData;
-        } catch (error) {
-          console.warn("Failed to convert Pump.fun SOL price to USD:", error);
-        }
-      }
-
       console.warn(
-        "Failed to fetch FXM price from all sources - service unavailable",
+        "Failed to fetch FXM price from DexScreener/Jupiter - service unavailable",
       );
-
-      // Try to get price from localStorage as fallback
-      const cachedServicePrice = getCachedServicePrice("FXM");
-      if (cachedServicePrice && cachedServicePrice.price > 0) {
-        console.log(
-          `[FXM Price Service] Using localStorage cached price: $${cachedServicePrice.price.toFixed(8)}`,
-        );
-        return {
-          price: cachedServicePrice.price,
-          priceChange24h: cachedServicePrice.priceChange24h ?? 0,
-          volume24h: 0,
-          lastUpdated: new Date(),
-          derivationMethod: "cache",
-          isFallback: true,
-        };
-      }
       return null;
     } catch (error) {
       console.error("Error fetching FXM price:", error);
-
-      // Try to get price from localStorage as fallback on error
-      const cachedServicePrice = getCachedServicePrice("FXM");
-      if (cachedServicePrice && cachedServicePrice.price > 0) {
-        console.log(
-          `[FXM Price Service] Using localStorage cached price on error: $${cachedServicePrice.price.toFixed(8)}`,
-        );
-        return {
-          price: cachedServicePrice.price,
-          priceChange24h: cachedServicePrice.priceChange24h ?? 0,
-          volume24h: 0,
-          lastUpdated: new Date(),
-          derivationMethod: "cache",
-          isFallback: true,
-        };
-      }
       return null;
     }
-  }
-
-  private getFallbackPrice(): FXMPriceData | null {
-    console.log(
-      "FXM price service unavailable - returning null to show loading state",
-    );
-    return null;
   }
 
   // Get just the price number for quick access
@@ -211,8 +93,8 @@ class FXMPriceService {
   }> {
     const data = await this.getFXMPrice();
     return {
-      price: data?.price || 0.000003567,
-      derivationMethod: data?.derivationMethod || "hardcoded fallback",
+      price: data?.price || 0,
+      derivationMethod: data?.derivationMethod || "unavailable",
     };
   }
 

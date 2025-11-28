@@ -84,21 +84,6 @@ const POPULAR_TOKENS = [
   },
   // PumpFun tokens
   {
-    mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
-    symbol: "FIXERCOIN",
-    name: "FIXERCOIN",
-  },
-  {
-    mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
-    symbol: "LOCKER",
-    name: "LOCKER",
-  },
-  {
-    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
-    symbol: "FXM",
-    name: "Fixorium",
-  },
-  {
     mint: "DezXAZ8z7PnrnRJjz3wXBoRgixVqXaSMegAZiHX6apb",
     symbol: "COPE",
     name: "Cope",

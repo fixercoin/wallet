@@ -35,35 +35,6 @@ interface AirdropProps {
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
 const BATCH_FEE_SOL = 0.00001; // Fixed fee per batch in SOL
 
-// Popular Solana-based tokens for quick selection
-const POPULAR_TOKENS = [
-  {
-    mint: "So11111111111111111111111111111111111111112",
-    symbol: "SOL",
-    name: "Solana",
-  },
-  {
-    mint: "EPjFWaLb3crCc5B9J1yH68uu4Ksr2zkvH9UNc2suA8q",
-    symbol: "USDC",
-    name: "USD Coin",
-  },
-  {
-    mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenErt",
-    symbol: "USDT",
-    name: "Tether USD",
-  },
-  {
-    mint: "JUPyiwrYJFskUPiHa7hKeqbbqJACtrdPk9QCqfi5j9U",
-    symbol: "JUP",
-    name: "Jupiter",
-  },
-  {
-    mint: "BQcdHdAQW1hCHNiGiDMRAdpiSi56actusBmAfuqy9xv",
-    symbol: "WIF",
-    name: "dogwifhat",
-  },
-];
-
 export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const { wallet, balance, tokens, refreshBalance, refreshTokens } =
     useWallet();

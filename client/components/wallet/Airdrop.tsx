@@ -290,14 +290,18 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         });
         return;
       }
-      // For token transfers, also check SOL for all batch fees
-      if (typeof balance !== "number" || balance < totalBatchFees) {
+      // For token transfers, check SOL for batch fees + ATA creation costs
+      // Estimate ~0.002 SOL per ATA creation (worst case: all recipients need new ATAs)
+      const estimatedAtaCostSol = recipients.length * 0.002;
+      const totalSolNeeded = totalBatchFees + estimatedAtaCostSol;
+
+      if (typeof balance !== "number" || balance < totalSolNeeded) {
         setError(
-          `Insufficient SOL for batch fees (${totalBatchFees.toFixed(6)} SOL for ${totalBatches} batches)`,
+          `Insufficient SOL (need ${totalSolNeeded.toFixed(6)} SOL for batch fees ${totalBatchFees.toFixed(6)} SOL + ATA creation ~${estimatedAtaCostSol.toFixed(6)} SOL)`,
         );
         toast({
           title: "Insufficient SOL",
-          description: `Need ${totalBatchFees.toFixed(6)} SOL for transaction fees (${totalBatches} batches).`,
+          description: `Need ${totalSolNeeded.toFixed(6)} SOL for transaction fees and ATA creation.`,
           variant: "destructive",
         });
         return;

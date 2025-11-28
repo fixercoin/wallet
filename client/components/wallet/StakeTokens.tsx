@@ -8,6 +8,7 @@ import { useStakingTokens } from "@/hooks/use-staking-tokens";
 
 interface StakeTokensProps {
   onBack: () => void;
+  onTokenSelect?: (tokenMint: string) => void;
 }
 
 export const StakeTokens: React.FC<StakeTokensProps> = ({ onBack }) => {

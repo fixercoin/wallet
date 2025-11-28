@@ -792,32 +792,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {/* Action buttons - moved to right */}
+              {/* Connection status and settings - moved to right */}
               <div className="flex items-center gap-3">
-                <Button
-                  onClick={() => {
-                    window.location.reload();
-                  }}
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
-                  aria-label="Refresh"
-                  title="Refresh"
-                  disabled={isLoading}
-                >
-                  <style>{`
-                    @keyframes spin {
-                      0% { transform: rotate(0deg); }
-                      100% { transform: rotate(360deg); }
-                    }
-                    .rotate-cw-active {
-                      animation: spin 1.2s linear infinite;
-                      transform-origin: center;
-                    }
-                  `}</style>
-                  <RotateCw
-                    className={`h-4 w-4 ${isLoading ? "rotate-cw-active" : ""}`}
-                  />
-                </Button>
+                {isUsingCache ? (
+                  <div
+                    className="h-7 px-2 rounded-md bg-orange-500/10 border border-orange-500/40 flex items-center gap-1.5 text-xs text-orange-600 cursor-default"
+                    title="Connection unstable - using cached prices"
+                    aria-label="Unstable connection"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-orange-600 animate-pulse" />
+                    <span className="font-medium">Unstable</span>
+                  </div>
+                ) : (
+                  <div
+                    className="h-7 px-2 rounded-md bg-green-500/10 border border-green-500/40 flex items-center gap-1.5 text-xs text-green-600 cursor-default"
+                    title="Connection stable - using live prices"
+                    aria-label="Stable connection"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-600" />
+                    <span className="font-medium">Stable</span>
+                  </div>
+                )}
                 <Button
                   onClick={onSettings}
                   size="sm"

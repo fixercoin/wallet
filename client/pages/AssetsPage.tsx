@@ -140,9 +140,13 @@ export default function AssetsPage() {
           >
             <ArrowLeft size={24} />
           </button>
-          {isUsingCache && (
-            <div className="text-xs px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-600 border border-yellow-500/40 mb-3 inline-flex items-center gap-1.5">
-              <span>📡 Offline Mode - Last Synced</span>
+          {isUsingCache ? (
+            <div className="text-xs px-3 py-1 rounded-full bg-orange-500/20 text-orange-600 border border-orange-500/40 mb-3 inline-flex items-center gap-1.5">
+              <span>⚠️ Unstable Connect - Using Cache</span>
+            </div>
+          ) : (
+            <div className="text-xs px-3 py-1 rounded-full bg-green-500/20 text-green-600 border border-green-500/40 mb-3 inline-flex items-center gap-1.5">
+              <span>✓ Stable Connect</span>
             </div>
           )}
           <div className="bg-transparent rounded-lg p-4 border border-[#22c55e]/30 flex items-start justify-between">

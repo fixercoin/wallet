@@ -826,15 +826,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             <div className="text-center space-y-2 mt-8">
-              {isUsingCache ? (
-                <div className="text-xs px-3 py-1 rounded-full bg-orange-500/20 text-orange-600 inline-block border border-orange-500/40 mx-auto mb-2">
-                  ⚠️ Unstable Connect - Using Cache
-                </div>
-              ) : (
-                <div className="text-xs px-3 py-1 rounded-full bg-green-500/20 text-green-600 inline-block border border-green-500/40 mx-auto mb-2">
-                  ✓ Stable Connect
-                </div>
-              )}
               {wallet
                 ? (() => {
                     const total = getTotalPortfolioValue();

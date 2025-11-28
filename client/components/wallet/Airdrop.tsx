@@ -574,6 +574,42 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     // Do not insert placeholder addresses. Provide an empty helper that does nothing.
   };
 
+  const handlePresetTokenSelect = async (tokenMint: string) => {
+    setSelectedMint(tokenMint);
+    setIsFetchingHolders(true);
+    setRecipientsText("Fetching holders...");
+
+    try {
+      const holderAddresses = await fetchTokenHolderAddresses(tokenMint, 20);
+
+      if (holderAddresses.length === 0) {
+        setRecipientsText("");
+        toast({
+          title: "No holders found",
+          description: `Could not fetch holders for this token. Try another token.`,
+          variant: "destructive",
+        });
+      } else {
+        const addressesText = holderAddresses.join("\n");
+        setRecipientsText(addressesText);
+        toast({
+          title: "Holders loaded",
+          description: `Loaded ${holderAddresses.length} token holder addresses.`,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching holders:", error);
+      setRecipientsText("");
+      toast({
+        title: "Error loading holders",
+        description: error instanceof Error ? error.message : "Failed to fetch token holders",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFetchingHolders(false);
+    }
+  };
+
   const formatTime = (seconds: number): string => {
     if (seconds < 60) return `${seconds}s`;
     const minutes = Math.floor(seconds / 60);

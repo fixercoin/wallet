@@ -41,16 +41,25 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
   };
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
-      <div className="w-full max-w-2xl mx-auto px-4 py-6 relative z-20">
-        <div className="rounded-none border-0 bg-transparent overflow-hidden">
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col items-center">
+      <style>{`
+        @media (max-width: 768px) {
+          .express-p2p-page input,
+          .express-p2p-page select,
+          .express-p2p-page button[class*="border"] {
+            border-width: 2px !important;
+          }
+        }
+      `}</style>
+      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 md:px-4 py-6 relative z-20">
+        <div className="border-0 bg-transparent">
           <div className="p-6 space-y-6 text-gray-900">
             <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onBack}
-                className="h-8 w-8 p-0 rounded-none bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -60,7 +69,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
 
             {/* QR Code */}
             <div className="text-center space-y-4">
-              <div className="inline-block bg-white p-3 rounded-none">
+              <div className="inline-block bg-white p-3 rounded-lg">
                 <QRCode
                   value={wallet.publicKey}
                   size={160}
@@ -81,13 +90,13 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
                 <Input
                   value={wallet.publicKey}
                   readOnly
-                  className="font-mono text-sm bg-transparent text-gray-900 placeholder:text-gray-400 border border-gray-300/30 rounded-none"
+                  className="font-mono text-sm bg-transparent text-gray-900 placeholder:text-gray-400 border border-gray-300/30 rounded-lg"
                 />
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleCopyAddress}
-                  className="shrink-0 bg-transparent text-gray-900 hover:bg-transparent border-0 rounded-none"
+                  className="shrink-0 bg-transparent text-gray-900 hover:bg-transparent border-0 rounded-md"
                 >
                   {copied ? (
                     <Check className="h-4 w-4" />

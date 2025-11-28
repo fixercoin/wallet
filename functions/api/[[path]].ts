@@ -1019,6 +1019,10 @@ async function handleDexscreenerTokens(url: URL): Promise<Response> {
       );
     }
 
+    console.log(
+      `[DexScreener Tokens] Requesting data for mints: ${uniqueMints.join(", ")}`,
+    );
+
     const MAX_TOKENS_PER_BATCH = 20;
     const batches: string[][] = [];
     for (let i = 0; i < uniqueMints.length; i += MAX_TOKENS_PER_BATCH) {
@@ -1040,30 +1044,49 @@ async function handleDexscreenerTokens(url: URL): Promise<Response> {
             headers: browserHeaders(),
           });
           if (!resp.ok) {
+            console.warn(
+              `[DexScreener] Endpoint ${base} returned status ${resp.status}`,
+            );
             continue;
           }
           const data = await safeJson(resp);
           if (data?.schemaVersion) schemaVersion = data.schemaVersion;
           if (Array.isArray(data?.pairs)) {
+            console.log(
+              `[DexScreener] Got ${data.pairs.length} pairs from ${base}`,
+            );
             results.push(...data.pairs);
           }
           success = true;
           break;
-        } catch {
-          // try next endpoint
+        } catch (e) {
+          console.warn(
+            `[DexScreener] Error fetching from ${base}:`,
+            e instanceof Error ? e.message : String(e),
+          );
           continue;
         }
       }
-      // continue to next batch even if this one failed
       if (!success) {
-        continue;
+        console.warn(`[DexScreener] Failed to fetch batch: ${batch.join(",")}`);
       }
     }
 
     // Deduplicate and filter to Solana
     const seen = new Set<string>();
     const pairs = results
-      .filter((p: any) => (p?.chainId || "").toLowerCase() === "solana")
+      .filter((p: any) => {
+        // More flexible chain matching - handle various chainId formats
+        const chainId = (p?.chainId || "").toLowerCase().trim();
+        const isValidChain =
+          chainId === "solana" || chainId === "sol" || chainId === "";
+        if (!isValidChain) {
+          console.debug(
+            `[DexScreener] Filtering out pair with chainId: ${p?.chainId}`,
+          );
+        }
+        return isValidChain;
+      })
       .filter((p: any) => {
         const key = `${p?.baseToken?.address || ""}:${p?.quoteToken?.address || ""}`;
         if (seen.has(key)) return false;
@@ -1071,10 +1094,35 @@ async function handleDexscreenerTokens(url: URL): Promise<Response> {
         return true;
       });
 
+    console.log(
+      `[DexScreener Tokens] Processed ${results.length} results, returning ${pairs.length} Solana pairs. Requested: ${uniqueMints.join(", ")}`,
+    );
+
+    // Log what we got
+    if (pairs.length > 0) {
+      const gotMints = Array.from(
+        new Set(
+          pairs
+            .flatMap((p: any) => [
+              p?.baseToken?.address,
+              p?.quoteToken?.address,
+            ])
+            .filter(Boolean),
+        ),
+      );
+      const missingMints = uniqueMints.filter((m) => !gotMints.includes(m));
+      if (missingMints.length > 0) {
+        console.warn(
+          `[DexScreener] Missing mints (${missingMints.length}): ${missingMints.join(", ")}`,
+        );
+      }
+    }
+
     return new Response(JSON.stringify({ schemaVersion, pairs }), {
       headers: CORS_HEADERS,
     });
   } catch (err: any) {
+    console.error("[DexScreener] Tokens handler error:", err);
     return new Response(
       JSON.stringify({
         error: { message: err?.message || String(err) },

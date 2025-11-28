@@ -47,7 +47,7 @@ async function handler(request: Request): Promise<Response> {
       params: [
         publicKey,
         {
-          programId: "TokenkegQfeZyiNwAJsyFbPVwwQQfubRS2Xs8JZNuM",
+          programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
         },
         {
           encoding: "jsonParsed",

@@ -57,6 +57,7 @@ interface DashboardProps {
   onAccounts?: () => void;
   onLock: () => void;
   onBurn: () => void;
+  onStakeTokens?: () => void;
 }
 
 import { useNavigate } from "react-router-dom";

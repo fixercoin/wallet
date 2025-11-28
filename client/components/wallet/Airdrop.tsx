@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Gift } from "lucide-react";
+import { ArrowLeft, Gift, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
@@ -26,6 +26,7 @@ import {
   getAssociatedTokenAddress,
 } from "@solana/spl-token";
 import type { TokenInfo } from "@/lib/wallet";
+import { fetchTokenHolderAddresses } from "@/lib/services/token-holders";
 
 interface AirdropProps {
   onBack: () => void;

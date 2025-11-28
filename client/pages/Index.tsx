@@ -157,7 +157,28 @@ export default function Index() {
       return <BurnToken onBack={navigateToDashboard} />;
 
     case "stake-tokens":
-      return <StakeTokens onBack={navigateToDashboard} />;
+      return (
+        <StakeTokens
+          onBack={navigateToDashboard}
+          onTokenSelect={(tokenMint) =>
+            navigateToScreen("stake-token-detail", tokenMint)
+          }
+        />
+      );
+
+    case "stake-token-detail": {
+      const { wallet } = useWallet();
+      const allTokens = wallet ? tokens : [];
+      const selectedToken = allTokens.find(
+        (t) => t.mint === currentScreen.tokenMint
+      );
+      if (!selectedToken) {
+        return <StakeTokens onBack={navigateToDashboard} />;
+      }
+      return (
+        <TokenStakingDetail token={selectedToken} onBack={navigateToDashboard} />
+      );
+    }
 
     case "dashboard":
     default:

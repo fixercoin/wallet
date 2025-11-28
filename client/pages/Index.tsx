@@ -39,7 +39,7 @@ interface ScreenState {
 }
 
 export default function Index() {
-  const { wallet } = useWallet();
+  const { wallet, tokens } = useWallet();
   const [currentScreen, setCurrentScreen] = useState<ScreenState>({
     screen: "dashboard",
   });

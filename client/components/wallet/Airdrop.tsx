@@ -82,6 +82,67 @@ const POPULAR_TOKENS = [
     symbol: "ORCA",
     name: "Orca",
   },
+  // PumpFun tokens
+  {
+    mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+    symbol: "FIXERCOIN",
+    name: "FIXERCOIN",
+  },
+  {
+    mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+    symbol: "LOCKER",
+    name: "LOCKER",
+  },
+  {
+    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+    symbol: "FXM",
+    name: "Fixorium",
+  },
+  {
+    mint: "4whSvgm3qNvXqYvFqV1axa4JV6UY9dsFDVXaS5MSpump",
+    symbol: "PUMP",
+    name: "PumpFun",
+  },
+  {
+    mint: "AJvDm82AxByrtApnSPXXCUY5eqk47MvBXkkAKgw8Wpump",
+    symbol: "BONK",
+    name: "Bonk",
+  },
+  {
+    mint: "DezXAZ8z7PnrnRJjz3wXBoRgixVqXaSMegAZiHX6apb",
+    symbol: "COPE",
+    name: "Cope",
+  },
+  {
+    mint: "MEW1gQWJ4zccPS7zTZWm2BLT8VwRoySnnM8oLcXEWpump",
+    symbol: "MEW",
+    name: "MEW",
+  },
+  {
+    mint: "HeLp6NuQkmYoUFc6TEZrK3jeDMXqSJUGyViF5AAS7qpump",
+    symbol: "HELP",
+    name: "HELP",
+  },
+  {
+    mint: "HARDrwsCKJuyq1qyHTpV7pZhfAfZPYJUVoKZ5hzqpump",
+    symbol: "HARD",
+    name: "HARD",
+  },
+  {
+    mint: "5zRJbVpwJMbZ1bMvyMwVmSREjXuJfVqG8xf1yPx9Dnpump",
+    symbol: "USELESS",
+    name: "USELESS",
+  },
+  {
+    mint: "GRUPfqvSmUgKbmdcHeZxwy8KyXg7dUV7WD7Yo6KApump",
+    symbol: "GRUP",
+    name: "GRUP",
+  },
+  {
+    mint: "7qbRF6YsyGuLUVs6Y1q64bdVrfe4ZcUUz1JRdoVNUSpump",
+    symbol: "5IRCLE",
+    name: "5IRCLE",
+  },
 ];
 
 export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {

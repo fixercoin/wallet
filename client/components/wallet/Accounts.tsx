@@ -22,7 +22,7 @@ export const Accounts: React.FC<AccountsProps> = ({ onBack, onOpenSetup }) => {
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
-      <div className="w-full max-w-4xl mx-auto py-2 px-4">
+      <div className="w-full">
         <div className="mb-1 p-6 border-0 bg-transparent relative mx-0">
           <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
             <Button

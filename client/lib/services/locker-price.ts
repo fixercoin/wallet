@@ -96,4 +96,37 @@ class LockerPriceService {
   }
 }
 
-export const lockerPriceService = new LockerPriceService();
+// Fallback prices for LOCKER when API unavailable due to timeout
+const LOCKER_FALLBACK_PRICE: LockerPriceData = {
+  price: 0.00001112,
+  priceChange24h: 0,
+  volume24h: 0,
+  liquidity: 0,
+  lastUpdated: new Date(),
+  derivationMethod: "fallback (API timeout/unavailable)",
+  isFallback: true,
+};
+
+// Wrap service to add fallback logic
+class LockerPriceServiceWithFallback extends LockerPriceService {
+  async getLockerPrice(): Promise<LockerPriceData | null> {
+    try {
+      const result = await super.getLockerPrice();
+      if (result) {
+        return result;
+      }
+      console.warn(
+        "[LockerPriceService] Falling back to static price due to null result",
+      );
+      return LOCKER_FALLBACK_PRICE;
+    } catch (error) {
+      console.warn(
+        "[LockerPriceService] Error fetching price, using fallback:",
+        error instanceof Error ? error.message : error,
+      );
+      return LOCKER_FALLBACK_PRICE;
+    }
+  }
+}
+
+export const lockerPriceService = new LockerPriceServiceWithFallback();

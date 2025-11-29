@@ -576,8 +576,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div
-      className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden"
-      style={{ backgroundColor: "#1f1f1f" }}
+      className="express-p2p-page min-h-screen text-gray-900 relative overflow-hidden"
+      style={{ backgroundColor: "#f3f4f6" }}
     >
       {/* Decorative bottom green wave (SVG) */}
       <svg
@@ -778,21 +778,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     className="flex items-center gap-2 text-xs"
                   >
                     <Wallet className="h-4 w-4" />
-                    <span>MY-WALLET</span>
+                    <span>Wallet</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => onStakeTokens?.()}
                     className="flex items-center gap-2 text-xs"
                   >
                     <Coins className="h-4 w-4" />
-                    <span>STAKE TOKENS</span>
+                    <span>Staking</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => onLock()}
                     className="flex items-center gap-2 text-xs"
                   >
                     <Lock className="h-4 w-4" />
-                    <span>LOCK TOKENS</span>
+                    <span>Lock Up</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -800,7 +800,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     className="flex items-center gap-2 text-xs"
                   >
                     <Clock className="h-4 w-4" />
-                    <span>WALLET HISTORY</span>
+                    <span>Wallet History</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

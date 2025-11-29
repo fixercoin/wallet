@@ -106,4 +106,37 @@ class FXMPriceService {
   }
 }
 
-export const fxmPriceService = new FXMPriceService();
+// Fallback prices for FXM when API unavailable due to timeout
+const FXM_FALLBACK_PRICE: FXMPriceData = {
+  price: 0.000003567,
+  priceChange24h: 0,
+  volume24h: 0,
+  liquidity: 0,
+  lastUpdated: new Date(),
+  derivationMethod: "fallback (API timeout/unavailable)",
+  isFallback: true,
+};
+
+// Wrap service to add fallback logic
+class FXMPriceServiceWithFallback extends FXMPriceService {
+  async getFXMPrice(): Promise<FXMPriceData | null> {
+    try {
+      const result = await super.getFXMPrice();
+      if (result) {
+        return result;
+      }
+      console.warn(
+        "[FXMPriceService] Falling back to static price due to null result",
+      );
+      return FXM_FALLBACK_PRICE;
+    } catch (error) {
+      console.warn(
+        "[FXMPriceService] Error fetching price, using fallback:",
+        error instanceof Error ? error.message : error,
+      );
+      return FXM_FALLBACK_PRICE;
+    }
+  }
+}
+
+export const fxmPriceService = new FXMPriceServiceWithFallback();

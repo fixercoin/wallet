@@ -602,6 +602,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     if (!exists) {
       updatedWallets = [walletToAdd, ...wallets];
       setWallets(updatedWallets);
+      console.log(
+        `[WalletContext] New wallet added: ${walletToAdd.publicKey}`,
+      );
+    } else {
+      console.log(
+        `[WalletContext] Wallet already exists, just setting as active: ${walletToAdd.publicKey}`,
+      );
     }
 
     // Reset displayed balances to avoid flash of previous wallet
@@ -623,12 +630,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
       localStorage.setItem(ACTIVE_WALLET_KEY, walletToAdd.publicKey);
       console.log(
-        "[WalletContext] Wallet added and saved to localStorage:",
+        "[WalletContext] ✅ Wallet added and saved to localStorage:",
+        walletToAdd.publicKey,
+      );
+      console.log(
+        "[WalletContext] ✅ Active wallet key saved:",
+        ACTIVE_WALLET_KEY,
+        "=",
         walletToAdd.publicKey,
       );
     } catch (e) {
       console.error(
-        "[WalletContext] Failed to save wallet to localStorage:",
+        "[WalletContext] ❌ Failed to save wallet to localStorage:",
         e,
       );
     }

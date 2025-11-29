@@ -129,7 +129,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 try {
                   const bin = atob(parsed.secretKey);
                   const out = new Uint8Array(bin.length);
-                  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+                  for (let i = 0; i < bin.length; i++)
+                    out[i] = bin.charCodeAt(i);
                   parsed.secretKey = out;
                 } catch {}
               }
@@ -217,7 +218,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
               coerced.push(obj as WalletData);
             } catch (e) {
-              console.warn("[WalletContext] Failed to parse individual wallet:", e);
+              console.warn(
+                "[WalletContext] Failed to parse individual wallet:",
+                e,
+              );
               continue;
             }
           }
@@ -602,9 +606,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     if (!exists) {
       updatedWallets = [walletToAdd, ...wallets];
       setWallets(updatedWallets);
-      console.log(
-        `[WalletContext] New wallet added: ${walletToAdd.publicKey}`,
-      );
+      console.log(`[WalletContext] New wallet added: ${walletToAdd.publicKey}`);
     } else {
       console.log(
         `[WalletContext] Wallet already exists, just setting as active: ${walletToAdd.publicKey}`,

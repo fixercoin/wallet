@@ -806,56 +806,56 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {/* Network signal strength dots and settings - moved to right */}
+              {/* Network signal strength lines and settings - moved to right */}
               <div className="flex items-center gap-2">
                 <div
-                  className="relative h-6 w-6 flex flex-col items-center justify-center gap-0.5 group py-1"
+                  className="relative h-6 w-6 flex flex-col items-end justify-end gap-0.5 group py-1"
                   title={networkSignal.isOnline ? `Signal: ${networkSignal.bars}/4 (${networkSignal.latency}ms)` : 'No internet connection'}
                   aria-label={`Network signal ${networkSignal.bars} bars`}
                 >
-                  {/* Dot 4 - largest, lights up when signal >= 4 (top) */}
+                  {/* Line 4 - tallest, lights up when signal >= 4 (top) */}
                   <div
-                    className={`rounded-full transition-all ${
+                    className={`w-0.5 transition-all rounded-sm ${
                       networkSignal.bars >= 4
-                        ? 'w-2.5 h-2.5 bg-green-500'
-                        : 'w-0.5 h-0.5 bg-gray-600/40'
+                        ? 'h-5 bg-green-500'
+                        : 'h-1 bg-gray-600/40'
                     }`}
                   />
 
-                  {/* Dot 3 - large, lights up when signal >= 3 */}
+                  {/* Line 3 - tall, lights up when signal >= 3 */}
                   <div
-                    className={`rounded-full transition-all ${
+                    className={`w-0.5 transition-all rounded-sm ${
                       networkSignal.bars >= 3
-                        ? 'w-2 h-2 bg-green-500'
-                        : 'w-0.5 h-0.5 bg-gray-600/40'
+                        ? 'h-4 bg-green-500'
+                        : 'h-1 bg-gray-600/40'
                     }`}
                   />
 
-                  {/* Dot 2 - medium, lights up when signal >= 2 */}
+                  {/* Line 2 - medium, lights up when signal >= 2 */}
                   <div
-                    className={`rounded-full transition-all ${
+                    className={`w-0.5 transition-all rounded-sm ${
                       networkSignal.bars >= 2
-                        ? `w-1.5 h-1.5 ${
+                        ? `h-3 ${
                             networkSignal.bars === 2
                               ? 'bg-yellow-500'
                               : 'bg-green-500'
                           }`
-                        : 'w-0.5 h-0.5 bg-gray-600/40'
+                        : 'h-1 bg-gray-600/40'
                     }`}
                   />
 
-                  {/* Dot 1 - smallest, lights up when signal >= 1 (bottom) */}
+                  {/* Line 1 - shortest, lights up when signal >= 1 (bottom) */}
                   <div
-                    className={`rounded-full transition-all ${
+                    className={`w-0.5 transition-all rounded-sm ${
                       networkSignal.bars >= 1
-                        ? `w-1 h-1 ${
+                        ? `h-2 ${
                             networkSignal.bars === 1
                               ? 'bg-red-500'
                               : networkSignal.bars === 2
                               ? 'bg-yellow-500'
                               : 'bg-green-500'
                           }`
-                        : 'w-0.5 h-0.5 bg-gray-600/40'
+                        : 'h-1 bg-gray-600/40'
                     }`}
                   />
 

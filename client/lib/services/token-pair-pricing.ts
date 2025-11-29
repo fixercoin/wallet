@@ -68,10 +68,7 @@ class TokenPairPricingService {
       const solPriceData = await Promise.race([
         solPriceService.getSolPrice(),
         new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error("SOL price fetch timeout")),
-            5500,
-          ),
+          setTimeout(() => reject(new Error("SOL price fetch timeout")), 5500),
         ),
       ] as const);
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "@/contexts/WalletContext";
-import { supabase } from "@/lib/services/supabase";
+import { resolveApiUrl } from "@/lib/api-client";
 
 export interface Stake {
   id: string;

@@ -53,11 +53,14 @@ class SolPriceService {
         } catch (parseError) {
           // If JSON parsing fails and response is not ok, log and retry
           if (!response.ok) {
-            const contentType = response.headers.get("content-type") || "unknown";
+            const contentType =
+              response.headers.get("content-type") || "unknown";
             console.warn(
               `SOL price API returned ${response.status} with content-type: ${contentType}. Will retry.`,
             );
-            throw new Error(`Failed to fetch SOL price: HTTP ${response.status}`);
+            throw new Error(
+              `Failed to fetch SOL price: HTTP ${response.status}`,
+            );
           }
           console.error(
             "Failed to parse SOL price response as JSON:",
@@ -139,7 +142,9 @@ class SolPriceService {
 
     // Fallback to cache if retry failed
     if (this.cache.data) {
-      console.log("Returning in-memory cached SOL price due to all retries failing");
+      console.log(
+        "Returning in-memory cached SOL price due to all retries failing",
+      );
       return this.cache.data;
     }
 

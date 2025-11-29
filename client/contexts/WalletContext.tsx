@@ -157,7 +157,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         const firstWallet = parsed?.[0];
         if (firstWallet && isEncryptedWalletStorage(firstWallet)) {
           // Wallets are encrypted - store them and wait for password unlock
-          console.log("[WalletContext] Encrypted wallets detected, awaiting password");
+          console.log(
+            "[WalletContext] Encrypted wallets detected, awaiting password",
+          );
           encryptedWalletsRef.current = parsed;
           setRequiresPassword(true);
           return;
@@ -182,7 +184,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         if (coerced.length > 0) {
           const savedActiveKey = localStorage.getItem(ACTIVE_WALLET_KEY);
           const activeWallet = savedActiveKey
-            ? coerced.find(w => w.publicKey === savedActiveKey)
+            ? coerced.find((w) => w.publicKey === savedActiveKey)
             : coerced[0];
           if (activeWallet) {
             setActivePublicKey(activeWallet.publicKey);
@@ -1122,7 +1124,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
   const unlockWithPassword = async (password: string): Promise<boolean> => {
     try {
-      if (!encryptedWalletsRef.current || encryptedWalletsRef.current.length === 0) {
+      if (
+        !encryptedWalletsRef.current ||
+        encryptedWalletsRef.current.length === 0
+      ) {
         console.warn("[WalletContext] No encrypted wallets to unlock");
         return false;
       }

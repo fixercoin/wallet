@@ -304,12 +304,12 @@ class DexscreenerAPI {
       const gotMints = new Set(
         fetchedTokens
           .flatMap((t) => [t.baseToken?.address, t.quoteToken?.address])
-          .filter(Boolean) as string[]
+          .filter(Boolean) as string[],
       );
       const stillMissing = toFetch.filter((m) => !gotMints.has(m));
       if (stillMissing.length > 0) {
         throw new Error(
-          `DexScreener API failed and no cache available for ${stillMissing.join(", ")}: ${lastError}`
+          `DexScreener API failed and no cache available for ${stillMissing.join(", ")}: ${lastError}`,
         );
       }
     }

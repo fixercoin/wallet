@@ -17,10 +17,19 @@ export interface Stake {
   timeRemainingMs?: number;
 }
 
+export interface RewardDistribution {
+  amount: number;
+  tokenMint: string;
+  payerWallet: string;
+  recipientWallet: string;
+  status: string;
+}
+
 interface UseStakingReturn {
   stakes: Stake[];
   loading: boolean;
   error: string | null;
+  rewardPayerWallet: string;
   createStake: (
     tokenMint: string,
     amount: number,
@@ -28,8 +37,9 @@ interface UseStakingReturn {
   ) => Promise<Stake>;
   withdrawStake: (
     stakeId: string,
-  ) => Promise<{ stake: Stake; totalAmount: number }>;
+  ) => Promise<{ stake: Stake; totalAmount: number; reward?: RewardDistribution }>;
   refreshStakes: () => Promise<void>;
+  getRewardStatus: () => Promise<any>;
 }
 
 function calculateReward(amount: number, periodDays: number): number {

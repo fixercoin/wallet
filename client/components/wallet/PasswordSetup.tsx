@@ -67,16 +67,16 @@ export const PasswordSetup: React.FC<PasswordSetupProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md mx-4 rounded-2xl bg-white p-6 shadow-2xl">
-        <div className="space-y-4">
+      <div className="w-full max-w-md mx-4 rounded-none bg-gray-900 border border-gray-700 p-6 shadow-lg">
+        <div className="space-y-4 uppercase">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-            <p className="mt-2 text-sm text-gray-600">{description}</p>
+            <h2 className="text-2xl font-bold text-white">{title}</h2>
+            <p className="mt-2 text-sm text-gray-300">{description}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-700">
+              <Label htmlFor="password" className="text-gray-300">
                 {mode === "create" ? "Create Password" : "Enter Password"}
               </Label>
               <div className="relative">
@@ -91,13 +91,13 @@ export const PasswordSetup: React.FC<PasswordSetupProps> = ({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
-                  className="pr-10 bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                  className="pr-10 bg-gray-800 border border-gray-700 text-white rounded-none placeholder:uppercase placeholder:text-gray-400"
                   autoFocus
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-white"
                   disabled={isLoading}
                 >
                   {showPassword ? (
@@ -111,7 +111,7 @@ export const PasswordSetup: React.FC<PasswordSetupProps> = ({
 
             {mode === "create" && (
               <div className="space-y-2">
-                <Label htmlFor="confirm-password" className="text-gray-700">
+                <Label htmlFor="confirm-password" className="text-gray-300">
                   Confirm Password
                 </Label>
                 <div className="relative">
@@ -122,12 +122,12 @@ export const PasswordSetup: React.FC<PasswordSetupProps> = ({
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={isLoading}
-                    className="pr-10 bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                    className="pr-10 bg-gray-800 border border-gray-700 text-white rounded-none placeholder:uppercase placeholder:text-gray-400"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-white"
                     disabled={isLoading}
                   >
                     {showConfirm ? (
@@ -147,8 +147,8 @@ export const PasswordSetup: React.FC<PasswordSetupProps> = ({
             )}
 
             {mode === "create" && (
-              <div className="rounded-lg bg-blue-50 p-3">
-                <p className="text-xs text-blue-900">
+              <div className="rounded-lg bg-transparent p-3">
+                <p className="text-xs text-gray-300">
                   <strong>Security Note:</strong> Your password encrypts your
                   private keys. Without it, you cannot recover your wallet. Make
                   it strong and memorable!
@@ -162,14 +162,14 @@ export const PasswordSetup: React.FC<PasswordSetupProps> = ({
                 onClick={onCancel}
                 disabled={isLoading}
                 variant="outline"
-                className="flex-1 bg-gray-100 text-gray-900 hover:bg-gray-200"
+                className="flex-1 bg-gray-800 text-white hover:bg-gray-700 border border-gray-700 uppercase rounded-[2px]"
               >
                 {mode === "create" ? "Cancel" : "Close"}
               </Button>
               <Button
                 type="submit"
                 disabled={isLoading || (!password.trim() && mode === "create")}
-                className="flex-1 bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white font-semibold"
+                className="flex-1 bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white font-semibold uppercase rounded-[2px]"
               >
                 {isLoading
                   ? "Processing..."

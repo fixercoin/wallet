@@ -32,7 +32,7 @@ async function handler(request: Request): Promise<Response> {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 18000);
 
     // Try CoinGecko API first
     try {
@@ -126,27 +126,37 @@ async function handler(request: Request): Promise<Response> {
       },
     );
   } catch (error: any) {
+    // Always return 200 with fallback price to ensure client can parse response
     const isTimeout =
       error?.name === "AbortError" || error?.message?.includes("timeout");
 
+    console.error(
+      `[SOL Price] Handler error: ${isTimeout ? "timeout" : "fetch failed"}`,
+      error?.message || String(error),
+    );
+
     return new Response(
       JSON.stringify({
-        error: isTimeout ? "Request timeout" : "Failed to fetch SOL price",
-        details: error?.message || String(error),
         price: 100,
         price_change_24h: 0,
         market_cap: 0,
         volume_24h: 0,
+        source: "fallback",
+        error: isTimeout
+          ? "Request timeout - using fallback price"
+          : "API error - using fallback price",
       }),
       {
-        status: isTimeout ? 504 : 502,
+        status: 200,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "public, max-age=60",
         },
       },
     );
   }
 }
 
-export default handler;
+export const onRequest = async ({ request }: { request: Request }) =>
+  handler(request);

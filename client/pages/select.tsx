@@ -277,8 +277,8 @@ export default function Select() {
 
   return (
     <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden flex items-center justify-center">
-      <div className="absolute top-0 right-0 w-56 h-56 sm:w-72 sm:h-72 lg:w-96 lg:h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-56 sm:h-56 lg:w-72 lg:h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
       <div className="absolute top-4 left-4 z-30">
         <button
@@ -290,8 +290,8 @@ export default function Select() {
         </button>
       </div>
 
-      <div className="w-full mx-auto px-4 sm:px-6 relative z-20 flex flex-col items-center gap-2">
-        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-0 mt-6 flex items-center justify-end">
+      <div className="w-full mx-auto px-6 relative z-20 flex flex-col items-center gap-2">
+        <div className="w-full max-w-4xl order-0 mt-6 flex items-center justify-end">
           <span className="text-sm text-white/70 select-none">
             info@fixorium.com.pk
           </span>
@@ -299,20 +299,20 @@ export default function Select() {
         <img
           src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2Fda8d138bd45a4eceb9b1e4baae32a4a2?format=webp&width=800"
           alt="Payment illustration"
-          className="mx-auto mb-4 max-h-[220px] w-full sm:w-3/4 md:w-1/2 object-contain"
+          className="mx-auto mb-4 max-h-[220px] w-full object-contain"
         />
-        <div className="mt-2 w-full max-w-sm sm:max-w-md md:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 order-2">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
+        <div className="mt-2 w-full max-w-4xl rounded-3xl p-6 order-2">
+          <div className="grid grid-cols-2 gap-4 w-full">
             <Button
               onClick={() => navigate("/buy-now")}
-              className="w-full py-2 sm:py-3 h-12 rounded-xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
+              className="w-full py-3 h-12 rounded-xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-base shadow-lg active:scale-95"
             >
               BUY
             </Button>
 
             <Button
               onClick={() => navigate("/sell-now")}
-              className="w-full py-2 sm:py-3 h-12 rounded-xl bg-gradient-to-br from-[#FF5A8C] to-[#FF7A5C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-sm sm:text-base shadow-lg active:scale-95"
+              className="w-full py-3 h-12 rounded-xl bg-gradient-to-br from-[#FF5A8C] to-[#FF7A5C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-base shadow-lg active:scale-95"
             >
               SELL
             </Button>
@@ -320,14 +320,14 @@ export default function Select() {
         </div>
 
         {wallet?.publicKey && (
-          <div className="w-full max-w-sm sm:max-w-md md:max-w-lg order-1">
+          <div className="w-full max-w-4xl order-1">
             {/* Orders list displayed as prompt messages - moved above image */}
             <div className="mb-3 space-y-3">
               {loadingOrders ? (
                 <div className="text-sm text-white/60">Loading orders...</div>
               ) : orders.length === 0 ? (
                 payload && payload.roomId ? (
-                  <div className="p-4 bg-[#0f1520]/50 border border-white/10">
+                  <div className="p-4 bg-[#0f1520]/50 border border-white/3">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="font-semibold text-sm text-white/90">
@@ -373,7 +373,7 @@ export default function Select() {
                 orders.map((o: any) => (
                   <div
                     key={o.id || o.orderId}
-                    className="p-4 bg-[#0f1520]/50 border border-white/10"
+                    className="p-4 bg-[#0f1520]/50 border border-white/3"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
@@ -411,7 +411,7 @@ export default function Select() {
               )}
             </div>
 
-            <div className="w-full rounded-2xl p-4 sm:p-6 bg-transparent flex items-center justify-center">
+            <div className="w-full rounded-2xl p-6 bg-transparent flex items-center justify-center">
               {loadingOrders ? (
                 <div className="text-sm text-white/60">Loading orders...</div>
               ) : orders.length === 0 && !payload ? (
@@ -432,7 +432,7 @@ export default function Select() {
       </div>
 
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{confirmationData?.title}</DialogTitle>
             <DialogDescription>{confirmationData?.message}</DialogDescription>

@@ -102,4 +102,37 @@ class FixercoinPriceService {
   }
 }
 
-export const fixercoinPriceService = new FixercoinPriceService();
+// Fallback prices for FIXERCOIN when API unavailable due to timeout
+const FIXERCOIN_FALLBACK_PRICE: FixercoinPriceData = {
+  price: 0.00008139,
+  priceChange24h: 0,
+  volume24h: 0,
+  liquidity: 0,
+  lastUpdated: new Date(),
+  derivationMethod: "fallback (API timeout/unavailable)",
+  isFallback: true,
+};
+
+// Wrap service to add fallback logic
+class FixercoinPriceServiceWithFallback extends FixercoinPriceService {
+  async getFixercoinPrice(): Promise<FixercoinPriceData | null> {
+    try {
+      const result = await super.getFixercoinPrice();
+      if (result) {
+        return result;
+      }
+      console.warn(
+        "[FixercoinPriceService] Falling back to static price due to null result",
+      );
+      return FIXERCOIN_FALLBACK_PRICE;
+    } catch (error) {
+      console.warn(
+        "[FixercoinPriceService] Error fetching price, using fallback:",
+        error instanceof Error ? error.message : error,
+      );
+      return FIXERCOIN_FALLBACK_PRICE;
+    }
+  }
+}
+
+export const fixercoinPriceService = new FixercoinPriceServiceWithFallback();

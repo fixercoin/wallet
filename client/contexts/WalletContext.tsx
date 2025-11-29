@@ -651,7 +651,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       console.log(`[WalletContext] New wallet added: ${walletToAdd.publicKey}`);
     } else {
       console.log(
-        `[WalletContext] Wallet already exists, just setting as active: ${walletToAdd.publicKey}`,
+        `[WalletContext] Wallet already exists, just setting as active: ${walletToAdd.publicKey}`
       );
     }
 
@@ -662,7 +662,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     setActivePublicKey(walletToAdd.publicKey);
 
-    // Immediately save to localStorage
+    // Immediately save to storage
     try {
       const toStore = updatedWallets.map((w) => {
         const copy: any = { ...w } as any;
@@ -671,23 +671,31 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
         return copy;
       });
-      localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
-      localStorage.setItem(ACTIVE_WALLET_KEY, walletToAdd.publicKey);
-      console.log(
-        "[WalletContext] ✅ Wallet added and saved to localStorage:",
-        walletToAdd.publicKey,
+
+      const walletsSuccess = setStorageItem(
+        WALLETS_STORAGE_KEY,
+        JSON.stringify(toStore)
       );
-      console.log(
-        "[WalletContext] ✅ Active wallet key saved:",
+      const activeSuccess = setStorageItem(
         ACTIVE_WALLET_KEY,
-        "=",
-        walletToAdd.publicKey,
+        walletToAdd.publicKey
       );
+
+      if (walletsSuccess && activeSuccess) {
+        console.log(
+          "[WalletContext] ✅ Wallet added and saved to persistent storage:",
+          walletToAdd.publicKey
+        );
+      } else {
+        console.warn(
+          "[WalletContext] ⚠️ Partial save: wallets=" +
+            walletsSuccess +
+            ", active=" +
+            activeSuccess
+        );
+      }
     } catch (e) {
-      console.error(
-        "[WalletContext] ❌ Failed to save wallet to localStorage:",
-        e,
-      );
+      console.error("[WalletContext] ❌ Failed to save wallet:", e);
     }
   };
 

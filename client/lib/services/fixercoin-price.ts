@@ -1,5 +1,9 @@
 import { dexscreenerAPI } from "./dexscreener";
 import { saveServicePrice } from "./offline-cache";
+import {
+  retryWithExponentialBackoff,
+  AGGRESSIVE_RETRY_OPTIONS,
+} from "./retry-fetch";
 
 export interface FixercoinPriceData {
   price: number;
@@ -18,71 +22,81 @@ class FixercoinPriceService {
   private cachedData: FixercoinPriceData | null = null;
   private lastFetchTime: Date | null = null;
   private readonly CACHE_DURATION = 250; // 250ms - ensures live price updates every 250ms for real-time display
+  private readonly TOKEN_NAME = "FIXERCOIN";
 
   async getFixercoinPrice(): Promise<FixercoinPriceData | null> {
-    try {
-      // Check if we have valid cached data (only from live prices, not fallbacks)
-      if (
-        this.cachedData &&
-        this.lastFetchTime &&
-        this.cachedData.derivationMethod !== "fallback"
-      ) {
-        const timeSinceLastFetch = Date.now() - this.lastFetchTime.getTime();
-        if (timeSinceLastFetch < this.CACHE_DURATION) {
-          console.log("Returning cached FIXERCOIN price data");
-          return this.cachedData;
-        }
+    // Check if we have valid cached data (only from live prices, not fallbacks)
+    if (
+      this.cachedData &&
+      this.lastFetchTime &&
+      this.cachedData.derivationMethod !== "fallback"
+    ) {
+      const timeSinceLastFetch = Date.now() - this.lastFetchTime.getTime();
+      if (timeSinceLastFetch < this.CACHE_DURATION) {
+        console.log("Returning cached FIXERCOIN price data");
+        return this.cachedData;
       }
-
-      console.log("Fetching fresh FIXERCOIN price from DexScreener API...");
-
-      // Fetch directly from DexScreener
-      const tokens = await dexscreenerAPI.getTokensByMints([FIXERCOIN_MINT]);
-
-      if (!tokens || tokens.length === 0) {
-        console.warn("FIXERCOIN not found on DexScreener");
-        return null;
-      }
-
-      const token = tokens[0];
-      const price = token.priceUsd ? parseFloat(token.priceUsd) : null;
-      const priceChange24h = token.priceChange?.h24 || 0;
-      const volume24h = token.volume?.h24 || 0;
-      const liquidity = token.liquidity?.usd;
-      const marketCap = token.marketCap;
-
-      if (!price || price <= 0) {
-        console.warn("Invalid FIXERCOIN price from DexScreener:", price);
-        return null;
-      }
-
-      const priceData: FixercoinPriceData = {
-        price,
-        priceChange24h,
-        volume24h,
-        liquidity,
-        marketCap,
-        lastUpdated: new Date(),
-        derivationMethod: "DexScreener API (live)",
-      };
-
-      this.cachedData = priceData;
-      this.lastFetchTime = new Date();
-      console.log(
-        `✅ FIXERCOIN price updated: $${priceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${priceData.derivationMethod}`,
-      );
-
-      // Save to localStorage for offline support
-      saveServicePrice("FIXERCOIN", {
-        price: priceData.price,
-        priceChange24h: priceData.priceChange24h,
-      });
-
-      return priceData;
-    } catch (error) {
-      console.error("Error fetching FIXERCOIN price:", error);
-      return null;
     }
+
+    // Use retry logic to fetch price from DexScreener
+    const priceData = await retryWithExponentialBackoff(
+      async () => {
+        console.log("Fetching fresh FIXERCOIN price from DexScreener API...");
+
+        // Fetch directly from DexScreener with no fallback
+        const tokens = await dexscreenerAPI.getTokensByMints([FIXERCOIN_MINT]);
+
+        if (!tokens || tokens.length === 0) {
+          throw new Error("FIXERCOIN not found on DexScreener");
+        }
+
+        const token = tokens[0];
+        const price = token.priceUsd ? parseFloat(token.priceUsd) : null;
+        const priceChange24h = token.priceChange?.h24 || 0;
+        const volume24h = token.volume?.h24 || 0;
+        const liquidity = token.liquidity?.usd;
+        const marketCap = token.marketCap;
+
+        if (!price || price <= 0) {
+          throw new Error(`Invalid FIXERCOIN price from DexScreener: ${price}`);
+        }
+
+        const priceData: FixercoinPriceData = {
+          price,
+          priceChange24h,
+          volume24h,
+          liquidity,
+          marketCap,
+          lastUpdated: new Date(),
+          derivationMethod: "DexScreener API (live)",
+        };
+
+        this.cachedData = priceData;
+        this.lastFetchTime = new Date();
+        console.log(
+          `✅ FIXERCOIN price updated: $${priceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${priceData.derivationMethod}`,
+        );
+
+        // Save to localStorage for offline support
+        saveServicePrice("FIXERCOIN", {
+          price: priceData.price,
+          priceChange24h: priceData.priceChange24h,
+        });
+
+        return priceData;
+      },
+      this.TOKEN_NAME,
+      AGGRESSIVE_RETRY_OPTIONS,
+    );
+
+    // Return null only if all retries failed - never return fallback
+    if (!priceData) {
+      console.warn(
+        `[${this.TOKEN_NAME}] All price fetch attempts failed. Will retry on next request.`,
+      );
+    }
+
+    return priceData;
   }
 
   // Get just the price number for quick access
@@ -101,37 +115,4 @@ class FixercoinPriceService {
   }
 }
 
-// Fallback prices for FIXERCOIN when API unavailable due to timeout
-const FIXERCOIN_FALLBACK_PRICE: FixercoinPriceData = {
-  price: 0.00008139,
-  priceChange24h: 0,
-  volume24h: 0,
-  liquidity: 0,
-  lastUpdated: new Date(),
-  derivationMethod: "fallback (API timeout/unavailable)",
-  isFallback: true,
-};
-
-// Wrap service to add fallback logic
-class FixercoinPriceServiceWithFallback extends FixercoinPriceService {
-  async getFixercoinPrice(): Promise<FixercoinPriceData | null> {
-    try {
-      const result = await super.getFixercoinPrice();
-      if (result) {
-        return result;
-      }
-      console.warn(
-        "[FixercoinPriceService] Falling back to static price due to null result",
-      );
-      return FIXERCOIN_FALLBACK_PRICE;
-    } catch (error) {
-      console.warn(
-        "[FixercoinPriceService] Error fetching price, using fallback:",
-        error instanceof Error ? error.message : error,
-      );
-      return FIXERCOIN_FALLBACK_PRICE;
-    }
-  }
-}
-
-export const fixercoinPriceService = new FixercoinPriceServiceWithFallback();
+export const fixercoinPriceService = new FixercoinPriceService();

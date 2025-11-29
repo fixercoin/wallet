@@ -181,7 +181,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
         </svg>
 
         <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10">
-          <div className="w-full bg-transparent overflow-hidden">
+          <div className="w-full bg-transparent overflow-hidden px-4 sm:px-6">
             <div className="space-y-6">
               <div className="flex items-center justify-center pb-2">
                 <img

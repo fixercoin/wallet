@@ -866,7 +866,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   if (!wallet) {
     return (
-      <div className="w-full max-w-md mx-auto px-4">
+      <div className="w-full max-w-4xl mx-auto px-4">
         <div className="rounded-none border border-[#e6f6ec]/20 bg-transparent overflow-hidden">
           <div className="space-y-6 p-6">
             <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
@@ -902,16 +902,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col">
-      <style>{`
-        @media (max-width: 768px) {
-          .express-p2p-page input,
-          .express-p2p-page select,
-          .express-p2p-page button[class*="border"] {
-            border-width: 2px !important;
-          }
-        }
-      `}</style>
-      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 md:px-4 py-6 relative z-0">
+      <div className="w-full max-w-4xl mx-auto px-4 py-6 relative z-0">
         <div className="border-0 bg-transparent">
           <div className="space-y-6 p-6 relative">
             <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">

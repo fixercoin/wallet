@@ -47,6 +47,7 @@ export default function Index() {
 
   // Wait for wallet context to be initialized from localStorage
   if (!isInitialized) {
+    console.log("[Index] Wallet context initializing...");
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-center">
@@ -59,6 +60,7 @@ export default function Index() {
 
   // If password is required, don't show setup - let PasswordPromptDialog handle it
   if (requiresPassword && !wallet) {
+    console.log("[Index] Wallet is password protected, awaiting unlock...");
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-center">
@@ -70,12 +72,16 @@ export default function Index() {
 
   // If no wallet exists (new user), show the wallet setup screen
   if (!wallet) {
+    console.log("[Index] No wallet found, showing wallet setup screen");
     return (
       <WalletSetup
         onComplete={() => setCurrentScreen({ screen: "dashboard" })}
       />
     );
   }
+
+  // Wallet exists - show dashboard
+  console.log("[Index] ✅ Wallet loaded successfully:", wallet.publicKey);
 
   const navigateToScreen = (screen: Screen, tokenMint?: string) => {
     // Prevent accessing setup if wallet exists

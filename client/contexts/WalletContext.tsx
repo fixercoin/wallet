@@ -43,6 +43,7 @@ interface WalletContextType {
   isLoading: boolean;
   error: string | null;
   isUsingCache: boolean; // true when displaying cached data due to offline/network error
+  requiresPassword: boolean; // true when wallets are encrypted and need unlock
   setWallet: (wallet: WalletData | null) => void; // set active
   addWallet: (wallet: WalletData) => void; // add and select
   selectWallet: (publicKey: string) => void; // select existing
@@ -52,6 +53,7 @@ interface WalletContextType {
   removeToken: (tokenMint: string) => void;
   logout: () => void;
   updateWalletLabel: (publicKey: string, label: string) => void;
+  unlockWithPassword: (password: string) => Promise<boolean>;
   connection?: Connection | null;
 }
 

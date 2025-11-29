@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "@/contexts/WalletContext";
-import { supabase } from "@/lib/services/supabase";
+import { resolveApiUrl } from "@/lib/api-client";
 
 export interface Stake {
   id: string;
@@ -17,10 +17,19 @@ export interface Stake {
   timeRemainingMs?: number;
 }
 
+export interface RewardDistribution {
+  amount: number;
+  tokenMint: string;
+  payerWallet: string;
+  recipientWallet: string;
+  status: string;
+}
+
 interface UseStakingReturn {
   stakes: Stake[];
   loading: boolean;
   error: string | null;
+  rewardPayerWallet: string;
   createStake: (
     tokenMint: string,
     amount: number,
@@ -28,8 +37,13 @@ interface UseStakingReturn {
   ) => Promise<Stake>;
   withdrawStake: (
     stakeId: string,
-  ) => Promise<{ stake: Stake; totalAmount: number }>;
+  ) => Promise<{
+    stake: Stake;
+    totalAmount: number;
+    reward?: RewardDistribution;
+  }>;
   refreshStakes: () => Promise<void>;
+  getRewardStatus: () => Promise<any>;
 }
 
 function calculateReward(amount: number, periodDays: number): number {
@@ -52,6 +66,7 @@ export function useStaking(): UseStakingReturn {
   const [stakes, setStakes] = useState<Stake[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rewardPayerWallet, setRewardPayerWallet] = useState<string>("");
 
   // Map database row to Stake interface
   const mapRowToStake = (row: any): Stake => ({
@@ -70,7 +85,7 @@ export function useStaking(): UseStakingReturn {
       row.status === "active" ? Math.max(0, row.end_time - Date.now()) : 0,
   });
 
-  // Load stakes from Supabase
+  // Load stakes from Cloudflare API
   const refreshStakes = useCallback(async () => {
     if (!wallet?.publicKey) {
       setStakes([]);
@@ -81,16 +96,27 @@ export function useStaking(): UseStakingReturn {
     setError(null);
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from("stakes")
-        .select("*")
-        .eq("wallet_address", wallet.publicKey);
+      const response = await fetch(
+        resolveApiUrl(
+          `/api/staking/list?wallet=${encodeURIComponent(wallet.publicKey)}`,
+        ),
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
-      if (fetchError) {
-        throw new Error(fetchError.message);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || `Failed to fetch stakes: ${response.status}`,
+        );
       }
 
-      const mappedStakes = (data || []).map(mapRowToStake);
+      const result = await response.json();
+      const mappedStakes = (result.data || []).map(mapRowToStake);
       setStakes(mappedStakes);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -101,7 +127,7 @@ export function useStaking(): UseStakingReturn {
     }
   }, [wallet?.publicKey]);
 
-  // Create new stake in Supabase
+  // Create new stake via Cloudflare API
   const createStake = useCallback(
     async (
       tokenMint: string,
@@ -109,52 +135,58 @@ export function useStaking(): UseStakingReturn {
       periodDays: number,
     ): Promise<Stake> => {
       if (!wallet?.publicKey) throw new Error("No wallet");
+      if (!wallet?.secretKey)
+        throw new Error("Wallet secret key not available");
 
       if (![30, 60, 90].includes(periodDays)) {
         throw new Error("Invalid period. Must be 30, 60, or 90 days");
       }
 
-      const now = Date.now();
-      const endTime = now + periodDays * 24 * 60 * 60 * 1000;
-      const rewardAmount = calculateReward(amount, periodDays);
-      const stakeId = generateStakeId();
+      // For now, we'll use basic authentication with wallet address
+      // In production, implement proper message signing
+      const message = `Create stake:${wallet.publicKey}:${Date.now()}`;
 
-      const { data, error: insertError } = await supabase
-        .from("stakes")
-        .insert({
-          id: stakeId,
-          wallet_address: wallet.publicKey,
-          token_mint: tokenMint,
-          amount,
-          stake_period_days: periodDays,
-          start_time: now,
-          end_time: endTime,
-          reward_amount: rewardAmount,
-          status: "active",
-          created_at: now,
-          updated_at: now,
-        })
-        .select();
+      try {
+        const response = await fetch(resolveApiUrl("/api/staking/create"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            wallet: wallet.publicKey,
+            tokenMint,
+            amount,
+            periodDays,
+            message,
+            signature: "verified", // Placeholder - would be actual signature
+          }),
+        });
 
-      if (insertError) {
-        throw new Error(insertError.message);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.error || `Failed to create stake: ${response.status}`,
+          );
+        }
+
+        const result = await response.json();
+        const newStake = mapRowToStake(result.data);
+        setStakes((prev) => [...prev, newStake]);
+        return newStake;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new Error(msg);
       }
-
-      if (!data || data.length === 0) {
-        throw new Error("Failed to create stake");
-      }
-
-      const newStake = mapRowToStake(data[0]);
-      setStakes((prev) => [...prev, newStake]);
-      return newStake;
     },
-    [wallet?.publicKey],
+    [wallet?.publicKey, wallet?.secretKey],
   );
 
-  // Withdraw from stake in Supabase
+  // Withdraw from stake via Cloudflare API
   const withdrawStake = useCallback(
     async (stakeId: string) => {
       if (!wallet?.publicKey) throw new Error("No wallet");
+      if (!wallet?.secretKey)
+        throw new Error("Wallet secret key not available");
 
       const stake = stakes.find((s) => s.id === stakeId);
       if (!stake) throw new Error("Stake not found");
@@ -167,53 +199,98 @@ export function useStaking(): UseStakingReturn {
         throw new Error("Stake is not active");
       }
 
-      const now = Date.now();
-      if (now < stake.endTime) {
-        throw new Error("Staking period has not ended yet");
+      // For now, we'll use basic authentication with wallet address
+      // In production, implement proper message signing
+      const message = `Withdraw stake:${stakeId}:${wallet.publicKey}:${Date.now()}`;
+
+      try {
+        const response = await fetch(resolveApiUrl("/api/staking/withdraw"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            wallet: wallet.publicKey,
+            stakeId,
+            message,
+            signature: "verified", // Placeholder - would be actual signature
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.error || `Failed to withdraw stake: ${response.status}`,
+          );
+        }
+
+        const result = await response.json();
+        const updatedStake = mapRowToStake(result.data.stake);
+        setStakes((prev) =>
+          prev.map((s) => (s.id === stakeId ? updatedStake : s)),
+        );
+
+        return {
+          stake: updatedStake,
+          totalAmount: result.data.totalAmount,
+          reward: result.data.reward,
+        };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new Error(msg);
       }
+    },
+    [wallet?.publicKey, wallet?.secretKey, stakes],
+  );
 
-      const { data, error: updateError } = await supabase
-        .from("stakes")
-        .update({
-          status: "withdrawn",
-          withdrawn_at: now,
-          updated_at: now,
-        })
-        .eq("id", stakeId)
-        .select();
+  // Get reward status for wallet
+  const getRewardStatus = useCallback(async () => {
+    if (!wallet?.publicKey) {
+      return null;
+    }
 
-      if (updateError) {
-        throw new Error(updateError.message);
-      }
-
-      if (!data || data.length === 0) {
-        throw new Error("Failed to withdraw stake");
-      }
-
-      const updatedStake = mapRowToStake(data[0]);
-      setStakes((prev) =>
-        prev.map((s) => (s.id === stakeId ? updatedStake : s)),
+    try {
+      const response = await fetch(
+        resolveApiUrl(
+          `/api/staking/rewards-status?wallet=${encodeURIComponent(wallet.publicKey)}`,
+        ),
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
       );
 
-      return {
-        stake: updatedStake,
-        totalAmount: stake.amount + stake.rewardAmount,
-      };
-    },
-    [wallet?.publicKey, stakes],
-  );
+      if (!response.ok) {
+        throw new Error("Failed to fetch reward status");
+      }
+
+      const result = await response.json();
+      if (result.data?.rewardPayerWallet) {
+        setRewardPayerWallet(result.data.rewardPayerWallet);
+      }
+      return result.data;
+    } catch (err) {
+      console.error("Error fetching reward status:", err);
+      return null;
+    }
+  }, [wallet?.publicKey]);
 
   // Load stakes on mount and when wallet changes
   useEffect(() => {
     refreshStakes();
-  }, [refreshStakes]);
+    getRewardStatus();
+  }, [refreshStakes, getRewardStatus]);
 
   return {
     stakes,
     loading,
     error,
+    rewardPayerWallet,
     createStake,
     withdrawStake,
     refreshStakes,
+    getRewardStatus,
   };
 }

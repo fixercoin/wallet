@@ -208,8 +208,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   }, []);
 
-  // Persist wallets whenever they change
+  // Persist wallets whenever they change (but not before initial load)
   useEffect(() => {
+    // Don't persist until we've finished initial load from localStorage
+    if (!hasInitializedRef.current) {
+      return;
+    }
+
     try {
       if (wallets.length === 0) {
         localStorage.removeItem(WALLETS_STORAGE_KEY);

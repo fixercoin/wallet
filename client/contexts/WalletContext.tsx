@@ -1095,6 +1095,41 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     setTokens(DEFAULT_TOKENS);
   };
 
+  const unlockWithPassword = async (password: string): Promise<boolean> => {
+    try {
+      if (!encryptedWalletsRef.current || encryptedWalletsRef.current.length === 0) {
+        console.warn("[WalletContext] No encrypted wallets to unlock");
+        return false;
+      }
+
+      // Try to decrypt wallets with provided password
+      const decryptedWallets: WalletData[] = [];
+      for (const encrypted of encryptedWalletsRef.current) {
+        try {
+          const decrypted = decryptWalletData(encrypted, password);
+          decryptedWallets.push(decrypted);
+        } catch (err) {
+          console.warn("[WalletContext] Failed to decrypt wallet:", err);
+          throw new Error("Incorrect password");
+        }
+      }
+
+      // If we got here, password was correct
+      setWalletPassword(password);
+      setWallets(decryptedWallets);
+      setRequiresPassword(false);
+      if (decryptedWallets.length > 0) {
+        setActivePublicKey(decryptedWallets[0].publicKey);
+      }
+      encryptedWalletsRef.current = [];
+      console.log("[WalletContext] Wallets unlocked successfully");
+      return true;
+    } catch (error) {
+      console.error("[WalletContext] Unlock error:", error);
+      return false;
+    }
+  };
+
   const value: WalletContextType = {
     wallet: ensureWalletSecretKey(wallet),
     wallets,

@@ -110,102 +110,114 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
   // Load wallets from localStorage on mount (migrate legacy if necessary)
   useEffect(() => {
-    try {
-      const legacy = localStorage.getItem(LEGACY_WALLET_KEY);
-      if (legacy) {
-        const parsed = JSON.parse(legacy) as any;
-        // try to coerce secretKey
-        if (parsed && parsed.secretKey) {
-          try {
-            if (Array.isArray(parsed.secretKey)) {
-              parsed.secretKey = Uint8Array.from(parsed.secretKey);
-            } else if (typeof parsed.secretKey === "object") {
-              const vals = Object.values(parsed.secretKey).filter(
-                (v) => typeof v === "number",
-              ) as number[];
-              if (vals.length > 0) parsed.secretKey = Uint8Array.from(vals);
-            } else if (typeof parsed.secretKey === "string") {
-              try {
-                const bin = atob(parsed.secretKey);
-                const out = new Uint8Array(bin.length);
-                for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-                parsed.secretKey = out;
-              } catch {}
+    const initializeWallets = async () => {
+      try {
+        const legacy = localStorage.getItem(LEGACY_WALLET_KEY);
+        if (legacy) {
+          const parsed = JSON.parse(legacy) as any;
+          // try to coerce secretKey
+          if (parsed && parsed.secretKey) {
+            try {
+              if (Array.isArray(parsed.secretKey)) {
+                parsed.secretKey = Uint8Array.from(parsed.secretKey);
+              } else if (typeof parsed.secretKey === "object") {
+                const vals = Object.values(parsed.secretKey).filter(
+                  (v) => typeof v === "number",
+                ) as number[];
+                if (vals.length > 0) parsed.secretKey = Uint8Array.from(vals);
+              } else if (typeof parsed.secretKey === "string") {
+                try {
+                  const bin = atob(parsed.secretKey);
+                  const out = new Uint8Array(bin.length);
+                  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+                  parsed.secretKey = out;
+                } catch {}
+              }
+            } catch (e) {
+              console.warn("Failed to coerce legacy secretKey:", e);
             }
-          } catch (e) {
-            console.warn("Failed to coerce legacy secretKey:", e);
           }
-        }
-        const single = parsed as WalletData;
-        setWallets([single]);
-        setActivePublicKey(single.publicKey);
-        // migrate into new key
-        try {
-          const copy: any = { ...single } as any;
-          if (copy.secretKey instanceof Uint8Array)
-            copy.secretKey = Array.from(copy.secretKey as Uint8Array);
-          localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify([copy]));
-          localStorage.removeItem(LEGACY_WALLET_KEY);
-        } catch (e) {
-          console.warn("Failed to migrate legacy wallet to accounts key:", e);
-        }
-        hasInitializedRef.current = true;
-        setIsInitialized(true);
-        return;
-      }
-
-      const stored = localStorage.getItem(WALLETS_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as any[];
-
-        // Check if wallets are encrypted
-        const firstWallet = parsed?.[0];
-        if (firstWallet && isEncryptedWalletStorage(firstWallet)) {
-          // Wallets are encrypted - store them and wait for password unlock
-          console.log(
-            "[WalletContext] Encrypted wallets detected, awaiting password",
-          );
-          encryptedWalletsRef.current = parsed;
-          setRequiresPassword(true);
+          const single = parsed as WalletData;
+          setWallets([single]);
+          setActivePublicKey(single.publicKey);
+          // migrate into new key
+          try {
+            const copy: any = { ...single } as any;
+            if (copy.secretKey instanceof Uint8Array)
+              copy.secretKey = Array.from(copy.secretKey as Uint8Array);
+            localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify([copy]));
+            localStorage.removeItem(LEGACY_WALLET_KEY);
+          } catch (e) {
+            console.warn("Failed to migrate legacy wallet to accounts key:", e);
+          }
           hasInitializedRef.current = true;
           setIsInitialized(true);
           return;
         }
 
-        // Load wallets as plaintext
-        const coerced: WalletData[] = (parsed || []).map((p) => {
-          const obj = { ...p } as any;
-          if (obj.secretKey && Array.isArray(obj.secretKey)) {
-            obj.secretKey = Uint8Array.from(obj.secretKey);
-          } else if (obj.secretKey && typeof obj.secretKey === "object") {
-            const vals = Object.values(obj.secretKey).filter(
-              (v) => typeof v === "number",
-            ) as number[];
-            if (vals.length > 0) obj.secretKey = Uint8Array.from(vals);
-          }
-          return obj as WalletData;
-        });
-        setWallets(coerced);
+        const stored = localStorage.getItem(WALLETS_STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored) as any[];
 
-        // Restore active wallet from localStorage
-        if (coerced.length > 0) {
-          const savedActiveKey = localStorage.getItem(ACTIVE_WALLET_KEY);
-          const activeWallet = savedActiveKey
-            ? coerced.find((w) => w.publicKey === savedActiveKey)
-            : coerced[0];
-          if (activeWallet) {
-            setActivePublicKey(activeWallet.publicKey);
+          // Check if wallets are encrypted
+          const firstWallet = parsed?.[0];
+          if (firstWallet && isEncryptedWalletStorage(firstWallet)) {
+            // Wallets are encrypted - store them and wait for password unlock
+            console.log(
+              "[WalletContext] Encrypted wallets detected, awaiting password",
+            );
+            encryptedWalletsRef.current = parsed;
+            setRequiresPassword(true);
+            hasInitializedRef.current = true;
+            setIsInitialized(true);
+            return;
+          }
+
+          // Load wallets as plaintext
+          const coerced: WalletData[] = (parsed || []).map((p) => {
+            const obj = { ...p } as any;
+            if (obj.secretKey && Array.isArray(obj.secretKey)) {
+              obj.secretKey = Uint8Array.from(obj.secretKey);
+            } else if (obj.secretKey && typeof obj.secretKey === "object") {
+              const vals = Object.values(obj.secretKey).filter(
+                (v) => typeof v === "number",
+              ) as number[];
+              if (vals.length > 0) obj.secretKey = Uint8Array.from(vals);
+            }
+            return obj as WalletData;
+          });
+          setWallets(coerced);
+
+          // Restore active wallet from localStorage
+          if (coerced.length > 0) {
+            const savedActiveKey = localStorage.getItem(ACTIVE_WALLET_KEY);
+            const activeWallet = savedActiveKey
+              ? coerced.find((w) => w.publicKey === savedActiveKey)
+              : coerced[0];
+            if (activeWallet) {
+              setActivePublicKey(activeWallet.publicKey);
+            }
           }
         }
+
+        // Mark as initialized after state updates are queued
+        // Use a small timeout to ensure state updates are processed
+        await new Promise((resolve) => {
+          requestAnimationFrame(() => {
+            hasInitializedRef.current = true;
+            setIsInitialized(true);
+            resolve(null);
+          });
+        });
+      } catch (error) {
+        console.error("Error loading wallets from storage:", error);
+        localStorage.removeItem(WALLETS_STORAGE_KEY);
+        hasInitializedRef.current = true;
+        setIsInitialized(true);
       }
-      hasInitializedRef.current = true;
-      setIsInitialized(true);
-    } catch (error) {
-      console.error("Error loading wallets from storage:", error);
-      localStorage.removeItem(WALLETS_STORAGE_KEY);
-      hasInitializedRef.current = true;
-      setIsInitialized(true);
-    }
+    };
+
+    initializeWallets();
   }, []);
 
   // Persist wallets whenever they change (but not before initial load)

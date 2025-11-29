@@ -7,19 +7,26 @@
 class StakingDatabase {
   private $dataDir;
   private $stakesFile;
+  private $rewardsFile;
 
   public function __construct() {
     $this->dataDir = __DIR__ . '/../data';
     $this->stakesFile = $this->dataDir . '/stakes.json';
-    
+    $this->rewardsFile = $this->dataDir . '/rewards.json';
+
     // Ensure data directory exists
     if (!is_dir($this->dataDir)) {
       mkdir($this->dataDir, 0755, true);
     }
-    
+
     // Initialize stakes file if it doesn't exist
     if (!file_exists($this->stakesFile)) {
       file_put_contents($this->stakesFile, json_encode([], JSON_PRETTY_PRINT));
+    }
+
+    // Initialize rewards file if it doesn't exist
+    if (!file_exists($this->rewardsFile)) {
+      file_put_contents($this->rewardsFile, json_encode([], JSON_PRETTY_PRINT));
     }
   }
 

@@ -577,7 +577,7 @@ export default function BuyTrade() {
                           <img
                             src={msg.metadata.attachmentDataUrl}
                             alt="attachment"
-                            className="rounded-lg max-h-48 border border-white/20"
+                            className="rounded-lg max-h-48 border border-white/5"
                           />
                         </div>
                       )}
@@ -792,7 +792,7 @@ export default function BuyTrade() {
                               <img
                                 src={msg.metadata.attachmentDataUrl}
                                 alt="attachment"
-                                className="rounded-lg max-h-48 border border-white/20"
+                                className="rounded-lg max-h-48 border border-white/5"
                               />
                             </div>
                           )}

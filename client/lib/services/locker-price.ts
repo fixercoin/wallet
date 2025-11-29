@@ -1,5 +1,5 @@
-import { tokenPairPricingService } from "./token-pair-pricing";
-import { saveServicePrice, getCachedServicePrice } from "./offline-cache";
+import { dexscreenerAPI } from "./dexscreener";
+import { saveServicePrice } from "./offline-cache";
 
 export interface LockerPriceData {
   price: number;
@@ -10,6 +10,8 @@ export interface LockerPriceData {
   derivationMethod?: string;
   isFallback?: boolean;
 }
+
+const LOCKER_MINT = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
 
 class LockerPriceService {
   private cachedData: LockerPriceData | null = null;
@@ -31,51 +33,49 @@ class LockerPriceService {
         }
       }
 
-      console.log(
-        "Fetching fresh LOCKER price using derived pricing (SOL pair)...",
-      );
+      console.log("Fetching fresh LOCKER price from DexScreener API...");
 
-      // Use derived pricing based on SOL pair
-      const pairingData =
-        await tokenPairPricingService.getDerivedPrice("LOCKER");
+      // Fetch directly from DexScreener
+      const tokens = await dexscreenerAPI.getTokensByMints([LOCKER_MINT]);
+      
+      if (!tokens || tokens.length === 0) {
+        console.warn("LOCKER not found on DexScreener");
+        return null;
+      }
 
-      if (!pairingData) {
-        console.warn("Failed to derive LOCKER price - service unavailable");
+      const token = tokens[0];
+      const price = token.priceUsd ? parseFloat(token.priceUsd) : null;
+      const priceChange24h = token.priceChange?.h24 || 0;
+      const volume24h = token.volume?.h24 || 0;
+      const liquidity = token.liquidity?.usd;
+
+      if (!price || price <= 0) {
+        console.warn("Invalid LOCKER price from DexScreener:", price);
         return null;
       }
 
       const priceData: LockerPriceData = {
-        price: pairingData.derivedPrice,
-        priceChange24h: pairingData.priceChange24h,
-        volume24h: pairingData.volume24h,
-        liquidity: pairingData.liquidity,
-        lastUpdated: pairingData.lastUpdated,
-        derivationMethod: `derived from SOL pair (1 SOL = ${pairingData.pairRatio.toFixed(0)} LOCKER)`,
+        price,
+        priceChange24h,
+        volume24h,
+        liquidity,
+        lastUpdated: new Date(),
+        derivationMethod: "DexScreener API (live)",
       };
 
-      // Only cache if we got valid, live price data (not fallback)
-      if (
-        priceData.price > 0 &&
-        isFinite(priceData.price) &&
-        pairingData.derivedPrice > 0
-      ) {
-        this.cachedData = priceData;
-        this.lastFetchTime = new Date();
-        console.log(
-          `✅ LOCKER price updated: $${priceData.price.toFixed(8)} (${priceData.derivationMethod})`,
-        );
+      this.cachedData = priceData;
+      this.lastFetchTime = new Date();
+      console.log(
+        `✅ LOCKER price updated: $${priceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${priceData.derivationMethod}`
+      );
 
-        // Save to localStorage for offline support
-        saveServicePrice("LOCKER", {
-          price: priceData.price,
-          priceChange24h: priceData.priceChange24h,
-        });
+      // Save to localStorage for offline support
+      saveServicePrice("LOCKER", {
+        price: priceData.price,
+        priceChange24h: priceData.priceChange24h,
+      });
 
-        return priceData;
-      } else {
-        console.warn("Invalid price data from derivation");
-        return null;
-      }
+      return priceData;
     } catch (error) {
       console.error("Error fetching LOCKER price:", error);
       return null;
@@ -92,7 +92,9 @@ class LockerPriceService {
   clearCache(): void {
     this.cachedData = null;
     this.lastFetchTime = null;
-    tokenPairPricingService.clearTokenCache("LOCKER");
+    console.log(
+      "[LockerPriceService] Cache cleared - next fetch will be fresh"
+    );
   }
 }
 
@@ -116,13 +118,13 @@ class LockerPriceServiceWithFallback extends LockerPriceService {
         return result;
       }
       console.warn(
-        "[LockerPriceService] Falling back to static price due to null result",
+        "[LockerPriceService] Falling back to static price due to null result"
       );
       return LOCKER_FALLBACK_PRICE;
     } catch (error) {
       console.warn(
         "[LockerPriceService] Error fetching price, using fallback:",
-        error instanceof Error ? error.message : error,
+        error instanceof Error ? error.message : error
       );
       return LOCKER_FALLBACK_PRICE;
     }

@@ -235,8 +235,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   }, [wallets]);
 
-  // Persist active wallet selection whenever it changes
+  // Persist active wallet selection whenever it changes (but not before initial load)
   useEffect(() => {
+    // Don't persist until we've finished initial load from localStorage
+    if (!hasInitializedRef.current) {
+      return;
+    }
+
     try {
       if (activePublicKey) {
         localStorage.setItem(ACTIVE_WALLET_KEY, activePublicKey);

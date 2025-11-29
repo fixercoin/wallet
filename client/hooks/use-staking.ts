@@ -173,7 +173,7 @@ export function useStaking(): UseStakingReturn {
     [wallet?.publicKey, wallet?.secretKey],
   );
 
-  // Withdraw from stake via PHP API
+  // Withdraw from stake via Cloudflare API
   const withdrawStake = useCallback(
     async (stakeId: string) => {
       if (!wallet?.publicKey) throw new Error("No wallet");
@@ -196,7 +196,7 @@ export function useStaking(): UseStakingReturn {
 
       try {
         const response = await fetch(
-          resolveApiUrl("/backend/api/staking-withdraw.php"),
+          resolveApiUrl("/api/staking/withdraw"),
           {
             method: "POST",
             headers: {

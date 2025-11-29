@@ -96,7 +96,7 @@ class TokenPairPricingService {
         new Promise((_, reject) =>
           setTimeout(
             () => reject(new Error("DexScreener SOL fetch timeout")),
-            3000,
+            8000,
           ),
         ),
       ] as const);

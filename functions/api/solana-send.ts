@@ -1,118 +1,144 @@
-export const config = {
-  runtime: "nodejs_esmsh",
-};
-
 const RPC_ENDPOINTS = [
-  "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7",
+  // Prefer provided Helius RPC key
+  "https://mainnet.helius-rpc.com/?api-key=48e91c19-c676-4c4a-a0dd-a9b4f258d151",
+  // Public fallbacks
+  "https://solana.publicnode.com",
+  "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
 ];
 
-async function handler(request: Request): Promise<Response> {
-  // Handle CORS preflight
+function cors(h: Headers = new Headers()) {
+  h.set("Access-Control-Allow-Origin", "*");
+  h.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  h.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  h.set("Content-Type", "application/json");
+  return h;
+}
+
+export const onRequest: PagesFunction = async ({ request }) => {
   if (request.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-    });
+    return new Response(null, { status: 204, headers: cors() });
   }
 
   if (request.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
+      headers: cors(),
     });
   }
 
   try {
-    let body: any;
+    let body: any = {};
     try {
       body = await request.json();
     } catch {
       return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
         status: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
+        headers: cors(),
       });
     }
 
-    const { transaction } = body;
+    const transaction: string | undefined =
+      body?.transaction || body?.signedBase64 || body?.signedTx || body?.tx;
 
-    if (!transaction) {
+    if (!transaction || typeof transaction !== "string") {
       return new Response(
-        JSON.stringify({ error: "Missing 'transaction' field" }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        },
+        JSON.stringify({
+          error: "Missing signed transaction (base64)",
+          expected: ["transaction", "signedBase64", "signedTx", "tx"],
+        }),
+        { status: 400, headers: cors() },
       );
     }
 
-    const rpcBody = {
-      jsonrpc: "2.0",
-      id: 1,
-      method: "sendRawTransaction",
-      params: [
-        transaction,
-        { skipPreflight: false, preflightCommitment: "confirmed" },
-      ],
-    };
+    const makePayloads = (tx: string) => [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "sendRawTransaction",
+        params: [
+          tx,
+          {
+            skipPreflight: false,
+            preflightCommitment: "confirmed",
+            encoding: "base64",
+          },
+        ],
+      },
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "sendTransaction",
+        params: [
+          tx,
+          {
+            skipPreflight: false,
+            preflightCommitment: "confirmed",
+            encoding: "base64",
+          },
+        ],
+      },
+    ];
+
+    const payloads = makePayloads(transaction);
 
     let lastError = "";
 
-    // Try each RPC endpoint
     for (const endpoint of RPC_ENDPOINTS) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
+      for (const rpcBody of payloads) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(rpcBody),
-          signal: controller.signal,
-        });
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(rpcBody),
+            signal: controller.signal,
+          });
 
-        clearTimeout(timeoutId);
+          clearTimeout(timeoutId);
 
-        const data = await response.json();
+          const text = await response.text();
+          let data: any = {};
+          try {
+            data = JSON.parse(text);
+          } catch {
+            data = { raw: text };
+          }
 
-        if (data.result) {
-          return new Response(
-            JSON.stringify({
-              success: true,
-              signature: data.result,
-              timestamp: Date.now(),
-            }),
-            {
-              status: 200,
-              headers: {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-              },
-            },
-          );
+          if (data && data.result) {
+            return new Response(
+              JSON.stringify({
+                success: true,
+                signature: data.result,
+                timestamp: Date.now(),
+              }),
+              { status: 200, headers: cors() },
+            );
+          }
+
+          if (data && data.error) {
+            const msg = String(data.error.message || "RPC error");
+            lastError = msg;
+            if (
+              response.status === 429 ||
+              response.status >= 500 ||
+              /limit|rate/i.test(msg)
+            ) {
+              break; // try next endpoint
+            }
+            continue; // try next payload style
+          }
+
+          lastError = `Unexpected response from ${endpoint}`;
+        } catch (error: any) {
+          lastError =
+            error?.name === "AbortError"
+              ? "timeout"
+              : error?.message || String(error);
+          break; // try next endpoint on network error
         }
-
-        if (data.error) {
-          lastError = data.error.message || "RPC error";
-          continue;
-        }
-      } catch (error: any) {
-        lastError =
-          error?.name === "AbortError"
-            ? "timeout"
-            : error?.message || String(error);
       }
     }
 
@@ -121,13 +147,7 @@ async function handler(request: Request): Promise<Response> {
         error: "Failed to send transaction",
         details: lastError || "All RPC endpoints failed",
       }),
-      {
-        status: 502,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      },
+      { status: 502, headers: cors() },
     );
   } catch (error: any) {
     return new Response(
@@ -135,15 +155,7 @@ async function handler(request: Request): Promise<Response> {
         error: "Solana send error",
         details: error?.message || String(error),
       }),
-      {
-        status: 502,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      },
+      { status: 502, headers: cors() },
     );
   }
-}
-
-export default handler;
+};

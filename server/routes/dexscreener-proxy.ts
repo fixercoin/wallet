@@ -214,19 +214,23 @@ export const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
     "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
   EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump:
-    "7X7KkV94Y9jFhkXEMhgVcMHMRzALiGj5xKmM6TT3cUvK", // LOCKER (if available)
+    "7X7KkV94Y9jFhkXEMhgVcMHMRzALiGj5xKmM6TT3cUvK", // LOCKER
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump":
+    "BczJ8jo8Xghx2E6G3QKZiHQ6P5xYa5xP4oWc1F5HPXLX", // FXM
 };
 
 // Mint to search symbol mapping for tokens not found via mint lookup
 const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
   EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump": "FXM",
 };
 
 // Fallback prices for tokens when DexScreener returns nothing
 const FALLBACK_USD: Record<string, number> = {
   FIXERCOIN: 0.005,
-  LOCKER: 0.1,
+  LOCKER: 0.00001112,
+  FXM: 0.000003567,
   USDC: 1.0,
   USDT: 1.0,
 };

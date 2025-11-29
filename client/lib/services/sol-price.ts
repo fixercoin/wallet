@@ -1,3 +1,5 @@
+import { saveServicePrice, getCachedServicePrice } from "./offline-cache";
+
 export interface SolPriceData {
   price: number;
   price_change_24h: number;
@@ -11,7 +13,15 @@ class SolPriceService {
     timestamp: 0,
   };
 
-  private readonly CACHE_DURATION = 60000; // 1 minute cache
+  private readonly CACHE_DURATION = 1500; // 1.5 seconds cache - real-time updates
+
+  /**
+   * Validate that response is actually JSON
+   */
+  private isJsonResponse(response: Response): boolean {
+    const contentType = response.headers.get("content-type") || "";
+    return contentType.includes("application/json");
+  }
 
   /**
    * Fetch SOL price via proxy endpoint
@@ -28,20 +38,39 @@ class SolPriceService {
     try {
       const response = await fetch("/api/sol/price");
 
-      if (!response.ok) {
-        console.warn(`SOL price API returned ${response.status}`);
-        throw new Error(`Failed to fetch SOL price: ${response.status}`);
-      }
-
+      // Try to parse response as JSON regardless of content-type
+      // (server may return errors with wrong content-type)
       let data: any;
       try {
         data = await response.json();
       } catch (parseError) {
+        // If JSON parsing fails and response is not ok, log and use fallback
+        if (!response.ok) {
+          const contentType = response.headers.get("content-type") || "unknown";
+          console.warn(
+            `SOL price API returned ${response.status} with content-type: ${contentType}. Using fallback.`,
+          );
+          throw new Error(`Failed to fetch SOL price: HTTP ${response.status}`);
+        }
         console.error(
           "Failed to parse SOL price response as JSON:",
           parseError,
         );
         throw parseError;
+      }
+
+      // Check if response status is ok after successful JSON parse
+      if (!response.ok) {
+        console.warn(
+          `SOL price API returned ${response.status}, but JSON was parsed. Using fallback.`,
+        );
+        throw new Error(`Failed to fetch SOL price: ${response.status}`);
+      }
+
+      // Validate data structure
+      if (!data || typeof data !== "object") {
+        console.error("Invalid SOL price response structure:", data);
+        throw new Error("Invalid response structure");
       }
 
       // Handle both direct price response and nested structure
@@ -64,7 +93,14 @@ class SolPriceService {
           volume_24h: data.solana.usd_24h_vol || 0,
         };
       } else {
-        return null;
+        console.warn("SOL price response missing expected fields:", data);
+        throw new Error("Missing price data in response");
+      }
+
+      // Validate price is a valid number
+      if (!isFinite(priceData.price)) {
+        console.warn("SOL price is not a valid number:", priceData.price);
+        throw new Error("Invalid price value");
       }
 
       // Update cache
@@ -73,16 +109,38 @@ class SolPriceService {
         timestamp: Date.now(),
       };
 
+      // Save to localStorage for offline support
+      saveServicePrice("SOL", {
+        price: priceData.price,
+        priceChange24h: priceData.price_change_24h,
+      });
+
       return priceData;
     } catch (error) {
       console.error("Error fetching SOL price:", error);
 
-      // Return fallback price if available in cache
+      // Return in-memory cache first
       if (this.cache.data) {
+        console.log("Returning in-memory cached SOL price due to error");
         return this.cache.data;
       }
 
-      // Fallback to approximate price
+      // Try to get price from localStorage as fallback
+      const cachedServicePrice = getCachedServicePrice("SOL");
+      if (cachedServicePrice && cachedServicePrice.price > 0) {
+        console.log(
+          `[SOL Price Service] Using localStorage cached price: $${cachedServicePrice.price}`,
+        );
+        return {
+          price: cachedServicePrice.price,
+          price_change_24h: cachedServicePrice.priceChange24h ?? 0,
+          market_cap: 0,
+          volume_24h: 0,
+        };
+      }
+
+      // Final fallback to approximate price
+      console.log("Using fallback SOL price ($100) - no cache available");
       return {
         price: 100,
         price_change_24h: 0,

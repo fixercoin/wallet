@@ -5,6 +5,9 @@ export default {
   content: ["./client/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
+    screens: {
+      desktop: "1024px",
+    },
     container: {
       center: true,
       padding: "2rem",

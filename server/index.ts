@@ -106,11 +106,49 @@ export async function createServer(): Promise<express.Application> {
     }
   });
 
-  app.get("/api/dexscreener/price", handleDexscreenerPrice);
+  app.get("/api/dexscreener/price", async (req, res) => {
+    try {
+      return await handleDexscreenerPrice(req, res);
+    } catch (e: any) {
+      return res.status(502).json({
+        error: "DexScreener price failed",
+        details: e?.message || String(e),
+      });
+    }
+  });
 
   // Price routes
-  app.get("/api/sol/price", handleSolPrice);
-  app.get("/api/token/price", handleTokenPrice);
+  app.get("/api/sol/price", async (req, res) => {
+    try {
+      return await handleSolPrice(req, res);
+    } catch (e: any) {
+      console.error("[SOL Price] Unhandled error:", e);
+      return res.status(500).json({
+        token: "SOL",
+        price: 149.38,
+        priceUsd: 149.38,
+        priceChange24h: 0,
+        volume24h: 0,
+        marketCap: 0,
+        source: "fallback",
+        error: "Price service temporarily unavailable",
+      });
+    }
+  });
+  app.get("/api/token/price", async (req, res) => {
+    try {
+      return await handleTokenPrice(req, res);
+    } catch (e: any) {
+      console.error("[Token Price] Unhandled error:", e);
+      return res.status(500).json({
+        token: (req.query.token as string) || "FIXERCOIN",
+        price: 0.00008139,
+        priceUsd: "0.00008139",
+        source: "fallback",
+        error: "Price service temporarily unavailable",
+      });
+    }
+  });
 
   // CoinMarketCap routes
   app.get("/api/coinmarketcap/quotes", handleCoinMarketCapQuotes);
@@ -652,6 +690,28 @@ export async function createServer(): Promise<express.Application> {
     });
   });
 
+  // Root endpoint
+  app.get("/", (req, res) => {
+    res.json({
+      status: "ok",
+      message: "Fixorium Wallet API",
+      version: "1.0.0",
+      timestamp: new Date().toISOString(),
+      info: "Frontend is served from Vite dev server at http://localhost:5173 in development mode",
+      endpoints: {
+        health: "/health",
+        api: "/api",
+        api_health: "/api/health",
+        ping: "/api/ping",
+        wallet: "/api/wallet/balance",
+        balance: "/api/balance",
+        quote: "/api/quote",
+        swap: "/api/swap/execute",
+        orders: "/api/orders",
+      },
+    });
+  });
+
   // Root API endpoint
   app.get("/api", (req, res) => {
     res.json({
@@ -700,6 +760,21 @@ export async function createServer(): Promise<express.Application> {
         details: e?.message || String(e),
       });
     }
+  });
+
+  // Global error handler for async errors
+  app.use((err: any, req: any, res: any, next: any) => {
+    console.error("[Server] Unhandled error:", {
+      message: err?.message || String(err),
+      stack: err?.stack,
+      path: req.path,
+    });
+
+    // Always return JSON to prevent text/plain responses
+    res.status(500).json({
+      error: "Internal server error",
+      details: err?.message || "Unknown error",
+    });
   });
 
   // 404 handler

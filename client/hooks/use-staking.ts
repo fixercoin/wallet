@@ -81,7 +81,7 @@ export function useStaking(): UseStakingReturn {
       row.status === "active" ? Math.max(0, row.end_time - Date.now()) : 0,
   });
 
-  // Load stakes from PHP API
+  // Load stakes from Cloudflare API
   const refreshStakes = useCallback(async () => {
     if (!wallet?.publicKey) {
       setStakes([]);
@@ -93,7 +93,7 @@ export function useStaking(): UseStakingReturn {
 
     try {
       const response = await fetch(
-        resolveApiUrl(`/backend/api/staking-list.php?wallet=${encodeURIComponent(wallet.publicKey)}`),
+        resolveApiUrl(`/api/staking/list?wallet=${encodeURIComponent(wallet.publicKey)}`),
         {
           method: "GET",
           headers: {

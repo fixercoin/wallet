@@ -308,7 +308,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     try {
       if (wallets.length === 0) {
-        localStorage.removeItem(WALLETS_STORAGE_KEY);
+        removeStorageItem(WALLETS_STORAGE_KEY);
+        console.log("[WalletContext] Wallets cleared from storage");
         return;
       }
 
@@ -319,8 +320,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           copy.secretKey = Array.from(copy.secretKey as Uint8Array);
         return copy;
       });
-      localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
-      console.log("[WalletContext] Wallets saved as plaintext");
+
+      const success = setStorageItem(
+        WALLETS_STORAGE_KEY,
+        JSON.stringify(toStore)
+      );
+      if (!success) {
+        console.warn(
+          "[WalletContext] ⚠️ Failed to persist wallets to any storage"
+        );
+      }
     } catch (e) {
       console.error("Failed to persist wallets:", e);
     }
@@ -335,10 +344,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     try {
       if (activePublicKey) {
-        localStorage.setItem(ACTIVE_WALLET_KEY, activePublicKey);
-        console.log(`[WalletContext] Active wallet saved: ${activePublicKey}`);
+        const success = setStorageItem(ACTIVE_WALLET_KEY, activePublicKey);
+        if (!success) {
+          console.warn(
+            `[WalletContext] ⚠️ Failed to persist active wallet to any storage`
+          );
+        }
       } else {
-        localStorage.removeItem(ACTIVE_WALLET_KEY);
+        removeStorageItem(ACTIVE_WALLET_KEY);
       }
     } catch (e) {
       console.error("Failed to persist active wallet:", e);

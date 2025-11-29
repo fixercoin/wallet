@@ -36,6 +36,7 @@ import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { formatAmountCompact } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useStakingTokens } from "@/hooks/use-staking-tokens";
+import { useNetworkSignal } from "@/hooks/use-network-signal";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
 import {

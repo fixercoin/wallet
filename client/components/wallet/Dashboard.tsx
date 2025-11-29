@@ -576,8 +576,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div
-      className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden"
-      style={{ backgroundColor: "#1f1f1f" }}
+      className="express-p2p-page min-h-screen text-gray-900 relative overflow-hidden"
+      style={{ backgroundColor: "#f3f4f6" }}
     >
       {/* Decorative bottom green wave (SVG) */}
       <svg

@@ -84,8 +84,11 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       setIsLoading(true);
       setError(null);
 
-      // Set the wallet
+      // Set the wallet - this updates context and triggers localStorage save
       setWallet(wallet);
+
+      // Give a small delay to ensure localStorage is written and context is updated
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Prefetch address data via RPC providers
       void prefetchWalletAddressData(wallet.publicKey).catch(() => undefined);
@@ -98,6 +101,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
         description: "Your wallet has been created successfully.",
       });
 
+      // Call onComplete which will trigger context/state updates to show dashboard
       onComplete();
     } catch (error) {
       setError(error instanceof Error ? error.message : String(error));

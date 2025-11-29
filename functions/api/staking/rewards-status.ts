@@ -5,8 +5,8 @@
 
 import nacl from "tweetnacl";
 import bs58 from "bs58";
-import { KVStore } from "../lib/kv-utils.ts";
-import { REWARD_CONFIG } from "../lib/reward-config.ts";
+import { KVStore } from "../../lib/kv-utils.ts";
+import { REWARD_CONFIG } from "../../lib/reward-config.ts";
 
 interface Env {
   STAKING_KV: KVNamespace;

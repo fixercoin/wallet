@@ -8,14 +8,16 @@ const TOKEN_MINTS: Record<string, string> = {
   USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
   FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
   LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+  FXM: "", // FXM pump.fun token
 };
 
 const FALLBACK_PRICES: Record<string, number> = {
-  FIXERCOIN: 0.00008139,
+  FIXERCOIN: 0.000042,
   SOL: 149.38,
   USDC: 1.0,
   USDT: 1.0,
-  LOCKER: 0.00001112,
+  LOCKER: 0.000008,
+  FXM: 0.00000357,
 };
 
 async function handler(request: Request): Promise<Response> {

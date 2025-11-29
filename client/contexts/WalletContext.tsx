@@ -53,6 +53,7 @@ interface WalletContextType {
   error: string | null;
   isUsingCache: boolean; // true when displaying cached data due to offline/network error
   requiresPassword: boolean; // true when wallets are encrypted and need unlock
+  isInitialized: boolean; // true when wallet data has been loaded from storage
   setWallet: (wallet: WalletData | null) => void; // set active
   addWallet: (wallet: WalletData) => void; // add and select
   selectWallet: (publicKey: string) => void; // select existing

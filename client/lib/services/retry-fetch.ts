@@ -39,7 +39,10 @@ export async function retryWithExponentialBackoff<T>(
         fn(),
         new Promise<T>((_, reject) =>
           setTimeout(
-            () => reject(new Error(`${tokenName} fetch timeout (${opts.timeoutMs}ms)`)),
+            () =>
+              reject(
+                new Error(`${tokenName} fetch timeout (${opts.timeoutMs}ms)`),
+              ),
             opts.timeoutMs,
           ),
         ),

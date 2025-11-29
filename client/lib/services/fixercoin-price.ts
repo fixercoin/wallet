@@ -1,6 +1,9 @@
 import { dexscreenerAPI } from "./dexscreener";
 import { saveServicePrice } from "./offline-cache";
-import { retryWithExponentialBackoff, AGGRESSIVE_RETRY_OPTIONS } from "./retry-fetch";
+import {
+  retryWithExponentialBackoff,
+  AGGRESSIVE_RETRY_OPTIONS,
+} from "./retry-fetch";
 
 export interface FixercoinPriceData {
   price: number;

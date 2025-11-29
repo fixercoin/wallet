@@ -1,6 +1,9 @@
 import { dexscreenerAPI } from "./dexscreener";
 import { saveServicePrice } from "./offline-cache";
-import { retryWithExponentialBackoff, AGGRESSIVE_RETRY_OPTIONS } from "./retry-fetch";
+import {
+  retryWithExponentialBackoff,
+  AGGRESSIVE_RETRY_OPTIONS,
+} from "./retry-fetch";
 
 export interface LockerPriceData {
   price: number;
@@ -103,7 +106,9 @@ class LockerPriceService {
   clearCache(): void {
     this.cachedData = null;
     this.lastFetchTime = null;
-    console.log("[LockerPriceService] Cache cleared - next fetch will be fresh");
+    console.log(
+      "[LockerPriceService] Cache cleared - next fetch will be fresh",
+    );
   }
 }
 

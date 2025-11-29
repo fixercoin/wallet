@@ -1027,6 +1027,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         setError(
           `Failed to fetch tokens: ${error instanceof Error ? error.message : String(error)}`,
         );
+        // Show only basic token info without prices until they can be fetched
         const fallbackTokens: TokenInfo[] = [
           {
             mint: "So11111111111111111111111111111111111111112",
@@ -1036,16 +1037,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             logoURI:
               "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
             balance: balance || 0,
-            price: 100,
-          },
-          {
-            mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
-            symbol: "FIXERCOIN",
-            name: "FIXERCOIN",
-            decimals: 6,
-            logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
-            balance: 0,
-            price: 0.000023,
           },
         ];
 

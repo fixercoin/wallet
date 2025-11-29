@@ -70,7 +70,7 @@ export function useStaking(): UseStakingReturn {
       row.status === "active" ? Math.max(0, row.end_time - Date.now()) : 0,
   });
 
-  // Load stakes from Supabase
+  // Load stakes from PHP API
   const refreshStakes = useCallback(async () => {
     if (!wallet?.publicKey) {
       setStakes([]);
@@ -81,16 +81,23 @@ export function useStaking(): UseStakingReturn {
     setError(null);
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from("stakes")
-        .select("*")
-        .eq("wallet_address", wallet.publicKey);
+      const response = await fetch(
+        resolveApiUrl(`/backend/api/staking-list.php?wallet=${encodeURIComponent(wallet.publicKey)}`),
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      if (fetchError) {
-        throw new Error(fetchError.message);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to fetch stakes: ${response.status}`);
       }
 
-      const mappedStakes = (data || []).map(mapRowToStake);
+      const result = await response.json();
+      const mappedStakes = (result.data || []).map(mapRowToStake);
       setStakes(mappedStakes);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

@@ -2,6 +2,11 @@ name = "fixorium-pages"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Cloudflare Pages build configuration
+[build]
+command = "npm run build"
+cwd = "./"
+
 # Cloudflare Pages output directory
 pages_build_output_dir = "dist"
 

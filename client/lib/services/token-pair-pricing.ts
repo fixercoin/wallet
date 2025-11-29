@@ -179,7 +179,7 @@ class TokenPairPricingService {
         new Promise((_, reject) =>
           setTimeout(
             () => reject(new Error("DexScreener getDirectUsdPrice timeout")),
-            6000,
+            12000,
           ),
         ),
       ] as const);

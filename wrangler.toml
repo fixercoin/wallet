@@ -9,3 +9,9 @@ pages_build_output_dir = "dist"
 [vars]
 VITE_API_URL = ""
 VITE_API_BASE_URL = ""
+
+# KV namespace binding for staking data persistence
+[[kv_namespaces]]
+binding = "STAKING_KV"
+id = "staking_kv_prod"
+preview_id = "staking_kv_preview"

@@ -36,6 +36,7 @@ import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { formatAmountCompact } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useStakingTokens } from "@/hooks/use-staking-tokens";
+import { useNetworkSignal } from "@/hooks/use-network-signal";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
 import {
@@ -132,6 +133,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const { isStaking } = useStakingTokens(wallet?.publicKey || null);
+  const networkSignal = useNetworkSignal();
 
   // Quest state (per-wallet, persisted locally)
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
@@ -804,60 +806,70 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {/* Connection status and settings - moved to right */}
-              <div className="flex items-center gap-3">
-                {isUsingCache ? (
+              {/* Network signal strength lines and settings - moved to right */}
+              <div className="flex items-center gap-2">
+                <div
+                  className="relative h-6 w-6 flex flex-col items-end justify-end gap-0.5 group py-1"
+                  title={
+                    networkSignal.isOnline
+                      ? `Signal: ${networkSignal.bars}/4 (${networkSignal.latency}ms)`
+                      : "No internet connection"
+                  }
+                  aria-label={`Network signal ${networkSignal.bars} bars`}
+                >
+                  {/* Line 4 - tallest, lights up when signal >= 4 (top) */}
                   <div
-                    className="h-7 w-7 rounded-md flex items-center justify-center cursor-default relative"
-                    title="Connection unstable - using cached prices"
-                    aria-label="Unstable connection"
-                  >
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-gray-500"
-                    >
-                      <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-                      <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                      <path d="M9 20h6" />
-                      <circle cx="12" cy="16" r="1" fill="currentColor" />
-                    </svg>
-                    <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
-                      <span className="text-white text-[9px] font-bold leading-none">
-                        !
-                      </span>
-                    </div>
-                  </div>
-                ) : (
+                    className={`w-0.5 transition-all rounded-sm ${
+                      networkSignal.bars >= 4
+                        ? "h-5 bg-green-500"
+                        : "h-1 bg-gray-600/40"
+                    }`}
+                  />
+
+                  {/* Line 3 - tall, lights up when signal >= 3 */}
                   <div
-                    className="h-7 w-7 rounded-md flex items-center justify-center cursor-default"
-                    title="Connection stable - using live prices"
-                    aria-label="Stable connection"
-                  >
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-green-500"
-                    >
-                      <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-                      <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                      <path d="M9 20h6" />
-                      <circle cx="12" cy="16" r="1" fill="currentColor" />
-                    </svg>
+                    className={`w-0.5 transition-all rounded-sm ${
+                      networkSignal.bars >= 3
+                        ? "h-4 bg-green-500"
+                        : "h-1 bg-gray-600/40"
+                    }`}
+                  />
+
+                  {/* Line 2 - medium, lights up when signal >= 2 */}
+                  <div
+                    className={`w-0.5 transition-all rounded-sm ${
+                      networkSignal.bars >= 2
+                        ? `h-3 ${
+                            networkSignal.bars === 2
+                              ? "bg-yellow-500"
+                              : "bg-green-500"
+                          }`
+                        : "h-1 bg-gray-600/40"
+                    }`}
+                  />
+
+                  {/* Line 1 - shortest, lights up when signal >= 1 (bottom) */}
+                  <div
+                    className={`w-0.5 transition-all rounded-sm ${
+                      networkSignal.bars >= 1
+                        ? `h-2 ${
+                            networkSignal.bars === 1
+                              ? "bg-red-500"
+                              : networkSignal.bars === 2
+                                ? "bg-yellow-500"
+                                : "bg-green-500"
+                          }`
+                        : "h-1 bg-gray-600/40"
+                    }`}
+                  />
+
+                  {/* Tooltip showing latency */}
+                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                    {networkSignal.isOnline
+                      ? `${networkSignal.latency}ms`
+                      : "Offline"}
                   </div>
-                )}
+                </div>
                 <Button
                   onClick={onSettings}
                   size="sm"

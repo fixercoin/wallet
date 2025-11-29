@@ -787,6 +787,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     onSelect={() => onStakeTokens?.()}
                     className="flex items-center gap-2 text-xs"
                   >
+                    <TrendingUp className="h-4 w-4" />
                     <span>STAKE NOW</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem

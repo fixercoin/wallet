@@ -57,7 +57,7 @@ export default function Index() {
     );
   }
 
-  // If no wallet is set up, show the wallet setup screen
+  // If no wallet exists (new user), show the wallet setup screen
   if (!wallet) {
     return (
       <WalletSetup
@@ -67,6 +67,11 @@ export default function Index() {
   }
 
   const navigateToScreen = (screen: Screen, tokenMint?: string) => {
+    // Prevent accessing setup if wallet exists
+    if (screen === "setup" && wallet) {
+      setCurrentScreen({ screen: "dashboard" });
+      return;
+    }
     setCurrentScreen({ screen, tokenMint });
   };
 

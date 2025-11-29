@@ -2,30 +2,29 @@ import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Home, Rocket, Flame, Users } from "lucide-react";
+import { useWallet } from "@/contexts/WalletContext";
 
 export const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [noFixed, setNoFixed] = useState<boolean>(() => {
-    try {
-      return document.body.classList.contains("no-fixed-bottom");
-    } catch {
-      return false;
-    }
-  });
+  const { wallet } = useWallet();
+  const [classHidden, setClassHidden] = useState(() =>
+    document.body.classList.contains("no-fixed-bottom"),
+  );
+
+  // Hide navigation on:
+  // 1. Pages with no-fixed-bottom class (WalletSetup, recovery)
+  // 2. Home page when no wallet exists
+  const shouldHideNav = classHidden || (location.pathname === "/" && !wallet);
 
   useEffect(() => {
     const obs = new MutationObserver(() => {
-      try {
-        setNoFixed(document.body.classList.contains("no-fixed-bottom"));
-      } catch {}
+      setClassHidden(document.body.classList.contains("no-fixed-bottom"));
     });
-    try {
-      obs.observe(document.body, {
-        attributes: true,
-        attributeFilter: ["class"],
-      });
-    } catch {}
+    obs.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
     return () => obs.disconnect();
   }, []);
 
@@ -42,7 +41,7 @@ export const BottomNavigation = () => {
     );
   };
 
-  if (noFixed) return null;
+  if (shouldHideNav) return null;
 
   return (
     <div

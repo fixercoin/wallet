@@ -8,8 +8,8 @@ export const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { wallet } = useWallet();
-  const [classHidden, setClassHidden] = useState(
-    () => document.body.classList.contains("no-fixed-bottom")
+  const [classHidden, setClassHidden] = useState(() =>
+    document.body.classList.contains("no-fixed-bottom"),
   );
 
   // Hide navigation on:

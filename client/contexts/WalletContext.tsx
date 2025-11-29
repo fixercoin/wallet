@@ -1138,6 +1138,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     isLoading,
     error,
     isUsingCache,
+    requiresPassword,
     setWallet,
     addWallet,
     selectWallet,
@@ -1147,6 +1148,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     removeToken,
     logout,
     updateWalletLabel,
+    unlockWithPassword,
     connection: globalConnection,
   };
 

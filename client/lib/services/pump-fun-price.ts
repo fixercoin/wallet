@@ -87,9 +87,7 @@ class PumpFunPriceService {
       // Return fallback price
       const fallback = FALLBACK_PRICES[mint];
       if (fallback) {
-        console.log(
-          `[PumpFun] Using fallback price for ${mint}: $${fallback}`,
-        );
+        console.log(`[PumpFun] Using fallback price for ${mint}: $${fallback}`);
         return fallback;
       }
 

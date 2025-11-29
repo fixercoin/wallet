@@ -81,9 +81,7 @@ export async function fetchWithRetry(
   }
 
   // All retries failed
-  throw (
-    lastError || new Error(`Failed after ${maxRetries + 1} attempts`)
-  );
+  throw lastError || new Error(`Failed after ${maxRetries + 1} attempts`);
 }
 
 /**

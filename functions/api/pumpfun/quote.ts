@@ -49,9 +49,7 @@ export const onRequest: PagesFunction = async ({ request, env }) => {
 
     return new Response(
       JSON.stringify({
-        error: isTimeout
-          ? "Request timeout"
-          : "Failed to fetch PumpFun quote",
+        error: isTimeout ? "Request timeout" : "Failed to fetch PumpFun quote",
         details: message,
       }),
       {

@@ -123,9 +123,7 @@ async function handler(request: Request): Promise<Response> {
         error: isTimeout
           ? "Request timeout"
           : "Failed to request BUY transaction",
-        details: isTimeout
-          ? "Pump.fun API took too long to respond"
-          : message,
+        details: isTimeout ? "Pump.fun API took too long to respond" : message,
       }),
       {
         status: isTimeout ? 504 : 502,

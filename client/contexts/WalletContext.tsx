@@ -177,7 +177,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           return obj as WalletData;
         });
         setWallets(coerced);
-        if (coerced.length > 0) setActivePublicKey(coerced[0].publicKey);
+
+        // Restore active wallet from localStorage
+        if (coerced.length > 0) {
+          const savedActiveKey = localStorage.getItem(ACTIVE_WALLET_KEY);
+          const activeWallet = savedActiveKey
+            ? coerced.find(w => w.publicKey === savedActiveKey)
+            : coerced[0];
+          if (activeWallet) {
+            setActivePublicKey(activeWallet.publicKey);
+          }
+        }
       }
     } catch (error) {
       console.error("Error loading wallets from storage:", error);

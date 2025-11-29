@@ -293,7 +293,7 @@ class TokenPairPricingService {
           new Promise((_, reject) =>
             setTimeout(
               () => reject(new Error("DexScreener metadata fetch timeout")),
-              5000,
+              10000,
             ),
           ),
         ] as const);

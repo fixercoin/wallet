@@ -744,8 +744,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   if (step === "success") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-        <div className="w-full md:max-w-lg lg:max-w-lg mx-auto pt-2">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="w-full">
           <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl">
             <CardContent className="p-8 text-center">
               <div className="mb-6">

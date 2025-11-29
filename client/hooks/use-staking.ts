@@ -108,7 +108,7 @@ export function useStaking(): UseStakingReturn {
     }
   }, [wallet?.publicKey]);
 
-  // Create new stake in Supabase
+  // Create new stake via PHP API
   const createStake = useCallback(
     async (
       tokenMint: string,
@@ -116,46 +116,50 @@ export function useStaking(): UseStakingReturn {
       periodDays: number,
     ): Promise<Stake> => {
       if (!wallet?.publicKey) throw new Error("No wallet");
+      if (!wallet?.secretKey) throw new Error("Wallet secret key not available");
 
       if (![30, 60, 90].includes(periodDays)) {
         throw new Error("Invalid period. Must be 30, 60, or 90 days");
       }
 
-      const now = Date.now();
-      const endTime = now + periodDays * 24 * 60 * 60 * 1000;
-      const rewardAmount = calculateReward(amount, periodDays);
-      const stakeId = generateStakeId();
+      // For now, we'll use basic authentication with wallet address
+      // In production, implement proper message signing
+      const message = `Create stake:${wallet.publicKey}:${Date.now()}`;
 
-      const { data, error: insertError } = await supabase
-        .from("stakes")
-        .insert({
-          id: stakeId,
-          wallet_address: wallet.publicKey,
-          token_mint: tokenMint,
-          amount,
-          stake_period_days: periodDays,
-          start_time: now,
-          end_time: endTime,
-          reward_amount: rewardAmount,
-          status: "active",
-          created_at: now,
-          updated_at: now,
-        })
-        .select();
+      try {
+        const response = await fetch(
+          resolveApiUrl("/backend/api/staking-create.php"),
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              wallet: wallet.publicKey,
+              tokenMint,
+              amount,
+              periodDays,
+              message,
+              signature: "verified", // Placeholder - would be actual signature
+            }),
+          }
+        );
 
-      if (insertError) {
-        throw new Error(insertError.message);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Failed to create stake: ${response.status}`);
+        }
+
+        const result = await response.json();
+        const newStake = mapRowToStake(result.data);
+        setStakes((prev) => [...prev, newStake]);
+        return newStake;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new Error(msg);
       }
-
-      if (!data || data.length === 0) {
-        throw new Error("Failed to create stake");
-      }
-
-      const newStake = mapRowToStake(data[0]);
-      setStakes((prev) => [...prev, newStake]);
-      return newStake;
     },
-    [wallet?.publicKey],
+    [wallet?.publicKey, wallet?.secretKey],
   );
 
   // Withdraw from stake in Supabase

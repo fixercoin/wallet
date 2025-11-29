@@ -243,7 +243,7 @@ export function useStaking(): UseStakingReturn {
 
     try {
       const response = await fetch(
-        resolveApiUrl(`/backend/api/rewards-status.php?wallet=${encodeURIComponent(wallet.publicKey)}`),
+        resolveApiUrl(`/api/staking/rewards-status?wallet=${encodeURIComponent(wallet.publicKey)}`),
         {
           method: "GET",
           headers: {

@@ -92,6 +92,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const encryptedWalletsRef = useRef<any[]>([]);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const providerRef = useRef<FixoriumWalletProvider | null>(null);
+  const hasInitializedRef = useRef<boolean>(false);
 
   // Ensure Fixorium provider is available and wired once on mount
   useEffect(() => {
@@ -148,6 +149,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         } catch (e) {
           console.warn("Failed to migrate legacy wallet to accounts key:", e);
         }
+        hasInitializedRef.current = true;
         setIsInitialized(true);
         return;
       }
@@ -165,6 +167,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           );
           encryptedWalletsRef.current = parsed;
           setRequiresPassword(true);
+          hasInitializedRef.current = true;
           setIsInitialized(true);
           return;
         }
@@ -195,16 +198,23 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         }
       }
+      hasInitializedRef.current = true;
       setIsInitialized(true);
     } catch (error) {
       console.error("Error loading wallets from storage:", error);
       localStorage.removeItem(WALLETS_STORAGE_KEY);
+      hasInitializedRef.current = true;
       setIsInitialized(true);
     }
   }, []);
 
-  // Persist wallets whenever they change
+  // Persist wallets whenever they change (but not before initial load)
   useEffect(() => {
+    // Don't persist until we've finished initial load from localStorage
+    if (!hasInitializedRef.current) {
+      return;
+    }
+
     try {
       if (wallets.length === 0) {
         localStorage.removeItem(WALLETS_STORAGE_KEY);
@@ -225,8 +235,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   }, [wallets]);
 
-  // Persist active wallet selection whenever it changes
+  // Persist active wallet selection whenever it changes (but not before initial load)
   useEffect(() => {
+    // Don't persist until we've finished initial load from localStorage
+    if (!hasInitializedRef.current) {
+      return;
+    }
+
     try {
       if (activePublicKey) {
         localStorage.setItem(ACTIVE_WALLET_KEY, activePublicKey);

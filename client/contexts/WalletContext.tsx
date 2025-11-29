@@ -34,6 +34,15 @@ import {
   isCacheFresh,
   CACHE_VALIDITY_PRICES,
 } from "@/lib/services/offline-cache";
+import {
+  isEncryptedWalletStorage,
+  decryptWalletData,
+} from "@/lib/secure-storage";
+import {
+  setWalletPassword,
+  getWalletPassword,
+  isPasswordAvailable,
+} from "@/lib/wallet-password";
 
 interface WalletContextType {
   wallet: WalletData | null; // active
@@ -43,6 +52,7 @@ interface WalletContextType {
   isLoading: boolean;
   error: string | null;
   isUsingCache: boolean; // true when displaying cached data due to offline/network error
+  requiresPassword: boolean; // true when wallets are encrypted and need unlock
   setWallet: (wallet: WalletData | null) => void; // set active
   addWallet: (wallet: WalletData) => void; // add and select
   selectWallet: (publicKey: string) => void; // select existing
@@ -52,6 +62,7 @@ interface WalletContextType {
   removeToken: (tokenMint: string) => void;
   logout: () => void;
   updateWalletLabel: (publicKey: string, label: string) => void;
+  unlockWithPassword: (password: string) => Promise<boolean>;
   connection?: Connection | null;
 }
 
@@ -64,6 +75,7 @@ interface WalletProviderProps {
 const WALLETS_STORAGE_KEY = "solana_wallet_accounts";
 const LEGACY_WALLET_KEY = "solana_wallet_data";
 const HIDDEN_TOKENS_KEY = "hidden_tokens";
+const ACTIVE_WALLET_KEY = "solana_active_wallet";
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [wallets, setWallets] = useState<WalletData[]>([]);
@@ -74,6 +86,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isUsingCache, setIsUsingCache] = useState<boolean>(false);
+  const [requiresPassword, setRequiresPassword] = useState<boolean>(false);
+  const encryptedWalletsRef = useRef<any[]>([]);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const providerRef = useRef<FixoriumWalletProvider | null>(null);
 
@@ -139,7 +153,19 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       if (stored) {
         const parsed = JSON.parse(stored) as any[];
 
-        // Load wallets as plaintext (encryption disabled)
+        // Check if wallets are encrypted
+        const firstWallet = parsed?.[0];
+        if (firstWallet && isEncryptedWalletStorage(firstWallet)) {
+          // Wallets are encrypted - store them and wait for password unlock
+          console.log(
+            "[WalletContext] Encrypted wallets detected, awaiting password",
+          );
+          encryptedWalletsRef.current = parsed;
+          setRequiresPassword(true);
+          return;
+        }
+
+        // Load wallets as plaintext
         const coerced: WalletData[] = (parsed || []).map((p) => {
           const obj = { ...p } as any;
           if (obj.secretKey && Array.isArray(obj.secretKey)) {
@@ -153,7 +179,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           return obj as WalletData;
         });
         setWallets(coerced);
-        if (coerced.length > 0) setActivePublicKey(coerced[0].publicKey);
+
+        // Restore active wallet from localStorage
+        if (coerced.length > 0) {
+          const savedActiveKey = localStorage.getItem(ACTIVE_WALLET_KEY);
+          const activeWallet = savedActiveKey
+            ? coerced.find((w) => w.publicKey === savedActiveKey)
+            : coerced[0];
+          if (activeWallet) {
+            setActivePublicKey(activeWallet.publicKey);
+          }
+        }
       }
     } catch (error) {
       console.error("Error loading wallets from storage:", error);
@@ -182,6 +218,20 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       console.error("Failed to persist wallets:", e);
     }
   }, [wallets]);
+
+  // Persist active wallet selection whenever it changes
+  useEffect(() => {
+    try {
+      if (activePublicKey) {
+        localStorage.setItem(ACTIVE_WALLET_KEY, activePublicKey);
+        console.log(`[WalletContext] Active wallet saved: ${activePublicKey}`);
+      } else {
+        localStorage.removeItem(ACTIVE_WALLET_KEY);
+      }
+    } catch (e) {
+      console.error("Failed to persist active wallet:", e);
+    }
+  }, [activePublicKey]);
 
   // Declare wallet first before using it in useEffect
   const wallet = wallets.find((w) => w.publicKey === activePublicKey) || null;
@@ -1072,6 +1122,44 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     setTokens(DEFAULT_TOKENS);
   };
 
+  const unlockWithPassword = async (password: string): Promise<boolean> => {
+    try {
+      if (
+        !encryptedWalletsRef.current ||
+        encryptedWalletsRef.current.length === 0
+      ) {
+        console.warn("[WalletContext] No encrypted wallets to unlock");
+        return false;
+      }
+
+      // Try to decrypt wallets with provided password
+      const decryptedWallets: WalletData[] = [];
+      for (const encrypted of encryptedWalletsRef.current) {
+        try {
+          const decrypted = decryptWalletData(encrypted, password);
+          decryptedWallets.push(decrypted);
+        } catch (err) {
+          console.warn("[WalletContext] Failed to decrypt wallet:", err);
+          throw new Error("Incorrect password");
+        }
+      }
+
+      // If we got here, password was correct
+      setWalletPassword(password);
+      setWallets(decryptedWallets);
+      setRequiresPassword(false);
+      if (decryptedWallets.length > 0) {
+        setActivePublicKey(decryptedWallets[0].publicKey);
+      }
+      encryptedWalletsRef.current = [];
+      console.log("[WalletContext] Wallets unlocked successfully");
+      return true;
+    } catch (error) {
+      console.error("[WalletContext] Unlock error:", error);
+      return false;
+    }
+  };
+
   const value: WalletContextType = {
     wallet: ensureWalletSecretKey(wallet),
     wallets,
@@ -1080,6 +1168,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     isLoading,
     error,
     isUsingCache,
+    requiresPassword,
     setWallet,
     addWallet,
     selectWallet,
@@ -1089,6 +1178,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     removeToken,
     logout,
     updateWalletLabel,
+    unlockWithPassword,
     connection: globalConnection,
   };
 

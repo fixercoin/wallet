@@ -78,8 +78,20 @@ try {
     exit();
   }
 
+  // Load reward configuration
+  $rewardConfig = require(__DIR__ . '/../config/reward-config.php');
+
   // Update stake status to withdrawn
   $db->updateStakeStatus($stakeId, 'withdrawn');
+
+  // Record reward distribution
+  $totalAmount = $stake['amount'] + $stake['reward_amount'];
+  $db->recordRewardDistribution(
+    $stakeId,
+    $walletAddress,
+    $stake['reward_amount'],
+    $stake['token_mint']
+  );
 
   // Get updated stake
   $updatedStake = $db->getStakeById($stakeId);
@@ -89,7 +101,14 @@ try {
     'success' => true,
     'data' => [
       'stake' => $updatedStake,
-      'totalAmount' => $stake['amount'] + $stake['reward_amount']
+      'totalAmount' => $totalAmount,
+      'reward' => [
+        'amount' => $stake['reward_amount'],
+        'tokenMint' => $stake['token_mint'],
+        'payerWallet' => $rewardConfig['reward_wallet'],
+        'recipientWallet' => $walletAddress,
+        'status' => 'ready_for_distribution'
+      ]
     ]
   ]);
 

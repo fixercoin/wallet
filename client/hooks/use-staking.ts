@@ -235,17 +235,52 @@ export function useStaking(): UseStakingReturn {
     [wallet?.publicKey, wallet?.secretKey, stakes],
   );
 
+  // Get reward status for wallet
+  const getRewardStatus = useCallback(async () => {
+    if (!wallet?.publicKey) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(
+        resolveApiUrl(`/backend/api/rewards-status.php?wallet=${encodeURIComponent(wallet.publicKey)}`),
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch reward status");
+      }
+
+      const result = await response.json();
+      if (result.data?.rewardPayerWallet) {
+        setRewardPayerWallet(result.data.rewardPayerWallet);
+      }
+      return result.data;
+    } catch (err) {
+      console.error("Error fetching reward status:", err);
+      return null;
+    }
+  }, [wallet?.publicKey]);
+
   // Load stakes on mount and when wallet changes
   useEffect(() => {
     refreshStakes();
-  }, [refreshStakes]);
+    getRewardStatus();
+  }, [refreshStakes, getRewardStatus]);
 
   return {
     stakes,
     loading,
     error,
+    rewardPayerWallet,
     createStake,
     withdrawStake,
     refreshStakes,
+    getRewardStatus,
   };
 }

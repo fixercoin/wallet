@@ -217,6 +217,20 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   }, [wallets]);
 
+  // Persist active wallet selection whenever it changes
+  useEffect(() => {
+    try {
+      if (activePublicKey) {
+        localStorage.setItem(ACTIVE_WALLET_KEY, activePublicKey);
+        console.log(`[WalletContext] Active wallet saved: ${activePublicKey}`);
+      } else {
+        localStorage.removeItem(ACTIVE_WALLET_KEY);
+      }
+    } catch (e) {
+      console.error("Failed to persist active wallet:", e);
+    }
+  }, [activePublicKey]);
+
   // Declare wallet first before using it in useEffect
   const wallet = wallets.find((w) => w.publicKey === activePublicKey) || null;
 

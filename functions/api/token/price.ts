@@ -24,14 +24,14 @@ const FALLBACK_PRICES: Record<string, number> = {
 const DEXSCREENER_TOKENS = new Set(["FIXERCOIN", "LOCKER", "FXM"]);
 
 async function fetchDexscreenerPrice(
-  mint: string
+  mint: string,
 ): Promise<{ price: number; priceChange24h: number } | null> {
   try {
     const response = await fetch(
       `https://api.dexscreener.com/latest/dex/tokens/${mint}`,
       {
         headers: { "User-Agent": "Fixercoin-Wallet/1.0" },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -59,7 +59,7 @@ async function fetchDexscreenerPrice(
   } catch (error) {
     console.warn(
       `[DexScreener] Error fetching ${mint}:`,
-      error instanceof Error ? error.message : String(error)
+      error instanceof Error ? error.message : String(error),
     );
     return null;
   }
@@ -97,7 +97,7 @@ async function handler(request: Request): Promise<Response> {
             "Access-Control-Allow-Origin": "*",
             "Cache-Control": "public, max-age=3600",
           },
-        }
+        },
       );
     }
 
@@ -123,7 +123,7 @@ async function handler(request: Request): Promise<Response> {
                 "Access-Control-Allow-Origin": "*",
                 "Cache-Control": "public, max-age=10", // Short cache for live prices
               },
-            }
+            },
           );
         }
       }
@@ -145,7 +145,7 @@ async function handler(request: Request): Promise<Response> {
             "Access-Control-Allow-Origin": "*",
             "Cache-Control": "public, max-age=60",
           },
-        }
+        },
       );
     }
 
@@ -153,7 +153,7 @@ async function handler(request: Request): Promise<Response> {
     if (mint && mint.length > 40) {
       // Try to find the token symbol for this mint
       const tokenSymbol = Object.entries(TOKEN_MINTS).find(
-        ([, m]) => m === mint
+        ([, m]) => m === mint,
       )?.[0];
 
       if (tokenSymbol) {
@@ -177,7 +177,7 @@ async function handler(request: Request): Promise<Response> {
                   "Access-Control-Allow-Origin": "*",
                   "Cache-Control": "public, max-age=10",
                 },
-              }
+              },
             );
           }
         }
@@ -199,7 +199,7 @@ async function handler(request: Request): Promise<Response> {
                 "Access-Control-Allow-Origin": "*",
                 "Cache-Control": "public, max-age=60",
               },
-            }
+            },
           );
         }
       }
@@ -221,7 +221,7 @@ async function handler(request: Request): Promise<Response> {
           "Access-Control-Allow-Origin": "*",
           "Cache-Control": "public, max-age=60",
         },
-      }
+      },
     );
   } catch (error: any) {
     // Always return valid JSON with fallback price on error
@@ -241,7 +241,7 @@ async function handler(request: Request): Promise<Response> {
           "Access-Control-Allow-Origin": "*",
           "Cache-Control": "public, max-age=60",
         },
-      }
+      },
     );
   }
 }

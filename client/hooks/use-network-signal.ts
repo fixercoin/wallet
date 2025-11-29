@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 
 export interface NetworkSignalState {
   bars: number; // 0-4, 0 = offline, 4 = excellent
@@ -28,20 +28,20 @@ export const useNetworkSignal = (): NetworkSignalState => {
   const measureLatency = async (): Promise<number | null> => {
     try {
       const startTime = performance.now();
-      
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
       const response = await fetch(
-        new URL('/api/ping', window.location.origin).href,
+        new URL("/api/ping", window.location.origin).href,
         {
-          method: 'HEAD',
+          method: "HEAD",
           signal: controller.signal,
           // Prevent caching so we always get fresh response
           headers: {
-            'Cache-Control': 'no-cache',
+            "Cache-Control": "no-cache",
           },
-        }
+        },
       );
 
       clearTimeout(timeoutId);
@@ -54,7 +54,7 @@ export const useNetworkSignal = (): NetworkSignalState => {
       const latency = Math.round(performance.now() - startTime);
       return latency;
     } catch (error) {
-      console.warn('[NetworkSignal] Ping failed:', error);
+      console.warn("[NetworkSignal] Ping failed:", error);
       return null;
     }
   };
@@ -108,7 +108,7 @@ export const useNetworkSignal = (): NetworkSignalState => {
           }));
         }
       } catch (error) {
-        console.error('[NetworkSignal] Error checking signal:', error);
+        console.error("[NetworkSignal] Error checking signal:", error);
         if (isMounted) {
           setSignal((prev) => ({
             ...prev,

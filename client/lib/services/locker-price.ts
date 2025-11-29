@@ -37,7 +37,7 @@ class LockerPriceService {
 
       // Fetch directly from DexScreener
       const tokens = await dexscreenerAPI.getTokensByMints([LOCKER_MINT]);
-      
+
       if (!tokens || tokens.length === 0) {
         console.warn("LOCKER not found on DexScreener");
         return null;
@@ -66,7 +66,7 @@ class LockerPriceService {
       this.cachedData = priceData;
       this.lastFetchTime = new Date();
       console.log(
-        `✅ LOCKER price updated: $${priceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${priceData.derivationMethod}`
+        `✅ LOCKER price updated: $${priceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${priceData.derivationMethod}`,
       );
 
       // Save to localStorage for offline support
@@ -93,7 +93,7 @@ class LockerPriceService {
     this.cachedData = null;
     this.lastFetchTime = null;
     console.log(
-      "[LockerPriceService] Cache cleared - next fetch will be fresh"
+      "[LockerPriceService] Cache cleared - next fetch will be fresh",
     );
   }
 }
@@ -118,13 +118,13 @@ class LockerPriceServiceWithFallback extends LockerPriceService {
         return result;
       }
       console.warn(
-        "[LockerPriceService] Falling back to static price due to null result"
+        "[LockerPriceService] Falling back to static price due to null result",
       );
       return LOCKER_FALLBACK_PRICE;
     } catch (error) {
       console.warn(
         "[LockerPriceService] Error fetching price, using fallback:",
-        error instanceof Error ? error.message : error
+        error instanceof Error ? error.message : error,
       );
       return LOCKER_FALLBACK_PRICE;
     }

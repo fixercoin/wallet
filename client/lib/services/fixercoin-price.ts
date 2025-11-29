@@ -38,7 +38,7 @@ class FixercoinPriceService {
 
       // Fetch directly from DexScreener
       const tokens = await dexscreenerAPI.getTokensByMints([FIXERCOIN_MINT]);
-      
+
       if (!tokens || tokens.length === 0) {
         console.warn("FIXERCOIN not found on DexScreener");
         return null;
@@ -69,7 +69,7 @@ class FixercoinPriceService {
       this.cachedData = priceData;
       this.lastFetchTime = new Date();
       console.log(
-        `✅ FIXERCOIN price updated: $${priceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${priceData.derivationMethod}`
+        `✅ FIXERCOIN price updated: $${priceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${priceData.derivationMethod}`,
       );
 
       // Save to localStorage for offline support
@@ -96,7 +96,7 @@ class FixercoinPriceService {
     this.cachedData = null;
     this.lastFetchTime = null;
     console.log(
-      "[FixercoinPriceService] Cache cleared - next fetch will be fresh"
+      "[FixercoinPriceService] Cache cleared - next fetch will be fresh",
     );
   }
 }
@@ -121,13 +121,13 @@ class FixercoinPriceServiceWithFallback extends FixercoinPriceService {
         return result;
       }
       console.warn(
-        "[FixercoinPriceService] Falling back to static price due to null result"
+        "[FixercoinPriceService] Falling back to static price due to null result",
       );
       return FIXERCOIN_FALLBACK_PRICE;
     } catch (error) {
       console.warn(
         "[FixercoinPriceService] Error fetching price, using fallback:",
-        error instanceof Error ? error.message : error
+        error instanceof Error ? error.message : error,
       );
       return FIXERCOIN_FALLBACK_PRICE;
     }

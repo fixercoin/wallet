@@ -38,7 +38,7 @@ class FXMPriceService {
 
       // Fetch directly from DexScreener
       const tokens = await dexscreenerAPI.getTokensByMints([FXM_MINT]);
-      
+
       if (!tokens || tokens.length === 0) {
         console.warn("FXM not found on DexScreener");
         return null;
@@ -67,7 +67,7 @@ class FXMPriceService {
       this.cachedData = priceData;
       this.lastFetchTime = new Date();
       console.log(
-        `✅ FXM price updated: $${priceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${priceData.derivationMethod}`
+        `✅ FXM price updated: $${priceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${priceData.derivationMethod}`,
       );
 
       // Save to localStorage for offline support
@@ -105,9 +105,7 @@ class FXMPriceService {
   clearCache(): void {
     this.cachedData = null;
     this.lastFetchTime = null;
-    console.log(
-      "[FXMPriceService] Cache cleared - next fetch will be fresh"
-    );
+    console.log("[FXMPriceService] Cache cleared - next fetch will be fresh");
   }
 }
 
@@ -131,13 +129,13 @@ class FXMPriceServiceWithFallback extends FXMPriceService {
         return result;
       }
       console.warn(
-        "[FXMPriceService] Falling back to static price due to null result"
+        "[FXMPriceService] Falling back to static price due to null result",
       );
       return FXM_FALLBACK_PRICE;
     } catch (error) {
       console.warn(
         "[FXMPriceService] Error fetching price, using fallback:",
-        error instanceof Error ? error.message : error
+        error instanceof Error ? error.message : error,
       );
       return FXM_FALLBACK_PRICE;
     }

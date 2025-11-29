@@ -188,6 +188,11 @@ function AppRoutes() {
 }
 
 function App() {
+  // Initialize storage monitoring on app start
+  React.useEffect(() => {
+    initStorageMonitoring();
+  }, []);
+
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>

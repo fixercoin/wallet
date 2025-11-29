@@ -1,4 +1,8 @@
 import { saveServicePrice, getCachedServicePrice } from "./offline-cache";
+import {
+  retryWithExponentialBackoff,
+  AGGRESSIVE_RETRY_OPTIONS,
+} from "./retry-fetch";
 
 export interface SolPriceData {
   price: number;

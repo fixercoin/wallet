@@ -1,30 +1,23 @@
-import { createClient } from "@supabase/supabase-js";
+/**
+ * Supabase service - DEPRECATED
+ * Staking data is now managed by PHP backend API
+ * This file is kept for backward compatibility but is no longer actively used
+ */
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-let supabase: any = null;
-
-if (supabaseUrl && supabaseAnonKey) {
-  supabase = createClient(supabaseUrl, supabaseAnonKey);
-} else {
-  console.warn(
-    "Supabase credentials not configured. Supabase features will be disabled.",
-  );
-  supabase = {
-    from: () => ({
-      select: () => Promise.resolve({ data: null, error: null }),
-      insert: () => Promise.resolve({ data: null, error: null }),
-      update: () => Promise.resolve({ data: null, error: null }),
-      delete: () => Promise.resolve({ data: null, error: null }),
+// Stub object for backward compatibility (in case any code still references it)
+const supabase = {
+  from: () => ({
+    select: () => Promise.resolve({ data: null, error: null }),
+    insert: () => Promise.resolve({ data: null, error: null }),
+    update: () => Promise.resolve({ data: null, error: null }),
+    delete: () => Promise.resolve({ data: null, error: null }),
+  }),
+  auth: {
+    onAuthStateChange: () => ({
+      data: { subscription: { unsubscribe: () => {} } },
     }),
-    auth: {
-      onAuthStateChange: () => ({
-        data: { subscription: { unsubscribe: () => {} } },
-      }),
-    },
-  };
-}
+  },
+};
 
 export { supabase };
 

@@ -61,7 +61,7 @@ export const NetworkSignalIcon: React.FC<NetworkSignalIconProps> = ({
 
       {/* Signal condition text */}
       <span
-        className="text-[10px] font-bold uppercase transition-colors duration-300 whitespace-nowrap"
+        className="text-[10px] uppercase transition-colors duration-300 whitespace-nowrap"
         style={{ color: status.color }}
       >
         {status.text}

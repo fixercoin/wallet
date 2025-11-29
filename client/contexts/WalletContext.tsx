@@ -517,6 +517,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
   const setWallet = (newWallet: WalletData | null) => {
     if (!newWallet) {
+      console.log("[WalletContext] Clearing wallet and logout");
       setActivePublicKey(null);
       setBalance(0);
       balanceRef.current = 0;
@@ -537,10 +538,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     // If wallet already exists in list, just set active
     const exists = wallets.find((w) => w.publicKey === walletToAdd.publicKey);
     if (exists) {
+      console.log(
+        `[WalletContext] Wallet ${walletToAdd.publicKey} already exists, setting as active`,
+      );
       setActivePublicKey(walletToAdd.publicKey);
       // Ensure active wallet is saved to localStorage
       try {
         localStorage.setItem(ACTIVE_WALLET_KEY, walletToAdd.publicKey);
+        console.log(
+          `[WalletContext] Active wallet saved: ${walletToAdd.publicKey}`,
+        );
       } catch (e) {
         console.warn("Failed to save active wallet to localStorage:", e);
       }
@@ -549,6 +556,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     // Add and set active
     const updatedWallets = [walletToAdd, ...wallets];
+    console.log(
+      `[WalletContext] Adding new wallet and setting as active: ${walletToAdd.publicKey}`,
+    );
     setWallets(updatedWallets);
     setActivePublicKey(walletToAdd.publicKey);
 
@@ -564,12 +574,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
       localStorage.setItem(ACTIVE_WALLET_KEY, walletToAdd.publicKey);
       console.log(
-        "[WalletContext] Wallet saved to localStorage immediately:",
+        "[WalletContext] ✅ Wallet saved to localStorage immediately:",
+        walletToAdd.publicKey,
+      );
+      console.log(
+        "[WalletContext] ✅ Active wallet key saved to localStorage:",
+        ACTIVE_WALLET_KEY,
+        "=",
         walletToAdd.publicKey,
       );
     } catch (e) {
       console.error(
-        "[WalletContext] Failed to save wallet to localStorage:",
+        "[WalletContext] ❌ Failed to save wallet to localStorage:",
         e,
       );
     }

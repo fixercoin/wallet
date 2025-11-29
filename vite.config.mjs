@@ -16,6 +16,9 @@ export default defineConfig({
     assetsDir: "assets",
     sourcemap: false,
     minify: "terser",
+    rollupOptions: {
+      external: [],
+    },
   },
 
   server: {

@@ -67,6 +67,11 @@ export default function Index() {
   }
 
   const navigateToScreen = (screen: Screen, tokenMint?: string) => {
+    // Prevent accessing setup if wallet exists
+    if (screen === "setup" && wallet) {
+      setCurrentScreen({ screen: "dashboard" });
+      return;
+    }
     setCurrentScreen({ screen, tokenMint });
   };
 

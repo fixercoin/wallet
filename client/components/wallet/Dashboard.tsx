@@ -809,21 +809,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Network signal strength dots and settings - moved to right */}
               <div className="flex items-center gap-2">
                 <div
-                  className="relative h-6 w-6 flex items-center justify-center gap-0.5 group px-1"
+                  className="relative h-6 w-6 flex flex-col items-center justify-center gap-0.5 group py-1"
                   title={networkSignal.isOnline ? `Signal: ${networkSignal.bars}/4 (${networkSignal.latency}ms)` : 'No internet connection'}
                   aria-label={`Network signal ${networkSignal.bars} bars`}
                 >
-                  {/* Dot 1 - smallest, lights up when signal >= 1 */}
+                  {/* Dot 4 - largest, lights up when signal >= 4 (top) */}
                   <div
                     className={`rounded-full transition-all ${
-                      networkSignal.bars >= 1
-                        ? `w-1 h-1 ${
-                            networkSignal.bars === 1
-                              ? 'bg-red-500'
-                              : networkSignal.bars === 2
-                              ? 'bg-yellow-500'
-                              : 'bg-green-500'
-                          }`
+                      networkSignal.bars >= 4
+                        ? 'w-2.5 h-2.5 bg-green-500'
+                        : 'w-0.5 h-0.5 bg-gray-600/40'
+                    }`}
+                  />
+
+                  {/* Dot 3 - large, lights up when signal >= 3 */}
+                  <div
+                    className={`rounded-full transition-all ${
+                      networkSignal.bars >= 3
+                        ? 'w-2 h-2 bg-green-500'
                         : 'w-0.5 h-0.5 bg-gray-600/40'
                     }`}
                   />
@@ -841,20 +844,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     }`}
                   />
 
-                  {/* Dot 3 - large, lights up when signal >= 3 */}
+                  {/* Dot 1 - smallest, lights up when signal >= 1 (bottom) */}
                   <div
                     className={`rounded-full transition-all ${
-                      networkSignal.bars >= 3
-                        ? 'w-2 h-2 bg-green-500'
-                        : 'w-0.5 h-0.5 bg-gray-600/40'
-                    }`}
-                  />
-
-                  {/* Dot 4 - largest, lights up when signal >= 4 */}
-                  <div
-                    className={`rounded-full transition-all ${
-                      networkSignal.bars >= 4
-                        ? 'w-2.5 h-2.5 bg-green-500'
+                      networkSignal.bars >= 1
+                        ? `w-1 h-1 ${
+                            networkSignal.bars === 1
+                              ? 'bg-red-500'
+                              : networkSignal.bars === 2
+                              ? 'bg-yellow-500'
+                              : 'bg-green-500'
+                          }`
                         : 'w-0.5 h-0.5 bg-gray-600/40'
                     }`}
                   />

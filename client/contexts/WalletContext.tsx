@@ -53,6 +53,7 @@ interface WalletContextType {
   error: string | null;
   isUsingCache: boolean; // true when displaying cached data due to offline/network error
   requiresPassword: boolean; // true when wallets are encrypted and need unlock
+  isInitialized: boolean; // true when wallet data has been loaded from storage
   setWallet: (wallet: WalletData | null) => void; // set active
   addWallet: (wallet: WalletData) => void; // add and select
   selectWallet: (publicKey: string) => void; // select existing
@@ -87,6 +88,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
   const [isUsingCache, setIsUsingCache] = useState<boolean>(false);
   const [requiresPassword, setRequiresPassword] = useState<boolean>(false);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const encryptedWalletsRef = useRef<any[]>([]);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const providerRef = useRef<FixoriumWalletProvider | null>(null);
@@ -146,6 +148,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         } catch (e) {
           console.warn("Failed to migrate legacy wallet to accounts key:", e);
         }
+        setIsInitialized(true);
         return;
       }
 
@@ -162,6 +165,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           );
           encryptedWalletsRef.current = parsed;
           setRequiresPassword(true);
+          setIsInitialized(true);
           return;
         }
 
@@ -191,9 +195,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         }
       }
+      setIsInitialized(true);
     } catch (error) {
       console.error("Error loading wallets from storage:", error);
       localStorage.removeItem(WALLETS_STORAGE_KEY);
+      setIsInitialized(true);
     }
   }, []);
 
@@ -953,18 +959,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
       const enhancedTokens = visibleTokens.map((token) => {
         const price = prices[token.mint];
-        let finalPrice = price;
-
-        if (!finalPrice || finalPrice <= 0) {
-          if (token.symbol === "SOL") {
-            finalPrice = 100;
-          } else if (["FIXERCOIN", "LOCKER", "FXM"].includes(token.symbol)) {
-            // Keep price as undefined/null for these special tokens so Dashboard shows loading state
-            finalPrice = undefined;
-          } else {
-            finalPrice = 0;
-          }
-        }
+        // Only include price if it's a valid positive number
+        // Otherwise leave it undefined so Dashboard shows loading state
+        const finalPrice =
+          typeof price === "number" && isFinite(price) && price > 0
+            ? price
+            : undefined;
 
         const change =
           typeof changeMap[token.mint] === "number"
@@ -1027,6 +1027,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         setError(
           `Failed to fetch tokens: ${error instanceof Error ? error.message : String(error)}`,
         );
+        // Show only basic token info without prices until they can be fetched
         const fallbackTokens: TokenInfo[] = [
           {
             mint: "So11111111111111111111111111111111111111112",
@@ -1036,16 +1037,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             logoURI:
               "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
             balance: balance || 0,
-            price: 100,
-          },
-          {
-            mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
-            symbol: "FIXERCOIN",
-            name: "FIXERCOIN",
-            decimals: 6,
-            logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
-            balance: 0,
-            price: 0.000023,
           },
         ];
 
@@ -1169,6 +1160,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     error,
     isUsingCache,
     requiresPassword,
+    isInitialized,
     setWallet,
     addWallet,
     selectWallet,

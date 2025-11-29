@@ -221,10 +221,3 @@ function App() {
 }
 
 export default App;
-
-try {
-  createRoot(document.getElementById("root")!).render(<App />);
-} catch (err) {
-  console.error("React render error:", err);
-  throw err;
-}

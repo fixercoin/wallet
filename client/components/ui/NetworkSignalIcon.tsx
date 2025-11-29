@@ -49,19 +49,19 @@ export const NetworkSignalIcon: React.FC<NetworkSignalIconProps> = ({
 
   return (
     <div
-      className="relative flex flex-col items-center justify-center gap-1 group"
+      className="relative flex items-center justify-center gap-1.5 group"
       title={title}
       aria-label={`Network signal ${status.text}`}
     >
       {/* Colored dot */}
       <div
-        className="w-3 h-3 rounded-full transition-colors duration-300"
+        className="w-2.5 h-2.5 rounded-full transition-colors duration-300 flex-shrink-0"
         style={{ backgroundColor: status.color }}
       />
 
       {/* Signal condition text */}
       <span
-        className="text-[10px] font-bold uppercase transition-colors duration-300 leading-none"
+        className="text-[10px] font-bold uppercase transition-colors duration-300 whitespace-nowrap"
         style={{ color: status.color }}
       >
         {status.text}

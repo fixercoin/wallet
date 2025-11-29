@@ -561,8 +561,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       setBalance(0);
       balanceRef.current = 0;
       setTokens(DEFAULT_TOKENS);
-      localStorage.removeItem(WALLETS_STORAGE_KEY);
-      localStorage.removeItem(ACTIVE_WALLET_KEY);
+      clearAllWalletData();
       return;
     }
 
@@ -578,17 +577,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     const exists = wallets.find((w) => w.publicKey === walletToAdd.publicKey);
     if (exists) {
       console.log(
-        `[WalletContext] Wallet ${walletToAdd.publicKey} already exists, setting as active`,
+        `[WalletContext] Wallet ${walletToAdd.publicKey} already exists, setting as active`
       );
       setActivePublicKey(walletToAdd.publicKey);
-      // Ensure active wallet is saved to localStorage
+      // Ensure active wallet is saved to storage
       try {
-        localStorage.setItem(ACTIVE_WALLET_KEY, walletToAdd.publicKey);
+        setStorageItem(ACTIVE_WALLET_KEY, walletToAdd.publicKey);
         console.log(
-          `[WalletContext] Active wallet saved: ${walletToAdd.publicKey}`,
+          `[WalletContext] ✅ Active wallet saved: ${walletToAdd.publicKey}`
         );
       } catch (e) {
-        console.warn("Failed to save active wallet to localStorage:", e);
+        console.warn("Failed to save active wallet to storage:", e);
       }
       return;
     }
@@ -596,12 +595,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     // Add and set active
     const updatedWallets = [walletToAdd, ...wallets];
     console.log(
-      `[WalletContext] Adding new wallet and setting as active: ${walletToAdd.publicKey}`,
+      `[WalletContext] Adding new wallet and setting as active: ${walletToAdd.publicKey}`
     );
     setWallets(updatedWallets);
     setActivePublicKey(walletToAdd.publicKey);
 
-    // Immediately save to localStorage to ensure persistence
+    // Immediately save to storage to ensure persistence
     try {
       const toStore = updatedWallets.map((w) => {
         const copy: any = { ...w } as any;
@@ -610,23 +609,31 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
         return copy;
       });
-      localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
-      localStorage.setItem(ACTIVE_WALLET_KEY, walletToAdd.publicKey);
-      console.log(
-        "[WalletContext] ✅ Wallet saved to localStorage immediately:",
-        walletToAdd.publicKey,
+
+      const walletsSuccess = setStorageItem(
+        WALLETS_STORAGE_KEY,
+        JSON.stringify(toStore)
       );
-      console.log(
-        "[WalletContext] ✅ Active wallet key saved to localStorage:",
+      const activeSuccess = setStorageItem(
         ACTIVE_WALLET_KEY,
-        "=",
-        walletToAdd.publicKey,
+        walletToAdd.publicKey
       );
+
+      if (walletsSuccess && activeSuccess) {
+        console.log(
+          "[WalletContext] ✅ Wallet successfully saved to persistent storage:",
+          walletToAdd.publicKey
+        );
+      } else {
+        console.warn(
+          "[WalletContext] ⚠️ Partial save: wallets=" +
+            walletsSuccess +
+            ", active=" +
+            activeSuccess
+        );
+      }
     } catch (e) {
-      console.error(
-        "[WalletContext] ❌ Failed to save wallet to localStorage:",
-        e,
-      );
+      console.error("[WalletContext] ❌ Failed to save wallet:", e);
     }
   };
 

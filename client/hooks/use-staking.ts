@@ -62,6 +62,7 @@ export function useStaking(): UseStakingReturn {
   const [stakes, setStakes] = useState<Stake[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rewardPayerWallet, setRewardPayerWallet] = useState<string>("");
 
   // Map database row to Stake interface
   const mapRowToStake = (row: any): Stake => ({

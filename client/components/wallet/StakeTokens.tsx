@@ -44,7 +44,7 @@ export const StakeTokens: React.FC<StakeTokensProps> = ({
     );
   }
 
-  const excludedTokens = ["SOL", "USDC", "USDT"];
+  const excludedTokens = ["SOL", "USDC", "USDT", "FXM"];
   const filteredTokens = tokens.filter(
     (token) => !excludedTokens.includes(token.symbol.toUpperCase()),
   );

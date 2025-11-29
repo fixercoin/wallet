@@ -39,6 +39,7 @@ import { useStakingTokens } from "@/hooks/use-staking-tokens";
 import { useNetworkSignal } from "@/hooks/use-network-signal";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
+import { NetworkSignalIcon } from "@/components/ui/NetworkSignalIcon";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -806,70 +807,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {/* Network signal strength lines and settings - moved to right */}
+              {/* Network signal strength icon and settings - moved to right */}
               <div className="flex items-center gap-2">
-                <div
-                  className="relative h-6 w-6 flex flex-col items-end justify-end gap-0.5 group py-1"
-                  title={
-                    networkSignal.isOnline
-                      ? `Signal: ${networkSignal.bars}/4 (${networkSignal.latency}ms)`
-                      : "No internet connection"
-                  }
-                  aria-label={`Network signal ${networkSignal.bars} bars`}
-                >
-                  {/* Line 4 - tallest, lights up when signal >= 4 (top) */}
-                  <div
-                    className={`w-0.5 transition-all rounded-sm ${
-                      networkSignal.bars >= 4
-                        ? "h-5 bg-green-500"
-                        : "h-1 bg-gray-600/40"
-                    }`}
-                  />
-
-                  {/* Line 3 - tall, lights up when signal >= 3 */}
-                  <div
-                    className={`w-0.5 transition-all rounded-sm ${
-                      networkSignal.bars >= 3
-                        ? "h-4 bg-green-500"
-                        : "h-1 bg-gray-600/40"
-                    }`}
-                  />
-
-                  {/* Line 2 - medium, lights up when signal >= 2 */}
-                  <div
-                    className={`w-0.5 transition-all rounded-sm ${
-                      networkSignal.bars >= 2
-                        ? `h-3 ${
-                            networkSignal.bars === 2
-                              ? "bg-yellow-500"
-                              : "bg-green-500"
-                          }`
-                        : "h-1 bg-gray-600/40"
-                    }`}
-                  />
-
-                  {/* Line 1 - shortest, lights up when signal >= 1 (bottom) */}
-                  <div
-                    className={`w-0.5 transition-all rounded-sm ${
-                      networkSignal.bars >= 1
-                        ? `h-2 ${
-                            networkSignal.bars === 1
-                              ? "bg-red-500"
-                              : networkSignal.bars === 2
-                                ? "bg-yellow-500"
-                                : "bg-green-500"
-                          }`
-                        : "h-1 bg-gray-600/40"
-                    }`}
-                  />
-
-                  {/* Tooltip showing latency */}
-                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                    {networkSignal.isOnline
-                      ? `${networkSignal.latency}ms`
-                      : "Offline"}
-                  </div>
-                </div>
+                <NetworkSignalIcon
+                  bars={networkSignal.bars}
+                  isOnline={networkSignal.isOnline}
+                  latency={networkSignal.latency}
+                />
                 <Button
                   onClick={onSettings}
                   size="sm"

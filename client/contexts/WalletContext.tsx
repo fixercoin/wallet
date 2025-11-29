@@ -34,6 +34,15 @@ import {
   isCacheFresh,
   CACHE_VALIDITY_PRICES,
 } from "@/lib/services/offline-cache";
+import {
+  isEncryptedWalletStorage,
+  decryptWalletData,
+} from "@/lib/secure-storage";
+import {
+  setWalletPassword,
+  getWalletPassword,
+  isPasswordAvailable,
+} from "@/lib/wallet-password";
 
 interface WalletContextType {
   wallet: WalletData | null; // active

@@ -39,11 +39,23 @@ interface ScreenState {
 }
 
 export default function Index() {
-  const { wallet, tokens } = useWallet();
+  const { wallet, tokens, isInitialized } = useWallet();
   const [currentScreen, setCurrentScreen] = useState<ScreenState>({
     screen: "dashboard",
   });
   const [isAutoBotActive, setIsAutoBotActive] = useState(false);
+
+  // Wait for wallet context to be initialized from localStorage
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-gray-300">Loading wallet...</p>
+        </div>
+      </div>
+    );
+  }
 
   // If no wallet is set up, show the wallet setup screen
   if (!wallet) {

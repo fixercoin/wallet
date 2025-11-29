@@ -806,94 +806,54 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {/* Connection status and settings - moved to right */}
+              {/* Network signal strength bars and settings - moved to right */}
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-black/20">
-                  {isServiceDown ? (
-                    <>
-                      <div
-                        className="h-5 w-5 rounded flex items-center justify-center cursor-default relative"
-                        title={`Network offline - ${isUsingCache ? "showing cached data" : "no data available"}`}
-                        aria-label="Network offline"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="text-red-500"
-                        >
-                          <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-                          <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                          <path d="M9 20h6" />
-                          <circle cx="12" cy="16" r="1" fill="currentColor" />
-                        </svg>
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-600 rounded-full flex items-center justify-center border-1.5 border-white">
-                          <span className="text-white text-[8px] font-bold leading-none">✕</span>
-                        </div>
-                      </div>
-                      <span className="text-[11px] font-semibold text-red-400">Offline</span>
-                    </>
-                  ) : isUsingCache ? (
-                    <>
-                      <div
-                        className="h-5 w-5 rounded flex items-center justify-center cursor-default relative"
-                        title="Connection unstable - using cached prices"
-                        aria-label="Unstable connection - cached data"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="text-yellow-500"
-                        >
-                          <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-                          <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                          <path d="M9 20h6" />
-                          <circle cx="12" cy="16" r="1" fill="currentColor" />
-                        </svg>
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full flex items-center justify-center border-1.5 border-white">
-                          <span className="text-white text-[8px] font-bold leading-none">!</span>
-                        </div>
-                      </div>
-                      <span className="text-[11px] font-semibold text-yellow-400">Cached</span>
-                    </>
-                  ) : (
-                    <>
-                      <div
-                        className="h-5 w-5 rounded flex items-center justify-center cursor-default"
-                        title="Network connected - using live prices"
-                        aria-label="Network connected"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="text-green-500"
-                        >
-                          <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-                          <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                          <path d="M9 20h6" />
-                          <circle cx="12" cy="16" r="1" fill="currentColor" />
-                        </svg>
-                      </div>
-                      <span className="text-[11px] font-semibold text-green-400">Live</span>
-                    </>
-                  )}
+                <div
+                  className="flex items-center gap-0.5 px-2 py-1.5 rounded-md bg-black/20 group"
+                  title={networkSignal.isOnline ? `Signal: ${networkSignal.bars}/4 bars (${networkSignal.latency}ms latency)` : 'No internet connection'}
+                  aria-label={`Network signal ${networkSignal.bars} bars`}
+                >
+                  {/* Signal bar 1 (always shown if any signal) */}
+                  <div
+                    className={`w-1 h-2 rounded-sm transition-colors ${
+                      networkSignal.bars >= 1
+                        ? networkSignal.bars === 1
+                          ? 'bg-red-500'
+                          : networkSignal.bars === 2
+                          ? 'bg-yellow-500'
+                          : 'bg-green-500'
+                        : 'bg-gray-600/40'
+                    }`}
+                  />
+                  {/* Signal bar 2 */}
+                  <div
+                    className={`w-1 h-3 rounded-sm transition-colors ${
+                      networkSignal.bars >= 2
+                        ? networkSignal.bars === 2
+                          ? 'bg-yellow-500'
+                          : 'bg-green-500'
+                        : 'bg-gray-600/40'
+                    }`}
+                  />
+                  {/* Signal bar 3 */}
+                  <div
+                    className={`w-1 h-4 rounded-sm transition-colors ${
+                      networkSignal.bars >= 3 ? 'bg-green-500' : 'bg-gray-600/40'
+                    }`}
+                  />
+                  {/* Signal bar 4 */}
+                  <div
+                    className={`w-1 h-5 rounded-sm transition-colors ${
+                      networkSignal.bars >= 4 ? 'bg-green-500' : 'bg-gray-600/40'
+                    }`}
+                  />
+
+                  {/* Tooltip showing latency */}
+                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                    {networkSignal.isOnline
+                      ? `${networkSignal.latency}ms`
+                      : 'Offline'}
+                  </div>
                 </div>
                 <Button
                   onClick={onSettings}

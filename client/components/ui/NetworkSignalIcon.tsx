@@ -15,42 +15,32 @@ export const NetworkSignalIcon: React.FC<NetworkSignalIconProps> = ({
   const getColors = () => {
     if (!isOnline || bars === 0) {
       return {
-        glow: "rgba(239, 68, 68, 0.4)",
-        outer: "#ef4444",
-        mid: "#dc2626",
-        inner: "#b91c1c",
+        color: "#ef4444",
+        glowColor: "#ef4444",
       };
     }
     if (bars === 1) {
       return {
-        glow: "rgba(239, 68, 68, 0.4)",
-        outer: "#ef4444",
-        mid: "#dc2626",
-        inner: "#b91c1c",
+        color: "#ef4444",
+        glowColor: "#ef4444",
       };
     }
     if (bars === 2) {
       return {
-        glow: "rgba(234, 179, 8, 0.4)",
-        outer: "#eab308",
-        mid: "#ca8a04",
-        inner: "#a16207",
+        color: "#eab308",
+        glowColor: "#eab308",
       };
     }
     if (bars === 3) {
       return {
-        glow: "rgba(34, 197, 94, 0.4)",
-        outer: "#22c55e",
-        mid: "#16a34a",
-        inner: "#15803d",
+        color: "#22c55e",
+        glowColor: "#22c55e",
       };
     }
     // bars === 4
     return {
-      glow: "rgba(34, 197, 94, 0.6)",
-      outer: "#22c55e",
-      mid: "#16a34a",
-      inner: "#15803d",
+      color: "#22c55e",
+      glowColor: "#84cc16",
     };
   };
 
@@ -67,86 +57,74 @@ export const NetworkSignalIcon: React.FC<NetworkSignalIconProps> = ({
       aria-label={`Network signal ${bars} bars`}
     >
       <svg
-        viewBox="0 0 32 32"
+        viewBox="0 0 64 64"
         className="w-full h-full"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <filter id="glow-signal">
-            <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+          <filter id="glow-wifi">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
             <feMerge>
               <feMergeNode in="coloredBlur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
-          <radialGradient id="signal-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={colors.glow} />
-            <stop offset="100%" stopColor={colors.glow} stopOpacity="0" />
+          <radialGradient id="dot-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={colors.glowColor} stopOpacity="1" />
+            <stop offset="70%" stopColor={colors.glowColor} stopOpacity="0.4" />
+            <stop offset="100%" stopColor={colors.glowColor} stopOpacity="0" />
           </radialGradient>
         </defs>
 
-        {/* Glow effect background */}
+        {/* Outermost arc - shows when bars >= 4 */}
+        <path
+          d="M 32 8 A 24 24 0 0 1 54.43 13.57"
+          stroke={colors.color}
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          opacity={bars >= 4 ? 1 : 0.15}
+          filter="url(#glow-wifi)"
+          className="transition-opacity duration-300"
+        />
+
+        {/* Third arc - shows when bars >= 3 */}
+        <path
+          d="M 32 18 A 14 14 0 0 1 48.79 20.21"
+          stroke={colors.color}
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          opacity={bars >= 3 ? 1 : 0.15}
+          filter="url(#glow-wifi)"
+          className="transition-opacity duration-300"
+        />
+
+        {/* Second arc - shows when bars >= 2 */}
+        <path
+          d="M 32 28 A 7 7 0 0 1 42.95 30.95"
+          stroke={colors.color}
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          opacity={bars >= 2 ? 1 : 0.15}
+          filter="url(#glow-wifi)"
+          className="transition-opacity duration-300"
+        />
+
+        {/* Center dot - always visible, glowing bright */}
         <circle
-          cx="16"
-          cy="16"
-          r="14"
-          fill="url(#signal-glow)"
-          opacity={bars >= 3 ? 1 : 0.5}
-        />
-
-        {/* Outer arc - shows when bars >= 1 */}
-        <path
-          d="M 16 8 A 8 8 0 0 1 22.63 9.37"
-          stroke={colors.outer}
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          opacity={bars >= 1 ? 1 : 0.2}
-          filter="url(#glow-signal)"
-          className="transition-opacity duration-300"
-        />
-
-        {/* Middle arc - shows when bars >= 2 */}
-        <path
-          d="M 16 12 A 4 4 0 0 1 19.32 12.68"
-          stroke={colors.mid}
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          opacity={bars >= 2 ? 1 : 0.2}
-          filter="url(#glow-signal)"
-          className="transition-opacity duration-300"
-        />
-
-        {/* Outer arc 2 - shows when bars >= 3 */}
-        <path
-          d="M 16 4 A 12 12 0 0 1 25.29 6.71"
-          stroke={colors.outer}
-          strokeWidth="2"
-          strokeLinecap="round"
-          opacity={bars >= 3 ? 1 : 0.2}
-          filter="url(#glow-signal)"
-          className="transition-opacity duration-300"
-        />
-
-        {/* Middle arc 2 - shows when bars >= 3 */}
-        <path
-          d="M 16 10 A 6 6 0 0 1 20.95 11.05"
-          stroke={colors.mid}
-          strokeWidth="2"
-          strokeLinecap="round"
-          opacity={bars >= 3 ? 1 : 0.2}
-          filter="url(#glow-signal)"
-          className="transition-opacity duration-300"
-        />
-
-        {/* Center dot - always visible */}
-        <circle
-          cx="16"
-          cy="22"
-          r="2.5"
-          fill={colors.inner}
-          filter="url(#glow-signal)"
+          cx="32"
+          cy="50"
+          r="6"
+          fill="url(#dot-glow)"
+          filter="url(#glow-wifi)"
           className="transition-all duration-300"
+        />
+        <circle
+          cx="32"
+          cy="50"
+          r="3.5"
+          fill={colors.color}
+          className="transition-colors duration-300"
         />
       </svg>
 

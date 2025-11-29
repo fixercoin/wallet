@@ -959,18 +959,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
       const enhancedTokens = visibleTokens.map((token) => {
         const price = prices[token.mint];
-        let finalPrice = price;
-
-        if (!finalPrice || finalPrice <= 0) {
-          if (token.symbol === "SOL") {
-            finalPrice = 100;
-          } else if (["FIXERCOIN", "LOCKER", "FXM"].includes(token.symbol)) {
-            // Keep price as undefined/null for these special tokens so Dashboard shows loading state
-            finalPrice = undefined;
-          } else {
-            finalPrice = 0;
-          }
-        }
+        // Only include price if it's a valid positive number
+        // Otherwise leave it undefined so Dashboard shows loading state
+        const finalPrice =
+          typeof price === "number" && isFinite(price) && price > 0
+            ? price
+            : undefined;
 
         const change =
           typeof changeMap[token.mint] === "number"

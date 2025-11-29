@@ -133,7 +133,7 @@ class TokenPairPricingService {
         new Promise((_, reject) =>
           setTimeout(
             () => reject(new Error("DexScreener getTokenByMint timeout")),
-            6000,
+            12000,
           ),
         ),
       ] as const);

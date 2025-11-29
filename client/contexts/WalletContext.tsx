@@ -498,9 +498,15 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       });
       localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
       localStorage.setItem(ACTIVE_WALLET_KEY, walletToAdd.publicKey);
-      console.log("[WalletContext] Wallet saved to localStorage immediately:", walletToAdd.publicKey);
+      console.log(
+        "[WalletContext] Wallet saved to localStorage immediately:",
+        walletToAdd.publicKey,
+      );
     } catch (e) {
-      console.error("[WalletContext] Failed to save wallet to localStorage:", e);
+      console.error(
+        "[WalletContext] Failed to save wallet to localStorage:",
+        e,
+      );
     }
   };
 
@@ -535,9 +541,15 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       });
       localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
       localStorage.setItem(ACTIVE_WALLET_KEY, walletToAdd.publicKey);
-      console.log("[WalletContext] Wallet added and saved to localStorage:", walletToAdd.publicKey);
+      console.log(
+        "[WalletContext] Wallet added and saved to localStorage:",
+        walletToAdd.publicKey,
+      );
     } catch (e) {
-      console.error("[WalletContext] Failed to save wallet to localStorage:", e);
+      console.error(
+        "[WalletContext] Failed to save wallet to localStorage:",
+        e,
+      );
     }
   };
 

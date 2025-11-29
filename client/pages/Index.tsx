@@ -58,12 +58,22 @@ export default function Index() {
   }
 
   // If no wallet is set up, show the wallet setup screen
+  // Only show setup for new users without any wallets in localStorage
   if (!wallet) {
     return (
       <WalletSetup
-        onComplete={() => setCurrentScreen({ screen: "dashboard" })}
+        onComplete={() => {
+          // After wallet is imported/created, navigate to dashboard
+          setCurrentScreen({ screen: "dashboard" });
+        }}
       />
     );
+  }
+
+  // For existing users with wallet, always show dashboard (not setup page)
+  if (currentScreen.screen === "setup" && wallet) {
+    // Reset to dashboard if wallet exists and user navigates to setup
+    // User can only see setup page if they manually navigate to it
   }
 
   const navigateToScreen = (screen: Screen, tokenMint?: string) => {

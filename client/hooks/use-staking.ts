@@ -225,6 +225,7 @@ export function useStaking(): UseStakingReturn {
         return {
           stake: updatedStake,
           totalAmount: result.data.totalAmount,
+          reward: result.data.reward,
         };
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

@@ -48,36 +48,46 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
       // Validate the address format
       new PublicKey(contractAddress.trim());
 
-      // For demonstration, we'll create a mock token info
-      // In a real app, you would fetch this from the blockchain or a token metadata service
+      const mint = contractAddress.trim();
+
+      // Try to fetch from DexScreener first for metadata and logo
+      let dexToken: any = null;
+      try {
+        const response = await fetch(
+          `/api/dexscreener/token?mint=${encodeURIComponent(mint)}`,
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.pairs?.[0]) {
+            dexToken = data.pairs[0];
+          }
+        }
+      } catch {
+        // DexScreener lookup failed, will use fallback
+      }
+
+      // Create token info with data from DexScreener or fallback
       const mockTokenInfo: TokenInfo = {
-        mint: contractAddress.trim(),
-        symbol: "UNKNOWN",
-        name: "Unknown Token",
+        mint,
+        symbol: dexToken?.baseToken?.symbol || "UNKNOWN",
+        name: dexToken?.baseToken?.name || "Unknown Token",
         decimals: 9,
-        logoURI: "/placeholder.svg",
+        logoURI: dexToken?.info?.imageUrl || "/placeholder.svg",
         balance: 0,
       };
 
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Special handling for FIXERCOIN
-      if (contractAddress.trim() === TOKEN_MINTS.FIXERCOIN) {
+      // Special handling for known tokens
+      if (mint === TOKEN_MINTS.FIXERCOIN) {
         mockTokenInfo.symbol = "FIXERCOIN";
         mockTokenInfo.name = "FIXERCOIN";
         mockTokenInfo.decimals = 6;
         mockTokenInfo.logoURI = "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png";
-        mockTokenInfo.marketCap = 1200000; // $1.2M
-        mockTokenInfo.volume24h = 456000; // $456K
-        mockTokenInfo.liquidity = 234000; // $234K
+        mockTokenInfo.marketCap = 1200000;
+        mockTokenInfo.volume24h = 456000;
+        mockTokenInfo.liquidity = 234000;
       }
 
-      // Special handling for LOCKER
-      if (
-        contractAddress.trim() ===
-        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump"
-      ) {
+      if (mint === "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump") {
         mockTokenInfo.symbol = "LOCKER";
         mockTokenInfo.name = "LOCKER";
         mockTokenInfo.decimals = 6;
@@ -86,6 +96,14 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
         mockTokenInfo.marketCap = 0;
         mockTokenInfo.volume24h = 0;
         mockTokenInfo.liquidity = 0;
+      }
+
+      if (mint === "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump") {
+        mockTokenInfo.symbol = "FXM";
+        mockTokenInfo.name = "Fixorium";
+        mockTokenInfo.decimals = 6;
+        mockTokenInfo.logoURI =
+          "https://cdn.builder.io/api/v1/image/assets%2Feff28b05195a4f5f8e8aaeec5f72bbfe%2Fc78ec8b33eec40be819bca514ed06f2a?format=webp&width=800";
       }
 
       setTokenInfo(mockTokenInfo);

@@ -13,6 +13,8 @@ import { Accounts } from "@/components/wallet/Accounts";
 import { TokenLock } from "@/components/wallet/TokenLock";
 import { BurnToken } from "@/components/wallet/BurnToken";
 import { TokenManage } from "@/components/wallet/TokenManage";
+import { StakeTokens } from "@/components/wallet/StakeTokens";
+import { TokenStakingDetail } from "@/components/wallet/TokenStakingDetail";
 
 type Screen =
   | "dashboard"
@@ -27,7 +29,9 @@ type Screen =
   | "accounts"
   | "airdrop"
   | "lock"
-  | "burn";
+  | "burn"
+  | "stake-tokens"
+  | "stake-token-detail";
 
 interface ScreenState {
   screen: Screen;
@@ -35,11 +39,23 @@ interface ScreenState {
 }
 
 export default function Index() {
-  const { wallet } = useWallet();
+  const { wallet, tokens, isInitialized } = useWallet();
   const [currentScreen, setCurrentScreen] = useState<ScreenState>({
     screen: "dashboard",
   });
   const [isAutoBotActive, setIsAutoBotActive] = useState(false);
+
+  // Wait for wallet context to be initialized from localStorage
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-gray-300">Loading wallet...</p>
+        </div>
+      </div>
+    );
+  }
 
   // If no wallet is set up, show the wallet setup screen
   if (!wallet) {
@@ -152,6 +168,31 @@ export default function Index() {
     case "burn":
       return <BurnToken onBack={navigateToDashboard} />;
 
+    case "stake-tokens":
+      return (
+        <StakeTokens
+          onBack={navigateToDashboard}
+          onTokenSelect={(tokenMint) =>
+            navigateToScreen("stake-token-detail", tokenMint)
+          }
+        />
+      );
+
+    case "stake-token-detail": {
+      const selectedToken = tokens.find(
+        (t) => t.mint === currentScreen.tokenMint,
+      );
+      if (!selectedToken) {
+        return <StakeTokens onBack={navigateToDashboard} />;
+      }
+      return (
+        <TokenStakingDetail
+          token={selectedToken}
+          onBack={navigateToDashboard}
+        />
+      );
+    }
+
     case "dashboard":
     default:
       return (
@@ -167,6 +208,7 @@ export default function Index() {
           onAccounts={() => navigateToScreen("accounts")}
           onLock={() => navigateToScreen("lock")}
           onBurn={() => navigateToScreen("burn")}
+          onStakeTokens={() => navigateToScreen("stake-tokens")}
         />
       );
   }

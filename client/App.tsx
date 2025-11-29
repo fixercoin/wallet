@@ -138,8 +138,11 @@ import AssetsPage from "./pages/AssetsPage";
 import DepositAssetPage from "./pages/DepositAssetPage";
 import SelectLanguagePage from "./pages/SelectLanguagePage";
 import SelectCurrencyPage from "./pages/SelectCurrencyPage";
-import { BottomNavigation } from "@/components/BottomNavigation";
+import BurnTokenPage from "./pages/BurnTokenPage";
+import RunningMarketMaker from "./pages/RunningMarketMaker";
+import MarketMakerHistory from "./pages/MarketMakerHistory";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
+import { BottomNavigation } from "@/components/BottomNavigation";
 
 const queryClient = new QueryClient();
 
@@ -164,6 +167,7 @@ function AppRoutes() {
       <Route path="/token/:mint" element={<TokenSearchDetail />} />
       <Route path="/admin-broadcast" element={<AdminBroadcast />} />
       <Route path="/autobot" element={<AutoBot />} />
+      <Route path="/burn" element={<BurnTokenPage />} />
       <Route path="/airdrop" element={<AirdropPage />} />
       <Route path="/assets" element={<AssetsPage />} />
       <Route path="/assets/deposit" element={<DepositAssetPage />} />
@@ -172,6 +176,11 @@ function AppRoutes() {
       <Route path="/dapps/view" element={<DappView />} />
       <Route path="/select-language" element={<SelectLanguagePage />} />
       <Route path="/select-currency" element={<SelectCurrencyPage />} />
+      <Route
+        path="/market-maker/running/:sessionId"
+        element={<RunningMarketMaker />}
+      />
+      <Route path="/market-maker/history" element={<MarketMakerHistory />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -189,7 +198,7 @@ function App() {
               <LanguageProvider>
                 <CurrencyProvider>
                   <BrowserRouter>
-                    <div className="min-h-screen pb-20">
+                    <div className="min-h-screen pb-24">
                       <AppRoutes />
                       <BottomNavigation />
                     </div>
@@ -203,6 +212,8 @@ function App() {
     </ThemeProvider>
   );
 }
+
+export default App;
 
 try {
   createRoot(document.getElementById("root")!).render(<App />);

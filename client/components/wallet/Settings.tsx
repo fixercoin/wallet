@@ -162,7 +162,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
-      <div className="w-full max-w-4xl mx-auto px-4 pt-6 pb-6 relative z-20">
+      <div className="w-full relative z-20">
         <div>
           <div className="mt-6 mb-1 p-6 border-0 bg-transparent relative mx-0">
             <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">

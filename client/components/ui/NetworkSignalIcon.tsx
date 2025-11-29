@@ -59,11 +59,10 @@ export const NetworkSignalIcon: React.FC<NetworkSignalIconProps> = ({
 
         {/* Outermost arc - shows when bars >= 4 */}
         <path
-          d="M 3.1 8.9 Q 12 0 20.9 8.9"
+          d="M 2 10 A 10 10 0 0 1 22 10"
           stroke={color}
-          strokeWidth="1.8"
+          strokeWidth="1.2"
           strokeLinecap="round"
-          strokeLinejoin="round"
           opacity={bars >= 4 ? 1 : 0.2}
           filter="url(#glow-wifi)"
           className="transition-opacity duration-300"
@@ -71,11 +70,10 @@ export const NetworkSignalIcon: React.FC<NetworkSignalIconProps> = ({
 
         {/* Third arc - shows when bars >= 3 */}
         <path
-          d="M 5.5 11.3 Q 12 5 18.5 11.3"
+          d="M 5 12 A 7 7 0 0 1 19 12"
           stroke={color}
-          strokeWidth="1.8"
+          strokeWidth="1.2"
           strokeLinecap="round"
-          strokeLinejoin="round"
           opacity={bars >= 3 ? 1 : 0.2}
           filter="url(#glow-wifi)"
           className="transition-opacity duration-300"
@@ -83,23 +81,21 @@ export const NetworkSignalIcon: React.FC<NetworkSignalIconProps> = ({
 
         {/* Second arc - shows when bars >= 2 */}
         <path
-          d="M 8 13.7 Q 12 10 16 13.7"
+          d="M 8 14 A 4 4 0 0 1 16 14"
           stroke={color}
-          strokeWidth="1.8"
+          strokeWidth="1.2"
           strokeLinecap="round"
-          strokeLinejoin="round"
           opacity={bars >= 2 ? 1 : 0.2}
           filter="url(#glow-wifi)"
           className="transition-opacity duration-300"
         />
 
-        {/* First arc/dot - shows when bars >= 1 */}
+        {/* First arc - shows when bars >= 1 */}
         <path
-          d="M 10.5 16 Q 12 15 13.5 16"
+          d="M 10.5 16 A 1.5 1.5 0 0 1 13.5 16"
           stroke={color}
-          strokeWidth="1.8"
+          strokeWidth="1.2"
           strokeLinecap="round"
-          strokeLinejoin="round"
           opacity={bars >= 1 ? 1 : 0.2}
           filter="url(#glow-wifi)"
           className="transition-opacity duration-300"

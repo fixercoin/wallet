@@ -162,10 +162,11 @@ export function useStaking(): UseStakingReturn {
     [wallet?.publicKey, wallet?.secretKey],
   );
 
-  // Withdraw from stake in Supabase
+  // Withdraw from stake via PHP API
   const withdrawStake = useCallback(
     async (stakeId: string) => {
       if (!wallet?.publicKey) throw new Error("No wallet");
+      if (!wallet?.secretKey) throw new Error("Wallet secret key not available");
 
       const stake = stakes.find((s) => s.id === stakeId);
       if (!stake) throw new Error("Stake not found");
@@ -178,40 +179,48 @@ export function useStaking(): UseStakingReturn {
         throw new Error("Stake is not active");
       }
 
-      const now = Date.now();
-      if (now < stake.endTime) {
-        throw new Error("Staking period has not ended yet");
+      // For now, we'll use basic authentication with wallet address
+      // In production, implement proper message signing
+      const message = `Withdraw stake:${stakeId}:${wallet.publicKey}:${Date.now()}`;
+
+      try {
+        const response = await fetch(
+          resolveApiUrl("/backend/api/staking-withdraw.php"),
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              wallet: wallet.publicKey,
+              stakeId,
+              message,
+              signature: "verified", // Placeholder - would be actual signature
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Failed to withdraw stake: ${response.status}`);
+        }
+
+        const result = await response.json();
+        const updatedStake = mapRowToStake(result.data.stake);
+        setStakes((prev) =>
+          prev.map((s) => (s.id === stakeId ? updatedStake : s)),
+        );
+
+        return {
+          stake: updatedStake,
+          totalAmount: result.data.totalAmount,
+        };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new Error(msg);
       }
-
-      const { data, error: updateError } = await supabase
-        .from("stakes")
-        .update({
-          status: "withdrawn",
-          withdrawn_at: now,
-          updated_at: now,
-        })
-        .eq("id", stakeId)
-        .select();
-
-      if (updateError) {
-        throw new Error(updateError.message);
-      }
-
-      if (!data || data.length === 0) {
-        throw new Error("Failed to withdraw stake");
-      }
-
-      const updatedStake = mapRowToStake(data[0]);
-      setStakes((prev) =>
-        prev.map((s) => (s.id === stakeId ? updatedStake : s)),
-      );
-
-      return {
-        stake: updatedStake,
-        totalAmount: stake.amount + stake.rewardAmount,
-      };
     },
-    [wallet?.publicKey, stakes],
+    [wallet?.publicKey, wallet?.secretKey, stakes],
   );
 
   // Load stakes on mount and when wallet changes

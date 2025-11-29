@@ -806,47 +806,81 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {/* Network signal strength bars and settings - moved to right */}
+              {/* Network signal strength antenna and settings - moved to right */}
               <div className="flex items-center gap-2">
                 <div
-                  className="flex items-center gap-0.5 px-2 py-1.5 rounded-md bg-black/20 group"
-                  title={networkSignal.isOnline ? `Signal: ${networkSignal.bars}/4 bars (${networkSignal.latency}ms latency)` : 'No internet connection'}
+                  className="relative h-6 w-5 flex items-center justify-center group"
+                  title={networkSignal.isOnline ? `Signal: ${networkSignal.bars}/4 (${networkSignal.latency}ms)` : 'No internet connection'}
                   aria-label={`Network signal ${networkSignal.bars} bars`}
                 >
-                  {/* Signal bar 1 (always shown if any signal) */}
-                  <div
-                    className={`w-1 h-2 rounded-sm transition-colors ${
-                      networkSignal.bars >= 1
-                        ? networkSignal.bars === 1
-                          ? 'bg-red-500'
-                          : networkSignal.bars === 2
-                          ? 'bg-yellow-500'
-                          : 'bg-green-500'
-                        : 'bg-gray-600/40'
-                    }`}
-                  />
-                  {/* Signal bar 2 */}
-                  <div
-                    className={`w-1 h-3 rounded-sm transition-colors ${
-                      networkSignal.bars >= 2
-                        ? networkSignal.bars === 2
-                          ? 'bg-yellow-500'
-                          : 'bg-green-500'
-                        : 'bg-gray-600/40'
-                    }`}
-                  />
-                  {/* Signal bar 3 */}
-                  <div
-                    className={`w-1 h-4 rounded-sm transition-colors ${
-                      networkSignal.bars >= 3 ? 'bg-green-500' : 'bg-gray-600/40'
-                    }`}
-                  />
-                  {/* Signal bar 4 */}
-                  <div
-                    className={`w-1 h-5 rounded-sm transition-colors ${
-                      networkSignal.bars >= 4 ? 'bg-green-500' : 'bg-gray-600/40'
-                    }`}
-                  />
+                  <svg
+                    width="20"
+                    height="24"
+                    viewBox="0 0 20 24"
+                    fill="none"
+                    className="transition-opacity"
+                  >
+                    {/* Antenna pole */}
+                    <line x1="10" y1="24" x2="10" y2="14" stroke="currentColor" strokeWidth="1.5" className="text-gray-500" />
+
+                    {/* Signal line 1 (bottom) - red when poor */}
+                    <path
+                      d="M 10 18 Q 14 16 16 12"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      fill="none"
+                      strokeLinecap="round"
+                      className={`transition-colors ${
+                        networkSignal.bars >= 1
+                          ? networkSignal.bars === 1
+                            ? 'text-red-500'
+                            : networkSignal.bars === 2
+                            ? 'text-yellow-500'
+                            : 'text-green-500'
+                          : 'text-gray-600/40'
+                      }`}
+                    />
+
+                    {/* Signal line 2 - yellow when fair */}
+                    <path
+                      d="M 10 16 Q 15 12 18 6"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      fill="none"
+                      strokeLinecap="round"
+                      className={`transition-colors ${
+                        networkSignal.bars >= 2
+                          ? networkSignal.bars === 2
+                            ? 'text-yellow-500'
+                            : 'text-green-500'
+                          : 'text-gray-600/40'
+                      }`}
+                    />
+
+                    {/* Signal line 3 - green when good */}
+                    <path
+                      d="M 10 14 Q 15 8 18 2"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      fill="none"
+                      strokeLinecap="round"
+                      className={`transition-colors ${
+                        networkSignal.bars >= 3 ? 'text-green-500' : 'text-gray-600/40'
+                      }`}
+                    />
+
+                    {/* Signal line 4 - green when excellent */}
+                    <path
+                      d="M 10 12 Q 16 4 20 1"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      fill="none"
+                      strokeLinecap="round"
+                      className={`transition-colors ${
+                        networkSignal.bars >= 4 ? 'text-green-500' : 'text-gray-600/40'
+                      }`}
+                    />
+                  </svg>
 
                   {/* Tooltip showing latency */}
                   <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">

@@ -148,6 +148,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         } catch (e) {
           console.warn("Failed to migrate legacy wallet to accounts key:", e);
         }
+        setIsInitialized(true);
         return;
       }
 
@@ -164,6 +165,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           );
           encryptedWalletsRef.current = parsed;
           setRequiresPassword(true);
+          setIsInitialized(true);
           return;
         }
 
@@ -193,9 +195,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
         }
       }
+      setIsInitialized(true);
     } catch (error) {
       console.error("Error loading wallets from storage:", error);
       localStorage.removeItem(WALLETS_STORAGE_KEY);
+      setIsInitialized(true);
     }
   }, []);
 

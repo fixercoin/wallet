@@ -473,6 +473,19 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
         return bVolume - aVolume;
       });
 
+    // If we couldn't find live prices for the requested tokens, return error so client retries
+    if (solanaPairs.length === 0 && uniqueMints.length > 0) {
+      console.error(
+        `[DexScreener] ❌ No live prices found for any of ${uniqueMints.length} requested tokens. Returning 503 so client retries.`,
+      );
+      return res.status(503).json({
+        error: "No live price data available from DexScreener",
+        details: `Could not find prices for: ${uniqueMints.join(", ")}`,
+        schemaVersion,
+        pairs: [],
+      });
+    }
+
     console.log(
       `[DexScreener] ✅ Response: ${solanaPairs.length} Solana pairs found across ${batches.length} batch(es)` +
         (missingMints.length > 0

@@ -190,7 +190,7 @@ function AppRoutes() {
 
 function App() {
   // Initialize storage monitoring on app start
-  React.useEffect(() => {
+  useEffect(() => {
     initStorageMonitoring();
   }, []);
 

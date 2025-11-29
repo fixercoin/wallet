@@ -193,7 +193,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
 
               <div className="text-center px-4">
                 <p className="text-sm font-semibold text-gray-100 leading-relaxed">
-                  FIXORIUM WALLET IS A SECURE, NON-CUSTODIAL SOLANA WALLET THAT PUTS YOU IN FULL CONTROL OF YOUR DIGITAL ASSETS. CREATE A NEW WALLET OR IMPORT AN EXISTING ONE TO GET STARTED.
+                  YOUR SECURE SOLANA WALLET. CREATE OR IMPORT TO START.
                 </p>
               </div>
 

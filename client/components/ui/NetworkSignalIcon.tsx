@@ -49,7 +49,7 @@ export const NetworkSignalIcon: React.FC<NetworkSignalIconProps> = ({
       >
         <defs>
           <filter id="glow-wifi">
-            <feGaussianBlur stdDeviation="1.5" result="coloredBlur" />
+            <feGaussianBlur stdDeviation="1.2" result="coloredBlur" />
             <feMerge>
               <feMergeNode in="coloredBlur" />
               <feMergeNode in="SourceGraphic" />
@@ -57,12 +57,13 @@ export const NetworkSignalIcon: React.FC<NetworkSignalIconProps> = ({
           </filter>
         </defs>
 
-        {/* Outermost arc - largest, shows when bars >= 4 */}
+        {/* Outermost arc - shows when bars >= 4 */}
         <path
-          d="M 12 3 C 16.97 3 21.55 5.18 24.36 8.64"
+          d="M 3.1 8.9 Q 12 0 20.9 8.9"
           stroke={color}
-          strokeWidth="1.5"
+          strokeWidth="1.8"
           strokeLinecap="round"
+          strokeLinejoin="round"
           opacity={bars >= 4 ? 1 : 0.2}
           filter="url(#glow-wifi)"
           className="transition-opacity duration-300"
@@ -70,10 +71,11 @@ export const NetworkSignalIcon: React.FC<NetworkSignalIconProps> = ({
 
         {/* Third arc - shows when bars >= 3 */}
         <path
-          d="M 12 7 C 15.32 7 18.35 8.46 20.49 10.81"
+          d="M 5.5 11.3 Q 12 5 18.5 11.3"
           stroke={color}
-          strokeWidth="1.5"
+          strokeWidth="1.8"
           strokeLinecap="round"
+          strokeLinejoin="round"
           opacity={bars >= 3 ? 1 : 0.2}
           filter="url(#glow-wifi)"
           className="transition-opacity duration-300"
@@ -81,21 +83,23 @@ export const NetworkSignalIcon: React.FC<NetworkSignalIconProps> = ({
 
         {/* Second arc - shows when bars >= 2 */}
         <path
-          d="M 12 11 C 14.21 11 16.15 11.85 17.54 13.24"
+          d="M 8 13.7 Q 12 10 16 13.7"
           stroke={color}
-          strokeWidth="1.5"
+          strokeWidth="1.8"
           strokeLinecap="round"
+          strokeLinejoin="round"
           opacity={bars >= 2 ? 1 : 0.2}
           filter="url(#glow-wifi)"
           className="transition-opacity duration-300"
         />
 
-        {/* First arc - smallest, shows when bars >= 1 */}
+        {/* First arc/dot - shows when bars >= 1 */}
         <path
-          d="M 12 15 C 13.1 15 14.05 14.55 14.7 13.9"
+          d="M 10.5 16 Q 12 15 13.5 16"
           stroke={color}
-          strokeWidth="1.5"
+          strokeWidth="1.8"
           strokeLinecap="round"
+          strokeLinejoin="round"
           opacity={bars >= 1 ? 1 : 0.2}
           filter="url(#glow-wifi)"
           className="transition-opacity duration-300"

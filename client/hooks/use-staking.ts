@@ -119,7 +119,7 @@ export function useStaking(): UseStakingReturn {
     }
   }, [wallet?.publicKey]);
 
-  // Create new stake via PHP API
+  // Create new stake via Cloudflare API
   const createStake = useCallback(
     async (
       tokenMint: string,
@@ -139,7 +139,7 @@ export function useStaking(): UseStakingReturn {
 
       try {
         const response = await fetch(
-          resolveApiUrl("/backend/api/staking-create.php"),
+          resolveApiUrl("/api/staking/create"),
           {
             method: "POST",
             headers: {

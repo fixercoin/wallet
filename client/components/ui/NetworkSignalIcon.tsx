@@ -14,37 +14,22 @@ export const NetworkSignalIcon: React.FC<NetworkSignalIconProps> = ({
   // Determine color based on connection quality
   const getColors = () => {
     if (!isOnline || bars === 0) {
-      return {
-        color: "#ef4444",
-        glowColor: "#ef4444",
-      };
+      return "#ef4444"; // red
     }
     if (bars === 1) {
-      return {
-        color: "#ef4444",
-        glowColor: "#ef4444",
-      };
+      return "#ef4444"; // red
     }
     if (bars === 2) {
-      return {
-        color: "#eab308",
-        glowColor: "#eab308",
-      };
+      return "#eab308"; // yellow
     }
     if (bars === 3) {
-      return {
-        color: "#22c55e",
-        glowColor: "#22c55e",
-      };
+      return "#22c55e"; // green
     }
     // bars === 4
-    return {
-      color: "#22c55e",
-      glowColor: "#84cc16",
-    };
+    return "#22c55e"; // green
   };
 
-  const colors = getColors();
+  const color = getColors();
 
   const title = isOnline
     ? `Signal: ${bars}/4 (${latency}ms)`
@@ -57,66 +42,61 @@ export const NetworkSignalIcon: React.FC<NetworkSignalIconProps> = ({
       aria-label={`Network signal ${bars} bars`}
     >
       <svg
-        viewBox="0 0 64 64"
+        viewBox="0 0 24 24"
         className="w-full h-full"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
           <filter id="glow-wifi">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+            <feGaussianBlur stdDeviation="1.5" result="coloredBlur" />
             <feMerge>
               <feMergeNode in="coloredBlur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
-          <radialGradient id="dot-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={colors.glowColor} stopOpacity="1" />
-            <stop offset="70%" stopColor={colors.glowColor} stopOpacity="0.4" />
-            <stop offset="100%" stopColor={colors.glowColor} stopOpacity="0" />
-          </radialGradient>
         </defs>
 
-        {/* Outermost arc - shows when bars >= 4 */}
+        {/* Outermost arc - largest, shows when bars >= 4 */}
         <path
-          d="M 32 8 A 24 24 0 0 1 54.43 13.57"
-          stroke={colors.color}
-          strokeWidth="3.5"
+          d="M 12 3 C 16.97 3 21.55 5.18 24.36 8.64"
+          stroke={color}
+          strokeWidth="1.5"
           strokeLinecap="round"
-          opacity={bars >= 4 ? 1 : 0.15}
+          opacity={bars >= 4 ? 1 : 0.2}
           filter="url(#glow-wifi)"
           className="transition-opacity duration-300"
         />
 
         {/* Third arc - shows when bars >= 3 */}
         <path
-          d="M 32 18 A 14 14 0 0 1 48.79 20.21"
-          stroke={colors.color}
-          strokeWidth="3.5"
+          d="M 12 7 C 15.32 7 18.35 8.46 20.49 10.81"
+          stroke={color}
+          strokeWidth="1.5"
           strokeLinecap="round"
-          opacity={bars >= 3 ? 1 : 0.15}
+          opacity={bars >= 3 ? 1 : 0.2}
           filter="url(#glow-wifi)"
           className="transition-opacity duration-300"
         />
 
         {/* Second arc - shows when bars >= 2 */}
         <path
-          d="M 32 28 A 7 7 0 0 1 42.95 30.95"
-          stroke={colors.color}
-          strokeWidth="3.5"
+          d="M 12 11 C 14.21 11 16.15 11.85 17.54 13.24"
+          stroke={color}
+          strokeWidth="1.5"
           strokeLinecap="round"
-          opacity={bars >= 2 ? 1 : 0.15}
+          opacity={bars >= 2 ? 1 : 0.2}
           filter="url(#glow-wifi)"
           className="transition-opacity duration-300"
         />
 
-        {/* First arc - shows when bars >= 1 */}
+        {/* First arc - smallest, shows when bars >= 1 */}
         <path
-          d="M 32 40 A 1 1 0 0 1 33 41"
-          stroke={colors.color}
-          strokeWidth="3.5"
+          d="M 12 15 C 13.1 15 14.05 14.55 14.7 13.9"
+          stroke={color}
+          strokeWidth="1.5"
           strokeLinecap="round"
-          opacity={bars >= 1 ? 1 : 0.15}
+          opacity={bars >= 1 ? 1 : 0.2}
           filter="url(#glow-wifi)"
           className="transition-opacity duration-300"
         />

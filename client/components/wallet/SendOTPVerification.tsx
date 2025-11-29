@@ -172,7 +172,7 @@ export const SendOTPVerification: React.FC<SendOTPVerificationProps> = ({
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col">
       <div className="flex-1 flex items-center justify-center relative z-20">
-        <div className="w-full max-w-md px-4 py-6">
+        <div className="w-full">
           <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
             <div className="space-y-6 p-6">
               {/* Header */}

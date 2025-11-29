@@ -200,8 +200,11 @@ class HeliusAPI {
               }
             }
 
+            lastError = new Error(
+              `${response.status} ${response.statusText}: ${errorText}`,
+            );
             console.warn(
-              `RPC call failed on ${endpoint}: ${response.status} ${response.statusText}`,
+              `RPC call failed on ${endpoint}: ${lastError.message}`,
             );
             continue;
           }
@@ -209,7 +212,9 @@ class HeliusAPI {
           const data = await response.json();
 
           if (data.error) {
-            console.warn(`RPC error on ${endpoint}: ${data.error.message}`);
+            const errorMsg = data.error.message || JSON.stringify(data.error);
+            console.warn(`RPC error on ${endpoint}: ${errorMsg}`);
+            lastError = new Error(errorMsg);
             continue;
           }
 

@@ -1,3 +1,5 @@
+import { fetchWithRetry } from "../../utils/fetch-with-retry";
+
 export const onRequest: PagesFunction = async ({ request, env }) => {
   try {
     const quoteUrl = (env as any)?.PUMPFUN_QUOTE;
@@ -20,17 +22,15 @@ export const onRequest: PagesFunction = async ({ request, env }) => {
     }
 
     const body = await request.json();
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-    const res = await fetch(quoteUrl, {
+    const res = await fetchWithRetry(quoteUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-      signal: controller.signal,
+      timeoutMs: 55000,
+      maxRetries: 2,
+      retryDelayMs: 1000,
     });
 
-    clearTimeout(timeoutId);
     const text = await res.text();
 
     return new Response(text, {
@@ -44,17 +44,16 @@ export const onRequest: PagesFunction = async ({ request, env }) => {
     });
   } catch (error: any) {
     const message = error?.message || "Unknown error";
+    const isTimeout = message.includes("timeout") || message.includes("abort");
     console.error("PumpFun quote error:", error);
 
     return new Response(
       JSON.stringify({
-        error: message.includes("abort")
-          ? "Request timeout"
-          : "Failed to fetch PumpFun quote",
+        error: isTimeout ? "Request timeout" : "Failed to fetch PumpFun quote",
         details: message,
       }),
       {
-        status: 503,
+        status: isTimeout ? 504 : 503,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",

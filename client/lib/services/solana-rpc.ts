@@ -11,7 +11,7 @@ export interface TokenMetadata {
 }
 
 // Basic known token list (minimal, can be expanded)
-const KNOWN_TOKENS: Record<string, TokenMetadata> = {
+export const KNOWN_TOKENS: Record<string, TokenMetadata> = {
   So11111111111111111111111111111111111111112: {
     mint: "So11111111111111111111111111111111111111112",
     symbol: "SOL",
@@ -49,6 +49,14 @@ const KNOWN_TOKENS: Record<string, TokenMetadata> = {
     name: "LOCKER",
     decimals: 6,
     logoURI: "https://via.placeholder.com/64x64/8b5cf6/ffffff?text=LO",
+  },
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump": {
+    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+    symbol: "FXM",
+    name: "Fixorium",
+    decimals: 6,
+    logoURI:
+      "https://cdn.builder.io/api/v1/image/assets%2Feff28b05195a4f5f8e8aaeec5f72bbfe%2Fc78ec8b33eec40be819bca514ed06f2a?format=webp&width=800",
   },
 };
 
@@ -113,6 +121,7 @@ export const makeRpcCall = async (
 
           if (!response.ok) {
             const responseText = await response.text().catch(() => "");
+            const errorMsg = `HTTP ${response.status} ${response.statusText}: ${responseText}`;
             console.warn(
               `[RPC] ${method} on ${endpoint} returned ${response.status}`,
             );
@@ -121,6 +130,7 @@ export const makeRpcCall = async (
               lastErrorStatus = 429;
             }
 
+            lastError = new Error(errorMsg);
             continue;
           }
 
@@ -131,14 +141,17 @@ export const makeRpcCall = async (
             data = text ? JSON.parse(text) : null;
           } catch (e) {
             console.warn(`[RPC] Failed to parse response from ${endpoint}`);
+            lastError = new Error(`Failed to parse response: ${String(e)}`);
             continue;
           }
 
           if (data && data.error) {
+            const errorMsg = data.error.message || JSON.stringify(data.error);
             console.warn(
               `[RPC] ${method} on ${endpoint} returned error:`,
               data.error,
             );
+            lastError = new Error(errorMsg);
             continue;
           }
 
@@ -247,8 +260,17 @@ export const getTokenAccounts = async (publicKey: string) => {
       return value.map((account: any) => {
         const parsedInfo = account.account.data.parsed.info;
         const mint = parsedInfo.mint;
-        const balance = parsedInfo.tokenAmount.uiAmount || 0;
         const decimals = parsedInfo.tokenAmount.decimals;
+
+        // Extract balance - prefer uiAmount, fall back to calculating from raw amount
+        let balance = 0;
+        if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
+          balance = parsedInfo.tokenAmount.uiAmount;
+        } else if (parsedInfo.tokenAmount.amount) {
+          // Convert raw amount to UI amount using decimals
+          const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+          balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+        }
 
         const metadata = KNOWN_TOKENS[mint] || {
           mint,
@@ -287,8 +309,17 @@ export const getTokenAccounts = async (publicKey: string) => {
     return accounts.value.map((account: any) => {
       const parsedInfo = account.account.data.parsed.info;
       const mint = parsedInfo.mint;
-      const balance = parsedInfo.tokenAmount.uiAmount || 0;
       const decimals = parsedInfo.tokenAmount.decimals;
+
+      // Extract balance - prefer uiAmount, fall back to calculating from raw amount
+      let balance = 0;
+      if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
+        balance = parsedInfo.tokenAmount.uiAmount;
+      } else if (parsedInfo.tokenAmount.amount) {
+        // Convert raw amount to UI amount using decimals
+        const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+        balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+      }
 
       const metadata = KNOWN_TOKENS[mint] || {
         mint,
@@ -387,4 +418,84 @@ export const addKnownToken = (metadata: TokenMetadata) => {
  */
 export const getKnownTokens = (): Record<string, TokenMetadata> => {
   return { ...KNOWN_TOKENS };
+};
+
+/**
+ * Fetch balance for a specific token mint
+ * This is useful for custom tokens that might not be in the general token list
+ */
+export const getTokenBalanceForMint = async (
+  walletAddress: string,
+  tokenMint: string,
+): Promise<number | null> => {
+  const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+
+  try {
+    // Try via API proxy first
+    const response = await makeRpcCall("getTokenAccountsByOwner", [
+      walletAddress,
+      { mint: tokenMint },
+      { encoding: "jsonParsed", commitment: "confirmed" },
+    ]);
+
+    const value = (response as any)?.value || [];
+    if (Array.isArray(value) && value.length > 0) {
+      const account = value[0];
+      const parsedInfo = account.account.data.parsed.info;
+      const decimals = parsedInfo.tokenAmount.decimals;
+
+      let balance = 0;
+      if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
+        balance = parsedInfo.tokenAmount.uiAmount;
+      } else if (parsedInfo.tokenAmount.amount) {
+        const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+        balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+      }
+
+      console.log(
+        `[Token Balance] Fetched ${tokenMint}: ${balance} via proxy RPC`,
+      );
+      return balance;
+    }
+  } catch (error) {
+    console.warn(
+      `[Token Balance] Proxy RPC failed for ${tokenMint}, attempting direct web3.js fallback:`,
+      error,
+    );
+  }
+
+  // Fallback: Try direct web3.js Connection
+  try {
+    const conn = new Connection(SOLANA_RPC_URL, { commitment: "confirmed" });
+    const accounts = await conn.getParsedTokenAccountsByOwner(
+      new PublicKey(walletAddress),
+      { mint: new PublicKey(tokenMint) },
+    );
+
+    if (accounts.value.length > 0) {
+      const account = accounts.value[0];
+      const parsedInfo = account.account.data.parsed.info;
+      const decimals = parsedInfo.tokenAmount.decimals;
+
+      let balance = 0;
+      if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
+        balance = parsedInfo.tokenAmount.uiAmount;
+      } else if (parsedInfo.tokenAmount.amount) {
+        const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+        balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+      }
+
+      console.log(
+        `[Token Balance] Fetched ${tokenMint}: ${balance} via web3.js fallback`,
+      );
+      return balance;
+    }
+  } catch (webError) {
+    console.warn(
+      `[Token Balance] Direct web3.js fallback also failed for ${tokenMint}:`,
+      webError,
+    );
+  }
+
+  return null;
 };

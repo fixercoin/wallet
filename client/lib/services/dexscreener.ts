@@ -186,6 +186,10 @@ class DexscreenerAPI {
         );
         const response = await fetch(url, { signal: controller.signal });
 
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
         if (response.ok) {
           try {
             const contentType = response.headers.get("content-type") || "";
@@ -342,6 +346,32 @@ class DexscreenerAPI {
 
   async getTokenByMint(mint: string): Promise<DexscreenerToken | null> {
     const tokens = await this.getTokensByMints([mint]);
+
+    // If not found and it's FXM, try searching by symbol as fallback
+    if (
+      tokens.length === 0 &&
+      mint === "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump"
+    ) {
+      console.log(
+        `[DexScreener] FXM mint not found in batch, trying symbol search...`,
+      );
+      const searchResults = await this.searchTokens("FXM");
+      if (searchResults.length > 0) {
+        // Filter for Solana FXM tokens
+        const solanaFXM = searchResults.find(
+          (t) =>
+            (t.baseToken?.symbol === "FXM" || t.quoteToken?.symbol === "FXM") &&
+            t.chainId === "solana",
+        );
+        if (solanaFXM) {
+          console.log(
+            `[DexScreener] ✅ Found FXM via symbol search: ${solanaFXM.baseToken?.address}`,
+          );
+          return solanaFXM;
+        }
+      }
+    }
+
     return tokens.length > 0 ? tokens[0] : null;
   }
 

@@ -24,7 +24,7 @@ const fetchWithTimeout = (
   options?: RequestInit,
 ): Promise<Response> => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  const timeoutId = setTimeout(() => controller.abort(), 35000);
 
   return fetch(url, { ...options, signal: controller.signal }).finally(() =>
     clearTimeout(timeoutId),

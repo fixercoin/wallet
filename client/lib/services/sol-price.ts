@@ -1,3 +1,5 @@
+import { saveServicePrice, getCachedServicePrice } from "./offline-cache";
+
 export interface SolPriceData {
   price: number;
   price_change_24h: number;
@@ -11,7 +13,7 @@ class SolPriceService {
     timestamp: 0,
   };
 
-  private readonly CACHE_DURATION = 60000; // 1 minute cache
+  private readonly CACHE_DURATION = 1500; // 1.5 seconds cache - real-time updates
 
   /**
    * Validate that response is actually JSON
@@ -107,18 +109,38 @@ class SolPriceService {
         timestamp: Date.now(),
       };
 
+      // Save to localStorage for offline support
+      saveServicePrice("SOL", {
+        price: priceData.price,
+        priceChange24h: priceData.price_change_24h,
+      });
+
       return priceData;
     } catch (error) {
       console.error("Error fetching SOL price:", error);
 
-      // Return cached price if available
+      // Return in-memory cache first
       if (this.cache.data) {
-        console.log("Returning cached SOL price due to error");
+        console.log("Returning in-memory cached SOL price due to error");
         return this.cache.data;
       }
 
-      // Fallback to approximate price
-      console.log("Using fallback SOL price ($100)");
+      // Try to get price from localStorage as fallback
+      const cachedServicePrice = getCachedServicePrice("SOL");
+      if (cachedServicePrice && cachedServicePrice.price > 0) {
+        console.log(
+          `[SOL Price Service] Using localStorage cached price: $${cachedServicePrice.price}`,
+        );
+        return {
+          price: cachedServicePrice.price,
+          price_change_24h: cachedServicePrice.priceChange24h ?? 0,
+          market_cap: 0,
+          volume_24h: 0,
+        };
+      }
+
+      // Final fallback to approximate price
+      console.log("Using fallback SOL price ($100) - no cache available");
       return {
         price: 100,
         price_change_24h: 0,

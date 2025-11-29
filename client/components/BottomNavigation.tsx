@@ -1,8 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, TrendingUp, Gift, Clock, ExternalLink } from "lucide-react";
-
 import { useEffect, useState } from "react";
+import { Home, Rocket, Flame, Users } from "lucide-react";
 
 export const BottomNavigation = () => {
   const navigate = useNavigate();
@@ -31,11 +30,10 @@ export const BottomNavigation = () => {
   }, []);
 
   const navItems = [
-    { icon: Home, path: "/", label: "Home" },
-    { icon: TrendingUp, path: "/autobot", label: "Market Maker" },
-    { icon: Gift, path: "/airdrop", label: "Drop Distributor" },
-    { icon: ExternalLink, path: "/dapps", label: "DApps" },
-    { icon: Clock, path: "/wallet/history", label: "History" },
+    { path: "/", label: "HOME", icon: Home },
+    { path: "/autobot", label: "ADVANCE TRADE", icon: Rocket },
+    { path: "/burn", label: "BURN", icon: Flame },
+    { path: "/airdrop", label: "ARIDROP", icon: Users },
   ];
 
   const isActive = (path: string) => {
@@ -47,9 +45,12 @@ export const BottomNavigation = () => {
   if (noFixed) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-gray-800 border-t border-gray-700 shadow-lg">
-      <div className="flex items-center justify-between h-14 px-1 sm:px-2 md:px-4 gap-1 sm:gap-2 md:gap-4">
-        {navItems.map((item) => {
+    <div
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#333]"
+      style={{ backgroundColor: "#1f1f1f" }}
+    >
+      <div className="flex items-center justify-between h-16 xs:h-20 sm:h-20 md:h-24 lg:h-28 px-0 sm:px-1.5 md:px-4 lg:px-6 gap-0 xs:gap-0.5 sm:gap-1 md:gap-1.5 w-full">
+        {navItems.map((item, index) => {
           const active = isActive(item.path);
           const Icon = item.icon;
 
@@ -57,12 +58,14 @@ export const BottomNavigation = () => {
             <button
               key={item.label}
               onClick={() => navigate(item.path)}
-              className={`flex-1 flex items-center justify-center py-2 px-1 sm:px-2 rounded-none transition-colors ${
-                active ? "text-green-500" : "text-gray-400 hover:text-gray-200"
-              }`}
+              className="flex-1 px-0.5 xs:px-1 sm:px-2 md:px-4 lg:px-6 py-1 xs:py-1.5 sm:py-2 md:py-2.5 lg:py-3 transition-colors font-medium rounded-none leading-tight min-w-0 text-center flex flex-col items-center justify-center gap-0.5 xs:gap-1 text-white"
               aria-label={item.label}
+              title={item.label}
             >
-              <Icon className="w-6 h-6 sm:w-7 sm:h-7" />
+              <Icon className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 flex-shrink-0 text-white opacity-50" />
+              <span className="block truncate text-[9px] xs:text-[10px] sm:text-[11px] md:text-sm lg:text-base">
+                {item.label}
+              </span>
             </button>
           );
         })}

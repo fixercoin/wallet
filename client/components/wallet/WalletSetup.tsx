@@ -301,13 +301,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       className="w-full h-32 p-4 bg-[#1a1a1a] rounded-none border border-[#333] text-white placeholder:text-gray-500 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30"
                     />
                     <p className="text-xs text-gray-400">
-                      Derivation Path (Solana default) →
-                      <span className="ml-2 font-mono text-[11px] text-gray-300">
-                        m/44&apos;/501&apos;/0&apos;/0&apos;
-                      </span>
-                      <span className="ml-1 text-gray-400">
-                        (compatible with Phantom and other Solana wallets)
-                      </span>
+                      IMPORT ANY SOLANA BASE WALLET
                     </p>
                   </div>
                 ) : (

@@ -1,5 +1,5 @@
-import { tokenPairPricingService } from "./token-pair-pricing";
-import { saveServicePrice, getCachedServicePrice } from "./offline-cache";
+import { dexscreenerAPI } from "./dexscreener";
+import { saveServicePrice } from "./offline-cache";
 
 export interface FXMPriceData {
   price: number;
@@ -34,46 +34,49 @@ class FXMPriceService {
         }
       }
 
-      console.log(
-        "Fetching fresh FXM price using derived pricing (SOL pair)...",
-      );
+      console.log("Fetching fresh FXM price from DexScreener API...");
 
-      // Try derived pricing based on SOL pair (uses DexScreener and Jupiter, no Birdeye)
-      const pairingData = await tokenPairPricingService.getDerivedPrice("FXM");
-
-      if (
-        pairingData &&
-        pairingData.derivedPrice > 0 &&
-        isFinite(pairingData.derivedPrice)
-      ) {
-        const priceData: FXMPriceData = {
-          price: pairingData.derivedPrice,
-          priceChange24h: pairingData.priceChange24h,
-          volume24h: pairingData.volume24h,
-          liquidity: pairingData.liquidity,
-          lastUpdated: pairingData.lastUpdated,
-          derivationMethod: `derived from SOL pair (1 SOL = ${pairingData.pairRatio.toFixed(0)} FXM)`,
-        };
-
-        this.cachedData = priceData;
-        this.lastFetchTime = new Date();
-        console.log(
-          `✅ FXM price updated: $${priceData.price.toFixed(8)} (${priceData.derivationMethod})`,
-        );
-
-        // Save to localStorage for offline support
-        saveServicePrice("FXM", {
-          price: priceData.price,
-          priceChange24h: priceData.priceChange24h,
-        });
-
-        return priceData;
+      // Fetch directly from DexScreener
+      const tokens = await dexscreenerAPI.getTokensByMints([FXM_MINT]);
+      
+      if (!tokens || tokens.length === 0) {
+        console.warn("FXM not found on DexScreener");
+        return null;
       }
 
-      console.warn(
-        "Failed to fetch FXM price from DexScreener/Jupiter - service unavailable",
+      const token = tokens[0];
+      const price = token.priceUsd ? parseFloat(token.priceUsd) : null;
+      const priceChange24h = token.priceChange?.h24 || 0;
+      const volume24h = token.volume?.h24 || 0;
+      const liquidity = token.liquidity?.usd;
+
+      if (!price || price <= 0) {
+        console.warn("Invalid FXM price from DexScreener:", price);
+        return null;
+      }
+
+      const priceData: FXMPriceData = {
+        price,
+        priceChange24h,
+        volume24h,
+        liquidity,
+        lastUpdated: new Date(),
+        derivationMethod: "DexScreener API (live)",
+      };
+
+      this.cachedData = priceData;
+      this.lastFetchTime = new Date();
+      console.log(
+        `✅ FXM price updated: $${priceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${priceData.derivationMethod}`
       );
-      return null;
+
+      // Save to localStorage for offline support
+      saveServicePrice("FXM", {
+        price: priceData.price,
+        priceChange24h: priceData.priceChange24h,
+      });
+
+      return priceData;
     } catch (error) {
       console.error("Error fetching FXM price:", error);
       return null;
@@ -102,7 +105,9 @@ class FXMPriceService {
   clearCache(): void {
     this.cachedData = null;
     this.lastFetchTime = null;
-    tokenPairPricingService.clearTokenCache("FXM");
+    console.log(
+      "[FXMPriceService] Cache cleared - next fetch will be fresh"
+    );
   }
 }
 
@@ -126,13 +131,13 @@ class FXMPriceServiceWithFallback extends FXMPriceService {
         return result;
       }
       console.warn(
-        "[FXMPriceService] Falling back to static price due to null result",
+        "[FXMPriceService] Falling back to static price due to null result"
       );
       return FXM_FALLBACK_PRICE;
     } catch (error) {
       console.warn(
         "[FXMPriceService] Error fetching price, using fallback:",
-        error instanceof Error ? error.message : error,
+        error instanceof Error ? error.message : error
       );
       return FXM_FALLBACK_PRICE;
     }

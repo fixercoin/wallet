@@ -6,26 +6,26 @@ import { Home, Rocket, Flame, Users } from "lucide-react";
 export const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [noFixed, setNoFixed] = useState<boolean>(() => {
-    try {
-      return document.body.classList.contains("no-fixed-bottom");
-    } catch {
-      return false;
-    }
-  });
+  const [noFixed, setNoFixed] = useState<boolean>(false);
 
   useEffect(() => {
-    const obs = new MutationObserver(() => {
-      try {
-        setNoFixed(document.body.classList.contains("no-fixed-bottom"));
-      } catch {}
+    // Check immediately
+    const checkAndUpdate = () => {
+      if (document.body.classList.contains("no-fixed-bottom")) {
+        setNoFixed(true);
+      } else {
+        setNoFixed(false);
+      }
+    };
+
+    checkAndUpdate();
+
+    const obs = new MutationObserver(checkAndUpdate);
+    obs.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class"],
     });
-    try {
-      obs.observe(document.body, {
-        attributes: true,
-        attributeFilter: ["class"],
-      });
-    } catch {}
+
     return () => obs.disconnect();
   }, []);
 

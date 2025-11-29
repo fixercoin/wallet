@@ -781,21 +781,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     className="flex items-center gap-2 text-xs"
                   >
                     <Wallet className="h-4 w-4" />
-                    <span>Wallet</span>
+                    <span>MY WALLET</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => onStakeTokens?.()}
                     className="flex items-center gap-2 text-xs"
                   >
                     <Coins className="h-4 w-4" />
-                    <span>Staking</span>
+                    <span>TOKEN</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => onLock()}
                     className="flex items-center gap-2 text-xs"
                   >
                     <Lock className="h-4 w-4" />
-                    <span>Lock Up</span>
+                    <span>LOCK</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -803,7 +803,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     className="flex items-center gap-2 text-xs"
                   >
                     <Clock className="h-4 w-4" />
-                    <span>Wallet History</span>
+                    <span>WALLET HISTORY</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

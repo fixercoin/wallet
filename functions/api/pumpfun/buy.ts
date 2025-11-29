@@ -1,3 +1,5 @@
+import { fetchWithRetry } from "../../utils/fetch-with-retry";
+
 export const config = {
   runtime: "nodejs_esmsh",
 };
@@ -69,10 +71,7 @@ async function handler(request: Request): Promise<Response> {
       );
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-    const response = await fetch("https://pumpportal.fun/api/trade", {
+    const response = await fetchWithRetry("https://pumpportal.fun/api/trade", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -84,10 +83,10 @@ async function handler(request: Request): Promise<Response> {
         txVersion: "V0",
         operation: "buy",
       }),
-      signal: controller.signal,
+      timeoutMs: 55000,
+      maxRetries: 2,
+      retryDelayMs: 1000,
     });
-
-    clearTimeout(timeoutId);
 
     const data = await response.text();
 
@@ -116,8 +115,8 @@ async function handler(request: Request): Promise<Response> {
       },
     });
   } catch (error: any) {
-    const isTimeout =
-      error?.name === "AbortError" || error?.message?.includes("timeout");
+    const message = error?.message || "Unknown error";
+    const isTimeout = message.includes("timeout") || message.includes("abort");
 
     return new Response(
       JSON.stringify({
@@ -126,7 +125,7 @@ async function handler(request: Request): Promise<Response> {
           : "Failed to request BUY transaction",
         details: isTimeout
           ? "Pump.fun API took too long to respond"
-          : error?.message || String(error),
+          : message,
       }),
       {
         status: isTimeout ? 504 : 502,

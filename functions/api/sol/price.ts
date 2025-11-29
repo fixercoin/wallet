@@ -32,7 +32,7 @@ async function handler(request: Request): Promise<Response> {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 18000);
 
     // Try CoinGecko API first
     try {

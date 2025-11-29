@@ -175,10 +175,10 @@ class DexscreenerAPI {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         console.warn(
-          `[DexScreener] Request timeout after 8s for ${toFetch.length} mints`,
+          `[DexScreener] Request timeout after 15s for ${toFetch.length} mints`,
         );
         controller.abort();
-      }, 8000);
+      }, 15000);
       try {
         const url = `${this.baseUrl}/tokens?mints=${mintString}`;
         console.log(

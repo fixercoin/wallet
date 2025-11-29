@@ -152,7 +152,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       if (stored) {
         const parsed = JSON.parse(stored) as any[];
 
-        // Load wallets as plaintext (encryption disabled)
+        // Check if wallets are encrypted
+        const firstWallet = parsed?.[0];
+        if (firstWallet && isEncryptedWalletStorage(firstWallet)) {
+          // Wallets are encrypted - store them and wait for password unlock
+          console.log("[WalletContext] Encrypted wallets detected, awaiting password");
+          encryptedWalletsRef.current = parsed;
+          setRequiresPassword(true);
+          return;
+        }
+
+        // Load wallets as plaintext
         const coerced: WalletData[] = (parsed || []).map((p) => {
           const obj = { ...p } as any;
           if (obj.secretKey && Array.isArray(obj.secretKey)) {

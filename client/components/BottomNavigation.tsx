@@ -49,7 +49,7 @@ export const BottomNavigation = () => {
       className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#333]"
       style={{ backgroundColor: "#1f1f1f" }}
     >
-      <div className="flex items-center justify-between h-14 xs:h-16 sm:h-16 md:h-20 lg:h-24 px-0 sm:px-1.5 md:px-4 lg:px-6 gap-0 xs:gap-0.5 sm:gap-1 md:gap-1.5 w-full">
+      <div className="flex items-center justify-between h-16 xs:h-20 sm:h-20 md:h-24 lg:h-28 px-0 sm:px-1.5 md:px-4 lg:px-6 gap-0 xs:gap-0.5 sm:gap-1 md:gap-1.5 w-full">
         {navItems.map((item, index) => {
           const active = isActive(item.path);
           const Icon = item.icon;
@@ -63,7 +63,7 @@ export const BottomNavigation = () => {
               title={item.label}
             >
               <Icon className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 flex-shrink-0 text-white opacity-50" />
-              <span className="block truncate text-[7px] xs:text-[8px] sm:text-[9px] md:text-xs lg:text-sm">
+              <span className="block truncate text-[9px] xs:text-[10px] sm:text-[11px] md:text-sm lg:text-base">
                 {item.label}
               </span>
             </button>

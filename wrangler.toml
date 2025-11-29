@@ -2,7 +2,8 @@ name = "fixorium-pages"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Cloudflare Pages output directory
+# Cloudflare Pages build configuration
+build_command = "npm run build"
 pages_build_output_dir = "dist"
 
 # Environment variables available at build time and to Functions (VITE_ prefix exposed to client)

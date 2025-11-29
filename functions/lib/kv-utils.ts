@@ -3,7 +3,7 @@
  * Handles all KV operations for staking and rewards
  */
 
-import { Stake, RewardDistribution } from "./reward-config";
+import { Stake, RewardDistribution } from "./reward-config.ts";
 
 interface KVNamespace {
   get(key: string): Promise<string | null>;

@@ -806,11 +806,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </DropdownMenu>
               {/* Connection status and settings - moved to right */}
               <div className="flex items-center gap-3">
-                {isUsingCache ? (
+                {isServiceDown ? (
                   <div
-                    className="h-7 w-7 rounded-md flex items-center justify-center cursor-default relative"
-                    title="Connection unstable - using cached prices"
-                    aria-label="Unstable connection"
+                    className="h-7 w-7 rounded-md flex items-center justify-center cursor-default relative group"
+                    title={`Network offline - ${isUsingCache ? "showing cached data" : "no data available"}`}
+                    aria-label="Network offline"
                   >
                     <svg
                       width="18"
@@ -821,24 +821,54 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       strokeWidth="2.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="text-gray-500"
+                      className="text-red-500"
                     >
                       <path d="M5 12.55a11 11 0 0 1 14.08 0" />
                       <path d="M1.42 9a16 16 0 0 1 21.16 0" />
                       <path d="M9 20h6" />
                       <circle cx="12" cy="16" r="1" fill="currentColor" />
                     </svg>
-                    <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
-                      <span className="text-white text-[9px] font-bold leading-none">
-                        !
-                      </span>
+                    <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-600 rounded-full flex items-center justify-center border-2 border-white">
+                      <span className="text-white text-[10px] font-bold leading-none">✕</span>
+                    </div>
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      Network offline
+                    </div>
+                  </div>
+                ) : isUsingCache ? (
+                  <div
+                    className="h-7 w-7 rounded-md flex items-center justify-center cursor-default relative group"
+                    title="Connection unstable - using cached prices"
+                    aria-label="Unstable connection - cached data"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-yellow-500"
+                    >
+                      <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+                      <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+                      <path d="M9 20h6" />
+                      <circle cx="12" cy="16" r="1" fill="currentColor" />
+                    </svg>
+                    <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-yellow-500 rounded-full flex items-center justify-center border-2 border-white">
+                      <span className="text-white text-[9px] font-bold leading-none">!</span>
+                    </div>
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                      Using cached prices
                     </div>
                   </div>
                 ) : (
                   <div
-                    className="h-7 w-7 rounded-md flex items-center justify-center cursor-default"
-                    title="Connection stable - using live prices"
-                    aria-label="Stable connection"
+                    className="h-7 w-7 rounded-md flex items-center justify-center cursor-default relative group"
+                    title="Network connected - using live prices"
+                    aria-label="Network connected"
                   >
                     <svg
                       width="18"
@@ -856,6 +886,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <path d="M9 20h6" />
                       <circle cx="12" cy="16" r="1" fill="currentColor" />
                     </svg>
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                      Live prices
+                    </div>
                   </div>
                 )}
                 <Button

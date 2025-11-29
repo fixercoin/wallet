@@ -110,21 +110,15 @@ export const NetworkSignalIcon: React.FC<NetworkSignalIconProps> = ({
           className="transition-opacity duration-300"
         />
 
-        {/* Center dot - always visible, glowing bright */}
-        <circle
-          cx="32"
-          cy="50"
-          r="6"
-          fill="url(#dot-glow)"
+        {/* First arc - shows when bars >= 1 */}
+        <path
+          d="M 32 40 A 1 1 0 0 1 33 41"
+          stroke={colors.color}
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          opacity={bars >= 1 ? 1 : 0.15}
           filter="url(#glow-wifi)"
-          className="transition-all duration-300"
-        />
-        <circle
-          cx="32"
-          cy="50"
-          r="3.5"
-          fill={colors.color}
-          className="transition-colors duration-300"
+          className="transition-opacity duration-300"
         />
       </svg>
 

@@ -6,21 +6,22 @@ import { Home, Rocket, Flame, Users } from "lucide-react";
 export const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [noFixed, setNoFixed] = useState<boolean>(false);
+  const { wallet } = useWallet();
+
+  // Hide navigation on setup/wallet creation pages
+  const shouldHideNav =
+    document.body.classList.contains("no-fixed-bottom") ||
+    (location.pathname === "/" && !wallet);
 
   useEffect(() => {
-    // Check immediately
     const checkAndUpdate = () => {
-      if (document.body.classList.contains("no-fixed-bottom")) {
-        setNoFixed(true);
-      } else {
-        setNoFixed(false);
-      }
+      // Force re-render if class changes
     };
 
-    checkAndUpdate();
-
-    const obs = new MutationObserver(checkAndUpdate);
+    const obs = new MutationObserver(() => {
+      // Trigger re-render on class change
+      setNoRender((prev) => !prev);
+    });
     obs.observe(document.body, {
       attributes: true,
       attributeFilter: ["class"],
@@ -28,6 +29,8 @@ export const BottomNavigation = () => {
 
     return () => obs.disconnect();
   }, []);
+
+  const [noRender, setNoRender] = useState(false);
 
   const navItems = [
     { path: "/", label: "HOME", icon: Home },

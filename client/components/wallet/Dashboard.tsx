@@ -806,31 +806,64 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {/* Network signal strength antenna and settings - moved to right */}
+              {/* Network signal strength network icon and settings - moved to right */}
               <div className="flex items-center gap-2">
                 <div
-                  className="relative h-6 w-5 flex items-center justify-center group"
+                  className="relative h-6 w-6 flex items-center justify-center group"
                   title={networkSignal.isOnline ? `Signal: ${networkSignal.bars}/4 (${networkSignal.latency}ms)` : 'No internet connection'}
                   aria-label={`Network signal ${networkSignal.bars} bars`}
                 >
                   <svg
                     width="20"
-                    height="24"
-                    viewBox="0 0 20 24"
+                    height="20"
+                    viewBox="0 0 24 24"
                     fill="none"
-                    className="transition-opacity"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="transition-colors"
                   >
-                    {/* Antenna pole */}
-                    <line x1="10" y1="24" x2="10" y2="14" stroke="currentColor" strokeWidth="1.5" className="text-gray-500" />
-
-                    {/* Signal line 1 (bottom) - red when poor */}
-                    <path
-                      d="M 10 18 Q 14 16 16 12"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      fill="none"
-                      strokeLinecap="round"
+                    {/* Center node */}
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="1.5"
                       className={`transition-colors ${
+                        networkSignal.isOnline ? 'fill-current text-green-500' : 'fill-current text-gray-600'
+                      }`}
+                    />
+
+                    {/* Top node - lights up when signal >= 2 */}
+                    <circle
+                      cx="12"
+                      cy="4"
+                      r="1.5"
+                      className={`transition-colors fill-current ${
+                        networkSignal.bars >= 2
+                          ? networkSignal.bars === 2
+                            ? 'text-yellow-500'
+                            : 'text-green-500'
+                          : 'text-gray-600/40'
+                      }`}
+                    />
+
+                    {/* Right node - lights up when signal >= 3 */}
+                    <circle
+                      cx="20"
+                      cy="12"
+                      r="1.5"
+                      className={`transition-colors fill-current ${
+                        networkSignal.bars >= 3 ? 'text-green-500' : 'text-gray-600/40'
+                      }`}
+                    />
+
+                    {/* Bottom node - lights up when signal >= 1 */}
+                    <circle
+                      cx="12"
+                      cy="20"
+                      r="1.5"
+                      className={`transition-colors fill-current ${
                         networkSignal.bars >= 1
                           ? networkSignal.bars === 1
                             ? 'text-red-500'
@@ -841,43 +874,61 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       }`}
                     />
 
-                    {/* Signal line 2 - yellow when fair */}
-                    <path
-                      d="M 10 16 Q 15 12 18 6"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      fill="none"
-                      strokeLinecap="round"
+                    {/* Left node - lights up when signal >= 4 */}
+                    <circle
+                      cx="4"
+                      cy="12"
+                      r="1.5"
+                      className={`transition-colors fill-current ${
+                        networkSignal.bars >= 4 ? 'text-green-500' : 'text-gray-600/40'
+                      }`}
+                    />
+
+                    {/* Connection lines */}
+                    <line
+                      x1="12"
+                      y1="12"
+                      x2="12"
+                      y2="4"
                       className={`transition-colors ${
                         networkSignal.bars >= 2
                           ? networkSignal.bars === 2
-                            ? 'text-yellow-500'
-                            : 'text-green-500'
-                          : 'text-gray-600/40'
+                            ? 'stroke-yellow-500'
+                            : 'stroke-green-500'
+                          : 'stroke-gray-600/40'
                       }`}
                     />
-
-                    {/* Signal line 3 - green when good */}
-                    <path
-                      d="M 10 14 Q 15 8 18 2"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      fill="none"
-                      strokeLinecap="round"
+                    <line
+                      x1="12"
+                      y1="12"
+                      x2="20"
+                      y2="12"
                       className={`transition-colors ${
-                        networkSignal.bars >= 3 ? 'text-green-500' : 'text-gray-600/40'
+                        networkSignal.bars >= 3 ? 'stroke-green-500' : 'stroke-gray-600/40'
                       }`}
                     />
-
-                    {/* Signal line 4 - green when excellent */}
-                    <path
-                      d="M 10 12 Q 16 4 20 1"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      fill="none"
-                      strokeLinecap="round"
+                    <line
+                      x1="12"
+                      y1="12"
+                      x2="12"
+                      y2="20"
                       className={`transition-colors ${
-                        networkSignal.bars >= 4 ? 'text-green-500' : 'text-gray-600/40'
+                        networkSignal.bars >= 1
+                          ? networkSignal.bars === 1
+                            ? 'stroke-red-500'
+                            : networkSignal.bars === 2
+                            ? 'stroke-yellow-500'
+                            : 'stroke-green-500'
+                          : 'stroke-gray-600/40'
+                      }`}
+                    />
+                    <line
+                      x1="12"
+                      y1="12"
+                      x2="4"
+                      y2="12"
+                      className={`transition-colors ${
+                        networkSignal.bars >= 4 ? 'stroke-green-500' : 'stroke-gray-600/40'
                       }`}
                     />
                   </svg>

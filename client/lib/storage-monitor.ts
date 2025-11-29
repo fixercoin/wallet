@@ -23,7 +23,7 @@ export function initStorageMonitoring(): void {
       !event.newValue
     ) {
       console.warn(
-        "[StorageMonitor] ⚠️ Wallet data was cleared from another tab"
+        "[StorageMonitor] ⚠️ Wallet data was cleared from another tab",
       );
       showWarning("Wallet data was cleared. Please reload the page.");
     }
@@ -56,7 +56,7 @@ export function initStorageMonitoring(): void {
     if (!document.hidden) {
       console.log(
         "[StorageMonitor] Tab became visible, checking storage...",
-        Date.now()
+        Date.now(),
       );
       checkStorageAccessibility();
     }
@@ -71,10 +71,10 @@ export function initStorageMonitoring(): void {
     ) {
       console.error(
         "[StorageMonitor] ❌ Storage quota exceeded:",
-        event.message
+        event.message,
       );
       showWarning(
-        "Storage quota exceeded. Please clear some browser data and try again."
+        "Storage quota exceeded. Please clear some browser data and try again.",
       );
     }
   });

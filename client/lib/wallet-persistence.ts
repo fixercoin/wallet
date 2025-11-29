@@ -46,7 +46,7 @@ export function isSessionStorageAvailable(): boolean {
  */
 export function getStorageItem(
   key: string,
-  storage: "local" | "session" = "local"
+  storage: "local" | "session" = "local",
 ): string | null {
   try {
     if (storage === "local" && isLocalStorageAvailable()) {
@@ -75,7 +75,7 @@ export function getStorageItem(
 export function setStorageItem(
   key: string,
   value: string,
-  storage: "local" | "session" = "local"
+  storage: "local" | "session" = "local",
 ): boolean {
   let success = false;
 
@@ -91,7 +91,7 @@ export function setStorageItem(
   } catch (e) {
     console.warn(
       `[Wallet Persistence] Failed to save to localStorage: ${key}`,
-      e
+      e,
     );
   }
 
@@ -106,7 +106,7 @@ export function setStorageItem(
     } catch (e) {
       console.warn(
         `[Wallet Persistence] Failed to save to sessionStorage: ${key}`,
-        e
+        e,
       );
     }
   }
@@ -126,7 +126,7 @@ export function setStorageItem(
 
   if (!success && !walletInMemoryCache && !activeWalletInMemoryCache) {
     console.error(
-      `[Wallet Persistence] ❌ Failed to persist wallet data: no storage available`
+      `[Wallet Persistence] ❌ Failed to persist wallet data: no storage available`,
     );
     return false;
   }
@@ -153,7 +153,7 @@ export function removeStorageItem(key: string): void {
   } catch (e) {
     console.warn(
       `[Wallet Persistence] Failed to remove from sessionStorage:`,
-      e
+      e,
     );
   }
 

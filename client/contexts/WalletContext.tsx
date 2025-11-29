@@ -124,14 +124,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         console.log("[WalletContext] Starting initialization...");
         console.log(
           "[WalletContext] Storage diagnostics:",
-          getStorageDiagnostics()
+          getStorageDiagnostics(),
         );
 
         // Check legacy wallet first
         const legacy = getStorageItem(LEGACY_WALLET_KEY);
         if (legacy) {
           console.log(
-            "[WalletContext] Found legacy wallet, migrating to new format..."
+            "[WalletContext] Found legacy wallet, migrating to new format...",
           );
           const parsed = JSON.parse(legacy) as any;
           // try to coerce secretKey
@@ -167,7 +167,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
               copy.secretKey = Array.from(copy.secretKey as Uint8Array);
             setStorageItem(WALLETS_STORAGE_KEY, JSON.stringify([copy]));
             removeStorageItem(LEGACY_WALLET_KEY);
-            console.log("[WalletContext] ✅ Legacy wallet migrated successfully");
+            console.log(
+              "[WalletContext] ✅ Legacy wallet migrated successfully",
+            );
           } catch (e) {
             console.warn("Failed to migrate legacy wallet to accounts key:", e);
           }
@@ -185,7 +187,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           // Validate that parsed is an array
           if (!Array.isArray(parsed) || parsed.length === 0) {
             console.warn(
-              "[WalletContext] Invalid stored wallets format or empty array"
+              "[WalletContext] Invalid stored wallets format or empty array",
             );
             hasInitializedRef.current = true;
             setIsInitialized(true);
@@ -197,7 +199,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           if (firstWallet && isEncryptedWalletStorage(firstWallet)) {
             // Wallets are encrypted - store them and wait for password unlock
             console.log(
-              "[WalletContext] Encrypted wallets detected, awaiting password"
+              "[WalletContext] Encrypted wallets detected, awaiting password",
             );
             encryptedWalletsRef.current = parsed;
             setRequiresPassword(true);
@@ -221,13 +223,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                   obj.secretKey = Uint8Array.from(vals);
                 } else {
                   console.warn(
-                    `[WalletContext] Could not parse secretKey for wallet ${obj.publicKey}`
+                    `[WalletContext] Could not parse secretKey for wallet ${obj.publicKey}`,
                   );
                   continue;
                 }
               } else {
                 console.warn(
-                  `[WalletContext] No valid secretKey found for wallet ${obj.publicKey}`
+                  `[WalletContext] No valid secretKey found for wallet ${obj.publicKey}`,
                 );
                 continue;
               }
@@ -242,7 +244,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             } catch (e) {
               console.warn(
                 "[WalletContext] Failed to parse individual wallet:",
-                e
+                e,
               );
               continue;
             }
@@ -250,7 +252,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
           if (coerced.length === 0) {
             console.warn(
-              "[WalletContext] No valid wallets found after parsing. Clearing storage."
+              "[WalletContext] No valid wallets found after parsing. Clearing storage.",
             );
             clearAllWalletData();
             hasInitializedRef.current = true;
@@ -259,7 +261,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           }
 
           console.log(
-            `[WalletContext] ✅ Loaded ${coerced.length} valid wallet(s) from storage`
+            `[WalletContext] ✅ Loaded ${coerced.length} valid wallet(s) from storage`,
           );
           setWallets(coerced);
 
@@ -271,18 +273,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
           if (activeWallet) {
             console.log(
-              `[WalletContext] ✅ Setting active wallet: ${activeWallet.publicKey}`
+              `[WalletContext] ✅ Setting active wallet: ${activeWallet.publicKey}`,
             );
             setActivePublicKey(activeWallet.publicKey);
           } else if (coerced.length > 0) {
             console.log(
-              `[WalletContext] Saved active wallet not found, using first wallet`
+              `[WalletContext] Saved active wallet not found, using first wallet`,
             );
             setActivePublicKey(coerced[0].publicKey);
           }
         } else {
           console.log(
-            "[WalletContext] No wallets found in storage (new user or storage unavailable)"
+            "[WalletContext] No wallets found in storage (new user or storage unavailable)",
           );
         }
 
@@ -323,11 +325,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
       const success = setStorageItem(
         WALLETS_STORAGE_KEY,
-        JSON.stringify(toStore)
+        JSON.stringify(toStore),
       );
       if (!success) {
         console.warn(
-          "[WalletContext] ⚠️ Failed to persist wallets to any storage"
+          "[WalletContext] ⚠️ Failed to persist wallets to any storage",
         );
       }
     } catch (e) {
@@ -347,7 +349,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         const success = setStorageItem(ACTIVE_WALLET_KEY, activePublicKey);
         if (!success) {
           console.warn(
-            `[WalletContext] ⚠️ Failed to persist active wallet to any storage`
+            `[WalletContext] ⚠️ Failed to persist active wallet to any storage`,
           );
         }
       } else {
@@ -577,14 +579,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     const exists = wallets.find((w) => w.publicKey === walletToAdd.publicKey);
     if (exists) {
       console.log(
-        `[WalletContext] Wallet ${walletToAdd.publicKey} already exists, setting as active`
+        `[WalletContext] Wallet ${walletToAdd.publicKey} already exists, setting as active`,
       );
       setActivePublicKey(walletToAdd.publicKey);
       // Ensure active wallet is saved to storage
       try {
         setStorageItem(ACTIVE_WALLET_KEY, walletToAdd.publicKey);
         console.log(
-          `[WalletContext] ✅ Active wallet saved: ${walletToAdd.publicKey}`
+          `[WalletContext] ✅ Active wallet saved: ${walletToAdd.publicKey}`,
         );
       } catch (e) {
         console.warn("Failed to save active wallet to storage:", e);
@@ -595,7 +597,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     // Add and set active
     const updatedWallets = [walletToAdd, ...wallets];
     console.log(
-      `[WalletContext] Adding new wallet and setting as active: ${walletToAdd.publicKey}`
+      `[WalletContext] Adding new wallet and setting as active: ${walletToAdd.publicKey}`,
     );
     setWallets(updatedWallets);
     setActivePublicKey(walletToAdd.publicKey);
@@ -612,24 +614,24 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
       const walletsSuccess = setStorageItem(
         WALLETS_STORAGE_KEY,
-        JSON.stringify(toStore)
+        JSON.stringify(toStore),
       );
       const activeSuccess = setStorageItem(
         ACTIVE_WALLET_KEY,
-        walletToAdd.publicKey
+        walletToAdd.publicKey,
       );
 
       if (walletsSuccess && activeSuccess) {
         console.log(
           "[WalletContext] ✅ Wallet successfully saved to persistent storage:",
-          walletToAdd.publicKey
+          walletToAdd.publicKey,
         );
       } else {
         console.warn(
           "[WalletContext] ⚠️ Partial save: wallets=" +
             walletsSuccess +
             ", active=" +
-            activeSuccess
+            activeSuccess,
         );
       }
     } catch (e) {
@@ -651,7 +653,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       console.log(`[WalletContext] New wallet added: ${walletToAdd.publicKey}`);
     } else {
       console.log(
-        `[WalletContext] Wallet already exists, just setting as active: ${walletToAdd.publicKey}`
+        `[WalletContext] Wallet already exists, just setting as active: ${walletToAdd.publicKey}`,
       );
     }
 
@@ -674,24 +676,24 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
       const walletsSuccess = setStorageItem(
         WALLETS_STORAGE_KEY,
-        JSON.stringify(toStore)
+        JSON.stringify(toStore),
       );
       const activeSuccess = setStorageItem(
         ACTIVE_WALLET_KEY,
-        walletToAdd.publicKey
+        walletToAdd.publicKey,
       );
 
       if (walletsSuccess && activeSuccess) {
         console.log(
           "[WalletContext] ✅ Wallet added and saved to persistent storage:",
-          walletToAdd.publicKey
+          walletToAdd.publicKey,
         );
       } else {
         console.warn(
           "[WalletContext] ⚠️ Partial save: wallets=" +
             walletsSuccess +
             ", active=" +
-            activeSuccess
+            activeSuccess,
         );
       }
     } catch (e) {

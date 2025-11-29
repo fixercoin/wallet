@@ -133,4 +133,90 @@ class StakingDatabase {
   private function writeStakes($stakes) {
     file_put_contents($this->stakesFile, json_encode($stakes, JSON_PRETTY_PRINT));
   }
+
+  /**
+   * Record a reward distribution
+   */
+  public function recordRewardDistribution($stakeId, $walletAddress, $rewardAmount, $tokenMint, $txHash = null) {
+    $rewards = $this->readRewards();
+
+    $reward = [
+      'id' => 'reward_' . uniqid(),
+      'stake_id' => $stakeId,
+      'wallet_address' => $walletAddress,
+      'reward_amount' => floatval($rewardAmount),
+      'token_mint' => $tokenMint,
+      'status' => 'processed',
+      'tx_hash' => $txHash,
+      'created_at' => intval(time() * 1000),
+      'processed_at' => intval(time() * 1000)
+    ];
+
+    $rewards[] = $reward;
+    $this->writeRewards($rewards);
+
+    return $reward;
+  }
+
+  /**
+   * Get rewards for a wallet
+   */
+  public function getRewardsByWallet($walletAddress) {
+    $rewards = $this->readRewards();
+    return array_filter($rewards, function($reward) use ($walletAddress) {
+      return $reward['wallet_address'] === $walletAddress;
+    });
+  }
+
+  /**
+   * Get pending rewards (not yet distributed)
+   */
+  public function getPendingRewards() {
+    $rewards = $this->readRewards();
+    return array_filter($rewards, function($reward) {
+      return $reward['status'] === 'pending';
+    });
+  }
+
+  /**
+   * Update reward status
+   */
+  public function updateRewardStatus($rewardId, $status, $txHash = null) {
+    $rewards = $this->readRewards();
+
+    foreach ($rewards as &$reward) {
+      if ($reward['id'] === $rewardId) {
+        $reward['status'] = $status;
+        $reward['updated_at'] = intval(time() * 1000);
+        if ($txHash) {
+          $reward['tx_hash'] = $txHash;
+        }
+        break;
+      }
+    }
+
+    $this->writeRewards($rewards);
+    return true;
+  }
+
+  /**
+   * Read rewards from JSON file
+   */
+  private function readRewards() {
+    if (!file_exists($this->rewardsFile)) {
+      return [];
+    }
+
+    $content = file_get_contents($this->rewardsFile);
+    $rewards = json_decode($content, true);
+
+    return is_array($rewards) ? $rewards : [];
+  }
+
+  /**
+   * Write rewards to JSON file
+   */
+  private function writeRewards($rewards) {
+    file_put_contents($this->rewardsFile, json_encode($rewards, JSON_PRETTY_PRINT));
+  }
 }

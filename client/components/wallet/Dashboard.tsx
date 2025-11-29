@@ -806,132 +806,58 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {/* Network signal strength network icon and settings - moved to right */}
+              {/* Network signal strength dots and settings - moved to right */}
               <div className="flex items-center gap-2">
                 <div
-                  className="relative h-6 w-6 flex items-center justify-center group"
+                  className="relative h-6 w-6 flex items-center justify-center gap-0.5 group px-1"
                   title={networkSignal.isOnline ? `Signal: ${networkSignal.bars}/4 (${networkSignal.latency}ms)` : 'No internet connection'}
                   aria-label={`Network signal ${networkSignal.bars} bars`}
                 >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="transition-colors"
-                  >
-                    {/* Center node */}
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="1.5"
-                      className={`transition-colors ${
-                        networkSignal.isOnline ? 'fill-current text-green-500' : 'fill-current text-gray-600'
-                      }`}
-                    />
+                  {/* Dot 1 - smallest, lights up when signal >= 1 */}
+                  <div
+                    className={`rounded-full transition-all ${
+                      networkSignal.bars >= 1
+                        ? `w-1 h-1 ${
+                            networkSignal.bars === 1
+                              ? 'bg-red-500'
+                              : networkSignal.bars === 2
+                              ? 'bg-yellow-500'
+                              : 'bg-green-500'
+                          }`
+                        : 'w-0.5 h-0.5 bg-gray-600/40'
+                    }`}
+                  />
 
-                    {/* Top node - lights up when signal >= 2 */}
-                    <circle
-                      cx="12"
-                      cy="4"
-                      r="1.5"
-                      className={`transition-colors fill-current ${
-                        networkSignal.bars >= 2
-                          ? networkSignal.bars === 2
-                            ? 'text-yellow-500'
-                            : 'text-green-500'
-                          : 'text-gray-600/40'
-                      }`}
-                    />
+                  {/* Dot 2 - medium, lights up when signal >= 2 */}
+                  <div
+                    className={`rounded-full transition-all ${
+                      networkSignal.bars >= 2
+                        ? `w-1.5 h-1.5 ${
+                            networkSignal.bars === 2
+                              ? 'bg-yellow-500'
+                              : 'bg-green-500'
+                          }`
+                        : 'w-0.5 h-0.5 bg-gray-600/40'
+                    }`}
+                  />
 
-                    {/* Right node - lights up when signal >= 3 */}
-                    <circle
-                      cx="20"
-                      cy="12"
-                      r="1.5"
-                      className={`transition-colors fill-current ${
-                        networkSignal.bars >= 3 ? 'text-green-500' : 'text-gray-600/40'
-                      }`}
-                    />
+                  {/* Dot 3 - large, lights up when signal >= 3 */}
+                  <div
+                    className={`rounded-full transition-all ${
+                      networkSignal.bars >= 3
+                        ? 'w-2 h-2 bg-green-500'
+                        : 'w-0.5 h-0.5 bg-gray-600/40'
+                    }`}
+                  />
 
-                    {/* Bottom node - lights up when signal >= 1 */}
-                    <circle
-                      cx="12"
-                      cy="20"
-                      r="1.5"
-                      className={`transition-colors fill-current ${
-                        networkSignal.bars >= 1
-                          ? networkSignal.bars === 1
-                            ? 'text-red-500'
-                            : networkSignal.bars === 2
-                            ? 'text-yellow-500'
-                            : 'text-green-500'
-                          : 'text-gray-600/40'
-                      }`}
-                    />
-
-                    {/* Left node - lights up when signal >= 4 */}
-                    <circle
-                      cx="4"
-                      cy="12"
-                      r="1.5"
-                      className={`transition-colors fill-current ${
-                        networkSignal.bars >= 4 ? 'text-green-500' : 'text-gray-600/40'
-                      }`}
-                    />
-
-                    {/* Connection lines */}
-                    <line
-                      x1="12"
-                      y1="12"
-                      x2="12"
-                      y2="4"
-                      className={`transition-colors ${
-                        networkSignal.bars >= 2
-                          ? networkSignal.bars === 2
-                            ? 'stroke-yellow-500'
-                            : 'stroke-green-500'
-                          : 'stroke-gray-600/40'
-                      }`}
-                    />
-                    <line
-                      x1="12"
-                      y1="12"
-                      x2="20"
-                      y2="12"
-                      className={`transition-colors ${
-                        networkSignal.bars >= 3 ? 'stroke-green-500' : 'stroke-gray-600/40'
-                      }`}
-                    />
-                    <line
-                      x1="12"
-                      y1="12"
-                      x2="12"
-                      y2="20"
-                      className={`transition-colors ${
-                        networkSignal.bars >= 1
-                          ? networkSignal.bars === 1
-                            ? 'stroke-red-500'
-                            : networkSignal.bars === 2
-                            ? 'stroke-yellow-500'
-                            : 'stroke-green-500'
-                          : 'stroke-gray-600/40'
-                      }`}
-                    />
-                    <line
-                      x1="12"
-                      y1="12"
-                      x2="4"
-                      y2="12"
-                      className={`transition-colors ${
-                        networkSignal.bars >= 4 ? 'stroke-green-500' : 'stroke-gray-600/40'
-                      }`}
-                    />
-                  </svg>
+                  {/* Dot 4 - largest, lights up when signal >= 4 */}
+                  <div
+                    className={`rounded-full transition-all ${
+                      networkSignal.bars >= 4
+                        ? 'w-2.5 h-2.5 bg-green-500'
+                        : 'w-0.5 h-0.5 bg-gray-600/40'
+                    }`}
+                  />
 
                   {/* Tooltip showing latency */}
                   <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">

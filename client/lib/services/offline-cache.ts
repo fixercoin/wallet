@@ -48,23 +48,10 @@ export {
 };
 
 /**
- * Check if device is mobile
+ * Check if device is mobile - always returns false for desktop-only mode
  */
 function isMobileDevice(): boolean {
-  if (typeof window === "undefined") return false;
-
-  const userAgent =
-    navigator.userAgent || navigator.vendor || (window as any).opera;
-
-  // Check for mobile user agents
-  const mobileRegex =
-    /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
-  const isMobileUA = mobileRegex.test(userAgent.toLowerCase());
-
-  // Also check viewport width (mobile breakpoint is 768px)
-  const isMobileViewport = window.innerWidth < 768;
-
-  return isMobileUA || isMobileViewport;
+  return false;
 }
 
 /**

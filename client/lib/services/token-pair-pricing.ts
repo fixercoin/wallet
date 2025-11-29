@@ -64,8 +64,17 @@ class TokenPairPricingService {
    */
   private async getSolPrice(): Promise<number> {
     try {
-      // Use dedicated SOL price service which has better error handling and fallbacks
-      const solPriceData = await solPriceService.getSolPrice();
+      // Use dedicated SOL price service which has better error handling and fallbacks (with timeout)
+      const solPriceData = await Promise.race([
+        solPriceService.getSolPrice(),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("SOL price fetch timeout")),
+            5500,
+          ),
+        ),
+      ] as const);
+
       if (
         solPriceData &&
         solPriceData.price > 0 &&
@@ -78,14 +87,23 @@ class TokenPairPricingService {
       }
     } catch (error) {
       console.warn(
-        "[TokenPairPricing] Error fetching SOL price from service:",
-        error,
+        "[TokenPairPricing] Error/timeout fetching SOL price from service:",
+        error instanceof Error ? error.message : error,
       );
     }
 
-    // Fallback 1: Try DexScreener as backup
+    // Fallback 1: Try DexScreener as backup (with timeout)
     try {
-      const solToken = await dexscreenerAPI.getTokenByMint(SOL_MINT);
+      const solToken = await Promise.race([
+        dexscreenerAPI.getTokenByMint(SOL_MINT),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("DexScreener SOL fetch timeout")),
+            3000,
+          ),
+        ),
+      ] as const);
+
       if (solToken && solToken.priceUsd) {
         const price = parseFloat(solToken.priceUsd);
         if (isFinite(price) && price > 0) {
@@ -97,8 +115,8 @@ class TokenPairPricingService {
       }
     } catch (error) {
       console.warn(
-        "[TokenPairPricing] Error fetching SOL price from DexScreener:",
-        error,
+        "[TokenPairPricing] Error/timeout fetching SOL price from DexScreener:",
+        error instanceof Error ? error.message : error,
       );
     }
 

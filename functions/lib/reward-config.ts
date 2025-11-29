@@ -6,13 +6,13 @@
 export const REWARD_CONFIG = {
   // Wallet address that pays out staking rewards
   rewardWallet: "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM",
-  
+
   // APY percentage for staking rewards
   apyPercentage: 10,
-  
+
   // Reward token mint address (FIXERCOIN)
   rewardTokenMint: "FxmrDJB16th5FeZ3RBwAScwxt6iGz5pmpKGisTJQcWMf",
-  
+
   // KV namespace bindings
   kvNamespace: "STAKING_KV",
 };
@@ -44,10 +44,7 @@ export interface RewardDistribution {
   processedAt?: number;
 }
 
-export function calculateReward(
-  amount: number,
-  periodDays: number,
-): number {
+export function calculateReward(amount: number, periodDays: number): number {
   // 10% APY
   const yearlyReward = amount * (REWARD_CONFIG.apyPercentage / 100);
   const dailyRate = yearlyReward / 365;

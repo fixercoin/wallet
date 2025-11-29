@@ -31,10 +31,10 @@ function jsonResponse(status: number, body: any) {
   const headers = applyCors(
     new Headers({ "Content-Type": "application/json" }),
   );
-  return new Response(
-    typeof body === "string" ? body : JSON.stringify(body),
-    { status, headers },
-  );
+  return new Response(typeof body === "string" ? body : JSON.stringify(body), {
+    status,
+    headers,
+  });
 }
 
 function verifySignature(
@@ -52,9 +52,13 @@ function verifySignature(
   }
 }
 
-export const onRequestPost = async (
-  { request, env }: { request: Request; env: Env },
-) => {
+export const onRequestPost = async ({
+  request,
+  env,
+}: {
+  request: Request;
+  env: Env;
+}) => {
   try {
     const body: WithdrawRequest = await request.json();
 

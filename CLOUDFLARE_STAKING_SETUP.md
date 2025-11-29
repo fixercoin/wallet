@@ -68,11 +68,13 @@ All endpoints are at `/api/staking/*`
 **GET /api/staking/list**
 
 Query Parameters:
+
 - `wallet` (required) - User's wallet address
 - `message` (optional) - Auth message for signature verification
 - `signature` (optional) - Message signature
 
 Response:
+
 ```json
 {
   "success": true,
@@ -101,6 +103,7 @@ Response:
 **POST /api/staking/create**
 
 Request Body:
+
 ```json
 {
   "wallet": "user_wallet_address",
@@ -113,6 +116,7 @@ Request Body:
 ```
 
 Response:
+
 ```json
 {
   "success": true,
@@ -138,6 +142,7 @@ Response:
 **POST /api/staking/withdraw**
 
 Request Body:
+
 ```json
 {
   "wallet": "user_wallet_address",
@@ -148,11 +153,14 @@ Request Body:
 ```
 
 Response:
+
 ```json
 {
   "success": true,
   "data": {
-    "stake": { /* updated stake object */ },
+    "stake": {
+      /* updated stake object */
+    },
     "totalAmount": 1082.19,
     "reward": {
       "amount": 82.19,
@@ -170,17 +178,19 @@ Response:
 **GET /api/staking/rewards-status**
 
 Query Parameters:
+
 - `wallet` (required) - User's wallet address
 - `message` (optional) - Auth message
 - `signature` (optional) - Message signature
 
 Response:
+
 ```json
 {
   "success": true,
   "data": {
     "walletAddress": "user_wallet_address",
-    "totalRewardsEarned": 250.50,
+    "totalRewardsEarned": 250.5,
     "rewardCount": 3,
     "rewardPayerWallet": "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM",
     "rewards": [
@@ -209,18 +219,22 @@ Response:
 ### KV Storage Format
 
 **Stakes:**
+
 - Key: `stakes:<stakeId>`
 - Value: JSON stake object
 
 **Wallet Stakes Index:**
+
 - Key: `stakes:wallet:<walletAddress>`
 - Value: JSON array of stake IDs
 
 **Rewards:**
+
 - Key: `rewards:<rewardId>`
 - Value: JSON reward object
 
 **Wallet Rewards Index:**
+
 - Key: `rewards:wallet:<walletAddress>`
 - Value: JSON array of reward IDs
 
@@ -234,6 +248,7 @@ npm run dev           # Frontend + Node backend
 ```
 
 Note: For local development with Cloudflare Functions, you can run:
+
 ```bash
 wrangler pages dev dist
 ```
@@ -246,6 +261,7 @@ npm run deploy:pages
 ```
 
 The `deploy:pages` command:
+
 1. Builds the React app to `dist/`
 2. Builds and deploys Cloudflare Functions
 3. Publishes to Cloudflare Pages
@@ -253,16 +269,19 @@ The `deploy:pages` command:
 ### Environment Setup
 
 1. Install Wrangler CLI:
+
 ```bash
 npm install -g wrangler
 ```
 
 2. Authenticate:
+
 ```bash
 wrangler login
 ```
 
 3. Create KV namespaces (if not already created):
+
 ```bash
 wrangler kv:namespace create staking_kv_prod
 wrangler kv:namespace create staking_kv_preview
@@ -292,6 +311,7 @@ The client automatically uses `/api/staking/*` endpoints:
 ### Automatic Processing
 
 When a user withdraws:
+
 1. Stake status is updated to "withdrawn"
 2. Reward distribution is recorded
 3. Response includes:

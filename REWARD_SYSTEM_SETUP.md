@@ -1,11 +1,13 @@
 # Staking Reward System Setup
 
 ## Overview
+
 The staking reward system automatically processes and tracks reward distributions when users withdraw from completed stakes.
 
 ## Configuration
 
 ### Reward Wallet Address
+
 **Wallet:** `FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM`
 
 This wallet is configured as the reward payer and will be responsible for distributing staking rewards to users.
@@ -24,15 +26,18 @@ return [
 ## How It Works
 
 ### 1. Staking Creation
+
 - User stakes tokens for 30, 60, or 90 days
 - Reward amount is calculated: `(amount * 0.1) / 365 * stake_period_days`
 - Stake is stored with `status: 'active'`
 
 ### 2. Staking Period
+
 - Stake remains active until the `end_time` is reached
 - User cannot withdraw until the period completes
 
 ### 3. Reward Processing
+
 When a user withdraws from a completed stake:
 
 1. **Validation**: Check that the staking period has ended
@@ -48,14 +53,18 @@ When a user withdraws from a completed stake:
 ### API Endpoints
 
 #### GET `/backend/api/staking-list.php`
+
 Fetch all stakes for a wallet
+
 ```
 Query: ?wallet=<address>
 Response: { data: [{ stake objects }] }
 ```
 
 #### POST `/backend/api/staking-create.php`
+
 Create a new stake
+
 ```
 Body: {
   wallet: string,
@@ -69,7 +78,9 @@ Response: { data: { stake object with reward_amount } }
 ```
 
 #### POST `/backend/api/staking-withdraw.php`
+
 Withdraw from a completed stake
+
 ```
 Body: {
   wallet: string,
@@ -93,7 +104,9 @@ Response: {
 ```
 
 #### GET `/backend/api/rewards-status.php`
+
 Get reward status for a wallet
+
 ```
 Query: ?wallet=<address>
 Response: {
@@ -111,7 +124,9 @@ Response: {
 ## Data Storage
 
 ### Stakes File: `backend/data/stakes.json`
+
 Contains all stake records with:
+
 - Stake ID
 - Wallet address
 - Token mint
@@ -120,7 +135,9 @@ Contains all stake records with:
 - Status (active, withdrawn, completed)
 
 ### Rewards File: `backend/data/rewards.json`
+
 Contains all reward distributions with:
+
 - Reward ID
 - Stake ID reference
 - Wallet address
@@ -132,6 +149,7 @@ Contains all reward distributions with:
 ## Frontend Integration
 
 ### useStaking Hook
+
 The `client/hooks/use-staking.ts` hook now includes:
 
 ```typescript
@@ -148,7 +166,9 @@ interface UseStakingReturn {
 ```
 
 ### Reward Distribution Response
+
 When user withdraws, the response includes:
+
 ```typescript
 reward: {
   amount: number,           // Reward amount in tokens
@@ -178,17 +198,20 @@ reward: {
 ## Troubleshooting
 
 ### Rewards Not Appearing
+
 1. Check that stake end_time has passed
 2. Verify wallet address is correct
 3. Check `backend/data/rewards.json` for distribution records
 4. Check browser console for API errors
 
 ### Missing Reward Wallet Address
+
 - Ensure `backend/config/reward-config.php` exists
 - Verify reward_wallet is set correctly
 - Restart the dev server
 
 ### Staking Period Not Ended
+
 - Stake cannot be withdrawn until `end_time` is reached
 - Check the `timeRemainingMs` in stake object
 - Wait for the period to complete

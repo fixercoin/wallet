@@ -37,7 +37,11 @@ interface UseStakingReturn {
   ) => Promise<Stake>;
   withdrawStake: (
     stakeId: string,
-  ) => Promise<{ stake: Stake; totalAmount: number; reward?: RewardDistribution }>;
+  ) => Promise<{
+    stake: Stake;
+    totalAmount: number;
+    reward?: RewardDistribution;
+  }>;
   refreshStakes: () => Promise<void>;
   getRewardStatus: () => Promise<any>;
 }
@@ -93,18 +97,22 @@ export function useStaking(): UseStakingReturn {
 
     try {
       const response = await fetch(
-        resolveApiUrl(`/api/staking/list?wallet=${encodeURIComponent(wallet.publicKey)}`),
+        resolveApiUrl(
+          `/api/staking/list?wallet=${encodeURIComponent(wallet.publicKey)}`,
+        ),
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to fetch stakes: ${response.status}`);
+        throw new Error(
+          errorData.error || `Failed to fetch stakes: ${response.status}`,
+        );
       }
 
       const result = await response.json();
@@ -127,7 +135,8 @@ export function useStaking(): UseStakingReturn {
       periodDays: number,
     ): Promise<Stake> => {
       if (!wallet?.publicKey) throw new Error("No wallet");
-      if (!wallet?.secretKey) throw new Error("Wallet secret key not available");
+      if (!wallet?.secretKey)
+        throw new Error("Wallet secret key not available");
 
       if (![30, 60, 90].includes(periodDays)) {
         throw new Error("Invalid period. Must be 30, 60, or 90 days");
@@ -138,27 +147,26 @@ export function useStaking(): UseStakingReturn {
       const message = `Create stake:${wallet.publicKey}:${Date.now()}`;
 
       try {
-        const response = await fetch(
-          resolveApiUrl("/api/staking/create"),
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              wallet: wallet.publicKey,
-              tokenMint,
-              amount,
-              periodDays,
-              message,
-              signature: "verified", // Placeholder - would be actual signature
-            }),
-          }
-        );
+        const response = await fetch(resolveApiUrl("/api/staking/create"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            wallet: wallet.publicKey,
+            tokenMint,
+            amount,
+            periodDays,
+            message,
+            signature: "verified", // Placeholder - would be actual signature
+          }),
+        });
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || `Failed to create stake: ${response.status}`);
+          throw new Error(
+            errorData.error || `Failed to create stake: ${response.status}`,
+          );
         }
 
         const result = await response.json();
@@ -177,7 +185,8 @@ export function useStaking(): UseStakingReturn {
   const withdrawStake = useCallback(
     async (stakeId: string) => {
       if (!wallet?.publicKey) throw new Error("No wallet");
-      if (!wallet?.secretKey) throw new Error("Wallet secret key not available");
+      if (!wallet?.secretKey)
+        throw new Error("Wallet secret key not available");
 
       const stake = stakes.find((s) => s.id === stakeId);
       if (!stake) throw new Error("Stake not found");
@@ -195,25 +204,24 @@ export function useStaking(): UseStakingReturn {
       const message = `Withdraw stake:${stakeId}:${wallet.publicKey}:${Date.now()}`;
 
       try {
-        const response = await fetch(
-          resolveApiUrl("/api/staking/withdraw"),
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              wallet: wallet.publicKey,
-              stakeId,
-              message,
-              signature: "verified", // Placeholder - would be actual signature
-            }),
-          }
-        );
+        const response = await fetch(resolveApiUrl("/api/staking/withdraw"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            wallet: wallet.publicKey,
+            stakeId,
+            message,
+            signature: "verified", // Placeholder - would be actual signature
+          }),
+        });
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || `Failed to withdraw stake: ${response.status}`);
+          throw new Error(
+            errorData.error || `Failed to withdraw stake: ${response.status}`,
+          );
         }
 
         const result = await response.json();
@@ -243,13 +251,15 @@ export function useStaking(): UseStakingReturn {
 
     try {
       const response = await fetch(
-        resolveApiUrl(`/api/staking/rewards-status?wallet=${encodeURIComponent(wallet.publicKey)}`),
+        resolveApiUrl(
+          `/api/staking/rewards-status?wallet=${encodeURIComponent(wallet.publicKey)}`,
+        ),
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {

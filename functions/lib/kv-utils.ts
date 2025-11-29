@@ -85,7 +85,9 @@ export class KVStore {
   /**
    * Get all rewards for a wallet
    */
-  async getRewardsByWallet(walletAddress: string): Promise<RewardDistribution[]> {
+  async getRewardsByWallet(
+    walletAddress: string,
+  ): Promise<RewardDistribution[]> {
     const rewardIds = await this.getRewardIdsForWallet(walletAddress);
     const rewards: RewardDistribution[] = [];
 
@@ -156,7 +158,9 @@ export class KVStore {
   /**
    * Get reward IDs for wallet
    */
-  private async getRewardIdsForWallet(walletAddress: string): Promise<string[]> {
+  private async getRewardIdsForWallet(
+    walletAddress: string,
+  ): Promise<string[]> {
     const json = await this.kv.get(`rewards:wallet:${walletAddress}`);
     return json ? JSON.parse(json) : [];
   }

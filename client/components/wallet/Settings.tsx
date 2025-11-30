@@ -26,7 +26,11 @@ interface SettingsProps {
   onDocumentation?: () => void;
 }
 
-export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
+export const Settings: React.FC<SettingsProps> = ({
+  onBack,
+  onOpenSetup,
+  onDocumentation,
+}) => {
   const { wallet, wallets, logout, selectWallet } = useWallet();
   const { toast } = useToast();
   const [confirmDelete, setConfirmDelete] = useState(false);

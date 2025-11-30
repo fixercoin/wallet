@@ -162,7 +162,13 @@ export default function Index() {
         <Settings
           onBack={navigateToDashboard}
           onOpenSetup={() => navigateToScreen("setup")}
+          onDocumentation={() => navigateToScreen("documentation")}
         />
+      );
+
+    case "documentation":
+      return (
+        <DocumentationPage onBack={navigateToDashboard} />
       );
 
     case "accounts":

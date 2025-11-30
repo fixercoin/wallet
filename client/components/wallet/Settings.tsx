@@ -23,6 +23,7 @@ import bs58 from "bs58";
 interface SettingsProps {
   onBack: () => void;
   onOpenSetup?: () => void;
+  onDocumentation?: () => void;
 }
 
 export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {

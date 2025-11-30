@@ -117,39 +117,39 @@ const documentationSections: DocSection[] = [
   },
   {
     id: "limit-orders",
-    title: "How to Place Limit Orders",
+    title: "HOW TO PLACE LIMIT ORDERS",
     content:
-      "Set limit orders to buy or sell tokens at specific prices. Your order executes automatically when the market price reaches your target.",
+      "SET LIMIT ORDERS TO BUY OR SELL TOKENS AT SPECIFIC PRICES. YOUR ORDER EXECUTES AUTOMATICALLY WHEN THE MARKET PRICE REACHES YOUR TARGET.",
     subsections: [
       {
-        title: "Accessing Limit Orders",
+        title: "ACCESSING LIMIT ORDERS",
         content:
-          "From the Dashboard, navigate to 'Market Maker' or 'Limit Orders' section to create and manage your orders.",
+          "FROM THE DASHBOARD, NAVIGATE TO 'MARKET MAKER' OR 'LIMIT ORDERS' SECTION TO CREATE AND MANAGE YOUR ORDERS.",
       },
       {
-        title: "Creating a Buy Limit Order",
+        title: "CREATING A BUY LIMIT ORDER",
         content:
-          "1. Select 'Buy' as the order type\n2. Choose the token you want to buy\n3. Enter the quantity you want to buy\n4. Set your maximum price (limit price) per token\n5. Review the total cost (quantity × price)\n6. Click 'Create Order' to place the order\n\nYour order will remain active until it's filled, cancelled, or expires.",
+          "1. SELECT 'BUY' AS THE ORDER TYPE\n2. CHOOSE THE TOKEN YOU WANT TO BUY\n3. ENTER THE QUANTITY YOU WANT TO BUY\n4. SET YOUR MAXIMUM PRICE (LIMIT PRICE) PER TOKEN\n5. REVIEW THE TOTAL COST (QUANTITY × PRICE)\n6. CLICK 'CREATE ORDER' TO PLACE THE ORDER\n\nYOUR ORDER WILL REMAIN ACTIVE UNTIL IT'S FILLED, CANCELLED, OR EXPIRES.",
       },
       {
-        title: "Creating a Sell Limit Order",
+        title: "CREATING A SELL LIMIT ORDER",
         content:
-          "1. Select 'Sell' as the order type\n2. Choose the token you want to sell\n3. Enter the quantity you want to sell\n4. Set your minimum price (limit price) per token\n5. Review the total value you'll receive\n6. Click 'Create Order' to place the order\n\nYour order will remain active until it's filled, cancelled, or expires.",
+          "1. SELECT 'SELL' AS THE ORDER TYPE\n2. CHOOSE THE TOKEN YOU WANT TO SELL\n3. ENTER THE QUANTITY YOU WANT TO SELL\n4. SET YOUR MINIMUM PRICE (LIMIT PRICE) PER TOKEN\n5. REVIEW THE TOTAL VALUE YOU'LL RECEIVE\n6. CLICK 'CREATE ORDER' TO PLACE THE ORDER\n\nYOUR ORDER WILL REMAIN ACTIVE UNTIL IT'S FILLED, CANCELLED, OR EXPIRES.",
       },
       {
-        title: "Managing Active Orders",
+        title: "MANAGING ACTIVE ORDERS",
         content:
-          "View all your active orders in the 'Orders' section. You can:\n• Monitor order status and fills\n• Partial fills show how much has been executed\n• Cancel orders at any time (no fee for cancellation)\n• View filled orders in history\n• Create new orders while others are active",
+          "VIEW ALL YOUR ACTIVE ORDERS IN THE 'ORDERS' SECTION. YOU CAN:\n• MONITOR ORDER STATUS AND FILLS\n• PARTIAL FILLS SHOW HOW MUCH HAS BEEN EXECUTED\n• CANCEL ORDERS AT ANY TIME (NO FEE FOR CANCELLATION)\n• VIEW FILLED ORDERS IN HISTORY\n• CREATE NEW ORDERS WHILE OTHERS ARE ACTIVE",
       },
       {
-        title: "Order Execution",
+        title: "ORDER EXECUTION",
         content:
-          "Orders execute when market conditions are met:\n• Buy orders execute when price drops to or below your limit\n• Sell orders execute when price rises to or above your limit\n• Orders can partially fill if not enough volume is available\n• Execution is subject to network conditions\n• Failed orders remain active unless cancelled",
+          "ORDERS EXECUTE WHEN MARKET CONDITIONS ARE MET:\n• BUY ORDERS EXECUTE WHEN PRICE DROPS TO OR BELOW YOUR LIMIT\n• SELL ORDERS EXECUTE WHEN PRICE RISES TO OR ABOVE YOUR LIMIT\n• ORDERS CAN PARTIALLY FILL IF NOT ENOUGH VOLUME IS AVAILABLE\n• EXECUTION IS SUBJECT TO NETWORK CONDITIONS\n• FAILED ORDERS REMAIN ACTIVE UNLESS CANCELLED",
       },
       {
-        title: "Limit Order Tips",
+        title: "LIMIT ORDER TIPS",
         content:
-          "• Set realistic prices based on current market\n• Popular tokens execute faster than less liquid tokens\n• Check the order book before setting prices\n• Lower limit prices for buys and higher limits for sells\n• Monitor your orders regularly\n• Cancel orders you no longer want to execute\n• Liquidity and volume affect execution speed",
+          "• SET REALISTIC PRICES BASED ON CURRENT MARKET\n• POPULAR TOKENS EXECUTE FASTER THAN LESS LIQUID TOKENS\n• CHECK THE ORDER BOOK BEFORE SETTING PRICES\n• LOWER LIMIT PRICES FOR BUYS AND HIGHER LIMITS FOR SELLS\n• MONITOR YOUR ORDERS REGULARLY\n• CANCEL ORDERS YOU NO LONGER WANT TO EXECUTE\n• LIQUIDITY AND VOLUME AFFECT EXECUTION SPEED",
       },
     ],
   },

@@ -264,6 +264,14 @@ export function useStaking(): UseStakingReturn {
           prev.map((s) => (s.id === stakeId ? updatedStake : s)),
         );
 
+        // Update token balance in wallet context - add back staked amount + reward
+        const token = tokens.find((t) => t.mint === stake.tokenMint);
+        if (token) {
+          const totalAmount = result.data.totalAmount || stake.amount + stake.rewardAmount;
+          const newBalance = token.balance + totalAmount;
+          updateTokenBalance(stake.tokenMint, newBalance);
+        }
+
         return {
           stake: updatedStake,
           totalAmount: result.data.totalAmount,
@@ -274,7 +282,7 @@ export function useStaking(): UseStakingReturn {
         throw new Error(msg);
       }
     },
-    [wallet?.publicKey, wallet?.secretKey, stakes],
+    [wallet?.publicKey, wallet?.secretKey, stakes, tokens, updateTokenBalance],
   );
 
   // Get reward status for wallet

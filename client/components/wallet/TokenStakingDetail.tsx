@@ -64,13 +64,6 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
     {},
   );
 
-  // Calculate available balance (subtract active stakes)
-  const totalStaked = tokenStakes.reduce((sum, stake) => sum + stake.amount, 0);
-  const availableBalance = Math.max(0, (token.balance || 0) - totalStaked);
-  const calculatedReward = stakeAmount
-    ? calculateReward(Number(stakeAmount), selectedPeriod)
-    : 0;
-
   // Filter stakes for this token
   const tokenStakes = stakes.filter(
     (stake) => stake.tokenMint === token.mint && stake.status === "active",
@@ -79,6 +72,13 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
   const completedStakes = stakes.filter(
     (stake) => stake.tokenMint === token.mint && stake.status === "completed",
   );
+
+  // Calculate available balance (subtract active stakes)
+  const totalStaked = tokenStakes.reduce((sum, stake) => sum + stake.amount, 0);
+  const availableBalance = Math.max(0, (token.balance || 0) - totalStaked);
+  const calculatedReward = stakeAmount
+    ? calculateReward(Number(stakeAmount), selectedPeriod)
+    : 0;
 
   // Update timer for active stakes
   useEffect(() => {

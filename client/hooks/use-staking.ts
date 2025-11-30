@@ -211,11 +211,21 @@ export function useStaking(): UseStakingReturn {
         throw new Error("Stake is not active");
       }
 
-      // For now, we'll use basic authentication with wallet address
-      // In production, implement proper message signing
       const message = `Withdraw stake:${stakeId}:${wallet.publicKey}:${Date.now()}`;
 
       try {
+        // Sign the message using the Fixorium provider
+        const provider = ensureFixoriumProvider();
+        if (!provider) {
+          throw new Error("Wallet provider not available");
+        }
+
+        // Sign the message
+        const signatureBytes = await provider.signMessage(message);
+
+        // Encode signature as base58
+        const signatureBase58 = bs58.encode(signatureBytes);
+
         const response = await fetch(resolveApiUrl("/api/staking/withdraw"), {
           method: "POST",
           headers: {
@@ -225,7 +235,7 @@ export function useStaking(): UseStakingReturn {
             wallet: wallet.publicKey,
             stakeId,
             message,
-            signature: "verified", // Placeholder - would be actual signature
+            signature: signatureBase58,
           }),
         });
 

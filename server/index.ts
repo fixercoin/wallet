@@ -63,6 +63,12 @@ import {
   validateSolanaSend,
   validateSwapSubmit,
 } from "./middleware/validate";
+import {
+  handleCreateStake,
+  handleListStakes,
+  handleWithdrawStake,
+  handleRewardStatus,
+} from "./routes/staking";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
@@ -623,6 +629,12 @@ export async function createServer(): Promise<express.Application> {
   app.get("/api/orders/:orderId", handleGetOrder);
   app.put("/api/orders/:orderId", handleUpdateOrder);
   app.delete("/api/orders/:orderId", handleDeleteOrder);
+
+  // Staking routes
+  app.post("/api/staking/create", handleCreateStake);
+  app.get("/api/staking/list", handleListStakes);
+  app.post("/api/staking/withdraw", handleWithdrawStake);
+  app.get("/api/staking/rewards-status", handleRewardStatus);
 
   // P2P Orders routes (legacy API) - DISABLED
   // These legacy endpoints are intentionally disabled to stop P2P order handling from this setup.

@@ -630,6 +630,12 @@ export async function createServer(): Promise<express.Application> {
   app.put("/api/orders/:orderId", handleUpdateOrder);
   app.delete("/api/orders/:orderId", handleDeleteOrder);
 
+  // Staking routes
+  app.post("/api/staking/create", handleCreateStake);
+  app.get("/api/staking/list", handleListStakes);
+  app.post("/api/staking/withdraw", handleWithdrawStake);
+  app.get("/api/staking/rewards-status", handleRewardStatus);
+
   // P2P Orders routes (legacy API) - DISABLED
   // These legacy endpoints are intentionally disabled to stop P2P order handling from this setup.
   // Keeping explicit disabled handlers so callers receive a clear 410 Gone response.

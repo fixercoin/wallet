@@ -132,6 +132,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
 
       // Refresh stakes to ensure the new stake appears
       await new Promise(resolve => setTimeout(resolve, 500));
+      await refreshStakes();
 
       toast({
         title: "STAKING STARTED",

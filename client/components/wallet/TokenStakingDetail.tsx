@@ -64,8 +64,9 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
     {},
   );
 
-  // Get available balance for this token
-  const availableBalance = token.balance || 0;
+  // Calculate available balance (subtract active stakes)
+  const totalStaked = tokenStakes.reduce((sum, stake) => sum + stake.amount, 0);
+  const availableBalance = Math.max(0, (token.balance || 0) - totalStaked);
   const calculatedReward = stakeAmount
     ? calculateReward(Number(stakeAmount), selectedPeriod)
     : 0;

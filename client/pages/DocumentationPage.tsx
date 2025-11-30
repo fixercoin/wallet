@@ -390,12 +390,12 @@ const documentationSections: DocSection[] = [
           "Secure the device running Fixorium:\n• Use a trusted, updated device\n• Enable device lock with strong PIN/biometric\n• Keep operating system and apps updated\n• Run antivirus/malware protection\n• Use a VPN for public WiFi\n• Avoid using public computers\n• Enable two-factor authentication on related accounts\n• Use hardware wallets for large holdings",
       },
       {
-        title: "Recovery Phrase Protection",
+        title: "RECOVERY PHRASE PROTECTION",
         content:
-          "Protecting your recovery phrase:\n• Write it down on paper (never digitally)\n• Store in a secure physical location\n• Multiple copies in different safe locations\n• Never photograph or screenshot the phrase\n• Avoid sharing even with trusted people\n• Use a safe deposit box or home safe\n• Consider using metal recovery phrase plates\n• Memorize the phrase if possible",
+          "PROTECTING YOUR RECOVERY PHRASE:\n• WRITE IT DOWN ON PAPER (NEVER DIGITALLY)\n• STORE IN A SECURE PHYSICAL LOCATION\n• MULTIPLE COPIES IN DIFFERENT SAFE LOCATIONS\n• NEVER PHOTOGRAPH OR SCREENSHOT THE PHRASE\n• AVOID SHARING EVEN WITH TRUSTED PEOPLE\n• USE A SAFE DEPOSIT BOX OR HOME SAFE\n• CONSIDER USING METAL RECOVERY PHRASE PLATES\n• MEMORIZE THE PHRASE IF POSSIBLE",
       },
       {
-        title: "Phishing & Scams",
+        title: "PHISHING & SCAMS",
         content:
           "Protect yourself from scams:\n• Verify website URLs before entering credentials\n• Be wary of unexpected messages/emails\n• Never click links in unsolicited messages\n• Scammers impersonate Fixorium and other projects\n• 'Limited time offers' are usually scams\n• Too-good-to-be-true returns are always scams\n• Report suspicious activity to authorities\n• Use official Fixorium channels only",
       },

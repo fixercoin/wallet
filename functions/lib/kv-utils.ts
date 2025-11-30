@@ -19,7 +19,11 @@ interface KVNamespace {
 // rewards:wallet:<walletAddress> = JSON.stringify(string[]) - array of reward IDs
 
 export class KVStore {
-  constructor(private kv: KVNamespace) {}
+  constructor(private kv: KVNamespace) {
+    if (!kv) {
+      throw new Error('KV namespace is required. Ensure STAKING_KV is bound in wrangler.toml');
+    }
+  }
 
   /**
    * Get all stakes for a wallet

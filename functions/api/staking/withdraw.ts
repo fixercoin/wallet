@@ -9,7 +9,8 @@ import { KVStore } from "../../lib/kv-utils";
 import { REWARD_CONFIG, RewardDistribution } from "../../lib/reward-config";
 
 interface Env {
-  STAKING_KV: KVNamespace;
+  STAKING_KV: any;
+  [key: string]: any;
 }
 
 interface WithdrawRequest {

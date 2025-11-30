@@ -54,7 +54,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
   onBack,
 }) => {
   const { wallet, tokens } = useWallet();
-  const { stakes, loading, createStake, withdrawStake } = useStaking();
+  const { stakes, loading, createStake, withdrawStake, refreshStakes } = useStaking();
   const { toast } = useToast();
 
   const [selectedPeriod, setSelectedPeriod] = useState<30 | 60 | 90>(30);

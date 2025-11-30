@@ -155,39 +155,39 @@ const documentationSections: DocSection[] = [
   },
   {
     id: "burn-tokens",
-    title: "How to Burn Tokens",
+    title: "HOW TO BURN TOKENS",
     content:
-      "Permanently remove tokens from circulation by sending them to a null address. This reduces total supply and can increase token value.",
+      "PERMANENTLY REMOVE TOKENS FROM CIRCULATION BY SENDING THEM TO A NULL ADDRESS. THIS REDUCES TOTAL SUPPLY AND CAN INCREASE TOKEN VALUE.",
     subsections: [
       {
-        title: "What is Token Burning?",
+        title: "WHAT IS TOKEN BURNING?",
         content:
-          "Token burning is the process of sending tokens to a dead address (null address) where they cannot be recovered. This permanently removes tokens from circulation and reduces the total supply.",
+          "TOKEN BURNING IS THE PROCESS OF SENDING TOKENS TO A DEAD ADDRESS (NULL ADDRESS) WHERE THEY CANNOT BE RECOVERED. THIS PERMANENTLY REMOVES TOKENS FROM CIRCULATION AND REDUCES THE TOTAL SUPPLY.",
       },
       {
-        title: "Accessing the Burn Feature",
+        title: "ACCESSING THE BURN FEATURE",
         content:
-          "From the Dashboard, click on a token and select 'Burn Token' or navigate to the Burn section from the main menu.",
+          "FROM THE DASHBOARD, CLICK ON A TOKEN AND SELECT 'BURN TOKEN' OR NAVIGATE TO THE BURN SECTION FROM THE MAIN MENU.",
       },
       {
-        title: "Selecting Tokens to Burn",
+        title: "SELECTING TOKENS TO BURN",
         content:
-          "1. Choose the token you want to burn from your wallet\n2. Enter the quantity to burn\n3. Click 'MAX' to burn your entire balance of that token\n4. Review the amount before burning",
+          "1. CHOOSE THE TOKEN YOU WANT TO BURN FROM YOUR WALLET\n2. ENTER THE QUANTITY TO BURN\n3. CLICK 'MAX' TO BURN YOUR ENTIRE BALANCE OF THAT TOKEN\n4. REVIEW THE AMOUNT BEFORE BURNING",
       },
       {
-        title: "Confirming the Burn",
+        title: "CONFIRMING THE BURN",
         content:
-          "1. Review the burn transaction details\n2. Confirm that you want to permanently remove these tokens\n3. Sign the transaction with your wallet\n4. The tokens will be sent to the null address and permanently destroyed",
+          "1. REVIEW THE BURN TRANSACTION DETAILS\n2. CONFIRM THAT YOU WANT TO PERMANENTLY REMOVE THESE TOKENS\n3. SIGN THE TRANSACTION WITH YOUR WALLET\n4. THE TOKENS WILL BE SENT TO THE NULL ADDRESS AND PERMANENTLY DESTROYED",
       },
       {
-        title: "After Burning",
+        title: "AFTER BURNING",
         content:
-          "Once burned:\n• Tokens are permanently removed from circulation\n• This action cannot be undone\n• Your wallet balance for that token decreases\n• The burn transaction is recorded on the blockchain\n• You can view the burn in your transaction history",
+          "ONCE BURNED:\n• TOKENS ARE PERMANENTLY REMOVED FROM CIRCULATION\n• THIS ACTION CANNOT BE UNDONE\n• YOUR WALLET BALANCE FOR THAT TOKEN DECREASES\n• THE BURN TRANSACTION IS RECORDED ON THE BLOCKCHAIN\n• YOU CAN VIEW THE BURN IN YOUR TRANSACTION HISTORY",
       },
       {
-        title: "Important Warnings",
+        title: "IMPORTANT WARNINGS",
         content:
-          "• Token burning is PERMANENT and CANNOT be reversed\n• Double-check the amount before confirming\n• Only burn tokens you own and control\n• Verify you have the correct token selected\n• Pay attention to token decimals\n• Some tokens may not be burnable (check token contract)",
+          "• TOKEN BURNING IS PERMANENT AND CANNOT BE REVERSED\n• DOUBLE-CHECK THE AMOUNT BEFORE CONFIRMING\n• ONLY BURN TOKENS YOU OWN AND CONTROL\n• VERIFY YOU HAVE THE CORRECT TOKEN SELECTED\n• PAY ATTENTION TO TOKEN DECIMALS\n• SOME TOKENS MAY NOT BE BURNABLE (CHECK TOKEN CONTRACT)",
       },
     ],
   },

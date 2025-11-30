@@ -51,29 +51,29 @@ const documentationSections: DocSection[] = [
   },
   {
     id: "import-wallet",
-    title: "How to Import a Wallet",
+    title: "HOW TO IMPORT A WALLET",
     content:
-      "If you already have a Solana wallet, you can import it into Fixorium using your recovery phrase or private key.",
+      "IF YOU ALREADY HAVE A SOLANA WALLET, YOU CAN IMPORT IT INTO FIXORIUM USING YOUR RECOVERY PHRASE OR PRIVATE KEY.",
     subsections: [
       {
-        title: "Importing via Recovery Phrase",
+        title: "IMPORTING VIA RECOVERY PHRASE",
         content:
-          "1. Click 'Import Wallet' on the setup screen\n2. Select 'Recovery Phrase' as the import method\n3. Enter your 12-word recovery phrase separated by spaces\n4. Your wallet will be imported and ready to use\n\nNote: The recovery phrase must be in the exact same order as originally created.",
+          "1. CLICK 'IMPORT WALLET' ON THE SETUP SCREEN\n2. SELECT 'RECOVERY PHRASE' AS THE IMPORT METHOD\n3. ENTER YOUR 12-WORD RECOVERY PHRASE SEPARATED BY SPACES\n4. YOUR WALLET WILL BE IMPORTED AND READY TO USE\n\nNOTE: THE RECOVERY PHRASE MUST BE IN THE EXACT SAME ORDER AS ORIGINALLY CREATED.",
       },
       {
-        title: "Importing via Private Key",
+        title: "IMPORTING VIA PRIVATE KEY",
         content:
-          "1. Click 'Import Wallet' on the setup screen\n2. Select 'Private Key' as the import method\n3. Paste your private key (in base58 format)\n4. Your wallet will be imported\n\nWarning: Importing via private key creates a view-only wallet without a recovery phrase. You cannot recover this wallet with just the private key.",
+          "1. CLICK 'IMPORT WALLET' ON THE SETUP SCREEN\n2. SELECT 'PRIVATE KEY' AS THE IMPORT METHOD\n3. PASTE YOUR PRIVATE KEY (IN BASE58 FORMAT)\n4. YOUR WALLET WILL BE IMPORTED\n\nWARNING: IMPORTING VIA PRIVATE KEY CREATES A VIEW-ONLY WALLET WITHOUT A RECOVERY PHRASE. YOU CANNOT RECOVER THIS WALLET WITH JUST THE PRIVATE KEY.",
       },
       {
-        title: "Importing Multiple Wallets",
+        title: "IMPORTING MULTIPLE WALLETS",
         content:
-          "You can import and manage multiple wallets in Fixorium. Each wallet is stored separately and you can switch between them from the Accounts section in Settings. All wallets are stored locally on your device.",
+          "YOU CAN IMPORT AND MANAGE MULTIPLE WALLETS IN FIXORIUM. EACH WALLET IS STORED SEPARATELY AND YOU CAN SWITCH BETWEEN THEM FROM THE ACCOUNTS SECTION IN SETTINGS. ALL WALLETS ARE STORED LOCALLY ON YOUR DEVICE.",
       },
       {
-        title: "Important Warnings",
+        title: "IMPORTANT WARNINGS",
         content:
-          "• Only import wallets on secure devices\n• Never import wallets on public or shared computers\n• Be cautious of clipboard hijacking malware\n• Verify the wallet address after import to ensure it's correct\n• Do not import wallets you don't trust or control",
+          "• ONLY IMPORT WALLETS ON SECURE DEVICES\n• NEVER IMPORT WALLETS ON PUBLIC OR SHARED COMPUTERS\n• BE CAUTIOUS OF CLIPBOARD HIJACKING MALWARE\n• VERIFY THE WALLET ADDRESS AFTER IMPORT TO ENSURE IT'S CORRECT\n• DO NOT IMPORT WALLETS YOU DON'T TRUST OR CONTROL",
       },
     ],
   },

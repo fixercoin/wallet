@@ -323,6 +323,162 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
           <InfoRow label="MINT ADDRESS" value={shortenAddress(tokenMint)} />
         </div>
       </div>
+
+      {/* Staking Information */}
+      {(tokenStakes.length > 0 || completedStakes.length > 0) && (
+        <>
+          {/* Active Stakes */}
+          {tokenStakes.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold text-gray-300 uppercase">
+                ACTIVE STAKES
+              </h3>
+              {tokenStakes.map((stake) => {
+                const timeLeft = Math.max(0, stake.endTime - Date.now());
+                const isWithdrawable = timeLeft === 0;
+                const totalDurationMs = stake.stakePeriodDays * 24 * 60 * 60 * 1000;
+                const elapsedMs = totalDurationMs - timeLeft;
+                const progressPercentage = (elapsedMs / totalDurationMs) * 100;
+
+                return (
+                  <Card
+                    key={stake.id}
+                    className="w-full bg-gray-900 rounded-lg border border-gray-700"
+                  >
+                    <CardContent className="p-4">
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        <div>
+                          <p className="text-xs text-gray-400 mb-1 uppercase">
+                            STAKED AMOUNT
+                          </p>
+                          <p className="text-sm font-bold text-white">
+                            {formatTokenAmount(stake.amount)} {token.symbol}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 mb-1 uppercase">
+                            EXPECTED REWARD
+                          </p>
+                          <p className="text-sm font-bold text-green-400">
+                            +{formatTokenAmount(stake.rewardAmount)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 mb-1 uppercase">
+                            PERIOD
+                          </p>
+                          <p className="text-xs font-semibold text-white">
+                            {stake.stakePeriodDays} days
+                          </p>
+                        </div>
+                        <div className="flex items-end">
+                          {isWithdrawable ? (
+                            <span className="text-xs font-semibold text-green-400 bg-green-500/10 px-2 py-1 rounded uppercase">
+                              READY TO WITHDRAW
+                            </span>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-3 w-3 text-yellow-500" />
+                              <span className="text-xs font-semibold text-yellow-500 uppercase">
+                                {timeRemaining[stake.id] || "CALCULATING..."}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Progress Bar */}
+                      {!isWithdrawable && (
+                        <div className="mb-4">
+                          <div className="flex justify-between items-center mb-2">
+                            <p className="text-xs text-gray-400 uppercase">
+                              TIME PROGRESS
+                            </p>
+                            <p className="text-xs text-gray-400 uppercase">
+                              {Math.round(progressPercentage)}%
+                            </p>
+                          </div>
+                          <Progress
+                            value={Math.min(progressPercentage, 100)}
+                            className="h-2"
+                          />
+                        </div>
+                      )}
+
+                      <Button
+                        onClick={() => handleWithdraw(stake.id)}
+                        disabled={!isWithdrawable}
+                        className={`w-full uppercase text-xs ${
+                          isWithdrawable
+                            ? "bg-green-600 hover:bg-green-700"
+                            : "bg-gray-700 text-gray-500"
+                        } text-white font-semibold`}
+                        size="sm"
+                      >
+                        {isWithdrawable ? "WITHDRAW" : "WITHDRAWAL LOCKED"}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Completed Stakes */}
+          {completedStakes.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold text-gray-300 uppercase">
+                STAKE HISTORY ({completedStakes.length})
+              </h3>
+              <div className="space-y-2">
+                {completedStakes.map((stake) => (
+                  <Card
+                    key={stake.id}
+                    className="w-full bg-gray-900 rounded-lg border border-gray-700"
+                  >
+                    <CardContent className="p-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <p className="text-xs text-gray-400 mb-1 uppercase">
+                            STAKED
+                          </p>
+                          <p className="text-xs font-semibold text-white">
+                            {formatTokenAmount(stake.amount)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 mb-1 uppercase">
+                            REWARD EARNED
+                          </p>
+                          <p className="text-xs font-semibold text-green-400">
+                            +{formatTokenAmount(stake.rewardAmount)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 mb-1 uppercase">
+                            PERIOD
+                          </p>
+                          <p className="text-xs font-semibold text-white">
+                            {stake.stakePeriodDays} days
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 mb-1 uppercase">
+                            STATUS
+                          </p>
+                          <p className="text-xs font-semibold text-gray-300">
+                            COMPLETED
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };

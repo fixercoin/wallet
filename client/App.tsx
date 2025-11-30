@@ -183,6 +183,10 @@ function AppRoutes() {
         element={<RunningMarketMaker />}
       />
       <Route path="/market-maker/history" element={<MarketMakerHistory />} />
+      <Route
+        path="/documentation"
+        element={<DocumentationPage onBack={() => window.history.back()} />}
+      />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

@@ -327,44 +327,44 @@ const documentationSections: DocSection[] = [
   },
   {
     id: "external-connections",
-    title: "How to Connect with External Apps/Websites",
+    title: "HOW TO CONNECT WITH EXTERNAL APPS/WEBSITES",
     content:
-      "Connect your Fixorium wallet to external dApps and websites. Interact with DeFi protocols, NFT marketplaces, and blockchain services.",
+      "CONNECT YOUR FIXORIUM WALLET TO EXTERNAL DAPPS AND WEBSITES. INTERACT WITH DEFI PROTOCOLS, NFT MARKETPLACES, AND BLOCKCHAIN SERVICES.",
     subsections: [
       {
-        title: "Understanding Wallet Connections",
+        title: "UNDERSTANDING WALLET CONNECTIONS",
         content:
-          "Many blockchain applications require wallet connections to function. These connections allow dApps to:\n• Read your wallet balance and token holdings\n• Request transaction signatures (with your approval)\n• Display your portfolio\n• Enable trading and swaps on external platforms",
+          "MANY BLOCKCHAIN APPLICATIONS REQUIRE WALLET CONNECTIONS TO FUNCTION. THESE CONNECTIONS ALLOW DAPPS TO:\n• READ YOUR WALLET BALANCE AND TOKEN HOLDINGS\n• REQUEST TRANSACTION SIGNATURES (WITH YOUR APPROVAL)\n• DISPLAY YOUR PORTFOLIO\n• ENABLE TRADING AND SWAPS ON EXTERNAL PLATFORMS",
       },
       {
-        title: "Connecting to dApps",
+        title: "CONNECTING TO DAPPS",
         content:
-          "When visiting a dApp:\n1. Look for 'Connect Wallet' button\n2. Select 'Solana' as the blockchain\n3. Choose 'Fixorium' from wallet options (if available)\n4. Approve the connection request\n5. The dApp can now read your wallet info",
+          "WHEN VISITING A DAPP:\n1. LOOK FOR 'CONNECT WALLET' BUTTON\n2. SELECT 'SOLANA' AS THE BLOCKCHAIN\n3. CHOOSE 'FIXORIUM' FROM WALLET OPTIONS (IF AVAILABLE)\n4. APPROVE THE CONNECTION REQUEST\n5. THE DAPP CAN NOW READ YOUR WALLET INFO",
       },
       {
-        title: "Approving Transactions",
+        title: "APPROVING TRANSACTIONS",
         content:
-          "When a dApp requests a transaction:\n1. Review the transaction details carefully\n2. Check what you're signing (swap details, contract interactions, etc.)\n3. Verify the amount and token\n4. Check the recipient address\n5. Click 'Sign' only if you agree\n6. Never sign if the details seem wrong",
+          "WHEN A DAPP REQUESTS A TRANSACTION:\n1. REVIEW THE TRANSACTION DETAILS CAREFULLY\n2. CHECK WHAT YOU'RE SIGNING (SWAP DETAILS, CONTRACT INTERACTIONS, ETC.)\n3. VERIFY THE AMOUNT AND TOKEN\n4. CHECK THE RECIPIENT ADDRESS\n5. CLICK 'SIGN' ONLY IF YOU AGREE\n6. NEVER SIGN IF THE DETAILS SEEM WRONG",
       },
       {
-        title: "Popular dApps",
+        title: "POPULAR DAPPS",
         content:
-          "Common applications you can connect to:\n• Jupiter: DEX for token swaps\n• Magic Eden: NFT marketplace\n• Raydium: Liquidity pools and swaps\n• Serum: Trading platform\n• Phantom/Solflare: Wallet bridges\n• Marinade: Liquid staking\n• And many more Solana ecosystem apps",
+          "COMMON APPLICATIONS YOU CAN CONNECT TO:\n• JUPITER: DEX FOR TOKEN SWAPS\n• MAGIC EDEN: NFT MARKETPLACE\n• RAYDIUM: LIQUIDITY POOLS AND SWAPS\n• SERUM: TRADING PLATFORM\n• PHANTOM/SOLFLARE: WALLET BRIDGES\n• MARINADE: LIQUID STAKING\n• AND MANY MORE SOLANA ECOSYSTEM APPS",
       },
       {
-        title: "Managing Connections",
+        title: "MANAGING CONNECTIONS",
         content:
-          "View and manage active connections:\n1. Go to Settings\n2. Find 'Connected Apps' section\n3. See all connected dApps\n4. Disconnect from apps you no longer use\n5. Review permissions granted\n6. Remove suspicious connections",
+          "VIEW AND MANAGE ACTIVE CONNECTIONS:\n1. GO TO SETTINGS\n2. FIND 'CONNECTED APPS' SECTION\n3. SEE ALL CONNECTED DAPPS\n4. DISCONNECT FROM APPS YOU NO LONGER USE\n5. REVIEW PERMISSIONS GRANTED\n6. REMOVE SUSPICIOUS CONNECTIONS",
       },
       {
-        title: "Security Best Practices",
+        title: "SECURITY BEST PRACTICES",
         content:
-          "• Only connect to trusted, verified websites\n• Check URL carefully (watch for typos/spoofing)\n• Never approve unlimited spending allowances\n• Disconnect from apps you don't use\n• Review what permissions you're granting\n• Use hardware wallets for large amounts\n• Be cautious of new or unverified dApps\n• Research projects before connecting",
+          "• ONLY CONNECT TO TRUSTED, VERIFIED WEBSITES\n• CHECK URL CAREFULLY (WATCH FOR TYPOS/SPOOFING)\n• NEVER APPROVE UNLIMITED SPENDING ALLOWANCES\n• DISCONNECT FROM APPS YOU DON'T USE\n• REVIEW WHAT PERMISSIONS YOU'RE GRANTING\n• USE HARDWARE WALLETS FOR LARGE AMOUNTS\n• BE CAUTIOUS OF NEW OR UNVERIFIED DAPPS\n• RESEARCH PROJECTS BEFORE CONNECTING",
       },
       {
-        title: "Warning Signs",
+        title: "WARNING SIGNS",
         content:
-          "Avoid connecting to:\n• Websites with suspicious URLs\n• Unverified or newly created projects\n• Requests for unlimited approvals\n• Apps asking for your private key\n• Sites claiming to 'double' your tokens\n• Offers that seem too good to be true\n• Unaudited smart contracts",
+          "AVOID CONNECTING TO:\n• WEBSITES WITH SUSPICIOUS URLS\n• UNVERIFIED OR NEWLY CREATED PROJECTS\n• REQUESTS FOR UNLIMITED APPROVALS\n• APPS ASKING FOR YOUR PRIVATE KEY\n• SITES CLAIMING TO 'DOUBLE' YOUR TOKENS\n• OFFERS THAT SEEM TOO GOOD TO BE TRUE\n• UNAUDITED SMART CONTRACTS",
       },
     ],
   },

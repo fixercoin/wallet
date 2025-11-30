@@ -345,6 +345,9 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
             {tokenStakes.map((stake) => {
               const timeLeft = Math.max(0, stake.endTime - Date.now());
               const isWithdrawable = timeLeft === 0;
+              const totalDurationMs = stake.stakePeriodDays * 24 * 60 * 60 * 1000;
+              const elapsedMs = totalDurationMs - timeLeft;
+              const progressPercentage = (elapsedMs / totalDurationMs) * 100;
 
               return (
                 <Card
@@ -392,6 +395,24 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                         )}
                       </div>
                     </div>
+
+                    {/* Progress Bar with Time Count */}
+                    {!isWithdrawable && (
+                      <div className="mb-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <p className="text-xs text-gray-400 uppercase">
+                            TIME PROGRESS
+                          </p>
+                          <p className="text-xs text-gray-400 uppercase">
+                            {Math.round(progressPercentage)}%
+                          </p>
+                        </div>
+                        <Progress
+                          value={Math.min(progressPercentage, 100)}
+                          className="h-2"
+                        />
+                      </div>
+                    )}
 
                     <Button
                       onClick={() => handleWithdraw(stake.id)}

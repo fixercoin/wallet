@@ -14,7 +14,6 @@ import {
   EyeOff,
   Twitter,
   Send,
-  Book,
   Headphones,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";

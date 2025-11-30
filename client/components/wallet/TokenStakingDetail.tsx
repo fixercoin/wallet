@@ -80,6 +80,11 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
     ? calculateReward(Number(stakeAmount), selectedPeriod)
     : 0;
 
+  // Load stakes on component mount
+  useEffect(() => {
+    refreshStakes();
+  }, [token.mint, refreshStakes]);
+
   // Update timer for active stakes
   useEffect(() => {
     const interval = setInterval(() => {

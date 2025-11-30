@@ -79,39 +79,39 @@ const documentationSections: DocSection[] = [
   },
   {
     id: "swap-tokens",
-    title: "How to Swap Tokens",
+    title: "HOW TO SWAP TOKENS",
     content:
-      "Swap tokens directly in your wallet using integrated DEX protocols. Instantly exchange one token for another.",
+      "SWAP TOKENS DIRECTLY IN YOUR WALLET USING INTEGRATED DEX PROTOCOLS. INSTANTLY EXCHANGE ONE TOKEN FOR ANOTHER.",
     subsections: [
       {
-        title: "Accessing the Swap Interface",
+        title: "ACCESSING THE SWAP INTERFACE",
         content:
-          "From the Dashboard, click the 'Swap' button in the navigation menu. You'll see the token swap interface with input and output fields.",
+          "FROM THE DASHBOARD, CLICK THE 'SWAP' BUTTON IN THE NAVIGATION MENU. YOU'LL SEE THE TOKEN SWAP INTERFACE WITH INPUT AND OUTPUT FIELDS.",
       },
       {
-        title: "Selecting Tokens",
+        title: "SELECTING TOKENS",
         content:
-          "1. Click on the 'From' token to select the token you want to sell\n2. Click on the 'To' token to select the token you want to receive\n3. You can also click the swap arrow icon to reverse the tokens\n4. Your available balance for the 'From' token is shown below the input field",
+          "1. CLICK ON THE 'FROM' TOKEN TO SELECT THE TOKEN YOU WANT TO SELL\n2. CLICK ON THE 'TO' TOKEN TO SELECT THE TOKEN YOU WANT TO RECEIVE\n3. YOU CAN ALSO CLICK THE SWAP ARROW ICON TO REVERSE THE TOKENS\n4. YOUR AVAILABLE BALANCE FOR THE 'FROM' TOKEN IS SHOWN BELOW THE INPUT FIELD",
       },
       {
-        title: "Entering Amount",
+        title: "ENTERING AMOUNT",
         content:
-          "Type the amount you want to swap in the 'From' field. The expected output amount in the 'To' field will update automatically based on current market prices. Click 'MAX' to use your entire available balance.",
+          "TYPE THE AMOUNT YOU WANT TO SWAP IN THE 'FROM' FIELD. THE EXPECTED OUTPUT AMOUNT IN THE 'TO' FIELD WILL UPDATE AUTOMATICALLY BASED ON CURRENT MARKET PRICES. CLICK 'MAX' TO USE YOUR ENTIRE AVAILABLE BALANCE.",
       },
       {
-        title: "Reviewing the Exchange Rate",
+        title: "REVIEWING THE EXCHANGE RATE",
         content:
-          "Before confirming, review the exchange rate and estimated output. The rate includes slippage tolerance (typically 0.5%-2%). Higher slippage = lower minimum output but higher success rate.",
+          "BEFORE CONFIRMING, REVIEW THE EXCHANGE RATE AND ESTIMATED OUTPUT. THE RATE INCLUDES SLIPPAGE TOLERANCE (TYPICALLY 0.5%-2%). HIGHER SLIPPAGE = LOWER MINIMUM OUTPUT BUT HIGHER SUCCESS RATE.",
       },
       {
-        title: "Confirming the Swap",
+        title: "CONFIRMING THE SWAP",
         content:
-          "Click 'Swap' to execute the transaction. You'll need to sign the transaction with your wallet. Once signed, the swap is submitted to the blockchain and will complete within seconds to a few minutes.",
+          "CLICK 'SWAP' TO EXECUTE THE TRANSACTION. YOU'LL NEED TO SIGN THE TRANSACTION WITH YOUR WALLET. ONCE SIGNED, THE SWAP IS SUBMITTED TO THE BLOCKCHAIN AND WILL COMPLETE WITHIN SECONDS TO A FEW MINUTES.",
       },
       {
-        title: "Swap Tips",
+        title: "SWAP TIPS",
         content:
-          "• Check the network fee before swapping\n• Pair the tokens you want to swap are on the same blockchain (Solana)\n• Large swaps may have higher slippage\n• Slippage is the difference between expected and minimum output price\n• Failed swaps don't consume SOL for fees (native failure)\n• Popular pairs have better liquidity and lower slippage",
+          "• CHECK THE NETWORK FEE BEFORE SWAPPING\n• PAIR THE TOKENS YOU WANT TO SWAP ARE ON THE SAME BLOCKCHAIN (SOLANA)\n• LARGE SWAPS MAY HAVE HIGHER SLIPPAGE\n• SLIPPAGE IS THE DIFFERENCE BETWEEN EXPECTED AND MINIMUM OUTPUT PRICE\n• FAILED SWAPS DON'T CONSUME SOL FOR FEES (NATIVE FAILURE)\n• POPULAR PAIRS HAVE BETTER LIQUIDITY AND LOWER SLIPPAGE",
       },
     ],
   },

@@ -129,9 +129,13 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
     setIsStaking(true);
     try {
       await createStake(token.mint, Number(stakeAmount), selectedPeriod);
+
+      // Refresh stakes to ensure the new stake appears
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       toast({
         title: "STAKING STARTED",
-        description: `SUCCESSFULLY STAKED ${formatTokenAmount(Number(stakeAmount))} ${token.symbol}`,
+        description: `SUCCESSFULLY STAKED ${formatTokenAmount(Number(stakeAmount))} ${token.symbol}. YOUR TOKENS ARE NOW LOCKED IN THE STAKING POOL.`,
       });
       setStakeAmount("");
     } catch (err) {

@@ -139,6 +139,7 @@ export const handleCreateStake: RequestHandler = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("Error in handleCreateStake:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return res.status(500).json({ error: message });
   }

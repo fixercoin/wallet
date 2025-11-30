@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Copy, Check, ExternalLink, CheckCircle, Loader2 } from "lucide-react";
+import { Copy, Check, ExternalLink, CheckCircle, Loader2, Clock } from "lucide-react";
 import { TokenInfo } from "@/lib/wallet";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useStaking } from "@/hooks/use-staking";
+import { Progress } from "@/components/ui/progress";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface TokenDetailsPanelProps {
   token: TokenInfo;

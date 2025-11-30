@@ -44,6 +44,8 @@ interface UseStakingReturn {
   }>;
   refreshStakes: () => Promise<void>;
   getRewardStatus: () => Promise<any>;
+  getAvailableBalance: (tokenMint: string) => number;
+  getTotalStaked: (tokenMint: string) => number;
 }
 
 function calculateReward(amount: number, periodDays: number): number {

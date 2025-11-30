@@ -370,9 +370,9 @@ const documentationSections: DocSection[] = [
   },
   {
     id: "security",
-    title: "Security & Safety Guidelines",
+    title: "SECURITY & SAFETY GUIDELINES",
     content:
-      "Comprehensive security information to keep your wallet and funds safe. Understand best practices for cryptocurrency security.",
+      "COMPREHENSIVE SECURITY INFORMATION TO KEEP YOUR WALLET AND FUNDS SAFE. UNDERSTAND BEST PRACTICES FOR CRYPTOCURRENCY SECURITY.",
     subsections: [
       {
         title: "WALLET SECURITY FUNDAMENTALS",

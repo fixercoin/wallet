@@ -428,69 +428,69 @@ const documentationSections: DocSection[] = [
   },
   {
     id: "disclaimers",
-    title: "Terms, Disclaimers & Legal",
+    title: "TERMS, DISCLAIMERS & LEGAL",
     content:
-      "Important legal information, disclaimers, and terms of use. Please read carefully before using Fixorium.",
+      "IMPORTANT LEGAL INFORMATION, DISCLAIMERS, AND TERMS OF USE. PLEASE READ CAREFULLY BEFORE USING FIXORIUM.",
     subsections: [
       {
-        title: "General Disclaimer",
+        title: "GENERAL DISCLAIMER",
         content:
-          "Fixorium is provided 'as is' without warranties of any kind. The wallet is a non-custodial service - you maintain full control and responsibility for your assets. Fixorium is not responsible for:\n• Lost, stolen, or compromised funds\n• User errors in transactions\n• Market fluctuations or price changes\n• Third-party service failures\n• Smart contract vulnerabilities\n• Network issues or blockchain problems",
+          "FIXORIUM IS PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND. THE WALLET IS A NON-CUSTODIAL SERVICE - YOU MAINTAIN FULL CONTROL AND RESPONSIBILITY FOR YOUR ASSETS. FIXORIUM IS NOT RESPONSIBLE FOR:\n• LOST, STOLEN, OR COMPROMISED FUNDS\n• USER ERRORS IN TRANSACTIONS\n• MARKET FLUCTUATIONS OR PRICE CHANGES\n• THIRD-PARTY SERVICE FAILURES\n• SMART CONTRACT VULNERABILITIES\n• NETWORK ISSUES OR BLOCKCHAIN PROBLEMS",
       },
       {
-        title: "Risk Acknowledgment",
+        title: "RISK ACKNOWLEDGMENT",
         content:
-          "Using Fixorium and cryptocurrency involves significant risks:\n• Cryptocurrency prices are highly volatile\n• You can lose your entire investment\n• Blockchain transactions are irreversible\n• Smart contracts may contain bugs\n• Market liquidity can be unpredictable\n• Regulatory changes may affect usage\n• Hacking and theft risks exist\n• Technology is still evolving\n• No guarantees of returns or income",
+          "USING FIXORIUM AND CRYPTOCURRENCY INVOLVES SIGNIFICANT RISKS:\n• CRYPTOCURRENCY PRICES ARE HIGHLY VOLATILE\n• YOU CAN LOSE YOUR ENTIRE INVESTMENT\n• BLOCKCHAIN TRANSACTIONS ARE IRREVERSIBLE\n• SMART CONTRACTS MAY CONTAIN BUGS\n• MARKET LIQUIDITY CAN BE UNPREDICTABLE\n• REGULATORY CHANGES MAY AFFECT USAGE\n• HACKING AND THEFT RISKS EXIST\n• TECHNOLOGY IS STILL EVOLVING\n• NO GUARANTEES OF RETURNS OR INCOME",
       },
       {
-        title: "Non-Custodial Nature",
+        title: "NON-CUSTODIAL NATURE",
         content:
-          "Important points about wallet control:\n• Fixorium does NOT hold your private keys\n• Fixorium does NOT have access to your funds\n• You are solely responsible for your assets\n• Lost recovery phrases cannot be recovered\n• Fixorium cannot recover lost or stolen funds\n• Support cannot reset passwords or recovery phrases\n• You must manage your own security\n• Backup your recovery phrase immediately",
+          "IMPORTANT POINTS ABOUT WALLET CONTROL:\n• FIXORIUM DOES NOT HOLD YOUR PRIVATE KEYS\n• FIXORIUM DOES NOT HAVE ACCESS TO YOUR FUNDS\n• YOU ARE SOLELY RESPONSIBLE FOR YOUR ASSETS\n• LOST RECOVERY PHRASES CANNOT BE RECOVERED\n• FIXORIUM CANNOT RECOVER LOST OR STOLEN FUNDS\n• SUPPORT CANNOT RESET PASSWORDS OR RECOVERY PHRASES\n• YOU MUST MANAGE YOUR OWN SECURITY\n• BACKUP YOUR RECOVERY PHRASE IMMEDIATELY",
       },
       {
-        title: "No Financial Advice",
+        title: "NO FINANCIAL ADVICE",
         content:
-          "Disclaimer regarding financial advice:\n• Fixorium provides no financial advice\n• Nothing in this wallet is investment advice\n• You must do your own research\n• Consult professionals before investing\n• Past performance doesn't guarantee future results\n• Information is provided for educational purposes only\n• Make your own investment decisions\n• No guarantee of returns or profits",
+          "DISCLAIMER REGARDING FINANCIAL ADVICE:\n• FIXORIUM PROVIDES NO FINANCIAL ADVICE\n• NOTHING IN THIS WALLET IS INVESTMENT ADVICE\n• YOU MUST DO YOUR OWN RESEARCH\n• CONSULT PROFESSIONALS BEFORE INVESTING\n• PAST PERFORMANCE DOESN'T GUARANTEE FUTURE RESULTS\n• INFORMATION IS PROVIDED FOR EDUCATIONAL PURPOSES ONLY\n• MAKE YOUR OWN INVESTMENT DECISIONS\n• NO GUARANTEE OF RETURNS OR PROFITS",
       },
       {
-        title: "Regulatory Compliance",
+        title: "REGULATORY COMPLIANCE",
         content:
-          "Regulatory information:\n• Cryptocurrency regulations vary by jurisdiction\n• You are responsible for tax reporting\n• Consult local authorities about regulations\n• Some services may be restricted in your country\n• Fixorium complies with applicable laws\n• Use at your own legal risk\n• Report cryptocurrency taxes correctly\n• Verify local crypto regulations",
+          "REGULATORY INFORMATION:\n• CRYPTOCURRENCY REGULATIONS VARY BY JURISDICTION\n• YOU ARE RESPONSIBLE FOR TAX REPORTING\n• CONSULT LOCAL AUTHORITIES ABOUT REGULATIONS\n• SOME SERVICES MAY BE RESTRICTED IN YOUR COUNTRY\n• FIXORIUM COMPLIES WITH APPLICABLE LAWS\n• USE AT YOUR OWN LEGAL RISK\n• REPORT CRYPTOCURRENCY TAXES CORRECTLY\n• VERIFY LOCAL CRYPTO REGULATIONS",
       },
       {
-        title: "Service Availability",
+        title: "SERVICE AVAILABILITY",
         content:
-          "Service terms and limitations:\n• Fixorium may experience downtime\n• Services may be unavailable occasionally\n• Features may change or be discontinued\n• No guarantees of 24/7 uptime\n• We maintain the service continuously\n• Critical bugs may require temporary closure\n• Updates may cause brief unavailability\n• Blockchain issues can affect service",
+          "SERVICE TERMS AND LIMITATIONS:\n• FIXORIUM MAY EXPERIENCE DOWNTIME\n• SERVICES MAY BE UNAVAILABLE OCCASIONALLY\n• FEATURES MAY CHANGE OR BE DISCONTINUED\n• NO GUARANTEES OF 24/7 UPTIME\n• WE MAINTAIN THE SERVICE CONTINUOUSLY\n• CRITICAL BUGS MAY REQUIRE TEMPORARY CLOSURE\n• UPDATES MAY CAUSE BRIEF UNAVAILABILITY\n• BLOCKCHAIN ISSUES CAN AFFECT SERVICE",
       },
       {
-        title: "Intellectual Property",
+        title: "INTELLECTUAL PROPERTY",
         content:
-          "Intellectual property and usage:\n• Fixorium interface design is proprietary\n• Smart contracts may be audited code\n• You may use the service for personal use only\n• Unauthorized copying is prohibited\n• Fixorium trademarks are protected\n• User content remains your property\n• We reserve the right to modify the service\n• Updates may affect functionality",
+          "INTELLECTUAL PROPERTY AND USAGE:\n• FIXORIUM INTERFACE DESIGN IS PROPRIETARY\n• SMART CONTRACTS MAY BE AUDITED CODE\n• YOU MAY USE THE SERVICE FOR PERSONAL USE ONLY\n• UNAUTHORIZED COPYING IS PROHIBITED\n• FIXORIUM TRADEMARKS ARE PROTECTED\n• USER CONTENT REMAINS YOUR PROPERTY\n• WE RESERVE THE RIGHT TO MODIFY THE SERVICE\n• UPDATES MAY AFFECT FUNCTIONALITY",
       },
       {
-        title: "Limitation of Liability",
+        title: "LIMITATION OF LIABILITY",
         content:
-          "Liability limitations:\n• Fixorium is not liable for:\n  - Lost, stolen, or compromised funds\n  - User errors or mistakes\n  - Third-party actions or hacks\n  - Market losses or poor investments\n  - Service interruptions\n  - Data loss or corruption\n  - Indirect or consequential damages\n• Your sole remedy is discontinuing use\n• No liability for third-party services\n• Blockchain is immutable and permanent",
+          "LIABILITY LIMITATIONS:\n• FIXORIUM IS NOT LIABLE FOR:\n  - LOST, STOLEN, OR COMPROMISED FUNDS\n  - USER ERRORS OR MISTAKES\n  - THIRD-PARTY ACTIONS OR HACKS\n  - MARKET LOSSES OR POOR INVESTMENTS\n  - SERVICE INTERRUPTIONS\n  - DATA LOSS OR CORRUPTION\n  - INDIRECT OR CONSEQUENTIAL DAMAGES\n• YOUR SOLE REMEDY IS DISCONTINUING USE\n• NO LIABILITY FOR THIRD-PARTY SERVICES\n• BLOCKCHAIN IS IMMUTABLE AND PERMANENT",
       },
       {
-        title: "Third-Party Services",
+        title: "THIRD-PARTY SERVICES",
         content:
-          "Important about external integrations:\n• Fixorium may integrate with third parties\n• We're not responsible for third-party services\n• Third parties have their own terms\n• Third-party failures are their responsibility\n• Verify third-party security and legitimacy\n• Use at your own risk\n• Disconnect from unused services\n• Review third-party privacy policies",
+          "IMPORTANT ABOUT EXTERNAL INTEGRATIONS:\n• FIXORIUM MAY INTEGRATE WITH THIRD PARTIES\n• WE'RE NOT RESPONSIBLE FOR THIRD-PARTY SERVICES\n• THIRD PARTIES HAVE THEIR OWN TERMS\n• THIRD-PARTY FAILURES ARE THEIR RESPONSIBILITY\n• VERIFY THIRD-PARTY SECURITY AND LEGITIMACY\n• USE AT YOUR OWN RISK\n• DISCONNECT FROM UNUSED SERVICES\n• REVIEW THIRD-PARTY PRIVACY POLICIES",
       },
       {
-        title: "Age Restriction",
+        title: "AGE RESTRICTION",
         content:
-          "Age and capacity requirements:\n• Must be 18+ to use Fixorium\n• Must have legal capacity to use services\n• Parental consent if required by law\n• Cannot use if prohibited in your jurisdiction\n• We assume you're of legal age\n• Misrepresenting age is prohibited",
+          "AGE AND CAPACITY REQUIREMENTS:\n• MUST BE 18+ TO USE FIXORIUM\n• MUST HAVE LEGAL CAPACITY TO USE SERVICES\n• PARENTAL CONSENT IF REQUIRED BY LAW\n• CANNOT USE IF PROHIBITED IN YOUR JURISDICTION\n• WE ASSUME YOU'RE OF LEGAL AGE\n• MISREPRESENTING AGE IS PROHIBITED",
       },
       {
-        title: "Modifications to Terms",
+        title: "MODIFICATIONS TO TERMS",
         content:
-          "Changes to this agreement:\n• Fixorium may modify terms at any time\n• Continued use means acceptance of changes\n• Check terms regularly for updates\n• Major changes will be announced\n• You can stop using if you disagree\n• Effective date will be posted\n• Your rights won't be reduced without notice",
+          "CHANGES TO THIS AGREEMENT:\n• FIXORIUM MAY MODIFY TERMS AT ANY TIME\n• CONTINUED USE MEANS ACCEPTANCE OF CHANGES\n• CHECK TERMS REGULARLY FOR UPDATES\n• MAJOR CHANGES WILL BE ANNOUNCED\n• YOU CAN STOP USING IF YOU DISAGREE\n• EFFECTIVE DATE WILL BE POSTED\n• YOUR RIGHTS WON'T BE REDUCED WITHOUT NOTICE",
       },
       {
-        title: "Dispute Resolution",
+        title: "DISPUTE RESOLUTION",
         content:
-          "Handling disputes and complaints:\n• Contact support for issues: 24/7 helpline\n• Describe your issue clearly\n• Provide relevant transaction details\n• Support will investigate\n• Blockchain transactions are final\n• Cannot reverse confirmed transactions\n• For serious issues, contact authorities\n• Escalate through proper channels",
+          "HANDLING DISPUTES AND COMPLAINTS:\n• CONTACT SUPPORT FOR ISSUES: 24/7 HELPLINE\n• DESCRIBE YOUR ISSUE CLEARLY\n• PROVIDE RELEVANT TRANSACTION DETAILS\n• SUPPORT WILL INVESTIGATE\n• BLOCKCHAIN TRANSACTIONS ARE FINAL\n• CANNOT REVERSE CONFIRMED TRANSACTIONS\n• FOR SERIOUS ISSUES, CONTACT AUTHORITIES\n• ESCALATE THROUGH PROPER CHANNELS",
       },
     ],
   },

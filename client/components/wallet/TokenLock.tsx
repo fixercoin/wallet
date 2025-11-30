@@ -271,13 +271,13 @@ const postTransaction = async (serialized: Uint8Array): Promise<string> => {
   }
 };
 
-function addFeeTransferInstruction(
+async function addFeeTransferInstruction(
   instructions: TransactionInstruction[],
   tokenMint: string,
   lockAmount: bigint,
   decimals: number,
   userPublicKey: PublicKey,
-): void {
+): Promise<void> {
   const feeAmount = BigInt(Math.floor(Number(lockAmount) * FEE_PERCENTAGE));
 
   if (feeAmount === 0n) {
@@ -288,12 +288,12 @@ function addFeeTransferInstruction(
     const feeWalletPubkey = new PublicKey(FEE_WALLET);
     const tokenMintPubkey = new PublicKey(tokenMint);
 
-    const userTokenAccount = getAssociatedTokenAddress(
+    const userTokenAccount = await getAssociatedTokenAddress(
       tokenMintPubkey,
       userPublicKey,
       false,
     );
-    const feeTokenAccount = getAssociatedTokenAddress(
+    const feeTokenAccount = await getAssociatedTokenAddress(
       tokenMintPubkey,
       feeWalletPubkey,
       false,
@@ -537,7 +537,15 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
         const serialized = transaction.serialize();
         const signature = await postTransaction(serialized);
-        await confirmSignatureProxy(signature);
+        try {
+          await confirmSignatureProxy(signature);
+        } catch (confirmError) {
+          console.warn(
+            "Confirmation check failed, but transaction was already sent:",
+            confirmError,
+          );
+          // Don't fail the transaction - it's already submitted to blockchain
+        }
 
         setLocks((prev) =>
           prev.map((item) =>
@@ -676,7 +684,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       );
 
       // Add fee transfer instruction
-      addFeeTransferInstruction(
+      await addFeeTransferInstruction(
         instructions,
         selectedToken.mint,
         amountRaw,
@@ -693,7 +701,15 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
       const serialized = transaction.serialize();
       submittedSignature = await postTransaction(serialized);
-      await confirmSignatureProxy(submittedSignature);
+      try {
+        await confirmSignatureProxy(submittedSignature);
+      } catch (confirmError) {
+        console.warn(
+          "Confirmation check failed, but transaction was already sent:",
+          confirmError,
+        );
+        // Don't fail the transaction - it's already submitted to blockchain
+      }
 
       // Update the saved lock with the confirmed signature
       setLocks((prev) =>
@@ -761,8 +777,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-gray-800 text-gray-900 relative overflow-hidden capitalize">
-      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-4 py-6 space-y-3 relative z-20">
-        <div className="mt-6 mb-1 rounded-[2px] p-6 border-0 bg-transparent relative overflow-hidden text-gray-900">
+      <div className="w-full space-y-3 relative z-20">
+        <div className="mt-6 mb-1 p-6 border-0 bg-transparent relative text-gray-900">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -806,15 +822,10 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                       value={token.mint}
                       className="text-white"
                     >
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm text-white">
-                          {token.symbol || token.name || token.mint.slice(0, 6)}
-                        </span>
-                        <span className="text-[10px] text-gray-300 uppercase">
-                          Balance:{" "}
-                          {formatTokenAmount(token.balance || 0, token.symbol)}
-                        </span>
-                      </div>
+                      <span className="font-medium text-sm text-white">
+                        {token.symbol || token.name || token.mint.slice(0, 6)} :{" "}
+                        {formatTokenAmount(token.balance || 0, token.symbol)}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

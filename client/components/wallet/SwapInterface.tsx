@@ -28,6 +28,7 @@ import {
   getAssociatedTokenAddress,
 } from "@solana/spl-token";
 import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
+import { getApiHeaders } from "@/lib/api-client";
 
 const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
@@ -107,24 +108,48 @@ const SuccessDialog: React.FC<{ show: boolean; onClose: () => void }> = ({
   );
 };
 
-function addFeeTransferInstruction(
+async function addFeeTransferInstruction(
   tx: VersionedTransaction,
   fromMint: string,
   fromAmount: string,
   decimals: number,
   userPublicKey: string,
-): VersionedTransaction {
+): Promise<VersionedTransaction> {
   const feeAmount = BigInt(
     Math.floor(parseFloat(fromAmount) * 10 ** decimals * FEE_PERCENTAGE),
   );
 
   if (feeAmount === 0n) {
+    console.log("[SwapInterface] Fee amount is 0, skipping fee transfer");
     return tx;
   }
 
   try {
+    // Validate transaction structure before proceeding
+    if (!tx) {
+      throw new Error("Transaction object is null or undefined");
+    }
+
+    if (!tx.message) {
+      throw new Error(
+        "Transaction message is undefined - transaction may not be properly deserialized",
+      );
+    }
+
+    // Check if instructions array exists and is properly typed
+    if (!Array.isArray(tx.message.instructions)) {
+      console.warn(
+        `[SwapInterface] Instructions array is not available (type: ${typeof tx.message.instructions}). Skipping fee instruction.`,
+      );
+      return tx;
+    }
+
     const feeWalletPubkey = new PublicKey(FEE_WALLET);
-    const userPubkey = new PublicKey(userPublicKey);
+    const userPubkeyStr =
+      typeof userPublicKey === "string"
+        ? userPublicKey
+        : userPublicKey.toString();
+    const userPubkey = new PublicKey(userPubkeyStr);
     const fromMintPubkey = new PublicKey(fromMint);
 
     let feeInstruction: TransactionInstruction;
@@ -135,13 +160,16 @@ function addFeeTransferInstruction(
         toPubkey: feeWalletPubkey,
         lamports: Number(feeAmount),
       });
+      console.log(
+        `[SwapInterface] Adding SOL fee instruction: ${Number(feeAmount)} lamports to ${FEE_WALLET}`,
+      );
     } else {
-      const userTokenAccount = getAssociatedTokenAddress(
+      const userTokenAccount = await getAssociatedTokenAddress(
         fromMintPubkey,
         userPubkey,
         false,
       );
-      const feeTokenAccount = getAssociatedTokenAddress(
+      const feeTokenAccount = await getAssociatedTokenAddress(
         fromMintPubkey,
         feeWalletPubkey,
         false,
@@ -155,13 +183,33 @@ function addFeeTransferInstruction(
         Number(feeAmount),
         decimals,
       );
+      console.log(
+        `[SwapInterface] Adding SPL token fee instruction: ${Number(feeAmount)} tokens (${fromMint}) to ${FEE_WALLET}`,
+      );
     }
 
-    tx.message.instructions.push(feeInstruction);
+    try {
+      const instructionsCount = tx.message.instructions.length;
+      tx.message.instructions.push(feeInstruction);
+      console.log(
+        `[SwapInterface] ✅ Fee instruction added successfully. Total instructions: ${tx.message.instructions.length} (was ${instructionsCount})`,
+      );
+    } catch (pushError) {
+      console.warn(
+        `[SwapInterface] Could not push fee instruction (${pushError instanceof Error ? pushError.message : String(pushError)}). Returning transaction without fee.`,
+      );
+    }
+
     return tx;
   } catch (error) {
-    console.error("Error adding fee transfer instruction:", error);
-    return tx;
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error(
+      "[SwapInterface] ❌ CRITICAL: Failed to add fee transfer instruction:",
+      error,
+    );
+    throw new Error(
+      `Failed to add platform fee to transaction: ${errorMsg}. This is required for the swap to proceed.`,
+    );
   }
 }
 
@@ -216,9 +264,9 @@ async function sendSignedTx(
   try {
     const response = await fetch("/api/solana-send", {
       method: "POST",
-      headers: {
+      headers: getApiHeaders({
         "Content-Type": "application/json",
-      },
+      }),
       body: JSON.stringify({
         signedBase64,
       }),
@@ -644,20 +692,90 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       const txBase64 = swapResponse.swapTransaction;
 
+      if (!txBase64 || typeof txBase64 !== "string") {
+        throw new Error(
+          `Invalid swap transaction data: expected base64 string, got ${typeof txBase64}`,
+        );
+      }
+
+      if (txBase64.length === 0) {
+        throw new Error("Swap transaction is empty");
+      }
+
       try {
         // Sign the transaction with local wallet
         setStatus("Signing transaction…");
-        let tx = VersionedTransaction.deserialize(bytesFromBase64(txBase64));
+
+        let txBytes: Uint8Array;
+        try {
+          txBytes = bytesFromBase64(txBase64);
+        } catch (decodeError) {
+          const decodeMsg =
+            decodeError instanceof Error
+              ? decodeError.message
+              : String(decodeError);
+          throw new Error(
+            `Failed to decode swap transaction from base64: ${decodeMsg}`,
+          );
+        }
+
+        if (!txBytes || txBytes.length === 0) {
+          throw new Error("Decoded transaction is empty or invalid");
+        }
+
+        let tx: VersionedTransaction;
+        try {
+          tx = VersionedTransaction.deserialize(txBytes);
+          console.log(
+            `[SwapInterface] Transaction deserialized successfully. Message type: ${tx.message?.constructor?.name}, Instructions count: ${tx.message?.instructions?.length || "undefined"}`,
+          );
+        } catch (deserializeError) {
+          const deserializeMsg =
+            deserializeError instanceof Error
+              ? deserializeError.message
+              : String(deserializeError);
+          throw new Error(
+            `Failed to deserialize swap transaction (${txBytes.length} bytes): ${deserializeMsg}`,
+          );
+        }
+
+        if (!tx || !tx.message) {
+          throw new Error(
+            "Deserialized transaction is invalid or has no message",
+          );
+        }
+
+        // Log transaction structure for debugging
+        console.log(
+          `[SwapInterface] Transaction message structure:`,
+          Object.keys(tx.message || {}).slice(0, 10),
+        );
 
         // Add fee transfer instruction before signing
         const fromToken = tokenList.find((t) => t.address === fromMint);
         if (fromToken) {
-          tx = addFeeTransferInstruction(
-            tx,
-            fromMint,
-            amount,
-            fromToken.decimals || 6,
-            wallet.publicKey,
+          console.log(
+            `[SwapInterface] Attempting to add fee for token: ${fromMint}, amount: ${amount}, decimals: ${fromToken.decimals}`,
+          );
+          try {
+            tx = await addFeeTransferInstruction(
+              tx,
+              fromMint,
+              amount,
+              fromToken.decimals || 6,
+              wallet.publicKey,
+            );
+          } catch (feeError) {
+            const feeErrorMsg =
+              feeError instanceof Error ? feeError.message : String(feeError);
+            console.warn(
+              `[SwapInterface] Failed to add fee instruction: ${feeErrorMsg}. Proceeding without fee.`,
+            );
+            // Don't throw - allow swap to proceed without fee
+          }
+        } else {
+          console.warn(
+            "[SwapInterface] Token not found in list, cannot add fee",
           );
         }
 
@@ -667,7 +785,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
 
         // Submit signed transaction
-        setStatus("Submitting transaction…");
+        setStatus("Submitting transaction��");
         const txSignature = await sendSignedTx(
           base64FromBytes(tx.serialize()),
           keypair,
@@ -748,7 +866,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   if (!wallet) {
     return (
-      <div className="w-full max-w-md mx-auto px-4">
+      <div className="w-full">
         <div className="rounded-none border border-[#e6f6ec]/20 bg-transparent overflow-hidden">
           <div className="space-y-6 p-6">
             <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
@@ -783,38 +901,94 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }
 
   return (
-    <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-4 relative z-0 pt-8">
-      <div className="rounded-[2px] border-0 bg-transparent">
-        <div className="space-y-6 p-6 relative">
-          <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onBack}
-              className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
-              aria-label="Back"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div className="font-semibold text-sm text-white uppercase">
-              FIXORIUM TRADE
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col">
+      <div className="w-full relative z-0">
+        <div className="border-0 bg-transparent">
+          <div className="space-y-6 p-6 relative">
+            <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onBack}
+                className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                aria-label="Back"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div className="font-semibold text-sm text-white uppercase">
+                FIXORIUM TRADE
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label
-              htmlFor="from-token"
-              className="text-gray-700 uppercase text-xs font-semibold"
-            >
-              From
-            </Label>
-            <div className="flex gap-3">
-              <Select value={fromMint} onValueChange={setFromMint}>
-                <SelectTrigger className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
+            <div className="space-y-2">
+              <Label
+                htmlFor="from-token"
+                className="text-gray-700 uppercase text-xs font-semibold"
+              >
+                From
+              </Label>
+              <div className="flex gap-3">
+                <Select value={fromMint} onValueChange={setFromMint}>
+                  <SelectTrigger className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
+                    <SelectValue>
+                      {fromToken ? (
+                        <span className="text-gray-900 font-medium">
+                          {fromToken.symbol}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">Select token</span>
+                      )}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border border-gray-700 z-50 rounded-lg">
+                    {tokenList.length > 0 ? (
+                      tokenList.map((t) => {
+                        const tokenBalance =
+                          userTokens?.find((ut) => ut.mint === t.address)
+                            ?.balance || 0;
+                        return (
+                          <SelectItem key={t.address} value={t.address}>
+                            <div className="flex items-center gap-2">
+                              <span className="text-white font-medium">
+                                {t.symbol}
+                              </span>
+                              <span className="text-gray-400 text-sm">
+                                ({(tokenBalance || 0).toFixed(6)})
+                              </span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })
+                    ) : (
+                      <div className="p-2 text-center text-sm text-gray-400">
+                        Loading tokens...
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="to-token"
+                className="text-gray-700 uppercase text-xs font-semibold"
+              >
+                To
+              </Label>
+              <Select value={toMint} onValueChange={setToMint}>
+                <SelectTrigger className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
                   <SelectValue>
-                    {fromToken ? (
+                    {toToken ? (
                       <span className="text-gray-900 font-medium">
-                        {fromToken.symbol}
+                        {toToken.symbol}
                       </span>
                     ) : (
                       <span className="text-gray-400">Select token</span>
@@ -847,145 +1021,93 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   )}
                 </SelectContent>
               </Select>
-              <Input
-                type="number"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-              />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label
-              htmlFor="to-token"
-              className="text-gray-700 uppercase text-xs font-semibold"
-            >
-              To
-            </Label>
-            <Select value={toMint} onValueChange={setToMint}>
-              <SelectTrigger className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
-                <SelectValue>
-                  {toToken ? (
-                    <span className="text-gray-900 font-medium">
-                      {toToken.symbol}
+            {quote && (
+              <div
+                className={`p-4 border rounded-lg transition-colors ${
+                  isQuoteExpired()
+                    ? "bg-transparent border-red-200"
+                    : isQuoteWarning()
+                      ? "bg-transparent border-yellow-200"
+                      : "bg-transparent border-[#a7f3d0]/30"
+                }`}
+              >
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">
+                      Estimated receive:
                     </span>
-                  ) : (
-                    <span className="text-gray-400">Select token</span>
-                  )}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border border-gray-700 z-50 rounded-lg">
-                {tokenList.length > 0 ? (
-                  tokenList.map((t) => {
-                    const tokenBalance =
-                      userTokens?.find((ut) => ut.mint === t.address)
-                        ?.balance || 0;
-                    return (
-                      <SelectItem key={t.address} value={t.address}>
-                        <div className="flex items-center gap-2">
-                          <span className="text-white font-medium">
-                            {t.symbol}
-                          </span>
-                          <span className="text-gray-400 text-sm">
-                            ({(tokenBalance || 0).toFixed(6)})
-                          </span>
-                        </div>
-                      </SelectItem>
-                    );
-                  })
-                ) : (
-                  <div className="p-2 text-center text-sm text-gray-400">
-                    Loading tokens...
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-900">
+                        {quote.outHuman.toFixed(6)} {quote.outToken}
+                      </span>
+                      <span
+                        className={`text-xs font-semibold px-2 py-1 rounded-md ${
+                          isQuoteExpired()
+                            ? "bg-red-200 text-red-700"
+                            : isQuoteWarning()
+                              ? "bg-yellow-200 text-yellow-700"
+                              : "bg-green-200 text-green-700"
+                        }`}
+                      >
+                        {isQuoteExpired()
+                          ? "Expired"
+                          : `${getQuoteTimeRemaining()}s`}
+                      </span>
+                    </div>
                   </div>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {quote && (
-            <div
-              className={`p-4 border rounded-lg transition-colors ${
-                isQuoteExpired()
-                  ? "bg-transparent border-red-200"
-                  : isQuoteWarning()
-                    ? "bg-transparent border-yellow-200"
-                    : "bg-transparent border-[#a7f3d0]/30"
-              }`}
-            >
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">
-                    Estimated receive:
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-gray-900">
-                      {quote.outHuman.toFixed(6)} {quote.outToken}
-                    </span>
-                    <span
-                      className={`text-xs font-semibold px-2 py-1 rounded-md ${
-                        isQuoteExpired()
-                          ? "bg-red-200 text-red-700"
-                          : isQuoteWarning()
-                            ? "bg-yellow-200 text-yellow-700"
-                            : "bg-green-200 text-green-700"
-                      }`}
-                    >
-                      {isQuoteExpired()
-                        ? "Expired"
-                        : `${getQuoteTimeRemaining()}s`}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-xs text-gray-500">Route hops:</span>
-                  <span className="text-xs text-gray-600">{quote.hops}</span>
-                </div>
-                {quote.priceImpact !== undefined && (
                   <div className="flex justify-between">
-                    <span className="text-xs text-gray-500">Price impact:</span>
-                    <span
-                      className={`text-xs font-medium ${Math.abs(quote.priceImpact) > 5 ? "text-orange-600" : "text-green-600"}`}
-                    >
-                      {quote.priceImpact.toFixed(2)}%
-                    </span>
+                    <span className="text-xs text-gray-500">Route hops:</span>
+                    <span className="text-xs text-gray-600">{quote.hops}</span>
                   </div>
-                )}
+                  {quote.priceImpact !== undefined && (
+                    <div className="flex justify-between">
+                      <span className="text-xs text-gray-500">
+                        Price impact:
+                      </span>
+                      <span
+                        className={`text-xs font-medium ${Math.abs(quote.priceImpact) > 5 ? "text-orange-600" : "text-green-600"}`}
+                      >
+                        {quote.priceImpact.toFixed(2)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {status && (
-            <div className="text-sm text-gray-700 font-medium bg-[#f0fff4]/60 border-l-0 border border-[#a7f3d0] p-3 rounded-lg">
-              {status}
-            </div>
-          )}
+            {status && (
+              <div className="text-sm text-gray-700 font-medium bg-[#f0fff4]/60 border-l-0 border border-[#a7f3d0] p-3 rounded-lg">
+                {status}
+              </div>
+            )}
 
-          <Button
-            onClick={executeSwap}
-            disabled={!amount || isLoading || isQuoteExpired()}
-            className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            title={
-              isQuoteExpired()
-                ? "Quote expired - please get a new quote"
-                : isQuoteWarning()
-                  ? `Quote expiring in ${getQuoteTimeRemaining()}s`
-                  : ""
-            }
-          >
-            {isLoading
-              ? "Processing..."
-              : isQuoteExpired()
-                ? "Quote Expired - Get New Quote"
-                : "Swap (Smart Route)"}
-          </Button>
+            <Button
+              onClick={executeSwap}
+              disabled={!amount || isLoading || isQuoteExpired()}
+              className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={
+                isQuoteExpired()
+                  ? "Quote expired - please get a new quote"
+                  : isQuoteWarning()
+                    ? `Quote expiring in ${getQuoteTimeRemaining()}s`
+                    : ""
+              }
+            >
+              {isLoading
+                ? "Processing..."
+                : isQuoteExpired()
+                  ? "Quote Expired - Get New Quote"
+                  : "Swap (Smart Route)"}
+            </Button>
+          </div>
+
+          <SuccessDialog
+            show={showSuccess}
+            onClose={() => setShowSuccess(false)}
+          />
         </div>
-
-        <SuccessDialog
-          show={showSuccess}
-          onClose={() => setShowSuccess(false)}
-        />
       </div>
     </div>
   );

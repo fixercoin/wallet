@@ -208,7 +208,13 @@ export function useStaking(): UseStakingReturn {
         throw new Error(msg);
       }
     },
-    [wallet?.publicKey, wallet?.secretKey, tokens, updateTokenBalance, refreshTokens],
+    [
+      wallet?.publicKey,
+      wallet?.secretKey,
+      tokens,
+      updateTokenBalance,
+      refreshTokens,
+    ],
   );
 
   // Withdraw from stake via Cloudflare API
@@ -276,7 +282,8 @@ export function useStaking(): UseStakingReturn {
         // Update token balance in wallet context - add back staked amount + reward
         const token = tokens.find((t) => t.mint === stake.tokenMint);
         if (token) {
-          const totalAmount = result.data.totalAmount || stake.amount + stake.rewardAmount;
+          const totalAmount =
+            result.data.totalAmount || stake.amount + stake.rewardAmount;
           const newBalance = token.balance + totalAmount;
           updateTokenBalance(stake.tokenMint, newBalance);
         }
@@ -332,7 +339,9 @@ export function useStaking(): UseStakingReturn {
   const getTotalStaked = useCallback(
     (tokenMint: string) => {
       return stakes
-        .filter((stake) => stake.tokenMint === tokenMint && stake.status === "active")
+        .filter(
+          (stake) => stake.tokenMint === tokenMint && stake.status === "active",
+        )
         .reduce((sum, stake) => sum + stake.amount, 0);
     },
     [stakes],

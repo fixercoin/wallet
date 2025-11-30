@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Copy, Check, ExternalLink, CheckCircle, Loader2, Clock } from "lucide-react";
+import {
+  Copy,
+  Check,
+  ExternalLink,
+  CheckCircle,
+  Loader2,
+  Clock,
+} from "lucide-react";
 import { TokenInfo } from "@/lib/wallet";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +27,9 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
   const { stakes, withdrawStake } = useStaking();
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [tokenMetadata, setTokenMetadata] = useState<any>(null);
-  const [timeRemaining, setTimeRemaining] = useState<{ [key: string]: string }>({});
+  const [timeRemaining, setTimeRemaining] = useState<{ [key: string]: string }>(
+    {},
+  );
 
   // Filter stakes for this token
   const tokenStakes = stakes.filter(
@@ -38,8 +47,12 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
       tokenStakes.forEach((stake) => {
         const remaining = Math.max(0, stake.endTime - Date.now());
         const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+        const hours = Math.floor(
+          (remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+        );
+        const minutes = Math.floor(
+          (remaining % (1000 * 60 * 60)) / (1000 * 60),
+        );
         if (days > 0) {
           newTimeRemaining[stake.id] = `${days}d ${hours}h ${minutes}m`;
         } else if (hours > 0) {
@@ -336,7 +349,8 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
               {tokenStakes.map((stake) => {
                 const timeLeft = Math.max(0, stake.endTime - Date.now());
                 const isWithdrawable = timeLeft === 0;
-                const totalDurationMs = stake.stakePeriodDays * 24 * 60 * 60 * 1000;
+                const totalDurationMs =
+                  stake.stakePeriodDays * 24 * 60 * 60 * 1000;
                 const elapsedMs = totalDurationMs - timeLeft;
                 const progressPercentage = (elapsedMs / totalDurationMs) * 100;
 

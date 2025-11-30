@@ -54,7 +54,8 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
   onBack,
 }) => {
   const { wallet, tokens } = useWallet();
-  const { stakes, loading, createStake, withdrawStake, refreshStakes } = useStaking();
+  const { stakes, loading, createStake, withdrawStake, refreshStakes } =
+    useStaking();
   const { toast } = useToast();
 
   const [selectedPeriod, setSelectedPeriod] = useState<30 | 60 | 90>(30);
@@ -136,7 +137,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
       await createStake(token.mint, Number(stakeAmount), selectedPeriod);
 
       // Refresh stakes to ensure the new stake appears
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       await refreshStakes();
 
       toast({

@@ -144,11 +144,21 @@ export function useStaking(): UseStakingReturn {
         throw new Error("Invalid period. Must be 30, 60, or 90 days");
       }
 
-      // For now, we'll use basic authentication with wallet address
-      // In production, implement proper message signing
       const message = `Create stake:${wallet.publicKey}:${Date.now()}`;
 
       try {
+        // Sign the message using the Fixorium provider
+        const provider = ensureFixoriumProvider();
+        if (!provider) {
+          throw new Error("Wallet provider not available");
+        }
+
+        // Sign the message
+        const signatureBytes = await provider.signMessage(message);
+
+        // Encode signature as base58
+        const signatureBase58 = bs58.encode(signatureBytes);
+
         const response = await fetch(resolveApiUrl("/api/staking/create"), {
           method: "POST",
           headers: {
@@ -160,7 +170,7 @@ export function useStaking(): UseStakingReturn {
             amount,
             periodDays,
             message,
-            signature: "verified", // Placeholder - would be actual signature
+            signature: signatureBase58,
           }),
         });
 

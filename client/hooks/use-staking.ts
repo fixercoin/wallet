@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { resolveApiUrl } from "@/lib/api-client";
+import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
+import bs58 from "bs58";
 
 export interface Stake {
   id: string;
@@ -35,9 +37,7 @@ interface UseStakingReturn {
     amount: number,
     periodDays: number,
   ) => Promise<Stake>;
-  withdrawStake: (
-    stakeId: string,
-  ) => Promise<{
+  withdrawStake: (stakeId: string) => Promise<{
     stake: Stake;
     totalAmount: number;
     reward?: RewardDistribution;
@@ -142,11 +142,21 @@ export function useStaking(): UseStakingReturn {
         throw new Error("Invalid period. Must be 30, 60, or 90 days");
       }
 
-      // For now, we'll use basic authentication with wallet address
-      // In production, implement proper message signing
       const message = `Create stake:${wallet.publicKey}:${Date.now()}`;
 
       try {
+        // Sign the message using the Fixorium provider
+        const provider = ensureFixoriumProvider();
+        if (!provider) {
+          throw new Error("Wallet provider not available");
+        }
+
+        // Sign the message
+        const signatureBytes = await provider.signMessage(message);
+
+        // Encode signature as base58
+        const signatureBase58 = bs58.encode(signatureBytes);
+
         const response = await fetch(resolveApiUrl("/api/staking/create"), {
           method: "POST",
           headers: {
@@ -158,7 +168,7 @@ export function useStaking(): UseStakingReturn {
             amount,
             periodDays,
             message,
-            signature: "verified", // Placeholder - would be actual signature
+            signature: signatureBase58,
           }),
         });
 
@@ -199,11 +209,21 @@ export function useStaking(): UseStakingReturn {
         throw new Error("Stake is not active");
       }
 
-      // For now, we'll use basic authentication with wallet address
-      // In production, implement proper message signing
       const message = `Withdraw stake:${stakeId}:${wallet.publicKey}:${Date.now()}`;
 
       try {
+        // Sign the message using the Fixorium provider
+        const provider = ensureFixoriumProvider();
+        if (!provider) {
+          throw new Error("Wallet provider not available");
+        }
+
+        // Sign the message
+        const signatureBytes = await provider.signMessage(message);
+
+        // Encode signature as base58
+        const signatureBase58 = bs58.encode(signatureBytes);
+
         const response = await fetch(resolveApiUrl("/api/staking/withdraw"), {
           method: "POST",
           headers: {
@@ -213,7 +233,7 @@ export function useStaking(): UseStakingReturn {
             wallet: wallet.publicKey,
             stakeId,
             message,
-            signature: "verified", // Placeholder - would be actual signature
+            signature: signatureBase58,
           }),
         });
 

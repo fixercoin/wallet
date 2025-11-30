@@ -144,6 +144,7 @@ import RunningMarketMaker from "./pages/RunningMarketMaker";
 import MarketMakerHistory from "./pages/MarketMakerHistory";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 import { BottomNavigation } from "@/components/BottomNavigation";
+import DocumentationPage from "./pages/DocumentationPage";
 
 const queryClient = new QueryClient();
 
@@ -182,6 +183,10 @@ function AppRoutes() {
         element={<RunningMarketMaker />}
       />
       <Route path="/market-maker/history" element={<MarketMakerHistory />} />
+      <Route
+        path="/documentation"
+        element={<DocumentationPage onBack={() => window.history.back()} />}
+      />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

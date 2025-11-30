@@ -545,12 +545,12 @@ export default function DocumentationPage({
                 <CardContent className="p-4">
                   <div className="space-y-2">
                     <h2 className="text-lg font-semibold text-white">
-                      Welcome to Fixorium Documentation
+                      WELCOME TO FIXORIUM DOCUMENTATION
                     </h2>
                     <p className="text-sm text-gray-300">
-                      Complete guides covering all features of your secure Solana
-                      wallet. Learn how to create accounts, swap tokens, stake for
-                      rewards, and keep your funds secure.
+                      COMPLETE GUIDES COVERING ALL FEATURES OF YOUR SECURE SOLANA
+                      WALLET. LEARN HOW TO CREATE ACCOUNTS, SWAP TOKENS, STAKE FOR
+                      REWARDS, AND KEEP YOUR FUNDS SECURE.
                     </p>
                   </div>
                 </CardContent>

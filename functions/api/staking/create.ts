@@ -14,7 +14,8 @@ import {
 } from "../../lib/reward-config";
 
 interface Env {
-  STAKING_KV: KVNamespace;
+  STAKING_KV: any;
+  [key: string]: any;
 }
 
 interface CreateStakeRequest {

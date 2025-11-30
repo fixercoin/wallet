@@ -73,6 +73,7 @@ interface WalletContextType {
   logout: () => void;
   updateWalletLabel: (publicKey: string, label: string) => void;
   unlockWithPassword: (password: string) => Promise<boolean>;
+  updateTokenBalance: (tokenMint: string, newBalance: number) => void;
   connection?: Connection | null;
 }
 
@@ -1369,6 +1370,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   };
 
+  const updateTokenBalance = (tokenMint: string, newBalance: number) => {
+    setTokens((currentTokens) =>
+      currentTokens.map((token) =>
+        token.mint === tokenMint ? { ...token, balance: newBalance } : token,
+      ),
+    );
+  };
+
   const value: WalletContextType = {
     wallet: ensureWalletSecretKey(wallet),
     wallets,
@@ -1389,6 +1398,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     logout,
     updateWalletLabel,
     unlockWithPassword,
+    updateTokenBalance,
     connection: globalConnection,
   };
 

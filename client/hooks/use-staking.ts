@@ -44,6 +44,8 @@ interface UseStakingReturn {
   }>;
   refreshStakes: () => Promise<void>;
   getRewardStatus: () => Promise<any>;
+  getAvailableBalance: (tokenMint: string) => number;
+  getTotalStaked: (tokenMint: string) => number;
 }
 
 function calculateReward(amount: number, periodDays: number): number {
@@ -62,7 +64,7 @@ function generateStakeId(): string {
  * Stakes are persisted in Supabase and accessible from any device
  */
 export function useStaking(): UseStakingReturn {
-  const { wallet } = useWallet();
+  const { wallet, tokens, updateTokenBalance, refreshTokens } = useWallet();
   const [stakes, setStakes] = useState<Stake[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -185,13 +187,34 @@ export function useStaking(): UseStakingReturn {
         const result = await response.json();
         const newStake = mapRowToStake(result.data);
         setStakes((prev) => [...prev, newStake]);
+
+        // Update token balance in wallet context
+        const token = tokens.find((t) => t.mint === tokenMint);
+        if (token) {
+          const newBalance = Math.max(0, token.balance - amount);
+          updateTokenBalance(tokenMint, newBalance);
+        }
+
+        // Refresh tokens to get fresh balance from blockchain (after small delay to ensure backend is updated)
+        setTimeout(() => {
+          refreshTokens().catch((err) => {
+            console.error("Error refreshing tokens after staking:", err);
+          });
+        }, 1000);
+
         return newStake;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         throw new Error(msg);
       }
     },
-    [wallet?.publicKey, wallet?.secretKey],
+    [
+      wallet?.publicKey,
+      wallet?.secretKey,
+      tokens,
+      updateTokenBalance,
+      refreshTokens,
+    ],
   );
 
   // Withdraw from stake via Cloudflare API
@@ -256,6 +279,15 @@ export function useStaking(): UseStakingReturn {
           prev.map((s) => (s.id === stakeId ? updatedStake : s)),
         );
 
+        // Update token balance in wallet context - add back staked amount + reward
+        const token = tokens.find((t) => t.mint === stake.tokenMint);
+        if (token) {
+          const totalAmount =
+            result.data.totalAmount || stake.amount + stake.rewardAmount;
+          const newBalance = token.balance + totalAmount;
+          updateTokenBalance(stake.tokenMint, newBalance);
+        }
+
         return {
           stake: updatedStake,
           totalAmount: result.data.totalAmount,
@@ -266,7 +298,7 @@ export function useStaking(): UseStakingReturn {
         throw new Error(msg);
       }
     },
-    [wallet?.publicKey, wallet?.secretKey, stakes],
+    [wallet?.publicKey, wallet?.secretKey, stakes, tokens, updateTokenBalance],
   );
 
   // Get reward status for wallet
@@ -303,6 +335,28 @@ export function useStaking(): UseStakingReturn {
     }
   }, [wallet?.publicKey]);
 
+  // Calculate total staked amount for a specific token
+  const getTotalStaked = useCallback(
+    (tokenMint: string) => {
+      return stakes
+        .filter(
+          (stake) => stake.tokenMint === tokenMint && stake.status === "active",
+        )
+        .reduce((sum, stake) => sum + stake.amount, 0);
+    },
+    [stakes],
+  );
+
+  // Calculate available balance (total balance - staked amount)
+  const getAvailableBalance = useCallback(
+    (tokenMint: string) => {
+      const token = tokens.find((t) => t.mint === tokenMint);
+      const totalStaked = getTotalStaked(tokenMint);
+      return Math.max(0, (token?.balance || 0) - totalStaked);
+    },
+    [tokens, getTotalStaked],
+  );
+
   // Load stakes on mount and when wallet changes
   useEffect(() => {
     refreshStakes();
@@ -318,5 +372,7 @@ export function useStaking(): UseStakingReturn {
     withdrawStake,
     refreshStakes,
     getRewardStatus,
+    getTotalStaked,
+    getAvailableBalance,
   };
 }

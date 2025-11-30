@@ -54,7 +54,8 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
   onBack,
 }) => {
   const { wallet, tokens } = useWallet();
-  const { stakes, loading, createStake, withdrawStake } = useStaking();
+  const { stakes, loading, createStake, withdrawStake, refreshStakes } =
+    useStaking();
   const { toast } = useToast();
 
   const [selectedPeriod, setSelectedPeriod] = useState<30 | 60 | 90>(30);
@@ -64,16 +65,26 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
     {},
   );
 
-  // Get available balance for this token
-  const availableBalance = token.balance || 0;
-  const calculatedReward = stakeAmount
-    ? calculateReward(Number(stakeAmount), selectedPeriod)
-    : 0;
-
   // Filter stakes for this token
   const tokenStakes = stakes.filter(
     (stake) => stake.tokenMint === token.mint && stake.status === "active",
   );
+
+  const completedStakes = stakes.filter(
+    (stake) => stake.tokenMint === token.mint && stake.status === "completed",
+  );
+
+  // Calculate available balance (subtract active stakes)
+  const totalStaked = tokenStakes.reduce((sum, stake) => sum + stake.amount, 0);
+  const availableBalance = Math.max(0, (token.balance || 0) - totalStaked);
+  const calculatedReward = stakeAmount
+    ? calculateReward(Number(stakeAmount), selectedPeriod)
+    : 0;
+
+  // Load stakes on component mount
+  useEffect(() => {
+    refreshStakes();
+  }, [token.mint, refreshStakes]);
 
   // Update timer for active stakes
   useEffect(() => {
@@ -124,9 +135,14 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
     setIsStaking(true);
     try {
       await createStake(token.mint, Number(stakeAmount), selectedPeriod);
+
+      // Refresh stakes to ensure the new stake appears
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await refreshStakes();
+
       toast({
         title: "STAKING STARTED",
-        description: `SUCCESSFULLY STAKED ${formatTokenAmount(Number(stakeAmount))} ${token.symbol}`,
+        description: `SUCCESSFULLY STAKED ${formatTokenAmount(Number(stakeAmount))} ${token.symbol}. YOUR TOKENS ARE NOW LOCKED IN THE STAKING POOL.`,
       });
       setStakeAmount("");
     } catch (err) {
@@ -430,6 +446,82 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                 </Card>
               );
             })}
+          </div>
+        )}
+
+        {/* Stake History */}
+        {completedStakes.length > 0 && (
+          <div className="space-y-4 mb-6">
+            <h2 className="text-sm font-semibold text-white uppercase">
+              STAKE HISTORY ({completedStakes.length})
+            </h2>
+            {completedStakes.map((stake) => (
+              <Card
+                key={stake.id}
+                className="w-full bg-gray-900 rounded-lg border border-gray-700"
+              >
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1 uppercase">
+                        STAKED AMOUNT
+                      </p>
+                      <p className="text-sm font-bold text-white">
+                        {formatTokenAmount(stake.amount)} {token.symbol}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1 uppercase">
+                        REWARD EARNED
+                      </p>
+                      <p className="text-sm font-bold text-green-400">
+                        +{formatTokenAmount(stake.rewardAmount)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1 uppercase">
+                        PERIOD
+                      </p>
+                      <p className="text-xs font-semibold text-white">
+                        {stake.stakePeriodDays} days
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1 uppercase">
+                        STATUS
+                      </p>
+                      <span className="text-xs font-semibold text-gray-300 bg-gray-800/50 px-2 py-1 rounded">
+                        COMPLETED
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar for completed stake - show as 100% */}
+                  <div className="mb-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-xs text-gray-400 uppercase">
+                        COMPLETED
+                      </p>
+                      <p className="text-xs text-gray-400 uppercase">100%</p>
+                    </div>
+                    <Progress value={100} className="h-2" />
+                  </div>
+
+                  {/* Info about total received */}
+                  <div className="bg-gray-800/50 rounded-lg p-3">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-gray-400 uppercase">
+                        TOTAL RECEIVED
+                      </span>
+                      <span className="text-green-400 font-semibold">
+                        {formatTokenAmount(stake.amount + stake.rewardAmount)}{" "}
+                        {token.symbol}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
       </div>

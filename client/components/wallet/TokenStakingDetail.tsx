@@ -16,7 +16,7 @@ interface TokenStakingDetailProps {
 
 const STAKE_PERIODS = [30, 60, 90] as const;
 const APY_RATE = 0.1; // 10%
-const MIN_STAKE_AMOUNT = 10000000; // Minimum 10 million tokens
+const MIN_STAKE_AMOUNT = 1000; // Minimum 1000 tokens
 
 function calculateReward(amount: number, periodDays: number): number {
   const yearlyReward = amount * APY_RATE;

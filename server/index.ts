@@ -63,6 +63,12 @@ import {
   validateSolanaSend,
   validateSwapSubmit,
 } from "./middleware/validate";
+import {
+  handleCreateStake,
+  handleListStakes,
+  handleWithdrawStake,
+  handleRewardStatus,
+} from "./routes/staking";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();

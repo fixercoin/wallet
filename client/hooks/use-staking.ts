@@ -62,7 +62,7 @@ function generateStakeId(): string {
  * Stakes are persisted in Supabase and accessible from any device
  */
 export function useStaking(): UseStakingReturn {
-  const { wallet, tokens, setTokens } = useWallet();
+  const { wallet, tokens, updateTokenBalance } = useWallet();
   const [stakes, setStakes] = useState<Stake[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

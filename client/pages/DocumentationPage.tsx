@@ -284,44 +284,44 @@ const documentationSections: DocSection[] = [
   },
   {
     id: "wallet-history",
-    title: "How to Check Wallet History",
+    title: "HOW TO CHECK WALLET HISTORY",
     content:
-      "View all your transactions, trades, and wallet activities. Keep track of all movements and changes to your account.",
+      "VIEW ALL YOUR TRANSACTIONS, TRADES, AND WALLET ACTIVITIES. KEEP TRACK OF ALL MOVEMENTS AND CHANGES TO YOUR ACCOUNT.",
     subsections: [
       {
-        title: "Accessing Wallet History",
+        title: "ACCESSING WALLET HISTORY",
         content:
-          "From the Dashboard, click 'Wallet History' or 'Transaction History' in the navigation menu to view all your activities.",
+          "FROM THE DASHBOARD, CLICK 'WALLET HISTORY' OR 'TRANSACTION HISTORY' IN THE NAVIGATION MENU TO VIEW ALL YOUR ACTIVITIES.",
       },
       {
-        title: "Transaction Types",
+        title: "TRANSACTION TYPES",
         content:
-          "Your wallet history shows multiple transaction types:\n• Receives: Incoming transfers\n• Sends: Outgoing transfers\n• Swaps: Token exchanges\n• Stakes: Staking operations\n• Burns: Token burns\n• Locks: Token lock creations",
+          "YOUR WALLET HISTORY SHOWS MULTIPLE TRANSACTION TYPES:\n• RECEIVES: INCOMING TRANSFERS\n• SENDS: OUTGOING TRANSFERS\n• SWAPS: TOKEN EXCHANGES\n• STAKES: STAKING OPERATIONS\n• BURNS: TOKEN BURNS\n• LOCKS: TOKEN LOCK CREATIONS",
       },
       {
-        title: "Transaction Details",
+        title: "TRANSACTION DETAILS",
         content:
-          "Each transaction shows:\n• Transaction type and description\n• Amount and tokens involved\n• Date and time\n• Transaction status (Pending, Confirmed, Failed)\n• Transaction hash/ID\n• Fee information (if applicable)\n• Wallet addresses (from/to)",
+          "EACH TRANSACTION SHOWS:\n• TRANSACTION TYPE AND DESCRIPTION\n• AMOUNT AND TOKENS INVOLVED\n• DATE AND TIME\n• TRANSACTION STATUS (PENDING, CONFIRMED, FAILED)\n• TRANSACTION HASH/ID\n• FEE INFORMATION (IF APPLICABLE)\n• WALLET ADDRESSES (FROM/TO)",
       },
       {
-        title: "Filtering History",
+        title: "FILTERING HISTORY",
         content:
-          "Filter your history by:\n• Transaction type (Receives, Sends, Swaps, etc.)\n• Date range\n• Token\n• Status (All, Confirmed, Pending, Failed)\n• Search by amount or address",
+          "FILTER YOUR HISTORY BY:\n• TRANSACTION TYPE (RECEIVES, SENDS, SWAPS, ETC.)\n• DATE RANGE\n• TOKEN\n• STATUS (ALL, CONFIRMED, PENDING, FAILED)\n• SEARCH BY AMOUNT OR ADDRESS",
       },
       {
-        title: "Viewing Transaction Details",
+        title: "VIEWING TRANSACTION DETAILS",
         content:
-          "Click on any transaction to see:\n• Complete transaction information\n• Full wallet addresses\n• Exact amounts and fees\n• Token prices at transaction time\n• Blockchain confirmation status\n• Explorer link to view on-chain",
+          "CLICK ON ANY TRANSACTION TO SEE:\n• COMPLETE TRANSACTION INFORMATION\n• FULL WALLET ADDRESSES\n• EXACT AMOUNTS AND FEES\n• TOKEN PRICES AT TRANSACTION TIME\n• BLOCKCHAIN CONFIRMATION STATUS\n• EXPLORER LINK TO VIEW ON-CHAIN",
       },
       {
-        title: "Exporting History",
+        title: "EXPORTING HISTORY",
         content:
-          "You can export your transaction history:\n• Download as CSV for accounting\n• Import into tax software\n• Print records for documentation\n• Share with accountants or auditors\n• Keep personal records for tax purposes",
+          "YOU CAN EXPORT YOUR TRANSACTION HISTORY:\n• DOWNLOAD AS CSV FOR ACCOUNTING\n• IMPORT INTO TAX SOFTWARE\n• PRINT RECORDS FOR DOCUMENTATION\n• SHARE WITH ACCOUNTANTS OR AUDITORS\n• KEEP PERSONAL RECORDS FOR TAX PURPOSES",
       },
       {
-        title: "History Tips",
+        title: "HISTORY TIPS",
         content:
-          "• Keep records for tax reporting\n• Note the purpose of transactions\n• Monitor unusual activities\n• Verify large transaction amounts\n• Check fee structures\n• Review failed transactions\n• Use filters for quick lookups",
+          "• KEEP RECORDS FOR TAX REPORTING\n• NOTE THE PURPOSE OF TRANSACTIONS\n• MONITOR UNUSUAL ACTIVITIES\n• VERIFY LARGE TRANSACTION AMOUNTS\n• CHECK FEE STRUCTURES\n• REVIEW FAILED TRANSACTIONS\n• USE FILTERS FOR QUICK LOOKUPS",
       },
     ],
   },

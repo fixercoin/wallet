@@ -345,7 +345,8 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
             {tokenStakes.map((stake) => {
               const timeLeft = Math.max(0, stake.endTime - Date.now());
               const isWithdrawable = timeLeft === 0;
-              const totalDurationMs = stake.stakePeriodDays * 24 * 60 * 60 * 1000;
+              const totalDurationMs =
+                stake.stakePeriodDays * 24 * 60 * 60 * 1000;
               const elapsedMs = totalDurationMs - timeLeft;
               const progressPercentage = (elapsedMs / totalDurationMs) * 100;
 

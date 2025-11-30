@@ -370,9 +370,10 @@ export const Settings: React.FC<SettingsProps> = ({
               <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium text-[hsl(var(--foreground))]">
-                      CONTACT
-                    </span>
+                    <div className="flex items-center gap-3 text-[hsl(var(--foreground))]">
+                      <Book className="h-5 w-5" />
+                      <span className="font-medium">CONTACT</span>
+                    </div>
                     <div className="flex items-center gap-3">
                       <a
                         href="https://twitter.com/fixorium"

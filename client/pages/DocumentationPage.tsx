@@ -397,7 +397,7 @@ const documentationSections: DocSection[] = [
       {
         title: "PHISHING & SCAMS",
         content:
-          "Protect yourself from scams:\n• Verify website URLs before entering credentials\n• Be wary of unexpected messages/emails\n• Never click links in unsolicited messages\n• Scammers impersonate Fixorium and other projects\n• 'Limited time offers' are usually scams\n• Too-good-to-be-true returns are always scams\n• Report suspicious activity to authorities\n• Use official Fixorium channels only",
+          "PROTECT YOURSELF FROM SCAMS:\n• VERIFY WEBSITE URLS BEFORE ENTERING CREDENTIALS\n• BE WARY OF UNEXPECTED MESSAGES/EMAILS\n• NEVER CLICK LINKS IN UNSOLICITED MESSAGES\n• SCAMMERS IMPERSONATE FIXORIUM AND OTHER PROJECTS\n• 'LIMITED TIME OFFERS' ARE USUALLY SCAMS\n• TOO-GOOD-TO-BE-TRUE RETURNS ARE ALWAYS SCAMS\n• REPORT SUSPICIOUS ACTIVITY TO AUTHORITIES\n• USE OFFICIAL FIXORIUM CHANNELS ONLY",
       },
       {
         title: "Transaction Security",

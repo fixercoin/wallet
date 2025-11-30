@@ -375,19 +375,19 @@ const documentationSections: DocSection[] = [
       "Comprehensive security information to keep your wallet and funds safe. Understand best practices for cryptocurrency security.",
     subsections: [
       {
-        title: "Wallet Security Fundamentals",
+        title: "WALLET SECURITY FUNDAMENTALS",
         content:
-          "Essential security principles:\n• Your private key = full control of your funds\n• Never share your private key or recovery phrase\n• Private keys stored locally on your device\n• Fixorium never has access to your keys\n• Recovery phrase is the only way to restore your wallet\n• Losing your recovery phrase means losing access forever",
+          "ESSENTIAL SECURITY PRINCIPLES:\n• YOUR PRIVATE KEY = FULL CONTROL OF YOUR FUNDS\n• NEVER SHARE YOUR PRIVATE KEY OR RECOVERY PHRASE\n• PRIVATE KEYS STORED LOCALLY ON YOUR DEVICE\n• FIXORIUM NEVER HAS ACCESS TO YOUR KEYS\n• RECOVERY PHRASE IS THE ONLY WAY TO RESTORE YOUR WALLET\n• LOSING YOUR RECOVERY PHRASE MEANS LOSING ACCESS FOREVER",
       },
       {
-        title: "Password Security",
+        title: "PASSWORD SECURITY",
         content:
-          "If using password protection:\n• Use a strong, unique password (16+ characters)\n• Include numbers, symbols, and mixed case\n• Avoid common words and personal information\n• Don't reuse passwords across services\n• Store passwords securely (password manager recommended)\n• Never share your password with anyone\n• Change passwords periodically",
+          "IF USING PASSWORD PROTECTION:\n• USE A STRONG, UNIQUE PASSWORD (16+ CHARACTERS)\n• INCLUDE NUMBERS, SYMBOLS, AND MIXED CASE\n• AVOID COMMON WORDS AND PERSONAL INFORMATION\n• DON'T REUSE PASSWORDS ACROSS SERVICES\n• STORE PASSWORDS SECURELY (PASSWORD MANAGER RECOMMENDED)\n• NEVER SHARE YOUR PASSWORD WITH ANYONE\n• CHANGE PASSWORDS PERIODICALLY",
       },
       {
-        title: "Device Security",
+        title: "DEVICE SECURITY",
         content:
-          "Secure the device running Fixorium:\n• Use a trusted, updated device\n• Enable device lock with strong PIN/biometric\n• Keep operating system and apps updated\n• Run antivirus/malware protection\n• Use a VPN for public WiFi\n• Avoid using public computers\n• Enable two-factor authentication on related accounts\n• Use hardware wallets for large holdings",
+          "SECURE THE DEVICE RUNNING FIXORIUM:\n• USE A TRUSTED, UPDATED DEVICE\n• ENABLE DEVICE LOCK WITH STRONG PIN/BIOMETRIC\n• KEEP OPERATING SYSTEM AND APPS UPDATED\n• RUN ANTIVIRUS/MALWARE PROTECTION\n• USE A VPN FOR PUBLIC WIFI\n• AVOID USING PUBLIC COMPUTERS\n• ENABLE TWO-FACTOR AUTHENTICATION ON RELATED ACCOUNTS\n• USE HARDWARE WALLETS FOR LARGE HOLDINGS",
       },
       {
         title: "RECOVERY PHRASE PROTECTION",

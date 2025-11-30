@@ -54,6 +54,17 @@ export const onRequestGet = async ({
   env: Env;
 }) => {
   try {
+    // Verify KV binding is available
+    if (!env.STAKING_KV) {
+      console.error(
+        "STAKING_KV binding not found in env. Available bindings:",
+        Object.keys(env),
+      );
+      return jsonResponse(500, {
+        error: "KV storage not configured. Please verify wrangler.toml bindings.",
+      });
+    }
+
     const url = new URL(request.url);
     const walletAddress = url.searchParams.get("wallet");
     const authMessage = url.searchParams.get("message");
@@ -104,6 +115,7 @@ export const onRequestGet = async ({
       },
     });
   } catch (error) {
+    console.error("Error in /api/staking/rewards-status:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return jsonResponse(500, { error: message });
   }

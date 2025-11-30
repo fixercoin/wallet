@@ -371,7 +371,7 @@ export const Settings: React.FC<SettingsProps> = ({
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-[hsl(var(--foreground))]">
-                      HELPLINE 24/7
+                      CONTACT
                     </span>
                     <div className="flex items-center gap-3">
                       <a

@@ -193,13 +193,20 @@ export function useStaking(): UseStakingReturn {
           updateTokenBalance(tokenMint, newBalance);
         }
 
+        // Refresh tokens to get fresh balance from blockchain (after small delay to ensure backend is updated)
+        setTimeout(() => {
+          refreshTokens().catch((err) => {
+            console.error("Error refreshing tokens after staking:", err);
+          });
+        }, 1000);
+
         return newStake;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         throw new Error(msg);
       }
     },
-    [wallet?.publicKey, wallet?.secretKey, tokens, updateTokenBalance],
+    [wallet?.publicKey, wallet?.secretKey, tokens, updateTokenBalance, refreshTokens],
   );
 
   // Withdraw from stake via Cloudflare API

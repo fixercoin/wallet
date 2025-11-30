@@ -328,6 +328,26 @@ export function useStaking(): UseStakingReturn {
     }
   }, [wallet?.publicKey]);
 
+  // Calculate total staked amount for a specific token
+  const getTotalStaked = useCallback(
+    (tokenMint: string) => {
+      return stakes
+        .filter((stake) => stake.tokenMint === tokenMint && stake.status === "active")
+        .reduce((sum, stake) => sum + stake.amount, 0);
+    },
+    [stakes],
+  );
+
+  // Calculate available balance (total balance - staked amount)
+  const getAvailableBalance = useCallback(
+    (tokenMint: string) => {
+      const token = tokens.find((t) => t.mint === tokenMint);
+      const totalStaked = getTotalStaked(tokenMint);
+      return Math.max(0, (token?.balance || 0) - totalStaked);
+    },
+    [tokens, getTotalStaked],
+  );
+
   // Load stakes on mount and when wallet changes
   useEffect(() => {
     refreshStakes();
@@ -343,5 +363,7 @@ export function useStaking(): UseStakingReturn {
     withdrawStake,
     refreshStakes,
     getRewardStatus,
+    getTotalStaked,
+    getAvailableBalance,
   };
 }

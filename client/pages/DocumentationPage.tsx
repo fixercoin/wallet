@@ -496,11 +496,7 @@ const documentationSections: DocSection[] = [
   },
 ];
 
-export default function DocumentationPage({
-  onBack,
-}: {
-  onBack: () => void;
-}) {
+export default function DocumentationPage({ onBack }: { onBack: () => void }) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(["create-account"]),
   );
@@ -548,9 +544,9 @@ export default function DocumentationPage({
                       WELCOME TO FIXORIUM DOCUMENTATION
                     </h2>
                     <p className="text-sm text-gray-300">
-                      COMPLETE GUIDES COVERING ALL FEATURES OF YOUR SECURE SOLANA
-                      WALLET. LEARN HOW TO CREATE ACCOUNTS, SWAP TOKENS, STAKE FOR
-                      REWARDS, AND KEEP YOUR FUNDS SECURE.
+                      COMPLETE GUIDES COVERING ALL FEATURES OF YOUR SECURE
+                      SOLANA WALLET. LEARN HOW TO CREATE ACCOUNTS, SWAP TOKENS,
+                      STAKE FOR REWARDS, AND KEEP YOUR FUNDS SECURE.
                     </p>
                   </div>
                 </CardContent>
@@ -609,13 +605,13 @@ export default function DocumentationPage({
                     </h3>
                     <p className="text-xs text-gray-300">
                       If you have questions not covered in this documentation,
-                      contact our 24/7 support team through Twitter, Telegram, or
-                      other official channels. Our team is ready to help!
+                      contact our 24/7 support team through Twitter, Telegram,
+                      or other official channels. Our team is ready to help!
                     </p>
                     <div className="pt-2 border-t border-gray-300/20">
                       <p className="text-xs font-semibold text-yellow-400">
-                        Remember: Never share your private keys or recovery phrase
-                        with anyone, including support staff.
+                        Remember: Never share your private keys or recovery
+                        phrase with anyone, including support staff.
                       </p>
                     </div>
                   </div>

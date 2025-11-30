@@ -167,9 +167,7 @@ export default function Index() {
       );
 
     case "documentation":
-      return (
-        <DocumentationPage onBack={navigateToDashboard} />
-      );
+      return <DocumentationPage onBack={navigateToDashboard} />;
 
     case "accounts":
       return (

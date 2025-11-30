@@ -37,9 +37,7 @@ interface UseStakingReturn {
     amount: number,
     periodDays: number,
   ) => Promise<Stake>;
-  withdrawStake: (
-    stakeId: string,
-  ) => Promise<{
+  withdrawStake: (stakeId: string) => Promise<{
     stake: Stake;
     totalAmount: number;
     reward?: RewardDistribution;

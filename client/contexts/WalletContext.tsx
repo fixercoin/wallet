@@ -1370,6 +1370,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   };
 
+  const updateTokenBalance = (tokenMint: string, newBalance: number) => {
+    setTokens((currentTokens) =>
+      currentTokens.map((token) =>
+        token.mint === tokenMint ? { ...token, balance: newBalance } : token,
+      ),
+    );
+  };
+
   const value: WalletContextType = {
     wallet: ensureWalletSecretKey(wallet),
     wallets,

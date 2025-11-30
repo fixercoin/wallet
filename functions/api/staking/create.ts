@@ -68,6 +68,17 @@ export const onRequestPost = async ({
   env: Env;
 }) => {
   try {
+    // Verify KV binding is available
+    if (!env.STAKING_KV) {
+      console.error(
+        "STAKING_KV binding not found in env. Available bindings:",
+        Object.keys(env),
+      );
+      return jsonResponse(500, {
+        error: "KV storage not configured. Please verify wrangler.toml bindings.",
+      });
+    }
+
     const body: CreateStakeRequest = await request.json();
 
     // Validate inputs
@@ -129,6 +140,7 @@ export const onRequestPost = async ({
       },
     });
   } catch (error) {
+    console.error("Error in /api/staking/create:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return jsonResponse(500, { error: message });
   }

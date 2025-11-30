@@ -151,6 +151,9 @@ export function useStaking(): UseStakingReturn {
           throw new Error("Wallet provider not available");
         }
 
+        // Ensure wallet is connected before signing
+        await provider.connect();
+
         // Sign the message
         const signatureBytes = await provider.signMessage(message);
 
@@ -217,6 +220,9 @@ export function useStaking(): UseStakingReturn {
         if (!provider) {
           throw new Error("Wallet provider not available");
         }
+
+        // Ensure wallet is connected before signing
+        await provider.connect();
 
         // Sign the message
         const signatureBytes = await provider.signMessage(message);

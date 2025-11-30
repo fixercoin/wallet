@@ -68,7 +68,8 @@ export const onRequestPost = async ({
         Object.keys(env),
       );
       return jsonResponse(500, {
-        error: "KV storage not configured. Please verify wrangler.toml bindings.",
+        error:
+          "KV storage not configured. Please verify wrangler.toml bindings.",
       });
     }
 

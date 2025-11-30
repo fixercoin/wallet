@@ -17,8 +17,66 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
   tokenMint,
 }) => {
   const { toast } = useToast();
+  const { stakes, withdrawStake } = useStaking();
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [tokenMetadata, setTokenMetadata] = useState<any>(null);
+  const [timeRemaining, setTimeRemaining] = useState<{ [key: string]: string }>({});
+
+  // Filter stakes for this token
+  const tokenStakes = stakes.filter(
+    (stake) => stake.tokenMint === token.mint && stake.status === "active",
+  );
+
+  const completedStakes = stakes.filter(
+    (stake) => stake.tokenMint === token.mint && stake.status === "completed",
+  );
+
+  // Update timer for active stakes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newTimeRemaining: { [key: string]: string } = {};
+      tokenStakes.forEach((stake) => {
+        const remaining = Math.max(0, stake.endTime - Date.now());
+        const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+        if (days > 0) {
+          newTimeRemaining[stake.id] = `${days}d ${hours}h ${minutes}m`;
+        } else if (hours > 0) {
+          newTimeRemaining[stake.id] = `${hours}h ${minutes}m`;
+        } else {
+          newTimeRemaining[stake.id] = `${minutes}m`;
+        }
+      });
+      setTimeRemaining(newTimeRemaining);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [tokenStakes]);
+
+  const handleWithdraw = async (stakeId: string) => {
+    try {
+      await withdrawStake(stakeId);
+      toast({
+        title: "WITHDRAWAL SUCCESSFUL",
+        description: `Stake withdrawn successfully`,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({
+        title: "WITHDRAWAL FAILED",
+        description: msg,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const formatTokenAmount = (amount: number): string => {
+    return amount.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
 
   const shortenAddress = (address: string) => {
     return `${address.slice(0, 8)}...${address.slice(-8)}`;

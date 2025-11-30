@@ -400,29 +400,29 @@ const documentationSections: DocSection[] = [
           "PROTECT YOURSELF FROM SCAMS:\n• VERIFY WEBSITE URLS BEFORE ENTERING CREDENTIALS\n• BE WARY OF UNEXPECTED MESSAGES/EMAILS\n• NEVER CLICK LINKS IN UNSOLICITED MESSAGES\n• SCAMMERS IMPERSONATE FIXORIUM AND OTHER PROJECTS\n• 'LIMITED TIME OFFERS' ARE USUALLY SCAMS\n• TOO-GOOD-TO-BE-TRUE RETURNS ARE ALWAYS SCAMS\n• REPORT SUSPICIOUS ACTIVITY TO AUTHORITIES\n• USE OFFICIAL FIXORIUM CHANNELS ONLY",
       },
       {
-        title: "Transaction Security",
+        title: "TRANSACTION SECURITY",
         content:
-          "Before confirming any transaction:\n• Verify the recipient address carefully\n• Check the amount and token type\n• Review the transaction fee\n• Confirm the purpose of the transaction\n• Use small test amounts for new addresses\n• Never send to addresses you don't recognize\n• Double-check after confirming\n• Blockchain transactions are permanent",
+          "BEFORE CONFIRMING ANY TRANSACTION:\n• VERIFY THE RECIPIENT ADDRESS CAREFULLY\n• CHECK THE AMOUNT AND TOKEN TYPE\n• REVIEW THE TRANSACTION FEE\n• CONFIRM THE PURPOSE OF THE TRANSACTION\n• USE SMALL TEST AMOUNTS FOR NEW ADDRESSES\n• NEVER SEND TO ADDRESSES YOU DON'T RECOGNIZE\n• DOUBLE-CHECK AFTER CONFIRMING\n• BLOCKCHAIN TRANSACTIONS ARE PERMANENT",
       },
       {
-        title: "Backup Strategy",
+        title: "BACKUP STRATEGY",
         content:
-          "Create a comprehensive backup:\n• Multiple copies of recovery phrase\n• Stored in separate secure locations\n• Geographic redundancy recommended\n• Physical copies in fireproof safe\n• Consider metal seed phrase storage\n• Update backups if you change security measures\n• Test recovery process occasionally\n• Keep backups updated with new wallets",
+          "CREATE A COMPREHENSIVE BACKUP:\n• MULTIPLE COPIES OF RECOVERY PHRASE\n• STORED IN SEPARATE SECURE LOCATIONS\n• GEOGRAPHIC REDUNDANCY RECOMMENDED\n• PHYSICAL COPIES IN FIREPROOF SAFE\n• CONSIDER METAL SEED PHRASE STORAGE\n• UPDATE BACKUPS IF YOU CHANGE SECURITY MEASURES\n• TEST RECOVERY PROCESS OCCASIONALLY\n• KEEP BACKUPS UPDATED WITH NEW WALLETS",
       },
       {
-        title: "What Never to Do",
+        title: "WHAT NEVER TO DO",
         content:
-          "Critical security DON'Ts:\n• ❌ Never share private key or recovery phrase\n• ❌ Never enter credentials on unknown websites\n• ❌ Never click suspicious links\n• ❌ Never use public WiFi for sensitive operations\n• ❌ Never store credentials digitally (unencrypted)\n• ❌ Never screenshot or photograph your keys\n• ❌ Never grant unlimited token approvals\n• ❌ Never ignore security warnings\n• ❌ Never trust unexpected offers/deals",
+          "CRITICAL SECURITY DON'TS:\n• ❌ NEVER SHARE PRIVATE KEY OR RECOVERY PHRASE\n• ❌ NEVER ENTER CREDENTIALS ON UNKNOWN WEBSITES\n• ❌ NEVER CLICK SUSPICIOUS LINKS\n• ❌ NEVER USE PUBLIC WIFI FOR SENSITIVE OPERATIONS\n• ❌ NEVER STORE CREDENTIALS DIGITALLY (UNENCRYPTED)\n• ❌ NEVER SCREENSHOT OR PHOTOGRAPH YOUR KEYS\n• ❌ NEVER GRANT UNLIMITED TOKEN APPROVALS\n• ❌ NEVER IGNORE SECURITY WARNINGS\n• ❌ NEVER TRUST UNEXPECTED OFFERS/DEALS",
       },
       {
-        title: "If You Think You're Compromised",
+        title: "IF YOU THINK YOU'RE COMPROMISED",
         content:
-          "If you suspect a security breach:\n1. Do not panic\n2. Stop using the compromised device\n3. Access Fixorium from a trusted device\n4. Create a new wallet immediately\n5. Transfer funds to the new wallet\n6. Investigate how the breach occurred\n7. Update all passwords and security measures\n8. Enable extra security on all accounts\n9. Monitor the compromised wallet for activity",
+          "IF YOU SUSPECT A SECURITY BREACH:\n1. DO NOT PANIC\n2. STOP USING THE COMPROMISED DEVICE\n3. ACCESS FIXORIUM FROM A TRUSTED DEVICE\n4. CREATE A NEW WALLET IMMEDIATELY\n5. TRANSFER FUNDS TO THE NEW WALLET\n6. INVESTIGATE HOW THE BREACH OCCURRED\n7. UPDATE ALL PASSWORDS AND SECURITY MEASURES\n8. ENABLE EXTRA SECURITY ON ALL ACCOUNTS\n9. MONITOR THE COMPROMISED WALLET FOR ACTIVITY",
       },
       {
-        title: "Security Resources",
+        title: "SECURITY RESOURCES",
         content:
-          "Additional security information:\n• Solana Official Documentation: solana.com\n• Security Best Practices: ledger.com/security\n• Blockchain Security: ethereum.org\n• Scam Prevention: antiphishing.org\n• Fixorium Support: Contact 24/7 helpline\n• Emergency Contact: Use Twitter or Telegram",
+          "ADDITIONAL SECURITY INFORMATION:\n• SOLANA OFFICIAL DOCUMENTATION: SOLANA.COM\n• SECURITY BEST PRACTICES: LEDGER.COM/SECURITY\n• BLOCKCHAIN SECURITY: ETHEREUM.ORG\n• SCAM PREVENTION: ANTIPHISHING.ORG\n• FIXORIUM SUPPORT: CONTACT 24/7 HELPLINE\n• EMERGENCY CONTACT: USE TWITTER OR TELEGRAM",
       },
     ],
   },

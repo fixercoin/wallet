@@ -241,44 +241,44 @@ const documentationSections: DocSection[] = [
   },
   {
     id: "lock-tokens",
-    title: "How to Lock Tokens",
+    title: "HOW TO LOCK TOKENS",
     content:
-      "Create token locks to restrict token transfers for a specific duration. Useful for project security and investor confidence.",
+      "CREATE TOKEN LOCKS TO RESTRICT TOKEN TRANSFERS FOR A SPECIFIC DURATION. USEFUL FOR PROJECT SECURITY AND INVESTOR CONFIDENCE.",
     subsections: [
       {
-        title: "What is Token Locking?",
+        title: "WHAT IS TOKEN LOCKING?",
         content:
-          "Token locking restricts the movement of tokens for a set period. Locked tokens cannot be sold or transferred until the lock expires. This is commonly used by projects to build investor confidence.",
+          "TOKEN LOCKING RESTRICTS THE MOVEMENT OF TOKENS FOR A SET PERIOD. LOCKED TOKENS CANNOT BE SOLD OR TRANSFERRED UNTIL THE LOCK EXPIRES. THIS IS COMMONLY USED BY PROJECTS TO BUILD INVESTOR CONFIDENCE.",
       },
       {
-        title: "Accessing Token Lock",
+        title: "ACCESSING TOKEN LOCK",
         content:
-          "From the Dashboard, select 'Token Lock' from the menu or click on a token and select 'Lock Token' option.",
+          "FROM THE DASHBOARD, SELECT 'TOKEN LOCK' FROM THE MENU OR CLICK ON A TOKEN AND SELECT 'LOCK TOKEN' OPTION.",
       },
       {
-        title: "Creating a Token Lock",
+        title: "CREATING A TOKEN LOCK",
         content:
-          "1. Select the token you want to lock\n2. Enter the number of tokens to lock\n3. Choose the lock duration (days)\n4. Review the lock details\n5. Click 'Create Lock' to execute",
+          "1. SELECT THE TOKEN YOU WANT TO LOCK\n2. ENTER THE NUMBER OF TOKENS TO LOCK\n3. CHOOSE THE LOCK DURATION (DAYS)\n4. REVIEW THE LOCK DETAILS\n5. CLICK 'CREATE LOCK' TO EXECUTE",
       },
       {
-        title: "Lock Duration Options",
+        title: "LOCK DURATION OPTIONS",
         content:
-          "Lock periods can range from 1 day to several years:\n• Short locks: 7-30 days for testing\n• Standard locks: 90-180 days\n• Long-term locks: 1-4 years\n• Custom duration: Set any duration you prefer",
+          "LOCK PERIODS CAN RANGE FROM 1 DAY TO SEVERAL YEARS:\n• SHORT LOCKS: 7-30 DAYS FOR TESTING\n• STANDARD LOCKS: 90-180 DAYS\n• LONG-TERM LOCKS: 1-4 YEARS\n• CUSTOM DURATION: SET ANY DURATION YOU PREFER",
       },
       {
-        title: "Managing Locked Tokens",
+        title: "MANAGING LOCKED TOKENS",
         content:
-          "View all token locks in the 'Token Locks' section:\n• See locked amount and duration\n• Monitor time remaining\n• View original lock date and unlock date\n• Cannot transfer or sell locked tokens\n• Can create new locks while others are active",
+          "VIEW ALL TOKEN LOCKS IN THE 'TOKEN LOCKS' SECTION:\n• SEE LOCKED AMOUNT AND DURATION\n• MONITOR TIME REMAINING\n• VIEW ORIGINAL LOCK DATE AND UNLOCK DATE\n• CANNOT TRANSFER OR SELL LOCKED TOKENS\n• CAN CREATE NEW LOCKS WHILE OTHERS ARE ACTIVE",
       },
       {
-        title: "Token Unlock",
+        title: "TOKEN UNLOCK",
         content:
-          "When the lock period expires:\n• Tokens automatically become transferable\n• No action needed - happens automatically\n• You can sell or transfer immediately\n• View unlock history in transaction records",
+          "WHEN THE LOCK PERIOD EXPIRES:\n• TOKENS AUTOMATICALLY BECOME TRANSFERABLE\n• NO ACTION NEEDED - HAPPENS AUTOMATICALLY\n• YOU CAN SELL OR TRANSFER IMMEDIATELY\n• VIEW UNLOCK HISTORY IN TRANSACTION RECORDS",
       },
       {
-        title: "Important Notes",
+        title: "IMPORTANT NOTES",
         content:
-          "• Locked tokens cannot be moved or transferred\n• Locks cannot be extended or modified\n• Locks cannot be cancelled early\n• Only the token holder can create locks\n• Lock information is stored on-chain (public)\n• Locks are permanent until expiration",
+          "• LOCKED TOKENS CANNOT BE MOVED OR TRANSFERRED\n• LOCKS CANNOT BE EXTENDED OR MODIFIED\n• LOCKS CANNOT BE CANCELLED EARLY\n• ONLY THE TOKEN HOLDER CAN CREATE LOCKS\n• LOCK INFORMATION IS STORED ON-CHAIN (PUBLIC)\n• LOCKS ARE PERMANENT UNTIL EXPIRATION",
       },
     ],
   },

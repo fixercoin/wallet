@@ -15,6 +15,7 @@ import { BurnToken } from "@/components/wallet/BurnToken";
 import { TokenManage } from "@/components/wallet/TokenManage";
 import { StakeTokens } from "@/components/wallet/StakeTokens";
 import { TokenStakingDetail } from "@/components/wallet/TokenStakingDetail";
+import DocumentationPage from "./DocumentationPage";
 
 type Screen =
   | "dashboard"
@@ -24,6 +25,7 @@ type Screen =
   | "token-detail"
   | "token-manage"
   | "settings"
+  | "documentation"
   | "autobot"
   | "setup"
   | "accounts"

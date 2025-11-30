@@ -13,39 +13,39 @@ interface DocSection {
 const documentationSections: DocSection[] = [
   {
     id: "create-account",
-    title: "How to Create an Account",
+    title: "HOW TO CREATE AN ACCOUNT",
     content:
-      "Creating a secure wallet account is the first step to using Fixorium. Follow these steps to get started with a new wallet.",
+      "CREATING A SECURE WALLET ACCOUNT IS THE FIRST STEP TO USING FIXORIUM. FOLLOW THESE STEPS TO GET STARTED WITH A NEW WALLET.",
     subsections: [
       {
-        title: "Step 1: Open the Wallet Setup",
+        title: "STEP 1: OPEN THE WALLET SETUP",
         content:
-          "When you first open Fixorium, you'll see the wallet setup screen with two options: 'Create New Wallet' and 'Import Wallet'.",
+          "WHEN YOU FIRST OPEN FIXORIUM, YOU'LL SEE THE WALLET SETUP SCREEN WITH TWO OPTIONS: 'CREATE NEW WALLET' AND 'IMPORT WALLET'.",
       },
       {
-        title: "Step 2: Click Create New Wallet",
+        title: "STEP 2: CLICK CREATE NEW WALLET",
         content:
-          "Select the 'Create New Wallet' button to generate a new secure wallet with a randomly generated recovery phrase.",
+          "SELECT THE 'CREATE NEW WALLET' BUTTON TO GENERATE A NEW SECURE WALLET WITH A RANDOMLY GENERATED RECOVERY PHRASE.",
       },
       {
-        title: "Step 3: Secure Your Recovery Phrase",
+        title: "STEP 3: SECURE YOUR RECOVERY PHRASE",
         content:
-          "A 12-word recovery phrase will be displayed. This is crucial for account recovery. Write it down on paper and store it in a safe place. Never share this phrase with anyone.",
+          "A 12-WORD RECOVERY PHRASE WILL BE DISPLAYED. THIS IS CRUCIAL FOR ACCOUNT RECOVERY. WRITE IT DOWN ON PAPER AND STORE IT IN A SAFE PLACE. NEVER SHARE THIS PHRASE WITH ANYONE.",
       },
       {
-        title: "Step 4: Confirm Your Recovery Phrase",
+        title: "STEP 4: CONFIRM YOUR RECOVERY PHRASE",
         content:
-          "You'll be asked to confirm your recovery phrase by selecting the words in the correct order. This ensures you've written them down correctly.",
+          "YOU'LL BE ASKED TO CONFIRM YOUR RECOVERY PHRASE BY SELECTING THE WORDS IN THE CORRECT ORDER. THIS ENSURES YOU'VE WRITTEN THEM DOWN CORRECTLY.",
       },
       {
-        title: "Step 5: Set Up Your Wallet",
+        title: "STEP 5: SET UP YOUR WALLET",
         content:
-          "After confirmation, your wallet is created and ready to use. You can now access the dashboard, receive funds, and perform transactions.",
+          "AFTER CONFIRMATION, YOUR WALLET IS CREATED AND READY TO USE. YOU CAN NOW ACCESS THE DASHBOARD, RECEIVE FUNDS, AND PERFORM TRANSACTIONS.",
       },
       {
-        title: "Security Tips",
+        title: "SECURITY TIPS",
         content:
-          "• Never store your recovery phrase digitally on devices connected to the internet\n• Do not share your recovery phrase or private key with anyone\n• Store your recovery phrase in a safe physical location (safe deposit box, home safe, etc.)\n• Use a strong password if you enable wallet encryption\n• Regularly backup your recovery phrase",
+          "• NEVER STORE YOUR RECOVERY PHRASE DIGITALLY ON DEVICES CONNECTED TO THE INTERNET\n• DO NOT SHARE YOUR RECOVERY PHRASE OR PRIVATE KEY WITH ANYONE\n• STORE YOUR RECOVERY PHRASE IN A SAFE PHYSICAL LOCATION (SAFE DEPOSIT BOX, HOME SAFE, ETC.)\n• USE A STRONG PASSWORD IF YOU ENABLE WALLET ENCRYPTION\n• REGULARLY BACKUP YOUR RECOVERY PHRASE",
       },
     ],
   },

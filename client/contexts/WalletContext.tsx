@@ -73,6 +73,7 @@ interface WalletContextType {
   logout: () => void;
   updateWalletLabel: (publicKey: string, label: string) => void;
   unlockWithPassword: (password: string) => Promise<boolean>;
+  updateTokenBalance: (tokenMint: string, newBalance: number) => void;
   connection?: Connection | null;
 }
 

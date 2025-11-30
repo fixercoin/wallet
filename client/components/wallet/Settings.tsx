@@ -14,7 +14,7 @@ import {
   EyeOff,
   Twitter,
   Send,
-  Book,
+  Headphones,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
@@ -347,31 +347,12 @@ export const Settings: React.FC<SettingsProps> = ({
               </Card>
 
               {/* Documentation Card */}
-              {onDocumentation && (
-                <Card className="w-full bg-gradient-to-br from-yellow-500/10 to-orange-500/10 rounded-lg border border-yellow-500/30">
-                  <CardContent className="p-0">
-                    <button
-                      onClick={onDocumentation}
-                      className="w-full flex items-center justify-between p-4 rounded-none transition-colors hover:bg-white/5"
-                    >
-                      <div className="flex items-center gap-3 text-[hsl(var(--foreground))]">
-                        <Book className="h-5 w-5 text-yellow-500" />
-                        <span className="font-medium">FULL DOCUMENTATION</span>
-                      </div>
-                      <span className="text-xs text-gray-500 font-medium">
-                        GUIDES & TUTORIALS
-                      </span>
-                    </button>
-                  </CardContent>
-                </Card>
-              )}
-
               {/* Helpline Card */}
               <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-[hsl(var(--foreground))]">
-                      HELPLINE 24/7
+                      CONTACT
                     </span>
                     <div className="flex items-center gap-3">
                       <a
@@ -392,6 +373,15 @@ export const Settings: React.FC<SettingsProps> = ({
                       >
                         <Send className="h-5 w-5" />
                       </a>
+                      {onDocumentation && (
+                        <button
+                          onClick={onDocumentation}
+                          className="p-2 hover:bg-white/10 rounded-md transition-colors text-gray-600 hover:text-gray-900"
+                          aria-label="Documentation"
+                        >
+                          <Headphones className="h-5 w-5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </CardContent>

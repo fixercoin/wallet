@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { useWallet } from "@/contexts/WalletContext";
 import { useStaking, type Stake } from "@/hooks/use-staking";
 import { useToast } from "@/hooks/use-toast";

@@ -21,7 +21,9 @@ interface KVNamespace {
 export class KVStore {
   constructor(private kv: KVNamespace) {
     if (!kv) {
-      throw new Error('KV namespace is required. Ensure STAKING_KV is bound in wrangler.toml');
+      throw new Error(
+        "KV namespace is required. Ensure STAKING_KV is bound in wrangler.toml",
+      );
     }
   }
 

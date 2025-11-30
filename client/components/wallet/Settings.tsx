@@ -393,7 +393,13 @@ export const Settings: React.FC<SettingsProps> = ({
                       >
                         <Send className="h-5 w-5" />
                       </a>
-                      <Headphones className="h-5 w-5 text-gray-600" />
+                      <button
+                        onClick={onDocumentation}
+                        className="p-2 hover:bg-white/10 rounded-md transition-colors text-gray-600 hover:text-gray-900"
+                        aria-label="Documentation"
+                      >
+                        <Headphones className="h-5 w-5" />
+                      </button>
                     </div>
                   </div>
                 </CardContent>

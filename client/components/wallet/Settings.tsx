@@ -348,25 +348,6 @@ export const Settings: React.FC<SettingsProps> = ({
               </Card>
 
               {/* Documentation Card */}
-              {onDocumentation && (
-                <Card className="w-full bg-gradient-to-br from-yellow-500/10 to-orange-500/10 rounded-lg border border-yellow-500/30">
-                  <CardContent className="p-0">
-                    <button
-                      onClick={onDocumentation}
-                      className="w-full flex items-center justify-between p-4 rounded-none transition-colors hover:bg-white/5"
-                    >
-                      <div className="flex items-center gap-3 text-[hsl(var(--foreground))]">
-                        <Book className="h-5 w-5 text-yellow-500" />
-                        <span className="font-medium">FULL DOCUMENTATION</span>
-                      </div>
-                      <span className="text-xs text-gray-500 font-medium">
-                        GUIDES & TUTORIALS
-                      </span>
-                    </button>
-                  </CardContent>
-                </Card>
-              )}
-
               {/* Helpline Card */}
               <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
                 <CardContent className="p-4">

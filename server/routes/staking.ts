@@ -167,8 +167,10 @@ export const handleListStakes: RequestHandler = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: walletStakes,
+      count: walletStakes.length,
     });
   } catch (error) {
+    console.error("Error in handleListStakes:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return res.status(500).json({ error: message });
   }

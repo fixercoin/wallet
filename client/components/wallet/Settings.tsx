@@ -14,6 +14,7 @@ import {
   EyeOff,
   Twitter,
   Send,
+  Book,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";

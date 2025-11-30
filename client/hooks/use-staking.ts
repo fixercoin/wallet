@@ -185,13 +185,21 @@ export function useStaking(): UseStakingReturn {
         const result = await response.json();
         const newStake = mapRowToStake(result.data);
         setStakes((prev) => [...prev, newStake]);
+
+        // Update token balance in wallet context
+        const token = tokens.find((t) => t.mint === tokenMint);
+        if (token) {
+          const newBalance = Math.max(0, token.balance - amount);
+          updateTokenBalance(tokenMint, newBalance);
+        }
+
         return newStake;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         throw new Error(msg);
       }
     },
-    [wallet?.publicKey, wallet?.secretKey],
+    [wallet?.publicKey, wallet?.secretKey, tokens, updateTokenBalance],
   );
 
   // Withdraw from stake via Cloudflare API

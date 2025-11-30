@@ -193,49 +193,49 @@ const documentationSections: DocSection[] = [
   },
   {
     id: "stake-tokens",
-    title: "How to Stake Tokens",
+    title: "HOW TO STAKE TOKENS",
     content:
-      "Earn rewards by staking your tokens for a fixed period. Lock your tokens to generate passive income through staking rewards.",
+      "EARN REWARDS BY STAKING YOUR TOKENS FOR A FIXED PERIOD. LOCK YOUR TOKENS TO GENERATE PASSIVE INCOME THROUGH STAKING REWARDS.",
     subsections: [
       {
-        title: "Understanding Staking",
+        title: "UNDERSTANDING STAKING",
         content:
-          "Staking allows you to lock tokens for a set period and earn rewards. The longer you stake, the more rewards you earn. Current APY is 10% (varies by token and conditions).",
+          "STAKING ALLOWS YOU TO LOCK TOKENS FOR A SET PERIOD AND EARN REWARDS. THE LONGER YOU STAKE, THE MORE REWARDS YOU EARN. CURRENT APY IS 10% (VARIES BY TOKEN AND CONDITIONS).",
       },
       {
-        title: "Accessing Staking",
+        title: "ACCESSING STAKING",
         content:
-          "From the Dashboard, select a token and click 'Stake' to access the staking interface. You can also navigate to 'Stake Tokens' from the main menu.",
+          "FROM THE DASHBOARD, SELECT A TOKEN AND CLICK 'STAKE' TO ACCESS THE STAKING INTERFACE. YOU CAN ALSO NAVIGATE TO 'STAKE TOKENS' FROM THE MAIN MENU.",
       },
       {
-        title: "Choosing Stake Period",
+        title: "CHOOSING STAKE PERIOD",
         content:
-          "Select your lock period:\n• 30 days: Standard staking period\n• 60 days: Extended period with higher rewards\n• 90 days: Maximum period with maximum rewards\n\nRewards increase proportionally with the lock period.",
+          "SELECT YOUR LOCK PERIOD:\n• 30 DAYS: STANDARD STAKING PERIOD\n• 60 DAYS: EXTENDED PERIOD WITH HIGHER REWARDS\n• 90 DAYS: MAXIMUM PERIOD WITH MAXIMUM REWARDS\n\nREWARDS INCREASE PROPORTIONALLY WITH THE LOCK PERIOD.",
       },
       {
-        title: "Entering Stake Amount",
+        title: "ENTERING STAKE AMOUNT",
         content:
-          "1. Enter the amount of tokens you want to stake\n2. Minimum stake is typically 10 million tokens\n3. Click 'MAX' to stake your entire available balance\n4. The expected reward will be calculated automatically",
+          "1. ENTER THE AMOUNT OF TOKENS YOU WANT TO STAKE\n2. MINIMUM STAKE IS TYPICALLY 10 MILLION TOKENS\n3. CLICK 'MAX' TO STAKE YOUR ENTIRE AVAILABLE BALANCE\n4. THE EXPECTED REWARD WILL BE CALCULATED AUTOMATICALLY",
       },
       {
-        title: "Confirming Your Stake",
+        title: "CONFIRMING YOUR STAKE",
         content:
-          "1. Review the stake details:\n   • Amount staked\n   • Lock period\n   • Expected reward\n   • Total value at unlock\n2. Click 'Start Staking' to create the stake\n3. Sign the transaction with your wallet",
+          "1. REVIEW THE STAKE DETAILS:\n   • AMOUNT STAKED\n   • LOCK PERIOD\n   • EXPECTED REWARD\n   • TOTAL VALUE AT UNLOCK\n2. CLICK 'START STAKING' TO CREATE THE STAKE\n3. SIGN THE TRANSACTION WITH YOUR WALLET",
       },
       {
-        title: "Managing Active Stakes",
+        title: "MANAGING ACTIVE STAKES",
         content:
-          "View all active stakes in the 'Active Stakes' section:\n• Monitor remaining lock time\n• See current reward amount\n• View stake details\n• Countdown timer shows when stake unlocks\n• 'Withdrawal Locked' button during lock period\n• 'Withdraw' button becomes available when time expires",
+          "VIEW ALL ACTIVE STAKES IN THE 'ACTIVE STAKES' SECTION:\n• MONITOR REMAINING LOCK TIME\n• SEE CURRENT REWARD AMOUNT\n• VIEW STAKE DETAILS\n• COUNTDOWN TIMER SHOWS WHEN STAKE UNLOCKS\n• 'WITHDRAWAL LOCKED' BUTTON DURING LOCK PERIOD\n• 'WITHDRAW' BUTTON BECOMES AVAILABLE WHEN TIME EXPIRES",
       },
       {
-        title: "Withdrawing Stakes",
+        title: "WITHDRAWING STAKES",
         content:
-          "When the lock period expires:\n1. Click 'Withdraw' on your stake\n2. Receive your original tokens PLUS rewards\n3. Sign the withdrawal transaction\n4. Tokens are returned to your wallet\n\nYou cannot withdraw until the lock period is complete.",
+          "WHEN THE LOCK PERIOD EXPIRES:\n1. CLICK 'WITHDRAW' ON YOUR STAKE\n2. RECEIVE YOUR ORIGINAL TOKENS PLUS REWARDS\n3. SIGN THE WITHDRAWAL TRANSACTION\n4. TOKENS ARE RETURNED TO YOUR WALLET\n\nYOU CANNOT WITHDRAW UNTIL THE LOCK PERIOD IS COMPLETE.",
       },
       {
-        title: "Staking Tips",
+        title: "STAKING TIPS",
         content:
-          "• Stakes cannot be withdrawn early\n• Rewards are calculated daily\n• Lock the maximum period (90 days) for best rewards\n• Reward calculation: (Amount × 10% APY ÷ 365) × Days\n• Staking is non-custodial - you retain control\n• Monitor your active stakes regularly\n• Plan your lock periods strategically",
+          "• STAKES CANNOT BE WITHDRAWN EARLY\n• REWARDS ARE CALCULATED DAILY\n• LOCK THE MAXIMUM PERIOD (90 DAYS) FOR BEST REWARDS\n• REWARD CALCULATION: (AMOUNT × 10% APY ÷ 365) × DAYS\n• STAKING IS NON-CUSTODIAL - YOU RETAIN CONTROL\n• MONITOR YOUR ACTIVE STAKES REGULARLY\n• PLAN YOUR LOCK PERIODS STRATEGICALLY",
       },
     ],
   },

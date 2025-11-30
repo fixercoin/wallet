@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { resolveApiUrl } from "@/lib/api-client";
+import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
+import bs58 from "bs58";
 
 export interface Stake {
   id: string;

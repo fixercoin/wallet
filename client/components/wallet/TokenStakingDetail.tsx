@@ -75,6 +75,10 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
     (stake) => stake.tokenMint === token.mint && stake.status === "active",
   );
 
+  const completedStakes = stakes.filter(
+    (stake) => stake.tokenMint === token.mint && stake.status === "completed",
+  );
+
   // Update timer for active stakes
   useEffect(() => {
     const interval = setInterval(() => {

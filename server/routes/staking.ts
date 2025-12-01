@@ -29,7 +29,7 @@ export interface RewardDistribution {
   processedAt?: number;
 }
 
-// In-memory store for development
+// In-memory store for development (fallback, primary uses KV)
 const stakes: Map<string, Stake> = new Map();
 const stakesByWallet: Map<string, string[]> = new Map();
 const rewards: Map<string, RewardDistribution> = new Map();
@@ -56,6 +56,87 @@ function calculateReward(amount: number, periodDays: number): number {
   const dailyRate = yearlyReward / 365;
   return dailyRate * periodDays;
 }
+
+// KV Storage wrapper class for server-side use
+class KVStoreServer {
+  private stakes: Map<string, Stake> = new Map();
+  private stakesByWallet: Map<string, string[]> = new Map();
+  private rewards: Map<string, RewardDistribution> = new Map();
+  private rewardsByWallet: Map<string, string[]> = new Map();
+
+  async getStakesByWallet(walletAddress: string): Promise<Stake[]> {
+    const stakeIds = this.stakesByWallet.get(walletAddress) || [];
+    const stakes: Stake[] = [];
+
+    for (const stakeId of stakeIds) {
+      const stake = this.stakes.get(stakeId);
+      if (stake) {
+        stakes.push(stake);
+      }
+    }
+
+    return stakes;
+  }
+
+  async getStake(stakeId: string): Promise<Stake | null> {
+    return this.stakes.get(stakeId) || null;
+  }
+
+  async createStake(stake: Stake): Promise<Stake> {
+    this.stakes.set(stake.id, stake);
+
+    const stakeIds = this.stakesByWallet.get(stake.walletAddress) || [];
+    stakeIds.push(stake.id);
+    this.stakesByWallet.set(stake.walletAddress, stakeIds);
+
+    return stake;
+  }
+
+  async updateStake(stakeId: string, updates: Partial<Stake>): Promise<void> {
+    const stake = this.stakes.get(stakeId);
+    if (!stake) {
+      throw new Error("Stake not found");
+    }
+
+    const updated: Stake = {
+      ...stake,
+      ...updates,
+      updatedAt: Date.now(),
+    };
+
+    this.stakes.set(stakeId, updated);
+  }
+
+  async getRewardsByWallet(walletAddress: string): Promise<RewardDistribution[]> {
+    const rewardIds = this.rewardsByWallet.get(walletAddress) || [];
+    const rewards: RewardDistribution[] = [];
+
+    for (const rewardId of rewardIds) {
+      const reward = this.rewards.get(rewardId);
+      if (reward) {
+        rewards.push(reward);
+      }
+    }
+
+    return rewards;
+  }
+
+  async getReward(rewardId: string): Promise<RewardDistribution | null> {
+    return this.rewards.get(rewardId) || null;
+  }
+
+  async recordReward(reward: RewardDistribution): Promise<RewardDistribution> {
+    this.rewards.set(reward.id, reward);
+
+    const rewardIds = this.rewardsByWallet.get(reward.walletAddress) || [];
+    rewardIds.push(reward.id);
+    this.rewardsByWallet.set(reward.walletAddress, rewardIds);
+
+    return reward;
+  }
+}
+
+const kvStore = new KVStoreServer()
 
 function verifySignature(
   message: string,

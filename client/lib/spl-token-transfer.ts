@@ -35,9 +35,7 @@ export interface TransferParams {
 /**
  * Create a transfer instruction for SPL tokens
  */
-async function createTransferInstruction_(
-  params: TransferParams,
-): Promise<{
+async function createTransferInstruction_(params: TransferParams): Promise<{
   instruction: any;
   fromATA: PublicKey;
   toATA: PublicKey;

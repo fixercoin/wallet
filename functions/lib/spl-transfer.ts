@@ -3,8 +3,18 @@
  * Handles actual on-chain token transfers for staking operations
  */
 
-import { PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, Connection } from "@solana/web3.js";
-import { getAssociatedTokenAddress, createTransferInstruction, getAccount } from "@solana/spl-token";
+import {
+  PublicKey,
+  Transaction,
+  SystemProgram,
+  sendAndConfirmTransaction,
+  Connection,
+} from "@solana/web3.js";
+import {
+  getAssociatedTokenAddress,
+  createTransferInstruction,
+  getAccount,
+} from "@solana/spl-token";
 
 const RPC_ENDPOINTS = [
   "https://solana.publicnode.com",
@@ -40,13 +50,7 @@ export async function createSPLTransferInstruction(
   fromATA: PublicKey;
   toATA: PublicKey;
 }> {
-  const {
-    fromPublicKey,
-    toPublicKey,
-    amount,
-    decimals,
-    mint,
-  } = params;
+  const { fromPublicKey, toPublicKey, amount, decimals, mint } = params;
 
   // Get associated token accounts
   const fromATA = await getAssociatedTokenAddress(mint, fromPublicKey);
@@ -95,7 +99,9 @@ export async function buildTransferTransaction(
   } catch {
     // ATA doesn't exist, would need to be created
     // This should be handled by the client or a separate call
-    console.log("Recipient ATA might not exist - client should create it first");
+    console.log(
+      "Recipient ATA might not exist - client should create it first",
+    );
   }
 
   transaction.add(instruction);
@@ -124,9 +130,11 @@ export async function confirmTransaction(
   while (retries < maxRetries) {
     try {
       const status = await conn.getSignatureStatus(signature);
-      
-      if (status.value?.confirmationStatus === "confirmed" || 
-          status.value?.confirmationStatus === "finalized") {
+
+      if (
+        status.value?.confirmationStatus === "confirmed" ||
+        status.value?.confirmationStatus === "finalized"
+      ) {
         return true;
       }
 
@@ -136,7 +144,7 @@ export async function confirmTransaction(
       }
 
       // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       retries++;
     } catch (error) {
       console.error("Error checking transaction status:", error);

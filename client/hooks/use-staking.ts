@@ -383,7 +383,14 @@ export function useStaking(): UseStakingReturn {
         throw new Error(msg);
       }
     },
-    [wallet?.publicKey, wallet?.secretKey, stakes, tokens, updateTokenBalance, vaultWallet],
+    [
+      wallet?.publicKey,
+      wallet?.secretKey,
+      stakes,
+      tokens,
+      updateTokenBalance,
+      vaultWallet,
+    ],
   );
 
   // Get reward status

@@ -1,7 +1,7 @@
 /**
  * POST /api/staking/create
  * Create a new stake after confirming token transfer
- * 
+ *
  * This endpoint expects the user to have already:
  * 1. Built a transfer transaction (tokens: user wallet → vault wallet)
  * 2. Signed and sent the transaction

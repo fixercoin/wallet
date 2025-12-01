@@ -1,7 +1,7 @@
 /**
  * Vault Transfer Utilities
  * Handles signing and sending transactions from the vault wallet
- * 
+ *
  * WARNING: This requires the vault private key to be stored securely
  * in environment variables. Never commit private keys to version control.
  * Use secure vaults like Cloudflare Secrets or environment variable services.
@@ -108,10 +108,7 @@ export async function signAndSendVaultTransfer(
     });
 
     // Wait for confirmation
-    const confirmation = await conn.confirmTransaction(
-      signature,
-      "confirmed",
-    );
+    const confirmation = await conn.confirmTransaction(signature, "confirmed");
 
     if (confirmation.value.err) {
       throw new Error(`Transaction failed: ${confirmation.value.err}`);

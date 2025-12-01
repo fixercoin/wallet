@@ -74,6 +74,7 @@ This document describes the real-time staking system implementation using Option
 The withdrawal system requires the vault wallet's private key to sign transactions.
 
 **IMPORTANT SECURITY NOTES:**
+
 - ⚠️ Never commit private keys to version control
 - ⚠️ Use secure secret management (Cloudflare Secrets, AWS Secrets Manager, etc.)
 - ⚠️ Rotate keys regularly
@@ -82,6 +83,7 @@ The withdrawal system requires the vault wallet's private key to sign transactio
 **To set up:**
 
 1. Export your vault wallet's private key in base58 format:
+
    ```typescript
    // In Solana.js:
    const keypair = Keypair.fromSecretKey(secretKeyArray);
@@ -108,6 +110,7 @@ The vault wallet (`5bW3uEyoP1jhXBMswgkB8xZuKUY3hscMaLJcsuzH2LNU`) must have:
 - **Token reserves for reward payouts**
 
 Example: If you allow stakes of 1000 tokens for 30/60/90 days with 10% APY:
+
 ```
 30 days: 1000 + 82 tokens (reward)
 60 days: 1000 + 164 tokens (reward)
@@ -119,13 +122,16 @@ Pre-fund the vault with enough tokens to cover all potential rewards.
 ### 3. Token Decimals
 
 The system assumes 6 decimals for token transfers. If your token has different decimals, update:
+
 - `functions/api/staking/withdraw.ts` (line ~186): Change `decimals: 6`
 - `client/lib/spl-token-transfer.ts`: Add configurable decimals
 
 ## Endpoints
 
 ### GET /api/staking/config
+
 Returns staking configuration.
+
 ```json
 {
   "success": true,
@@ -139,9 +145,11 @@ Returns staking configuration.
 ```
 
 ### POST /api/staking/create
+
 Create a new stake.
 
 **Request:**
+
 ```json
 {
   "wallet": "user_public_key",
@@ -155,6 +163,7 @@ Create a new stake.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -175,9 +184,11 @@ Create a new stake.
 ```
 
 ### POST /api/staking/withdraw
+
 Withdraw completed stake with rewards.
 
 **Request:**
+
 ```json
 {
   "wallet": "user_public_key",
@@ -189,11 +200,14 @@ Withdraw completed stake with rewards.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
   "data": {
-    "stake": { /* updated stake */ },
+    "stake": {
+      /* updated stake */
+    },
     "totalAmount": 1082.19,
     "transferTxSignature": "withdrawal_tx_signature",
     "reward": {
@@ -209,6 +223,7 @@ Withdraw completed stake with rewards.
 ## Testing the System
 
 ### 1. Test Deposit
+
 ```
 1. Create a test stake for 30 days
 2. Check vault wallet receives tokens on Solana
@@ -217,6 +232,7 @@ Withdraw completed stake with rewards.
 ```
 
 ### 2. Test Withdrawal
+
 ```
 1. Wait for staking period to end (or test on devnet with reduced times)
 2. Click withdraw on completed stake
@@ -226,6 +242,7 @@ Withdraw completed stake with rewards.
 ```
 
 ### 3. Monitor Transactions
+
 ```
 - Check vault wallet balance: https://solscan.io/account/{vault_address}
 - Monitor transaction signatures from API responses
@@ -256,6 +273,7 @@ Withdraw completed stake with rewards.
 ## Monitoring & Maintenance
 
 ### Vault Balance Monitoring
+
 ```typescript
 // Check vault balance periodically
 async function checkVaultBalance() {
@@ -268,6 +286,7 @@ async function checkVaultBalance() {
 ```
 
 ### Reward Distribution Tracking
+
 - All reward distributions are recorded in KV
 - Check `/api/staking/rewards-status` endpoint
 - Monitor transaction hashes for on-chain verification
@@ -284,6 +303,7 @@ async function checkVaultBalance() {
 ## Support
 
 If the vault private key is not set, withdrawals will fail with clear error messages. Administrator must:
+
 1. Generate and securely store vault private key
 2. Set environment variable
 3. Pre-fund vault with tokens and SOL

@@ -77,11 +77,18 @@ export const onRequestPost = async ({
     const body: WithdrawRequest = await request.json();
 
     // Validate inputs
-    const { wallet, stakeId, message, signature } = body;
+    const { wallet, stakeId, transferTxSignature, message, signature } = body;
 
     if (!wallet || !stakeId) {
       return jsonResponse(400, {
         error: "Missing required fields: wallet, stakeId",
+      });
+    }
+
+    if (!transferTxSignature) {
+      return jsonResponse(400, {
+        error:
+          "Missing transfer transaction signature. Please sign and send the withdrawal transfer transaction first.",
       });
     }
 

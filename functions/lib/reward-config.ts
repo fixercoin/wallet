@@ -41,7 +41,7 @@ export interface RewardDistribution {
   walletAddress: string;
   rewardAmount: number;
   tokenMint: string;
-  status: "pending" | "processed";
+  status: "pending" | "processed" | "ready_for_distribution";
   txHash?: string;
   createdAt: number;
   processedAt?: number;

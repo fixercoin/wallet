@@ -17,6 +17,7 @@ This document explains the secure staking system architecture where private keys
 ```
 
 **Why it's secure:**
+
 - User's private key never leaves the wallet
 - Client only sends transaction signature (already signed)
 - Backend verifies the signature before processing
@@ -29,7 +30,7 @@ This document explains the secure staking system architecture where private keys
 1. USER → CLIENT: Requests withdrawal (after lock period ends)
 2. CLIENT: User signs withdrawal request message with wallet
 3. CLIENT → BACKEND: Sends signed message + signature
-4. BACKEND: 
+4. BACKEND:
    - Verifies user signature
    - Gets VAULT private key from secure environment
    - Builds return transaction (vault → user with tokens + rewards)
@@ -40,6 +41,7 @@ This document explains the secure staking system architecture where private keys
 ```
 
 **Why it's secure:**
+
 - User's private key never involved in return transaction
 - Vault private key **never leaves the backend**
 - Backend controls all fund movements
@@ -53,12 +55,14 @@ This document explains the secure staking system architecture where private keys
 ### Client-Side Changes (use-staking.ts)
 
 **Before (INSECURE):**
+
 ```typescript
 if (!wallet?.secretKey) throw new Error("Wallet secret key not available");
 // ❌ Secret key was required on client
 ```
 
 **After (SECURE):**
+
 ```typescript
 if (!wallet?.publicKey) throw new Error("No wallet connected");
 // ✅ Only public key needed for verification
@@ -67,12 +71,14 @@ if (!wallet?.publicKey) throw new Error("No wallet connected");
 ### Backend Changes
 
 #### 1. Staking Creation (Verified & Signed by User)
+
 - File: `server/routes/staking.ts` → `handleCreateStake`
 - Verifies user's signature on the token transfer
 - Records the stake in KV storage
 - No vault private key needed here
 
 #### 2. Staking Withdrawal (Signed by Backend with Vault Key)
+
 - File: `server/routes/staking.ts` → `handleWithdrawStake`
 - Verifies user owns the stake
 - **Retrieves vault private key from environment** (`VAULT_PRIVATE_KEY`)
@@ -80,6 +86,7 @@ if (!wallet?.publicKey) throw new Error("No wallet connected");
 - Updates stake status
 
 #### 3. Configuration Endpoint
+
 - File: `server/routes/staking.ts` → `handleStakingConfig`
 - Returns vault wallet address and APY info
 - Client uses this to show vault address for transfers
@@ -177,15 +184,15 @@ netlify env:set VAULT_PRIVATE_KEY "<key>"
 
 ```javascript
 // Client code
-const { useStaking } = require('@/hooks/use-staking');
+const { useStaking } = require("@/hooks/use-staking");
 
 const { createStake } = useStaking();
 
 // This should work WITHOUT requiring wallet.secretKey
 await createStake(
-  'EPjFWaLb3odcccccccccccccccccccccccccccccccc', // USDC mint
-  1000,  // amount
-  30     // period in days
+  "EPjFWaLb3odcccccccccccccccccccccccccccccccc", // USDC mint
+  1000, // amount
+  30, // period in days
 );
 ```
 
@@ -197,12 +204,13 @@ const { withdrawStake } = useStaking();
 
 // After lock period ends, user can withdraw
 // This only requires wallet.publicKey, NOT secretKey
-await withdrawStake('stake_123456789');
+await withdrawStake("stake_123456789");
 ```
 
 ### Verify Backend Vault Signing
 
 Check the backend logs:
+
 ```
 GET /api/staking/config → Returns vault wallet address
 POST /api/staking/create → Creates stake with user signature
@@ -229,15 +237,19 @@ POST /api/staking/withdraw → Backend signs with vault key
 ## Troubleshooting
 
 ### "Vault private key not configured"
+
 **Solution:** Add `VAULT_PRIVATE_KEY` environment variable to your backend
 
 ### "Invalid signature on withdrawal"
+
 **Solution:** Ensure user's wallet is signing the message properly. Check client browser console for errors.
 
 ### "Stake is not active"
+
 **Solution:** User might already have withdrawn this stake, or the stake doesn't exist.
 
 ### "Staking period has not ended yet"
+
 **Solution:** Lock period hasn't completed. User must wait until `endTime`.
 
 ---

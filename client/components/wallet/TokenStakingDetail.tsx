@@ -14,7 +14,14 @@ interface TokenStakingDetailProps {
   onBack: () => void;
 }
 
-const STAKE_PERIODS = [30, 60, 90] as const;
+// Period in days: 10 minutes = 10 / (24 * 60) days
+const STAKE_PERIODS = [
+  { days: 10 / (24 * 60), label: "10 MINS" },
+  { days: 10, label: "10 DAYS" },
+  { days: 30, label: "30 DAYS" },
+  { days: 60, label: "60 DAYS" },
+  { days: 90, label: "90 DAYS" },
+] as const;
 const APY_RATE = 0.1; // 10%
 const MIN_STAKE_AMOUNT = 10000000; // Minimum 10 million tokens
 
@@ -56,7 +63,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
   const { stakes, loading, createStake, withdrawStake } = useStaking();
   const { toast } = useToast();
 
-  const [selectedPeriod, setSelectedPeriod] = useState<30 | 60 | 90>(30);
+  const [selectedPeriod, setSelectedPeriod] = useState<number>(30);
   const [stakeAmount, setStakeAmount] = useState("");
   const [isStaking, setIsStaking] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<{ [key: string]: string }>(
@@ -272,15 +279,15 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
               <div className="grid grid-cols-3 gap-2">
                 {STAKE_PERIODS.map((period) => (
                   <button
-                    key={period}
-                    onClick={() => setSelectedPeriod(period)}
+                    key={period.label}
+                    onClick={() => setSelectedPeriod(period.days)}
                     className={`py-2 px-3 rounded-lg text-xs font-semibold transition-colors uppercase ${
-                      selectedPeriod === period
+                      selectedPeriod === period.days
                         ? "bg-yellow-500 text-gray-900"
                         : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                     }`}
                   >
-                    {period} DAYS
+                    {period.label}
                   </button>
                 ))}
               </div>

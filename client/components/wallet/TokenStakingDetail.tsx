@@ -80,12 +80,15 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
     useStaking();
   const { toast } = useToast();
 
-  const [selectedPeriod, setSelectedPeriod] = useState<30 | 60 | 90>(30);
+  const [selectedPeriod, setSelectedPeriod] = useState<StakePeriod>("30d");
   const [stakeAmount, setStakeAmount] = useState("");
   const [isStaking, setIsStaking] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<{ [key: string]: string }>(
     {},
   );
+
+  // Get the period option object
+  const selectedPeriodOption = STAKE_PERIODS.find((p) => p.value === selectedPeriod) || STAKE_PERIODS[1];
 
   // Filter stakes for this token
   const tokenStakes = stakes.filter(
@@ -100,7 +103,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
   const totalStaked = tokenStakes.reduce((sum, stake) => sum + stake.amount, 0);
   const availableBalance = Math.max(0, (token.balance || 0) - totalStaked);
   const calculatedReward = stakeAmount
-    ? calculateReward(Number(stakeAmount), selectedPeriod)
+    ? calculateReward(Number(stakeAmount), selectedPeriodOption.days)
     : 0;
 
   // Load stakes on component mount

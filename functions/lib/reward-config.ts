@@ -4,6 +4,9 @@
  */
 
 export const REWARD_CONFIG = {
+  // Vault wallet that holds staked tokens
+  vaultWallet: "5bW3uEyoP1jhXBMswgkB8xZuKUY3hscMaLJcsuzH2LNU",
+
   // Wallet address that pays out staking rewards
   rewardWallet: "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM",
 

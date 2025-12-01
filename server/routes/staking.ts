@@ -350,24 +350,19 @@ export const handleRewardStatus: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "Missing wallet address" });
     }
 
-    // Get all rewards for the wallet
-    const rewardIds = rewardsByWallet.get(walletAddress) || [];
-    const walletRewards: RewardDistribution[] = [];
+    // Get all rewards for the wallet using KV store
+    const walletRewards = await kvStore.getRewardsByWallet(walletAddress);
 
     let totalEarned = 0;
     let processedCount = 0;
     let pendingCount = 0;
 
-    for (const rewardId of rewardIds) {
-      const reward = rewards.get(rewardId);
-      if (reward) {
-        walletRewards.push(reward);
-        totalEarned += reward.rewardAmount;
-        if (reward.status === "processed") {
-          processedCount++;
-        } else {
-          pendingCount++;
-        }
+    for (const reward of walletRewards) {
+      totalEarned += reward.rewardAmount;
+      if (reward.status === "processed") {
+        processedCount++;
+      } else {
+        pendingCount++;
       }
     }
 

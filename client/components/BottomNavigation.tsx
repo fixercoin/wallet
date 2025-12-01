@@ -62,7 +62,7 @@ export const BottomNavigation = () => {
               title={item.label}
             >
               <Icon className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex-shrink-0 text-white opacity-50" />
-              <span className="block truncate text-[9px] xs:text-[10px] sm:text-[11px] md:text-sm lg:text-base">
+              <span className="block truncate text-[11px] xs:text-[12px] sm:text-[13px] md:text-base lg:text-lg">
                 {item.label}
               </span>
             </button>

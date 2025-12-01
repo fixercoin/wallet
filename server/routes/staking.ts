@@ -204,13 +204,8 @@ export const handleCreateStake: RequestHandler = async (req, res) => {
       updatedAt: now,
     };
 
-    // Store the stake
-    stakes.set(stakeId, stake);
-
-    // Add to wallet's stake list
-    const walletStakes = stakesByWallet.get(wallet) || [];
-    walletStakes.push(stakeId);
-    stakesByWallet.set(wallet, walletStakes);
+    // Store the stake using KV store
+    await kvStore.createStake(stake);
 
     return res.status(201).json({
       success: true,

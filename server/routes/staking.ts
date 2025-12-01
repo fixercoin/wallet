@@ -380,6 +380,27 @@ export const handleWithdrawStake: RequestHandler = async (req, res) => {
   }
 };
 
+// GET /api/staking/config - Get staking configuration
+export const handleStakingConfig: RequestHandler = async (req, res) => {
+  try {
+    // Get vault wallet from environment or config
+    const vaultWallet = process.env.VAULT_WALLET || REWARD_CONFIG.rewardWallet;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        vaultWallet,
+        apyPercentage: REWARD_CONFIG.apyPercentage,
+        supportedPeriods: [30, 60, 90],
+        rewardTokenMint: REWARD_CONFIG.rewardTokenMint,
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return res.status(500).json({ error: message });
+  }
+};
+
 // GET /api/staking/rewards-status - Get reward status for a wallet
 export const handleRewardStatus: RequestHandler = async (req, res) => {
   try {

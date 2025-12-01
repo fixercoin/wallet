@@ -5,6 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useWallet } from "@/contexts/WalletContext";
 import { useStaking, type Stake } from "@/hooks/use-staking";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +22,22 @@ interface TokenStakingDetailProps {
   onBack: () => void;
 }
 
-const STAKE_PERIODS = [30, 60, 90] as const;
+type StakePeriod = "10m" | "30d" | "60d" | "90d";
+
+interface PeriodOption {
+  value: StakePeriod;
+  label: string;
+  displayLabel: string;
+  days: number;
+}
+
+const STAKE_PERIODS: PeriodOption[] = [
+  { value: "10m", label: "10 MINUTES", displayLabel: "10 MINUTES", days: 10 / 1440 },
+  { value: "30d", label: "30 DAYS", displayLabel: "30 DAYS", days: 30 },
+  { value: "60d", label: "60 DAYS", displayLabel: "60 DAYS", days: 60 },
+  { value: "90d", label: "90 DAYS", displayLabel: "90 DAYS", days: 90 },
+];
+
 const APY_RATE = 0.1; // 10%
 const MIN_STAKE_AMOUNT = 1000; // Minimum 1000 tokens
 

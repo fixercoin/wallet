@@ -156,6 +156,7 @@ export const onRequestPost = async ({
       data: {
         stake: updatedStake,
         totalAmount: stake.amount + stake.rewardAmount,
+        transferTxSignature,
         reward: {
           amount: stake.rewardAmount,
           tokenMint: stake.tokenMint,

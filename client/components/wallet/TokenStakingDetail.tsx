@@ -5,6 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useWallet } from "@/contexts/WalletContext";
 import { useStaking, type Stake } from "@/hooks/use-staking";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +22,27 @@ interface TokenStakingDetailProps {
   onBack: () => void;
 }
 
-const STAKE_PERIODS = [30, 60, 90] as const;
+type StakePeriod = "10m" | "30d" | "60d" | "90d";
+
+interface PeriodOption {
+  value: StakePeriod;
+  label: string;
+  displayLabel: string;
+  days: number;
+}
+
+const STAKE_PERIODS: PeriodOption[] = [
+  {
+    value: "10m",
+    label: "10 MINUTES",
+    displayLabel: "10 MINUTES",
+    days: 10 / 1440,
+  },
+  { value: "30d", label: "30 DAYS", displayLabel: "30 DAYS", days: 30 },
+  { value: "60d", label: "60 DAYS", displayLabel: "60 DAYS", days: 60 },
+  { value: "90d", label: "90 DAYS", displayLabel: "90 DAYS", days: 90 },
+];
+
 const APY_RATE = 0.1; // 10%
 const MIN_STAKE_AMOUNT = 1000; // Minimum 1000 tokens
 
@@ -58,12 +85,16 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
     useStaking();
   const { toast } = useToast();
 
-  const [selectedPeriod, setSelectedPeriod] = useState<30 | 60 | 90>(30);
+  const [selectedPeriod, setSelectedPeriod] = useState<StakePeriod>("30d");
   const [stakeAmount, setStakeAmount] = useState("");
   const [isStaking, setIsStaking] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<{ [key: string]: string }>(
     {},
   );
+
+  // Get the period option object
+  const selectedPeriodOption =
+    STAKE_PERIODS.find((p) => p.value === selectedPeriod) || STAKE_PERIODS[1];
 
   // Filter stakes for this token
   const tokenStakes = stakes.filter(
@@ -78,7 +109,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
   const totalStaked = tokenStakes.reduce((sum, stake) => sum + stake.amount, 0);
   const availableBalance = Math.max(0, (token.balance || 0) - totalStaked);
   const calculatedReward = stakeAmount
-    ? calculateReward(Number(stakeAmount), selectedPeriod)
+    ? calculateReward(Number(stakeAmount), selectedPeriodOption.days)
     : 0;
 
   // Load stakes on component mount
@@ -134,7 +165,11 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
 
     setIsStaking(true);
     try {
-      await createStake(token.mint, Number(stakeAmount), selectedPeriod);
+      await createStake(
+        token.mint,
+        Number(stakeAmount),
+        selectedPeriodOption.days,
+      );
 
       // Refresh stakes to ensure the new stake appears
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -286,21 +321,27 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
               <label className="text-xs text-gray-400 mb-3 block uppercase">
                 STAKING PERIOD
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                {STAKE_PERIODS.map((period) => (
-                  <button
-                    key={period}
-                    onClick={() => setSelectedPeriod(period)}
-                    className={`py-2 px-3 rounded-lg text-xs font-semibold transition-colors uppercase ${
-                      selectedPeriod === period
-                        ? "bg-yellow-500 text-gray-900"
-                        : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                    }`}
-                  >
-                    {period} DAYS
-                  </button>
-                ))}
-              </div>
+              <Select
+                value={selectedPeriod}
+                onValueChange={(value) =>
+                  setSelectedPeriod(value as StakePeriod)
+                }
+              >
+                <SelectTrigger className="bg-gray-800 border-gray-700 text-white uppercase hover:bg-gray-700">
+                  <SelectValue placeholder="SELECT PERIOD" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STAKE_PERIODS.map((period) => (
+                    <SelectItem
+                      key={period.value}
+                      value={period.value}
+                      className="uppercase"
+                    >
+                      {period.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Reward Preview */}

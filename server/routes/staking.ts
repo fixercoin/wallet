@@ -268,8 +268,8 @@ export const handleWithdrawStake: RequestHandler = async (req, res) => {
       return res.status(401).json({ error: "Invalid signature" });
     }
 
-    // Get the stake
-    const stake = stakes.get(stakeId);
+    // Get the stake using KV store
+    const stake = await kvStore.getStake(stakeId);
 
     if (!stake) {
       return res.status(404).json({ error: "Stake not found" });
@@ -297,14 +297,14 @@ export const handleWithdrawStake: RequestHandler = async (req, res) => {
       });
     }
 
-    // Update stake status
-    const updatedStake: Stake = {
-      ...stake,
+    // Update stake status using KV store
+    await kvStore.updateStake(stakeId, {
       status: "withdrawn",
       withdrawnAt: now,
-      updatedAt: now,
-    };
-    stakes.set(stakeId, updatedStake);
+    });
+
+    // Get updated stake
+    const updatedStake = await kvStore.getStake(stakeId);
 
     // Record reward distribution
     const rewardId = generateRewardId();
@@ -319,12 +319,7 @@ export const handleWithdrawStake: RequestHandler = async (req, res) => {
       processedAt: now,
     };
 
-    rewards.set(rewardId, reward);
-
-    // Add to wallet's reward list
-    const walletRewards = rewardsByWallet.get(wallet) || [];
-    walletRewards.push(rewardId);
-    rewardsByWallet.set(wallet, walletRewards);
+    await kvStore.recordReward(reward);
 
     return res.status(200).json({
       success: true,

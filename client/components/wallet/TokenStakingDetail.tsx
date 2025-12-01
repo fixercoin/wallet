@@ -159,7 +159,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
 
     setIsStaking(true);
     try {
-      await createStake(token.mint, Number(stakeAmount), selectedPeriod);
+      await createStake(token.mint, Number(stakeAmount), selectedPeriodOption.days);
 
       // Refresh stakes to ensure the new stake appears
       await new Promise((resolve) => setTimeout(resolve, 500));

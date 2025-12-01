@@ -1,6 +1,12 @@
 /**
  * POST /api/staking/create
- * Create a new stake
+ * Create a new stake after confirming token transfer
+ * 
+ * This endpoint expects the user to have already:
+ * 1. Built a transfer transaction (tokens: user wallet → vault wallet)
+ * 2. Signed and sent the transaction
+ * 3. Confirmed the transaction on-chain
+ * Then call this endpoint with the transaction signature to record the stake
  */
 
 import nacl from "tweetnacl";
@@ -23,8 +29,9 @@ interface CreateStakeRequest {
   tokenMint: string;
   amount: number;
   periodDays: number;
+  transferTxSignature: string; // Transaction signature of the token transfer
   message: string;
-  signature: string;
+  messageSignature: string;
 }
 
 function applyCors(headers: Headers) {
@@ -60,6 +67,20 @@ function verifySignature(
   }
 }
 
+/**
+ * Verify transaction signature is valid (format check)
+ * Full validation requires RPC access to confirm the transaction actually occurred
+ */
+function isValidTransactionSignature(signature: string): boolean {
+  try {
+    const decoded = bs58.decode(signature);
+    // Transaction signatures should be 64 bytes
+    return decoded.length === 64;
+  } catch {
+    return false;
+  }
+}
+
 export const onRequestPost = async ({
   request,
   env,
@@ -83,11 +104,32 @@ export const onRequestPost = async ({
     const body: CreateStakeRequest = await request.json();
 
     // Validate inputs
-    const { wallet, tokenMint, amount, periodDays, message, signature } = body;
+    const {
+      wallet,
+      tokenMint,
+      amount,
+      periodDays,
+      transferTxSignature,
+      message,
+      messageSignature,
+    } = body;
 
     if (!wallet || !tokenMint || !amount || !periodDays) {
       return jsonResponse(400, {
         error: "Missing required fields: wallet, tokenMint, amount, periodDays",
+      });
+    }
+
+    if (!transferTxSignature) {
+      return jsonResponse(400, {
+        error:
+          "Missing transfer transaction signature. Please sign and send the token transfer transaction first.",
+      });
+    }
+
+    if (!isValidTransactionSignature(transferTxSignature)) {
+      return jsonResponse(400, {
+        error: "Invalid transaction signature format",
       });
     }
 
@@ -97,9 +139,9 @@ export const onRequestPost = async ({
       });
     }
 
-    // Verify signature
-    if (!verifySignature(message, signature, wallet)) {
-      return jsonResponse(401, { error: "Invalid signature" });
+    // Verify message signature
+    if (!verifySignature(message, messageSignature, wallet)) {
+      return jsonResponse(401, { error: "Invalid message signature" });
     }
 
     // Validate period
@@ -109,7 +151,7 @@ export const onRequestPost = async ({
       });
     }
 
-    // Create stake
+    // Create stake record
     const now = Date.now();
     const endTime = now + periodDays * 24 * 60 * 60 * 1000;
     const rewardAmount = calculateReward(amount, periodDays);
@@ -138,6 +180,8 @@ export const onRequestPost = async ({
       data: {
         ...stake,
         timeRemainingMs: periodDays * 24 * 60 * 60 * 1000,
+        vaultWallet: REWARD_CONFIG.vaultWallet,
+        transferTxSignature,
       },
     });
   } catch (error) {

@@ -68,6 +68,7 @@ import {
   handleListStakes,
   handleWithdrawStake,
   handleRewardStatus,
+  handleStakingConfig,
 } from "./routes/staking";
 
 export async function createServer(): Promise<express.Application> {
@@ -631,6 +632,7 @@ export async function createServer(): Promise<express.Application> {
   app.delete("/api/orders/:orderId", handleDeleteOrder);
 
   // Staking routes
+  app.get("/api/staking/config", handleStakingConfig);
   app.post("/api/staking/create", handleCreateStake);
   app.get("/api/staking/list", handleListStakes);
   app.post("/api/staking/withdraw", handleWithdrawStake);

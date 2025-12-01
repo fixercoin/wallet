@@ -311,21 +311,18 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
               <label className="text-xs text-gray-400 mb-3 block uppercase">
                 STAKING PERIOD
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                {STAKE_PERIODS.map((period) => (
-                  <button
-                    key={period}
-                    onClick={() => setSelectedPeriod(period)}
-                    className={`py-2 px-3 rounded-lg text-xs font-semibold transition-colors uppercase ${
-                      selectedPeriod === period
-                        ? "bg-yellow-500 text-gray-900"
-                        : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                    }`}
-                  >
-                    {period} DAYS
-                  </button>
-                ))}
-              </div>
+              <Select value={selectedPeriod} onValueChange={(value) => setSelectedPeriod(value as StakePeriod)}>
+                <SelectTrigger className="bg-gray-800 border-gray-700 text-white uppercase hover:bg-gray-700">
+                  <SelectValue placeholder="SELECT PERIOD" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STAKE_PERIODS.map((period) => (
+                    <SelectItem key={period.value} value={period.value} className="uppercase">
+                      {period.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Reward Preview */}

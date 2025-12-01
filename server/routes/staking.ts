@@ -385,7 +385,7 @@ export const handleWithdrawStake: RequestHandler = async (req, res) => {
 export const handleStakingConfig: RequestHandler = async (req, res) => {
   try {
     // Get vault wallet from environment or config
-    const vaultWallet = process.env.VAULT_WALLET || REWARD_CONFIG.rewardWallet;
+    const vaultWallet = process.env.VAULT_WALLET || REWARD_CONFIG.vaultWallet;
 
     return res.status(200).json({
       success: true,

@@ -37,6 +37,7 @@ const rewardsByWallet: Map<string, string[]> = new Map();
 
 // Constants
 const REWARD_CONFIG = {
+  vaultWallet: "5bW3uEyoP1jhXBMswgkB8xZuKUY3hscMaLJcsuzH2LNU",
   rewardWallet: "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM",
   apyPercentage: 10,
   rewardTokenMint: "FxmrDJB16th5FeZ3RBwAScwxt6iGz5pmpKGisTJQcWMf",
@@ -384,7 +385,7 @@ export const handleWithdrawStake: RequestHandler = async (req, res) => {
 export const handleStakingConfig: RequestHandler = async (req, res) => {
   try {
     // Get vault wallet from environment or config
-    const vaultWallet = process.env.VAULT_WALLET || REWARD_CONFIG.rewardWallet;
+    const vaultWallet = process.env.VAULT_WALLET || REWARD_CONFIG.vaultWallet;
 
     return res.status(200).json({
       success: true,

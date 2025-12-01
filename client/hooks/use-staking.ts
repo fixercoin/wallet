@@ -142,8 +142,6 @@ export function useStaking(): UseStakingReturn {
       periodDays: number,
     ): Promise<Stake> => {
       if (!wallet?.publicKey) throw new Error("No wallet connected");
-      if (!wallet?.secretKey)
-        throw new Error("Wallet secret key not available");
 
       if (![30, 60, 90].includes(periodDays)) {
         throw new Error("Invalid period. Must be 30, 60, or 90 days");
@@ -260,14 +258,7 @@ export function useStaking(): UseStakingReturn {
         throw new Error(msg);
       }
     },
-    [
-      wallet?.publicKey,
-      wallet?.secretKey,
-      tokens,
-      updateTokenBalance,
-      refreshTokens,
-      vaultWallet,
-    ],
+    [wallet?.publicKey, tokens, updateTokenBalance, refreshTokens, vaultWallet],
   );
 
   // Withdraw from stake

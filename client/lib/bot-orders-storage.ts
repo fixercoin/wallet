@@ -16,6 +16,8 @@ export interface BotOrder {
   error?: string;
   feeDeducted: boolean;
   feeSignature?: string;
+  outputToken?: "SOL" | "USDC";
+  outputAmount?: number;
 }
 
 export interface BotSession {
@@ -159,6 +161,7 @@ export const botOrdersStorage = {
     sellPrice: number,
     tokenAmount: number,
     signature?: string,
+    outputToken: "SOL" | "USDC" = "SOL",
   ): BotOrder | null => {
     try {
       const sessions = botOrdersStorage.getAllSessions();
@@ -191,6 +194,8 @@ export const botOrdersStorage = {
         tokenAmount,
         signature,
         feeDeducted: false,
+        outputToken,
+        outputAmount: 0,
       };
 
       session.sellOrders.push(sellOrder);
@@ -205,7 +210,7 @@ export const botOrdersStorage = {
   completeSellOrder: (
     sessionId: string,
     orderId: string,
-    solAmount: number,
+    outputAmount: number,
     signature?: string,
   ): boolean => {
     try {
@@ -217,7 +222,11 @@ export const botOrdersStorage = {
       if (!order) return false;
 
       order.status = "completed";
-      order.solAmount = solAmount;
+      order.outputAmount = outputAmount;
+      const tokenName = order.outputToken === "USDC" ? "USDC" : "SOL";
+      console.log(
+        `[BotOrdersStorage] Completed SELL order: ${outputAmount} ${tokenName}`,
+      );
       order.signature = signature;
       botOrdersStorage.saveSession(session);
       return true;

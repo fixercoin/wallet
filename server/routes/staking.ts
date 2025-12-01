@@ -107,7 +107,9 @@ class KVStoreServer {
     this.stakes.set(stakeId, updated);
   }
 
-  async getRewardsByWallet(walletAddress: string): Promise<RewardDistribution[]> {
+  async getRewardsByWallet(
+    walletAddress: string,
+  ): Promise<RewardDistribution[]> {
     const rewardIds = this.rewardsByWallet.get(walletAddress) || [];
     const rewards: RewardDistribution[] = [];
 
@@ -136,7 +138,7 @@ class KVStoreServer {
   }
 }
 
-const kvStore = new KVStoreServer()
+const kvStore = new KVStoreServer();
 
 function verifySignature(
   message: string,

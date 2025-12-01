@@ -1381,7 +1381,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         try {
           saveTokensToCache(wallet.publicKey, updatedTokens);
         } catch (err) {
-          console.warn("[WalletContext] Failed to save updated tokens to cache:", err);
+          console.warn(
+            "[WalletContext] Failed to save updated tokens to cache:",
+            err,
+          );
         }
       }
 

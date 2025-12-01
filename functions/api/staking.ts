@@ -77,6 +77,20 @@ function verifySignature(
 
 export const onRequestGet = async ({ request }: { request: Request }) => {
   const url = new URL(request.url);
+  const action = url.pathname.split("/").pop();
+
+  if (action === "config") {
+    return jsonCors(200, {
+      success: true,
+      data: {
+        vaultWallet: "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM",
+        apyPercentage: 10,
+        supportedPeriods: [30, 60, 90],
+        rewardTokenMint: "FxmrDJB16th5FeZ3RBwAScwxt6iGz5pmpKGisTJQcWMf",
+      },
+    });
+  }
+
   const walletAddress = url.searchParams.get("wallet");
   const authMessage = url.searchParams.get("message");
   const authSignature = url.searchParams.get("signature");

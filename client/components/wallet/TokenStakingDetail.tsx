@@ -276,7 +276,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
               <label className="text-xs text-gray-400 mb-3 block uppercase">
                 STAKING PERIOD
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                 {STAKE_PERIODS.map((period) => (
                   <button
                     key={period.label}

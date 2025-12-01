@@ -16,6 +16,7 @@ interface Env {
 interface WithdrawRequest {
   wallet: string;
   stakeId: string;
+  transferTxSignature: string; // Transaction signature of the withdrawal transfer (vault → user)
   message: string;
   signature: string;
 }

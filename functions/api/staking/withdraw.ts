@@ -1,12 +1,25 @@
 /**
  * POST /api/staking/withdraw
  * Withdraw from a completed stake and process rewards
+ *
+ * This endpoint signs and sends the withdrawal transfer from vault wallet.
+ * Requires VAULT_PRIVATE_KEY environment variable to be set with base58-encoded private key.
  */
 
 import nacl from "tweetnacl";
 import bs58 from "bs58";
+import { PublicKey } from "@solana/web3.js";
 import { KVStore } from "../../lib/kv-utils";
-import { REWARD_CONFIG, RewardDistribution } from "../../lib/reward-config";
+import {
+  REWARD_CONFIG,
+  RewardDistribution,
+  calculateReward,
+  generateStakeId,
+} from "../../lib/reward-config";
+import {
+  signAndSendVaultTransfer,
+  validateVaultBalance,
+} from "../../lib/vault-transfer";
 
 interface Env {
   STAKING_KV: any;

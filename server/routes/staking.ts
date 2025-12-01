@@ -29,7 +29,7 @@ export interface RewardDistribution {
   processedAt?: number;
 }
 
-// In-memory store for development
+// In-memory store for development (fallback, primary uses KV)
 const stakes: Map<string, Stake> = new Map();
 const stakesByWallet: Map<string, string[]> = new Map();
 const rewards: Map<string, RewardDistribution> = new Map();
@@ -56,6 +56,89 @@ function calculateReward(amount: number, periodDays: number): number {
   const dailyRate = yearlyReward / 365;
   return dailyRate * periodDays;
 }
+
+// KV Storage wrapper class for server-side use
+class KVStoreServer {
+  private stakes: Map<string, Stake> = new Map();
+  private stakesByWallet: Map<string, string[]> = new Map();
+  private rewards: Map<string, RewardDistribution> = new Map();
+  private rewardsByWallet: Map<string, string[]> = new Map();
+
+  async getStakesByWallet(walletAddress: string): Promise<Stake[]> {
+    const stakeIds = this.stakesByWallet.get(walletAddress) || [];
+    const stakes: Stake[] = [];
+
+    for (const stakeId of stakeIds) {
+      const stake = this.stakes.get(stakeId);
+      if (stake) {
+        stakes.push(stake);
+      }
+    }
+
+    return stakes;
+  }
+
+  async getStake(stakeId: string): Promise<Stake | null> {
+    return this.stakes.get(stakeId) || null;
+  }
+
+  async createStake(stake: Stake): Promise<Stake> {
+    this.stakes.set(stake.id, stake);
+
+    const stakeIds = this.stakesByWallet.get(stake.walletAddress) || [];
+    stakeIds.push(stake.id);
+    this.stakesByWallet.set(stake.walletAddress, stakeIds);
+
+    return stake;
+  }
+
+  async updateStake(stakeId: string, updates: Partial<Stake>): Promise<void> {
+    const stake = this.stakes.get(stakeId);
+    if (!stake) {
+      throw new Error("Stake not found");
+    }
+
+    const updated: Stake = {
+      ...stake,
+      ...updates,
+      updatedAt: Date.now(),
+    };
+
+    this.stakes.set(stakeId, updated);
+  }
+
+  async getRewardsByWallet(
+    walletAddress: string,
+  ): Promise<RewardDistribution[]> {
+    const rewardIds = this.rewardsByWallet.get(walletAddress) || [];
+    const rewards: RewardDistribution[] = [];
+
+    for (const rewardId of rewardIds) {
+      const reward = this.rewards.get(rewardId);
+      if (reward) {
+        rewards.push(reward);
+      }
+    }
+
+    return rewards;
+  }
+
+  async getReward(rewardId: string): Promise<RewardDistribution | null> {
+    return this.rewards.get(rewardId) || null;
+  }
+
+  async recordReward(reward: RewardDistribution): Promise<RewardDistribution> {
+    this.rewards.set(reward.id, reward);
+
+    const rewardIds = this.rewardsByWallet.get(reward.walletAddress) || [];
+    rewardIds.push(reward.id);
+    this.rewardsByWallet.set(reward.walletAddress, rewardIds);
+
+    return reward;
+  }
+}
+
+const kvStore = new KVStoreServer();
 
 function verifySignature(
   message: string,
@@ -123,13 +206,8 @@ export const handleCreateStake: RequestHandler = async (req, res) => {
       updatedAt: now,
     };
 
-    // Store the stake
-    stakes.set(stakeId, stake);
-
-    // Add to wallet's stake list
-    const walletStakes = stakesByWallet.get(wallet) || [];
-    walletStakes.push(stakeId);
-    stakesByWallet.set(wallet, walletStakes);
+    // Store the stake using KV store
+    await kvStore.createStake(stake);
 
     return res.status(201).json({
       success: true,
@@ -154,21 +232,20 @@ export const handleListStakes: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "Missing wallet address" });
     }
 
-    // Get all stakes for the wallet
-    const stakeIds = stakesByWallet.get(walletAddress) || [];
-    const walletStakes: Stake[] = [];
+    // Get all stakes for the wallet using KV store
+    const walletStakes = await kvStore.getStakesByWallet(walletAddress);
 
-    for (const stakeId of stakeIds) {
-      const stake = stakes.get(stakeId);
-      if (stake) {
-        walletStakes.push(stake);
-      }
-    }
+    // Add timeRemainingMs for active stakes
+    const enrichedStakes = walletStakes.map((stake) => ({
+      ...stake,
+      timeRemainingMs:
+        stake.status === "active" ? Math.max(0, stake.endTime - Date.now()) : 0,
+    }));
 
     return res.status(200).json({
       success: true,
-      data: walletStakes,
-      count: walletStakes.length,
+      data: enrichedStakes,
+      count: enrichedStakes.length,
     });
   } catch (error) {
     console.error("Error in handleListStakes:", error);
@@ -193,8 +270,8 @@ export const handleWithdrawStake: RequestHandler = async (req, res) => {
       return res.status(401).json({ error: "Invalid signature" });
     }
 
-    // Get the stake
-    const stake = stakes.get(stakeId);
+    // Get the stake using KV store
+    const stake = await kvStore.getStake(stakeId);
 
     if (!stake) {
       return res.status(404).json({ error: "Stake not found" });
@@ -222,14 +299,14 @@ export const handleWithdrawStake: RequestHandler = async (req, res) => {
       });
     }
 
-    // Update stake status
-    const updatedStake: Stake = {
-      ...stake,
+    // Update stake status using KV store
+    await kvStore.updateStake(stakeId, {
       status: "withdrawn",
       withdrawnAt: now,
-      updatedAt: now,
-    };
-    stakes.set(stakeId, updatedStake);
+    });
+
+    // Get updated stake
+    const updatedStake = await kvStore.getStake(stakeId);
 
     // Record reward distribution
     const rewardId = generateRewardId();
@@ -244,12 +321,7 @@ export const handleWithdrawStake: RequestHandler = async (req, res) => {
       processedAt: now,
     };
 
-    rewards.set(rewardId, reward);
-
-    // Add to wallet's reward list
-    const walletRewards = rewardsByWallet.get(wallet) || [];
-    walletRewards.push(rewardId);
-    rewardsByWallet.set(wallet, walletRewards);
+    await kvStore.recordReward(reward);
 
     return res.status(200).json({
       success: true,
@@ -280,24 +352,19 @@ export const handleRewardStatus: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "Missing wallet address" });
     }
 
-    // Get all rewards for the wallet
-    const rewardIds = rewardsByWallet.get(walletAddress) || [];
-    const walletRewards: RewardDistribution[] = [];
+    // Get all rewards for the wallet using KV store
+    const walletRewards = await kvStore.getRewardsByWallet(walletAddress);
 
     let totalEarned = 0;
     let processedCount = 0;
     let pendingCount = 0;
 
-    for (const rewardId of rewardIds) {
-      const reward = rewards.get(rewardId);
-      if (reward) {
-        walletRewards.push(reward);
-        totalEarned += reward.rewardAmount;
-        if (reward.status === "processed") {
-          processedCount++;
-        } else {
-          pendingCount++;
-        }
+    for (const reward of walletRewards) {
+      totalEarned += reward.rewardAmount;
+      if (reward.status === "processed") {
+        processedCount++;
+      } else {
+        pendingCount++;
       }
     }
 

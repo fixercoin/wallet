@@ -101,16 +101,17 @@ if (typeof window !== "undefined") {
 
 import "./global.css";
 
+import React, { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
-import { createRoot } from "react-dom/client";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "next-themes";
+import { initStorageMonitoring } from "@/lib/storage-monitor";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
@@ -138,8 +139,12 @@ import AssetsPage from "./pages/AssetsPage";
 import DepositAssetPage from "./pages/DepositAssetPage";
 import SelectLanguagePage from "./pages/SelectLanguagePage";
 import SelectCurrencyPage from "./pages/SelectCurrencyPage";
-import { BottomNavigation } from "@/components/BottomNavigation";
+import BurnTokenPage from "./pages/BurnTokenPage";
+import RunningMarketMaker from "./pages/RunningMarketMaker";
+import MarketMakerHistory from "./pages/MarketMakerHistory";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
+import { BottomNavigation } from "@/components/BottomNavigation";
+import DocumentationPage from "./pages/DocumentationPage";
 
 const queryClient = new QueryClient();
 
@@ -164,6 +169,7 @@ function AppRoutes() {
       <Route path="/token/:mint" element={<TokenSearchDetail />} />
       <Route path="/admin-broadcast" element={<AdminBroadcast />} />
       <Route path="/autobot" element={<AutoBot />} />
+      <Route path="/burn" element={<BurnTokenPage />} />
       <Route path="/airdrop" element={<AirdropPage />} />
       <Route path="/assets" element={<AssetsPage />} />
       <Route path="/assets/deposit" element={<DepositAssetPage />} />
@@ -172,12 +178,26 @@ function AppRoutes() {
       <Route path="/dapps/view" element={<DappView />} />
       <Route path="/select-language" element={<SelectLanguagePage />} />
       <Route path="/select-currency" element={<SelectCurrencyPage />} />
+      <Route
+        path="/market-maker/running/:sessionId"
+        element={<RunningMarketMaker />}
+      />
+      <Route path="/market-maker/history" element={<MarketMakerHistory />} />
+      <Route
+        path="/documentation"
+        element={<DocumentationPage onBack={() => window.history.back()} />}
+      />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
 
 function App() {
+  // Initialize storage monitoring on app start
+  useEffect(() => {
+    initStorageMonitoring();
+  }, []);
+
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
@@ -189,7 +209,7 @@ function App() {
               <LanguageProvider>
                 <CurrencyProvider>
                   <BrowserRouter>
-                    <div className="min-h-screen pb-20">
+                    <div className="min-h-screen pb-24">
                       <AppRoutes />
                       <BottomNavigation />
                     </div>
@@ -204,9 +224,4 @@ function App() {
   );
 }
 
-try {
-  createRoot(document.getElementById("root")!).render(<App />);
-} catch (err) {
-  console.error("React render error:", err);
-  throw err;
-}
+export default App;

@@ -63,6 +63,12 @@ import {
   validateSolanaSend,
   validateSwapSubmit,
 } from "./middleware/validate";
+import {
+  handleCreateStake,
+  handleListStakes,
+  handleWithdrawStake,
+  handleRewardStatus,
+} from "./routes/staking";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
@@ -624,6 +630,12 @@ export async function createServer(): Promise<express.Application> {
   app.put("/api/orders/:orderId", handleUpdateOrder);
   app.delete("/api/orders/:orderId", handleDeleteOrder);
 
+  // Staking routes
+  app.post("/api/staking/create", handleCreateStake);
+  app.get("/api/staking/list", handleListStakes);
+  app.post("/api/staking/withdraw", handleWithdrawStake);
+  app.get("/api/staking/rewards-status", handleRewardStatus);
+
   // P2P Orders routes (legacy API) - DISABLED
   // These legacy endpoints are intentionally disabled to stop P2P order handling from this setup.
   // Keeping explicit disabled handlers so callers receive a clear 410 Gone response.
@@ -687,6 +699,28 @@ export async function createServer(): Promise<express.Application> {
     res.json({
       status: "pong",
       timestamp: new Date().toISOString(),
+    });
+  });
+
+  // Root endpoint
+  app.get("/", (req, res) => {
+    res.json({
+      status: "ok",
+      message: "Fixorium Wallet API",
+      version: "1.0.0",
+      timestamp: new Date().toISOString(),
+      info: "Frontend is served from Vite dev server at http://localhost:5173 in development mode",
+      endpoints: {
+        health: "/health",
+        api: "/api",
+        api_health: "/api/health",
+        ping: "/api/ping",
+        wallet: "/api/wallet/balance",
+        balance: "/api/balance",
+        quote: "/api/quote",
+        swap: "/api/swap/execute",
+        orders: "/api/orders",
+      },
     });
   });
 

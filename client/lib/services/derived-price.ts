@@ -12,6 +12,14 @@ export interface DerivedPrice {
   updatedAt: number;
 }
 
+export interface GenericTokenPrice {
+  mint: string;
+  tokensPerSol: number; // how many token units per 1 SOL
+  tokenUsd: number; // USD price per 1 token
+  solUsd: number; // SOL USD price used
+  updatedAt: number;
+}
+
 const DECIMALS: Record<SupportedToken | "SOL", number> = {
   SOL: 9,
   FIXERCOIN: 6,
@@ -20,9 +28,11 @@ const DECIMALS: Record<SupportedToken | "SOL", number> = {
 
 const FALLBACK_USD: Record<SupportedToken | "SOL", number> = {
   SOL: 149.38, // Real-time market price
-  FIXERCOIN: 0.00008139, // Real-time market price
-  LOCKER: 0.00001112, // Real-time market price
+  FIXERCOIN: 0.000042, // Fallback price for pump.fun token
+  LOCKER: 0.000008, // Fallback price for pump.fun token
 };
+
+const genericTokenCache = new Map<string, GenericTokenPrice>();
 
 const cache = new Map<SupportedToken, DerivedPrice>();
 const CACHE_TTL_MS = 30_000;
@@ -181,5 +191,68 @@ export async function getDerivedPrice(
     updatedAt: now,
   };
   cache.set(token, result);
+  return result;
+}
+
+async function getGenericTokensPerSol(
+  tokenMint: string,
+  tokenDecimals: number,
+): Promise<number | null> {
+  try {
+    // Use DexScreener to get token USD price
+    const dexData = await dexscreenerAPI.getTokenByMint(tokenMint);
+    if (dexData?.priceUsd) {
+      const tokenUsd = parseFloat(dexData.priceUsd);
+      if (Number.isFinite(tokenUsd) && tokenUsd > 0) {
+        const solUsd = await getSolUsd();
+        const tokensPerSol = solUsd / tokenUsd;
+        console.log(
+          `1 SOL = ${tokensPerSol.toFixed(2)} tokens (mint=${tokenMint}, from DexScreener)`,
+        );
+        return tokensPerSol;
+      }
+    }
+
+    console.warn(`No price data found for token ${tokenMint} on DexScreener`);
+    return null;
+  } catch (error) {
+    console.warn(`Error getting tokens per SOL for ${tokenMint}:`, error);
+    return null;
+  }
+}
+
+export async function getTokenPriceBySol(
+  mint: string,
+  decimals: number,
+): Promise<GenericTokenPrice | null> {
+  const now = Date.now();
+  const cached = genericTokenCache.get(mint);
+  if (cached && now - cached.updatedAt < CACHE_TTL_MS) return cached;
+
+  const [solUsd, tps] = await Promise.all([
+    getSolUsd(),
+    getGenericTokensPerSol(mint, decimals),
+  ]);
+
+  let tokensPerSol = tps ?? 0;
+  let tokenUsd = 0;
+
+  if (tokensPerSol > 0) {
+    tokenUsd = solUsd / tokensPerSol;
+  } else {
+    // If DexScreener failed, return null
+    // The caller should handle fallback to existing price data
+    console.warn(`Unable to calculate price for token ${mint}`);
+    return null;
+  }
+
+  const result: GenericTokenPrice = {
+    mint,
+    tokensPerSol,
+    tokenUsd,
+    solUsd,
+    updatedAt: now,
+  };
+  genericTokenCache.set(mint, result);
   return result;
 }

@@ -98,6 +98,14 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
         mockTokenInfo.liquidity = 0;
       }
 
+      if (mint === "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump") {
+        mockTokenInfo.symbol = "FXM";
+        mockTokenInfo.name = "Fixorium";
+        mockTokenInfo.decimals = 6;
+        mockTokenInfo.logoURI =
+          "https://cdn.builder.io/api/v1/image/assets%2Feff28b05195a4f5f8e8aaeec5f72bbfe%2Fc78ec8b33eec40be819bca514ed06f2a?format=webp&width=800";
+      }
+
       setTokenInfo(mockTokenInfo);
     } catch (error) {
       console.error("Token validation error:", error);

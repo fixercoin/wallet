@@ -7,7 +7,8 @@ import { dexscreenerAPI, DexscreenerToken } from "@/lib/services/dexscreener";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { TokenInfo } from "@/lib/wallet";
-import { getTokenMetadata } from "@/lib/services/solana-rpc";
+import { getTokenMetadata, KNOWN_TOKENS } from "@/lib/services/solana-rpc";
+import { TradingChart } from "@/components/wallet/token-detail/TradingChart";
 
 export default function TokenSearchDetail() {
   const { mint = "" } = useParams();
@@ -18,9 +19,12 @@ export default function TokenSearchDetail() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
 
+  const knownToken = KNOWN_TOKENS[mint];
+  const tokenMintToCheck =
+    dexToken?.baseToken?.address || knownToken?.mint || mint;
   const alreadyAdded = useMemo(
-    () => tokens.some((t) => t.mint === mint),
-    [tokens, mint],
+    () => tokens.some((t) => t.mint === tokenMintToCheck),
+    [tokens, tokenMintToCheck],
   );
 
   useEffect(() => {
@@ -41,20 +45,24 @@ export default function TokenSearchDetail() {
   }, [mint]);
 
   const onAdd = async () => {
-    if (!dexToken) return;
     setAdding(true);
     try {
-      const baseMint = dexToken.baseToken?.address || mint;
+      const baseMint = dexToken?.baseToken?.address || knownToken?.mint || mint;
       const meta = await getTokenMetadata(baseMint).catch(() => null);
-      const decimals = meta?.decimals ?? 9;
-      const symbol = dexToken.baseToken?.symbol || meta?.symbol || "TOKEN";
-      const name = dexToken.baseToken?.name || meta?.name || symbol;
-      const priceUsd = dexToken.priceUsd
+      const decimals = meta?.decimals ?? knownToken?.decimals ?? 9;
+      const symbol =
+        dexToken?.baseToken?.symbol ||
+        knownToken?.symbol ||
+        meta?.symbol ||
+        "TOKEN";
+      const name =
+        dexToken?.baseToken?.name || knownToken?.name || meta?.name || symbol;
+      const priceUsd = dexToken?.priceUsd
         ? parseFloat(dexToken.priceUsd)
         : undefined;
 
-      // Get logo from DexScreener API
-      const logoURI = dexToken.info?.imageUrl;
+      // Get logo from DexScreener API, fallback to KNOWN_TOKENS
+      let logoURI = dexToken?.info?.imageUrl || knownToken?.logoURI;
 
       const token: TokenInfo = {
         mint: baseMint,
@@ -86,8 +94,7 @@ export default function TokenSearchDetail() {
       </div>
     );
   }
-
-  if (!dexToken) {
+  if (!dexToken && !knownToken) {
     return (
       <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -100,15 +107,26 @@ export default function TokenSearchDetail() {
     );
   }
 
-  const img = dexToken.info?.imageUrl;
-  const symbol = dexToken.baseToken?.symbol || "";
-  const name = dexToken.baseToken?.name || symbol;
-  const priceUsd = dexToken.priceUsd ? parseFloat(dexToken.priceUsd) : 0;
+  const img = dexToken?.info?.imageUrl || knownToken?.logoURI;
+  const symbol = dexToken?.baseToken?.symbol || knownToken?.symbol || "";
+  const name = dexToken?.baseToken?.name || knownToken?.name || symbol;
+  const priceUsd = dexToken?.priceUsd ? parseFloat(dexToken.priceUsd) : 0;
+
+  // Create a TokenInfo object for the TradingChart
+  const tokenInfo: TokenInfo = {
+    mint: tokenMintToCheck,
+    symbol,
+    name,
+    decimals: knownToken?.decimals ?? 9,
+    logoURI: img,
+    price: priceUsd || undefined,
+    priceChange24h: dexToken?.priceChange?.h24,
+  };
 
   return (
     <div className="express-p2p-page dark-theme min-h-screen bg-gray-900 text-white">
-      <div className="w-full md:max-w-lg mx-auto px-4 py-6">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="w-full md:max-w-lg mx-auto px-4 py-6 flex flex-col gap-6">
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
@@ -170,15 +188,24 @@ export default function TokenSearchDetail() {
                   <Plus className="h-4 w-4 mr-2" /> Add Token
                 </Button>
               )}
-              <a
-                href={dexToken.url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-[2px] border border-gray-600 px-3 text-sm text-gray-400 hover:bg-gray-700"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </a>
+              {dexToken?.url ? (
+                <a
+                  href={dexToken.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center rounded-[2px] border border-gray-600 px-3 text-sm text-gray-400 hover:bg-gray-700"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              ) : null}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Trading Chart */}
+        <Card className="border border-gray-700/40 bg-gradient-to-br from-gray-800 via-gray-800 to-gray-700">
+          <CardContent className="p-4">
+            <TradingChart token={tokenInfo} mint={tokenMintToCheck} />
           </CardContent>
         </Card>
       </div>

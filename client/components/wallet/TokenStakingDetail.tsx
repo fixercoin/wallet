@@ -32,7 +32,12 @@ interface PeriodOption {
 }
 
 const STAKE_PERIODS: PeriodOption[] = [
-  { value: "10m", label: "10 MINUTES", displayLabel: "10 MINUTES", days: 10 / 1440 },
+  {
+    value: "10m",
+    label: "10 MINUTES",
+    displayLabel: "10 MINUTES",
+    days: 10 / 1440,
+  },
   { value: "30d", label: "30 DAYS", displayLabel: "30 DAYS", days: 30 },
   { value: "60d", label: "60 DAYS", displayLabel: "60 DAYS", days: 60 },
   { value: "90d", label: "90 DAYS", displayLabel: "90 DAYS", days: 90 },
@@ -88,7 +93,8 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
   );
 
   // Get the period option object
-  const selectedPeriodOption = STAKE_PERIODS.find((p) => p.value === selectedPeriod) || STAKE_PERIODS[1];
+  const selectedPeriodOption =
+    STAKE_PERIODS.find((p) => p.value === selectedPeriod) || STAKE_PERIODS[1];
 
   // Filter stakes for this token
   const tokenStakes = stakes.filter(
@@ -159,7 +165,11 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
 
     setIsStaking(true);
     try {
-      await createStake(token.mint, Number(stakeAmount), selectedPeriodOption.days);
+      await createStake(
+        token.mint,
+        Number(stakeAmount),
+        selectedPeriodOption.days,
+      );
 
       // Refresh stakes to ensure the new stake appears
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -311,13 +321,22 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
               <label className="text-xs text-gray-400 mb-3 block uppercase">
                 STAKING PERIOD
               </label>
-              <Select value={selectedPeriod} onValueChange={(value) => setSelectedPeriod(value as StakePeriod)}>
+              <Select
+                value={selectedPeriod}
+                onValueChange={(value) =>
+                  setSelectedPeriod(value as StakePeriod)
+                }
+              >
                 <SelectTrigger className="bg-gray-800 border-gray-700 text-white uppercase hover:bg-gray-700">
                   <SelectValue placeholder="SELECT PERIOD" />
                 </SelectTrigger>
                 <SelectContent>
                   {STAKE_PERIODS.map((period) => (
-                    <SelectItem key={period.value} value={period.value} className="uppercase">
+                    <SelectItem
+                      key={period.value}
+                      value={period.value}
+                      className="uppercase"
+                    >
                       {period.label}
                     </SelectItem>
                   ))}

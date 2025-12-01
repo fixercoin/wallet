@@ -145,9 +145,17 @@ export const onRequestPost = async ({
     }
 
     // Validate period
-    if (![30, 60, 90].includes(periodDays)) {
+    const validPeriods = [
+      10 / (24 * 60), // 10 minutes
+      10, // 10 days
+      30, // 30 days
+      60, // 60 days
+      90, // 90 days
+    ];
+    if (!validPeriods.some((p) => Math.abs(p - periodDays) < 0.0001)) {
       return jsonResponse(400, {
-        error: "Invalid period. Must be 30, 60, or 90 days",
+        error:
+          "Invalid period. Must be 10 minutes, 10 days, 30 days, 60 days, or 90 days",
       });
     }
 

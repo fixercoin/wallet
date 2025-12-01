@@ -22,6 +22,8 @@ interface TokenStakingDetailProps {
   onBack: () => void;
 }
 
+// ======= MAIN VERSION KEPT =======
+
 type StakePeriod = "10m" | "30d" | "60d" | "90d";
 
 interface PeriodOption {
@@ -43,8 +45,10 @@ const STAKE_PERIODS: PeriodOption[] = [
   { value: "90d", label: "90 DAYS", displayLabel: "90 DAYS", days: 90 },
 ];
 
-const APY_RATE = 0.1; // 10%
-const MIN_STAKE_AMOUNT = 1000; // Minimum 1000 tokens
+// ==================================
+
+const APY_RATE = 0.1;
+const MIN_STAKE_AMOUNT = 1000;
 
 function calculateReward(amount: number, periodDays: number): number {
   const yearlyReward = amount * APY_RATE;
@@ -65,15 +69,10 @@ function formatTimeRemaining(ms: number): string {
   const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((ms % (1000 * 60)) / 1000);
 
-  if (days > 0) {
-    return `${days}d ${hours}h ${minutes}m`;
-  } else if (hours > 0) {
-    return `${hours}h ${minutes}m ${seconds}s`;
-  } else if (minutes > 0) {
-    return `${minutes}m ${seconds}s`;
-  } else {
-    return `${seconds}s`;
-  }
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
 }
 
 export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
@@ -85,18 +84,19 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
     useStaking();
   const { toast } = useToast();
 
+  // ===== MAIN VERSION KEPT =====
   const [selectedPeriod, setSelectedPeriod] = useState<StakePeriod>("30d");
+  // =============================
+
   const [stakeAmount, setStakeAmount] = useState("");
   const [isStaking, setIsStaking] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<{ [key: string]: string }>(
     {},
   );
 
-  // Get the period option object
   const selectedPeriodOption =
     STAKE_PERIODS.find((p) => p.value === selectedPeriod) || STAKE_PERIODS[1];
 
-  // Filter stakes for this token
   const tokenStakes = stakes.filter(
     (stake) => stake.tokenMint === token.mint && stake.status === "active",
   );
@@ -105,19 +105,16 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
     (stake) => stake.tokenMint === token.mint && stake.status === "completed",
   );
 
-  // Calculate available balance (subtract active stakes)
   const totalStaked = tokenStakes.reduce((sum, stake) => sum + stake.amount, 0);
   const availableBalance = Math.max(0, (token.balance || 0) - totalStaked);
   const calculatedReward = stakeAmount
     ? calculateReward(Number(stakeAmount), selectedPeriodOption.days)
     : 0;
 
-  // Load stakes on component mount
   useEffect(() => {
     refreshStakes();
   }, [token.mint, refreshStakes]);
 
-  // Update timer for active stakes
   useEffect(() => {
     const interval = setInterval(() => {
       const newTimeRemaining: { [key: string]: string } = {};
@@ -171,13 +168,12 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
         selectedPeriodOption.days,
       );
 
-      // Refresh stakes to ensure the new stake appears
       await new Promise((resolve) => setTimeout(resolve, 500));
       await refreshStakes();
 
       toast({
         title: "STAKING STARTED",
-        description: `SUCCESSFULLY STAKED ${formatTokenAmount(Number(stakeAmount))} ${token.symbol}. YOUR TOKENS ARE NOW LOCKED IN THE STAKING POOL.`,
+        description: `SUCCESSFULLY STAKED ${formatTokenAmount(Number(stakeAmount))} ${token.symbol}.`,
       });
       setStakeAmount("");
     } catch (err) {
@@ -197,7 +193,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
       const result = await withdrawStake(stakeId);
       toast({
         title: "WITHDRAWAL SUCCESSFUL",
-        description: `RECEIVED ${formatTokenAmount(result.totalAmount)} ${token.symbol} INCLUDING REWARDS`,
+        description: `RECEIVED ${formatTokenAmount(result.totalAmount)} ${token.symbol}`,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -236,13 +232,13 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
   return (
     <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground p-4">
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2">
-        {/* Header */}
+
+        {/* HEADER */}
         <div className="flex items-center gap-3 mb-6">
           <Button
             onClick={onBack}
             size="sm"
             className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-white/10 text-white ring-0 focus-visible:ring-0 border border-transparent"
-            aria-label="Back"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -251,7 +247,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
           </h1>
         </div>
 
-        {/* Token Card */}
+        {/* TOKEN CARD */}
         <Card className="w-full bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg border border-gray-700 mb-6">
           <CardContent className="p-6">
             <div className="flex items-center gap-4 mb-6">
@@ -272,7 +268,6 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
               </div>
             </div>
 
-            {/* Available Balance */}
             <div className="bg-gray-900/50 rounded-lg p-4 mb-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-400">AVAILABLE</span>
@@ -284,14 +279,14 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
           </CardContent>
         </Card>
 
-        {/* Staking Form */}
+        {/* STAKING FORM */}
         <Card className="w-full bg-gray-900 rounded-lg border border-gray-700 mb-6">
           <CardContent className="p-6">
             <h2 className="text-sm font-semibold text-white mb-4 uppercase">
               NEW STAKE
             </h2>
 
-            {/* Amount Input */}
+            {/* AMOUNT */}
             <div className="mb-6">
               <label className="text-xs text-gray-400 mb-2 block uppercase">
                 STAKE AMOUNT ({token.symbol})
@@ -303,8 +298,6 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                   onChange={(e) => setStakeAmount(e.target.value)}
                   placeholder="0.00"
                   className="bg-gray-800 border-gray-700 text-white"
-                  min="0"
-                  step="0.01"
                 />
                 <Button
                   onClick={handleMaxClick}
@@ -316,11 +309,12 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
               </div>
             </div>
 
-            {/* Staking Period Selection */}
+            {/* STAKE PERIOD */}
             <div className="mb-6">
               <label className="text-xs text-gray-400 mb-3 block uppercase">
                 STAKING PERIOD
               </label>
+
               <Select
                 value={selectedPeriod}
                 onValueChange={(value) =>
@@ -344,7 +338,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
               </Select>
             </div>
 
-            {/* Reward Preview */}
+            {/* REWARD PREVIEW */}
             {stakeAmount && (
               <div className="bg-gray-800/50 rounded-lg p-4 mb-6">
                 <div className="space-y-2">
@@ -357,9 +351,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-400 uppercase">
-                      TOTAL AT END
-                    </span>
+                    <span className="text-gray-400 uppercase">TOTAL AT END</span>
                     <span className="text-white font-semibold">
                       {formatTokenAmount(
                         Number(stakeAmount) + calculatedReward,
@@ -371,7 +363,6 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
               </div>
             )}
 
-            {/* Start Staking Button */}
             <Button
               onClick={handleStartStaking}
               disabled={
@@ -380,25 +371,27 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                 isStaking ||
                 loading
               }
-              className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold uppercase"
             >
               {isStaking ? "PROCESSING..." : "START STAKING"}
             </Button>
+
             {stakeAmount && Number(stakeAmount) < MIN_STAKE_AMOUNT && (
               <p className="text-xs text-red-400 mt-2 uppercase">
-                MINIMUM STAKE REQUIRED: {formatTokenAmount(MIN_STAKE_AMOUNT)}{" "}
-                {token.symbol}
+                MINIMUM STAKE REQUIRED:{" "}
+                {formatTokenAmount(MIN_STAKE_AMOUNT)} {token.symbol}
               </p>
             )}
           </CardContent>
         </Card>
 
-        {/* Active Stakes */}
+        {/* ACTIVE STAKES */}
         {tokenStakes.length > 0 && (
           <div className="space-y-4 mb-6">
             <h2 className="text-sm font-semibold text-white uppercase">
               ACTIVE STAKES
             </h2>
+
             {tokenStakes.map((stake) => {
               const timeLeft = Math.max(0, stake.endTime - Date.now());
               const isWithdrawable = timeLeft === 0;
@@ -422,6 +415,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                           {formatTokenAmount(stake.amount)} {token.symbol}
                         </p>
                       </div>
+
                       <div>
                         <p className="text-xs text-gray-400 mb-1 uppercase">
                           EXPECTED REWARD
@@ -430,6 +424,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                           +{formatTokenAmount(stake.rewardAmount)}
                         </p>
                       </div>
+
                       <div>
                         <p className="text-xs text-gray-400 mb-1 uppercase">
                           PERIOD
@@ -438,6 +433,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                           {stake.stakePeriodDays} days
                         </p>
                       </div>
+
                       <div className="flex items-end">
                         {isWithdrawable ? (
                           <span className="text-xs font-semibold text-green-400 bg-green-500/10 px-2 py-1 rounded uppercase">
@@ -454,7 +450,6 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                       </div>
                     </div>
 
-                    {/* Progress Bar with Time Count */}
                     {!isWithdrawable && (
                       <div className="mb-4">
                         <div className="flex justify-between items-center mb-2">
@@ -490,12 +485,13 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
           </div>
         )}
 
-        {/* Stake History */}
+        {/* HISTORY */}
         {completedStakes.length > 0 && (
           <div className="space-y-4 mb-6">
             <h2 className="text-sm font-semibold text-white uppercase">
               STAKE HISTORY ({completedStakes.length})
             </h2>
+
             {completedStakes.map((stake) => (
               <Card
                 key={stake.id}
@@ -511,6 +507,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                         {formatTokenAmount(stake.amount)} {token.symbol}
                       </p>
                     </div>
+
                     <div>
                       <p className="text-xs text-gray-400 mb-1 uppercase">
                         REWARD EARNED
@@ -519,6 +516,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                         +{formatTokenAmount(stake.rewardAmount)}
                       </p>
                     </div>
+
                     <div>
                       <p className="text-xs text-gray-400 mb-1 uppercase">
                         PERIOD
@@ -527,6 +525,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                         {stake.stakePeriodDays} days
                       </p>
                     </div>
+
                     <div>
                       <p className="text-xs text-gray-400 mb-1 uppercase">
                         STATUS
@@ -537,7 +536,6 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                     </div>
                   </div>
 
-                  {/* Progress Bar for completed stake - show as 100% */}
                   <div className="mb-3">
                     <div className="flex justify-between items-center mb-2">
                       <p className="text-xs text-gray-400 uppercase">
@@ -548,14 +546,15 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                     <Progress value={100} className="h-2" />
                   </div>
 
-                  {/* Info about total received */}
                   <div className="bg-gray-800/50 rounded-lg p-3">
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-gray-400 uppercase">
                         TOTAL RECEIVED
                       </span>
                       <span className="text-green-400 font-semibold">
-                        {formatTokenAmount(stake.amount + stake.rewardAmount)}{" "}
+                        {formatTokenAmount(
+                          stake.amount + stake.rewardAmount,
+                        )}{" "}
                         {token.symbol}
                       </span>
                     </div>

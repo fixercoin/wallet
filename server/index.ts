@@ -68,6 +68,7 @@ import {
   handleListStakes,
   handleWithdrawStake,
   handleRewardStatus,
+  handleStakingConfig,
 } from "./routes/staking";
 
 export async function createServer(): Promise<express.Application> {

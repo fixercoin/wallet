@@ -1,7 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
+import { PublicKey } from "@solana/web3.js";
 import { useWallet } from "@/contexts/WalletContext";
 import { resolveApiUrl } from "@/lib/api-client";
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
+import {
+  buildTokenTransferTransaction,
+  sendTokenTransferTransaction,
+  confirmTokenTransfer,
+  getTokenDecimals,
+} from "@/lib/spl-token-transfer";
 import bs58 from "bs58";
 
 export interface Stake {
@@ -32,6 +39,7 @@ interface UseStakingReturn {
   loading: boolean;
   error: string | null;
   rewardPayerWallet: string;
+  vaultWallet: string;
   createStake: (
     tokenMint: string,
     amount: number,
@@ -55,13 +63,9 @@ function calculateReward(amount: number, periodDays: number): number {
   return dailyRate * periodDays;
 }
 
-function generateStakeId(): string {
-  return `stake_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-}
-
 /**
- * Hook to manage staking operations using Supabase database
- * Stakes are persisted in Supabase and accessible from any device
+ * Hook to manage staking operations with real SPL token transfers
+ * Tokens are actually transferred to/from the vault wallet
  */
 export function useStaking(): UseStakingReturn {
   const { wallet, tokens, updateTokenBalance, refreshTokens } = useWallet();
@@ -69,25 +73,26 @@ export function useStaking(): UseStakingReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rewardPayerWallet, setRewardPayerWallet] = useState<string>("");
+  const [vaultWallet, setVaultWallet] = useState<string>("");
 
-  // Map database row to Stake interface
+  // Map API response to Stake interface
   const mapRowToStake = (row: any): Stake => ({
     id: row.id,
-    walletAddress: row.wallet_address,
-    tokenMint: row.token_mint,
+    walletAddress: row.walletAddress,
+    tokenMint: row.tokenMint,
     amount: row.amount,
-    stakePeriodDays: row.stake_period_days,
-    startTime: row.start_time,
-    endTime: row.end_time,
-    rewardAmount: row.reward_amount,
+    stakePeriodDays: row.stakePeriodDays,
+    startTime: row.startTime,
+    endTime: row.endTime,
+    rewardAmount: row.rewardAmount,
     status: row.status,
-    withdrawnAt: row.withdrawn_at,
-    createdAt: row.created_at,
+    withdrawnAt: row.withdrawnAt,
+    createdAt: row.createdAt,
     timeRemainingMs:
-      row.status === "active" ? Math.max(0, row.end_time - Date.now()) : 0,
+      row.status === "active" ? Math.max(0, row.endTime - Date.now()) : 0,
   });
 
-  // Load stakes from Cloudflare API
+  // Load stakes from API
   const refreshStakes = useCallback(async () => {
     if (!wallet?.publicKey) {
       setStakes([]);
@@ -129,14 +134,14 @@ export function useStaking(): UseStakingReturn {
     }
   }, [wallet?.publicKey]);
 
-  // Create new stake via Cloudflare API
+  // Create new stake with real token transfer
   const createStake = useCallback(
     async (
       tokenMint: string,
       amount: number,
       periodDays: number,
     ): Promise<Stake> => {
-      if (!wallet?.publicKey) throw new Error("No wallet");
+      if (!wallet?.publicKey) throw new Error("No wallet connected");
       if (!wallet?.secretKey)
         throw new Error("Wallet secret key not available");
 
@@ -144,24 +149,70 @@ export function useStaking(): UseStakingReturn {
         throw new Error("Invalid period. Must be 30, 60, or 90 days");
       }
 
-      const message = `Create stake:${wallet.publicKey}:${Date.now()}`;
-
       try {
-        // Sign the message using the Fixorium provider
         const provider = ensureFixoriumProvider();
         if (!provider) {
           throw new Error("Wallet provider not available");
         }
 
-        // Ensure wallet is connected before signing
+        // Ensure wallet is connected
         await provider.connect();
+
+        // Get vault wallet address from reward config
+        const configResponse = await fetch(
+          resolveApiUrl("/api/staking/config"),
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+
+        let vaultAddress = vaultWallet;
+        if (configResponse.ok) {
+          const config = await configResponse.json();
+          vaultAddress = config.vaultWallet;
+          setVaultWallet(vaultAddress);
+        }
+
+        if (!vaultAddress) {
+          throw new Error("Vault wallet not configured");
+        }
+
+        // Get token decimals
+        const decimals = await getTokenDecimals(new PublicKey(tokenMint));
+
+        // Build transfer transaction (user → vault)
+        const transferTx = await buildTokenTransferTransaction({
+          fromWallet: new PublicKey(wallet.publicKey),
+          toWallet: new PublicKey(vaultAddress),
+          mint: new PublicKey(tokenMint),
+          amount,
+          decimals,
+        });
+
+        // Send and sign the transfer transaction
+        const transferSignature = await sendTokenTransferTransaction(
+          transferTx,
+          provider,
+        );
+
+        // Confirm the transfer on-chain
+        const isConfirmed = await confirmTokenTransfer(transferSignature, 30);
+
+        if (!isConfirmed) {
+          throw new Error(
+            "Token transfer failed to confirm on blockchain. Please try again.",
+          );
+        }
+
+        // Create message for signing
+        const message = `Create stake:${wallet.publicKey}:${Date.now()}`;
 
         // Sign the message
         const signatureBytes = await provider.signMessage(message);
+        const messageSignature = bs58.encode(signatureBytes);
 
-        // Encode signature as base58
-        const signatureBase58 = bs58.encode(signatureBytes);
-
+        // Call staking create endpoint with transfer signature
         const response = await fetch(resolveApiUrl("/api/staking/create"), {
           method: "POST",
           headers: {
@@ -172,8 +223,9 @@ export function useStaking(): UseStakingReturn {
             tokenMint,
             amount,
             periodDays,
+            transferTxSignature: transferSignature,
             message,
-            signature: signatureBase58,
+            messageSignature,
           }),
         });
 
@@ -188,19 +240,19 @@ export function useStaking(): UseStakingReturn {
         const newStake = mapRowToStake(result.data);
         setStakes((prev) => [...prev, newStake]);
 
-        // Update token balance in wallet context
+        // Update token balance in wallet context (tokens are now in vault)
         const token = tokens.find((t) => t.mint === tokenMint);
         if (token) {
           const newBalance = Math.max(0, token.balance - amount);
           updateTokenBalance(tokenMint, newBalance);
         }
 
-        // Refresh tokens to get fresh balance from blockchain (after small delay to ensure backend is updated)
+        // Refresh tokens from blockchain
         setTimeout(() => {
           refreshTokens().catch((err) => {
             console.error("Error refreshing tokens after staking:", err);
           });
-        }, 1000);
+        }, 2000);
 
         return newStake;
       } catch (err) {
@@ -214,13 +266,14 @@ export function useStaking(): UseStakingReturn {
       tokens,
       updateTokenBalance,
       refreshTokens,
+      vaultWallet,
     ],
   );
 
-  // Withdraw from stake via Cloudflare API
+  // Withdraw from stake
   const withdrawStake = useCallback(
     async (stakeId: string) => {
-      if (!wallet?.publicKey) throw new Error("No wallet");
+      if (!wallet?.publicKey) throw new Error("No wallet connected");
       if (!wallet?.secretKey)
         throw new Error("Wallet secret key not available");
 
@@ -228,31 +281,63 @@ export function useStaking(): UseStakingReturn {
       if (!stake) throw new Error("Stake not found");
 
       if (stake.walletAddress !== wallet.publicKey) {
-        throw new Error("Unauthorized");
+        throw new Error("Unauthorized - you do not own this stake");
       }
 
       if (stake.status !== "active") {
         throw new Error("Stake is not active");
       }
 
-      const message = `Withdraw stake:${stakeId}:${wallet.publicKey}:${Date.now()}`;
+      const now = Date.now();
+      if (now < stake.endTime) {
+        const timeRemaining = (stake.endTime - now) / 1000 / 60;
+        throw new Error(
+          `Staking period has not ended. ${timeRemaining.toFixed(0)} minutes remaining.`,
+        );
+      }
 
       try {
-        // Sign the message using the Fixorium provider
         const provider = ensureFixoriumProvider();
         if (!provider) {
           throw new Error("Wallet provider not available");
         }
 
-        // Ensure wallet is connected before signing
         await provider.connect();
+
+        // Get token decimals
+        const decimals = await getTokenDecimals(new PublicKey(stake.tokenMint));
+
+        // Build transfer transaction (vault → user)
+        // NOTE: This requires the backend to have access to vault private key
+        // For now, we pass a placeholder signature and the backend will handle the actual transfer
+        const totalAmount = stake.amount + stake.rewardAmount;
+
+        const transferTx = await buildTokenTransferTransaction({
+          fromWallet: new PublicKey(vaultWallet),
+          toWallet: new PublicKey(wallet.publicKey),
+          mint: new PublicKey(stake.tokenMint),
+          amount: totalAmount,
+          decimals,
+        });
+
+        // Serialize transaction for backend to sign (vault needs to sign this)
+        const txBuffer = Buffer.from(
+          transferTx.serialize({
+            requireAllSignatures: false,
+            verifySignatures: false,
+          }),
+        );
+        const txBase64 = txBuffer.toString("base64");
+
+        // Create message for signing
+        const message = `Withdraw stake:${stakeId}:${wallet.publicKey}:${Date.now()}`;
 
         // Sign the message
         const signatureBytes = await provider.signMessage(message);
+        const messageSignature = bs58.encode(signatureBytes);
 
-        // Encode signature as base58
-        const signatureBase58 = bs58.encode(signatureBytes);
-
+        // Call withdraw endpoint
+        // The backend will use the vault private key to sign and send the transfer
         const response = await fetch(resolveApiUrl("/api/staking/withdraw"), {
           method: "POST",
           headers: {
@@ -261,8 +346,10 @@ export function useStaking(): UseStakingReturn {
           body: JSON.stringify({
             wallet: wallet.publicKey,
             stakeId,
+            transferTxSignature: "", // Will be generated by backend
+            transferTxBase64: txBase64, // Backend will sign and send this
             message,
-            signature: signatureBase58,
+            signature: messageSignature,
           }),
         });
 
@@ -279,18 +366,16 @@ export function useStaking(): UseStakingReturn {
           prev.map((s) => (s.id === stakeId ? updatedStake : s)),
         );
 
-        // Update token balance in wallet context - add back staked amount + reward
+        // Update token balance
         const token = tokens.find((t) => t.mint === stake.tokenMint);
         if (token) {
-          const totalAmount =
-            result.data.totalAmount || stake.amount + stake.rewardAmount;
           const newBalance = token.balance + totalAmount;
           updateTokenBalance(stake.tokenMint, newBalance);
         }
 
         return {
           stake: updatedStake,
-          totalAmount: result.data.totalAmount,
+          totalAmount,
           reward: result.data.reward,
         };
       } catch (err) {
@@ -298,10 +383,10 @@ export function useStaking(): UseStakingReturn {
         throw new Error(msg);
       }
     },
-    [wallet?.publicKey, wallet?.secretKey, stakes, tokens, updateTokenBalance],
+    [wallet?.publicKey, wallet?.secretKey, stakes, tokens, updateTokenBalance, vaultWallet],
   );
 
-  // Get reward status for wallet
+  // Get reward status
   const getRewardStatus = useCallback(async () => {
     if (!wallet?.publicKey) {
       return null;
@@ -335,7 +420,7 @@ export function useStaking(): UseStakingReturn {
     }
   }, [wallet?.publicKey]);
 
-  // Calculate total staked amount for a specific token
+  // Calculate total staked for a token
   const getTotalStaked = useCallback(
     (tokenMint: string) => {
       return stakes
@@ -347,7 +432,7 @@ export function useStaking(): UseStakingReturn {
     [stakes],
   );
 
-  // Calculate available balance (total balance - staked amount)
+  // Calculate available balance (balance - staked)
   const getAvailableBalance = useCallback(
     (tokenMint: string) => {
       const token = tokens.find((t) => t.mint === tokenMint);
@@ -368,6 +453,7 @@ export function useStaking(): UseStakingReturn {
     loading,
     error,
     rewardPayerWallet,
+    vaultWallet,
     createStake,
     withdrawStake,
     refreshStakes,

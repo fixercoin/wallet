@@ -1,4 +1,5 @@
-// API base resolution is via VITE_API_BASE_URL; otherwise same-origin /api
+// API base resolution prefers env (VITE_API_BASE_URL or VITE_API_URL),
+// then defaults to the Cloudflare Worker domain
 
 // Track which API base is currently working
 let workingApiBase: string | null = null;
@@ -12,10 +13,21 @@ const normalizeBase = (value: string | null | undefined): string => {
 };
 
 const determineBase = (): string => {
-  const envBase = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
-  if (envBase) return envBase;
+  // Try primary env var
+  const envBasePrimary = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
+  if (envBasePrimary) {
+    return envBasePrimary;
+  }
+
+  // Try alternative env var
+  const envBaseAlt = normalizeBase((import.meta as any)?.env?.VITE_API_URL);
+  if (envBaseAlt) {
+    return envBaseAlt;
+  }
+
   if (workingApiBase) return workingApiBase;
-  // Default to same-origin relative API
+
+  // Default to relative /api (served by the same origin - for SPA on Worker)
   return "";
 };
 
@@ -68,6 +80,27 @@ export const resolveApiUrl = (path: string): string => {
   return `${baseNorm}${normalizedPath}`;
 };
 
+// Get API key from environment variables
+export const getApiKey = (): string | null => {
+  return (import.meta.env.VITE_API_KEY || null) as string | null;
+};
+
+// Helper to add API key header to requests
+export const getApiHeaders = (
+  additionalHeaders?: Record<string, string>,
+): Record<string, string> => {
+  const headers: Record<string, string> = {
+    ...additionalHeaders,
+  };
+
+  const apiKey = getApiKey();
+  if (apiKey) {
+    headers["x-api-key"] = apiKey;
+  }
+
+  return headers;
+};
+
 // Fetch wrapper with automatic fallback support
 export const fetchWithFallback = async (
   path: string,
@@ -77,8 +110,13 @@ export const fetchWithFallback = async (
   const currentBase = getApiBaseUrl();
 
   try {
+    const mergedHeaders = getApiHeaders(
+      (options?.headers as Record<string, string>) || {},
+    );
+
     const response = await fetch(url, {
       ...options,
+      headers: mergedHeaders,
       // Add timeout if not present
       signal: options?.signal || AbortSignal.timeout?.(30000),
     });

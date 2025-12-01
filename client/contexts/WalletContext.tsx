@@ -73,6 +73,7 @@ interface WalletContextType {
   logout: () => void;
   updateWalletLabel: (publicKey: string, label: string) => void;
   unlockWithPassword: (password: string) => Promise<boolean>;
+  updateTokenBalance: (tokenMint: string, newBalance: number) => void;
   connection?: Connection | null;
 }
 
@@ -1369,6 +1370,28 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   };
 
+  const updateTokenBalance = (tokenMint: string, newBalance: number) => {
+    setTokens((currentTokens) => {
+      const updatedTokens = currentTokens.map((token) =>
+        token.mint === tokenMint ? { ...token, balance: newBalance } : token,
+      );
+
+      // Persist updated tokens to cache immediately
+      if (wallet?.publicKey) {
+        try {
+          saveTokensToCache(wallet.publicKey, updatedTokens);
+        } catch (err) {
+          console.warn(
+            "[WalletContext] Failed to save updated tokens to cache:",
+            err,
+          );
+        }
+      }
+
+      return updatedTokens;
+    });
+  };
+
   const value: WalletContextType = {
     wallet: ensureWalletSecretKey(wallet),
     wallets,
@@ -1389,6 +1412,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     logout,
     updateWalletLabel,
     unlockWithPassword,
+    updateTokenBalance,
     connection: globalConnection,
   };
 

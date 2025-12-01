@@ -15,8 +15,21 @@ pages_build_output_dir = "dist"
 VITE_API_URL = ""
 VITE_API_BASE_URL = ""
 
-# KV namespace binding for staking data persistence
+# KV namespace bindings for Pages Functions
+# These bindings are available in functions/api/* routes
 [[kv_namespaces]]
+binding = "STAKING_KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "d7ce3f94e821495d8c93952fdc8868b6"
+
+# Enable KV for Pages Functions (development environment)
+[env.development.kv_namespaces]
+binding = "STAKING_KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "d7ce3f94e821495d8c93952fdc8868b6"
+
+# Enable KV for Pages Functions (production environment)
+[env.production.kv_namespaces]
 binding = "STAKING_KV"
 id = "295bfeb238c344ccb5afdd2bb93e497f"
 preview_id = "d7ce3f94e821495d8c93952fdc8868b6"

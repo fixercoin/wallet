@@ -230,21 +230,20 @@ export const handleListStakes: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "Missing wallet address" });
     }
 
-    // Get all stakes for the wallet
-    const stakeIds = stakesByWallet.get(walletAddress) || [];
-    const walletStakes: Stake[] = [];
+    // Get all stakes for the wallet using KV store
+    const walletStakes = await kvStore.getStakesByWallet(walletAddress);
 
-    for (const stakeId of stakeIds) {
-      const stake = stakes.get(stakeId);
-      if (stake) {
-        walletStakes.push(stake);
-      }
-    }
+    // Add timeRemainingMs for active stakes
+    const enrichedStakes = walletStakes.map((stake) => ({
+      ...stake,
+      timeRemainingMs:
+        stake.status === "active" ? Math.max(0, stake.endTime - Date.now()) : 0,
+    }));
 
     return res.status(200).json({
       success: true,
-      data: walletStakes,
-      count: walletStakes.length,
+      data: enrichedStakes,
+      count: enrichedStakes.length,
     });
   } catch (error) {
     console.error("Error in handleListStakes:", error);

@@ -800,23 +800,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {/* Network signal strength icon and settings - moved to right */}
-              <div className="flex items-center gap-2">
-                <NetworkSignalIcon
-                  bars={networkSignal.bars}
-                  isOnline={networkSignal.isOnline}
-                  latency={networkSignal.latency}
-                />
-                <Button
-                  onClick={onSettings}
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
-                  aria-label="Settings"
-                  title="Settings"
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </div>
+              {/* Settings button - moved to right */}
+              <Button
+                onClick={onSettings}
+                size="sm"
+                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                aria-label="Settings"
+                title="Settings"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
             </div>
 
             <div className="text-center space-y-2 mt-8">

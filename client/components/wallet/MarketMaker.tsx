@@ -438,8 +438,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     if (isNaN(amount) || amount <= 0)
       return "Buy amount must be greater than 0";
     if (isNaN(total) || total <= 0) return "Buy total is invalid";
-    if (usdcBalance < total)
-      return `Insufficient USDC. Need ${total.toFixed(8)}, have ${usdcBalance.toFixed(8)}`;
+    if (solBalance < total)
+      return `Insufficient SOL. Need ${total.toFixed(8)}, have ${solBalance.toFixed(8)}`;
 
     return null;
   };

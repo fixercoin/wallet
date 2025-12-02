@@ -1,4 +1,5 @@
 import { dexscreenerAPI } from "./dexscreener";
+import { solPriceService } from "./sol-price";
 import { saveServicePrice } from "./offline-cache";
 import {
   retryWithExponentialBackoff,
@@ -16,6 +17,7 @@ export interface FXMPriceData {
 }
 
 const FXM_MINT = "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump";
+const SOL_MINT = "So11111111111111111111111111111111111111112";
 
 class FXMPriceService {
   private cachedData: FXMPriceData | null = null;

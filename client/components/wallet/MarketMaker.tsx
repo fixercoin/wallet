@@ -128,32 +128,25 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
 
           try {
-            // Try Pump.fun API first for accurate price (in SOL)
+            // Use Pump.fun API for accurate price (in SOL) - matches DexTool
+            console.log("[MarketMaker] Fetching FIXERCOIN from Pump.fun API...");
             const priceSol = await pumpFunPriceService.getTokenPrice(fixercoinMint);
-            if (priceSol && priceSol > 0 && solPriceUsd && solPriceUsd > 0) {
-              // Convert from SOL price to USD price
-              tokenPrice = priceSol * solPriceUsd;
-              console.log(
-                `[MarketMaker] FIXERCOIN price from PumpFun: ${priceSol.toFixed(8)} SOL = $${tokenPrice.toFixed(8)} USD`,
-              );
+
+            if (priceSol && priceSol > 0) {
+              if (solPriceUsd && solPriceUsd > 0) {
+                // Convert from SOL price to USD price
+                tokenPrice = priceSol * solPriceUsd;
+                console.log(
+                  `[MarketMaker] ✅ FIXERCOIN price from PumpFun: ${priceSol.toFixed(8)} SOL = $${tokenPrice.toFixed(8)} USD`,
+                );
+              } else {
+                console.warn("[MarketMaker] SOL price not available for conversion");
+              }
+            } else {
+              console.warn("[MarketMaker] Pump.fun returned invalid price:", priceSol);
             }
           } catch (error) {
             console.error("[MarketMaker] Error fetching FIXERCOIN from PumpFun:", error);
-          }
-
-          // Fallback to fixercoinPriceService if Pump.fun failed
-          if (!tokenPrice) {
-            try {
-              const priceData = await fixercoinPriceService.getFixercoinPrice();
-              if (priceData && priceData.price > 0) {
-                tokenPrice = priceData.price;
-                console.log(
-                  `[MarketMaker] FIXERCOIN price from DexScreener (fallback): $${tokenPrice.toFixed(8)} USD`,
-                );
-              }
-            } catch (error) {
-              console.error("[MarketMaker] Error fetching FIXERCOIN from DexScreener:", error);
-            }
           }
         }
 

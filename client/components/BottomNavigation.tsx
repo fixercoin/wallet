@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Home, Rocket, Flame, Users } from "lucide-react";
+import { Home, ArrowRightLeft, AlertCircle, Users } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 
 export const BottomNavigation = () => {
@@ -30,8 +30,8 @@ export const BottomNavigation = () => {
 
   const navItems = [
     { path: "/", label: "HOME", icon: Home },
-    { path: "/autobot", label: "TRADE", icon: Rocket },
-    { path: "/burn", label: "BURN TOKEN", icon: Flame },
+    { path: "/autobot", label: "TRADE", icon: ArrowRightLeft },
+    { path: "/burn", label: "BURN TOKEN", icon: AlertCircle },
     { path: "/airdrop", label: "ARIDROP", icon: Users },
   ];
 
@@ -45,7 +45,7 @@ export const BottomNavigation = () => {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#333]"
+      className="fixed bottom-0 left-0 right-0 z-40"
       style={{ backgroundColor: "#1f1f1f" }}
     >
       <div className="flex items-center justify-around h-16 xs:h-20 sm:h-20 md:h-24 lg:h-28 px-2 sm:px-3 md:px-6 lg:px-8 gap-2 xs:gap-3 sm:gap-4 md:gap-6 lg:gap-8 w-full">
@@ -57,7 +57,7 @@ export const BottomNavigation = () => {
             <button
               key={item.label}
               onClick={() => navigate(item.path)}
-              className="px-4 xs:px-5 sm:px-6 md:px-8 lg:px-10 py-3 xs:py-4 sm:py-5 md:py-6 lg:py-7 transition-colors font-medium rounded-lg leading-tight text-center flex flex-col items-center justify-center text-white border border-white/50 hover:border-white/75"
+              className="px-4 xs:px-5 sm:px-6 md:px-8 lg:px-10 py-3 xs:py-4 sm:py-5 md:py-6 lg:py-7 transition-colors leading-tight text-center flex flex-col items-center justify-center text-white"
               aria-label={item.label}
               title={item.label}
             >

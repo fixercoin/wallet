@@ -48,7 +48,7 @@ export const BottomNavigation = () => {
       className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#333]"
       style={{ backgroundColor: "#1f1f1f" }}
     >
-      <div className="flex items-center justify-between h-16 xs:h-20 sm:h-20 md:h-24 lg:h-28 px-0 sm:px-1.5 md:px-4 lg:px-6 gap-0 xs:gap-0.5 sm:gap-1 md:gap-1.5 w-full">
+      <div className="flex items-center justify-around h-16 xs:h-20 sm:h-20 md:h-24 lg:h-28 px-2 sm:px-3 md:px-6 lg:px-8 gap-2 xs:gap-3 sm:gap-4 md:gap-6 lg:gap-8 w-full">
         {navItems.map((item, index) => {
           const active = isActive(item.path);
           const Icon = item.icon;

@@ -686,7 +686,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
                   <div className="space-y-2">
                     <Label className="text-gray-600 text-xs font-semibold">
-                      USDC AMOUNT
+                      SOL AMOUNT
                     </Label>
                     <Input
                       type="number"
@@ -696,7 +696,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         handleBuyUsdcAmountChange(e.target.value)
                       }
                       className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-green-400`}
-                      placeholder="ENTER USDC AMOUNT"
+                      placeholder="ENTER SOL AMOUNT"
                     />
                   </div>
 

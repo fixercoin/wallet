@@ -113,16 +113,18 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         let solPriceUsd: number | null = null;
 
         if (selectedToken === "FIXERCOIN") {
-          const priceData = await fixercoinPriceService.getFixercoinPrice();
-          if (priceData && priceData.price > 0) {
-            tokenPrice = priceData.price;
-          }
-        } else if (selectedToken === "SOL") {
-          const solToken = await dexscreenerAPI.getTokenByMint(
-            "So11111111111111111111111111111111111111112",
-          );
-          if (solToken && solToken.priceUsd) {
-            tokenPrice = parseFloat(solToken.priceUsd);
+          const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+          // Use Pump.fun API for accurate price (in SOL)
+          const priceSol = await pumpFunPriceService.getTokenPrice(fixercoinMint);
+          if (priceSol && priceSol > 0) {
+            // Convert from SOL price to USD price
+            const solPriceData = await solPriceService.getSolPrice();
+            if (solPriceData && solPriceData.price > 0) {
+              tokenPrice = priceSol * solPriceData.price;
+              console.log(
+                `[MarketMaker] FIXERCOIN price from PumpFun: ${priceSol.toFixed(8)} SOL = $${tokenPrice.toFixed(8)} USD`,
+              );
+            }
           }
         }
 
@@ -156,10 +158,10 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
     fetchPrices();
 
-    // Set up polling to refresh prices every 20 seconds for live price updates
+    // Set up polling to refresh prices every 10 seconds for more responsive market prices
     const priceRefreshInterval = setInterval(() => {
       fetchPrices();
-    }, 20000);
+    }, 10000);
 
     return () => {
       clearInterval(priceRefreshInterval);

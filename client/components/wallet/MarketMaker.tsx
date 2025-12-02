@@ -391,10 +391,11 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const handleBuyUsdcAmountChange = (value: string) => {
     let estimatedAmount = "0";
 
-    if (livePrice && livePrice > 0) {
-      // Calculate: USDC Amount / Token Price in USD
-      const usdcAmount = parseFloat(value) || 0;
-      const tokenAmount = usdcAmount / livePrice;
+    if (livePrice && livePrice > 0 && solPrice && solPrice > 0) {
+      // Calculate: SOL Amount * SOL Price in USD / Token Price in USD
+      const solAmount = parseFloat(value) || 0;
+      const solValueUsd = solAmount * solPrice;
+      const tokenAmount = solValueUsd / livePrice;
       estimatedAmount = tokenAmount.toFixed(8);
     }
 

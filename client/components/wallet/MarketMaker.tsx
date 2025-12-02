@@ -713,7 +713,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
                   <div className="space-y-2">
                     <Label className="text-gray-600 text-xs font-semibold">
-                      AVAILABLE USDC
+                      AVAILABLE SOL
                     </Label>
                     <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-medium">
                       <span
@@ -721,7 +721,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                           canAffordCurrent ? "text-green-400" : "text-red-400"
                         }
                       >
-                        {usdcBalance.toFixed(8)}
+                        {solBalance.toFixed(8)}
                       </span>
                     </div>
                   </div>

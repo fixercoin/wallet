@@ -803,20 +803,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                     <Label className="text-gray-600 text-xs font-semibold">
                       RECEIVE IN
                     </Label>
-                    <Select
-                      value={sellOutputToken}
-                      onValueChange={(value) =>
-                        setSellOutputToken(value as "SOL" | "USDC")
-                      }
-                    >
-                      <SelectTrigger className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="SOL">SOL</SelectItem>
-                        <SelectItem value="USDC">USDC</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-semibold">
+                      SOL
+                    </div>
                   </div>
                 </>
               )}

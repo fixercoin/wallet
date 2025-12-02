@@ -622,18 +622,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <Label className="text-gray-700 uppercase text-xs font-semibold">
               TOKEN
             </Label>
-            <Select value={selectedToken} onValueChange={setSelectedToken}>
-              <SelectTrigger className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(TOKEN_CONFIGS).map(([key, config]) => (
-                  <SelectItem key={key} value={key}>
-                    {config.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-semibold">
+              FIXERCOIN
+            </div>
           </div>
 
           <div className="bg-transparent border border-gray-700 rounded-lg p-3 md:p-4 w-full">

@@ -433,12 +433,24 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
   // Recalculate estimated amounts when prices update
   useEffect(() => {
-    if (orderMode === "BUY" && buyOrder.total) {
-      handleBuyUsdcAmountChange(buyOrder.total);
-    } else if (orderMode === "SELL" && sellOrder.amount) {
-      handleSellAmountChange(sellOrder.amount);
+    if (orderMode === "BUY" && buyOrder.total && livePrice && solPrice) {
+      const solAmount = parseFloat(buyOrder.total) || 0;
+      const solValueUsd = solAmount * solPrice;
+      const tokenAmount = solValueUsd / livePrice;
+      setBuyOrder((prev) => ({
+        ...prev,
+        amount: tokenAmount.toFixed(8),
+      }));
+    } else if (orderMode === "SELL" && sellOrder.amount && livePrice && solPrice) {
+      const tokenAmount = parseFloat(sellOrder.amount) || 0;
+      const tokenValueUsd = tokenAmount * livePrice;
+      const solAmount = tokenValueUsd / solPrice;
+      setSellOrder((prev) => ({
+        ...prev,
+        total: solAmount.toFixed(8),
+      }));
     }
-  }, [livePrice, solPrice]);
+  }, [livePrice, solPrice, orderMode]);
 
   const validateBuyOrder = (): string | null => {
     const price = parseFloat(buyOrder.price);

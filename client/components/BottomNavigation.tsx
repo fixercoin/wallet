@@ -31,7 +31,7 @@ export const BottomNavigation = () => {
   const navItems = [
     { path: "/", label: "HOME", icon: Home },
     { path: "/autobot", label: "TRADE", icon: ArrowRightLeft },
-    { path: "/burn", label: "BURN TOKEN", icon: BadgeDollarSign },
+    { path: "/burn", label: "BURN TOKEN", icon: CircleDollarSign },
     { path: "/airdrop", label: "ARIDROP", icon: Users },
   ];
 

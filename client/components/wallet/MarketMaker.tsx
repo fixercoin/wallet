@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { pumpFunPriceService } from "@/lib/services/pump-fun-price";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { solPriceService } from "@/lib/services/sol-price";
 import { MarketMakerHistoryCard } from "./MarketMakerHistoryCard";

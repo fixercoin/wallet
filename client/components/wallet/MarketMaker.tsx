@@ -431,6 +431,15 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     });
   };
 
+  // Recalculate estimated amounts when prices update
+  useEffect(() => {
+    if (orderMode === "BUY" && buyOrder.total) {
+      handleBuyUsdcAmountChange(buyOrder.total);
+    } else if (orderMode === "SELL" && sellOrder.amount) {
+      handleSellAmountChange(sellOrder.amount);
+    }
+  }, [livePrice, solPrice]);
+
   const validateBuyOrder = (): string | null => {
     const price = parseFloat(buyOrder.price);
     const amount = parseFloat(buyOrder.amount);

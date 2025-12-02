@@ -1,4 +1,5 @@
 import { dexscreenerAPI } from "./dexscreener";
+import { solPriceService } from "./sol-price";
 import { saveServicePrice } from "./offline-cache";
 import {
   retryWithExponentialBackoff,
@@ -16,6 +17,7 @@ export interface LockerPriceData {
 }
 
 const LOCKER_MINT = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+const SOL_MINT = "So11111111111111111111111111111111111111112";
 
 class LockerPriceService {
   private cachedData: LockerPriceData | null = null;

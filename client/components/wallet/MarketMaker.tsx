@@ -778,7 +778,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-gray-600 text-xs font-semibold">
-                        ESTIMATED USDC
+                        ESTIMATED SOL
                       </Label>
                     </div>
                     <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-medium">

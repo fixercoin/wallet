@@ -623,7 +623,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <Label className="text-gray-700 uppercase text-xs font-semibold">
               TOKEN
             </Label>
-            <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900 font-semibold">
+            <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-semibold">
               FIXERCOIN
             </div>
           </div>

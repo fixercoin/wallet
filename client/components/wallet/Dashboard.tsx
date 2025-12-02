@@ -36,10 +36,8 @@ import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { formatAmountCompact } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useStakingTokens } from "@/hooks/use-staking-tokens";
-import { useNetworkSignal } from "@/hooks/use-network-signal";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
-import { NetworkSignalIcon } from "@/components/ui/NetworkSignalIcon";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -134,7 +132,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const { isStaking } = useStakingTokens(wallet?.publicKey || null);
-  const networkSignal = useNetworkSignal();
 
   // Quest state (per-wallet, persisted locally)
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
@@ -784,13 +781,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <span>MY WALLET</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onSelect={() => onStakeTokens?.()}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <TrendingUp className="h-4 w-4" />
-                    <span>STAKE NOW</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
                     onSelect={() => onLock()}
                     className="flex items-center gap-2 text-xs"
                   >
@@ -807,23 +797,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {/* Network signal strength icon and settings - moved to right */}
-              <div className="flex items-center gap-2">
-                <NetworkSignalIcon
-                  bars={networkSignal.bars}
-                  isOnline={networkSignal.isOnline}
-                  latency={networkSignal.latency}
-                />
-                <Button
-                  onClick={onSettings}
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
-                  aria-label="Settings"
-                  title="Settings"
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </div>
+              {/* Settings button - moved to right */}
+              <Button
+                onClick={onSettings}
+                size="sm"
+                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                aria-label="Settings"
+                title="Settings"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
             </div>
 
             <div className="text-center space-y-2 mt-8">

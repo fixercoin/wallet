@@ -57,7 +57,7 @@ export const BottomNavigation = () => {
             <button
               key={item.label}
               onClick={() => navigate(item.path)}
-              className="flex-1 px-0.5 xs:px-1 sm:px-2 md:px-4 lg:px-6 py-1 xs:py-1.5 sm:py-2 md:py-2.5 lg:py-3 transition-colors font-medium rounded-lg leading-tight min-w-0 text-center flex flex-col items-center justify-center text-white border border-white/50 hover:border-white/75"
+              className="px-4 xs:px-5 sm:px-6 md:px-8 lg:px-10 py-3 xs:py-4 sm:py-5 md:py-6 lg:py-7 transition-colors font-medium rounded-lg leading-tight text-center flex flex-col items-center justify-center text-white border border-white/50 hover:border-white/75"
               aria-label={item.label}
               title={item.label}
             >

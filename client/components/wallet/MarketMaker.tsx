@@ -433,7 +433,12 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         ...prev,
         amount: tokenAmount.toFixed(8),
       }));
-    } else if (orderMode === "SELL" && sellOrder.amount && livePrice && solPrice) {
+    } else if (
+      orderMode === "SELL" &&
+      sellOrder.amount &&
+      livePrice &&
+      solPrice
+    ) {
       const tokenAmount = parseFloat(sellOrder.amount) || 0;
       const tokenValueUsd = tokenAmount * livePrice;
       const solAmount = tokenValueUsd / solPrice;

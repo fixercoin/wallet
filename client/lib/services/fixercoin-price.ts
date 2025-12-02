@@ -55,7 +55,9 @@ class FixercoinPriceService {
           ]);
 
           if (!pairs || pairs.length === 0) {
-            throw new Error("Could not fetch FIXERCOIN/SOL pair from DexScreener");
+            throw new Error(
+              "Could not fetch FIXERCOIN/SOL pair from DexScreener",
+            );
           }
 
           // Find the pair where FIXERCOIN and SOL interact
@@ -149,7 +151,9 @@ class FixercoinPriceService {
             `[FixercoinPrice] Conversion logic failed: ${conversionError instanceof Error ? conversionError.message : String(conversionError)}. Falling back to direct DexScreener price...`,
           );
 
-          const tokens = await dexscreenerAPI.getTokensByMints([FIXERCOIN_MINT]);
+          const tokens = await dexscreenerAPI.getTokensByMints([
+            FIXERCOIN_MINT,
+          ]);
 
           if (!tokens || tokens.length === 0) {
             throw new Error("FIXERCOIN not found on DexScreener for fallback");

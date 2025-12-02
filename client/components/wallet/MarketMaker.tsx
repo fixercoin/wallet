@@ -113,30 +113,48 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
         let tokenPrice: number | null = null;
         let solPriceUsd: number | null = null;
 
-        if (selectedToken === "FIXERCOIN") {
-          const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
-          // Use Pump.fun API for accurate price (in SOL)
-          const priceSol = await pumpFunPriceService.getTokenPrice(fixercoinMint);
-          if (priceSol && priceSol > 0) {
-            // Convert from SOL price to USD price
-            const solPriceData = await solPriceService.getSolPrice();
-            if (solPriceData && solPriceData.price > 0) {
-              tokenPrice = priceSol * solPriceData.price;
-              console.log(
-                `[MarketMaker] FIXERCOIN price from PumpFun: ${priceSol.toFixed(8)} SOL = $${tokenPrice.toFixed(8)} USD`,
-              );
-            }
-          }
-        }
-
-        // Always fetch SOL price for calculation
+        // Fetch SOL price first (needed for both cases)
         try {
           const solPriceData = await solPriceService.getSolPrice();
           if (solPriceData && solPriceData.price > 0) {
             solPriceUsd = solPriceData.price;
+            console.log(`[MarketMaker] Fetched SOL price: ${solPriceUsd}`);
           }
         } catch (error) {
           console.error("[MarketMaker] Error fetching SOL price:", error);
+        }
+
+        if (selectedToken === "FIXERCOIN") {
+          const fixercoinMint = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+
+          try {
+            // Try Pump.fun API first for accurate price (in SOL)
+            const priceSol = await pumpFunPriceService.getTokenPrice(fixercoinMint);
+            if (priceSol && priceSol > 0 && solPriceUsd && solPriceUsd > 0) {
+              // Convert from SOL price to USD price
+              tokenPrice = priceSol * solPriceUsd;
+              console.log(
+                `[MarketMaker] FIXERCOIN price from PumpFun: ${priceSol.toFixed(8)} SOL = $${tokenPrice.toFixed(8)} USD`,
+              );
+            }
+          } catch (error) {
+            console.error("[MarketMaker] Error fetching FIXERCOIN from PumpFun:", error);
+          }
+
+          // Fallback to fixercoinPriceService if Pump.fun failed
+          if (!tokenPrice) {
+            try {
+              const priceData = await fixercoinPriceService.getFixercoinPrice();
+              if (priceData && priceData.price > 0) {
+                tokenPrice = priceData.price;
+                console.log(
+                  `[MarketMaker] FIXERCOIN price from DexScreener (fallback): $${tokenPrice.toFixed(8)} USD`,
+                );
+              }
+            } catch (error) {
+              console.error("[MarketMaker] Error fetching FIXERCOIN from DexScreener:", error);
+            }
+          }
         }
 
         if (tokenPrice && tokenPrice > 0) {
@@ -148,7 +166,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
         if (solPriceUsd && solPriceUsd > 0) {
           setSolPrice(solPriceUsd);
-          console.log(`[MarketMaker] Fetched SOL price: ${solPriceUsd}`);
         }
       } catch (error) {
         console.error("[MarketMaker] Error fetching prices:", error);

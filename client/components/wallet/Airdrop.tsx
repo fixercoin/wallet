@@ -146,23 +146,16 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   };
 
   const postTx = async (b64: string) => {
-    const body = {
-      method: "sendTransaction",
-      params: [b64, { skipPreflight: false, preflightCommitment: "confirmed" }],
-      id: Date.now(),
-    };
-    const resp = await fetch(resolveApiUrl("/api/solana-rpc"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!resp.ok) {
-      const t = await resp.text().catch(() => "");
-      throw new Error(`RPC ${resp.status}: ${t || resp.statusText}`);
+    try {
+      const signature = await makeRpcCall("sendTransaction", [
+        b64,
+        { skipPreflight: false, preflightCommitment: "confirmed" },
+      ]);
+      return signature;
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      throw new Error(`Failed to send transaction: ${errorMsg}`);
     }
-    const j = await resp.json();
-    if (j && j.error) throw new Error(j.error.message || "RPC error");
-    return j.result || j;
   };
 
   const confirmSignatureProxy = async (sig: string) => {

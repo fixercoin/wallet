@@ -45,7 +45,7 @@ export const BottomNavigation = () => {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-40"
+      className="fixed bottom-4 left-0 right-0 z-40"
       style={{ backgroundColor: "#1f1f1f" }}
     >
       <div className="flex items-center justify-around h-16 xs:h-20 sm:h-20 md:h-24 lg:h-28 px-2 sm:px-3 md:px-6 lg:px-8 gap-2 xs:gap-3 sm:gap-4 md:gap-6 lg:gap-8 w-full">

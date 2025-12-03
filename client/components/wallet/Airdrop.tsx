@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Loader2, Search } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
-import { resolveApiUrl } from "@/lib/api-client";
 import { makeRpcCall } from "@/lib/services/solana-rpc";
 import { Buffer } from "buffer";
 import {

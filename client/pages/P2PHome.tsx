@@ -113,7 +113,7 @@ export default function P2PHome() {
             {paymentMethods.map((method) => (
               <div
                 key={method.id}
-                className="bg-[#2a2a2a] border border-[#a855f7]/30 rounded-lg p-3"
+                className="bg-[#2a2a2a] border border-gray-300/30 rounded-lg p-3"
               >
                 <div className="flex items-center justify-between">
                   <div>

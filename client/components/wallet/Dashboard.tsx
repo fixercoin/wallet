@@ -890,10 +890,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       const usdZero = `0.000 $`;
                       return (
                         <>
-                          <div className="text-3xl font-medium text-gray-900 leading-tight">
+                          <div className="text-3xl text-gray-900 leading-tight">
                             {showBalance ? `${usdZero}` : "****"}
                           </div>
-                          <div className="text-xs mt-1 font-medium">
+                          <div className="text-xs mt-1">
                             <span
                               style={{ color: "#FACC15", display: "block" }}
                             >
@@ -934,11 +934,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                     return (
                       <>
-                        <div className="text-3xl font-medium text-gray-900 leading-tight">
+                        <div className="text-3xl text-gray-900 leading-tight">
                           {showBalance ? (
                             <>
                               <span
-                                className="font-extrabold"
                                 style={{
                                   fontVariantNumeric: "tabular-nums",
                                   fontFamily: "Arial",
@@ -956,7 +955,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           )}
                         </div>
                         {showBalance ? (
-                          <div className="text-xs mt-1 font-medium">
+                          <div className="text-xs mt-1">
                             <span
                               style={{
                                 color: isPositive ? "#FACC15" : "#F87171",
@@ -1021,7 +1020,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onClick={() => navigate("/p2p")}
                 className="relative flex-1 bg-[#2a2a2a] border border-[#22c55e]/30 rounded-md px-4 py-3 text-center hover:bg-[#2a2a2a]/80 transition-colors text-white font-bold text-xs h-auto py-3"
               >
-                TRADE CRYPTO IN PKR
+                P2P - EXCHANGE NOW
                 {unreadCount > 0 && (
                   <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#FF7A5C] rounded-full flex items-center justify-center">
                     <span className="text-white text-xs font-bold">
@@ -1120,7 +1119,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </div>
 
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <div className="text-xs font-semibold whitespace-nowrap">
+                        <div
+                          className={`text-xs whitespace-nowrap ${
+                            typeof token.price === "number" &&
+                            isFinite(token.price) &&
+                            token.price !== 0
+                              ? "font-semibold"
+                              : ""
+                          }`}
+                        >
                           {typeof token.price === "number" &&
                           isFinite(token.price) ? (
                             <span style={{ color: "#ffffff" }}>
@@ -1144,7 +1151,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           )}
                         </div>
 
-                        <p className="text-xs font-semibold text-white whitespace-nowrap">
+                        <p
+                          className={`text-xs text-white whitespace-nowrap ${
+                            tokenBalance > 0 ? "font-semibold" : ""
+                          }`}
+                        >
                           $
                           {tokenBalance.toLocaleString(undefined, {
                             minimumFractionDigits: 2,

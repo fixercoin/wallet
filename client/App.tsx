@@ -147,6 +147,7 @@ import DocumentationPage from "./pages/DocumentationPage";
 import P2PHome from "./pages/P2PHome";
 import BuyTrade from "./pages/BuyTrade";
 import { BottomNavigation } from "@/components/BottomNavigation";
+import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
@@ -196,6 +197,18 @@ function AppRoutes() {
   );
 }
 
+function AppContent() {
+  const location = useLocation();
+  const isWalletDashboard = location.pathname === "/";
+
+  return (
+    <div className="min-h-screen pb-24">
+      <AppRoutes />
+      {isWalletDashboard && <BottomNavigation />}
+    </div>
+  );
+}
+
 function App() {
   // Initialize storage monitoring on app start
   useEffect(() => {
@@ -213,10 +226,7 @@ function App() {
               <LanguageProvider>
                 <CurrencyProvider>
                   <BrowserRouter>
-                    <div className="min-h-screen pb-24">
-                      <AppRoutes />
-                      <BottomNavigation />
-                    </div>
+                    <AppContent />
                   </BrowserRouter>
                 </CurrencyProvider>
               </LanguageProvider>

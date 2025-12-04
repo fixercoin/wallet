@@ -934,13 +934,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                     return (
                       <>
-                        <div className={`text-3xl text-gray-900 leading-tight ${
-                          total > 0 ? "font-medium" : ""
-                        }`}>
+                        <div className="text-3xl text-gray-900 leading-tight">
                           {showBalance ? (
                             <>
                               <span
-                                className={total > 0 ? "font-extrabold" : ""}
                                 style={{
                                   fontVariantNumeric: "tabular-nums",
                                   fontFamily: "Arial",

@@ -143,7 +143,6 @@ import BurnTokenPage from "./pages/BurnTokenPage";
 import RunningMarketMaker from "./pages/RunningMarketMaker";
 import MarketMakerHistory from "./pages/MarketMakerHistory";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import DocumentationPage from "./pages/DocumentationPage";
 
 const queryClient = new QueryClient();
@@ -211,7 +210,6 @@ function App() {
                   <BrowserRouter>
                     <div className="min-h-screen pb-24">
                       <AppRoutes />
-                      <BottomNavigation />
                     </div>
                   </BrowserRouter>
                 </CurrencyProvider>

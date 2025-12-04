@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Home, ArrowRightLeft, AlertCircle, Users } from "lucide-react";
+import { Home } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 
 export const BottomNavigation = () => {
@@ -28,12 +28,7 @@ export const BottomNavigation = () => {
     return () => obs.disconnect();
   }, []);
 
-  const navItems = [
-    { path: "/", label: "HOME", icon: Home },
-    { path: "/autobot", label: "TRADE", icon: ArrowRightLeft },
-    { path: "/burn", label: "TOKEN", icon: AlertCircle },
-    { path: "/airdrop", label: "ARIDROP", icon: Users },
-  ];
+  const navItems = [{ path: "/", label: "HOME", icon: Home }];
 
   const isActive = (path: string) => {
     return (
@@ -57,14 +52,12 @@ export const BottomNavigation = () => {
             <button
               key={item.label}
               onClick={() => navigate(item.path)}
-              className="px-4 xs:px-5 sm:px-6 md:px-8 lg:px-10 py-3 xs:py-4 sm:py-5 md:py-6 lg:py-7 transition-colors leading-tight text-center flex flex-col items-center justify-center text-white gap-1"
+              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               aria-label={item.label}
               title={item.label}
             >
-              <Icon className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex-shrink-0 text-white" />
-              <span className="text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-base font-semibold whitespace-nowrap">
-                {item.label}
-              </span>
+              <Icon className="w-8 h-8 text-[#22c55e]" />
+              <span className="whitespace-nowrap">{item.label}</span>
             </button>
           );
         })}

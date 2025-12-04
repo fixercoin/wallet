@@ -46,6 +46,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
+import { FlyingPrizeBox } from "./FlyingPrizeBox";
+import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
+import bs58 from "bs58";
+import nacl from "tweetnacl";
+import { TokenSearch } from "./TokenSearch";
+import { PriceLoader } from "@/components/ui/price-loader";
+import { Zap } from "lucide-react";
 
 interface DashboardProps {
   onSend: () => void;
@@ -61,14 +69,6 @@ interface DashboardProps {
   onBurn: () => void;
   onStakeTokens?: () => void;
 }
-
-import { useNavigate } from "react-router-dom";
-import { FlyingPrizeBox } from "./FlyingPrizeBox";
-import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
-import bs58 from "bs58";
-import nacl from "tweetnacl";
-import { TokenSearch } from "./TokenSearch";
-import { PriceLoader } from "@/components/ui/price-loader";
 
 const QUEST_TASKS = [
   {
@@ -781,12 +781,34 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <Wallet className="h-4 w-4" />
                     <span>MY WALLET</span>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => navigate("/autobot")}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <ArrowRightLeft className="h-4 w-4" />
+                    <span>TRADE</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => navigate("/burn")}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Zap className="h-4 w-4" />
+                    <span>TOKEN</span>
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => onLock()}
                     className="flex items-center gap-2 text-xs"
                   >
                     <Lock className="h-4 w-4" />
                     <span>LOCK</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={onAirdrop}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Gift className="h-4 w-4" />
+                    <span>AIRDROP</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem

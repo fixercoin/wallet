@@ -186,6 +186,8 @@ export default function BuyCrypto() {
         },
         buyerWallet: wallet.publicKey,
         walletAddress: walletAddress || wallet.publicKey,
+        minAmountPKR: minAmountPKR ? Number(minAmountPKR) : 0,
+        maxAmountPKR: maxAmountPKR ? Number(maxAmountPKR) : 0,
         createdAt: Date.now(),
       };
       try {

@@ -16,6 +16,7 @@ export default function P2PHome() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<string | undefined>();
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
 
   useEffect(() => {
@@ -121,7 +122,10 @@ export default function P2PHome() {
                     </p>
                   </div>
                   <Button
-                    onClick={() => setShowPaymentDialog(true)}
+                    onClick={() => {
+                      setEditingPaymentMethodId(method.id);
+                      setShowPaymentDialog(true);
+                    }}
                     size="sm"
                     className="bg-[#a855f7] hover:bg-[#9333ea] text-white text-xs h-auto py-1 px-2"
                   >
@@ -137,14 +141,21 @@ export default function P2PHome() {
       {/* Payment Method Dialog */}
       <PaymentMethodDialog
         open={showPaymentDialog}
-        onOpenChange={setShowPaymentDialog}
+        onOpenChange={(open) => {
+          setShowPaymentDialog(open);
+          if (!open) {
+            setEditingPaymentMethodId(undefined);
+          }
+        }}
         walletAddress={wallet?.publicKey || ""}
+        paymentMethodId={editingPaymentMethodId}
         onSave={() => {
           // Reload payment methods
           if (wallet) {
             const methods = getPaymentMethodsByWallet(wallet.publicKey);
             setPaymentMethods(methods);
           }
+          setEditingPaymentMethodId(undefined);
         }}
       />
     </div>

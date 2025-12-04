@@ -935,12 +935,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     return (
                       <>
                         <div className="text-3xl font-medium text-gray-900 leading-tight">
-                          {showBalance
-                            ? `${total.toLocaleString(undefined, {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
-                              })} $`
-                            : "****"}
+                          {showBalance ? (
+                            <>
+                              <span className="font-extrabold">
+                                {total.toLocaleString(undefined, {
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3,
+                                })}
+                              </span>
+                              {" $"}
+                            </>
+                          ) : (
+                            "****"
+                          )}
                         </div>
                         {showBalance ? (
                           <div className="text-xs mt-1 font-medium">

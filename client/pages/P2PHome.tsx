@@ -1,25 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MessageSquare, ShoppingCart, TrendingUp } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
-import {
-  getUnreadNotifications,
-  loadChatHistory,
-  type ChatNotification,
-} from "@/lib/p2p-chat";
-
-interface TradeRoom {
-  id: string;
-  type: "buy" | "sell";
-  token: string;
-  amount: string;
-  status: "active" | "pending" | "completed";
-  lastMessage?: string;
-  timestamp?: number;
-  unreadCount: number;
-}
 
 export default function P2PHome() {
   const navigate = useNavigate();

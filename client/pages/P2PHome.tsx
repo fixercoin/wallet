@@ -76,7 +76,12 @@ export default function P2PHome() {
       {/* Main Content - Two Column Layout */}
       <div className="max-w-lg mx-auto px-4 py-8">
         <div className="space-y-3">
-          {orders.length === 0 && (
+          {loadingOrders && (
+            <div className="text-center text-white/70 py-8">
+              Loading orders...
+            </div>
+          )}
+          {!loadingOrders && orders.length === 0 && (
             <div className="text-center text-white/70 py-8">
               No active orders yet
             </div>

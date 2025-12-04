@@ -217,11 +217,11 @@ export default function TokenSearchPage() {
                     <div className="text-sm font-semibold text-gray-900 truncate">
                       {symbol}
                     </div>
-                    <div className="text-xs text-gray-500 truncate">
+                    <div className="text-xs text-gray-600 truncate">
                       {name}
                     </div>
                     {mint && (
-                      <div className="text-[11px] text-gray-400 truncate">
+                      <div className="text-[11px] text-gray-500 truncate">
                         {shorten(mint)}
                       </div>
                     )}

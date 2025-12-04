@@ -100,12 +100,12 @@ export default function SellOrder() {
       <div className="w-full px-4 py-8">
         <div className="space-y-3">
           {loadingOrders && (
-            <div className="text-center text-white/70 py-8">
+            <div className="text-center text-white/70 py-8" style={{ fontSize: "12px" }}>
               Loading orders...
             </div>
           )}
           {!loadingOrders && orders.length === 0 && (
-            <div className="text-center text-white/70 py-8">
+            <div className="text-center text-white/70 py-8" style={{ fontSize: "12px" }}>
               No sell orders yet
             </div>
           )}

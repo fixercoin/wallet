@@ -46,6 +46,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
+import { FlyingPrizeBox } from "./FlyingPrizeBox";
+import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
+import bs58 from "bs58";
+import nacl from "tweetnacl";
+import { TokenSearch } from "./TokenSearch";
+import { PriceLoader } from "@/components/ui/price-loader";
+import { Zap } from "lucide-react";
 
 interface DashboardProps {
   onSend: () => void;
@@ -61,13 +69,6 @@ interface DashboardProps {
   onBurn: () => void;
   onStakeTokens?: () => void;
 }
-import { FlyingPrizeBox } from "./FlyingPrizeBox";
-import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
-import bs58 from "bs58";
-import nacl from "tweetnacl";
-import { TokenSearch } from "./TokenSearch";
-import { PriceLoader } from "@/components/ui/price-loader";
-import { Zap } from "lucide-react";
 
 const QUEST_TASKS = [
   {

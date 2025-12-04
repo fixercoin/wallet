@@ -109,7 +109,7 @@ export default function OrdersList() {
                 {wallet?.publicKey === ADMIN_WALLET ? (
                   <button
                     onClick={() =>
-                      navigate("/express/buy-trade", {
+                      navigate("/order-complete", {
                         state: { order: o, openChat: true },
                       })
                     }

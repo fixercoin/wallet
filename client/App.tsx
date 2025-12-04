@@ -146,6 +146,7 @@ import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 import DocumentationPage from "./pages/DocumentationPage";
 import P2PHome from "./pages/P2PHome";
 import BuyTrade from "./pages/BuyTrade";
+import OrderComplete from "./pages/OrderComplete";
 import TokenSearchPage from "./pages/TokenSearchPage";
 import BuyActiveOrders from "./pages/BuyActiveOrders";
 import SellActiveOrders from "./pages/SellActiveOrders";
@@ -196,6 +197,7 @@ function AppRoutes() {
       <Route path="/p2p/buy-active-orders" element={<BuyActiveOrders />} />
       <Route path="/p2p/sell-active-orders" element={<SellActiveOrders />} />
       <Route path="/express/buy-trade" element={<BuyTrade />} />
+      <Route path="/order-complete" element={<OrderComplete />} />
       <Route path="/search" element={<TokenSearchPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

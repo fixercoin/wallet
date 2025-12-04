@@ -201,7 +201,7 @@ export default function BuyCrypto() {
 
   return (
     <div
-      className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden text-[10px]"
+      className="express-p2p-page min-h-screen bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95 text-white relative overflow-hidden text-[10px]"
       style={{ fontSize: "10px" }}
     >
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
@@ -211,8 +211,8 @@ export default function BuyCrypto() {
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
           <CardContent className="space-y-6 pt-6">
             <div>
-              <label className="block font-medium text-white/80 mb-3">
-                Select Token
+              <label className="block font-medium text-white/80 mb-3 uppercase">
+                SELECT TOKEN
               </label>
               <Select
                 value={selectedToken.id}
@@ -239,8 +239,8 @@ export default function BuyCrypto() {
             </div>
 
             <div>
-              <label className="block font-medium text-white/80 mb-2">
-                Amount (PKR)
+              <label className="block font-medium text-white/80 mb-2 uppercase">
+                AMOUNT (PKR)
               </label>
               <input
                 type="number"
@@ -256,7 +256,9 @@ export default function BuyCrypto() {
             <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-white/70">Exchange Rate:</span>
+                  <span className="text-white/70 uppercase">
+                    EXCHANGE RATE:
+                  </span>
                   {fetchingRate ? (
                     <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
                   ) : (
@@ -273,7 +275,9 @@ export default function BuyCrypto() {
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-white/70">You Will Receive:</span>
+                  <span className="text-white/70 uppercase">
+                    YOU WILL RECEIVE:
+                  </span>
                   <span className="font-bold text-[#FF7A5C]">
                     {estimatedTokens.toFixed(6)} {selectedToken.symbol}
                   </span>

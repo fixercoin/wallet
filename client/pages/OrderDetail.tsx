@@ -18,9 +18,30 @@ import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 export default function OrderDetail() {
   const { formatCurrency } = useCurrency();
   const navigate = useNavigate();
+  const { wallet } = useWallet();
   const { orderId } = useParams();
   const [order, setOrder] = useState<any | null>(null);
   const [status, setStatus] = useState<"pending" | "completed" | null>(null);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
+    string | undefined
+  >();
+  const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
+  const [offerPassword, setOfferPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const OFFER_PASSWORD = "######Pakistan";
+
+  const handleOfferAction = (action: "buy" | "sell") => {
+    if (offerPassword !== OFFER_PASSWORD) {
+      setPasswordError("Invalid password");
+      return;
+    }
+    setShowCreateOfferDialog(false);
+    setOfferPassword("");
+    setPasswordError("");
+    navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
+  };
 
   useEffect(() => {
     try {

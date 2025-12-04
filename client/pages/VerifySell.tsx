@@ -10,9 +10,20 @@ import {
   Clock,
   Copy,
   Send,
+  ShoppingCart,
+  TrendingUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { API_BASE } from "@/lib/p2p";
 import { copyToClipboard, shortenAddress } from "@/lib/wallet";
 import {

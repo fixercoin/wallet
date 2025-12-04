@@ -40,7 +40,7 @@ const DEFAULT_TOKENS: TokenOption[] = [
 
 export default function BuyCrypto() {
   const navigate = useNavigate();
-  const { wallet, tokens: walletTokens = [] } = useWallet();
+  const { wallet } = useWallet();
   const { toast } = useToast();
 
   const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);

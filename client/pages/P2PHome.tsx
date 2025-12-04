@@ -30,7 +30,7 @@ export default function P2PHome() {
     return (
       <div
         className="w-full min-h-screen pb-24"
-        style={{ fontSize: "10px", backgroundColor: "#0f0f0f", color: "#fff" }}
+        style={{ fontSize: "10px", backgroundColor: "#1a1a1a", color: "#fff" }}
       >
         <div className="text-center pt-20 text-white/70">
           Please connect your wallet first

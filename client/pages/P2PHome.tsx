@@ -150,11 +150,6 @@ export default function P2PHome() {
         walletAddress={wallet?.publicKey || ""}
         paymentMethodId={editingPaymentMethodId}
         onSave={() => {
-          // Reload payment methods
-          if (wallet) {
-            const methods = getPaymentMethodsByWallet(wallet.publicKey);
-            setPaymentMethods(methods);
-          }
           setEditingPaymentMethodId(undefined);
         }}
       />

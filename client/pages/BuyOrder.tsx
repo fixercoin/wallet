@@ -49,8 +49,7 @@ export default function BuyOrder() {
           localStorage.getItem("orders_pending") || "[]",
         );
         const buyOrders = pendingOrders.filter(
-          (order: any) =>
-            !order.type || order.type === "BUY" || order.amountPKR,
+          (order: any) => order.type === "BUY",
         );
         setOrders(buyOrders);
       } catch (error) {

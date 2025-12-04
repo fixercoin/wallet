@@ -9,13 +9,11 @@ import { Search as SearchIcon, Loader2 } from "lucide-react";
 interface TokenSearchProps {
   className?: string;
   inputClassName?: string;
-  searchInputRef?: React.RefObject<HTMLInputElement>;
 }
 
 export const TokenSearch: React.FC<TokenSearchProps> = ({
   className,
   inputClassName,
-  searchInputRef,
 }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DexscreenerToken[]>([]);
@@ -137,7 +135,6 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
       <div className="relative">
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input
-          ref={searchInputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search tokens..."

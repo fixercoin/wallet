@@ -46,23 +46,13 @@ export default function P2PHome() {
     >
       {/* Header */}
       <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-300/20 border border-gray-300/30 text-gray-300 hover:bg-gray-300/30 transition-colors"
-            aria-label="Back"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-xl font-bold text-white uppercase">
-              P2P TRADE
-            </h1>
-            <p className="text-xs text-white/60 uppercase">
-              BUY OR SELL CRYPTO
-            </p>
-          </div>
-        </div>
+        <button
+          onClick={() => navigate("/")}
+          className="text-gray-300 hover:text-gray-100 transition-colors"
+          aria-label="Back"
+        >
+          <ArrowLeft className="w-6 h-6" />
+        </button>
       </div>
 
       {/* Main Content - Two Column Layout */}

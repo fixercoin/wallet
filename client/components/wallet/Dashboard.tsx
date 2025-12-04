@@ -827,12 +827,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div className="flex items-center gap-2 ml-auto">
                 {/* Search button */}
                 <Button
-                  onClick={() => {
-                    setShowSearchFocus(!showSearchFocus);
-                    if (!showSearchFocus) {
-                      setTimeout(() => searchInputRef.current?.focus(), 0);
-                    }
-                  }}
+                  onClick={() => navigate("/search")}
                   size="sm"
                   className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-[#22c55e] ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
                   aria-label="Search tokens"

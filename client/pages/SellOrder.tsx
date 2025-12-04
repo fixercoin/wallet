@@ -100,12 +100,18 @@ export default function SellOrder() {
       <div className="w-full px-4 py-8">
         <div className="space-y-3">
           {loadingOrders && (
-            <div className="text-center text-white/70 py-8" style={{ fontSize: "12px" }}>
+            <div
+              className="text-center text-white/70 py-8"
+              style={{ fontSize: "12px" }}
+            >
               Loading orders...
             </div>
           )}
           {!loadingOrders && orders.length === 0 && (
-            <div className="text-center text-white/70 py-8" style={{ fontSize: "12px" }}>
+            <div
+              className="text-center text-white/70 py-8"
+              style={{ fontSize: "12px" }}
+            >
               No sell orders yet
             </div>
           )}
@@ -118,10 +124,11 @@ export default function SellOrder() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-baseline gap-3" style={{ fontSize: "12px" }}>
-                      <div className="font-semibold text-white">
-                        {order.id}
-                      </div>
+                    <div
+                      className="flex items-baseline gap-3"
+                      style={{ fontSize: "12px" }}
+                    >
+                      <div className="font-semibold text-white">{order.id}</div>
                       <div className="font-semibold text-[#FF7A5C]">
                         {order.token} {Number(order.amountPKR).toFixed(2)} PKR
                       </div>

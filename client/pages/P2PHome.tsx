@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -6,15 +6,23 @@ import {
   MessageSquare,
   ShoppingCart,
   TrendingUp,
+  CreditCard,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+import { getPaymentMethodsByWallet } from "@/lib/p2p-payment-methods";
 
 export default function P2PHome() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
 
   useEffect(() => {
     if (!wallet) return;
+    // Load payment methods
+    const methods = getPaymentMethodsByWallet(wallet.publicKey);
+    setPaymentMethods(methods);
   }, [wallet]);
 
   if (!wallet) {
@@ -81,7 +89,64 @@ export default function P2PHome() {
           <TrendingUp className="w-5 h-5 mr-2" />
           SELL CRYPTO
         </Button>
+
+        <Button
+          onClick={() => setShowPaymentDialog(true)}
+          className="w-full h-14 bg-transparent border border-[#a855f7] text-[#a855f7] hover:bg-[#a855f7]/10 font-bold rounded-lg text-base uppercase"
+        >
+          <CreditCard className="w-5 h-5 mr-2" />
+          ADD PAYMENT METHOD
+        </Button>
       </div>
+
+      {/* Saved Payment Methods */}
+      {paymentMethods.length > 0 && (
+        <div className="max-w-lg mx-auto px-4 py-4">
+          <h3 className="text-sm font-bold text-white/80 uppercase mb-3">
+            Saved Payment Methods
+          </h3>
+          <div className="space-y-2">
+            {paymentMethods.map((method) => (
+              <div
+                key={method.id}
+                className="bg-[#2a2a2a] border border-[#a855f7]/30 rounded-lg p-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-white">
+                      {method.userName}
+                    </p>
+                    <p className="text-xs text-white/60">
+                      {method.paymentMethod} - {method.accountNumber}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setShowPaymentDialog(true)}
+                    size="sm"
+                    className="bg-[#a855f7] hover:bg-[#9333ea] text-white text-xs h-auto py-1 px-2"
+                  >
+                    Edit
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Payment Method Dialog */}
+      <PaymentMethodDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        walletAddress={wallet?.publicKey || ""}
+        onSave={() => {
+          // Reload payment methods
+          if (wallet) {
+            const methods = getPaymentMethodsByWallet(wallet.publicKey);
+            setPaymentMethods(methods);
+          }
+        }}
+      />
     </div>
   );
 }

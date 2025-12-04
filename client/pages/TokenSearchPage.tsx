@@ -169,7 +169,7 @@ export default function TokenSearchPage() {
       <div className="w-full max-w-lg mx-auto px-4 pb-8 relative z-20">
         {query.trim().length < 2 && (
           <div className="text-center py-12">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-600">
               Start typing to search for tokens...
             </p>
           </div>
@@ -178,13 +178,13 @@ export default function TokenSearchPage() {
         {query.trim().length >= 2 && loading && (
           <div className="text-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-[#22c55e] mx-auto mb-2" />
-            <p className="text-sm text-gray-500">Searching tokens...</p>
+            <p className="text-sm text-gray-600">Searching tokens...</p>
           </div>
         )}
 
         {query.trim().length >= 2 && !loading && results.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-sm text-gray-500">No tokens found</p>
+            <p className="text-sm text-gray-600">No tokens found</p>
           </div>
         )}
 
@@ -203,7 +203,7 @@ export default function TokenSearchPage() {
                 <button
                   key={`${r.pairAddress}-${mint}`}
                   onClick={() => onSelect(r)}
-                  className="w-full flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-gray-100 bg-white border border-gray-200 transition-colors text-left"
+                  className="w-full flex items-center gap-4 px-4 py-3 rounded-md hover:bg-[#f0fff4]/60 bg-white/80 border border-[#22c55e]/20 transition-colors text-left shadow-sm"
                   aria-label={`Open ${symbol} ${name}`}
                 >
                   <Avatar className="h-10 w-10 flex-shrink-0">

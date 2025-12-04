@@ -186,8 +186,21 @@ export default function OrderDetail() {
                         </div>
                         <div className="flex items-center justify-between p-4">
                           <div className="text-xs opacity-80">Account Number</div>
-                          <div className="font-semibold font-mono">
-                            {order.seller.accountNumber}
+                          <div className="flex items-center gap-2">
+                            <div className="font-semibold font-mono">
+                              {order.seller.accountNumber}
+                            </div>
+                            <button
+                              onClick={() => handleCopy(order.seller.accountNumber, "Account Number")}
+                              className="text-gray-400 hover:text-white transition-colors"
+                              title="Copy account number"
+                            >
+                              {copiedValue === order.seller.accountNumber ? (
+                                <Check className="w-4 h-4" />
+                              ) : (
+                                <Copy className="w-4 h-4" />
+                              )}
+                            </button>
                           </div>
                         </div>
                       </>

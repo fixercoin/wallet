@@ -289,7 +289,7 @@ export default function BuyCrypto() {
       <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-4">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/p2p")}
             className="p-2 hover:bg-[#1a2540]/50 rounded-lg transition-colors"
             aria-label="Back"
           >

@@ -25,6 +25,8 @@ import {
   X,
   Clock,
   Coins,
+  Search as SearchIcon,
+  MessageSquare,
 } from "lucide-react";
 import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import {
@@ -51,7 +53,7 @@ import { FlyingPrizeBox } from "./FlyingPrizeBox";
 import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
-import { TokenSearch } from "./TokenSearch";
+import { getUnreadNotifications } from "@/lib/p2p-chat";
 import { PriceLoader } from "@/components/ui/price-loader";
 import { Zap } from "lucide-react";
 
@@ -129,6 +131,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
@@ -276,6 +279,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
       clearInterval(id);
     };
   }, [refreshBalance, refreshTokens]);
+
+  // Monitor unread notifications
+  useEffect(() => {
+    if (!wallet) return;
+
+    const updateUnreadCount = () => {
+      const unread = getUnreadNotifications(wallet.publicKey);
+      setUnreadCount(unread.length);
+    };
+
+    updateUnreadCount();
+
+    // Check for updates every 2 seconds
+    const interval = setInterval(updateUnreadCount, 2000);
+
+    // Also listen for storage changes
+    const handleStorageChange = () => {
+      updateUnreadCount();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [wallet]);
 
   // Check for pending payment verifications if admin
   useEffect(() => {
@@ -761,7 +791,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             }}
           />
           <div className="relative z-10">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2 gap-2">
               {/* Dropdown menu - moved to left */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -820,16 +850,30 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {/* Settings button - moved to right */}
-              <Button
-                onClick={onSettings}
-                size="sm"
-                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
-                aria-label="Settings"
-                title="Settings"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
+
+              <div className="flex items-center gap-2 ml-auto">
+                {/* Search button */}
+                <Button
+                  onClick={() => navigate("/search")}
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-[#22c55e] ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                  aria-label="Search tokens"
+                  title="Search tokens"
+                >
+                  <SearchIcon className="h-4 w-4" />
+                </Button>
+
+                {/* Settings button */}
+                <Button
+                  onClick={onSettings}
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                  aria-label="Settings"
+                  title="Settings"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="text-center space-y-2 mt-8">
@@ -958,12 +1002,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </Button>
             </div>
 
-            {/* Token Search - Under Action Buttons */}
-            <div className="w-full mt-4 px-0">
-              <TokenSearch
-                className="w-full"
-                inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-md"
-              />
+            {/* P2P EXPRESS SERVICE Button with Notification Badge */}
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mt-4 w-full px-0">
+              <Button
+                onClick={() => navigate("/p2p")}
+                className="relative flex-1 bg-[#2a2a2a] border border-[#22c55e]/30 rounded-md px-4 py-3 text-center hover:bg-[#2a2a2a]/80 transition-colors text-white font-bold text-xs h-auto py-3"
+              >
+                P2P EXPRESS SERVICE
+                {unreadCount > 0 && (
+                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#FF7A5C] rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  </div>
+                )}
+              </Button>
             </div>
           </div>
         </div>

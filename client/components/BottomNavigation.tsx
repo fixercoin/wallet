@@ -65,14 +65,14 @@ export const BottomNavigation = () => {
       style={{ backgroundColor: "#1f1f1f" }}
     >
       <div className="flex items-center justify-between h-16 xs:h-20 sm:h-20 md:h-24 lg:h-28 px-2 xs:px-3 sm:px-3 md:px-6 lg:px-8 gap-2 xs:gap-3 sm:gap-4 md:gap-6 lg:gap-8 w-full">
-        {/* P2P TRADE Text with Card Style */}
+        {/* P2P TRADE SERVICE Text with Card Style */}
         <div
           onClick={() => navigate("/p2p")}
           className="cursor-pointer flex-1 bg-[#2a2a2a] border border-[#22c55e]/30 rounded-md px-4 py-3 text-center hover:bg-[#2a2a2a]/80 transition-colors"
-          title="P2P Trade"
+          title="P2P Trade Service"
         >
           <span className="text-white font-bold text-sm xs:text-base whitespace-nowrap">
-            P2P TRADE
+            P2P TRADE SERVICE
           </span>
         </div>
 

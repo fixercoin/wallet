@@ -146,7 +146,7 @@ import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 import DocumentationPage from "./pages/DocumentationPage";
 import P2PHome from "./pages/P2PHome";
 import BuyTrade from "./pages/BuyTrade";
-import { BottomNavigation } from "@/components/BottomNavigation";
+import TokenSearchPage from "./pages/TokenSearchPage";
 import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
@@ -192,19 +192,16 @@ function AppRoutes() {
       />
       <Route path="/p2p" element={<P2PHome />} />
       <Route path="/express/buy-trade" element={<BuyTrade />} />
+      <Route path="/search" element={<TokenSearchPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
 
 function AppContent() {
-  const location = useLocation();
-  const isWalletDashboard = location.pathname === "/";
-
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen pb-4">
       <AppRoutes />
-      {isWalletDashboard && <BottomNavigation />}
     </div>
   );
 }

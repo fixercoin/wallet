@@ -193,7 +193,7 @@ export default function P2PHome() {
             PAYMENT
           </Button>
           <Button
-            onClick={() => navigate("/buy-crypto")}
+            onClick={() => setShowCreateOfferDialog(true)}
             className="h-12 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-sm uppercase"
           >
             +

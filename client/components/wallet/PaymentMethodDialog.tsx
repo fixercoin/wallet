@@ -49,24 +49,28 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 
   // Load existing payment method if editing
   useEffect(() => {
-    if (paymentMethodId && open) {
-      const existing = getPaymentMethod(paymentMethodId);
-      if (existing) {
-        setUserName(existing.userName);
-        setPaymentMethod(existing.paymentMethod);
-        setAccountName(existing.accountName);
-        setAccountNumber(existing.accountNumber);
-        setSolanawWalletAddress(existing.solanawWalletAddress);
+    const loadPaymentMethod = async () => {
+      if (paymentMethodId && open) {
+        const existing = await getPaymentMethod(paymentMethodId);
+        if (existing) {
+          setUserName(existing.userName);
+          setPaymentMethod(existing.paymentMethod);
+          setAccountName(existing.accountName);
+          setAccountNumber(existing.accountNumber);
+          setSolanawWalletAddress(existing.solanawWalletAddress);
+        }
+      } else if (open) {
+        // Reset for new entry
+        setUserName("");
+        setPaymentMethod("EASYPAISA");
+        setAccountName("");
+        setAccountNumber("");
+        setSolanawWalletAddress("");
+        setErrors({});
       }
-    } else if (open) {
-      // Reset for new entry
-      setUserName("");
-      setPaymentMethod("EASYPAISA");
-      setAccountName("");
-      setAccountNumber("");
-      setSolanawWalletAddress("");
-      setErrors({});
-    }
+    };
+
+    loadPaymentMethod();
   }, [paymentMethodId, open]);
 
   const validateForm = (): boolean => {

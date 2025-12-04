@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { ADMIN_WALLET } from "@/lib/p2p";
+import { getOrdersByWallet, P2POrder } from "@/lib/p2p-orders";
 
 export default function P2PHome() {
   const navigate = useNavigate();
@@ -14,23 +15,40 @@ export default function P2PHome() {
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
   >();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<P2POrder[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("orders_pending");
-      const arr = raw ? JSON.parse(raw) : [];
-      setOrders(Array.isArray(arr) ? arr : []);
-    } catch {
-      setOrders([]);
-    }
-  }, []);
+    const loadOrders = async () => {
+      if (!wallet?.publicKey) {
+        setOrders([]);
+        setLoadingOrders(false);
+        return;
+      }
+
+      try {
+        setLoadingOrders(true);
+        const fetchedOrders = await getOrdersByWallet(
+          wallet.publicKey,
+          "PENDING",
+        );
+        setOrders(fetchedOrders);
+      } catch (error) {
+        console.error("Error loading orders:", error);
+        setOrders([]);
+      } finally {
+        setLoadingOrders(false);
+      }
+    };
+
+    loadOrders();
+  }, [wallet?.publicKey]);
 
   if (!wallet) {
     return (
       <div
         className="w-full min-h-screen pb-24"
-        style={{ fontSize: "10px", backgroundColor: "#0f0f0f", color: "#fff" }}
+        style={{ fontSize: "10px", backgroundColor: "#1a1a1a", color: "#fff" }}
       >
         <div className="text-center pt-20 text-white/70">
           Please connect your wallet first
@@ -42,36 +60,28 @@ export default function P2PHome() {
   return (
     <div
       className="w-full min-h-screen pb-32"
-      style={{ fontSize: "10px", backgroundColor: "#0f0f0f", color: "#fff" }}
+      style={{ fontSize: "10px", backgroundColor: "#1a1a1a", color: "#fff" }}
     >
       {/* Header */}
       <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-300/20 border border-gray-300/30 text-gray-300 hover:bg-gray-300/30 transition-colors"
-            aria-label="Back"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-xl font-bold text-white uppercase">
-              P2P TRADE
-            </h1>
-            <p className="text-xs text-white/60 uppercase">
-              BUY OR SELL CRYPTO
-            </p>
-          </div>
-        </div>
+        <button
+          onClick={() => navigate("/")}
+          className="text-gray-300 hover:text-gray-100 transition-colors"
+          aria-label="Back"
+        >
+          <ArrowLeft className="w-6 h-6" />
+        </button>
       </div>
 
       {/* Main Content - Two Column Layout */}
       <div className="max-w-lg mx-auto px-4 py-8">
-        <h2 className="text-lg font-bold text-white uppercase mb-4">
-          Active Orders
-        </h2>
         <div className="space-y-3">
-          {orders.length === 0 && (
+          {loadingOrders && (
+            <div className="text-center text-white/70 py-8">
+              Loading orders...
+            </div>
+          )}
+          {!loadingOrders && orders.length === 0 && (
             <div className="text-center text-white/70 py-8">
               No active orders yet
             </div>
@@ -151,7 +161,7 @@ export default function P2PHome() {
       />
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95 border-t border-gray-300/30 p-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95 p-4 pb-8">
         <div className="max-w-7xl mx-auto grid grid-cols-4 gap-3">
           <Button
             onClick={() => navigate("/buy-crypto")}

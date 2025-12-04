@@ -34,32 +34,11 @@ const SUPPORTED_TOKEN_MINTS: Record<string, string> = {
 
 const DEFAULT_TOKENS: TokenOption[] = [
   {
-    id: "FIXERCOIN",
-    name: "Fixercoin",
-    symbol: "FIXERCOIN",
-    logo: "https://raw.githubusercontent.com/Fixorium/token-list/main/assets/fixercoin.png",
-    mint: SUPPORTED_TOKEN_MINTS.FIXERCOIN,
-  },
-  {
-    id: "SOL",
-    name: "Solana",
-    symbol: "SOL",
-    logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-    mint: SUPPORTED_TOKEN_MINTS.SOL,
-  },
-  {
     id: "USDC",
     name: "USDC",
     symbol: "USDC",
     logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5Au7BXRSpJfDw3gEPrwwAau4vTNihtQ5go5Q/logo.png",
     mint: SUPPORTED_TOKEN_MINTS.USDC,
-  },
-  {
-    id: "USDT",
-    name: "Tether",
-    symbol: "USDT",
-    logo: "https://cdn.builder.io/api/v1/image/assets%2F559a5e19be114c9d8427d6683b845144%2Fc2ea69828dbc4a90b2deed99c2291802?format=webp&width=800",
-    mint: SUPPORTED_TOKEN_MINTS.USDT,
   },
 ];
 
@@ -140,6 +119,19 @@ export default function SellNow() {
     } catch {}
   };
 
+  const getAvailableBuyerWallet = () => {
+    try {
+      const pendingOrders = JSON.parse(
+        localStorage.getItem("orders_pending") || "[]",
+      );
+      const buyOrders = pendingOrders.filter((o: any) => o.buyerWallet);
+      if (buyOrders.length > 0) {
+        return buyOrders[0].buyerWallet;
+      }
+    } catch {}
+    return undefined;
+  };
+
   const handleSellClick = async () => {
     if (!wallet) {
       toast({
@@ -164,6 +156,7 @@ export default function SellNow() {
       return;
     }
     try {
+      const buyerWallet = getAvailableBuyerWallet();
       const order = {
         id: `SELL-${Date.now()}`,
         token: selectedToken.id,
@@ -173,6 +166,7 @@ export default function SellNow() {
         paymentMethod: "easypaisa",
         sellerWallet: wallet.publicKey,
         adminWallet: ADMIN_WALLET,
+        buyerWallet: buyerWallet,
         createdAt: Date.now(),
       };
       try {
@@ -197,50 +191,9 @@ export default function SellNow() {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-4">
-          <button
-            onClick={() => navigate("/p2p")}
-            className="p-2 hover:bg-[#1a2540]/50 rounded-lg transition-colors"
-            aria-label="Back"
-          >
-            <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
-          </button>
-          <div className="flex-1 text-center font-medium text-sm">Sell Now</div>
-        </div>
-      </div>
-
       <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
           <CardContent className="space-y-6 pt-6">
-            <div>
-              <label className="block font-medium text-white/80 mb-3">
-                Select Token
-              </label>
-              <Select
-                value={selectedToken.id}
-                onValueChange={(id) => {
-                  const token = tokens.find((t) => t.id === id);
-                  if (token) setSelectedToken(token);
-                }}
-              >
-                <SelectTrigger className="bg-[#1a2540]/50 focus:ring-2 focus:ring-[#FF7A5C] text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#1a2540]">
-                  {tokens.map((token) => (
-                    <SelectItem
-                      key={token.id}
-                      value={token.id}
-                      className="text-white"
-                    >
-                      {token.symbol}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
               <div className="text-xs opacity-80">Available Balance</div>
               <div className="mt-1 text-sm">
@@ -313,6 +266,15 @@ export default function SellNow() {
               ) : (
                 "SELL FOR PKR"
               )}
+            </Button>
+
+            <Button
+              onClick={() => navigate("/p2p")}
+              variant="outline"
+              className="w-full h-12 rounded-lg font-semibold transition-all duration-200 border border-[#FF7A5C]/50 text-[#FF7A5C] hover:bg-[#FF7A5C]/10"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Back
             </Button>
           </CardContent>
         </Card>

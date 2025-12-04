@@ -142,34 +142,21 @@ export default function BuyNote() {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center">
-          <button
-            onClick={goBack}
-            className="p-2 hover:bg-[#1a2540]/50 rounded-lg transition-colors"
-            aria-label="Back"
-          >
-            <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
-          </button>
-          <div className="flex-1 text-center font-semibold">Buy Note</div>
-        </div>
-      </div>
-
       <div className="max-w-md mx-auto px-4 py-6 relative z-20">
-        <Card className="bg-transparent backdrop-blur-xl rounded-md">
+        <Card className="bg-transparent backdrop-blur-xl rounded-md border border-[#FF7A5C]/30">
           <CardContent className="space-y-6 pt-6">
-            <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
-              <div className="flex items-center justify-between">
-                <div className="text-xs opacity-80">Order Number</div>
-                <div className="font-semibold text-[#FF7A5C]">{order.id}</div>
-              </div>
+            <div className="flex items-center justify-between px-4">
+              <div className="text-xs opacity-80">Order Number</div>
+              <div className="font-semibold text-[#FF7A5C]">{order.id}</div>
             </div>
 
-            <div>
+            <Separator className="bg-[#FF7A5C]/20" />
+
+            <div className="px-4">
               <label className="block font-medium text-white/80 mb-3">
                 Seller Details
               </label>
-              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white space-y-2">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="opacity-80">Account Name</span>
                   <span className="font-semibold text-[#FF7A5C]">
@@ -193,66 +180,69 @@ export default function BuyNote() {
 
             <Separator className="bg-[#FF7A5C]/20" />
 
-            <div>
+            <div className="px-4">
               <label className="block font-medium text-white/80 mb-3">
                 Order Detail
               </label>
-              <div className="space-y-3">
-                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="opacity-80">Token</span>
-                    <span className="font-semibold text-[#FF7A5C]">
-                      {order.token}
-                    </span>
-                  </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="opacity-80">Token</span>
+                  <span className="font-semibold text-[#FF7A5C]">
+                    {order.token}
+                  </span>
                 </div>
-                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="opacity-80">Amount (PKR)</span>
-                    <span className="font-semibold text-[#FF7A5C]">
-                      {order.amountPKR.toLocaleString()}
-                    </span>
-                  </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="opacity-80">Amount (PKR)</span>
+                  <span className="font-semibold text-[#FF7A5C]">
+                    {order.amountPKR.toLocaleString()}
+                  </span>
                 </div>
-                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="opacity-80">Exchange Rate</span>
-                    <span className="font-semibold text-[#FF7A5C]">
-                      1 {order.token} ={" "}
-                      {order.pricePKRPerQuote < 1
-                        ? order.pricePKRPerQuote.toFixed(6)
-                        : order.pricePKRPerQuote.toFixed(2)}{" "}
-                      PKR
-                    </span>
-                  </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="opacity-80">Exchange Rate</span>
+                  <span className="font-semibold text-[#FF7A5C]">
+                    1 {order.token} ={" "}
+                    {order.pricePKRPerQuote < 1
+                      ? order.pricePKRPerQuote.toFixed(6)
+                      : order.pricePKRPerQuote.toFixed(2)}{" "}
+                    PKR
+                  </span>
                 </div>
-                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="opacity-80">You Will Receive</span>
-                    <span className="font-bold text-[#FF7A5C]">
-                      {estimatedTokens.toFixed(6)} {order.token}
-                    </span>
-                  </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="opacity-80">You Will Receive</span>
+                  <span className="font-bold text-[#FF7A5C]">
+                    {estimatedTokens.toFixed(6)} {order.token}
+                  </span>
                 </div>
               </div>
             </div>
 
             <Separator className="bg-[#FF7A5C]/20" />
 
-            <Button
-              onClick={handlePaid}
-              disabled={loading}
-              className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Notifying seller...
-                </>
-              ) : (
-                "I HAVE PAID"
-              )}
-            </Button>
+            <div className="px-4 pb-4 space-y-3">
+              <Button
+                onClick={handlePaid}
+                disabled={loading}
+                className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Notifying seller...
+                  </>
+                ) : (
+                  "I HAVE PAID"
+                )}
+              </Button>
+
+              <Button
+                onClick={goBack}
+                variant="outline"
+                className="w-full h-12 rounded-lg font-semibold transition-all duration-200 border border-[#FF7A5C]/50 text-[#FF7A5C] hover:bg-[#FF7A5C]/10"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2" />
+                Back
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

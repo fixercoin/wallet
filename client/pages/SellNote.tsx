@@ -25,6 +25,7 @@ interface SellOrder {
   paymentMethod: string;
   sellerWallet: string;
   adminWallet: string;
+  buyerWallet?: string;
   createdAt: number;
 }
 
@@ -37,6 +38,8 @@ export default function SellNote() {
 
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<SellOrder | null>(null);
+  const [fetchingBuyerWallet, setFetchingBuyerWallet] = useState(true);
+  const [buyerWallet, setBuyerWallet] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -45,9 +48,38 @@ export default function SellNote() {
     } catch {}
   }, []);
 
+  useEffect(() => {
+    const fetchBuyerWallet = async () => {
+      setFetchingBuyerWallet(true);
+      try {
+        const pendingOrders = JSON.parse(
+          localStorage.getItem("orders_pending") || "[]",
+        );
+        const buyOrder = pendingOrders.find((o: any) => o.buyerWallet);
+        if (buyOrder && buyOrder.buyerWallet) {
+          setBuyerWallet(buyOrder.buyerWallet);
+        } else {
+          setBuyerWallet(null);
+        }
+      } catch (error) {
+        console.error("Failed to fetch buyer wallet", error);
+        setBuyerWallet(null);
+      } finally {
+        setFetchingBuyerWallet(false);
+      }
+    };
+
+    fetchBuyerWallet();
+  }, []);
+
+  const targetWallet =
+    buyerWallet || order?.buyerWallet || order?.adminWallet || ADMIN_WALLET;
+
   const copyAddress = async () => {
     try {
-      await navigator.clipboard.writeText(ADMIN_WALLET);
+      const walletToCopy =
+        buyerWallet || order?.buyerWallet || order?.adminWallet || ADMIN_WALLET;
+      await navigator.clipboard.writeText(walletToCopy);
       toast({ title: "Wallet copied" });
     } catch {}
   };
@@ -145,49 +177,49 @@ export default function SellNote() {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center">
-          <button
-            onClick={goBack}
-            className="p-2 hover:bg-[#1a2540]/50 rounded-lg transition-colors"
-            aria-label="Back"
-          >
-            <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
-          </button>
-          <div className="flex-1 text-center font-semibold">Sell Note</div>
-        </div>
-      </div>
-
       <div className="max-w-md mx-auto px-4 py-6 relative z-20">
-        <Card className="bg-transparent backdrop-blur-xl rounded-md">
+        <Card className="bg-transparent backdrop-blur-xl rounded-md border border-[#FF7A5C]/30">
           <CardContent className="space-y-6 pt-6">
-            <div>
-              <label className="block font-medium text-white/80 mb-2">
+            <div className="px-4">
+              <label className="block font-medium text-white/80 mb-3">
                 Send transaction to this wallet
               </label>
-              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white flex items-center justify-between gap-2">
-                <code className="font-mono text-xs break-all">
-                  {ADMIN_WALLET}
-                </code>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={copyAddress}
-                  aria-label="Copy address"
-                  className="text-white"
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </div>
+              {fetchingBuyerWallet ? (
+                <div className="p-3 rounded-lg bg-[#1a2540]/50 text-white flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#FF7A5C]" />
+                  <span className="text-xs opacity-80">
+                    Fetching wallet address...
+                  </span>
+                </div>
+              ) : buyerWallet ? (
+                <div className="p-3 rounded-lg bg-[#1a2540]/50 text-white flex items-center justify-between gap-2">
+                  <code className="font-mono text-xs break-all">
+                    {buyerWallet}
+                  </code>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={copyAddress}
+                    aria-label="Copy address"
+                    className="text-white"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="p-3 rounded-lg bg-[#1a2540]/50 text-white/60 text-xs">
+                  No buyer wallet available. Using admin wallet for transfer.
+                </div>
+              )}
             </div>
 
             <Separator className="bg-[#FF7A5C]/20" />
 
-            <div>
-              <label className="block font-medium text-white/80 mb-2">
+            <div className="px-4">
+              <label className="block font-medium text-white/80 mb-3">
                 Order Detail
               </label>
-              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white space-y-2">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="opacity-80">Order Number</span>
                   <span className="font-semibold">{order.id}</span>
@@ -223,20 +255,31 @@ export default function SellNote() {
 
             <Separator className="bg-[#FF7A5C]/20" />
 
-            <Button
-              onClick={handleSent}
-              disabled={loading}
-              className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Notifying buyer...
-                </>
-              ) : (
-                "I HAVE SENT"
-              )}
-            </Button>
+            <div className="px-4 pb-4 space-y-3">
+              <Button
+                onClick={handleSent}
+                disabled={loading}
+                className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Notifying buyer...
+                  </>
+                ) : (
+                  "I HAVE SENT"
+                )}
+              </Button>
+
+              <Button
+                onClick={goBack}
+                variant="outline"
+                className="w-full h-12 rounded-lg font-semibold transition-all duration-200 border border-[#FF7A5C]/50 text-[#FF7A5C] hover:bg-[#FF7A5C]/10"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2" />
+                Back
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

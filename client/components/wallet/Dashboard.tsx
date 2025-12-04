@@ -130,8 +130,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
-  const [showSearchFocus, setShowSearchFocus] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
@@ -976,9 +974,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             {/* Token Search - Under Action Buttons */}
-            <div className={`w-full mt-4 px-0 transition-all duration-300 ${showSearchFocus ? "block" : "hidden sm:block"}`}>
+            <div className="w-full mt-4 px-0">
               <TokenSearch
-                searchInputRef={searchInputRef}
                 className="w-full"
                 inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-md"
               />

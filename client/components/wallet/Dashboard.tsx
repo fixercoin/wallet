@@ -13,6 +13,7 @@ import {
   Copy,
   ArrowUpRight,
   ArrowDownLeft,
+  ArrowRightLeft,
   TrendingUp,
   Settings,
   Bot,
@@ -752,7 +753,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Balance Section */}
         <div className="w-full mt-2 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <img
-            src="https://cdn.builder.io/api/v1/image/assets%2F7af6522794cb4e5ca85f19bc91cbec76%2Fce1c4ab24b794d18b14d3087397797f1?format=webp&width=800"
+            src="https://cdn.builder.io/api/v1/image/assets%2F544a1f0862d54740bb19cea328eb3490%2F144647ed9eb7478cac472b3cb771e9ae?format=webp&width=800"
             alt="Balance card background"
             className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
             style={{
@@ -826,8 +827,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <div className="text-3xl font-medium text-gray-900 leading-tight">
                             {showBalance ? `${usdZero}` : "****"}
                           </div>
-                          <div className="text-xs text-green-400 mt-1 font-medium">
-                            {showBalance ? `▲ + 0.000 0.00 %` : "24h: ****"}
+                          <div className="text-xs mt-1 font-medium">
+                            <span
+                              style={{ color: "#FACC15", display: "block" }}
+                            >
+                              {showBalance ? `▲ + 0.000 0.00 %` : "24h: ****"}
+                            </span>
                           </div>
                         </>
                       );
@@ -872,21 +877,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             : "****"}
                         </div>
                         {showBalance ? (
-                          <div
-                            className={`text-xs mt-1 font-medium ${isPositive ? "text-green-400" : "text-red-400"}`}
-                          >
-                            {isPositive ? "▲" : "▼"} {isPositive ? "+" : "-"}{" "}
-                            {Math.abs(totalChange24h).toLocaleString(
-                              undefined,
-                              {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
-                              },
-                            )}{" "}
-                            {Math.abs(
-                              isFinite(change24hPercent) ? change24hPercent : 0,
-                            ).toFixed(2)}
-                            %
+                          <div className="text-xs mt-1 font-medium">
+                            <span
+                              style={{
+                                color: isPositive ? "#FACC15" : "#F87171",
+                                display: "block",
+                              }}
+                            >
+                              {isPositive ? "▲" : "▼"} {isPositive ? "+" : "-"}{" "}
+                              {Math.abs(totalChange24h).toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3,
+                                },
+                              )}{" "}
+                              {Math.abs(
+                                isFinite(change24hPercent)
+                                  ? change24hPercent
+                                  : 0,
+                              ).toFixed(2)}
+                              %
+                            </span>
                           </div>
                         ) : (
                           <div className="text-xs text-gray-400 mt-1">****</div>
@@ -901,7 +913,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="flex items-center justify-around gap-2 sm:gap-3 mt-6 w-full px-0">
               <Button
                 onClick={onSend}
-                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
                 <Send className="h-8 w-8 text-[#22c55e]" />
                 <span>SEND</span>
@@ -909,7 +921,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               <Button
                 onClick={onReceive}
-                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
                 <Download className="h-8 w-8 text-[#22c55e]" />
                 <span>RECEIVE</span>
@@ -917,9 +929,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               <Button
                 onClick={onSwap}
-                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
-                <TrendingUp className="h-8 w-8 text-[#22c55e]" />
+                <ArrowRightLeft className="h-8 w-8 text-[#22c55e]" />
                 <span>SWAP</span>
               </Button>
             </div>

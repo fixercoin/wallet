@@ -214,7 +214,7 @@ export default function SellNow() {
 
   return (
     <div
-      className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden text-[10px]"
+      className="express-p2p-page min-h-screen bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95 text-white relative overflow-hidden text-[10px]"
       style={{ fontSize: "10px" }}
     >
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
@@ -224,7 +224,7 @@ export default function SellNow() {
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
           <CardContent className="space-y-6 pt-6">
             <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
-              <div className="text-xs opacity-80">Available Balance</div>
+              <div className="text-xs opacity-80 uppercase">AVAILABLE BALANCE</div>
               <div className="mt-1 text-sm">
                 <span className="font-semibold">
                   {selectedTokenBalance.toFixed(6)} {selectedToken.symbol}
@@ -233,8 +233,8 @@ export default function SellNow() {
             </div>
 
             <div>
-              <label className="block font-medium text-white/80 mb-2">
-                Amount ({selectedToken.symbol})
+              <label className="block font-medium text-white/80 mb-2 uppercase">
+                AMOUNT ({selectedToken.symbol})
               </label>
               <input
                 type="number"
@@ -250,7 +250,7 @@ export default function SellNow() {
             <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-white/70">Exchange Rate:</span>
+                  <span className="text-white/70 uppercase">EXCHANGE RATE:</span>
                   {fetchingRate ? (
                     <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
                   ) : (
@@ -266,7 +266,7 @@ export default function SellNow() {
                   )}
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-white/70">You Will Receive:</span>
+                  <span className="text-white/70 uppercase">YOU WILL RECEIVE:</span>
                   <span className="font-bold text-[#FF7A5C]">
                     {(
                       Number(sellAmountTokens || 0) * (exchangeRate || 0)

@@ -96,6 +96,18 @@ export default function SellOrder() {
         </button>
       </div>
 
+      {/* Info Banner */}
+      <div className="w-full px-4 py-4">
+        <div className="p-4 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/30">
+          <p
+            className="text-white/80 text-center uppercase tracking-wide"
+            style={{ fontSize: "11px" }}
+          >
+            USER CAN SELL USDC COIN FOR PAKISTANI RUPEE
+          </p>
+        </div>
+      </div>
+
       {/* Main Content */}
       <div className="w-full px-4 py-8">
         <div className="space-y-3">
@@ -125,13 +137,14 @@ export default function SellOrder() {
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1">
                     <div
-                      className="flex items-baseline gap-3"
+                      className="font-semibold text-white"
                       style={{ fontSize: "12px" }}
                     >
-                      <div className="font-semibold text-white">{order.id}</div>
-                      <div className="font-semibold text-[#FF7A5C]">
-                        {order.token} {Number(order.amountPKR).toFixed(2)} PKR
-                      </div>
+                      <span>SELL-{order.id.split("-").pop()}</span>
+                      <span className="text-[#FF7A5C] ml-3">
+                        LIMIT {Number(order.amountTokens || 0).toFixed(6)}{" "}
+                        {order.token}
+                      </span>
                     </div>
                   </div>
                   <button
@@ -148,7 +161,7 @@ export default function SellOrder() {
                     className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white hover:shadow-lg transition-colors uppercase font-semibold flex-shrink-0"
                     style={{ fontSize: "12px" }}
                   >
-                    View
+                    SELL
                   </button>
                 </div>
               </CardContent>

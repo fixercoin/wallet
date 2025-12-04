@@ -3,8 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/contexts/CurrencyContext";
-import { ArrowLeft, ShoppingCart, TrendingUp } from "lucide-react";
+import { ArrowLeft, ShoppingCart, TrendingUp, Copy, Check } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,7 @@ export default function OrderDetail() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const { orderId } = useParams();
+  const { toast } = useToast();
   const [order, setOrder] = useState<any | null>(null);
   const [status, setStatus] = useState<"pending" | "completed" | null>(null);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
@@ -29,8 +31,25 @@ export default function OrderDetail() {
   const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
   const [offerPassword, setOfferPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [copiedValue, setCopiedValue] = useState<string | null>(null);
 
   const OFFER_PASSWORD = "######Pakistan";
+
+  const shortenAddress = (address: string, chars = 6) => {
+    if (!address) return "";
+    return `${address.slice(0, chars)}...${address.slice(-chars)}`;
+  };
+
+  const handleCopy = (value: string, label: string) => {
+    navigator.clipboard.writeText(value);
+    setCopiedValue(value);
+    toast({
+      title: "Copied!",
+      description: `${label} copied to clipboard`,
+      duration: 2000,
+    });
+    setTimeout(() => setCopiedValue(null), 2000);
+  };
 
   const handleOfferAction = (action: "buy" | "sell") => {
     if (offerPassword !== OFFER_PASSWORD) {
@@ -81,7 +100,22 @@ export default function OrderDetail() {
               <CardContent className="space-y-0 p-0">
                 <div className="flex items-center justify-between p-4 border-b border-gray-300/20">
                   <div className="text-xs opacity-80">Order Number</div>
-                  <div className="font-semibold">{order.id}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="font-semibold">
+                      {shortenAddress(order.id, 8)}
+                    </div>
+                    <button
+                      onClick={() => handleCopy(order.id, "Order Number")}
+                      className="text-gray-400 hover:text-white transition-colors"
+                      title="Copy order number"
+                    >
+                      {copiedValue === order.id ? (
+                        <Check className="w-4 h-4" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <div className="flex items-center justify-between p-4 border-b border-gray-300/20">
                   <div className="text-xs opacity-80">Status</div>
@@ -125,13 +159,77 @@ export default function OrderDetail() {
                     </div>
                   </div>
                 )}
-                {order.paymentMethod && (
-                  <div className="flex items-center justify-between p-4">
-                    <div className="text-xs opacity-80">Payment Method</div>
-                    <div className="font-semibold capitalize">
-                      {order.paymentMethod}
+                {order.type === "SELL" ? (
+                  order.buyerWallet && (
+                    <div className="flex items-center justify-between p-4">
+                      <div className="text-xs opacity-80">Buyer Wallet</div>
+                      <div className="flex items-center gap-2">
+                        <div className="font-semibold font-mono text-xs">
+                          {shortenAddress(order.buyerWallet, 6)}
+                        </div>
+                        <button
+                          onClick={() =>
+                            handleCopy(order.buyerWallet, "Buyer Wallet")
+                          }
+                          className="text-gray-400 hover:text-white transition-colors flex-shrink-0"
+                          title="Copy buyer wallet"
+                        >
+                          {copiedValue === order.buyerWallet ? (
+                            <Check className="w-4 h-4" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )
+                ) : (
+                  <>
+                    {order.paymentMethod && (
+                      <div className="flex items-center justify-between p-4 border-b border-gray-300/20">
+                        <div className="text-xs opacity-80">Payment Method</div>
+                        <div className="font-semibold capitalize">
+                          {order.paymentMethod}
+                        </div>
+                      </div>
+                    )}
+                    {order.paymentMethod === "easypaisa" && order.seller && (
+                      <>
+                        <div className="flex items-center justify-between p-4 border-b border-gray-300/20">
+                          <div className="text-xs opacity-80">Account Name</div>
+                          <div className="font-semibold capitalize">
+                            {order.seller.accountName}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between p-4">
+                          <div className="text-xs opacity-80">
+                            Account Number
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="font-semibold font-mono">
+                              {order.seller.accountNumber}
+                            </div>
+                            <button
+                              onClick={() =>
+                                handleCopy(
+                                  order.seller.accountNumber,
+                                  "Account Number",
+                                )
+                              }
+                              className="text-gray-400 hover:text-white transition-colors"
+                              title="Copy account number"
+                            >
+                              {copiedValue === order.seller.accountNumber ? (
+                                <Check className="w-4 h-4" />
+                              ) : (
+                                <Copy className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>

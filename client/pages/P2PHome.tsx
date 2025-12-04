@@ -94,16 +94,14 @@ export default function P2PHome() {
                 onClick={() => navigate("/buy-crypto")}
                 className="w-full h-14 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-base uppercase"
               >
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                BUY CRYPTO
+                BUY
               </Button>
 
               <Button
                 onClick={() => navigate("/sell-now")}
                 className="w-full h-14 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-base uppercase"
               >
-                <TrendingUp className="w-5 h-5 mr-2" />
-                SELL CRYPTO
+                SELL
               </Button>
 
               <Button
@@ -113,8 +111,14 @@ export default function P2PHome() {
                 }}
                 className="w-full h-14 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-base uppercase"
               >
-                <CreditCard className="w-5 h-5 mr-2" />
-                ADD PAYMENT METHOD
+                PAYMENT
+              </Button>
+
+              <Button
+                onClick={() => navigate("/buy-crypto")}
+                className="w-full h-14 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-base uppercase"
+              >
+                +
               </Button>
             </div>
 

@@ -138,7 +138,7 @@ export default function BuyOrder() {
                     >
                       <span>BUY-{order.id.split("-").pop()}</span>
                       <span className="text-[#FF7A5C] ml-3">
-                        {order.token} {Number(order.amountPKR).toFixed(2)} PKR
+                        LIMIT {Number(order.maxAmountPKR || 0).toFixed(2)} PKR
                       </span>
                     </div>
                   </div>

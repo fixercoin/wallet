@@ -80,9 +80,7 @@ export default function P2PHome() {
             <Card
               key={order.id}
               className="bg-transparent border border-gray-300/30 hover:border-gray-300/50 transition-colors cursor-pointer"
-              onClick={() =>
-                navigate(`/order/${encodeURIComponent(order.id)}`)
-              }
+              onClick={() => navigate(`/order/${encodeURIComponent(order.id)}`)}
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between gap-4">
@@ -91,9 +89,7 @@ export default function P2PHome() {
                     <div className="font-semibold text-white truncate">
                       {order.id}
                     </div>
-                    {(order.token ||
-                      order.amountPKR ||
-                      order.amountTokens) && (
+                    {(order.token || order.amountPKR || order.amountTokens) && (
                       <div className="text-xs text-white/70 mt-2">
                         {order.token && (
                           <span className="inline-block mr-2">

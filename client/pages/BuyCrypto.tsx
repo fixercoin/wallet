@@ -212,40 +212,6 @@ export default function BuyCrypto() {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      <div className="bg-gradient-to-r from-[#1a2847]/95 to-[#16223a]/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-4">
-          <button
-            onClick={() => navigate("/p2p")}
-            className="p-2 hover:bg-[#1a2540]/50 rounded-lg transition-colors"
-            aria-label="Back"
-          >
-            <ArrowLeft className="w-5 h-5 text-[#FF7A5C]" />
-          </button>
-          <div className="flex items-center gap-4 text-white/80 text-[10px]">
-            <span
-              onClick={() => navigate("/orders/completed")}
-              className="cursor-pointer hover:text-white"
-            >
-              COMPLETED{" "}
-              <span className="font-semibold text-white">{completedCount}</span>
-            </span>
-            <span
-              onClick={() => navigate("/orders/pending")}
-              className="cursor-pointer hover:text-white"
-            >
-              PENDING{" "}
-              <span className="font-semibold text-white">{pendingCount}</span>
-            </span>
-          </div>
-          <a
-            href="mailto:info@fixorium.com.pk"
-            className="ml-auto text-white/80 text-[10px] hover:text-white"
-          >
-            PUT APPEAL
-          </a>
-        </div>
-      </div>
-
       <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
           <CardContent className="space-y-6 pt-6">

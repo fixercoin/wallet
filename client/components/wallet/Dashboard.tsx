@@ -752,7 +752,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Balance Section */}
         <div className="w-full mt-2 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <img
-            src="https://cdn.builder.io/api/v1/image/assets%2F7af6522794cb4e5ca85f19bc91cbec76%2Fce1c4ab24b794d18b14d3087397797f1?format=webp&width=800"
+            src="https://cdn.builder.io/api/v1/image/assets%2F544a1f0862d54740bb19cea328eb3490%2F144647ed9eb7478cac472b3cb771e9ae?format=webp&width=800"
             alt="Balance card background"
             className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
             style={{

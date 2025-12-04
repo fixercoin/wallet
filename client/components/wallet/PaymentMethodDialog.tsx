@@ -150,8 +150,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 
         <div className="space-y-4 py-4">
           {/* User Name */}
-          <div className="space-y-2">
-            <Label htmlFor="userName">User Name</Label>
+          <div>
             <Input
               id="userName"
               value={userName}
@@ -161,13 +160,12 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               className={errors.userName ? "border-red-500" : ""}
             />
             {errors.userName && (
-              <p className="text-xs text-red-500">{errors.userName}</p>
+              <p className="text-xs text-red-500 mt-1">{errors.userName}</p>
             )}
           </div>
 
           {/* Payment Method */}
-          <div className="space-y-2">
-            <Label htmlFor="paymentMethod">Payment Method</Label>
+          <div>
             <Select
               value={paymentMethod}
               onValueChange={(value) =>
@@ -176,7 +174,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               disabled={loading}
             >
               <SelectTrigger id="paymentMethod">
-                <SelectValue />
+                <SelectValue placeholder="Select payment method" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="EASYPAISA">EASYPAISA</SelectItem>
@@ -185,8 +183,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
           </div>
 
           {/* Account Name */}
-          <div className="space-y-2">
-            <Label htmlFor="accountName">Account Name</Label>
+          <div>
             <Input
               id="accountName"
               value={accountName}
@@ -198,8 +195,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
           </div>
 
           {/* Account Number */}
-          <div className="space-y-2">
-            <Label htmlFor="accountNumber">Account Number</Label>
+          <div>
             <Input
               id="accountNumber"
               value={accountNumber}
@@ -211,8 +207,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
           </div>
 
           {/* Solana Wallet Address */}
-          <div className="space-y-2">
-            <Label htmlFor="solanawWalletAddress">Solana Wallet Address</Label>
+          <div>
             <Input
               id="solanawWalletAddress"
               value={solanawWalletAddress}

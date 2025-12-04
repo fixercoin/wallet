@@ -203,54 +203,6 @@ export default function BuyCrypto() {
     }
   };
 
-  const handleSellClick = async () => {
-    if (!wallet) {
-      toast({
-        title: "Wallet Not Connected",
-        description: "Please connect your wallet first",
-        variant: "destructive",
-      });
-      return;
-    }
-    const amount = Number(sellAmountTokens);
-    if (
-      !sellAmountTokens ||
-      !isFinite(amount) ||
-      amount <= 0 ||
-      !exchangeRate
-    ) {
-      toast({
-        title: "Invalid Amount",
-        description: "Enter a valid token amount",
-        variant: "destructive",
-      });
-      return;
-    }
-    try {
-      const order = {
-        id: `SELL-${Date.now()}`,
-        token: selectedToken.id,
-        amountTokens: amount,
-        amountPKR: amount * exchangeRate,
-        pricePKRPerQuote: exchangeRate,
-        paymentMethod: "easypaisa",
-        sellerWallet: wallet.publicKey,
-        adminWallet: ADMIN_WALLET,
-        createdAt: Date.now(),
-      };
-      try {
-        localStorage.setItem("sellnote_order", JSON.stringify(order));
-      } catch {}
-      addPendingOrder(order);
-      navigate("/sellnote");
-    } catch (error: any) {
-      toast({
-        title: "Failed to start chat",
-        description: error?.message || String(error),
-        variant: "destructive",
-      });
-    }
-  };
 
   return (
     <div

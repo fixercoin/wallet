@@ -58,8 +58,6 @@ export default function BuyCrypto() {
   );
   const [amountPKR, setAmountPKR] = useState<string>("");
   const [walletAddress, setWalletAddress] = useState<string>("");
-  const [minAmountPKR, setMinAmountPKR] = useState<string>("");
-  const [maxAmountPKR, setMaxAmountPKR] = useState<string>("");
   const [estimatedTokens, setEstimatedTokens] = useState<number>(0);
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
@@ -186,8 +184,6 @@ export default function BuyCrypto() {
         },
         buyerWallet: wallet.publicKey,
         walletAddress: walletAddress || wallet.publicKey,
-        minAmountPKR: minAmountPKR ? Number(minAmountPKR) : 0,
-        maxAmountPKR: maxAmountPKR ? Number(maxAmountPKR) : 0,
         createdAt: Date.now(),
       };
       try {
@@ -273,36 +269,6 @@ export default function BuyCrypto() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
-                <label className="block font-medium text-white/80 mb-2 uppercase text-xs">
-                  MINIMUM PKR
-                </label>
-                <input
-                  type="number"
-                  value={minAmountPKR}
-                  onChange={(e) => setMinAmountPKR(e.target.value)}
-                  placeholder="Min amount"
-                  className="w-full px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40 text-sm"
-                  min="0"
-                  step="100"
-                />
-              </div>
-              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
-                <label className="block font-medium text-white/80 mb-2 uppercase text-xs">
-                  MAXIMUM PKR
-                </label>
-                <input
-                  type="number"
-                  value={maxAmountPKR}
-                  onChange={(e) => setMaxAmountPKR(e.target.value)}
-                  placeholder="Max amount"
-                  className="w-full px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40 text-sm"
-                  min="0"
-                  step="100"
-                />
-              </div>
-            </div>
 
             <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
               <div className="space-y-3">

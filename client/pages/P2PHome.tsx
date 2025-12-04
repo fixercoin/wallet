@@ -69,7 +69,7 @@ export default function P2PHome() {
       <div className="max-w-lg mx-auto px-4 py-8 space-y-4">
         <Button
           onClick={() => navigate("/orders/active")}
-          className="w-full h-14 bg-transparent border border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e]/10 font-bold rounded-lg text-base uppercase"
+          className="w-full h-14 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-base uppercase"
         >
           <MessageSquare className="w-5 h-5 mr-2" />
           ACTIVE ORDERS
@@ -77,7 +77,7 @@ export default function P2PHome() {
 
         <Button
           onClick={() => navigate("/buy-crypto")}
-          className="w-full h-14 bg-transparent border border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e]/10 font-bold rounded-lg text-base uppercase"
+          className="w-full h-14 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-base uppercase"
         >
           <ShoppingCart className="w-5 h-5 mr-2" />
           BUY CRYPTO
@@ -85,7 +85,7 @@ export default function P2PHome() {
 
         <Button
           onClick={() => navigate("/sell-now")}
-          className="w-full h-14 bg-transparent border border-[#FF7A5C] text-[#FF7A5C] hover:bg-[#FF7A5C]/10 font-bold rounded-lg text-base uppercase"
+          className="w-full h-14 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-base uppercase"
         >
           <TrendingUp className="w-5 h-5 mr-2" />
           SELL CRYPTO
@@ -96,7 +96,7 @@ export default function P2PHome() {
             setEditingPaymentMethodId(undefined);
             setShowPaymentDialog(true);
           }}
-          className="w-full h-14 bg-transparent border border-[#a855f7] text-[#a855f7] hover:bg-[#a855f7]/10 font-bold rounded-lg text-base uppercase"
+          className="w-full h-14 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-base uppercase"
         >
           <CreditCard className="w-5 h-5 mr-2" />
           ADD PAYMENT METHOD

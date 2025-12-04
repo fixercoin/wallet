@@ -121,7 +121,9 @@ export default function SellNow() {
 
   const getAvailableBuyerWallet = () => {
     try {
-      const pendingOrders = JSON.parse(localStorage.getItem("orders_pending") || "[]");
+      const pendingOrders = JSON.parse(
+        localStorage.getItem("orders_pending") || "[]",
+      );
       const buyOrders = pendingOrders.filter((o: any) => o.buyerWallet);
       if (buyOrders.length > 0) {
         return buyOrders[0].buyerWallet;
@@ -189,11 +191,9 @@ export default function SellNow() {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-
       <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
           <CardContent className="space-y-6 pt-6">
-
             <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
               <div className="text-xs opacity-80">Available Balance</div>
               <div className="mt-1 text-sm">

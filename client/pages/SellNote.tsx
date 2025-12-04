@@ -52,7 +52,9 @@ export default function SellNote() {
     const fetchBuyerWallet = async () => {
       setFetchingBuyerWallet(true);
       try {
-        const pendingOrders = JSON.parse(localStorage.getItem("orders_pending") || "[]");
+        const pendingOrders = JSON.parse(
+          localStorage.getItem("orders_pending") || "[]",
+        );
         const buyOrder = pendingOrders.find((o: any) => o.buyerWallet);
         if (buyOrder && buyOrder.buyerWallet) {
           setBuyerWallet(buyOrder.buyerWallet);
@@ -70,11 +72,13 @@ export default function SellNote() {
     fetchBuyerWallet();
   }, []);
 
-  const targetWallet = buyerWallet || order?.buyerWallet || order?.adminWallet || ADMIN_WALLET;
+  const targetWallet =
+    buyerWallet || order?.buyerWallet || order?.adminWallet || ADMIN_WALLET;
 
   const copyAddress = async () => {
     try {
-      const walletToCopy = buyerWallet || order?.buyerWallet || order?.adminWallet || ADMIN_WALLET;
+      const walletToCopy =
+        buyerWallet || order?.buyerWallet || order?.adminWallet || ADMIN_WALLET;
       await navigator.clipboard.writeText(walletToCopy);
       toast({ title: "Wallet copied" });
     } catch {}
@@ -173,7 +177,6 @@ export default function SellNote() {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-
       <div className="max-w-md mx-auto px-4 py-6 relative z-20">
         <Card className="bg-transparent backdrop-blur-xl rounded-md border border-[#FF7A5C]/30">
           <CardContent className="space-y-6 pt-6">
@@ -184,7 +187,9 @@ export default function SellNote() {
               {fetchingBuyerWallet ? (
                 <div className="p-3 rounded-lg bg-[#1a2540]/50 text-white flex items-center justify-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin text-[#FF7A5C]" />
-                  <span className="text-xs opacity-80">Fetching wallet address...</span>
+                  <span className="text-xs opacity-80">
+                    Fetching wallet address...
+                  </span>
                 </div>
               ) : buyerWallet ? (
                 <div className="p-3 rounded-lg bg-[#1a2540]/50 text-white flex items-center justify-between gap-2">

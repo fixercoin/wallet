@@ -196,7 +196,9 @@ export default function P2PHome() {
       >
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 text-white">
           <DialogHeader>
-            <DialogTitle className="text-white uppercase">CREATE OFFER</DialogTitle>
+            <DialogTitle className="text-white uppercase">
+              CREATE OFFER
+            </DialogTitle>
             <DialogDescription className="text-white/70 uppercase">
               CHOOSE WHETHER YOU WANT TO BUY OR SELL CRYPTO
             </DialogDescription>

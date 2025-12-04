@@ -1,8 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/contexts/CurrencyContext";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ShoppingCart, TrendingUp } from "lucide-react";
+import { useWallet } from "@/contexts/WalletContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 
 export default function OrderDetail() {
   const { formatCurrency } = useCurrency();

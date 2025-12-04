@@ -937,7 +937,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <div className="text-3xl font-medium text-gray-900 leading-tight">
                           {showBalance ? (
                             <>
-                              <span className="font-extrabold">
+                              <span className="font-extrabold" style={{ fontVariantNumeric: "tabular-nums" }}>
                                 {total.toLocaleString(undefined, {
                                   minimumFractionDigits: 3,
                                   maximumFractionDigits: 3,

@@ -125,13 +125,13 @@ export default function SellOrder() {
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1">
                     <div
-                      className="flex items-baseline gap-3"
+                      className="font-semibold text-white"
                       style={{ fontSize: "12px" }}
                     >
-                      <div className="font-semibold text-white">{order.id}</div>
-                      <div className="font-semibold text-[#FF7A5C]">
+                      <span>SELL-{order.id.split("-").pop()}</span>
+                      <span className="text-[#FF7A5C] ml-3">
                         {order.token} {Number(order.amountPKR).toFixed(2)} PKR
-                      </div>
+                      </span>
                     </div>
                   </div>
                   <button
@@ -148,7 +148,7 @@ export default function SellOrder() {
                     className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white hover:shadow-lg transition-colors uppercase font-semibold flex-shrink-0"
                     style={{ fontSize: "12px" }}
                   >
-                    View
+                    SELL
                   </button>
                 </div>
               </CardContent>

@@ -26,6 +26,7 @@ import {
   Clock,
   Coins,
   Search as SearchIcon,
+  MessageSquare,
 } from "lucide-react";
 import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import {
@@ -52,7 +53,7 @@ import { FlyingPrizeBox } from "./FlyingPrizeBox";
 import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
-import { TokenSearch } from "./TokenSearch";
+import { getUnreadNotifications } from "@/lib/p2p-chat";
 import { PriceLoader } from "@/components/ui/price-loader";
 import { Zap } from "lucide-react";
 
@@ -130,6 +131,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);

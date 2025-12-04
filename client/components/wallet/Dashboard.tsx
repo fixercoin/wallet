@@ -69,6 +69,7 @@ import bs58 from "bs58";
 import nacl from "tweetnacl";
 import { TokenSearch } from "./TokenSearch";
 import { PriceLoader } from "@/components/ui/price-loader";
+import { Zap } from "lucide-react";
 
 const QUEST_TASKS = [
   {

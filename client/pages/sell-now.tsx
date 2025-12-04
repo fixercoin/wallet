@@ -180,33 +180,6 @@ export default function SellNow() {
       <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
           <CardContent className="space-y-6 pt-6">
-            <div>
-              <label className="block font-medium text-white/80 mb-3">
-                Select Token
-              </label>
-              <Select
-                value={selectedToken.id}
-                onValueChange={(id) => {
-                  const token = tokens.find((t) => t.id === id);
-                  if (token) setSelectedToken(token);
-                }}
-              >
-                <SelectTrigger className="bg-[#1a2540]/50 focus:ring-2 focus:ring-[#FF7A5C] text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[#1a2540]">
-                  {tokens.map((token) => (
-                    <SelectItem
-                      key={token.id}
-                      value={token.id}
-                      className="text-white"
-                    >
-                      {token.symbol}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
             <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
               <div className="text-xs opacity-80">Available Balance</div>

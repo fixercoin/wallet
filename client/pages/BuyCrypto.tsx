@@ -62,14 +62,6 @@ export default function BuyCrypto() {
     } catch {}
   };
 
-  const selectedTokenBalance = useMemo(() => {
-    const t = (walletTokens || []).find(
-      (tk) =>
-        (tk.symbol || "").toUpperCase() === selectedToken.symbol.toUpperCase(),
-    );
-    return t?.balance || 0;
-  }, [walletTokens, selectedToken]);
-
   // Load token logos/prices (best-effort)
   useEffect(() => {
     const fetchTokens = async () => {

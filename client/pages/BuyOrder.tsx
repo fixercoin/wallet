@@ -13,13 +13,12 @@ import {
 } from "@/components/ui/dialog";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
-import { getOrdersByWallet, P2POrder } from "@/lib/p2p-orders";
 import { ADMIN_WALLET } from "@/lib/p2p";
 
 export default function BuyOrder() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
-  const [orders, setOrders] = useState<P2POrder[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<

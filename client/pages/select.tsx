@@ -296,23 +296,6 @@ export default function Select() {
             info@fixorium.com.pk
           </span>
         </div>
-        <div className="mt-2 w-full max-w-4xl rounded-3xl p-6 order-2">
-          <div className="grid grid-cols-2 gap-4 w-full">
-            <Button
-              onClick={() => navigate("/buy-now")}
-              className="w-full py-3 h-12 rounded-xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-base shadow-lg active:scale-95"
-            >
-              BUY
-            </Button>
-
-            <Button
-              onClick={() => navigate("/sell-now")}
-              className="w-full py-3 h-12 rounded-xl bg-gradient-to-br from-[#FF5A8C] to-[#FF7A5C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-base shadow-lg active:scale-95"
-            >
-              SELL
-            </Button>
-          </div>
-        </div>
 
         {wallet?.publicKey && (
           <div className="w-full max-w-4xl order-1">

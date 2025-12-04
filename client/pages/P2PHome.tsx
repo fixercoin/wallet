@@ -92,7 +92,10 @@ export default function P2PHome() {
         </Button>
 
         <Button
-          onClick={() => setShowPaymentDialog(true)}
+          onClick={() => {
+            setEditingPaymentMethodId(undefined);
+            setShowPaymentDialog(true);
+          }}
           className="w-full h-14 bg-transparent border border-[#a855f7] text-[#a855f7] hover:bg-[#a855f7]/10 font-bold rounded-lg text-base uppercase"
         >
           <CreditCard className="w-5 h-5 mr-2" />

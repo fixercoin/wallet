@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
-import { getPaymentMethodsByWallet } from "@/lib/p2p-payment-methods";
 import { ADMIN_WALLET } from "@/lib/p2p";
 
 export default function P2PHome() {
@@ -15,15 +14,7 @@ export default function P2PHome() {
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
   >();
-  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (!wallet) return;
-    // Load payment methods
-    const methods = getPaymentMethodsByWallet(wallet.publicKey);
-    setPaymentMethods(methods);
-  }, [wallet]);
 
   useEffect(() => {
     try {

@@ -14,6 +14,7 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   TrendingUp,
+  ArrowUpDown,
   Settings,
   Bot,
   Plus,

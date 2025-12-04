@@ -158,7 +158,7 @@ export default function SellNote() {
               </label>
               <div className="p-3 rounded-lg bg-[#1a2540]/50 text-white flex items-center justify-between gap-2">
                 <code className="font-mono text-xs break-all">
-                  {ADMIN_WALLET}
+                  {targetWallet}
                 </code>
                 <Button
                   variant="ghost"

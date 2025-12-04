@@ -1,9 +1,34 @@
 /**
  * Cloudflare KV Storage Utilities
- * Handles all KV operations for staking and rewards
+ * Handles all KV operations for staking, rewards, payment methods, and orders
  */
 
 import { Stake, RewardDistribution } from "./reward-config";
+
+export interface PaymentMethod {
+  id: string;
+  walletAddress: string;
+  userName: string;
+  paymentMethod: "EASYPAISA";
+  accountName: string;
+  accountNumber: string;
+  solanawWalletAddress: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface P2POrder {
+  id: string;
+  walletAddress: string;
+  type: "BUY" | "SELL";
+  token: string;
+  amountTokens: number;
+  amountPKR: number;
+  paymentMethodId: string;
+  status: "PENDING" | "COMPLETED" | "CANCELLED";
+  createdAt: number;
+  updatedAt: number;
+}
 
 interface KVNamespace {
   get(key: string): Promise<string | null>;

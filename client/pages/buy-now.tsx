@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, ShoppingCart, TrendingUp } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { useOrderNotifications } from "@/hooks/use-order-notifications";
+import { ADMIN_WALLET } from "@/lib/p2p";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
@@ -75,6 +77,7 @@ export default function BuyNow() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const { toast } = useToast();
+  const { createNotification } = useOrderNotifications();
 
   const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
@@ -234,6 +237,19 @@ export default function BuyNow() {
       } catch (kvError) {
         console.error("Error saving to KV storage:", kvError);
       }
+
+      await createNotification(
+        ADMIN_WALLET,
+        "order_created",
+        "BUY",
+        orderId,
+        `New buy order created: ${Number(amountPKR).toFixed(2)} PKR for ${selectedToken.id}`,
+        {
+          token: selectedToken.id,
+          amountTokens: Number(amountPKR) / exchangeRate,
+          amountPKR: Number(amountPKR),
+        },
+      );
 
       navigate("/sell-order");
     } catch (error: any) {

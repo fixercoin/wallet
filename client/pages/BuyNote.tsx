@@ -45,6 +45,26 @@ export default function BuyNote() {
 
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<BuyOrder | null>(null);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
+    string | undefined
+  >();
+  const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
+  const [offerPassword, setOfferPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const OFFER_PASSWORD = "######Pakistan";
+
+  const handleOfferAction = (action: "buy" | "sell") => {
+    if (offerPassword !== OFFER_PASSWORD) {
+      setPasswordError("Invalid password");
+      return;
+    }
+    setShowCreateOfferDialog(false);
+    setOfferPassword("");
+    setPasswordError("");
+    navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
+  };
 
   useEffect(() => {
     try {

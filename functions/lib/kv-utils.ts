@@ -195,4 +195,184 @@ export class KVStore {
     const json = await this.kv.get(`rewards:wallet:${walletAddress}`);
     return json ? JSON.parse(json) : [];
   }
+
+  /**
+   * Get all payment methods for a wallet
+   */
+  async getPaymentMethodsByWallet(
+    walletAddress: string,
+  ): Promise<PaymentMethod[]> {
+    const paymentMethodIds = await this.getPaymentMethodIdsForWallet(
+      walletAddress,
+    );
+    const paymentMethods: PaymentMethod[] = [];
+
+    for (const methodId of paymentMethodIds) {
+      const method = await this.getPaymentMethod(methodId);
+      if (method) {
+        paymentMethods.push(method);
+      }
+    }
+
+    return paymentMethods;
+  }
+
+  /**
+   * Get a single payment method by ID
+   */
+  async getPaymentMethod(methodId: string): Promise<PaymentMethod | null> {
+    const json = await this.kv.get(`payment_methods:${methodId}`);
+    return json ? JSON.parse(json) : null;
+  }
+
+  /**
+   * Create or update a payment method
+   */
+  async savePaymentMethod(
+    method: Omit<PaymentMethod, "id" | "createdAt" | "updatedAt">,
+    methodId?: string,
+  ): Promise<PaymentMethod> {
+    const id =
+      methodId ||
+      `pm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const now = Date.now();
+
+    const existing = methodId ? await this.getPaymentMethod(methodId) : null;
+
+    const paymentMethod: PaymentMethod = {
+      ...method,
+      id,
+      createdAt: existing?.createdAt || now,
+      updatedAt: now,
+    };
+
+    await this.kv.put(
+      `payment_methods:${id}`,
+      JSON.stringify(paymentMethod),
+    );
+
+    const paymentMethodIds = await this.getPaymentMethodIdsForWallet(
+      method.walletAddress,
+    );
+
+    if (!paymentMethodIds.includes(id)) {
+      paymentMethodIds.push(id);
+      await this.kv.put(
+        `payment_methods:wallet:${method.walletAddress}`,
+        JSON.stringify(paymentMethodIds),
+      );
+    }
+
+    return paymentMethod;
+  }
+
+  /**
+   * Delete a payment method
+   */
+  async deletePaymentMethod(
+    methodId: string,
+    walletAddress: string,
+  ): Promise<void> {
+    await this.kv.delete(`payment_methods:${methodId}`);
+
+    const paymentMethodIds = await this.getPaymentMethodIdsForWallet(
+      walletAddress,
+    );
+    const filtered = paymentMethodIds.filter((id) => id !== methodId);
+    await this.kv.put(
+      `payment_methods:wallet:${walletAddress}`,
+      JSON.stringify(filtered),
+    );
+  }
+
+  /**
+   * Get all orders for a wallet
+   */
+  async getOrdersByWallet(walletAddress: string): Promise<P2POrder[]> {
+    const orderIds = await this.getOrderIdsForWallet(walletAddress);
+    const orders: P2POrder[] = [];
+
+    for (const orderId of orderIds) {
+      const order = await this.getOrder(orderId);
+      if (order) {
+        orders.push(order);
+      }
+    }
+
+    return orders;
+  }
+
+  /**
+   * Get a single order by ID
+   */
+  async getOrder(orderId: string): Promise<P2POrder | null> {
+    const json = await this.kv.get(`orders:${orderId}`);
+    return json ? JSON.parse(json) : null;
+  }
+
+  /**
+   * Create or update an order
+   */
+  async saveOrder(
+    order: Omit<P2POrder, "id" | "createdAt" | "updatedAt">,
+    orderId?: string,
+  ): Promise<P2POrder> {
+    const id = orderId || `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const now = Date.now();
+
+    const existing = orderId ? await this.getOrder(orderId) : null;
+
+    const p2pOrder: P2POrder = {
+      ...order,
+      id,
+      createdAt: existing?.createdAt || now,
+      updatedAt: now,
+    };
+
+    await this.kv.put(`orders:${id}`, JSON.stringify(p2pOrder));
+
+    const orderIds = await this.getOrderIdsForWallet(order.walletAddress);
+
+    if (!orderIds.includes(id)) {
+      orderIds.push(id);
+      await this.kv.put(
+        `orders:wallet:${order.walletAddress}`,
+        JSON.stringify(orderIds),
+      );
+    }
+
+    return p2pOrder;
+  }
+
+  /**
+   * Delete an order
+   */
+  async deleteOrder(orderId: string, walletAddress: string): Promise<void> {
+    await this.kv.delete(`orders:${orderId}`);
+
+    const orderIds = await this.getOrderIdsForWallet(walletAddress);
+    const filtered = orderIds.filter((id) => id !== orderId);
+    await this.kv.put(
+      `orders:wallet:${walletAddress}`,
+      JSON.stringify(filtered),
+    );
+  }
+
+  /**
+   * Get payment method IDs for wallet
+   */
+  private async getPaymentMethodIdsForWallet(
+    walletAddress: string,
+  ): Promise<string[]> {
+    const json = await this.kv.get(`payment_methods:wallet:${walletAddress}`);
+    return json ? JSON.parse(json) : [];
+  }
+
+  /**
+   * Get order IDs for wallet
+   */
+  private async getOrderIdsForWallet(walletAddress: string): Promise<string[]> {
+    const json = await this.kv.get(`orders:wallet:${walletAddress}`);
+    return json ? JSON.parse(json) : [];
+  }
 }

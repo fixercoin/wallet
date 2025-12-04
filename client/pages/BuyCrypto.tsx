@@ -55,15 +55,6 @@ export default function BuyCrypto() {
   const [loading, setLoading] = useState(false);
   const [fetchingRate, setFetchingRate] = useState(false);
 
-  const addPendingOrder = (o: any) => {
-    try {
-      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
-      const arr = Array.isArray(cur) ? cur : [];
-      arr.unshift({ ...o, status: "pending" });
-      localStorage.setItem("orders_pending", JSON.stringify(arr));
-    } catch {}
-    refreshCounts();
-  };
   const selectedTokenBalance = useMemo(() => {
     const t = (walletTokens || []).find(
       (tk) =>

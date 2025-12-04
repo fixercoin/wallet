@@ -74,7 +74,8 @@ export default function SellNote() {
 
   const copyAddress = async () => {
     try {
-      await navigator.clipboard.writeText(targetWallet);
+      const walletToCopy = buyerWallet || order?.buyerWallet || order?.adminWallet || ADMIN_WALLET;
+      await navigator.clipboard.writeText(walletToCopy);
       toast({ title: "Wallet copied" });
     } catch {}
   };

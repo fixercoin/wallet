@@ -934,11 +934,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                     return (
                       <>
-                        <div className="text-3xl font-medium text-gray-900 leading-tight">
+                        <div className={`text-3xl text-gray-900 leading-tight ${
+                          total > 0 ? "font-medium" : ""
+                        }`}>
                           {showBalance ? (
                             <>
                               <span
-                                className="font-extrabold"
+                                className={total > 0 ? "font-extrabold" : ""}
                                 style={{
                                   fontVariantNumeric: "tabular-nums",
                                   fontFamily: "Arial",
@@ -956,7 +958,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           )}
                         </div>
                         {showBalance ? (
-                          <div className="text-xs mt-1 font-medium">
+                          <div className={`text-xs mt-1 ${
+                            total > 0 ? "font-medium" : ""
+                          }`}>
                             <span
                               style={{
                                 color: isPositive ? "#FACC15" : "#F87171",

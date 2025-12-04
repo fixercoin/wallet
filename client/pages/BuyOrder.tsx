@@ -123,12 +123,17 @@ export default function BuyOrder() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1">
-                    <div
-                      className="flex items-baseline gap-3"
-                      style={{ fontSize: "12px" }}
-                    >
-                      <div className="font-semibold text-white">{order.id}</div>
-                      <div className="font-semibold text-[#FF7A5C]">
+                    <div className="space-y-2">
+                      <div
+                        className="font-semibold text-white"
+                        style={{ fontSize: "12px" }}
+                      >
+                        BUY-{order.id.split("-").pop()}
+                      </div>
+                      <div
+                        className="font-semibold text-[#FF7A5C]"
+                        style={{ fontSize: "12px" }}
+                      >
                         {order.token} {Number(order.amountPKR).toFixed(2)} PKR
                       </div>
                     </div>

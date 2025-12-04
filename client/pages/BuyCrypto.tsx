@@ -256,7 +256,9 @@ export default function BuyCrypto() {
             <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">EXCHANGE RATE:</span>
+                  <span className="text-white/70 uppercase">
+                    EXCHANGE RATE:
+                  </span>
                   {fetchingRate ? (
                     <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
                   ) : (
@@ -273,7 +275,9 @@ export default function BuyCrypto() {
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">YOU WILL RECEIVE:</span>
+                  <span className="text-white/70 uppercase">
+                    YOU WILL RECEIVE:
+                  </span>
                   <span className="font-bold text-[#FF7A5C]">
                     {estimatedTokens.toFixed(6)} {selectedToken.symbol}
                   </span>

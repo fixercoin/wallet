@@ -169,7 +169,9 @@ export default function OrderComplete() {
               </div>
               <div className="flex justify-between items-start">
                 <span className="text-white/70 uppercase text-xs">TOKEN</span>
-                <span className="text-sm text-white/90">{order?.token || "—"}</span>
+                <span className="text-sm text-white/90">
+                  {order?.token || "—"}
+                </span>
               </div>
               <div className="flex justify-between items-start">
                 <span className="text-white/70 uppercase text-xs">AMOUNT</span>
@@ -340,9 +342,7 @@ export default function OrderComplete() {
               />
               <Button
                 type="button"
-                onClick={() =>
-                  document.getElementById("attach-input")?.click()
-                }
+                onClick={() => document.getElementById("attach-input")?.click()}
                 className="px-3 py-2 bg-[#FF7A5C]/20 border border-[#FF7A5C]/50 hover:bg-[#FF7A5C]/30 text-[#FF7A5C]"
                 title="Attach proof"
               >

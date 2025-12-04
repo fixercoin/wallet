@@ -305,16 +305,24 @@ export default function Select() {
                         <div className="flex items-center gap-2 mb-3">
                           <div className="w-2 h-2 rounded-full bg-[#FF7A5C]"></div>
                           <div className="font-bold text-base text-white uppercase">
-                            {action === "buyer_paid" ? "PAYMENT RECEIVED" : "ASSET SENT"}
+                            {action === "buyer_paid"
+                              ? "PAYMENT RECEIVED"
+                              : "ASSET SENT"}
                           </div>
                         </div>
                         <div className="space-y-3 mt-3">
                           <div>
-                            <span className="text-xs text-white/60 uppercase block">Order ID</span>
-                            <span className="font-mono text-sm text-white/90 mt-1 block break-all">{payload.roomId}</span>
+                            <span className="text-xs text-white/60 uppercase block">
+                              Order ID
+                            </span>
+                            <span className="font-mono text-sm text-white/90 mt-1 block break-all">
+                              {payload.roomId}
+                            </span>
                           </div>
                           <div>
-                            <span className="text-xs text-white/60 uppercase block">Amount</span>
+                            <span className="text-xs text-white/60 uppercase block">
+                              Amount
+                            </span>
                             <span className="text-sm text-white/90 mt-1 font-semibold">
                               {action === "buyer_paid"
                                 ? `${payload.amountPKR?.toLocaleString?.() ?? payload.amountPKR} PKR for ~${Number(payload.estimatedTokens || 0).toFixed(6)} ${payload.token}`
@@ -322,8 +330,12 @@ export default function Select() {
                             </span>
                           </div>
                           <div>
-                            <span className="text-xs text-white/60 uppercase block">Payment Method</span>
-                            <span className="text-sm text-white/90 mt-1 font-semibold capitalize">{payload.paymentMethod || "—"}</span>
+                            <span className="text-xs text-white/60 uppercase block">
+                              Payment Method
+                            </span>
+                            <span className="text-sm text-white/90 mt-1 font-semibold capitalize">
+                              {payload.paymentMethod || "—"}
+                            </span>
                           </div>
                         </div>
                       </div>

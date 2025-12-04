@@ -224,7 +224,9 @@ export default function SellNow() {
         <Card className="bg-transparent backdrop-blur-xl rounded-md">
           <CardContent className="space-y-6 pt-6">
             <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white">
-              <div className="text-xs opacity-80 uppercase">AVAILABLE BALANCE</div>
+              <div className="text-xs opacity-80 uppercase">
+                AVAILABLE BALANCE
+              </div>
               <div className="mt-1 text-sm">
                 <span className="font-semibold">
                   {selectedTokenBalance.toFixed(6)} {selectedToken.symbol}
@@ -250,7 +252,9 @@ export default function SellNow() {
             <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">EXCHANGE RATE:</span>
+                  <span className="text-white/70 uppercase">
+                    EXCHANGE RATE:
+                  </span>
                   {fetchingRate ? (
                     <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
                   ) : (
@@ -266,7 +270,9 @@ export default function SellNow() {
                   )}
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">YOU WILL RECEIVE:</span>
+                  <span className="text-white/70 uppercase">
+                    YOU WILL RECEIVE:
+                  </span>
                   <span className="font-bold text-[#FF7A5C]">
                     {(
                       Number(sellAmountTokens || 0) * (exchangeRate || 0)

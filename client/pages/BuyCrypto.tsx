@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 
 interface TokenOption {
   id: string;

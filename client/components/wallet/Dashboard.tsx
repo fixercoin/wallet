@@ -809,7 +809,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </Button>
             </div>
 
-            <div className="text-center space-y-2 mt-8">
+            <div className="text-center space-y-2 mt-8" style={{ color: "inherit" }}>
               {wallet
                 ? (() => {
                     const total = getTotalPortfolioValue();

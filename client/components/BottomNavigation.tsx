@@ -57,11 +57,12 @@ export const BottomNavigation = () => {
             <button
               key={item.label}
               onClick={() => navigate(item.path)}
-              className="px-4 xs:px-5 sm:px-6 md:px-8 lg:px-10 py-3 xs:py-4 sm:py-5 md:py-6 lg:py-7 transition-colors leading-tight text-center flex flex-col items-center justify-center text-white"
+              className="px-4 xs:px-5 sm:px-6 md:px-8 lg:px-10 py-3 xs:py-4 sm:py-5 md:py-6 lg:py-7 transition-colors leading-tight text-center flex flex-col items-center justify-center text-white gap-1"
               aria-label={item.label}
               title={item.label}
             >
               <Icon className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex-shrink-0 text-white" />
+              <span className="text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-base font-semibold whitespace-nowrap">{item.label}</span>
             </button>
           );
         })}

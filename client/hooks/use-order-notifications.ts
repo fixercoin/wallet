@@ -45,7 +45,9 @@ export function useOrderNotifications() {
         const data = await response.json();
         setNotifications(data.data || []);
 
-        const unread = (data.data || []).filter((n: OrderNotification) => !n.read).length;
+        const unread = (data.data || []).filter(
+          (n: OrderNotification) => !n.read,
+        ).length;
         setUnreadCount(unread);
       } catch (error) {
         console.error("Error fetching notifications:", error);
@@ -107,30 +109,29 @@ export function useOrderNotifications() {
     [wallet],
   );
 
-  const markAsRead = useCallback(
-    async (notificationId: string) => {
-      try {
-        const response = await fetch("/api/p2p/notifications", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ notificationId }),
-        });
+  const markAsRead = useCallback(async (notificationId: string) => {
+    try {
+      const response = await fetch("/api/p2p/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationId }),
+      });
 
-        if (!response.ok) {
-          throw new Error(`Failed to mark notification as read: ${response.status}`);
-        }
-
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)),
+      if (!response.ok) {
+        throw new Error(
+          `Failed to mark notification as read: ${response.status}`,
         );
-
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      } catch (error) {
-        console.error("Error marking notification as read:", error);
       }
-    },
-    [],
-  );
+
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)),
+      );
+
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  }, []);
 
   const showNotificationToast = useCallback(
     (notification: OrderNotification) => {

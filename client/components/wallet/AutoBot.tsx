@@ -19,6 +19,7 @@ import {
   Transaction,
   PublicKey,
 } from "@solana/web3.js";
+import { rpcCall } from "@/lib/rpc-utils";
 
 interface AutoBotProps {
   onBack: () => void;
@@ -186,32 +187,17 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
     const signed = vtx.serialize();
     const signedBase64 = base64FromBytes(signed);
 
-    const body = {
-      method: "sendRawTransaction",
-      params: [
+    // Use the new RPC utility to send the signed transaction
+    try {
+      const result = await rpcCall("sendTransaction", [
         signedBase64,
         { skipPreflight: false, preflightCommitment: "confirmed" },
-      ],
-      id: Date.now(),
-    };
-
-    // Try solana proxy first
-    const tryPost = async (url: string) => {
-      const r = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!r.ok) {
-        const t = await r.text().catch(() => "");
-        throw new Error(`RPC ${r.status}: ${t || r.statusText}`);
-      }
-      const j = await r.json();
-      if (j.error) throw new Error(j.error.message || "RPC error");
-      return j.result as string;
-    };
-
-    return await tryPost("/api/solana-rpc");
+      ]);
+      return result as string;
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to send transaction: ${msg}`);
+    }
   };
 
   const runOnce = useCallback(async () => {
@@ -298,7 +284,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                       const signed = vtx.serialize();
                       const signedBase64 = base64FromBytes(signed);
                       const body = {
-                        method: "sendRawTransaction",
+                        method: "sendTransaction",
                         params: [
                           signedBase64,
                           {
@@ -341,7 +327,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                           bin += String.fromCharCode(signed[i]);
                         const signedBase64 = btoa(bin);
                         const body = {
-                          method: "sendRawTransaction",
+                          method: "sendTransaction",
                           params: [
                             signedBase64,
                             {
@@ -658,7 +644,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <Card className="bg-black/30 border-white/10">
+                <Card className="bg-black/30 border-white/3">
                   <CardContent className="p-3 text-center">
                     <Zap className="h-5 w-5 text-cream mx-auto mb-1" />
                     <div className="text-xs text-gray-400">SOL</div>
@@ -669,7 +655,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="bg-black/30 border-white/10">
+                <Card className="bg-black/30 border-white/3">
                   <CardContent className="p-3 text-center">
                     <Shield className="h-5 w-5 text-blue-400 mx-auto mb-1" />
                     <div className="text-xs text-gray-400">FIXERCOIN</div>
@@ -680,7 +666,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="bg-black/30 border-white/10">
+                <Card className="bg-black/30 border-white/3">
                   <CardContent className="p-3 text-center">
                     <Clock className="h-5 w-5 text-purple-400 mx-auto mb-1" />
                     <div className="text-xs text-gray-400">PnL</div>
@@ -694,14 +680,14 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
                 <Button
                   onClick={() => runOnce()}
                   disabled={!canRun || isTicking}
-                  className="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white"
+                  className="flex-1 rounded-[4px] bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white"
                 >
                   <Play className="h-4 w-4 mr-2" /> Run Now
                 </Button>
                 <Button
                   onClick={() => setEnabled((e) => !e)}
                   variant="outline"
-                  className="flex-1 bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
+                  className="flex-1 rounded-[4px] bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
                 >
                   <Square className="h-4 w-4 mr-2" />{" "}
                   {enabled ? "Pause" : "Resume"}

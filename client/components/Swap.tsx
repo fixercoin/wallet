@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useWallet } from "../contexts/WalletContext";
 import { jupiterAPI } from "../lib/services/jupiter";
 
-const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
+const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 
 export default function Swap() {

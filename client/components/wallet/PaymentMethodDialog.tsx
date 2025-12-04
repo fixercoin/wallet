@@ -195,9 +195,6 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               disabled={loading}
               className={errors.accountName ? "border-red-500" : ""}
             />
-            {errors.accountName && (
-              <p className="text-xs text-red-500">{errors.accountName}</p>
-            )}
           </div>
 
           {/* Account Number */}
@@ -211,9 +208,6 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               disabled={loading}
               className={errors.accountNumber ? "border-red-500" : ""}
             />
-            {errors.accountNumber && (
-              <p className="text-xs text-red-500">{errors.accountNumber}</p>
-            )}
           </div>
 
           {/* Solana Wallet Address */}
@@ -227,11 +221,6 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               disabled={loading}
               className={errors.solanawWalletAddress ? "border-red-500" : ""}
             />
-            {errors.solanawWalletAddress && (
-              <p className="text-xs text-red-500">
-                {errors.solanawWalletAddress}
-              </p>
-            )}
           </div>
         </div>
 

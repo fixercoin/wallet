@@ -65,10 +65,10 @@ export const BottomNavigation = () => {
       style={{ backgroundColor: "#1f1f1f" }}
     >
       <div className="flex items-center justify-between h-16 xs:h-20 sm:h-20 md:h-24 lg:h-28 px-2 xs:px-3 sm:px-3 md:px-6 lg:px-8 gap-2 xs:gap-3 sm:gap-4 md:gap-6 lg:gap-8 w-full">
-        {/* P2P TRADE Text */}
+        {/* P2P TRADE Text with Card Style */}
         <div
           onClick={() => navigate("/p2p")}
-          className="cursor-pointer flex-1 text-center"
+          className="cursor-pointer flex-1 bg-[#2a2a2a] border border-[#22c55e]/30 rounded-md px-4 py-3 text-center hover:bg-[#2a2a2a]/80 transition-colors"
           title="P2P Trade"
         >
           <span className="text-white font-bold text-sm xs:text-base whitespace-nowrap">
@@ -76,17 +76,18 @@ export const BottomNavigation = () => {
           </span>
         </div>
 
-        <div className="relative flex items-center">
+        {/* Notification Icon with Card Style */}
+        <div className="relative flex items-center bg-[#2a2a2a] border border-[#FF7A5C]/30 rounded-md p-3 hover:bg-[#2a2a2a]/80 transition-colors">
           <button
             onClick={() => navigate("/p2p")}
-            className="relative flex items-center justify-center w-12 h-12 rounded-full border border-[#FF7A5C] hover:bg-[#FF7A5C]/10 transition-colors"
+            className="relative flex items-center justify-center"
             aria-label="P2P Chat Notifications"
             title="View chat notifications"
           >
             <MessageSquare className="w-6 h-6 text-[#FF7A5C]" />
 
             {unreadCount > 0 && (
-              <div className="absolute top-0 right-0 w-5 h-5 bg-[#FF7A5C] rounded-full flex items-center justify-center">
+              <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#FF7A5C] rounded-full flex items-center justify-center">
                 <span className="text-white text-xs font-bold">
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>

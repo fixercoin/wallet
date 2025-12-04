@@ -161,8 +161,21 @@ export default function OrderDetail() {
                   order.buyerWallet && (
                     <div className="flex items-center justify-between p-4">
                       <div className="text-xs opacity-80">Buyer Wallet</div>
-                      <div className="font-semibold font-mono text-xs break-all">
-                        {order.buyerWallet}
+                      <div className="flex items-center gap-2">
+                        <div className="font-semibold font-mono text-xs">
+                          {shortenAddress(order.buyerWallet, 6)}
+                        </div>
+                        <button
+                          onClick={() => handleCopy(order.buyerWallet, "Buyer Wallet")}
+                          className="text-gray-400 hover:text-white transition-colors flex-shrink-0"
+                          title="Copy buyer wallet"
+                        >
+                          {copiedValue === order.buyerWallet ? (
+                            <Check className="w-4 h-4" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                        </button>
                       </div>
                     </div>
                   )

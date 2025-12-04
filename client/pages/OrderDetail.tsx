@@ -76,6 +76,7 @@ export default function OrderDetail() {
         {!order ? (
           <div className="text-center text-white/70">Order not found</div>
         ) : (
+          <>
           <Card className="bg-transparent backdrop-blur-xl rounded-md border border-gray-300/30">
             <CardContent className="space-y-0 p-0">
               <div className="flex items-center justify-between p-4 border-b border-gray-300/20">
@@ -132,25 +133,26 @@ export default function OrderDetail() {
                   </div>
                 </div>
               )}
-              <div className="border-t border-gray-300/20 p-4 space-y-3">
-                <Button
-                  onClick={() =>
-                    navigate("/order-complete", { state: { order } })
-                  }
-                  className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl"
-                >
-                  COMPLETE ORDER
-                </Button>
-                <Button
-                  onClick={goBack}
-                  variant="outline"
-                  className="w-full h-12 rounded-lg font-semibold transition-all duration-200 border border-gray-300/30 text-gray-300 hover:bg-gray-300/10"
-                >
-                  BACK
-                </Button>
-              </div>
             </CardContent>
           </Card>
+          <div className="mt-4 space-y-3">
+            <Button
+              onClick={() =>
+                navigate("/order-complete", { state: { order } })
+              }
+              className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl"
+            >
+              COMPLETE ORDER
+            </Button>
+            <Button
+              onClick={goBack}
+              variant="outline"
+              className="w-full h-12 rounded-lg font-semibold transition-all duration-200 border border-gray-300/30 text-gray-300 hover:bg-gray-300/10"
+            >
+              BACK
+            </Button>
+          </div>
+          </>
         )}
       </div>
 

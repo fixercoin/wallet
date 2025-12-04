@@ -211,6 +211,9 @@ function AppRoutes() {
 function AppContent() {
   return (
     <div className="min-h-screen pb-4">
+      <div className="fixed top-4 right-4 z-40">
+        <NotificationCenter />
+      </div>
       <AppRoutes />
     </div>
   );

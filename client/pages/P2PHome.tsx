@@ -15,17 +15,34 @@ export default function P2PHome() {
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
   >();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<P2POrder[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("orders_pending");
-      const arr = raw ? JSON.parse(raw) : [];
-      setOrders(Array.isArray(arr) ? arr : []);
-    } catch {
-      setOrders([]);
-    }
-  }, []);
+    const loadOrders = async () => {
+      if (!wallet?.publicKey) {
+        setOrders([]);
+        setLoadingOrders(false);
+        return;
+      }
+
+      try {
+        setLoadingOrders(true);
+        const fetchedOrders = await getOrdersByWallet(
+          wallet.publicKey,
+          "PENDING",
+        );
+        setOrders(fetchedOrders);
+      } catch (error) {
+        console.error("Error loading orders:", error);
+        setOrders([]);
+      } finally {
+        setLoadingOrders(false);
+      }
+    };
+
+    loadOrders();
+  }, [wallet?.publicKey]);
 
   if (!wallet) {
     return (

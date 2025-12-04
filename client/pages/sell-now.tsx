@@ -119,6 +119,17 @@ export default function SellNow() {
     } catch {}
   };
 
+  const getAvailableBuyerWallet = () => {
+    try {
+      const pendingOrders = JSON.parse(localStorage.getItem("orders_pending") || "[]");
+      const buyOrders = pendingOrders.filter((o: any) => o.buyerWallet);
+      if (buyOrders.length > 0) {
+        return buyOrders[0].buyerWallet;
+      }
+    } catch {}
+    return undefined;
+  };
+
   const handleSellClick = async () => {
     if (!wallet) {
       toast({
@@ -143,6 +154,7 @@ export default function SellNow() {
       return;
     }
     try {
+      const buyerWallet = getAvailableBuyerWallet();
       const order = {
         id: `SELL-${Date.now()}`,
         token: selectedToken.id,
@@ -152,6 +164,7 @@ export default function SellNow() {
         paymentMethod: "easypaisa",
         sellerWallet: wallet.publicKey,
         adminWallet: ADMIN_WALLET,
+        buyerWallet: buyerWallet,
         createdAt: Date.now(),
       };
       try {

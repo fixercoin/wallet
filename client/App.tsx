@@ -147,6 +147,8 @@ import DocumentationPage from "./pages/DocumentationPage";
 import P2PHome from "./pages/P2PHome";
 import BuyTrade from "./pages/BuyTrade";
 import TokenSearchPage from "./pages/TokenSearchPage";
+import BuyActiveOrders from "./pages/BuyActiveOrders";
+import SellActiveOrders from "./pages/SellActiveOrders";
 import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();

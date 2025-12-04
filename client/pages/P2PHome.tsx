@@ -130,9 +130,9 @@ export default function P2PHome() {
                       setShowPaymentDialog(true);
                     }}
                     size="sm"
-                    className="bg-[#a855f7] hover:bg-[#9333ea] text-white text-xs h-auto py-1 px-2"
+                    className="bg-transparent border border-gray-300/30 hover:bg-gray-300/10 text-gray-300 text-xs h-auto py-1 px-2 uppercase"
                   >
-                    Edit
+                    EDIT
                   </Button>
                 </div>
               </div>

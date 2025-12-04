@@ -172,9 +172,9 @@ export default function P2PHome() {
       <Dialog open={showCreateOfferDialog} onOpenChange={setShowCreateOfferDialog}>
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 text-white">
           <DialogHeader>
-            <DialogTitle className="text-white">Create Offer</DialogTitle>
-            <DialogDescription className="text-white/70">
-              Choose whether you want to buy or sell crypto
+            <DialogTitle className="text-white uppercase">CREATE OFFER</DialogTitle>
+            <DialogDescription className="text-white/70 uppercase">
+              CHOOSE WHETHER YOU WANT TO BUY OR SELL CRYPTO
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4">
@@ -183,20 +183,20 @@ export default function P2PHome() {
                 setShowCreateOfferDialog(false);
                 navigate("/buy-crypto");
               }}
-              className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-600/20 to-blue-600/10 border border-blue-500/30 hover:border-blue-500/50 text-white font-semibold rounded-lg transition-all"
+              className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-600/20 to-blue-600/10 border border-blue-500/30 hover:border-blue-500/50 text-white font-semibold rounded-lg transition-all uppercase"
             >
               <ShoppingCart className="w-8 h-8" />
-              <span>Buy Crypto</span>
+              <span>BUY CRYPTO</span>
             </Button>
             <Button
               onClick={() => {
                 setShowCreateOfferDialog(false);
                 navigate("/sell-now");
               }}
-              className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-green-600/20 to-green-600/10 border border-green-500/30 hover:border-green-500/50 text-white font-semibold rounded-lg transition-all"
+              className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-green-600/20 to-green-600/10 border border-green-500/30 hover:border-green-500/50 text-white font-semibold rounded-lg transition-all uppercase"
             >
               <TrendingUp className="w-8 h-8" />
-              <span>Sell Crypto</span>
+              <span>SELL CRYPTO</span>
             </Button>
           </div>
         </DialogContent>

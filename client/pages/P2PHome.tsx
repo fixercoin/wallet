@@ -12,6 +12,7 @@ import {
 import { ArrowLeft, ShoppingCart, TrendingUp } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { ADMIN_WALLET } from "@/lib/p2p";
 import { getOrdersByWallet, P2POrder } from "@/lib/p2p-orders";
 

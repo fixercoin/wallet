@@ -172,6 +172,7 @@ export default function BuyCrypto() {
     try {
       const order = {
         id: `ORD-${Date.now()}`,
+        type: "BUY",
         token: selectedToken.id,
         amountPKR: Number(amountPKR),
         pricePKRPerQuote,

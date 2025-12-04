@@ -188,6 +188,7 @@ export default function SellNow() {
       const buyerWallet = getAvailableBuyerWallet();
       const order = {
         id: `SELL-${Date.now()}`,
+        type: "SELL",
         token: selectedToken.id,
         amountTokens: amount,
         amountPKR: amount * exchangeRate,

@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Home, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { getUnreadNotifications } from "@/lib/p2p-chat";
 

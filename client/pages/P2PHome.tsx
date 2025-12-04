@@ -49,7 +49,7 @@ export default function P2PHome() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#22c55e]/20 border border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e]/30 transition-colors"
+            className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-300/20 border border-gray-300/30 text-gray-300 hover:bg-gray-300/30 transition-colors"
             aria-label="Back"
           >
             <ArrowLeft className="w-5 h-5" />

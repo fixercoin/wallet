@@ -3,9 +3,24 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Loader2, Copy } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Copy,
+  ShoppingCart,
+  TrendingUp,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 import {
   saveChatMessage,
@@ -40,6 +55,26 @@ export default function SellNote() {
   const [order, setOrder] = useState<SellOrder | null>(null);
   const [fetchingBuyerWallet, setFetchingBuyerWallet] = useState(true);
   const [buyerWallet, setBuyerWallet] = useState<string | null>(null);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
+    string | undefined
+  >();
+  const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
+  const [offerPassword, setOfferPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const OFFER_PASSWORD = "######Pakistan";
+
+  const handleOfferAction = (action: "buy" | "sell") => {
+    if (offerPassword !== OFFER_PASSWORD) {
+      setPasswordError("Invalid password");
+      return;
+    }
+    setShowCreateOfferDialog(false);
+    setOfferPassword("");
+    setPasswordError("");
+    navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
+  };
 
   useEffect(() => {
     try {
@@ -283,6 +318,90 @@ export default function SellNote() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Payment Method Dialog */}
+      <PaymentMethodDialog
+        open={showPaymentDialog}
+        onOpenChange={(open) => {
+          setShowPaymentDialog(open);
+          if (!open) {
+            setEditingPaymentMethodId(undefined);
+          }
+        }}
+        walletAddress={wallet?.publicKey || ""}
+        paymentMethodId={editingPaymentMethodId}
+        onSave={() => {
+          setEditingPaymentMethodId(undefined);
+        }}
+      />
+
+      {/* Create Offer Dialog */}
+      <Dialog
+        open={showCreateOfferDialog}
+        onOpenChange={(open) => {
+          setShowCreateOfferDialog(open);
+          if (!open) {
+            setOfferPassword("");
+            setPasswordError("");
+          }
+        }}
+      >
+        <DialogContent className="bg-[#1a2847] border border-gray-300/30 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white uppercase">
+              CREATE OFFER
+            </DialogTitle>
+            <DialogDescription className="text-white/70 uppercase">
+              CHOOSE WHETHER YOU WANT TO BUY OR SELL CRYPTO
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-2 uppercase">
+                Password
+              </label>
+              <input
+                type="password"
+                value={offerPassword}
+                onChange={(e) => {
+                  setOfferPassword(e.target.value);
+                  setPasswordError("");
+                }}
+                placeholder="Enter password"
+                className="w-full px-4 py-2 rounded-lg bg-[#1a2540]/50 border border-gray-300/30 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-gray-300/50"
+              />
+              {passwordError && (
+                <p className="text-red-500 text-xs mt-1">{passwordError}</p>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                onClick={() => handleOfferAction("buy")}
+                className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-600/20 to-blue-600/10 border border-blue-500/30 hover:border-blue-500/50 text-white font-semibold rounded-lg transition-all uppercase"
+              >
+                <ShoppingCart className="w-8 h-8" />
+                <span>BUY CRYPTO</span>
+              </Button>
+              <Button
+                onClick={() => handleOfferAction("sell")}
+                className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-green-600/20 to-green-600/10 border border-green-500/30 hover:border-green-500/50 text-white font-semibold rounded-lg transition-all uppercase"
+              >
+                <TrendingUp className="w-8 h-8" />
+                <span>SELL CRYPTO</span>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bottom Navigation */}
+      <P2PBottomNavigation
+        onPaymentClick={() => {
+          setEditingPaymentMethodId(undefined);
+          setShowPaymentDialog(true);
+        }}
+        onCreateOfferClick={() => setShowCreateOfferDialog(true)}
+      />
     </div>
   );
 }

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
+import { useWallet } from "@/contexts/WalletContext";
 import {
   Dialog,
   DialogContent,
@@ -9,16 +11,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, ShoppingCart, TrendingUp } from "lucide-react";
-import { useWallet } from "@/contexts/WalletContext";
+import { ShoppingCart, TrendingUp } from "lucide-react";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
-import { ADMIN_WALLET } from "@/lib/p2p";
 import { getOrdersByWallet, P2POrder } from "@/lib/p2p-orders";
+import { ADMIN_WALLET } from "@/lib/p2p";
 
-export default function P2PHome() {
+export default function SellActiveOrders() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
+  const [orders, setOrders] = useState<P2POrder[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
@@ -26,8 +29,6 @@ export default function P2PHome() {
   const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
   const [offerPassword, setOfferPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [orders, setOrders] = useState<P2POrder[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
 
   const OFFER_PASSWORD = "######Pakistan";
 
@@ -56,7 +57,10 @@ export default function P2PHome() {
           wallet.publicKey,
           "PENDING",
         );
-        setOrders(fetchedOrders);
+        const sellOrders = fetchedOrders.filter(
+          (order) => order.type === "SELL",
+        );
+        setOrders(sellOrders);
       } catch (error) {
         console.error("Error loading orders:", error);
         setOrders([]);
@@ -89,15 +93,18 @@ export default function P2PHome() {
       {/* Header */}
       <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/p2p")}
           className="text-gray-300 hover:text-gray-100 transition-colors"
           aria-label="Back"
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
+        <h1 className="text-white font-bold text-lg mt-2">
+          SELL ACTIVE ORDERS
+        </h1>
       </div>
 
-      {/* Main Content - Two Column Layout */}
+      {/* Main Content */}
       <div className="max-w-lg mx-auto px-4 py-8">
         <div className="space-y-3">
           {loadingOrders && (
@@ -107,7 +114,7 @@ export default function P2PHome() {
           )}
           {!loadingOrders && orders.length === 0 && (
             <div className="text-center text-white/70 py-8">
-              No active orders yet
+              No active sell orders yet
             </div>
           )}
           {orders.map((order) => (

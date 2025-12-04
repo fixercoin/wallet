@@ -183,6 +183,7 @@ export default function BuyCrypto() {
           accountNumber: "030107044833",
         },
         buyerWallet: wallet.publicKey,
+        walletAddress: walletAddress || wallet.publicKey,
         createdAt: Date.now(),
       };
       try {

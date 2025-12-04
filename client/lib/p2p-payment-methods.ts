@@ -1,14 +1,13 @@
 /**
  * P2P Payment Methods Storage
- * Uses localStorage to store user payment method information
- * Similar to KV store pattern for consistent data management
+ * Uses Cloudflare KV through API endpoints for persistent storage
  */
 
 export interface PaymentMethod {
   id: string;
   walletAddress: string;
   userName: string;
-  paymentMethod: "EASYPAISA"; // Only EASYPAISA for now
+  paymentMethod: "EASYPAISA";
   accountName: string;
   accountNumber: string;
   solanawWalletAddress: string;
@@ -16,30 +15,24 @@ export interface PaymentMethod {
   updatedAt: number;
 }
 
-const PAYMENT_METHODS_KEY = "p2p:payment_methods";
-const PAYMENT_METHOD_IDS_KEY = (walletAddress: string) =>
-  `p2p:payment_method_ids:${walletAddress}`;
+const API_BASE = "/api/p2p/payment-methods";
 
 /**
  * Get all payment methods for a wallet
  */
-export function getPaymentMethodsByWallet(
+export async function getPaymentMethodsByWallet(
   walletAddress: string,
-): PaymentMethod[] {
+): Promise<PaymentMethod[]> {
   try {
-    const ids = JSON.parse(
-      localStorage.getItem(PAYMENT_METHOD_IDS_KEY(walletAddress)) || "[]",
+    const response = await fetch(
+      `${API_BASE}?wallet=${encodeURIComponent(walletAddress)}`,
     );
-    const methods: PaymentMethod[] = [];
-
-    for (const id of ids) {
-      const method = getPaymentMethod(id);
-      if (method) {
-        methods.push(method);
-      }
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to fetch payment methods");
     }
-
-    return methods;
+    const result = await response.json();
+    return result.data || [];
   } catch (e) {
     console.error("[P2P Payment Methods] Error getting methods:", e);
     return [];
@@ -49,10 +42,18 @@ export function getPaymentMethodsByWallet(
 /**
  * Get a single payment method by ID
  */
-export function getPaymentMethod(id: string): PaymentMethod | null {
+export async function getPaymentMethod(id: string): Promise<PaymentMethod | null> {
   try {
-    const json = localStorage.getItem(`${PAYMENT_METHODS_KEY}:${id}`);
-    return json ? JSON.parse(json) : null;
+    const response = await fetch(`${API_BASE}?id=${encodeURIComponent(id)}`);
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      const error = await response.json();
+      throw new Error(error.error || "Failed to fetch payment method");
+    }
+    const result = await response.json();
+    return result.data || null;
   } catch (e) {
     console.error("[P2P Payment Methods] Error getting payment method:", e);
     return null;
@@ -62,42 +63,36 @@ export function getPaymentMethod(id: string): PaymentMethod | null {
 /**
  * Create or update a payment method
  */
-export function savePaymentMethod(
+export async function savePaymentMethod(
   method: Omit<PaymentMethod, "id" | "createdAt" | "updatedAt">,
   id?: string,
-): PaymentMethod {
+): Promise<PaymentMethod> {
   try {
-    const methodId =
-      id || `pm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const now = Date.now();
-
-    const paymentMethod: PaymentMethod = {
-      ...method,
-      id: methodId,
-      createdAt: id ? getPaymentMethod(id)?.createdAt || now : now,
-      updatedAt: now,
+    const body = {
+      walletAddress: method.walletAddress,
+      userName: method.userName,
+      paymentMethod: method.paymentMethod,
+      accountName: method.accountName,
+      accountNumber: method.accountNumber,
+      solanawWalletAddress: method.solanawWalletAddress,
+      methodId: id,
     };
 
-    localStorage.setItem(
-      `${PAYMENT_METHODS_KEY}:${methodId}`,
-      JSON.stringify(paymentMethod),
-    );
+    const response = await fetch(API_BASE, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
 
-    // Add to wallet's payment method list
-    const ids = JSON.parse(
-      localStorage.getItem(PAYMENT_METHOD_IDS_KEY(method.walletAddress)) ||
-        "[]",
-    );
-
-    if (!ids.includes(methodId)) {
-      ids.push(methodId);
-      localStorage.setItem(
-        PAYMENT_METHOD_IDS_KEY(method.walletAddress),
-        JSON.stringify(ids),
-      );
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to save payment method");
     }
 
-    return paymentMethod;
+    const result = await response.json();
+    return result.data;
   } catch (e) {
     console.error("[P2P Payment Methods] Error saving payment method:", e);
     throw e;
@@ -107,19 +102,24 @@ export function savePaymentMethod(
 /**
  * Delete a payment method
  */
-export function deletePaymentMethod(id: string, walletAddress: string): void {
+export async function deletePaymentMethod(
+  id: string,
+  walletAddress: string,
+): Promise<void> {
   try {
-    localStorage.removeItem(`${PAYMENT_METHODS_KEY}:${id}`);
+    const response = await fetch(
+      `${API_BASE}?id=${encodeURIComponent(id)}&wallet=${encodeURIComponent(walletAddress)}`,
+      {
+        method: "DELETE",
+      },
+    );
 
-    const ids = JSON.parse(
-      localStorage.getItem(PAYMENT_METHOD_IDS_KEY(walletAddress)) || "[]",
-    );
-    const filtered = ids.filter((methodId: string) => methodId !== id);
-    localStorage.setItem(
-      PAYMENT_METHOD_IDS_KEY(walletAddress),
-      JSON.stringify(filtered),
-    );
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to delete payment method");
+    }
   } catch (e) {
     console.error("[P2P Payment Methods] Error deleting payment method:", e);
+    throw e;
   }
 }

@@ -255,6 +255,19 @@ export default function BuyCrypto() {
               />
             </div>
 
+            <div>
+              <label className="block font-medium text-white/80 mb-2 uppercase">
+                WALLET ADDRESS
+              </label>
+              <input
+                type="text"
+                value={walletAddress}
+                onChange={(e) => setWalletAddress(e.target.value)}
+                placeholder="Paste your wallet address"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40 font-mono text-xs"
+              />
+            </div>
+
             <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
               <div className="space-y-3">
                 <div className="flex justify-between items-center">

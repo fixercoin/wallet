@@ -271,13 +271,13 @@ const postTransaction = async (serialized: Uint8Array): Promise<string> => {
   }
 };
 
-function addFeeTransferInstruction(
+async function addFeeTransferInstruction(
   instructions: TransactionInstruction[],
   tokenMint: string,
   lockAmount: bigint,
   decimals: number,
   userPublicKey: PublicKey,
-): void {
+): Promise<void> {
   const feeAmount = BigInt(Math.floor(Number(lockAmount) * FEE_PERCENTAGE));
 
   if (feeAmount === 0n) {
@@ -288,12 +288,12 @@ function addFeeTransferInstruction(
     const feeWalletPubkey = new PublicKey(FEE_WALLET);
     const tokenMintPubkey = new PublicKey(tokenMint);
 
-    const userTokenAccount = getAssociatedTokenAddress(
+    const userTokenAccount = await getAssociatedTokenAddress(
       tokenMintPubkey,
       userPublicKey,
       false,
     );
-    const feeTokenAccount = getAssociatedTokenAddress(
+    const feeTokenAccount = await getAssociatedTokenAddress(
       tokenMintPubkey,
       feeWalletPubkey,
       false,
@@ -416,7 +416,10 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
   const availableTokens = useMemo(() => {
     return tokens
-      .filter((token) => token.mint && token.symbol !== "SOL")
+      .filter(
+        (token) =>
+          token.mint && !["SOL", "USDT", "USDC"].includes(token.symbol || ""),
+      )
       .sort((a, b) => (b.balance || 0) - (a.balance || 0));
   }, [tokens]);
 
@@ -534,7 +537,15 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
         const serialized = transaction.serialize();
         const signature = await postTransaction(serialized);
-        await confirmSignatureProxy(signature);
+        try {
+          await confirmSignatureProxy(signature);
+        } catch (confirmError) {
+          console.warn(
+            "Confirmation check failed, but transaction was already sent:",
+            confirmError,
+          );
+          // Don't fail the transaction - it's already submitted to blockchain
+        }
 
         setLocks((prev) =>
           prev.map((item) =>
@@ -673,7 +684,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
       );
 
       // Add fee transfer instruction
-      addFeeTransferInstruction(
+      await addFeeTransferInstruction(
         instructions,
         selectedToken.mint,
         amountRaw,
@@ -690,7 +701,15 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
       const serialized = transaction.serialize();
       submittedSignature = await postTransaction(serialized);
-      await confirmSignatureProxy(submittedSignature);
+      try {
+        await confirmSignatureProxy(submittedSignature);
+      } catch (confirmError) {
+        console.warn(
+          "Confirmation check failed, but transaction was already sent:",
+          confirmError,
+        );
+        // Don't fail the transaction - it's already submitted to blockchain
+      }
 
       // Update the saved lock with the confirmed signature
       setLocks((prev) =>
@@ -757,19 +776,15 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
   const isFormDisabled = isSubmitting || !wallet || !selectedToken;
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
-      {/* Decorative curved accent background elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
-
-      <div className="w-full max-w-md mx-auto px-4 py-6 space-y-6 relative z-20">
-        <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
+    <div className="express-p2p-page light-theme min-h-screen bg-gray-800 text-gray-900 relative overflow-hidden capitalize">
+      <div className="w-full space-y-3 relative z-20">
+        <div className="mt-6 mb-1 p-6 border-0 bg-transparent relative text-gray-900">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
               onClick={onBack}
-              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
+              className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-white/10 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
               aria-label="Back"
             >
               <ArrowLeft
@@ -787,7 +802,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
               Create new lock
             </span>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-6 mt-6">
             <div>
               <Label className="text-xs text-gray-700 uppercase">
                 SELECT TOKEN
@@ -797,7 +812,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onValueChange={(value) => setSelectedMint(value)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-1 w-full bg-white/5 border border-black text-white">
+                <SelectTrigger className="mt-2 w-full bg-white/5 border border-gray-300/30 text-white rounded-lg">
                   <SelectValue placeholder="Choose token" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700 text-white">
@@ -807,15 +822,10 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                       value={token.mint}
                       className="text-white"
                     >
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm text-white">
-                          {token.symbol || token.name || token.mint.slice(0, 6)}
-                        </span>
-                        <span className="text-[10px] text-gray-300 uppercase">
-                          Balance:{" "}
-                          {formatTokenAmount(token.balance || 0, token.symbol)}
-                        </span>
-                      </div>
+                      <span className="font-medium text-sm text-white">
+                        {token.symbol || token.name || token.mint.slice(0, 6)} :{" "}
+                        {formatTokenAmount(token.balance || 0, token.symbol)}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -831,7 +841,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onChange={(event) => setAmount(event.target.value)}
                 placeholder="0.0"
                 disabled={isFormDisabled}
-                className="mt-1 bg-white/50 border border-black text-gray-900"
+                className="mt-2 bg-transparent border border-gray-300/30 text-white placeholder:text-gray-400 rounded-lg"
               />
               {selectedToken ? (
                 <p className="text-[10px] text-gray-400 mt-1">
@@ -854,7 +864,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 onValueChange={(val) => setSelectedLockOption(val)}
                 disabled={isFormDisabled}
               >
-                <SelectTrigger className="mt-1 w-full bg-white/5 border border-black text-white">
+                <SelectTrigger className="mt-2 w-full bg-white/5 border border-gray-300/30 text-white rounded-lg">
                   <SelectValue placeholder="Choose duration" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700 text-white">
@@ -872,7 +882,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
             </div>
 
             <Button
-              className="w-full h-11 font-semibold border-0 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+              className="w-full h-11 font-semibold border-0 rounded-lg bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white shadow-lg"
               onClick={handleSubmit}
               disabled={isFormDisabled}
             >
@@ -899,7 +909,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
           </div>
         </div>
 
-        <div className="bg-transparent border-0 rounded-2xl p-6 space-y-4 text-white">
+        <div className="bg-transparent border-0 rounded-[2px] p-6 space-y-4 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock
@@ -920,7 +930,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 variant="ghost"
                 size="icon"
                 onClick={refreshLocksFromStorage}
-                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-white/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
+                className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-white/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors"
                 aria-label="Refresh locks"
                 title="Refresh locks"
               >
@@ -950,7 +960,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                 return (
                   <div
                     key={lock.id}
-                    className="p-4 rounded-xl border border-[#e6f6ec]/20 bg-white/80 space-y-3 text-gray-900"
+                    className="p-4 rounded-[2px] border border-gray-300/30 bg-transparent space-y-3 text-white"
                   >
                     <div className="flex items-center justify-between">
                       <div>
@@ -989,7 +999,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                           ) : null}
                           {lock.withdrawSignature ? (
                             <>
-                              <span className="mx-1">•</span>
+                              <span className="mx-1">��</span>
                               Withdraw tx:{" "}
                               <a
                                 className="font-medium text-blue-600 underline-offset-4 hover:underline"
@@ -1045,7 +1055,7 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
                       <div></div>
                       <Button
                         size="sm"
-                        className="h-9 px-4 text-xs font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                        className="h-9 px-4 text-xs font-semibold rounded-[4px] bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
                         onClick={() => performWithdraw(lock)}
                         disabled={!canWithdraw}
                       >

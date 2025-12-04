@@ -101,17 +101,17 @@ if (typeof window !== "undefined") {
 
 import "./global.css";
 
+import React, { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
-import { createRoot } from "react-dom/client";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "next-themes";
-import MobileShell from "@/components/ui/MobileShell";
+import { initStorageMonitoring } from "@/lib/storage-monitor";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
@@ -130,6 +130,29 @@ import BuyNow from "./pages/buy-now";
 import SellNow from "./pages/sell-now";
 import AdminBroadcast from "./pages/AdminBroadcast";
 import SwapPage from "./pages/Swap";
+import AutoBot from "./pages/AutoBot";
+import AirdropPage from "./pages/AirdropPage";
+import DappsPage from "./pages/DappsPage";
+import DappView from "./pages/DappView";
+import DappVisit from "./pages/DappVisit";
+import AssetsPage from "./pages/AssetsPage";
+import DepositAssetPage from "./pages/DepositAssetPage";
+import SelectLanguagePage from "./pages/SelectLanguagePage";
+import SelectCurrencyPage from "./pages/SelectCurrencyPage";
+import BurnTokenPage from "./pages/BurnTokenPage";
+import RunningMarketMaker from "./pages/RunningMarketMaker";
+import MarketMakerHistory from "./pages/MarketMakerHistory";
+import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
+import DocumentationPage from "./pages/DocumentationPage";
+import P2PHome from "./pages/P2PHome";
+import BuyTrade from "./pages/BuyTrade";
+import OrderComplete from "./pages/OrderComplete";
+import TokenSearchPage from "./pages/TokenSearchPage";
+import BuyActiveOrders from "./pages/BuyActiveOrders";
+import SellActiveOrders from "./pages/SellActiveOrders";
+import BuyOrder from "./pages/BuyOrder";
+import SellOrder from "./pages/SellOrder";
+import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
@@ -142,6 +165,8 @@ function AppRoutes() {
       <Route path="/buy-now" element={<BuyNow />} />
       <Route path="/sell-now" element={<SellNow />} />
       <Route path="/buy-crypto" element={<BuyCrypto />} />
+      <Route path="/buy-order" element={<BuyOrder />} />
+      <Route path="/sell-order" element={<SellOrder />} />
       <Route path="/buynote" element={<BuyNote />} />
       <Route path="/sellnote" element={<SellNote />} />
       <Route path="/verify-sell" element={<VerifySell />} />
@@ -153,69 +178,71 @@ function AppRoutes() {
       <Route path="/wallet/history" element={<WalletHistory />} />
       <Route path="/token/:mint" element={<TokenSearchDetail />} />
       <Route path="/admin-broadcast" element={<AdminBroadcast />} />
+      <Route path="/autobot" element={<AutoBot />} />
+      <Route path="/burn" element={<BurnTokenPage />} />
+      <Route path="/airdrop" element={<AirdropPage />} />
+      <Route path="/assets" element={<AssetsPage />} />
+      <Route path="/assets/deposit" element={<DepositAssetPage />} />
+      <Route path="/dapps" element={<DappsPage />} />
+      <Route path="/dapps/visit" element={<DappVisit />} />
+      <Route path="/dapps/view" element={<DappView />} />
+      <Route path="/select-language" element={<SelectLanguagePage />} />
+      <Route path="/select-currency" element={<SelectCurrencyPage />} />
+      <Route
+        path="/market-maker/running/:sessionId"
+        element={<RunningMarketMaker />}
+      />
+      <Route path="/market-maker/history" element={<MarketMakerHistory />} />
+      <Route
+        path="/documentation"
+        element={<DocumentationPage onBack={() => window.history.back()} />}
+      />
+      <Route path="/p2p" element={<P2PHome />} />
+      <Route path="/p2p/buy-active-orders" element={<BuyActiveOrders />} />
+      <Route path="/p2p/sell-active-orders" element={<SellActiveOrders />} />
+      <Route path="/express/buy-trade" element={<BuyTrade />} />
+      <Route path="/order-complete" element={<OrderComplete />} />
+      <Route path="/search" element={<TokenSearchPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
 
-function App() {
-  const [isMobileMatch, setIsMobileMatch] = useState<boolean>(() =>
-    typeof window !== "undefined"
-      ? window.matchMedia("(max-width: 640px)").matches
-      : false,
+function AppContent() {
+  return (
+    <div className="min-h-screen pb-4">
+      <AppRoutes />
+    </div>
   );
+}
 
+function App() {
+  // Initialize storage monitoring on app start
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(max-width: 640px)");
-    const handler = (e: MediaQueryListEvent) => setIsMobileMatch(e.matches);
-    try {
-      mq.addEventListener("change", handler);
-    } catch (e) {
-      // Safari fallback
-      // @ts-ignore
-      mq.addListener(handler);
-    }
-    return () => {
-      try {
-        mq.removeEventListener("change", handler);
-      } catch (e) {
-        // @ts-ignore
-        mq.removeListener(handler);
-      }
-    };
+    initStorageMonitoring();
   }, []);
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <CurrencyProvider>
-              <BrowserRouter>
-                {isMobileMatch ? (
-                  <MobileShell>
-                    <AppRoutes />
-                  </MobileShell>
-                ) : (
-                  <div className="min-h-screen">
-                    <AppRoutes />
-                  </div>
-                )}
-              </BrowserRouter>
-            </CurrencyProvider>
-          </TooltipProvider>
+          <AppWithPasswordPrompt>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <LanguageProvider>
+                <CurrencyProvider>
+                  <BrowserRouter>
+                    <AppContent />
+                  </BrowserRouter>
+                </CurrencyProvider>
+              </LanguageProvider>
+            </TooltipProvider>
+          </AppWithPasswordPrompt>
         </WalletProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );
 }
 
-try {
-  createRoot(document.getElementById("root")!).render(<App />);
-} catch (err) {
-  console.error("React render error:", err);
-  throw err;
-}
+export default App;

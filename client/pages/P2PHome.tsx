@@ -1,7 +1,12 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MessageSquare, ShoppingCart, TrendingUp } from "lucide-react";
+import {
+  ArrowLeft,
+  MessageSquare,
+  ShoppingCart,
+  TrendingUp,
+} from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 
 export default function P2PHome() {
@@ -41,8 +46,12 @@ export default function P2PHome() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex-1">
-            <h1 className="text-xl font-bold text-white uppercase">P2P TRADE</h1>
-            <p className="text-xs text-white/60 uppercase">BUY OR SELL CRYPTO</p>
+            <h1 className="text-xl font-bold text-white uppercase">
+              P2P TRADE
+            </h1>
+            <p className="text-xs text-white/60 uppercase">
+              BUY OR SELL CRYPTO
+            </p>
           </div>
         </div>
       </div>

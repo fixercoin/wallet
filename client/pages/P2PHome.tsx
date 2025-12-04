@@ -2,13 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  ArrowLeft,
-  MessageSquare,
-  ShoppingCart,
-  TrendingUp,
-  CreditCard,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { getPaymentMethodsByWallet } from "@/lib/p2p-payment-methods";

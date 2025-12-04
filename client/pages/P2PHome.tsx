@@ -42,7 +42,7 @@ export default function P2PHome() {
   return (
     <div
       className="w-full min-h-screen pb-32"
-      style={{ fontSize: "10px", backgroundColor: "#0f0f0f", color: "#fff" }}
+      style={{ fontSize: "10px", backgroundColor: "#1a1a1a", color: "#fff" }}
     >
       {/* Header */}
       <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4">

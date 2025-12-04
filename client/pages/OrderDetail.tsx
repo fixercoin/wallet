@@ -145,6 +145,23 @@ export default function OrderDetail() {
                   </div>
                 </div>
               )}
+              <div className="pt-4 space-y-3">
+                <Button
+                  onClick={() =>
+                    navigate("/order-complete", { state: { order } })
+                  }
+                  className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl"
+                >
+                  COMPLETE ORDER
+                </Button>
+                <Button
+                  onClick={goBack}
+                  variant="outline"
+                  className="w-full h-12 rounded-lg font-semibold transition-all duration-200 border border-gray-300/30 text-gray-300 hover:bg-gray-300/10"
+                >
+                  BACK
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}

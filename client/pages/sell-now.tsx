@@ -203,7 +203,7 @@ export default function SellNow() {
         localStorage.setItem("sellnote_order", JSON.stringify(order));
       } catch {}
       addPendingOrder(order);
-      navigate("/sell-order");
+      navigate("/buy-order");
     } catch (error: any) {
       toast({
         title: "Failed to start chat",

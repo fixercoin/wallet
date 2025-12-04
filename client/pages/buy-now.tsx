@@ -206,7 +206,7 @@ export default function BuyNow() {
         localStorage.setItem("buynote_order", JSON.stringify(order));
       } catch {}
       addPendingOrder(order);
-      navigate("/buynote");
+      navigate("/sell-order");
     } catch (error: any) {
       toast({
         title: "Failed to start chat",

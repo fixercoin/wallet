@@ -1,8 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, ShoppingCart, TrendingUp } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { ADMIN_WALLET } from "@/lib/p2p";
 
 export default function OrdersList() {

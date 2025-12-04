@@ -955,9 +955,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           )}
                         </div>
                         {showBalance ? (
-                          <div className={`text-xs mt-1 ${
-                            total > 0 ? "font-medium" : ""
-                          }`}>
+                          <div className="text-xs mt-1">
                             <span
                               style={{
                                 color: isPositive ? "#FACC15" : "#F87171",

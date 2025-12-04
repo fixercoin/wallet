@@ -210,7 +210,6 @@ function App() {
                   <BrowserRouter>
                     <div className="min-h-screen pb-24">
                       <AppRoutes />
-                      <BottomNavigation />
                     </div>
                   </BrowserRouter>
                 </CurrencyProvider>

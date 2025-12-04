@@ -560,9 +560,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         ]);
         const exists = !!ataInfo?.value;
         if (!exists) {
-          const rent = await rpcCall("getMinimumBalanceForRentExemption", [
-            165,
-          ]);
+          const rent = await rpcCall(
+            "getMinimumBalanceForRentExemption",
+            [165],
+          );
           rentLamports = typeof rent === "number" ? rent : rent?.value || 0;
         }
       } catch {}
@@ -744,8 +745,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   if (step === "success") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-        <div className="max-w-md mx-auto pt-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="w-full">
           <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl">
             <CardContent className="p-8 text-center">
               <div className="mb-6">
@@ -811,9 +812,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-      <div className="max-w-md mx-auto">
-        <div className="flex items-center gap-3 mb-6 pt-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="w-full">
+        <div className="flex items-center gap-3 mb-6 pt-2">
           <Button
             variant="ghost"
             size="sm"

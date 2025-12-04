@@ -634,9 +634,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         ]);
         const exists = !!ataInfo?.value;
         if (!exists) {
-          const rent = await rpcCall("getMinimumBalanceForRentExemption", [
-            165,
-          ]);
+          const rent = await rpcCall(
+            "getMinimumBalanceForRentExemption",
+            [165],
+          );
           rentLamports = typeof rent === "number" ? rent : rent?.value || 0;
         }
       } catch {}
@@ -805,17 +806,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   const formatAmount = (value: string): string => {
     const num = parseFloat(value);
-    if (isNaN(num)) return "0.00";
-    if (selectedSymbol === "FIXERCOIN" || selectedSymbol === "LOCKER") {
-      return num.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-    }
-    const fractionDigits = 6;
+    if (isNaN(num)) return "0.000";
     return num.toLocaleString(undefined, {
-      minimumFractionDigits: Math.min(2, fractionDigits),
-      maximumFractionDigits: fractionDigits,
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
     });
   };
 
@@ -869,11 +863,11 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col">
-      <div className="flex-1 flex items-center justify-center relative z-20">
-        <div className="w-full md:max-w-lg lg:max-w-lg px-4 py-6">
-          <div className="rounded-[2px] border-0 bg-transparent overflow-hidden">
-            <div className="space-y-6 p-6">
-              <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
+      <div className="flex flex-col relative z-20 pt-4">
+        <div className="w-full">
+          <div className="border-0 bg-transparent">
+            <div className="space-y-6 px-6 py-4">
+              <div className="flex items-center gap-3 pb-2">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -911,11 +905,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                             <div className="flex items-center justify-between w-full">
                               <span className="font-medium text-white">
                                 {t.symbol} ~{" "}
-                                {(t.symbol === "SOL"
-                                  ? balance
-                                  : t.balance || 0
+                                {(
+                                  Math.floor(
+                                    (t.symbol === "SOL"
+                                      ? balance
+                                      : t.balance || 0) * 1000,
+                                  ) / 1000
                                 ).toLocaleString(undefined, {
-                                  maximumFractionDigits: 8,
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3,
                                 })}
                               </span>
                             </div>
@@ -947,14 +945,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         htmlFor="amount"
                         className="text-[hsl(var(--foreground))] uppercase"
                       >
-                        Amount ({selectedSymbol})
+                        {selectedSymbol}
                       </Label>
                       <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                        Balance:{" "}
-                        {selectedBalance.toLocaleString(undefined, {
-                          maximumFractionDigits: 8,
-                        })}{" "}
-                        {selectedSymbol}
+                        {(
+                          Math.floor(selectedBalance * 1000) / 1000
+                        ).toLocaleString(undefined, {
+                          minimumFractionDigits: 3,
+                          maximumFractionDigits: 3,
+                        })}
                       </span>
                     </div>
                     <Input

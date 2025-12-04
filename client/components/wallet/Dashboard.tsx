@@ -922,7 +922,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onClick={onSwap}
                 className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
-                <TrendingUp className="h-8 w-8 text-[#22c55e]" />
+                <ArrowUpDown className="h-8 w-8 text-[#22c55e]" />
                 <span>SWAP</span>
               </Button>
             </div>

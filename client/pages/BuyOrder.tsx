@@ -43,23 +43,19 @@ export default function BuyOrder() {
   };
 
   useEffect(() => {
-    const loadOrders = async () => {
-      if (!wallet?.publicKey) {
-        setOrders([]);
-        setLoadingOrders(false);
-        return;
-      }
-
+    const loadOrders = () => {
       try {
         setLoadingOrders(true);
-        const fetchedOrders = await getOrdersByWallet(
-          wallet.publicKey,
-          "PENDING",
+        const pendingOrders = JSON.parse(
+          localStorage.getItem("orders_pending") || "[]",
         );
-        const buyOrders = fetchedOrders.filter((order) => order.type === "BUY");
+        const buyOrders = pendingOrders.filter(
+          (order: any) =>
+            !order.type || order.type === "BUY" || order.amountPKR,
+        );
         setOrders(buyOrders);
       } catch (error) {
-        console.error("Error loading orders:", error);
+        console.error("Error loading orders from localStorage:", error);
         setOrders([]);
       } finally {
         setLoadingOrders(false);
@@ -67,7 +63,10 @@ export default function BuyOrder() {
     };
 
     loadOrders();
-  }, [wallet?.publicKey]);
+
+    const interval = setInterval(loadOrders, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (!wallet) {
     return (

@@ -112,6 +112,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "next-themes";
 import { initStorageMonitoring } from "@/lib/storage-monitor";
+import { usePushNotifications } from "@/lib/services/push-notifications";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
@@ -221,10 +222,15 @@ function AppContent() {
 }
 
 function App() {
-  // Initialize storage monitoring on app start
+  const { initPushNotifications } = usePushNotifications();
+
+  // Initialize storage monitoring and push notifications on app start
   useEffect(() => {
     initStorageMonitoring();
-  }, []);
+    initPushNotifications().catch((error) => {
+      console.warn("Failed to initialize push notifications:", error);
+    });
+  }, [initPushNotifications]);
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

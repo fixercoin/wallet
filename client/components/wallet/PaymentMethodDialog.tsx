@@ -143,8 +143,8 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {paymentMethodId ? "Edit Payment Method" : "Add Payment Method"}
+          <DialogTitle className="uppercase">
+            {paymentMethodId ? "EDIT PAYMENT METHOD" : "ADD PAYMENT METHOD"}
           </DialogTitle>
         </DialogHeader>
 
@@ -155,9 +155,9 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               id="userName"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
-              placeholder="Enter your name"
+              placeholder="ENTER YOUR NAME"
               disabled={loading}
-              className={errors.userName ? "border-red-500" : ""}
+              className={`uppercase ${errors.userName ? "border-red-500" : ""}`}
             />
             {errors.userName && (
               <p className="text-xs text-red-500 mt-1">{errors.userName}</p>
@@ -173,8 +173,8 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               }
               disabled={loading}
             >
-              <SelectTrigger id="paymentMethod">
-                <SelectValue placeholder="Select payment method" />
+              <SelectTrigger id="paymentMethod" className="uppercase">
+                <SelectValue placeholder="SELECT PAYMENT METHOD" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="EASYPAISA">EASYPAISA</SelectItem>
@@ -188,9 +188,9 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               id="accountName"
               value={accountName}
               onChange={(e) => setAccountName(e.target.value)}
-              placeholder="Enter account name"
+              placeholder="ENTER ACCOUNT NAME"
               disabled={loading}
-              className={errors.accountName ? "border-red-500" : ""}
+              className={`uppercase ${errors.accountName ? "border-red-500" : ""}`}
             />
           </div>
 
@@ -200,7 +200,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               id="accountNumber"
               value={accountNumber}
               onChange={(e) => setAccountNumber(e.target.value)}
-              placeholder="Enter account number"
+              placeholder="ENTER ACCOUNT NUMBER"
               disabled={loading}
               className={errors.accountNumber ? "border-red-500" : ""}
             />
@@ -212,9 +212,9 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               id="solanawWalletAddress"
               value={solanawWalletAddress}
               onChange={(e) => setSolanawWalletAddress(e.target.value)}
-              placeholder="Enter Solana wallet address"
+              placeholder="ENTER SOLANA WALLET ADDRESS"
               disabled={loading}
-              className={errors.solanawWalletAddress ? "border-red-500" : ""}
+              className={`uppercase ${errors.solanawWalletAddress ? "border-red-500" : ""}`}
             />
           </div>
         </div>
@@ -224,15 +224,16 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={loading}
+            className="uppercase"
           >
-            Cancel
+            CANCEL
           </Button>
           <Button
             onClick={handleSave}
             disabled={loading}
-            className="bg-[#22c55e] hover:bg-[#16a34a]"
+            className="bg-[#22c55e] hover:bg-[#16a34a] uppercase"
           >
-            {loading ? "Saving..." : paymentMethodId ? "Update" : "Save"}
+            {loading ? "SAVING..." : paymentMethodId ? "UPDATE" : "SAVE"}
           </Button>
         </DialogFooter>
       </DialogContent>

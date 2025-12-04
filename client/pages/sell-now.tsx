@@ -254,6 +254,15 @@ export default function SellNow() {
                 "SELL FOR PKR"
               )}
             </Button>
+
+            <Button
+              onClick={() => navigate("/p2p")}
+              variant="outline"
+              className="w-full h-12 rounded-lg font-semibold transition-all duration-200 border border-[#FF7A5C]/50 text-[#FF7A5C] hover:bg-[#FF7A5C]/10"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Back
+            </Button>
           </CardContent>
         </Card>
       </div>

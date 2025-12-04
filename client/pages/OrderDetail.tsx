@@ -132,7 +132,7 @@ export default function OrderDetail() {
                   </div>
                 </div>
               )}
-              <div className="pt-4 space-y-3">
+              <div className="border-t border-gray-300/20 p-4 space-y-3">
                 <Button
                   onClick={() =>
                     navigate("/order-complete", { state: { order } })

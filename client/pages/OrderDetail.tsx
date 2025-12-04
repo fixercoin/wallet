@@ -100,7 +100,20 @@ export default function OrderDetail() {
               <CardContent className="space-y-0 p-0">
                 <div className="flex items-center justify-between p-4 border-b border-gray-300/20">
                   <div className="text-xs opacity-80">Order Number</div>
-                  <div className="font-semibold">{order.id}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="font-semibold">{shortenAddress(order.id, 8)}</div>
+                    <button
+                      onClick={() => handleCopy(order.id, "Order Number")}
+                      className="text-gray-400 hover:text-white transition-colors"
+                      title="Copy order number"
+                    >
+                      {copiedValue === order.id ? (
+                        <Check className="w-4 h-4" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <div className="flex items-center justify-between p-4 border-b border-gray-300/20">
                   <div className="text-xs opacity-80">Status</div>

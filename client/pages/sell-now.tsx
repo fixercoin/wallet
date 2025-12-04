@@ -34,32 +34,11 @@ const SUPPORTED_TOKEN_MINTS: Record<string, string> = {
 
 const DEFAULT_TOKENS: TokenOption[] = [
   {
-    id: "FIXERCOIN",
-    name: "Fixercoin",
-    symbol: "FIXERCOIN",
-    logo: "https://raw.githubusercontent.com/Fixorium/token-list/main/assets/fixercoin.png",
-    mint: SUPPORTED_TOKEN_MINTS.FIXERCOIN,
-  },
-  {
-    id: "SOL",
-    name: "Solana",
-    symbol: "SOL",
-    logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-    mint: SUPPORTED_TOKEN_MINTS.SOL,
-  },
-  {
     id: "USDC",
     name: "USDC",
     symbol: "USDC",
     logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5Au7BXRSpJfDw3gEPrwwAau4vTNihtQ5go5Q/logo.png",
     mint: SUPPORTED_TOKEN_MINTS.USDC,
-  },
-  {
-    id: "USDT",
-    name: "Tether",
-    symbol: "USDT",
-    logo: "https://cdn.builder.io/api/v1/image/assets%2F559a5e19be114c9d8427d6683b845144%2Fc2ea69828dbc4a90b2deed99c2291802?format=webp&width=800",
-    mint: SUPPORTED_TOKEN_MINTS.USDT,
   },
 ];
 

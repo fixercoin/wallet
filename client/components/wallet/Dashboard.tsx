@@ -25,6 +25,7 @@ import {
   X,
   Clock,
   Coins,
+  Search as SearchIcon,
 } from "lucide-react";
 import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import {
@@ -129,6 +130,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
+  const [showSearchFocus, setShowSearchFocus] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
@@ -761,7 +764,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             }}
           />
           <div className="relative z-10">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2 gap-2">
               {/* Dropdown menu - moved to left */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -820,16 +823,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {/* Settings button - moved to right */}
-              <Button
-                onClick={onSettings}
-                size="sm"
-                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
-                aria-label="Settings"
-                title="Settings"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
+
+              <div className="flex items-center gap-2 ml-auto">
+                {/* Search button */}
+                <Button
+                  onClick={() => {
+                    setShowSearchFocus(!showSearchFocus);
+                    if (!showSearchFocus) {
+                      setTimeout(() => searchInputRef.current?.focus(), 0);
+                    }
+                  }}
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-[#22c55e] ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                  aria-label="Search tokens"
+                  title="Search tokens"
+                >
+                  <SearchIcon className="h-4 w-4" />
+                </Button>
+
+                {/* Settings button */}
+                <Button
+                  onClick={onSettings}
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                  aria-label="Settings"
+                  title="Settings"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="text-center space-y-2 mt-8">
@@ -959,8 +981,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             {/* Token Search - Under Action Buttons */}
-            <div className="w-full mt-4 px-0">
+            <div className={`w-full mt-4 px-0 transition-all duration-300 ${showSearchFocus ? "block" : "hidden sm:block"}`}>
               <TokenSearch
+                searchInputRef={searchInputRef}
                 className="w-full"
                 inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-md"
               />

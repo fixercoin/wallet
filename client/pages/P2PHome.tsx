@@ -22,6 +22,7 @@ export default function P2PHome() {
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
   >();
+  const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
   const [orders, setOrders] = useState<P2POrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
 

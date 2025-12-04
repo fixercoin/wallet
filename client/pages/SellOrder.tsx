@@ -130,7 +130,7 @@ export default function SellOrder() {
                     >
                       <span>SELL-{order.id.split("-").pop()}</span>
                       <span className="text-[#FF7A5C] ml-3">
-                        {order.token} {Number(order.amountPKR).toFixed(2)} PKR
+                        LIMIT {Number(order.amountTokens || 0).toFixed(6)} {order.token}
                       </span>
                     </div>
                   </div>

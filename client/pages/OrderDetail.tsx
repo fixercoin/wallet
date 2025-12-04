@@ -21,6 +21,7 @@ export default function OrderDetail() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const { orderId } = useParams();
+  const { toast } = useToast();
   const [order, setOrder] = useState<any | null>(null);
   const [status, setStatus] = useState<"pending" | "completed" | null>(null);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
@@ -30,8 +31,25 @@ export default function OrderDetail() {
   const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
   const [offerPassword, setOfferPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [copiedValue, setCopiedValue] = useState<string | null>(null);
 
   const OFFER_PASSWORD = "######Pakistan";
+
+  const shortenAddress = (address: string, chars = 6) => {
+    if (!address) return "";
+    return `${address.slice(0, chars)}...${address.slice(-chars)}`;
+  };
+
+  const handleCopy = (value: string, label: string) => {
+    navigator.clipboard.writeText(value);
+    setCopiedValue(value);
+    toast({
+      title: "Copied!",
+      description: `${label} copied to clipboard`,
+      duration: 2000,
+    });
+    setTimeout(() => setCopiedValue(null), 2000);
+  };
 
   const handleOfferAction = (action: "buy" | "sell") => {
     if (offerPassword !== OFFER_PASSWORD) {

@@ -154,7 +154,7 @@ export default function SellActiveOrders() {
                     onClick={(e) => {
                       e.stopPropagation();
                       if (wallet?.publicKey === ADMIN_WALLET) {
-                        navigate("/express/buy-trade", {
+                        navigate("/order-complete", {
                           state: { order, openChat: true },
                         });
                       } else {

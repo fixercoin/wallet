@@ -199,7 +199,6 @@ export default function BuyCrypto() {
     }
   };
 
-
   return (
     <div
       className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden text-[10px]"

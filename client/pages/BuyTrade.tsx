@@ -1,6 +1,14 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MessageSquare, Copy, Send, Plus, ShoppingCart, TrendingUp } from "lucide-react";
+import {
+  ArrowLeft,
+  MessageSquare,
+  Copy,
+  Send,
+  Plus,
+  ShoppingCart,
+  TrendingUp,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 import { useWallet } from "@/contexts/WalletContext";

@@ -188,6 +188,7 @@ export default function SellNow() {
       const buyerWallet = getAvailableBuyerWallet();
       const order = {
         id: `SELL-${Date.now()}`,
+        type: "SELL",
         token: selectedToken.id,
         amountTokens: amount,
         amountPKR: amount * exchangeRate,
@@ -202,7 +203,7 @@ export default function SellNow() {
         localStorage.setItem("sellnote_order", JSON.stringify(order));
       } catch {}
       addPendingOrder(order);
-      navigate("/sellnote");
+      navigate("/sell-order");
     } catch (error: any) {
       toast({
         title: "Failed to start chat",

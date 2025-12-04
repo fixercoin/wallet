@@ -172,6 +172,7 @@ export default function BuyCrypto() {
     try {
       const order = {
         id: `ORD-${Date.now()}`,
+        type: "BUY",
         token: selectedToken.id,
         amountPKR: Number(amountPKR),
         pricePKRPerQuote,
@@ -187,7 +188,7 @@ export default function BuyCrypto() {
         localStorage.setItem("buynote_order", JSON.stringify(order));
       } catch {}
       addPendingOrder(order);
-      navigate("/buynote");
+      navigate("/buy-order");
     } catch (error: any) {
       toast({
         title: "Failed to start chat",

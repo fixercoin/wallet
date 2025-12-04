@@ -150,6 +150,8 @@ import OrderComplete from "./pages/OrderComplete";
 import TokenSearchPage from "./pages/TokenSearchPage";
 import BuyActiveOrders from "./pages/BuyActiveOrders";
 import SellActiveOrders from "./pages/SellActiveOrders";
+import BuyOrder from "./pages/BuyOrder";
+import SellOrder from "./pages/SellOrder";
 import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
@@ -163,6 +165,8 @@ function AppRoutes() {
       <Route path="/buy-now" element={<BuyNow />} />
       <Route path="/sell-now" element={<SellNow />} />
       <Route path="/buy-crypto" element={<BuyCrypto />} />
+      <Route path="/buy-order" element={<BuyOrder />} />
+      <Route path="/sell-order" element={<SellOrder />} />
       <Route path="/buynote" element={<BuyNote />} />
       <Route path="/sellnote" element={<SellNote />} />
       <Route path="/verify-sell" element={<VerifySell />} />

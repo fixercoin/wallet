@@ -54,8 +54,6 @@ export default function BuyCrypto() {
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [fetchingRate, setFetchingRate] = useState(false);
-  const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
-  const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [completedCount, setCompletedCount] = useState<number>(0);
 

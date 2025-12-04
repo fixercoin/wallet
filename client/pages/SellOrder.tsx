@@ -138,7 +138,8 @@ export default function SellOrder() {
                         navigate(`/order/${encodeURIComponent(order.id)}`);
                       }
                     }}
-                    className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs hover:shadow-lg transition-colors uppercase font-semibold flex-shrink-0"
+                    className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white hover:shadow-lg transition-colors uppercase font-semibold flex-shrink-0"
+                    style={{ fontSize: "12px" }}
                   >
                     View
                   </button>

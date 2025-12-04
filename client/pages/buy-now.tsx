@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, ShoppingCart, TrendingUp } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { useOrderNotifications } from "@/hooks/use-order-notifications";
+import { ADMIN_WALLET } from "@/lib/p2p";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
@@ -75,6 +77,7 @@ export default function BuyNow() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const { toast } = useToast();
+  const { createNotification } = useOrderNotifications();
 
   const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
@@ -189,9 +192,12 @@ export default function BuyNow() {
     const pricePKRPerQuote = exchangeRate;
     setLoading(true);
     try {
+      const orderId = `BUY-${Date.now()}`;
       const order = {
-        id: `ORD-${Date.now()}`,
+        id: orderId,
+        type: "BUY",
         token: selectedToken.id,
+        amountTokens: Number(amountPKR) / exchangeRate,
         amountPKR: Number(amountPKR),
         pricePKRPerQuote,
         paymentMethod: "easypaisa",
@@ -201,12 +207,51 @@ export default function BuyNow() {
         },
         buyerWallet: wallet.publicKey,
         createdAt: Date.now(),
+        status: "pending",
       };
+
       try {
         localStorage.setItem("buynote_order", JSON.stringify(order));
       } catch {}
+
       addPendingOrder(order);
-      navigate("/buynote");
+
+      try {
+        const response = await fetch("/api/p2p/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            walletAddress: wallet.publicKey,
+            type: "BUY",
+            token: selectedToken.id,
+            amountTokens: Number(amountPKR) / exchangeRate,
+            amountPKR: Number(amountPKR),
+            paymentMethodId: "easypaisa",
+            status: "PENDING",
+            orderId,
+          }),
+        });
+        if (!response.ok) {
+          console.error("Failed to save order to KV:", response.status);
+        }
+      } catch (kvError) {
+        console.error("Error saving to KV storage:", kvError);
+      }
+
+      await createNotification(
+        ADMIN_WALLET,
+        "order_created",
+        "BUY",
+        orderId,
+        `New buy order created: ${Number(amountPKR).toFixed(2)} PKR for ${selectedToken.id}`,
+        {
+          token: selectedToken.id,
+          amountTokens: Number(amountPKR) / exchangeRate,
+          amountPKR: Number(amountPKR),
+        },
+      );
+
+      navigate("/sell-order");
     } catch (error: any) {
       toast({
         title: "Failed to start chat",

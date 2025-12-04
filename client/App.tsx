@@ -112,6 +112,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "next-themes";
 import { initStorageMonitoring } from "@/lib/storage-monitor";
+import { usePushNotifications } from "@/lib/services/push-notifications";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
@@ -143,6 +144,7 @@ import BurnTokenPage from "./pages/BurnTokenPage";
 import RunningMarketMaker from "./pages/RunningMarketMaker";
 import MarketMakerHistory from "./pages/MarketMakerHistory";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
+import { NotificationCenter } from "@/components/NotificationCenter";
 import DocumentationPage from "./pages/DocumentationPage";
 import P2PHome from "./pages/P2PHome";
 import BuyTrade from "./pages/BuyTrade";
@@ -211,16 +213,24 @@ function AppRoutes() {
 function AppContent() {
   return (
     <div className="min-h-screen pb-4">
+      <div className="fixed top-4 right-4 z-40">
+        <NotificationCenter />
+      </div>
       <AppRoutes />
     </div>
   );
 }
 
 function App() {
-  // Initialize storage monitoring on app start
+  const { initPushNotifications } = usePushNotifications();
+
+  // Initialize storage monitoring and push notifications on app start
   useEffect(() => {
     initStorageMonitoring();
-  }, []);
+    initPushNotifications().catch((error) => {
+      console.warn("Failed to initialize push notifications:", error);
+    });
+  }, [initPushNotifications]);
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

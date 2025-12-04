@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, ShoppingCart, TrendingUp } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
@@ -55,6 +56,7 @@ export default function SellNow() {
   const navigate = useNavigate();
   const { wallet, tokens: walletTokens = [] } = useWallet();
   const { toast } = useToast();
+  const { createNotification } = useOrderNotifications();
 
   const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
@@ -184,10 +186,12 @@ export default function SellNow() {
       });
       return;
     }
+    setLoading(true);
     try {
       const buyerWallet = getAvailableBuyerWallet();
+      const orderId = `SELL-${Date.now()}`;
       const order = {
-        id: `SELL-${Date.now()}`,
+        id: orderId,
         type: "SELL",
         token: selectedToken.id,
         amountTokens: amount,
@@ -198,18 +202,59 @@ export default function SellNow() {
         adminWallet: ADMIN_WALLET,
         buyerWallet: buyerWallet,
         createdAt: Date.now(),
+        status: "pending",
       };
+
       try {
         localStorage.setItem("sellnote_order", JSON.stringify(order));
       } catch {}
+
       addPendingOrder(order);
-      navigate("/sell-order");
+
+      try {
+        const response = await fetch("/api/p2p/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            walletAddress: wallet.publicKey,
+            type: "SELL",
+            token: selectedToken.id,
+            amountTokens: amount,
+            amountPKR: amount * exchangeRate,
+            paymentMethodId: "easypaisa",
+            status: "PENDING",
+            orderId,
+          }),
+        });
+        if (!response.ok) {
+          console.error("Failed to save order to KV:", response.status);
+        }
+      } catch (kvError) {
+        console.error("Error saving to KV storage:", kvError);
+      }
+
+      await createNotification(
+        ADMIN_WALLET,
+        "order_created",
+        "SELL",
+        orderId,
+        `New sell order created: ${amount.toFixed(6)} ${selectedToken.id} for ${(amount * exchangeRate).toFixed(2)} PKR`,
+        {
+          token: selectedToken.id,
+          amountTokens: amount,
+          amountPKR: amount * exchangeRate,
+        },
+      );
+
+      navigate("/buy-order");
     } catch (error: any) {
       toast({
         title: "Failed to start chat",
         description: error?.message || String(error),
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 

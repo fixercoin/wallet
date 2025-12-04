@@ -30,6 +30,23 @@ export interface P2POrder {
   updatedAt: number;
 }
 
+export interface OrderNotification {
+  id: string;
+  orderId: string;
+  recipientWallet: string;
+  senderWallet: string;
+  type: "order_created" | "payment_confirmed" | "received_confirmed";
+  orderType: "BUY" | "SELL";
+  message: string;
+  orderData: {
+    token: string;
+    amountTokens: number;
+    amountPKR: number;
+  };
+  read: boolean;
+  createdAt: number;
+}
+
 interface KVNamespace {
   get(key: string): Promise<string | null>;
   put(key: string, value: string): Promise<void>;
@@ -202,9 +219,8 @@ export class KVStore {
   async getPaymentMethodsByWallet(
     walletAddress: string,
   ): Promise<PaymentMethod[]> {
-    const paymentMethodIds = await this.getPaymentMethodIdsForWallet(
-      walletAddress,
-    );
+    const paymentMethodIds =
+      await this.getPaymentMethodIdsForWallet(walletAddress);
     const paymentMethods: PaymentMethod[] = [];
 
     for (const methodId of paymentMethodIds) {
@@ -233,8 +249,7 @@ export class KVStore {
     methodId?: string,
   ): Promise<PaymentMethod> {
     const id =
-      methodId ||
-      `pm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      methodId || `pm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const now = Date.now();
 
     const existing = methodId ? await this.getPaymentMethod(methodId) : null;
@@ -246,10 +261,7 @@ export class KVStore {
       updatedAt: now,
     };
 
-    await this.kv.put(
-      `payment_methods:${id}`,
-      JSON.stringify(paymentMethod),
-    );
+    await this.kv.put(`payment_methods:${id}`, JSON.stringify(paymentMethod));
 
     const paymentMethodIds = await this.getPaymentMethodIdsForWallet(
       method.walletAddress,
@@ -275,9 +287,8 @@ export class KVStore {
   ): Promise<void> {
     await this.kv.delete(`payment_methods:${methodId}`);
 
-    const paymentMethodIds = await this.getPaymentMethodIdsForWallet(
-      walletAddress,
-    );
+    const paymentMethodIds =
+      await this.getPaymentMethodIdsForWallet(walletAddress);
     const filtered = paymentMethodIds.filter((id) => id !== methodId);
     await this.kv.put(
       `payment_methods:wallet:${walletAddress}`,
@@ -317,7 +328,9 @@ export class KVStore {
     order: Omit<P2POrder, "id" | "createdAt" | "updatedAt">,
     orderId?: string,
   ): Promise<P2POrder> {
-    const id = orderId || `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const id =
+      orderId ||
+      `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const now = Date.now();
 
     const existing = orderId ? await this.getOrder(orderId) : null;
@@ -373,6 +386,101 @@ export class KVStore {
    */
   private async getOrderIdsForWallet(walletAddress: string): Promise<string[]> {
     const json = await this.kv.get(`orders:wallet:${walletAddress}`);
+    return json ? JSON.parse(json) : [];
+  }
+
+  /**
+   * Get all notifications for a wallet
+   */
+  async getNotificationsByWallet(
+    walletAddress: string,
+  ): Promise<OrderNotification[]> {
+    const notificationIds =
+      await this.getNotificationIdsForWallet(walletAddress);
+    const notifications: OrderNotification[] = [];
+
+    for (const notifId of notificationIds) {
+      const notif = await this.getNotification(notifId);
+      if (notif) {
+        notifications.push(notif);
+      }
+    }
+
+    return notifications;
+  }
+
+  /**
+   * Get a single notification by ID
+   */
+  async getNotification(
+    notificationId: string,
+  ): Promise<OrderNotification | null> {
+    const json = await this.kv.get(`notifications:${notificationId}`);
+    return json ? JSON.parse(json) : null;
+  }
+
+  /**
+   * Save a notification
+   */
+  async saveNotification(
+    notification: Omit<OrderNotification, "id" | "createdAt">,
+    notificationId?: string,
+  ): Promise<OrderNotification> {
+    const id =
+      notificationId ||
+      `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const now = Date.now();
+
+    const orderNotification: OrderNotification = {
+      ...notification,
+      id,
+      createdAt: now,
+    };
+
+    await this.kv.put(`notifications:${id}`, JSON.stringify(orderNotification));
+
+    const notificationIds = await this.getNotificationIdsForWallet(
+      notification.recipientWallet,
+    );
+
+    if (!notificationIds.includes(id)) {
+      notificationIds.push(id);
+      await this.kv.put(
+        `notifications:wallet:${notification.recipientWallet}`,
+        JSON.stringify(notificationIds),
+      );
+    }
+
+    return orderNotification;
+  }
+
+  /**
+   * Mark notification as read
+   */
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    const notif = await this.getNotification(notificationId);
+    if (!notif) {
+      throw new Error("Notification not found");
+    }
+
+    const updated: OrderNotification = {
+      ...notif,
+      read: true,
+    };
+
+    await this.kv.put(
+      `notifications:${notificationId}`,
+      JSON.stringify(updated),
+    );
+  }
+
+  /**
+   * Get notification IDs for wallet
+   */
+  private async getNotificationIdsForWallet(
+    walletAddress: string,
+  ): Promise<string[]> {
+    const json = await this.kv.get(`notifications:wallet:${walletAddress}`);
     return json ? JSON.parse(json) : [];
   }
 }

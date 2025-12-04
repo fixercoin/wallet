@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
+import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import {
   saveChatMessage,
   loadChatHistory,
@@ -17,6 +18,7 @@ export default function OrderComplete() {
   const location = useLocation() as any;
   const { wallet } = useWallet();
   const { toast } = useToast();
+  const { createNotification } = useOrderNotifications();
 
   const order = location.state?.order || null;
   const confirmation = location.state?.confirmation || null;
@@ -104,7 +106,11 @@ export default function OrderComplete() {
   };
 
   const handleVerify = async () => {
-    if (isBuyer) {
+    if (!order) return;
+
+    const isBuyerAction = isBuyer;
+
+    if (isBuyerAction) {
       setBuyerVerified(true);
     } else {
       setSellerVerified(true);
@@ -125,6 +131,43 @@ export default function OrderComplete() {
     setChatLog((prev) => [...prev, msg]);
     await saveChatMessage(roomId, msg);
     await sendChatMessage(roomId, msg);
+
+    const otherWalletKey =
+      order.type === "BUY"
+        ? isBuyerAction
+          ? order.sellerWallet
+          : order.buyerWallet
+        : isBuyerAction
+          ? order.buyerWallet
+          : order.sellerWallet;
+
+    if (isBuyerAction) {
+      await createNotification(
+        otherWalletKey,
+        "payment_confirmed",
+        order.type || "BUY",
+        order.id,
+        "Buyer has confirmed payment",
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+    } else {
+      await createNotification(
+        otherWalletKey,
+        "received_confirmed",
+        order.type || "BUY",
+        order.id,
+        "Seller has confirmed receiving payment",
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+    }
 
     toast({
       title: "Verification confirmed",

@@ -184,10 +184,12 @@ export default function SellNow() {
       });
       return;
     }
+    setLoading(true);
     try {
       const buyerWallet = getAvailableBuyerWallet();
+      const orderId = `SELL-${Date.now()}`;
       const order = {
-        id: `SELL-${Date.now()}`,
+        id: orderId,
         type: "SELL",
         token: selectedToken.id,
         amountTokens: amount,
@@ -198,11 +200,37 @@ export default function SellNow() {
         adminWallet: ADMIN_WALLET,
         buyerWallet: buyerWallet,
         createdAt: Date.now(),
+        status: "pending",
       };
+
       try {
         localStorage.setItem("sellnote_order", JSON.stringify(order));
       } catch {}
+
       addPendingOrder(order);
+
+      try {
+        const response = await fetch("/api/p2p/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            walletAddress: wallet.publicKey,
+            type: "SELL",
+            token: selectedToken.id,
+            amountTokens: amount,
+            amountPKR: amount * exchangeRate,
+            paymentMethodId: "easypaisa",
+            status: "PENDING",
+            orderId,
+          }),
+        });
+        if (!response.ok) {
+          console.error("Failed to save order to KV:", response.status);
+        }
+      } catch (kvError) {
+        console.error("Error saving to KV storage:", kvError);
+      }
+
       navigate("/buy-order");
     } catch (error: any) {
       toast({
@@ -210,6 +238,8 @@ export default function SellNow() {
         description: error?.message || String(error),
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 

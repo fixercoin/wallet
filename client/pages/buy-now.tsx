@@ -189,9 +189,12 @@ export default function BuyNow() {
     const pricePKRPerQuote = exchangeRate;
     setLoading(true);
     try {
+      const orderId = `BUY-${Date.now()}`;
       const order = {
-        id: `ORD-${Date.now()}`,
+        id: orderId,
+        type: "BUY",
         token: selectedToken.id,
+        amountTokens: Number(amountPKR) / exchangeRate,
         amountPKR: Number(amountPKR),
         pricePKRPerQuote,
         paymentMethod: "easypaisa",
@@ -201,11 +204,37 @@ export default function BuyNow() {
         },
         buyerWallet: wallet.publicKey,
         createdAt: Date.now(),
+        status: "pending",
       };
+
       try {
         localStorage.setItem("buynote_order", JSON.stringify(order));
       } catch {}
+
       addPendingOrder(order);
+
+      try {
+        const response = await fetch("/api/p2p/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            walletAddress: wallet.publicKey,
+            type: "BUY",
+            token: selectedToken.id,
+            amountTokens: Number(amountPKR) / exchangeRate,
+            amountPKR: Number(amountPKR),
+            paymentMethodId: "easypaisa",
+            status: "PENDING",
+            orderId,
+          }),
+        });
+        if (!response.ok) {
+          console.error("Failed to save order to KV:", response.status);
+        }
+      } catch (kvError) {
+        console.error("Error saving to KV storage:", kvError);
+      }
+
       navigate("/sell-order");
     } catch (error: any) {
       toast({

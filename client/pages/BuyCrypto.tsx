@@ -269,7 +269,6 @@ export default function BuyCrypto() {
               />
             </div>
 
-
             <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
               <div className="space-y-3">
                 <div className="flex justify-between items-center">

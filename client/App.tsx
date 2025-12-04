@@ -147,7 +147,6 @@ import DocumentationPage from "./pages/DocumentationPage";
 import P2PHome from "./pages/P2PHome";
 import BuyTrade from "./pages/BuyTrade";
 import TokenSearchPage from "./pages/TokenSearchPage";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
@@ -200,13 +199,9 @@ function AppRoutes() {
 }
 
 function AppContent() {
-  const location = useLocation();
-  const isWalletDashboard = location.pathname === "/";
-
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen pb-4">
       <AppRoutes />
-      {isWalletDashboard && <BottomNavigation />}
     </div>
   );
 }

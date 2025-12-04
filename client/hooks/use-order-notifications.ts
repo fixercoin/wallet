@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { pushNotificationService } from "@/lib/services/push-notifications";
 
 export interface OrderNotification {
   id: string;
@@ -91,6 +92,12 @@ export function useOrderNotifications() {
         if (!response.ok) {
           throw new Error(`Failed to create notification: ${response.status}`);
         }
+
+        await pushNotificationService.sendOrderNotification(
+          type,
+          message,
+          orderData,
+        );
 
         console.log(`Notification created for ${recipientWallet}`);
       } catch (error) {

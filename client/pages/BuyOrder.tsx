@@ -97,7 +97,7 @@ export default function BuyOrder() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-lg mx-auto px-4 py-8">
+      <div className="w-full px-4 py-8">
         <div className="space-y-3">
           {loadingOrders && (
             <div className="text-center text-white/70 py-8">
@@ -118,12 +118,11 @@ export default function BuyOrder() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1">
-                    <div className="text-sm opacity-80 mb-2">Order Number</div>
-                    <div className="flex items-baseline gap-2">
-                      <div className="font-semibold text-white text-lg">
+                    <div className="flex items-baseline gap-3" style={{ fontSize: "12px" }}>
+                      <div className="font-semibold text-white">
                         {order.id}
                       </div>
-                      <div className="text-lg font-semibold text-[#FF7A5C]">
+                      <div className="font-semibold text-[#FF7A5C]">
                         {order.token} {Number(order.amountPKR).toFixed(2)} PKR
                       </div>
                     </div>

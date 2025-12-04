@@ -280,6 +280,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
   }, [refreshBalance, refreshTokens]);
 
+  // Monitor unread notifications
+  useEffect(() => {
+    if (!wallet) return;
+
+    const updateUnreadCount = () => {
+      const unread = getUnreadNotifications(wallet.publicKey);
+      setUnreadCount(unread.length);
+    };
+
+    updateUnreadCount();
+
+    // Check for updates every 2 seconds
+    const interval = setInterval(updateUnreadCount, 2000);
+
+    // Also listen for storage changes
+    const handleStorageChange = () => {
+      updateUnreadCount();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [wallet]);
+
   // Check for pending payment verifications if admin
   useEffect(() => {
     if (

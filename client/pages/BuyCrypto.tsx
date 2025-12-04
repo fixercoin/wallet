@@ -269,7 +269,7 @@ export default function BuyCrypto() {
                   Processing...
                 </>
               ) : (
-                `PAY TO BUY CRYPTO CURRENCY`
+                `BUY CRYPTO`
               )}
             </Button>
 

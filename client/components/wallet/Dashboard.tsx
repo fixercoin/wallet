@@ -1021,7 +1021,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onClick={() => navigate("/p2p")}
                 className="relative flex-1 bg-[#2a2a2a] border border-[#22c55e]/30 rounded-md px-4 py-3 text-center hover:bg-[#2a2a2a]/80 transition-colors text-white font-bold text-xs h-auto py-3"
               >
-                P2P  :  TRADE CRYPTO
+                P2P - EXCHANGE NOW
                 {unreadCount > 0 && (
                   <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#FF7A5C] rounded-full flex items-center justify-center">
                     <span className="text-white text-xs font-bold">

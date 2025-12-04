@@ -219,7 +219,7 @@ export default function BuyNote() {
 
             <Separator className="bg-[#FF7A5C]/20" />
 
-            <div className="px-4 pb-4">
+            <div className="px-4 pb-4 space-y-3">
               <Button
                 onClick={handlePaid}
                 disabled={loading}
@@ -233,6 +233,15 @@ export default function BuyNote() {
                 ) : (
                   "I HAVE PAID"
                 )}
+              </Button>
+
+              <Button
+                onClick={goBack}
+                variant="outline"
+                className="w-full h-12 rounded-lg font-semibold transition-all duration-200 border border-[#FF7A5C]/50 text-[#FF7A5C] hover:bg-[#FF7A5C]/10"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2" />
+                Back
               </Button>
             </div>
           </CardContent>

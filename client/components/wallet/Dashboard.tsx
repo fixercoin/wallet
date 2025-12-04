@@ -1002,12 +1002,30 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </Button>
             </div>
 
-            {/* Token Search - Under Action Buttons */}
-            <div className="w-full mt-4 px-0">
-              <TokenSearch
-                className="w-full"
-                inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-md"
-              />
+            {/* P2P and Notification Buttons */}
+            <div className="flex items-center justify-between gap-2 sm:gap-3 mt-4 w-full px-0">
+              <Button
+                onClick={() => navigate("/p2p")}
+                className="flex-1 bg-[#2a2a2a] border border-[#22c55e]/30 rounded-md px-4 py-3 text-center hover:bg-[#2a2a2a]/80 transition-colors text-white font-bold text-xs h-auto py-3"
+              >
+                P2P TRADE
+              </Button>
+
+              <Button
+                onClick={() => navigate("/p2p")}
+                className="relative bg-[#2a2a2a] border border-[#FF7A5C]/30 rounded-md p-3 hover:bg-[#2a2a2a]/80 transition-colors flex items-center justify-center"
+                aria-label="P2P Chat Notifications"
+                title="View chat notifications"
+              >
+                <MessageSquare className="w-5 h-5 text-[#FF7A5C]" />
+                {unreadCount > 0 && (
+                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#FF7A5C] rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  </div>
+                )}
+              </Button>
             </div>
           </div>
         </div>

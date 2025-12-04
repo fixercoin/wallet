@@ -101,7 +101,9 @@ export default function OrderDetail() {
                 <div className="flex items-center justify-between p-4 border-b border-gray-300/20">
                   <div className="text-xs opacity-80">Order Number</div>
                   <div className="flex items-center gap-2">
-                    <div className="font-semibold">{shortenAddress(order.id, 8)}</div>
+                    <div className="font-semibold">
+                      {shortenAddress(order.id, 8)}
+                    </div>
                     <button
                       onClick={() => handleCopy(order.id, "Order Number")}
                       className="text-gray-400 hover:text-white transition-colors"
@@ -166,7 +168,9 @@ export default function OrderDetail() {
                           {shortenAddress(order.buyerWallet, 6)}
                         </div>
                         <button
-                          onClick={() => handleCopy(order.buyerWallet, "Buyer Wallet")}
+                          onClick={() =>
+                            handleCopy(order.buyerWallet, "Buyer Wallet")
+                          }
                           className="text-gray-400 hover:text-white transition-colors flex-shrink-0"
                           title="Copy buyer wallet"
                         >
@@ -198,13 +202,20 @@ export default function OrderDetail() {
                           </div>
                         </div>
                         <div className="flex items-center justify-between p-4">
-                          <div className="text-xs opacity-80">Account Number</div>
+                          <div className="text-xs opacity-80">
+                            Account Number
+                          </div>
                           <div className="flex items-center gap-2">
                             <div className="font-semibold font-mono">
                               {order.seller.accountNumber}
                             </div>
                             <button
-                              onClick={() => handleCopy(order.seller.accountNumber, "Account Number")}
+                              onClick={() =>
+                                handleCopy(
+                                  order.seller.accountNumber,
+                                  "Account Number",
+                                )
+                              }
                               className="text-gray-400 hover:text-white transition-colors"
                               title="Copy account number"
                             >

@@ -97,7 +97,6 @@ export default function BuyActiveOrders() {
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
-        <h1 className="text-white font-bold text-lg mt-2">BUY ACTIVE ORDERS</h1>
       </div>
 
       {/* Main Content */}

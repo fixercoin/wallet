@@ -75,8 +75,8 @@ export default function P2PHome() {
       </div>
 
       {/* Main Content - Two Column Layout */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="max-w-full mx-auto px-4 py-8">
+        <div className="grid grid-cols-2 gap-8">
           {/* Left Column - Action Buttons */}
           <div className="space-y-6">
             {/* Navigation Buttons */}

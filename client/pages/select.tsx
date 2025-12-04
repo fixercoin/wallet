@@ -412,22 +412,17 @@ export default function Select() {
               )}
             </div>
 
-            <div className="w-full rounded-2xl p-6 bg-transparent flex items-center justify-center">
-              {loadingOrders ? (
-                <div className="text-sm text-white/60">Loading orders...</div>
-              ) : orders.length === 0 && !payload ? (
-                <div className="text-sm text-white/60">
-                  FIXORIUM P2P — SECURE, FAST, AND LOW-FEE PEER-TO-PEER CRYPTO
-                  TRADING. NO ORDERS AVAILABLE.
-                </div>
-              ) : (
-                <img
-                  src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
-                  alt="Payment illustration"
-                  className="max-h-[320px] w-full object-contain"
-                />
-              )}
-            </div>
+            {loadingOrders && (
+              <div className="text-sm text-white/60 text-center py-8">
+                Loading orders...
+              </div>
+            )}
+            {!loadingOrders && orders.length === 0 && !payload && (
+              <div className="text-sm text-white/60 text-center py-8">
+                FIXORIUM P2P — SECURE, FAST, AND LOW-FEE PEER-TO-PEER CRYPTO
+                TRADING. NO ORDERS AVAILABLE.
+              </div>
+            )}
           </div>
         )}
       </div>

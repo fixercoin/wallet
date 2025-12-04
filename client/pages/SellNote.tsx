@@ -38,6 +38,8 @@ export default function SellNote() {
 
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<SellOrder | null>(null);
+  const [fetchingBuyerWallet, setFetchingBuyerWallet] = useState(true);
+  const [buyerWallet, setBuyerWallet] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -46,7 +48,29 @@ export default function SellNote() {
     } catch {}
   }, []);
 
-  const targetWallet = order?.buyerWallet || order?.adminWallet || ADMIN_WALLET;
+  useEffect(() => {
+    const fetchBuyerWallet = async () => {
+      setFetchingBuyerWallet(true);
+      try {
+        const pendingOrders = JSON.parse(localStorage.getItem("orders_pending") || "[]");
+        const buyOrder = pendingOrders.find((o: any) => o.buyerWallet);
+        if (buyOrder && buyOrder.buyerWallet) {
+          setBuyerWallet(buyOrder.buyerWallet);
+        } else {
+          setBuyerWallet(null);
+        }
+      } catch (error) {
+        console.error("Failed to fetch buyer wallet", error);
+        setBuyerWallet(null);
+      } finally {
+        setFetchingBuyerWallet(false);
+      }
+    };
+
+    fetchBuyerWallet();
+  }, []);
+
+  const targetWallet = buyerWallet || order?.buyerWallet || order?.adminWallet || ADMIN_WALLET;
 
   const copyAddress = async () => {
     try {

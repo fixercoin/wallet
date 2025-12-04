@@ -32,7 +32,7 @@ export const P2PBottomNavigation: React.FC<P2PBottomNavigationProps> = ({
           onClick={onPaymentClick}
           className="h-16 w-16 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-full text-xs uppercase flex items-center justify-center"
         >
-          PAY
+          ADD
         </Button>
         <Button
           onClick={onCreateOfferClick}

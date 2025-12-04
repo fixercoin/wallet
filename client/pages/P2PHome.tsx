@@ -50,7 +50,7 @@ export default function P2PHome() {
 
   return (
     <div
-      className="w-full min-h-screen pb-24"
+      className="w-full min-h-screen pb-32"
       style={{ fontSize: "10px", backgroundColor: "#0f0f0f", color: "#fff" }}
     >
       {/* Header */}
@@ -250,6 +250,39 @@ export default function P2PHome() {
           setEditingPaymentMethodId(undefined);
         }}
       />
+
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95 border-t border-gray-300/30 p-4">
+        <div className="max-w-7xl mx-auto grid grid-cols-4 gap-3">
+          <Button
+            onClick={() => navigate("/buy-crypto")}
+            className="h-12 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-sm uppercase"
+          >
+            BUY
+          </Button>
+          <Button
+            onClick={() => navigate("/sell-now")}
+            className="h-12 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-sm uppercase"
+          >
+            SELL
+          </Button>
+          <Button
+            onClick={() => {
+              setEditingPaymentMethodId(undefined);
+              setShowPaymentDialog(true);
+            }}
+            className="h-12 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-sm uppercase"
+          >
+            PAYMENT
+          </Button>
+          <Button
+            onClick={() => navigate("/buy-crypto")}
+            className="h-12 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-sm uppercase"
+          >
+            +
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -195,9 +195,7 @@ export default function TokenSearchPage() {
               const img = r.info?.imageUrl;
               const name = r.baseToken?.name || r.quoteToken?.name || "Unknown";
               const symbol = r.baseToken?.symbol || r.quoteToken?.symbol || "";
-              const price = r.priceUsd
-                ? parseFloat(r.priceUsd)
-                : null;
+              const price = r.priceUsd ? parseFloat(r.priceUsd) : null;
 
               return (
                 <button
@@ -217,9 +215,7 @@ export default function TokenSearchPage() {
                     <div className="text-sm font-semibold text-gray-900 truncate">
                       {symbol}
                     </div>
-                    <div className="text-xs text-gray-600 truncate">
-                      {name}
-                    </div>
+                    <div className="text-xs text-gray-600 truncate">{name}</div>
                     {mint && (
                       <div className="text-[11px] text-gray-500 truncate">
                         {shorten(mint)}

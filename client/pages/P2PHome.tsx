@@ -16,7 +16,9 @@ export default function P2PHome() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<string | undefined>();
+  const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
+    string | undefined
+  >();
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
 
   useEffect(() => {

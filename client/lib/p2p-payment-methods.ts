@@ -67,7 +67,8 @@ export function savePaymentMethod(
   id?: string,
 ): PaymentMethod {
   try {
-    const methodId = id || `pm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const methodId =
+      id || `pm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const now = Date.now();
 
     const paymentMethod: PaymentMethod = {
@@ -84,9 +85,8 @@ export function savePaymentMethod(
 
     // Add to wallet's payment method list
     const ids = JSON.parse(
-      localStorage.getItem(
-        PAYMENT_METHOD_IDS_KEY(method.walletAddress),
-      ) || "[]",
+      localStorage.getItem(PAYMENT_METHOD_IDS_KEY(method.walletAddress)) ||
+        "[]",
     );
 
     if (!ids.includes(methodId)) {
@@ -107,10 +107,7 @@ export function savePaymentMethod(
 /**
  * Delete a payment method
  */
-export function deletePaymentMethod(
-  id: string,
-  walletAddress: string,
-): void {
+export function deletePaymentMethod(id: string, walletAddress: string): void {
   try {
     localStorage.removeItem(`${PAYMENT_METHODS_KEY}:${id}`);
 

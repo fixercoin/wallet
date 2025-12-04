@@ -128,7 +128,9 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
       onOpenChange(false);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to save payment method";
+        error instanceof Error
+          ? error.message
+          : "Failed to save payment method";
       toast({
         title: "Error",
         description: message,
@@ -168,9 +170,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
           <div>
             <Select
               value={paymentMethod}
-              onValueChange={(value) =>
-                setPaymentMethod(value as "EASYPAISA")
-              }
+              onValueChange={(value) => setPaymentMethod(value as "EASYPAISA")}
               disabled={loading}
             >
               <SelectTrigger id="paymentMethod" className="uppercase">

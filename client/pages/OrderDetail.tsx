@@ -3,8 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/contexts/CurrencyContext";
-import { ArrowLeft, ShoppingCart, TrendingUp } from "lucide-react";
+import { ArrowLeft, ShoppingCart, TrendingUp, Copy, Check } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,

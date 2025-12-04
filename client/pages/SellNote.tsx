@@ -180,20 +180,31 @@ export default function SellNote() {
               <label className="block font-medium text-white/80 mb-3">
                 Send transaction to this wallet
               </label>
-              <div className="p-3 rounded-lg bg-[#1a2540]/50 text-white flex items-center justify-between gap-2">
-                <code className="font-mono text-xs break-all">
-                  {targetWallet}
-                </code>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={copyAddress}
-                  aria-label="Copy address"
-                  className="text-white"
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </div>
+              {fetchingBuyerWallet ? (
+                <div className="p-3 rounded-lg bg-[#1a2540]/50 text-white flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#FF7A5C]" />
+                  <span className="text-xs opacity-80">Fetching wallet address...</span>
+                </div>
+              ) : buyerWallet ? (
+                <div className="p-3 rounded-lg bg-[#1a2540]/50 text-white flex items-center justify-between gap-2">
+                  <code className="font-mono text-xs break-all">
+                    {buyerWallet}
+                  </code>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={copyAddress}
+                    aria-label="Copy address"
+                    className="text-white"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="p-3 rounded-lg bg-[#1a2540]/50 text-white/60 text-xs">
+                  No buyer wallet available. Using admin wallet for transfer.
+                </div>
+              )}
             </div>
 
             <Separator className="bg-[#FF7A5C]/20" />

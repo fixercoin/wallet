@@ -168,6 +168,40 @@ export default function P2PHome() {
         }}
       />
 
+      {/* Create Offer Dialog */}
+      <Dialog open={showCreateOfferDialog} onOpenChange={setShowCreateOfferDialog}>
+        <DialogContent className="bg-[#1a2847] border border-gray-300/30 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white">Create Offer</DialogTitle>
+            <DialogDescription className="text-white/70">
+              Choose whether you want to buy or sell crypto
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            <Button
+              onClick={() => {
+                setShowCreateOfferDialog(false);
+                navigate("/buy-crypto");
+              }}
+              className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-600/20 to-blue-600/10 border border-blue-500/30 hover:border-blue-500/50 text-white font-semibold rounded-lg transition-all"
+            >
+              <ShoppingCart className="w-8 h-8" />
+              <span>Buy Crypto</span>
+            </Button>
+            <Button
+              onClick={() => {
+                setShowCreateOfferDialog(false);
+                navigate("/sell-now");
+              }}
+              className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-green-600/20 to-green-600/10 border border-green-500/30 hover:border-green-500/50 text-white font-semibold rounded-lg transition-all"
+            >
+              <TrendingUp className="w-8 h-8" />
+              <span>Sell Crypto</span>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95 p-4 pb-8">
         <div className="max-w-7xl mx-auto grid grid-cols-4 gap-3">

@@ -874,22 +874,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             : "****"}
                         </div>
                         {showBalance ? (
-                          <div
-                            className={`text-xs mt-1 font-medium`}
-                            style={{ color: isPositive ? "#FACC15" : "#F87171" }}
-                          >
-                            {isPositive ? "▲" : "▼"} {isPositive ? "+" : "-"}{" "}
-                            {Math.abs(totalChange24h).toLocaleString(
-                              undefined,
-                              {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
-                              },
-                            )}{" "}
-                            {Math.abs(
-                              isFinite(change24hPercent) ? change24hPercent : 0,
-                            ).toFixed(2)}
-                            %
+                          <div className="text-xs mt-1 font-medium">
+                            <span style={{ color: isPositive ? "#FACC15" : "#F87171", display: "block" }}>
+                              {isPositive ? "▲" : "▼"} {isPositive ? "+" : "-"}{" "}
+                              {Math.abs(totalChange24h).toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3,
+                                },
+                              )}{" "}
+                              {Math.abs(
+                                isFinite(change24hPercent) ? change24hPercent : 0,
+                              ).toFixed(2)}
+                              %
+                            </span>
                           </div>
                         ) : (
                           <div className="text-xs text-gray-400 mt-1">****</div>

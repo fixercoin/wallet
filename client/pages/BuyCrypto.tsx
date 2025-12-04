@@ -54,29 +54,6 @@ export default function BuyCrypto() {
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [fetchingRate, setFetchingRate] = useState(false);
-  const [pendingCount, setPendingCount] = useState<number>(0);
-  const [completedCount, setCompletedCount] = useState<number>(0);
-
-  const refreshCounts = () => {
-    try {
-      const p = JSON.parse(localStorage.getItem("orders_pending") || "[]");
-      const c = JSON.parse(localStorage.getItem("orders_completed") || "[]");
-      setPendingCount(Array.isArray(p) ? p.length : 0);
-      setCompletedCount(Array.isArray(c) ? c.length : 0);
-    } catch {
-      setPendingCount(0);
-      setCompletedCount(0);
-    }
-  };
-
-  useEffect(() => {
-    refreshCounts();
-    const onStorage = (e: StorageEvent) => {
-      if (!e.key || e.key.includes("orders_")) refreshCounts();
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
 
   const addPendingOrder = (o: any) => {
     try {

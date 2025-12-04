@@ -296,11 +296,6 @@ export default function Select() {
             info@fixorium.com.pk
           </span>
         </div>
-        <img
-          src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2Fda8d138bd45a4eceb9b1e4baae32a4a2?format=webp&width=800"
-          alt="Payment illustration"
-          className="mx-auto mb-4 max-h-[220px] w-full object-contain"
-        />
         <div className="mt-2 w-full max-w-4xl rounded-3xl p-6 order-2">
           <div className="grid grid-cols-2 gap-4 w-full">
             <Button

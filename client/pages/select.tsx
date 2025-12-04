@@ -345,17 +345,18 @@ export default function Select() {
                       <div className="flex-shrink-0">
                         <Button
                           onClick={() =>
-                            navigate("/express/buy-trade", {
+                            navigate("/order-complete", {
                               state: {
                                 order: {
                                   id: payload.roomId,
                                   token: payload.token,
                                   pricePKRPerQuote: payload.pricePKRPerQuote,
                                   paymentMethod: payload.paymentMethod,
+                                  amountPKR: payload.amountPKR,
                                   type:
                                     action === "buyer_paid" ? "buy" : "sell",
                                 },
-                                openChat: true,
+                                confirmation: confirmationData,
                               },
                             })
                           }

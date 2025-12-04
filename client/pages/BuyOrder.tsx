@@ -95,6 +95,15 @@ export default function BuyOrder() {
         </button>
       </div>
 
+      {/* Info Banner */}
+      <div className="w-full px-4 py-4">
+        <div className="p-4 rounded-lg bg-[#FF7A5C]/10 border border-[#FF7A5C]/30">
+          <p className="text-white/80 text-center uppercase tracking-wide" style={{ fontSize: "11px" }}>
+            USER CAN BUY ONLY USDC COIN WITH PAKISTANI RUPEE
+          </p>
+        </div>
+      </div>
+
       {/* Main Content */}
       <div className="w-full px-4 py-8">
         <div className="space-y-3">

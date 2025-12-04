@@ -28,9 +28,7 @@ export const BottomNavigation = () => {
     return () => obs.disconnect();
   }, []);
 
-  const navItems = [
-    { path: "/", label: "HOME", icon: Home },
-  ];
+  const navItems = [{ path: "/", label: "HOME", icon: Home }];
 
   const isActive = (path: string) => {
     return (
@@ -59,9 +57,7 @@ export const BottomNavigation = () => {
               title={item.label}
             >
               <Icon className="w-8 h-8 text-[#22c55e]" />
-              <span className="whitespace-nowrap">
-                {item.label}
-              </span>
+              <span className="whitespace-nowrap">{item.label}</span>
             </button>
           );
         })}

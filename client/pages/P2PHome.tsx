@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { ADMIN_WALLET } from "@/lib/p2p";
+import { getOrdersByWallet, P2POrder } from "@/lib/p2p-orders";
 
 export default function P2PHome() {
   const navigate = useNavigate();

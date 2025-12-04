@@ -112,38 +112,21 @@ export default function BuyOrder() {
           {orders.map((order) => (
             <Card
               key={order.id}
-              className="bg-transparent border border-gray-300/30 hover:border-gray-300/50 transition-colors cursor-pointer"
+              className="bg-transparent border border-gray-300/30 hover:border-gray-300/50 transition-colors cursor-pointer w-full"
               onClick={() => navigate(`/order/${encodeURIComponent(order.id)}`)}
             >
-              <CardContent className="p-4">
+              <CardContent className="p-6">
                 <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs opacity-80">Order Number</div>
-                    <div className="font-semibold text-white truncate">
-                      {order.id}
-                    </div>
-                    {(order.token || order.amountPKR || order.amountTokens) && (
-                      <div className="text-xs text-white/70 mt-2">
-                        {order.token && (
-                          <span className="inline-block mr-2">
-                            {order.token}
-                          </span>
-                        )}
-                        {typeof order.amountPKR === "number" &&
-                          isFinite(order.amountPKR) && (
-                            <span className="inline-block mr-2">
-                              {Number(order.amountPKR).toFixed(2)} PKR
-                            </span>
-                          )}
-                        {typeof order.amountTokens === "number" &&
-                          isFinite(order.amountTokens) && (
-                            <span className="inline-block">
-                              {Number(order.amountTokens).toFixed(6)}{" "}
-                              {order.token || ""}
-                            </span>
-                          )}
+                  <div className="flex-1">
+                    <div className="text-sm opacity-80 mb-2">Order Number</div>
+                    <div className="flex items-baseline gap-2">
+                      <div className="font-semibold text-white text-lg">
+                        {order.id}
                       </div>
-                    )}
+                      <div className="text-lg font-semibold text-[#FF7A5C]">
+                        {order.token} {Number(order.amountPKR).toFixed(2)} PKR
+                      </div>
+                    </div>
                   </div>
                   <button
                     onClick={(e) => {
@@ -156,7 +139,7 @@ export default function BuyOrder() {
                         navigate(`/order/${encodeURIComponent(order.id)}`);
                       }
                     }}
-                    className="px-4 py-2 rounded-lg bg-gray-300/10 border border-gray-300/30 text-gray-300 text-xs hover:bg-gray-300/20 transition-colors uppercase font-semibold flex-shrink-0"
+                    className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs hover:shadow-lg transition-colors uppercase font-semibold flex-shrink-0"
                   >
                     View
                   </button>

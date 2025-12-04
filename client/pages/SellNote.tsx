@@ -25,6 +25,7 @@ interface SellOrder {
   paymentMethod: string;
   sellerWallet: string;
   adminWallet: string;
+  buyerWallet?: string;
   createdAt: number;
 }
 

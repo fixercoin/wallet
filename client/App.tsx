@@ -146,6 +146,7 @@ import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 import DocumentationPage from "./pages/DocumentationPage";
 import P2PHome from "./pages/P2PHome";
 import BuyTrade from "./pages/BuyTrade";
+import { BottomNavigation } from "@/components/BottomNavigation";
 
 const queryClient = new QueryClient();
 
@@ -214,6 +215,7 @@ function App() {
                   <BrowserRouter>
                     <div className="min-h-screen pb-24">
                       <AppRoutes />
+                      <BottomNavigation />
                     </div>
                   </BrowserRouter>
                 </CurrencyProvider>

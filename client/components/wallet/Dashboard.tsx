@@ -61,8 +61,6 @@ interface DashboardProps {
   onBurn: () => void;
   onStakeTokens?: () => void;
 }
-
-import { useNavigate } from "react-router-dom";
 import { FlyingPrizeBox } from "./FlyingPrizeBox";
 import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";

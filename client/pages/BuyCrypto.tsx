@@ -272,6 +272,14 @@ export default function BuyCrypto() {
                 `PAY TO BUY CRYPTO CURRENCY`
               )}
             </Button>
+
+            <Button
+              onClick={() => navigate("/p2p")}
+              variant="outline"
+              className="w-full h-12 rounded-lg font-semibold transition-all duration-200 border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 text-white"
+            >
+              BACK
+            </Button>
           </CardContent>
         </Card>
       </div>

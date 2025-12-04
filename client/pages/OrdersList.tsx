@@ -23,7 +23,7 @@ export default function OrdersList() {
     }
   }, [status]);
 
-  const goBack = () => navigate("/buy-crypto");
+  const goBack = () => navigate("/p2p");
 
   return (
     <div

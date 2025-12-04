@@ -1,8 +1,9 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Home } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import { getUnreadNotifications } from "@/lib/p2p-chat";
 
 export const BottomNavigation = () => {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export const BottomNavigation = () => {
   const [classHidden, setClassHidden] = useState(() =>
     document.body.classList.contains("no-fixed-bottom"),
   );
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Hide navigation on:
   // 1. Pages with no-fixed-bottom class (WalletSetup, recovery)
@@ -28,13 +30,32 @@ export const BottomNavigation = () => {
     return () => obs.disconnect();
   }, []);
 
-  const navItems = [{ path: "/", label: "HOME", icon: Home }];
+  // Monitor unread notifications
+  useEffect(() => {
+    if (!wallet) return;
 
-  const isActive = (path: string) => {
-    return (
-      location.pathname === path || location.pathname.startsWith(path + "/")
-    );
-  };
+    const updateUnreadCount = () => {
+      const unread = getUnreadNotifications(wallet.publicKey);
+      setUnreadCount(unread.length);
+    };
+
+    updateUnreadCount();
+
+    // Check for updates every 2 seconds
+    const interval = setInterval(updateUnreadCount, 2000);
+
+    // Also listen for storage changes
+    const handleStorageChange = () => {
+      updateUnreadCount();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [wallet]);
 
   if (shouldHideNav) return null;
 
@@ -43,24 +64,37 @@ export const BottomNavigation = () => {
       className="fixed bottom-4 left-0 right-0 z-40"
       style={{ backgroundColor: "#1f1f1f" }}
     >
-      <div className="flex items-center justify-around h-16 xs:h-20 sm:h-20 md:h-24 lg:h-28 px-2 sm:px-3 md:px-6 lg:px-8 gap-2 xs:gap-3 sm:gap-4 md:gap-6 lg:gap-8 w-full">
-        {navItems.map((item, index) => {
-          const active = isActive(item.path);
-          const Icon = item.icon;
+      <div className="flex items-center justify-between h-16 xs:h-20 sm:h-20 md:h-24 lg:h-28 px-2 xs:px-3 sm:px-3 md:px-6 lg:px-8 gap-2 xs:gap-3 sm:gap-4 md:gap-6 lg:gap-8 w-full">
+        {/* P2P TRADE Text with Card Style */}
+        <div
+          onClick={() => navigate("/p2p")}
+          className="cursor-pointer flex-1 bg-[#2a2a2a] border border-[#22c55e]/30 rounded-md px-4 py-3 text-center hover:bg-[#2a2a2a]/80 transition-colors"
+          title="P2P Trade"
+        >
+          <span className="text-white font-bold text-sm xs:text-base whitespace-nowrap">
+            P2P TRADE
+          </span>
+        </div>
 
-          return (
-            <button
-              key={item.label}
-              onClick={() => navigate(item.path)}
-              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
-              aria-label={item.label}
-              title={item.label}
-            >
-              <Icon className="w-8 h-8 text-[#22c55e]" />
-              <span className="whitespace-nowrap">{item.label}</span>
-            </button>
-          );
-        })}
+        {/* Notification Icon with Card Style */}
+        <div className="relative flex items-center bg-[#2a2a2a] border border-[#FF7A5C]/30 rounded-md p-3 hover:bg-[#2a2a2a]/80 transition-colors">
+          <button
+            onClick={() => navigate("/p2p")}
+            className="relative flex items-center justify-center"
+            aria-label="P2P Chat Notifications"
+            title="View chat notifications"
+          >
+            <MessageSquare className="w-6 h-6 text-[#FF7A5C]" />
+
+            {unreadCount > 0 && (
+              <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#FF7A5C] rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-bold">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              </div>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

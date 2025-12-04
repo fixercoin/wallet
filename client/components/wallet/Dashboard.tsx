@@ -796,6 +796,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <Clock className="h-4 w-4" />
                     <span>WALLET HISTORY</span>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => navigate("/autobot")}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <ArrowRightLeft className="h-4 w-4" />
+                    <span>TRADE</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => navigate("/burn")}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Zap className="h-4 w-4" />
+                    <span>TOKEN</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={onAirdrop}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Gift className="h-4 w-4" />
+                    <span>AIRDROP</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               {/* Settings button - moved to right */}

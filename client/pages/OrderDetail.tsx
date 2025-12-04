@@ -126,12 +126,28 @@ export default function OrderDetail() {
                   </div>
                 )}
                 {order.paymentMethod && (
-                  <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center justify-between p-4 border-b border-gray-300/20">
                     <div className="text-xs opacity-80">Payment Method</div>
                     <div className="font-semibold capitalize">
                       {order.paymentMethod}
                     </div>
                   </div>
+                )}
+                {order.paymentMethod === "easypaisa" && order.seller && (
+                  <>
+                    <div className="flex items-center justify-between p-4 border-b border-gray-300/20">
+                      <div className="text-xs opacity-80">Account Name</div>
+                      <div className="font-semibold capitalize">
+                        {order.seller.accountName}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-4">
+                      <div className="text-xs opacity-80">Account Number</div>
+                      <div className="font-semibold font-mono">
+                        {order.seller.accountNumber}
+                      </div>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>

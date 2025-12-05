@@ -866,6 +866,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </DropdownMenu>
 
               <div className="flex items-center gap-2 ml-auto">
+                {/* Refresh button */}
+                <Button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-[#22c55e] ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Refresh balance"
+                  title="Refresh balance and tokens"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                </Button>
+
                 {/* Search button */}
                 <Button
                   onClick={() => navigate("/search")}

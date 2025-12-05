@@ -217,11 +217,51 @@ export default function BuyTrade() {
     const role = order.type === "buy" ? "buyer" : "seller";
     setUserRole(role);
 
-    const history = loadChatHistory(rid);
-    setChatLog(history);
+    const loadHistory = async () => {
+      try {
+        // Load from server (source of truth)
+        const history = await loadServerChatHistory(rid);
+        setChatLog(history);
+        lastMessageCountRef.current = history.length;
+      } catch {
+        // Fallback to localStorage
+        const history = loadChatHistory(rid);
+        setChatLog(history);
+        lastMessageCountRef.current = history.length;
+      }
+    };
 
+    loadHistory();
     clearNotificationsForRoom(rid);
   }, [order?.id, wallet]);
+
+  // Poll for new messages every 2 seconds
+  useEffect(() => {
+    if (!order?.id || !wallet?.publicKey) return;
+
+    const setupPolling = () => {
+      syncIntervalRef.current = setInterval(async () => {
+        try {
+          const messages = await loadServerChatHistory(order.id);
+          // Only update if message count changed
+          if (messages.length !== lastMessageCountRef.current) {
+            setChatLog(messages);
+            lastMessageCountRef.current = messages.length;
+          }
+        } catch (error) {
+          // Silently fail on poll errors
+        }
+      }, 2000);
+    };
+
+    setupPolling();
+
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+      }
+    };
+  }, [order?.id, wallet?.publicKey]);
 
   // Auto-open chat if flagged
   useEffect(() => {

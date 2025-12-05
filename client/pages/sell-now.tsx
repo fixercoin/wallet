@@ -168,6 +168,32 @@ export default function SellNow() {
     fetchRate();
   }, [selectedToken]);
 
+  useEffect(() => {
+    const fetchPaymentMethod = async () => {
+      if (!wallet?.publicKey) {
+        setPaymentMethod(null);
+        return;
+      }
+
+      setFetchingPaymentMethod(true);
+      try {
+        const methods = await getPaymentMethodsByWallet(wallet.publicKey);
+        if (methods.length > 0) {
+          setPaymentMethod(methods[0]);
+        } else {
+          setPaymentMethod(null);
+        }
+      } catch (error) {
+        console.error("Error fetching payment method:", error);
+        setPaymentMethod(null);
+      } finally {
+        setFetchingPaymentMethod(false);
+      }
+    };
+
+    fetchPaymentMethod();
+  }, [wallet?.publicKey]);
+
   const saveOrderToAPI = async (order: any) => {
     try {
       const response = await fetch("/api/p2p/orders", {

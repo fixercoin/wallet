@@ -81,6 +81,10 @@ export default function SellNow() {
   const [editingOrder, setEditingOrder] = useState<any>(
     (location.state as any)?.editingOrder || null,
   );
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
+    null,
+  );
+  const [fetchingPaymentMethod, setFetchingPaymentMethod] = useState(false);
 
   const OFFER_PASSWORD = "######Pakistan";
 

@@ -30,7 +30,13 @@ export default function OrderComplete() {
   const [sellerVerified, setSellerVerified] = useState(false);
 
   const roomId = order?.id || order?.roomId || "global";
-  const isBuyer = order?.type === "buy";
+
+  // Determine if current user is buyer based on wallet and order type
+  const isBuyer = order?.type?.toLowerCase() === "buy"
+    ? order?.senderWallet === wallet?.publicKey || !order?.senderWallet
+    : order?.type?.toUpperCase() === "BUY"
+      ? order?.senderWallet === wallet?.publicKey || !order?.senderWallet
+      : false;
 
   useEffect(() => {
     const loadChat = async () => {

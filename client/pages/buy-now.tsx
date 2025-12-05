@@ -204,7 +204,11 @@ export default function BuyNow() {
       });
 
       if (!response.ok) {
-        console.error("Failed to save order to API:", response.status, await response.text());
+        console.error(
+          "Failed to save order to API:",
+          response.status,
+          await response.text(),
+        );
         return false;
       }
       return true;

@@ -19,15 +19,18 @@ export async function syncOrderStatusToKV(
   operation: OrderSyncOperation,
 ): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE}/p2p/orders/${operation.orderId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `${API_BASE}/p2p/orders/${operation.orderId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: operation.status,
+        }),
       },
-      body: JSON.stringify({
-        status: operation.status,
-      }),
-    });
+    );
 
     if (!response.ok) {
       console.warn(

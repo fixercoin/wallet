@@ -13,7 +13,13 @@ export interface P2POrder {
   pricePKRPerQuote?: number;
   payment_method?: string;
   paymentMethodId?: string;
-  status: "PENDING" | "active" | "pending" | "completed" | "cancelled" | "disputed";
+  status:
+    | "PENDING"
+    | "active"
+    | "pending"
+    | "completed"
+    | "cancelled"
+    | "disputed";
   online?: boolean;
   created_at?: number;
   createdAt?: number;
@@ -108,7 +114,8 @@ export const handleListP2POrders: RequestHandler = async (req, res) => {
     if (id) filtered = filtered.filter((o) => o.id === id);
 
     filtered.sort(
-      (a, b) => (b.createdAt || b.created_at || 0) - (a.createdAt || a.created_at || 0),
+      (a, b) =>
+        (b.createdAt || b.created_at || 0) - (a.createdAt || a.created_at || 0),
     );
 
     res.json({ orders: filtered });
@@ -147,13 +154,16 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
     const finalWallet = walletAddress || creator_wallet;
     const finalType = type?.toUpperCase() || "BUY";
     const finalToken = token;
-    const finalAmount = amountTokens !== undefined ? amountTokens : parseFloat(token_amount || 0);
-    const finalPKR = amountPKR !== undefined ? amountPKR : parseFloat(pkr_amount || 0);
+    const finalAmount =
+      amountTokens !== undefined ? amountTokens : parseFloat(token_amount || 0);
+    const finalPKR =
+      amountPKR !== undefined ? amountPKR : parseFloat(pkr_amount || 0);
     const finalPrice = pricePKRPerQuote;
 
     if (!finalType || !finalWallet || !finalToken) {
       return res.status(400).json({
-        error: "Missing required fields: type, walletAddress (or creator_wallet), and token",
+        error:
+          "Missing required fields: type, walletAddress (or creator_wallet), and token",
       });
     }
 

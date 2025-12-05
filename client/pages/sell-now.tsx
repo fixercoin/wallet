@@ -169,6 +169,18 @@ export default function SellNow() {
     } catch {}
   };
 
+  const updatePendingOrder = (updatedOrder: any) => {
+    try {
+      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
+      const arr = Array.isArray(cur) ? cur : [];
+      const index = arr.findIndex((o: any) => o.id === updatedOrder.id);
+      if (index >= 0) {
+        arr[index] = { ...updatedOrder, status: "pending" };
+        localStorage.setItem("orders_pending", JSON.stringify(arr));
+      }
+    } catch {}
+  };
+
   const getAvailableBuyerWallet = () => {
     try {
       const pendingOrders = JSON.parse(
@@ -208,7 +220,7 @@ export default function SellNow() {
     setLoading(true);
     try {
       const buyerWallet = getAvailableBuyerWallet();
-      const orderId = `SELL-${Date.now()}`;
+      const orderId = editingOrder?.id || `SELL-${Date.now()}`;
       const order = {
         id: orderId,
         type: "SELL",
@@ -218,9 +230,11 @@ export default function SellNow() {
         pricePKRPerQuote: exchangeRate,
         paymentMethod: "easypaisa",
         sellerWallet: wallet.publicKey,
+        walletAddress: wallet.publicKey,
         adminWallet: ADMIN_WALLET,
         buyerWallet: buyerWallet,
-        createdAt: Date.now(),
+        createdAt: editingOrder?.createdAt || Date.now(),
+        updatedAt: Date.now(),
         status: "pending",
       };
 
@@ -228,7 +242,11 @@ export default function SellNow() {
         localStorage.setItem("sellnote_order", JSON.stringify(order));
       } catch {}
 
-      addPendingOrder(order);
+      if (editingOrder) {
+        updatePendingOrder(order);
+      } else {
+        addPendingOrder(order);
+      }
 
       try {
         const response = await fetch("/api/p2p/orders", {

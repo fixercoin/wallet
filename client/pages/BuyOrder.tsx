@@ -152,14 +152,17 @@ export default function BuyOrder() {
               Loading data...
             </div>
           )}
-          {!loadingOrders && !loadingStakes && orders.length === 0 && stakes.length === 0 && (
-            <div
-              className="text-center text-white/70 py-8"
-              style={{ fontSize: "12px" }}
-            >
-              No buy orders or active stakes
-            </div>
-          )}
+          {!loadingOrders &&
+            !loadingStakes &&
+            orders.length === 0 &&
+            stakes.length === 0 && (
+              <div
+                className="text-center text-white/70 py-8"
+                style={{ fontSize: "12px" }}
+              >
+                No buy orders or active stakes
+              </div>
+            )}
           {!loadingStakes && stakes.length > 0 && (
             <div className="mb-8">
               <h3
@@ -193,7 +196,8 @@ export default function BuyOrder() {
                             <div>Period: {stake.stakePeriodDays} days</div>
                             <div>Status: {stake.status}</div>
                             <div>
-                              Reward: {Number(stake.rewardAmount || 0).toFixed(6)} SOL
+                              Reward:{" "}
+                              {Number(stake.rewardAmount || 0).toFixed(6)} SOL
                             </div>
                           </div>
                         </div>
@@ -214,66 +218,69 @@ export default function BuyOrder() {
               </h3>
             </div>
           )}
-          {!loadingOrders && orders.map((order) => {
-            const isOrderCreator = order.walletAddress === wallet?.publicKey;
-            return (
-              <Card
-                key={order.id}
-                className="bg-transparent border border-gray-300/30 hover:border-gray-300/50 transition-colors cursor-pointer w-full"
-                onClick={() =>
-                  navigate(`/order/${encodeURIComponent(order.id)}`)
-                }
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <div
-                        className="font-semibold text-white"
-                        style={{ fontSize: "12px" }}
-                      >
-                        <span>BUY-{order.id.split("-").pop()}</span>
-                        <span className="text-[#FF7A5C] ml-3">
-                          LIMIT {Number(order.amountPKR || 0).toFixed(2)} PKR
-                        </span>
+          {!loadingOrders &&
+            orders.map((order) => {
+              const isOrderCreator = order.walletAddress === wallet?.publicKey;
+              return (
+                <Card
+                  key={order.id}
+                  className="bg-transparent border border-gray-300/30 hover:border-gray-300/50 transition-colors cursor-pointer w-full"
+                  onClick={() =>
+                    navigate(`/order/${encodeURIComponent(order.id)}`)
+                  }
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div
+                          className="font-semibold text-white"
+                          style={{ fontSize: "12px" }}
+                        >
+                          <span>BUY-{order.id.split("-").pop()}</span>
+                          <span className="text-[#FF7A5C] ml-3">
+                            LIMIT {Number(order.amountPKR || 0).toFixed(2)} PKR
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex gap-2 flex-shrink-0">
-                      {isOrderCreator && (
+                      <div className="flex gap-2 flex-shrink-0">
+                        {isOrderCreator && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate("/buy-crypto", {
+                                state: { editingOrder: order },
+                              });
+                            }}
+                            className="px-4 py-3 rounded-lg bg-blue-600/80 hover:bg-blue-700 text-white transition-colors uppercase font-semibold"
+                            style={{ fontSize: "12px" }}
+                          >
+                            EDIT
+                          </button>
+                        )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate("/buy-crypto", {
-                              state: { editingOrder: order },
-                            });
+                            if (wallet?.publicKey === ADMIN_WALLET) {
+                              navigate("/order-complete", {
+                                state: { order, openChat: true },
+                              });
+                            } else {
+                              navigate(
+                                `/order/${encodeURIComponent(order.id)}`,
+                              );
+                            }
                           }}
-                          className="px-4 py-3 rounded-lg bg-blue-600/80 hover:bg-blue-700 text-white transition-colors uppercase font-semibold"
+                          className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white hover:shadow-lg transition-colors uppercase font-semibold"
                           style={{ fontSize: "12px" }}
                         >
-                          EDIT
+                          BUY
                         </button>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (wallet?.publicKey === ADMIN_WALLET) {
-                            navigate("/order-complete", {
-                              state: { order, openChat: true },
-                            });
-                          } else {
-                            navigate(`/order/${encodeURIComponent(order.id)}`);
-                          }
-                        }}
-                        className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white hover:shadow-lg transition-colors uppercase font-semibold"
-                        style={{ fontSize: "12px" }}
-                      >
-                        BUY
-                      </button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  </CardContent>
+                </Card>
+              );
+            })}
         </div>
       </div>
 

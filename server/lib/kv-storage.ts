@@ -116,11 +116,7 @@ class CloudflareKVStorage implements KVStorageBackend {
   private apiToken: string;
   private baseUrl: string;
 
-  constructor(
-    accountId: string,
-    namespaceId: string,
-    apiToken: string,
-  ) {
+  constructor(accountId: string, namespaceId: string, apiToken: string) {
     if (!accountId || !namespaceId || !apiToken) {
       throw new Error(
         "Cloudflare KV credentials missing: CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_NAMESPACE_ID, CLOUDFLARE_API_TOKEN",
@@ -134,17 +130,20 @@ class CloudflareKVStorage implements KVStorageBackend {
 
   private getHeaders(): Record<string, string> {
     return {
-      "Authorization": `Bearer ${this.apiToken}`,
+      Authorization: `Bearer ${this.apiToken}`,
       "Content-Type": "application/json",
     };
   }
 
   async get(key: string): Promise<string | null> {
     try {
-      const response = await fetch(`${this.baseUrl}/values/${encodeURIComponent(key)}`, {
-        method: "GET",
-        headers: this.getHeaders(),
-      });
+      const response = await fetch(
+        `${this.baseUrl}/values/${encodeURIComponent(key)}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        },
+      );
 
       if (response.status === 404) {
         return null;
@@ -168,11 +167,14 @@ class CloudflareKVStorage implements KVStorageBackend {
 
   async put(key: string, value: string): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/values/${encodeURIComponent(key)}`, {
-        method: "PUT",
-        headers: this.getHeaders(),
-        body: value,
-      });
+      const response = await fetch(
+        `${this.baseUrl}/values/${encodeURIComponent(key)}`,
+        {
+          method: "PUT",
+          headers: this.getHeaders(),
+          body: value,
+        },
+      );
 
       if (!response.ok) {
         throw new Error(
@@ -187,10 +189,13 @@ class CloudflareKVStorage implements KVStorageBackend {
 
   async delete(key: string): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/values/${encodeURIComponent(key)}`, {
-        method: "DELETE",
-        headers: this.getHeaders(),
-      });
+      const response = await fetch(
+        `${this.baseUrl}/values/${encodeURIComponent(key)}`,
+        {
+          method: "DELETE",
+          headers: this.getHeaders(),
+        },
+      );
 
       if (!response.ok && response.status !== 404) {
         throw new Error(
@@ -266,7 +271,9 @@ export class KVStorage {
     namespaceId: string,
     apiToken: string,
   ): KVStorage {
-    return new KVStorage(new CloudflareKVStorage(accountId, namespaceId, apiToken));
+    return new KVStorage(
+      new CloudflareKVStorage(accountId, namespaceId, apiToken),
+    );
   }
 
   static createAutoStorage(): KVStorage {
@@ -277,7 +284,9 @@ export class KVStorage {
 
     if (accountId && namespaceId && apiToken) {
       console.log("[KVStorage] Using Cloudflare KV storage backend");
-      return new KVStorage(new CloudflareKVStorage(accountId, namespaceId, apiToken));
+      return new KVStorage(
+        new CloudflareKVStorage(accountId, namespaceId, apiToken),
+      );
     }
 
     // Fall back to file-based storage in development

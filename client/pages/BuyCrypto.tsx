@@ -213,6 +213,17 @@ export default function BuyCrypto() {
       });
       return;
     }
+
+    if (!paymentMethod) {
+      toast({
+        title: "Payment Method Required",
+        description: "Please add a payment method first",
+        variant: "destructive",
+      });
+      setShowPaymentDialog(true);
+      return;
+    }
+
     if (!amountPKR || Number(amountPKR) <= 0 || !exchangeRate) {
       toast({
         title: "Invalid Amount",
@@ -232,7 +243,7 @@ export default function BuyCrypto() {
         amountTokens: Number(amountPKR) / exchangeRate,
         amountPKR: Number(amountPKR),
         pricePKRPerQuote,
-        paymentMethod: "easypaisa",
+        paymentMethod: paymentMethod.id,
       };
 
       const savedOrder = await saveOrderToKV(order);

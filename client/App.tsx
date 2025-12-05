@@ -145,7 +145,6 @@ import MarketMakerHistory from "./pages/MarketMakerHistory";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import DocumentationPage from "./pages/DocumentationPage";
-import P2PHome from "./pages/P2PHome";
 import BuyTrade from "./pages/BuyTrade";
 import OrderComplete from "./pages/OrderComplete";
 import TokenSearchPage from "./pages/TokenSearchPage";
@@ -198,7 +197,6 @@ function AppRoutes() {
         path="/documentation"
         element={<DocumentationPage onBack={() => window.history.back()} />}
       />
-      <Route path="/p2p" element={<P2PHome />} />
       <Route path="/p2p/buy-active-orders" element={<BuyActiveOrders />} />
       <Route path="/p2p/sell-active-orders" element={<SellActiveOrders />} />
       <Route path="/p2p/admin-disputes" element={<AdminDisputes />} />

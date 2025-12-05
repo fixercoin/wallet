@@ -427,14 +427,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const handleRefresh = async () => {
-    await refreshBalance();
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    await refreshTokens();
+    if (isRefreshing) return;
 
-    toast({
-      title: "Refreshed",
-      description: "Balance and tokens updated",
-    });
+    try {
+      setIsRefreshing(true);
+      await refreshBalance();
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await refreshTokens();
+
+      toast({
+        title: "Refreshed",
+        description: "Balance and tokens updated",
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh Failed",
+        description: "Could not refresh data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleTokenCardClick = (token: TokenInfo) => {

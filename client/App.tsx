@@ -154,6 +154,7 @@ import BuyActiveOrders from "./pages/BuyActiveOrders";
 import SellActiveOrders from "./pages/SellActiveOrders";
 import BuyOrder from "./pages/BuyOrder";
 import SellOrder from "./pages/SellOrder";
+import AdminDisputes from "./pages/AdminDisputes";
 import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();

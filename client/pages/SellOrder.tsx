@@ -47,7 +47,7 @@ export default function SellOrder() {
       try {
         setLoadingOrders(true);
         const response = await fetch(
-          `/api/p2p/orders?type=SELL&wallet=${wallet.publicKey}`
+          `/api/p2p/orders?type=SELL&wallet=${wallet.publicKey}`,
         );
         if (!response.ok) {
           console.error("Failed to load orders:", response.status);

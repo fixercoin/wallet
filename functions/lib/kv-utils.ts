@@ -372,6 +372,44 @@ export class KVStore {
   }
 
   /**
+   * Update order status
+   */
+  async updateOrderStatus(
+    orderId: string,
+    status: "PENDING" | "COMPLETED" | "CANCELLED",
+  ): Promise<P2POrder | null> {
+    const order = await this.getOrder(orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    const updated: P2POrder = {
+      ...order,
+      status,
+      updatedAt: Date.now(),
+    };
+
+    await this.kv.put(`orders:${orderId}`, JSON.stringify(updated));
+    return updated;
+  }
+
+  /**
+   * Get pending orders for a wallet
+   */
+  async getPendingOrdersByWallet(walletAddress: string): Promise<P2POrder[]> {
+    const orders = await this.getOrdersByWallet(walletAddress);
+    return orders.filter((o) => o.status === "PENDING");
+  }
+
+  /**
+   * Get completed orders for a wallet
+   */
+  async getCompletedOrdersByWallet(walletAddress: string): Promise<P2POrder[]> {
+    const orders = await this.getOrdersByWallet(walletAddress);
+    return orders.filter((o) => o.status === "COMPLETED");
+  }
+
+  /**
    * Get payment method IDs for wallet
    */
   private async getPaymentMethodIdsForWallet(

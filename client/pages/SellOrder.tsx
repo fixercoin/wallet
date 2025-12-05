@@ -14,6 +14,7 @@ import {
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { ADMIN_WALLET } from "@/lib/p2p";
+import { getFilteredPendingOrders } from "@/lib/kv-orders-sync";
 
 export default function SellOrder() {
   const navigate = useNavigate();
@@ -45,13 +46,7 @@ export default function SellOrder() {
     const loadOrders = () => {
       try {
         setLoadingOrders(true);
-        const pendingOrders = JSON.parse(
-          localStorage.getItem("orders_pending") || "[]",
-        );
-        const sellOrders = pendingOrders.filter(
-          (order: any) =>
-            order.type === "SELL" || (order.amountTokens && !order.amountPKR),
-        );
+        const sellOrders = getFilteredPendingOrders("SELL");
         setOrders(sellOrders);
       } catch (error) {
         console.error("Error loading orders from localStorage:", error);

@@ -14,6 +14,7 @@ import {
   syncChatMessagesFromServer,
   type ChatMessage,
 } from "@/lib/p2p-chat";
+import { completeOrder, cancelOrder } from "@/lib/kv-orders-sync";
 
 export default function OrderComplete() {
   const navigate = useNavigate();
@@ -192,10 +193,14 @@ export default function OrderComplete() {
     if (!order || !wallet?.publicKey) return;
 
     const isBuyerAction = isBuyer;
+    let newBuyerVerified = buyerVerified;
+    let newSellerVerified = sellerVerified;
 
     if (isBuyerAction) {
+      newBuyerVerified = true;
       setBuyerVerified(true);
     } else {
+      newSellerVerified = true;
       setSellerVerified(true);
     }
 
@@ -264,6 +269,20 @@ export default function OrderComplete() {
         );
       }
 
+      // If both are now verified, move order to completed
+      if (newBuyerVerified && newSellerVerified) {
+        try {
+          await completeOrder(order, wallet.publicKey);
+
+          toast({
+            title: "Order Completed",
+            description: "Both parties have verified. Order is now complete.",
+          });
+        } catch (error) {
+          console.error("Failed to move order to completed:", error);
+        }
+      }
+
       toast({
         title: "Verification confirmed",
         description: "Your verification has been recorded",
@@ -273,6 +292,34 @@ export default function OrderComplete() {
       toast({
         title: "Verification error",
         description: "Failed to record verification",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!order || !wallet?.publicKey) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this order? This action cannot be undone.",
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await cancelOrder(order.id, wallet.publicKey);
+
+      toast({
+        title: "Order Cancelled",
+        description: "The order has been successfully cancelled.",
+      });
+
+      navigate("/p2p");
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel the order.",
         variant: "destructive",
       });
     }
@@ -411,6 +458,16 @@ export default function OrderComplete() {
                   </span>
                 </div>
               </div>
+            )}
+
+            {/* Cancel Order Button */}
+            {!(buyerVerified && sellerVerified) && (
+              <button
+                onClick={handleCancelOrder}
+                className="w-full mt-4 px-4 py-3 rounded-lg bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 text-red-400 uppercase text-xs font-semibold transition-colors"
+              >
+                CANCEL ORDER
+              </button>
             )}
           </div>
         </div>

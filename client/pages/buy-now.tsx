@@ -251,39 +251,12 @@ export default function BuyNow() {
         walletAddress: wallet.publicKey,
         createdAt: editingOrder?.createdAt || Date.now(),
         updatedAt: Date.now(),
-        status: "pending",
+        status: "PENDING",
       };
 
-      try {
-        localStorage.setItem("buynote_order", JSON.stringify(order));
-      } catch {}
-
-      if (editingOrder) {
-        updatePendingOrder(order);
-      } else {
-        addPendingOrder(order);
-      }
-
-      try {
-        const response = await fetch("/api/p2p/orders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            walletAddress: wallet.publicKey,
-            type: "BUY",
-            token: selectedToken.id,
-            amountTokens: Number(amountPKR) / exchangeRate,
-            amountPKR: Number(amountPKR),
-            paymentMethodId: "easypaisa",
-            status: "PENDING",
-            orderId,
-          }),
-        });
-        if (!response.ok) {
-          console.error("Failed to save order to KV:", response.status);
-        }
-      } catch (kvError) {
-        console.error("Error saving to KV storage:", kvError);
+      const saved = await saveOrderToAPI(order);
+      if (!saved) {
+        throw new Error("Failed to save order to the server");
       }
 
       if (!editingOrder) {

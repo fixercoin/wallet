@@ -19,7 +19,9 @@ export default function SellOrder() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const [orders, setOrders] = useState<any[]>([]);
+  const [stakes, setStakes] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+  const [loadingStakes, setLoadingStakes] = useState(true);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
@@ -65,9 +67,36 @@ export default function SellOrder() {
       }
     };
 
-    loadOrders();
+    const loadStakes = async () => {
+      if (!wallet) return;
+      try {
+        setLoadingStakes(true);
+        const response = await fetch(
+          `/api/staking/list?wallet=${wallet.publicKey}`,
+        );
+        if (!response.ok) {
+          console.error("Failed to load stakes:", response.status);
+          setStakes([]);
+          return;
+        }
+        const data = await response.json();
+        const stakes = Array.isArray(data.stakes) ? data.stakes : [];
+        setStakes(stakes);
+      } catch (error) {
+        console.error("Error loading stakes from API:", error);
+        setStakes([]);
+      } finally {
+        setLoadingStakes(false);
+      }
+    };
 
-    const interval = setInterval(loadOrders, 5000);
+    loadOrders();
+    loadStakes();
+
+    const interval = setInterval(() => {
+      loadOrders();
+      loadStakes();
+    }, 5000);
     return () => clearInterval(interval);
   }, [wallet]);
 
@@ -115,23 +144,77 @@ export default function SellOrder() {
       {/* Main Content */}
       <div className="w-full px-4 py-8">
         <div className="space-y-3">
-          {loadingOrders && (
+          {loadingOrders && loadingStakes && (
             <div
               className="text-center text-white/70 py-8"
               style={{ fontSize: "12px" }}
             >
-              Loading orders...
+              Loading data...
             </div>
           )}
-          {!loadingOrders && orders.length === 0 && (
+          {!loadingOrders && !loadingStakes && orders.length === 0 && stakes.length === 0 && (
             <div
               className="text-center text-white/70 py-8"
               style={{ fontSize: "12px" }}
             >
-              No sell orders yet
+              No sell orders or active stakes
             </div>
           )}
-          {orders.map((order) => {
+          {!loadingStakes && stakes.length > 0 && (
+            <div className="mb-8">
+              <h3
+                className="text-white font-semibold mb-4 uppercase"
+                style={{ fontSize: "12px" }}
+              >
+                Active Stakes ({stakes.length})
+              </h3>
+              <div className="space-y-3">
+                {stakes.map((stake) => (
+                  <Card
+                    key={stake.id}
+                    className="bg-transparent border border-gray-300/30 hover:border-gray-300/50 transition-colors"
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <div
+                            className="font-semibold text-white mb-2"
+                            style={{ fontSize: "12px" }}
+                          >
+                            <span>STAKE-{stake.id.split("_").pop()}</span>
+                            <span className="text-[#FF7A5C] ml-3">
+                              {Number(stake.amount || 0).toFixed(6)} SOL
+                            </span>
+                          </div>
+                          <div
+                            className="text-white/60 text-xs"
+                            style={{ fontSize: "10px" }}
+                          >
+                            <div>Period: {stake.stakePeriodDays} days</div>
+                            <div>Status: {stake.status}</div>
+                            <div>
+                              Reward: {Number(stake.rewardAmount || 0).toFixed(6)} SOL
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+          {!loadingOrders && orders.length > 0 && (
+            <div className="mb-4">
+              <h3
+                className="text-white font-semibold mb-4 uppercase"
+                style={{ fontSize: "12px" }}
+              >
+                Sell Orders ({orders.length})
+              </h3>
+            </div>
+          )}
+          {!loadingOrders && orders.map((order) => {
             const isOrderCreator = order.walletAddress === wallet?.publicKey;
             return (
               <Card

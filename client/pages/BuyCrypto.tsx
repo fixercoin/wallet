@@ -73,6 +73,10 @@ export default function BuyCrypto() {
   const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
   const [offerPassword, setOfferPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
+    null,
+  );
+  const [fetchingPaymentMethod, setFetchingPaymentMethod] = useState(false);
 
   const OFFER_PASSWORD = "######Pakistan";
 

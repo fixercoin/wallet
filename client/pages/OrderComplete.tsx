@@ -272,26 +272,7 @@ export default function OrderComplete() {
       // If both are now verified, move order to completed
       if (newBuyerVerified && newSellerVerified) {
         try {
-          const completedOrders = JSON.parse(
-            localStorage.getItem("orders_completed") || "[]",
-          );
-          const completedOrder = {
-            ...order,
-            status: "completed",
-            completedAt: Date.now(),
-            buyerVerified: true,
-            sellerVerified: true,
-          };
-          completedOrders.unshift(completedOrder);
-          localStorage.setItem("orders_completed", JSON.stringify(completedOrders));
-
-          const pendingOrders = JSON.parse(
-            localStorage.getItem("orders_pending") || "[]",
-          );
-          const filteredPending = pendingOrders.filter(
-            (o: any) => o.id !== order.id,
-          );
-          localStorage.setItem("orders_pending", JSON.stringify(filteredPending));
+          await completeOrder(order, wallet.publicKey);
 
           toast({
             title: "Order Completed",

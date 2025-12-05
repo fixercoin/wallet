@@ -261,6 +261,30 @@ export class KVStorage {
     return new KVStorage(new InMemoryKVStorage());
   }
 
+  static createCloudflareStorage(
+    accountId: string,
+    namespaceId: string,
+    apiToken: string,
+  ): KVStorage {
+    return new KVStorage(new CloudflareKVStorage(accountId, namespaceId, apiToken));
+  }
+
+  static createAutoStorage(): KVStorage {
+    // Try to auto-detect Cloudflare KV credentials from environment
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    const namespaceId = process.env.CLOUDFLARE_NAMESPACE_ID;
+    const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+
+    if (accountId && namespaceId && apiToken) {
+      console.log("[KVStorage] Using Cloudflare KV storage backend");
+      return new KVStorage(new CloudflareKVStorage(accountId, namespaceId, apiToken));
+    }
+
+    // Fall back to file-based storage in development
+    console.log("[KVStorage] Using file-based KV storage backend");
+    return new KVStorage(new FileKVStorage());
+  }
+
   async get(key: string): Promise<string | null> {
     return this.backend.get(key);
   }

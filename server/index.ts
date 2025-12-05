@@ -33,6 +33,11 @@ import {
   handleUpdateTradeRoom,
   handleListTradeMessages,
   handleAddTradeMessage,
+  handleListP2POrders,
+  handleCreateP2POrder,
+  handleGetP2POrder,
+  handleUpdateP2POrder,
+  handleDeleteP2POrder,
 } from "./routes/p2p-orders";
 import {
   handleListOrders,
@@ -70,6 +75,11 @@ import {
   handleRewardStatus,
   handleStakingConfig,
 } from "./routes/staking";
+import {
+  handleGetPaymentMethods,
+  handleSavePaymentMethod,
+  handleDeletePaymentMethod,
+} from "./routes/p2p-payment-methods";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
@@ -638,34 +648,17 @@ export async function createServer(): Promise<express.Application> {
   app.post("/api/staking/withdraw", handleWithdrawStake);
   app.get("/api/staking/rewards-status", handleRewardStatus);
 
-  // P2P Orders routes (legacy API) - DISABLED
-  // These legacy endpoints are intentionally disabled to stop P2P order handling from this setup.
-  // Keeping explicit disabled handlers so callers receive a clear 410 Gone response.
-  app.get("/api/p2p/orders", (req, res) =>
-    res
-      .status(410)
-      .json({ error: "P2P orders API is disabled on this server" }),
-  );
-  app.post("/api/p2p/orders", (req, res) =>
-    res
-      .status(410)
-      .json({ error: "P2P orders API is disabled on this server" }),
-  );
-  app.get("/api/p2p/orders/:orderId", (req, res) =>
-    res
-      .status(410)
-      .json({ error: "P2P orders API is disabled on this server" }),
-  );
-  app.put("/api/p2p/orders/:orderId", (req, res) =>
-    res
-      .status(410)
-      .json({ error: "P2P orders API is disabled on this server" }),
-  );
-  app.delete("/api/p2p/orders/:orderId", (req, res) =>
-    res
-      .status(410)
-      .json({ error: "P2P orders API is disabled on this server" }),
-  );
+  // P2P Orders routes - ENABLED (stores orders in memory, can be replaced with Cloudflare KV)
+  app.get("/api/p2p/orders", handleListP2POrders);
+  app.post("/api/p2p/orders", handleCreateP2POrder);
+  app.get("/api/p2p/orders/:orderId", handleGetP2POrder);
+  app.put("/api/p2p/orders/:orderId", handleUpdateP2POrder);
+  app.delete("/api/p2p/orders/:orderId", handleDeleteP2POrder);
+
+  // P2P Payment Methods routes
+  app.get("/api/p2p/payment-methods", handleGetPaymentMethods);
+  app.post("/api/p2p/payment-methods", handleSavePaymentMethod);
+  app.delete("/api/p2p/payment-methods", handleDeletePaymentMethod);
 
   // Trade Rooms routes
   app.get("/api/p2p/rooms", handleListTradeRooms);

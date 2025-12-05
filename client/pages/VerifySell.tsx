@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,19 +10,32 @@ import {
   Clock,
   Copy,
   Send,
+  ShoppingCart,
+  TrendingUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { API_BASE } from "@/lib/p2p";
 import { copyToClipboard, shortenAddress } from "@/lib/wallet";
 import {
   getPaymentReceivedNotifications,
   clearNotificationsForRoom,
   saveChatMessage,
+  loadChatHistory,
+  loadServerChatHistory,
+  saveServerChatMessage,
   sendChatMessage,
   broadcastNotification,
   saveNotification,
-  loadChatHistory,
   parseWebSocketMessage,
   type ChatMessage,
   type ChatNotification,
@@ -43,6 +56,29 @@ export default function VerifySell() {
   const [messageInput, setMessageInput] = useState<string>("");
   const [buyerConfirmed, setBuyerConfirmed] = useState(false);
   const [sellerConfirmed, setSellerConfirmed] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
+    string | undefined
+  >();
+  const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
+  const [offerPassword, setOfferPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastMessageCountRef = useRef(0);
+
+  const OFFER_PASSWORD = "######Pakistan";
+
+  const handleOfferAction = (action: "buy" | "sell") => {
+    if (offerPassword !== OFFER_PASSWORD) {
+      setPasswordError("Invalid password");
+      return;
+    }
+    setShowCreateOfferDialog(false);
+    setOfferPassword("");
+    setPasswordError("");
+    navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
+  };
 
   const selectedOrder = orders.find((o) => o.id === selectedOrderId);
 
@@ -69,8 +105,49 @@ export default function VerifySell() {
 
   useEffect(() => {
     if (!selectedOrder) return;
-    const history = loadChatHistory(selectedOrder.roomId);
-    setChatLog(history);
+
+    const loadHistory = async () => {
+      try {
+        // Load from server (source of truth)
+        const history = await loadServerChatHistory(selectedOrder.roomId);
+        setChatLog(history);
+        lastMessageCountRef.current = history.length;
+      } catch {
+        // Fallback to localStorage
+        const history = loadChatHistory(selectedOrder.roomId);
+        setChatLog(history);
+        lastMessageCountRef.current = history.length;
+      }
+    };
+
+    loadHistory();
+  }, [selectedOrder]);
+
+  // Poll for new messages every 2 seconds
+  useEffect(() => {
+    if (!selectedOrder) return;
+
+    const setupPolling = () => {
+      syncIntervalRef.current = setInterval(async () => {
+        try {
+          const messages = await loadServerChatHistory(selectedOrder.roomId);
+          if (messages.length !== lastMessageCountRef.current) {
+            setChatLog(messages);
+            lastMessageCountRef.current = messages.length;
+          }
+        } catch (error) {
+          // Silently fail on poll errors
+        }
+      }, 2000);
+    };
+
+    setupPolling();
+
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+      }
+    };
   }, [selectedOrder]);
 
   const moveOrderToCompleted = () => {
@@ -90,29 +167,45 @@ export default function VerifySell() {
   };
 
   const handleVerified = async () => {
-    if (!selectedOrder) return;
+    if (!selectedOrder || !wallet?.publicKey) return;
     setLoading(true);
 
     try {
       setPhase("chat");
 
-      const message: ChatMessage = {
-        id: `msg-${Date.now()}`,
-        roomId: selectedOrder.roomId,
-        senderWallet: wallet?.publicKey || "",
-        senderRole: "seller",
-        type: "seller_verified",
-        text: "Seller verified payment. Ready to transfer assets.",
-        timestamp: Date.now(),
-      };
+      const text = "Seller verified payment. Ready to transfer assets.";
 
-      saveChatMessage(message);
-      setChatLog((prev) => [...prev, message]);
+      // Save to server
+      const serverMsg = await saveServerChatMessage(
+        selectedOrder.roomId,
+        wallet.publicKey,
+        text,
+      );
+
+      if (serverMsg) {
+        serverMsg.senderRole = "seller";
+        serverMsg.type = "seller_verified";
+        setChatLog((prev) => [...prev, serverMsg]);
+        lastMessageCountRef.current += 1;
+      } else {
+        // Fallback
+        const message: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId: selectedOrder.roomId,
+          senderWallet: wallet.publicKey,
+          senderRole: "seller",
+          type: "seller_verified",
+          text,
+          timestamp: Date.now(),
+        };
+        saveChatMessage(message);
+        setChatLog((prev) => [...prev, message]);
+      }
 
       const notification: ChatNotification = {
         type: "status_change",
         roomId: selectedOrder.roomId,
-        initiatorWallet: wallet?.publicKey || "",
+        initiatorWallet: wallet.publicKey,
         initiatorRole: "seller",
         message: "Seller verified payment",
         timestamp: Date.now(),
@@ -136,22 +229,42 @@ export default function VerifySell() {
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedOrder || !wallet) return;
 
-    const message: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      roomId: selectedOrder.roomId,
-      senderWallet: wallet.publicKey,
-      senderRole: "seller",
-      type: "text",
-      text: messageInput,
-      timestamp: Date.now(),
-    };
-
-    saveChatMessage(message);
-    setChatLog((prev) => [...prev, message]);
+    const text = messageInput.trim();
     setMessageInput("");
+
+    try {
+      // Save to server
+      const serverMsg = await saveServerChatMessage(
+        selectedOrder.roomId,
+        wallet.publicKey,
+        text,
+      );
+
+      if (serverMsg) {
+        serverMsg.senderRole = "seller";
+        setChatLog((prev) => [...prev, serverMsg]);
+        lastMessageCountRef.current += 1;
+      } else {
+        // Fallback
+        const message: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId: selectedOrder.roomId,
+          senderWallet: wallet.publicKey,
+          senderRole: "seller",
+          type: "text",
+          text,
+          timestamp: Date.now(),
+        };
+        saveChatMessage(message);
+        setChatLog((prev) => [...prev, message]);
+      }
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      setMessageInput(text);
+    }
   };
 
   const handleCompleted = async () => {
@@ -524,6 +637,90 @@ export default function VerifySell() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Payment Method Dialog */}
+        <PaymentMethodDialog
+          open={showPaymentDialog}
+          onOpenChange={(open) => {
+            setShowPaymentDialog(open);
+            if (!open) {
+              setEditingPaymentMethodId(undefined);
+            }
+          }}
+          walletAddress={wallet?.publicKey || ""}
+          paymentMethodId={editingPaymentMethodId}
+          onSave={() => {
+            setEditingPaymentMethodId(undefined);
+          }}
+        />
+
+        {/* Create Offer Dialog */}
+        <Dialog
+          open={showCreateOfferDialog}
+          onOpenChange={(open) => {
+            setShowCreateOfferDialog(open);
+            if (!open) {
+              setOfferPassword("");
+              setPasswordError("");
+            }
+          }}
+        >
+          <DialogContent className="bg-[#1a2847] border border-gray-300/30 text-white">
+            <DialogHeader>
+              <DialogTitle className="text-white uppercase">
+                CREATE OFFER
+              </DialogTitle>
+              <DialogDescription className="text-white/70 uppercase">
+                CHOOSE WHETHER YOU WANT TO BUY OR SELL CRYPTO
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2 uppercase">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={offerPassword}
+                  onChange={(e) => {
+                    setOfferPassword(e.target.value);
+                    setPasswordError("");
+                  }}
+                  placeholder="Enter password"
+                  className="w-full px-4 py-2 rounded-lg bg-[#1a2540]/50 border border-gray-300/30 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-gray-300/50"
+                />
+                {passwordError && (
+                  <p className="text-red-500 text-xs mt-1">{passwordError}</p>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  onClick={() => handleOfferAction("buy")}
+                  className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-600/20 to-blue-600/10 border border-blue-500/30 hover:border-blue-500/50 text-white font-semibold rounded-lg transition-all uppercase"
+                >
+                  <ShoppingCart className="w-8 h-8" />
+                  <span>BUY CRYPTO</span>
+                </Button>
+                <Button
+                  onClick={() => handleOfferAction("sell")}
+                  className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-green-600/20 to-green-600/10 border border-green-500/30 hover:border-green-500/50 text-white font-semibold rounded-lg transition-all uppercase"
+                >
+                  <TrendingUp className="w-8 h-8" />
+                  <span>SELL CRYPTO</span>
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bottom Navigation */}
+        <P2PBottomNavigation
+          onPaymentClick={() => {
+            setEditingPaymentMethodId(undefined);
+            setShowPaymentDialog(true);
+          }}
+          onCreateOfferClick={() => setShowCreateOfferDialog(true)}
+        />
       </div>
     );
   }

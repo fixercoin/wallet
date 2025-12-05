@@ -1,0 +1,174 @@
+import { useState, useCallback, useEffect } from "react";
+import { useWallet } from "@/contexts/WalletContext";
+import { useToast } from "@/hooks/use-toast";
+import { pushNotificationService } from "@/lib/services/push-notifications";
+
+export interface OrderNotification {
+  id: string;
+  orderId: string;
+  recipientWallet: string;
+  senderWallet: string;
+  type: "order_created" | "payment_confirmed" | "received_confirmed";
+  orderType: "BUY" | "SELL";
+  message: string;
+  orderData: {
+    token: string;
+    amountTokens: number;
+    amountPKR: number;
+  };
+  read: boolean;
+  createdAt: number;
+}
+
+export function useOrderNotifications() {
+  const { wallet } = useWallet();
+  const { toast } = useToast();
+  const [notifications, setNotifications] = useState<OrderNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const fetchNotifications = useCallback(
+    async (unreadOnly: boolean = false) => {
+      if (!wallet) return;
+
+      setLoading(true);
+      try {
+        const query = unreadOnly ? "&unread=true" : "";
+        const response = await fetch(
+          `/api/p2p/notifications?wallet=${encodeURIComponent(wallet.publicKey)}${query}`,
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch notifications: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setNotifications(data.data || []);
+
+        const unread = (data.data || []).filter(
+          (n: OrderNotification) => !n.read,
+        ).length;
+        setUnreadCount(unread);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [wallet],
+  );
+
+  const createNotification = useCallback(
+    async (
+      recipientWallet: string,
+      type: "order_created" | "payment_confirmed" | "received_confirmed",
+      orderType: "BUY" | "SELL",
+      orderId: string,
+      message: string,
+      orderData: {
+        token: string;
+        amountTokens: number;
+        amountPKR: number;
+      },
+    ) => {
+      if (!wallet) {
+        console.error("Wallet not connected");
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/p2p/notifications", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            recipientWallet,
+            senderWallet: wallet.publicKey,
+            type,
+            orderType,
+            message,
+            orderId,
+            orderData,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to create notification: ${response.status}`);
+        }
+
+        await pushNotificationService.sendOrderNotification(
+          type,
+          message,
+          orderData,
+        );
+
+        console.log(`Notification created for ${recipientWallet}`);
+      } catch (error) {
+        console.error("Error creating notification:", error);
+      }
+    },
+    [wallet],
+  );
+
+  const markAsRead = useCallback(async (notificationId: string) => {
+    try {
+      const response = await fetch("/api/p2p/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to mark notification as read: ${response.status}`,
+        );
+      }
+
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)),
+      );
+
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  }, []);
+
+  const showNotificationToast = useCallback(
+    (notification: OrderNotification) => {
+      const titles: Record<string, string> = {
+        order_created: "New Order",
+        payment_confirmed: "Payment Confirmed",
+        received_confirmed: "Order Received",
+      };
+
+      toast({
+        title: titles[notification.type] || "Order Notification",
+        description: notification.message,
+        duration: 5000,
+      });
+    },
+    [toast],
+  );
+
+  useEffect(() => {
+    if (!wallet) return;
+
+    fetchNotifications();
+
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [wallet, fetchNotifications]);
+
+  return {
+    notifications,
+    unreadCount,
+    loading,
+    fetchNotifications,
+    createNotification,
+    markAsRead,
+    showNotificationToast,
+  };
+}

@@ -47,6 +47,35 @@ export interface OrderNotification {
   createdAt: number;
 }
 
+export interface Escrow {
+  id: string;
+  orderId: string;
+  buyerWallet: string;
+  sellerWallet: string;
+  amountPKR: number;
+  amountTokens: number;
+  token: string;
+  status: "LOCKED" | "RELEASED" | "REFUNDED" | "DISPUTED";
+  createdAt: number;
+  updatedAt: number;
+  releasedAt?: number;
+}
+
+export interface Dispute {
+  id: string;
+  escrowId: string;
+  orderId: string;
+  initiatedBy: string;
+  reason: string;
+  status: "OPEN" | "RESOLVED" | "CLOSED";
+  resolution?: "RELEASE_TO_SELLER" | "REFUND_TO_BUYER" | "SPLIT";
+  resolvedBy?: string;
+  resolvedAt?: number;
+  evidence: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+
 interface KVNamespace {
   get(key: string): Promise<string | null>;
   put(key: string, value: string): Promise<void>;

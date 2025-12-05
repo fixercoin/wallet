@@ -160,38 +160,36 @@ export default function SellNow() {
     fetchRate();
   }, [selectedToken]);
 
-  const addPendingOrder = (o: any) => {
+  const saveOrderToAPI = async (order: any) => {
     try {
-      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
-      const arr = Array.isArray(cur) ? cur : [];
-      arr.unshift({ ...o, status: "pending" });
-      localStorage.setItem("orders_pending", JSON.stringify(arr));
-    } catch {}
-  };
+      const response = await fetch("/api/p2p/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "SELL",
+          walletAddress: wallet.publicKey,
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+          pricePKRPerQuote: order.pricePKRPerQuote,
+          paymentMethodId: order.paymentMethod,
+          status: "PENDING",
+          orderId: order.id,
+          sellerWallet: order.sellerWallet,
+          adminWallet: order.adminWallet,
+          buyerWallet: order.buyerWallet,
+        }),
+      });
 
-  const updatePendingOrder = (updatedOrder: any) => {
-    try {
-      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
-      const arr = Array.isArray(cur) ? cur : [];
-      const index = arr.findIndex((o: any) => o.id === updatedOrder.id);
-      if (index >= 0) {
-        arr[index] = { ...updatedOrder, status: "pending" };
-        localStorage.setItem("orders_pending", JSON.stringify(arr));
+      if (!response.ok) {
+        console.error("Failed to save order to API:", response.status, await response.text());
+        return false;
       }
-    } catch {}
-  };
-
-  const getAvailableBuyerWallet = () => {
-    try {
-      const pendingOrders = JSON.parse(
-        localStorage.getItem("orders_pending") || "[]",
-      );
-      const buyOrders = pendingOrders.filter((o: any) => o.buyerWallet);
-      if (buyOrders.length > 0) {
-        return buyOrders[0].buyerWallet;
-      }
-    } catch {}
-    return undefined;
+      return true;
+    } catch (error) {
+      console.error("Error saving order to API:", error);
+      return false;
+    }
   };
 
   const handleSellClick = async () => {

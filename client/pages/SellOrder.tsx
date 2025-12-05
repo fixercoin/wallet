@@ -46,19 +46,7 @@ export default function SellOrder() {
     const loadOrders = () => {
       try {
         setLoadingOrders(true);
-        const pendingOrders = JSON.parse(
-          localStorage.getItem("orders_pending") || "[]",
-        );
-        const completedOrders = JSON.parse(
-          localStorage.getItem("orders_completed") || "[]",
-        );
-        const completedIds = new Set(completedOrders.map((o: any) => o.id));
-
-        const sellOrders = pendingOrders.filter(
-          (order: any) =>
-            (order.type === "SELL" || (order.amountTokens && !order.amountPKR)) &&
-            !completedIds.has(order.id),
-        );
+        const sellOrders = getFilteredPendingOrders("SELL");
         setOrders(sellOrders);
       } catch (error) {
         console.error("Error loading orders from localStorage:", error);

@@ -275,23 +275,33 @@ export default function BuyNow() {
         console.error("Error saving to KV storage:", kvError);
       }
 
-      await createNotification(
-        ADMIN_WALLET,
-        "order_created",
-        "BUY",
-        orderId,
-        `New buy order created: ${Number(amountPKR).toFixed(2)} PKR for ${selectedToken.id}`,
-        {
-          token: selectedToken.id,
-          amountTokens: Number(amountPKR) / exchangeRate,
-          amountPKR: Number(amountPKR),
-        },
-      );
+      if (!editingOrder) {
+        await createNotification(
+          ADMIN_WALLET,
+          "order_created",
+          "BUY",
+          orderId,
+          `New buy order created: ${Number(amountPKR).toFixed(2)} PKR for ${selectedToken.id}`,
+          {
+            token: selectedToken.id,
+            amountTokens: Number(amountPKR) / exchangeRate,
+            amountPKR: Number(amountPKR),
+          },
+        );
+      }
 
-      navigate("/sell-order");
+      toast({
+        title: "Success",
+        description: editingOrder
+          ? "Buy order updated successfully"
+          : "Buy order created successfully",
+        duration: 2000,
+      });
+
+      navigate("/buy-order");
     } catch (error: any) {
       toast({
-        title: "Failed to start chat",
+        title: "Failed to save order",
         description: error?.message || String(error),
         variant: "destructive",
       });

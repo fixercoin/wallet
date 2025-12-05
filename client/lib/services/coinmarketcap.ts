@@ -193,13 +193,21 @@ class CoinMarketCapAPI {
     symbols: string[],
   ): Promise<CoinMarketCapResponse["data"] | null> {
     try {
-      // Try proxy first (server-side with API key)
-      if (this.apiKey) {
+      // Always try proxy first (server-side with API key configured)
+      try {
         return await this.fetchViaProxy(symbols);
+      } catch (proxyError) {
+        console.warn(
+          "[CoinMarketCap] Proxy fetch failed, falling back to direct API:",
+          proxyError,
+        );
+        // If proxy fails, try direct API as fallback
+        if (this.apiKey) {
+          return await this.fetchDirect(symbols);
+        }
       }
 
-      // Fallback: try direct API without key (limited)
-      return await this.fetchDirect(symbols);
+      return null;
     } catch (error) {
       console.error("[CoinMarketCap] Fetch error:", error);
       return null;

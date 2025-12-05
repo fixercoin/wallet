@@ -1,5 +1,3 @@
-import { useDurableRoom } from "@/hooks/useDurableRoom";
-
 export interface ChatMessage {
   id: string;
   roomId: string;
@@ -21,10 +19,24 @@ export interface ChatNotification {
   timestamp: number;
 }
 
+export interface ServerMessage {
+  id: string;
+  room_id: string;
+  sender_wallet: string;
+  message: string;
+  attachment_url?: string;
+  created_at: number;
+}
+
 const CHAT_STORAGE_PREFIX = "p2p_chat_";
 const NOTIFICATIONS_KEY = "p2p_notifications";
+const API_BASE =
+  (import.meta as any).env?.VITE_P2P_API || window.location.origin;
 
-// Store chat messages locally
+// WebSocket connection pool
+const wsConnections: Map<string, WebSocket> = new Map();
+
+// Store chat messages locally (fallback)
 export function saveChatMessage(message: ChatMessage) {
   try {
     const key = `${CHAT_STORAGE_PREFIX}${message.roomId}`;
@@ -36,13 +48,108 @@ export function saveChatMessage(message: ChatMessage) {
   }
 }
 
-// Load chat history for a room
+// Load chat history for a room (fallback)
 export function loadChatHistory(roomId: string): ChatMessage[] {
   try {
     const key = `${CHAT_STORAGE_PREFIX}${roomId}`;
     return JSON.parse(localStorage.getItem(key) || "[]");
   } catch {
     return [];
+  }
+}
+
+// SERVER-SIDE: Load chat history from server (source of truth)
+export async function loadServerChatHistory(
+  roomId: string,
+): Promise<ChatMessage[]> {
+  try {
+    const res = await fetch(
+      `${API_BASE}/api/p2p/rooms/${encodeURIComponent(roomId)}/messages`,
+    );
+    if (!res.ok) return loadChatHistory(roomId); // Fallback to localStorage
+
+    const data = await res.json();
+    const messages = data.messages || [];
+
+    // Convert server messages to ChatMessage format
+    return messages.map((msg: ServerMessage) => ({
+      id: msg.id,
+      roomId: roomId,
+      senderWallet: msg.sender_wallet,
+      senderRole: "buyer" as const, // Will be determined by order context
+      type: "message",
+      text: msg.message,
+      metadata: msg.attachment_url
+        ? { attachmentUrl: msg.attachment_url }
+        : undefined,
+      timestamp: msg.created_at,
+    }));
+  } catch (error) {
+    console.error("Failed to load server chat history:", error);
+    return loadChatHistory(roomId); // Fallback to localStorage
+  }
+}
+
+// SERVER-SIDE: Save message to server (source of truth)
+export async function saveServerChatMessage(
+  roomId: string,
+  senderWallet: string,
+  text: string,
+  attachmentUrl?: string,
+): Promise<ChatMessage | null> {
+  try {
+    const res = await fetch(
+      `${API_BASE}/api/p2p/rooms/${encodeURIComponent(roomId)}/messages`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room_id: roomId,
+          sender_wallet: senderWallet,
+          message: text,
+          attachment_url: attachmentUrl,
+        }),
+      },
+    );
+
+    if (!res.ok) {
+      console.error("Failed to save message to server:", res.status);
+      return null;
+    }
+
+    const data = await res.json();
+    const msg = data.message;
+
+    return {
+      id: msg.id,
+      roomId: roomId,
+      senderWallet: msg.sender_wallet,
+      senderRole: "buyer" as const,
+      type: "message",
+      text: msg.message,
+      metadata: msg.attachment_url
+        ? { attachmentUrl: msg.attachment_url }
+        : undefined,
+      timestamp: msg.created_at,
+    };
+  } catch (error) {
+    console.error("Failed to send message to server:", error);
+    return null;
+  }
+}
+
+// Polling: Sync messages periodically
+export async function syncChatMessagesFromServer(
+  roomId: string,
+  onNewMessages?: (messages: ChatMessage[]) => void,
+): Promise<void> {
+  try {
+    const messages = await loadServerChatHistory(roomId);
+    if (onNewMessages) {
+      onNewMessages(messages);
+    }
+  } catch (error) {
+    console.error("Failed to sync messages:", error);
   }
 }
 
@@ -95,6 +202,52 @@ export function clearNotificationsForRoom(roomId: string) {
     localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(filtered));
   } catch (e) {
     console.error("Failed to clear notifications", e);
+  }
+}
+
+// WEBSOCKET: Connect to real-time chat room
+export function connectToRoom(
+  roomId: string,
+  onMessage: (message: ChatMessage) => void,
+  onError?: (error: Event) => void,
+): () => void {
+  try {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/ws/p2p/${encodeURIComponent(roomId)}`;
+
+    const ws = new WebSocket(wsUrl);
+    wsConnections.set(roomId, ws);
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = parseWebSocketMessage(event.data);
+        if (msg) {
+          onMessage(msg);
+        }
+      } catch (e) {
+        console.error("Failed to parse WebSocket message:", e);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+      if (onError) onError(error);
+    };
+
+    ws.onclose = () => {
+      wsConnections.delete(roomId);
+    };
+
+    // Return disconnect function
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+      wsConnections.delete(roomId);
+    };
+  } catch (error) {
+    console.error("Failed to connect to WebSocket:", error);
+    return () => {}; // No-op disconnect
   }
 }
 

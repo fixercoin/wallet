@@ -1,16 +1,34 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MessageSquare, Copy, Send, Plus } from "lucide-react";
+import {
+  ArrowLeft,
+  MessageSquare,
+  Copy,
+  Send,
+  Plus,
+  ShoppingCart,
+  TrendingUp,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 import { useWallet } from "@/contexts/WalletContext";
 import { copyToClipboard, shortenAddress } from "@/lib/wallet";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import {
   saveChatMessage,
   loadChatHistory,
+  loadServerChatHistory,
+  saveServerChatMessage,
   saveNotification,
   clearNotificationsForRoom,
   parseWebSocketMessage,
@@ -35,14 +53,15 @@ export default function BuyTrade() {
   const { toast } = useToast();
   const { wallet, balance, tokens } = useWallet();
   const derivedRoomId = room?.id || (order && order.id) || "global";
-  const { events, send } = useDurableRoom(derivedRoomId, API_BASE);
-  const { send: sendGlobal } = useDurableRoom("global", API_BASE);
   const counterpartyWallet = useMemo(() => {
     if (!room) return "";
     return wallet?.publicKey === (room.seller_wallet || "")
       ? room.buyer_wallet || ""
       : room.seller_wallet || "";
   }, [room, wallet?.publicKey]);
+
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastMessageCountRef = useRef(0);
 
   type Phase =
     | "entry"
@@ -71,6 +90,27 @@ export default function BuyTrade() {
     String(order?.quoteAsset || order?.token || "USDC").toUpperCase(),
   );
 
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
+    string | undefined
+  >();
+  const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
+  const [offerPassword, setOfferPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const OFFER_PASSWORD = "######Pakistan";
+
+  const handleOfferAction = (action: "buy" | "sell") => {
+    if (offerPassword !== OFFER_PASSWORD) {
+      setPasswordError("Invalid password");
+      return;
+    }
+    setShowCreateOfferDialog(false);
+    setOfferPassword("");
+    setPasswordError("");
+    navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
+  };
+
   const pricePKR: number | null = useMemo(() => {
     const price = Number(order?.pricePKRPerQuote);
     if (!isFinite(price) || price <= 0) return null;
@@ -88,47 +128,73 @@ export default function BuyTrade() {
   const canConfirm =
     Boolean(order) && Boolean(pricePKR) && Number(estimatedTokens) > 0;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!canConfirm || !derivedRoomId || !wallet) return;
 
-    const message: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      roomId: derivedRoomId,
-      senderWallet: wallet.publicKey,
-      senderRole: userRole,
-      type: "buyer_confirm",
-      text: `Buyer requested ~${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
-      metadata: {
-        amountPKR: Number(amountPKR),
-        token,
-        estimatedTokens: estimatedTokens.toFixed(6),
-      },
-      timestamp: Date.now(),
-    };
+    const text = `Buyer requested ~${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`;
 
-    saveChatMessage(message);
-    sendChatMessage(send, message);
+    try {
+      // Save to server
+      const serverMsg = await saveServerChatMessage(
+        derivedRoomId,
+        wallet.publicKey,
+        text,
+      );
 
-    const notification: ChatNotification = {
-      type: "trade_initiated",
-      roomId: derivedRoomId,
-      initiatorWallet: wallet.publicKey,
-      initiatorRole: userRole,
-      message: `Trade initiated: ${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
-      data: { amountPKR: Number(amountPKR), token },
-      timestamp: Date.now(),
-    };
+      if (serverMsg) {
+        serverMsg.senderRole = userRole;
+        serverMsg.type = "buyer_confirm";
+        serverMsg.metadata = {
+          amountPKR: Number(amountPKR),
+          token,
+          estimatedTokens: estimatedTokens.toFixed(6),
+        };
+        setChatLog((prev) => [...prev, serverMsg]);
+        lastMessageCountRef.current += 1;
+      } else {
+        // Fallback
+        const message: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId: derivedRoomId,
+          senderWallet: wallet.publicKey,
+          senderRole: userRole,
+          type: "buyer_confirm",
+          text,
+          metadata: {
+            amountPKR: Number(amountPKR),
+            token,
+            estimatedTokens: estimatedTokens.toFixed(6),
+          },
+          timestamp: Date.now(),
+        };
+        saveChatMessage(message);
+        setChatLog((prev) => [...prev, message]);
+      }
 
-    saveNotification(notification);
-    broadcastNotification(send, notification);
-    broadcastNotification(sendGlobal, notification);
+      const notification: ChatNotification = {
+        type: "trade_initiated",
+        roomId: derivedRoomId,
+        initiatorWallet: wallet.publicKey,
+        initiatorRole: userRole,
+        message: `Trade initiated: ${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
+        data: { amountPKR: Number(amountPKR), token },
+        timestamp: Date.now(),
+      };
 
-    setChatLog((prev) => [...prev, message]);
-    toast({
-      title: "Trade request sent",
-      description: `Request to buy ~${estimatedTokens.toFixed(6)} ${token}`,
-    });
-    setPhase("awaiting_seller_approval");
+      saveNotification(notification);
+
+      toast({
+        title: "Trade request sent",
+        description: `Request to buy ~${estimatedTokens.toFixed(6)} ${token}`,
+      });
+      setPhase("awaiting_seller_approval");
+    } catch (error) {
+      console.error("Failed to confirm trade:", error);
+      toast({
+        title: "Failed to send trade request",
+        variant: "destructive",
+      });
+    }
   };
 
   const notifySeller = () => {
@@ -145,7 +211,6 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    sendChatMessage(send, message);
 
     const notification: ChatNotification = {
       type: "payment_received",
@@ -163,8 +228,6 @@ export default function BuyTrade() {
     };
 
     saveNotification(notification);
-    broadcastNotification(send, notification);
-    broadcastNotification(sendGlobal, notification);
 
     setChatLog((prev) => [...prev, message]);
     toast({
@@ -183,93 +246,51 @@ export default function BuyTrade() {
     const role = order.type === "buy" ? "buyer" : "seller";
     setUserRole(role);
 
-    const history = loadChatHistory(rid);
-    setChatLog(history);
+    const loadHistory = async () => {
+      try {
+        // Load from server (source of truth)
+        const history = await loadServerChatHistory(rid);
+        setChatLog(history);
+        lastMessageCountRef.current = history.length;
+      } catch {
+        // Fallback to localStorage
+        const history = loadChatHistory(rid);
+        setChatLog(history);
+        lastMessageCountRef.current = history.length;
+      }
+    };
 
+    loadHistory();
     clearNotificationsForRoom(rid);
   }, [order?.id, wallet]);
 
-  // Listen for incoming WebSocket messages
+  // Poll for new messages every 2 seconds
   useEffect(() => {
-    const last = events[events.length - 1];
-    if (!last) return;
+    if (!order?.id || !wallet?.publicKey) return;
 
-    if (last.kind === "chat") {
-      const txt = last.data?.text || "";
-      const msg = parseWebSocketMessage(txt);
-
-      if (msg && msg.roomId === derivedRoomId) {
-        saveChatMessage(msg);
-        setChatLog((prev) => {
-          const exists = prev.find((m) => m.id === msg.id);
-          return exists ? prev : [...prev, msg];
-        });
-        setUnread(true);
-
-        if (msg.type === "seller_approved") {
-          setSellerInfo({
-            accountName: String(msg.metadata?.accountName || ""),
-            accountNumber: String(msg.metadata?.accountNumber || ""),
-            paymentMethod: String(msg.metadata?.paymentMethod || ""),
-          });
-          setPhase("seller_approved");
-          toast({
-            title: "Seller approved",
-            description: "Payment details received",
-          });
-        } else if (msg.type === "seller_verified") {
-          setPhase("seller_verified");
-          toast({
-            title: "Seller verified payment",
-            description: "Assets are being transferred to you",
-          });
-        } else if (
-          msg.type === "seller_transferred" ||
-          msg.type === "seller_completed" ||
-          msg.type === "seller_sent"
-        ) {
-          setPhase("seller_transferred");
-          toast({
-            title: "Seller completed transfer",
-            description: "Please confirm receipt to finalize order",
-          });
-        } else if (msg.type === "buyer_confirmed_receipt") {
-          setPhase("completed");
-          toast({
-            title: "Order Complete",
-            description: "Trade finalized successfully",
-          });
-          try {
-            const completedRaw = localStorage.getItem("orders_completed");
-            const completed = completedRaw ? JSON.parse(completedRaw) : [];
-            const orderToSave = order
-              ? { ...order, status: "completed", completedAt: Date.now() }
-              : null;
-            if (orderToSave) {
-              completed.unshift(orderToSave);
-              localStorage.setItem(
-                "orders_completed",
-                JSON.stringify(completed),
-              );
-            }
-            const pendingRaw = localStorage.getItem("orders_pending");
-            const pending = pendingRaw ? JSON.parse(pendingRaw) : [];
-            const filtered =
-              Array.isArray(pending) && order?.id
-                ? pending.filter((o: any) => o.id !== order.id)
-                : pending;
-            localStorage.setItem("orders_pending", JSON.stringify(filtered));
-          } catch {}
-          setTimeout(() => navigate("/", { state: { goP2P: true } }), 2000);
-        } else if (msg.type === "order_failed") {
-          setFailMsg(
-            String(msg.metadata?.reason || "Order could not complete"),
-          );
-          setPhase("failed");
+    const setupPolling = () => {
+      syncIntervalRef.current = setInterval(async () => {
+        try {
+          const messages = await loadServerChatHistory(order.id);
+          // Only update if message count changed
+          if (messages.length !== lastMessageCountRef.current) {
+            setChatLog(messages);
+            lastMessageCountRef.current = messages.length;
+          }
+        } catch (error) {
+          // Silently fail on poll errors
         }
+      }, 2000);
+    };
+
+    setupPolling();
+
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
       }
-    }
-  }, [events, derivedRoomId, wallet?.publicKey, order, navigate]);
+    };
+  }, [order?.id, wallet?.publicKey]);
 
   // Auto-open chat if flagged
   useEffect(() => {
@@ -308,21 +329,41 @@ export default function BuyTrade() {
     }
   }, [counterpartyWallet, toWallet]);
 
-  const sendTextMessage = () => {
+  const sendTextMessage = async () => {
     if (!messageInput.trim() || !derivedRoomId || !wallet) return;
-    const message: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      roomId: derivedRoomId,
-      senderWallet: wallet.publicKey,
-      senderRole: userRole,
-      type: "message",
-      text: messageInput.trim(),
-      timestamp: Date.now(),
-    };
-    saveChatMessage(message);
-    sendChatMessage(send, message);
-    setChatLog((prev) => [...prev, message]);
+    const text = messageInput.trim();
     setMessageInput("");
+
+    try {
+      // Save to server first
+      const serverMsg = await saveServerChatMessage(
+        derivedRoomId,
+        wallet.publicKey,
+        text,
+      );
+
+      if (serverMsg) {
+        serverMsg.senderRole = userRole;
+        setChatLog((prev) => [...prev, serverMsg]);
+        lastMessageCountRef.current += 1;
+      } else {
+        // Fallback to localStorage
+        const message: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId: derivedRoomId,
+          senderWallet: wallet.publicKey,
+          senderRole: userRole,
+          type: "message",
+          text,
+          timestamp: Date.now(),
+        };
+        saveChatMessage(message);
+        setChatLog((prev) => [...prev, message]);
+      }
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      setMessageInput(text);
+    }
   };
 
   const handleReceived = () => {
@@ -337,7 +378,6 @@ export default function BuyTrade() {
       timestamp: Date.now(),
     };
     saveChatMessage(message);
-    sendChatMessage(send, message);
     toast({ title: "Payment received" });
     setHasReceived(true);
     setPhase("seller_verified");
@@ -360,7 +400,6 @@ export default function BuyTrade() {
       timestamp: Date.now(),
     };
     saveChatMessage(message);
-    sendChatMessage(send, message);
     toast({ title: "Assets sent" });
     setPhase("seller_transferred");
   };
@@ -384,7 +423,6 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
   };
 
@@ -402,7 +440,6 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
   };
 
@@ -420,7 +457,6 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
   };
 
@@ -439,7 +475,6 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
   };
 
@@ -457,7 +492,6 @@ export default function BuyTrade() {
     };
 
     saveChatMessage(message);
-    sendChatMessage(send, message);
     setChatLog((prev) => [...prev, message]);
     setPhase("completed");
   };
@@ -514,7 +548,6 @@ export default function BuyTrade() {
         timestamp: Date.now(),
       };
       saveChatMessage(message);
-      sendChatMessage(send, message);
       setChatLog((prev) => [...prev, message]);
     } catch (e) {
       console.error("Attachment failed", e);
@@ -677,7 +710,7 @@ export default function BuyTrade() {
                           <img
                             src={msg.metadata.attachmentDataUrl}
                             alt="attachment"
-                            className="rounded-lg max-h-48 border border-white/20"
+                            className="rounded-lg max-h-48 border border-white/5"
                           />
                         </div>
                       )}
@@ -892,7 +925,7 @@ export default function BuyTrade() {
                               <img
                                 src={msg.metadata.attachmentDataUrl}
                                 alt="attachment"
-                                className="rounded-lg max-h-48 border border-white/20"
+                                className="rounded-lg max-h-48 border border-white/5"
                               />
                             </div>
                           )}

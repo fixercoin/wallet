@@ -4,9 +4,7 @@ import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
-import { TokenBadge } from "./TokenBadge";
-import { PriceCard } from "./token-detail/PriceCard";
-import { BuySellLine } from "./token-detail/BuySellLine";
+import { TokenDetailsPanel } from "./token-detail/TokenDetailsPanel";
 
 interface TokenDetailProps {
   tokenMint: string;
@@ -16,16 +14,6 @@ interface TokenDetailProps {
   onSend: (tokenMint: string) => void;
   onReceive: (tokenMint: string) => void;
 }
-
-// Mock price data for demonstration
-const generateMockPriceData = () => {
-  const basePrice = Math.random() * 100;
-  return Array.from({ length: 24 }, (_, i) => ({
-    time: `${i}:00`,
-    price: basePrice + (Math.random() - 0.5) * 20,
-    volume: Math.random() * 1000000,
-  }));
-};
 
 export const TokenDetail: React.FC<TokenDetailProps> = ({
   tokenMint,
@@ -37,9 +25,7 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 }) => {
   const { tokens, refreshTokens } = useWallet();
   const { toast } = useToast();
-  const [priceData, setPriceData] = useState(generateMockPriceData());
   const [isLoading, setIsLoading] = useState(false);
-  const [showBalance, setShowBalance] = useState(true);
   const [enhancedToken, setEnhancedToken] = useState<TokenInfo | null>(null);
 
   // Find the token from the tokens list
@@ -55,7 +41,6 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     setIsLoading(true);
     try {
       await refreshTokens();
-      setPriceData(generateMockPriceData());
       toast({
         title: "Refreshed",
         description: "Token data updated",
@@ -73,12 +58,9 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 
   if (!token) {
     return (
-      <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white relative overflow-hidden flex items-center justify-center">
-        {/* Decorative curved accent background elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
+      <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground relative overflow-hidden flex items-center justify-center">
         <div className="text-center relative z-20">
-          <p className="text-white text-lg mb-4">Token not found</p>
+          <p className="text-foreground text-lg mb-4">Token not found</p>
           <Button onClick={onBack} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Go Back
@@ -91,74 +73,50 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
   const displayToken = enhancedToken || token;
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white relative overflow-hidden">
-      {/* Decorative curved accent background elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
-
-      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        <div className="rounded-2xl border border-[#555555]/30 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3">
+    <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground relative overflow-hidden flex flex-col">
+      <div className="w-full md:max-w-lg mx-auto relative z-20 flex-1 flex flex-col">
+        {/* Header Section - With padding */}
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
               onClick={onBack}
               aria-label="Back"
-              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-[#a855f7]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-card text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-2 flex-1">
-              <h1 className="text-lg font-semibold text-[hsl(var(--foreground))]">
+              <h1 className="text-lg font-semibold text-foreground">
                 {displayToken.symbol}
               </h1>
-              <TokenBadge token={displayToken} />
             </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={handleRefresh}
               disabled={isLoading}
-              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-[#a855f7]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-card text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
+        </div>
 
-          {/* Price Section (inside single card) */}
-          <PriceCard
-            token={displayToken}
-            priceData={priceData}
-            showBalance={showBalance}
-            onToggleBalance={() => setShowBalance(!showBalance)}
-            withinCard
-          />
+        {/* Token Details Section - Scrollable */}
+        <div className="px-4 py-4 flex-1 flex flex-col overflow-hidden">
+          <TokenDetailsPanel token={displayToken} tokenMint={tokenMint} />
+        </div>
 
-          {/* Chart and actions */}
-          <div className="px-4 pb-4 space-y-3">
-            <div className="rounded-lg overflow-hidden border border-[hsl(var(--border))] bg-[#1a2540]/50 border-[#FF7A5C]/30 text-white">
-              <div className="px-3 pt-3 text-sm font-medium text-gray-700">
-                Buys vs Sells (5m → 24h)
-              </div>
-              <div className="p-3">
-                <BuySellLine mint={tokenMint} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                onClick={() => onBuy(tokenMint)}
-                className="h-10 font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white"
-              >
-                BUY
-              </Button>
-              <Button
-                onClick={() => onSell(tokenMint)}
-                className="h-10 font-semibold bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white"
-              >
-                SELL
-              </Button>
-            </div>
-          </div>
+        {/* QUICK BUY Button - Fixed at bottom with padding */}
+        <div className="px-4 py-4 border-t border-gray-800">
+          <Button
+            onClick={() => onBuy(tokenMint)}
+            className="w-full h-10 font-semibold rounded-[2px] bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
+          >
+            QUICK BUY
+          </Button>
         </div>
       </div>
     </div>

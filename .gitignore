@@ -25,3 +25,6 @@ dist-ssr
 
 .config/
 !.env
+
+# Cloudflare KV data (development)
+.kv-data/

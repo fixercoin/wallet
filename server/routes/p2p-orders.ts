@@ -88,17 +88,28 @@ function generateId(prefix: string): string {
 // P2P Orders endpoints
 export const handleListP2POrders: RequestHandler = async (req, res) => {
   try {
-    const { type, status, token, online } = req.query;
+    const { type, status, token, wallet, id } = req.query;
 
     let filtered = Array.from(orders.values());
 
-    if (type) filtered = filtered.filter((o) => o.type === type);
+    if (wallet) {
+      filtered = filtered.filter(
+        (o) =>
+          o.walletAddress === wallet ||
+          o.creator_wallet === wallet ||
+          o.buyerWallet === wallet ||
+          o.sellerWallet === wallet,
+      );
+    }
+
+    if (type) filtered = filtered.filter((o) => o.type === String(type));
     if (status) filtered = filtered.filter((o) => o.status === status);
     if (token) filtered = filtered.filter((o) => o.token === token);
-    if (online === "true") filtered = filtered.filter((o) => o.online);
-    if (online === "false") filtered = filtered.filter((o) => !o.online);
+    if (id) filtered = filtered.filter((o) => o.id === id);
 
-    filtered.sort((a, b) => b.created_at - a.created_at);
+    filtered.sort(
+      (a, b) => (b.createdAt || b.created_at || 0) - (a.createdAt || a.created_at || 0),
+    );
 
     res.json({ orders: filtered });
   } catch (error) {
@@ -111,46 +122,64 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
   try {
     const {
       type,
+      walletAddress,
       creator_wallet,
       token,
+      amountTokens,
       token_amount,
+      amountPKR,
       pkr_amount,
+      pricePKRPerQuote,
       payment_method,
-      online,
+      paymentMethodId,
+      status,
+      orderId,
+      buyerWallet,
+      sellerWallet,
+      adminWallet,
+      accountName,
       account_name,
+      accountNumber,
       account_number,
-      wallet_address,
     } = req.body;
 
-    if (
-      !type ||
-      !creator_wallet ||
-      !token ||
-      !token_amount ||
-      !pkr_amount ||
-      !payment_method
-    ) {
-      return res.status(400).json({ error: "Missing required fields" });
+    // Support both naming conventions
+    const finalWallet = walletAddress || creator_wallet;
+    const finalType = type?.toUpperCase() || "BUY";
+    const finalToken = token;
+    const finalAmount = amountTokens !== undefined ? amountTokens : parseFloat(token_amount || 0);
+    const finalPKR = amountPKR !== undefined ? amountPKR : parseFloat(pkr_amount || 0);
+    const finalPrice = pricePKRPerQuote;
+
+    if (!finalType || !finalWallet || !finalToken) {
+      return res.status(400).json({
+        error: "Missing required fields: type, walletAddress (or creator_wallet), and token",
+      });
     }
 
-    const id = generateId("order");
+    const id = orderId || generateId("order");
     const now = Date.now();
 
     const order: P2POrder = {
       id,
-      type,
-      creator_wallet,
-      token,
-      token_amount: String(token_amount),
-      pkr_amount: Number(pkr_amount),
-      payment_method,
-      status: "active",
-      online: online !== false,
+      type: finalType as "BUY" | "SELL",
+      walletAddress: finalWallet,
+      creator_wallet: finalWallet,
+      token: finalToken,
+      amountTokens: finalAmount,
+      amountPKR: finalPKR,
+      pricePKRPerQuote: finalPrice,
+      paymentMethod: payment_method || paymentMethodId,
+      status: (status || "PENDING") as P2POrder["status"],
+      createdAt: now,
       created_at: now,
+      updatedAt: now,
       updated_at: now,
-      account_name,
-      account_number,
-      wallet_address: type === "sell" ? wallet_address : undefined,
+      accountName: accountName || account_name,
+      accountNumber: accountNumber || account_number,
+      buyerWallet,
+      sellerWallet,
+      adminWallet,
     };
 
     orders.set(id, order);
@@ -191,7 +220,9 @@ export const handleUpdateP2POrder: RequestHandler = async (req, res) => {
       ...order,
       ...req.body,
       id: order.id,
+      createdAt: order.createdAt,
       created_at: order.created_at,
+      updatedAt: Date.now(),
       updated_at: Date.now(),
     };
 

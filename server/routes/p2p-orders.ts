@@ -343,6 +343,13 @@ export const handleUpdateTradeRoom: RequestHandler = async (req, res) => {
   }
 };
 
+// Export P2P Order handlers for use in main server file
+export const handleListP2POrdersRoute = handleListP2POrders;
+export const handleCreateP2POrderRoute = handleCreateP2POrder;
+export const handleGetP2POrderRoute = handleGetP2POrder;
+export const handleUpdateP2POrderRoute = handleUpdateP2POrder;
+export const handleDeleteP2POrderRoute = handleDeleteP2POrder;
+
 // Trade Messages endpoints
 export const handleListTradeMessages: RequestHandler = async (req, res) => {
   try {

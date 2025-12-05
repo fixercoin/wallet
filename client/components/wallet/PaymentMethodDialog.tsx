@@ -342,7 +342,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
             variant="outline"
             onClick={handleCancel}
             disabled={loading}
-            className="uppercase"
+            className="uppercase bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
           >
             {isEditing ? "CANCEL" : "CLOSE"}
           </Button>
@@ -350,7 +350,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
             <Button
               onClick={handleEditClick}
               disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 uppercase"
+              className="bg-blue-600 hover:bg-blue-700 text-white uppercase disabled:bg-blue-800"
             >
               EDIT
             </Button>
@@ -358,7 +358,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
             <Button
               onClick={handleSave}
               disabled={loading}
-              className="bg-[#22c55e] hover:bg-[#16a34a] uppercase"
+              className="bg-[#22c55e] hover:bg-[#16a34a] text-white uppercase disabled:bg-green-700"
             >
               {loading ? "SAVING..." : "SAVE"}
             </Button>

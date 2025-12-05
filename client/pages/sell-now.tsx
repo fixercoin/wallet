@@ -217,7 +217,6 @@ export default function SellNow() {
     }
     setLoading(true);
     try {
-      const buyerWallet = getAvailableBuyerWallet();
       const orderId = editingOrder?.id || `SELL-${Date.now()}`;
       const order = {
         id: orderId,
@@ -230,42 +229,14 @@ export default function SellNow() {
         sellerWallet: wallet.publicKey,
         walletAddress: wallet.publicKey,
         adminWallet: ADMIN_WALLET,
-        buyerWallet: buyerWallet,
         createdAt: editingOrder?.createdAt || Date.now(),
         updatedAt: Date.now(),
-        status: "pending",
+        status: "PENDING",
       };
 
-      try {
-        localStorage.setItem("sellnote_order", JSON.stringify(order));
-      } catch {}
-
-      if (editingOrder) {
-        updatePendingOrder(order);
-      } else {
-        addPendingOrder(order);
-      }
-
-      try {
-        const response = await fetch("/api/p2p/orders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            walletAddress: wallet.publicKey,
-            type: "SELL",
-            token: selectedToken.id,
-            amountTokens: amount,
-            amountPKR: amount * exchangeRate,
-            paymentMethodId: "easypaisa",
-            status: "PENDING",
-            orderId,
-          }),
-        });
-        if (!response.ok) {
-          console.error("Failed to save order to KV:", response.status);
-        }
-      } catch (kvError) {
-        console.error("Error saving to KV storage:", kvError);
+      const saved = await saveOrderToAPI(order);
+      if (!saved) {
+        throw new Error("Failed to save order to the server");
       }
 
       if (!editingOrder) {

@@ -140,7 +140,7 @@ export default function OrderComplete() {
       await createNotification(
         otherWalletKey,
         "payment_confirmed",
-        order.type || "BUY",
+        "BUY",
         order.id,
         "Buyer has confirmed payment",
         {
@@ -153,7 +153,7 @@ export default function OrderComplete() {
       await createNotification(
         otherWalletKey,
         "received_confirmed",
-        order.type || "BUY",
+        "BUY",
         order.id,
         "Seller has confirmed receiving payment",
         {

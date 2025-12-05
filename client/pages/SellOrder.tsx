@@ -46,11 +46,10 @@ export default function SellOrder() {
 
   useEffect(() => {
     const loadOrders = async () => {
-      if (!wallet) return;
       try {
         setLoadingOrders(true);
         const response = await fetch(
-          `/api/p2p/orders?type=SELL&wallet=${wallet.publicKey}`,
+          `/api/p2p/orders?type=SELL`,
         );
         if (!response.ok) {
           console.error("Failed to load orders:", response.status);

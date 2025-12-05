@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, ShoppingCart, TrendingUp } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
-import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
@@ -24,7 +23,6 @@ import {
 } from "@/components/ui/dialog";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
-import { ADMIN_WALLET } from "@/lib/p2p";
 import {
   PaymentMethod,
   getPaymentMethodsByWallet,
@@ -61,7 +59,6 @@ export default function SellNow() {
   const location = useLocation();
   const { wallet, tokens: walletTokens = [] } = useWallet();
   const { toast } = useToast();
-  const { createNotification } = useOrderNotifications();
 
   const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
@@ -283,21 +280,6 @@ export default function SellNow() {
       const saved = await saveOrderToAPI(order);
       if (!saved) {
         throw new Error("Failed to save order to the server");
-      }
-
-      if (!editingOrder) {
-        await createNotification(
-          ADMIN_WALLET,
-          "order_created",
-          "SELL",
-          orderId,
-          `New sell order created: ${amount.toFixed(6)} ${selectedToken.id} for ${(amount * exchangeRate).toFixed(2)} PKR`,
-          {
-            token: selectedToken.id,
-            amountTokens: amount,
-            amountPKR: amount * exchangeRate,
-          },
-        );
       }
 
       toast({

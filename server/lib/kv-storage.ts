@@ -27,9 +27,10 @@ class FileKVStorage implements KVStorageBackend {
   }
 
   private getFilePath(key: string): string {
-    // Sanitize key to be a valid filename, but preserve colons for key structure
-    const safeKey = key.replace(/[^a-zA-Z0-9._:\-]/g, "_");
-    return path.join(this.dataDir, safeKey);
+    // Encode key to be a valid filename across all platforms
+    // Use URL encoding to preserve key structure
+    const encodedKey = encodeURIComponent(key);
+    return path.join(this.dataDir, encodedKey);
   }
 
   async get(key: string): Promise<string | null> {

@@ -138,6 +138,7 @@ export default function OrderComplete() {
       roomId,
       senderWallet: wallet?.publicKey || "",
       senderRole: isBuyer ? "buyer" : "seller",
+      type: "verification",
       text: `${isBuyer ? "Buyer" : "Seller"} has verified and confirmed payment`,
       timestamp: Date.now(),
       metadata: {
@@ -146,8 +147,8 @@ export default function OrderComplete() {
     };
 
     setChatLog((prev) => [...prev, msg]);
-    await saveChatMessage(roomId, msg);
-    await sendChatMessage(roomId, msg);
+    // Save message to localStorage
+    saveChatMessage(msg);
 
     const otherWalletKey = isBuyerAction
       ? order.sellerWallet

@@ -260,7 +260,7 @@ export default function OrderComplete() {
                   onClick={handleVerify}
                   className="w-full mt-3 bg-green-600/30 border border-green-500/50 hover:bg-green-600/40 text-green-400 uppercase text-xs font-semibold"
                 >
-                  CONFIRM I HAVE PAID
+                  I HAVE PAID FIAT
                 </Button>
               )}
             </div>
@@ -293,7 +293,7 @@ export default function OrderComplete() {
                   onClick={handleVerify}
                   className="w-full mt-3 bg-purple-600/30 border border-purple-500/50 hover:bg-purple-600/40 text-purple-400 uppercase text-xs font-semibold"
                 >
-                  CONFIRM I HAVE RECEIVED
+                  I HAVE TRANSFERRED CRYPTO
                 </Button>
               )}
             </div>

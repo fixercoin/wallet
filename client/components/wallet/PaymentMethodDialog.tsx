@@ -273,7 +273,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   onChange={(e) => setUserName(e.target.value)}
                   placeholder="ENTER YOUR NAME"
                   disabled={loading}
-                  className={`uppercase ${errors.userName ? "border-red-500" : ""}`}
+                  className={`uppercase bg-[#0f1729] border border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 ${errors.userName ? "border-red-500" : ""}`}
                 />
                 {errors.userName && (
                   <p className="text-xs text-red-500 mt-1">{errors.userName}</p>
@@ -289,11 +289,11 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   }
                   disabled={loading}
                 >
-                  <SelectTrigger id="paymentMethod" className="uppercase">
+                  <SelectTrigger id="paymentMethod" className="uppercase bg-[#0f1729] border border-gray-600 text-white">
                     <SelectValue placeholder="SELECT PAYMENT METHOD" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="EASYPAISA">EASYPAISA</SelectItem>
+                  <SelectContent className="bg-[#1a2540] border border-gray-600">
+                    <SelectItem value="EASYPAISA" className="text-white">EASYPAISA</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -306,7 +306,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   onChange={(e) => setAccountName(e.target.value)}
                   placeholder="ENTER ACCOUNT NAME"
                   disabled={loading}
-                  className={`uppercase ${errors.accountName ? "border-red-500" : ""}`}
+                  className={`uppercase bg-[#0f1729] border border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 ${errors.accountName ? "border-red-500" : ""}`}
                 />
               </div>
 
@@ -318,7 +318,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   onChange={(e) => setAccountNumber(e.target.value)}
                   placeholder="ENTER ACCOUNT NUMBER"
                   disabled={loading}
-                  className={errors.accountNumber ? "border-red-500" : ""}
+                  className={`bg-[#0f1729] border border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 ${errors.accountNumber ? "border-red-500" : ""}`}
                 />
               </div>
 
@@ -330,7 +330,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   onChange={(e) => setSolanawWalletAddress(e.target.value)}
                   placeholder="ENTER SOLANA WALLET ADDRESS"
                   disabled={loading}
-                  className={`uppercase ${errors.solanawWalletAddress ? "border-red-500" : ""}`}
+                  className={`uppercase bg-[#0f1729] border border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 ${errors.solanawWalletAddress ? "border-red-500" : ""}`}
                 />
               </div>
             </>

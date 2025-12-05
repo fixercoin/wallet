@@ -103,6 +103,17 @@ export function NotificationCenter() {
 
                         setIsOpen(false);
 
+                        // Determine buyer and seller based on notification type
+                        // For BUY orders: senderWallet is buyer, recipientWallet is seller/admin
+                        // For SELL orders: senderWallet is seller, recipientWallet is buyer
+                        const isBuyOrder = notification.orderType === "BUY";
+                        const buyerWallet = isBuyOrder
+                          ? notification.senderWallet
+                          : notification.recipientWallet;
+                        const sellerWallet = isBuyOrder
+                          ? notification.recipientWallet
+                          : notification.senderWallet;
+
                         navigate("/order-complete", {
                           state: {
                             order: {
@@ -111,15 +122,11 @@ export function NotificationCenter() {
                               token: notification.orderData.token,
                               amountTokens: notification.orderData.amountTokens,
                               amountPKR: notification.orderData.amountPKR,
-                              buyerWallet:
-                                notification.orderType === "BUY"
-                                  ? notification.senderWallet
-                                  : notification.recipientWallet,
-                              sellerWallet:
-                                notification.orderType === "BUY"
-                                  ? notification.recipientWallet
-                                  : notification.senderWallet,
+                              buyerWallet,
+                              sellerWallet,
+                              paymentMethod: "easypaisa",
                             },
+                            roomId: notification.orderId,
                             openChat: true,
                           },
                         });

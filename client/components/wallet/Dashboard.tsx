@@ -1045,7 +1045,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {/* P2P EXPRESS SERVICE Button with Notification Badge */}
             <div className="flex items-center justify-center gap-2 sm:gap-3 mt-4 w-full px-0">
               <Button
-                onClick={() => navigate("/p2p")}
+                onClick={() => navigate("/buy-order")}
                 className="relative flex-1 flex items-center bg-transparent border border-[#22c55e]/40 rounded-md px-4 py-3 hover:bg-[#22c55e]/10 transition-colors text-white font-bold text-xs h-auto py-3"
               >
                 <Bell className="h-4 w-4 text-[#22c55e] flex-shrink-0" />

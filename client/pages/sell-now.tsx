@@ -270,23 +270,33 @@ export default function SellNow() {
         console.error("Error saving to KV storage:", kvError);
       }
 
-      await createNotification(
-        ADMIN_WALLET,
-        "order_created",
-        "SELL",
-        orderId,
-        `New sell order created: ${amount.toFixed(6)} ${selectedToken.id} for ${(amount * exchangeRate).toFixed(2)} PKR`,
-        {
-          token: selectedToken.id,
-          amountTokens: amount,
-          amountPKR: amount * exchangeRate,
-        },
-      );
+      if (!editingOrder) {
+        await createNotification(
+          ADMIN_WALLET,
+          "order_created",
+          "SELL",
+          orderId,
+          `New sell order created: ${amount.toFixed(6)} ${selectedToken.id} for ${(amount * exchangeRate).toFixed(2)} PKR`,
+          {
+            token: selectedToken.id,
+            amountTokens: amount,
+            amountPKR: amount * exchangeRate,
+          },
+        );
+      }
 
-      navigate("/buy-order");
+      toast({
+        title: "Success",
+        description: editingOrder
+          ? "Sell order updated successfully"
+          : "Sell order created successfully",
+        duration: 2000,
+      });
+
+      navigate("/sell-order");
     } catch (error: any) {
       toast({
-        title: "Failed to start chat",
+        title: "Failed to save order",
         description: error?.message || String(error),
         variant: "destructive",
       });

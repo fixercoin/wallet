@@ -370,7 +370,7 @@ export default function SellNow() {
             </Button>
 
             <Button
-              onClick={() => navigate("/p2p")}
+              onClick={() => navigate("/")}
               variant="outline"
               className="w-full h-12 rounded-lg font-semibold transition-all duration-200 border border-[#FF7A5C]/50 text-[#FF7A5C] hover:bg-[#FF7A5C]/10"
             >

@@ -64,8 +64,8 @@ export default function VerifySell() {
   const [offerPassword, setOfferPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  const syncIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
-  const lastMessageCountRef = React.useRef(0);
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastMessageCountRef = useRef(0);
 
   const OFFER_PASSWORD = "######Pakistan";
 

@@ -221,36 +221,28 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                 <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
                   Name
                 </p>
-                <p className="text-white font-medium">
-                  {userName}
-                </p>
+                <p className="text-white font-medium">{userName}</p>
               </div>
 
               <div className="p-3 rounded-lg bg-[#0f1729] border border-gray-600">
                 <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
                   Payment Method
                 </p>
-                <p className="text-white font-medium">
-                  {paymentMethod}
-                </p>
+                <p className="text-white font-medium">{paymentMethod}</p>
               </div>
 
               <div className="p-3 rounded-lg bg-[#0f1729] border border-gray-600">
                 <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
                   Account Name
                 </p>
-                <p className="text-white font-medium">
-                  {accountName}
-                </p>
+                <p className="text-white font-medium">{accountName}</p>
               </div>
 
               <div className="p-3 rounded-lg bg-[#0f1729] border border-gray-600">
                 <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
                   Account Number
                 </p>
-                <p className="text-white font-medium">
-                  {accountNumber}
-                </p>
+                <p className="text-white font-medium">{accountNumber}</p>
               </div>
 
               <div className="p-3 rounded-lg bg-[#0f1729] border border-gray-600">
@@ -289,11 +281,16 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   }
                   disabled={loading}
                 >
-                  <SelectTrigger id="paymentMethod" className="uppercase bg-[#0f1729] border border-gray-600 text-white">
+                  <SelectTrigger
+                    id="paymentMethod"
+                    className="uppercase bg-[#0f1729] border border-gray-600 text-white"
+                  >
                     <SelectValue placeholder="SELECT PAYMENT METHOD" />
                   </SelectTrigger>
                   <SelectContent className="bg-[#1a2540] border border-gray-600">
-                    <SelectItem value="EASYPAISA" className="text-white">EASYPAISA</SelectItem>
+                    <SelectItem value="EASYPAISA" className="text-white">
+                      EASYPAISA
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

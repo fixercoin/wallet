@@ -30,7 +30,9 @@ export default function OrderComplete() {
   const [sellerVerified, setSellerVerified] = useState(false);
 
   const roomId = order?.id || order?.roomId || "global";
-  const isBuyer = order?.type === "buy";
+
+  // Determine if current user is buyer based on wallet
+  const isBuyer = order?.buyerWallet === wallet?.publicKey;
 
   useEffect(() => {
     const loadChat = async () => {
@@ -132,20 +134,15 @@ export default function OrderComplete() {
     await saveChatMessage(roomId, msg);
     await sendChatMessage(roomId, msg);
 
-    const otherWalletKey =
-      order.type === "BUY"
-        ? isBuyerAction
-          ? order.sellerWallet
-          : order.buyerWallet
-        : isBuyerAction
-          ? order.buyerWallet
-          : order.sellerWallet;
+    const otherWalletKey = isBuyerAction
+      ? order.sellerWallet
+      : order.buyerWallet;
 
     if (isBuyerAction) {
       await createNotification(
         otherWalletKey,
         "payment_confirmed",
-        order.type || "BUY",
+        "BUY",
         order.id,
         "Buyer has confirmed payment",
         {
@@ -158,7 +155,7 @@ export default function OrderComplete() {
       await createNotification(
         otherWalletKey,
         "received_confirmed",
-        order.type || "BUY",
+        "BUY",
         order.id,
         "Seller has confirmed receiving payment",
         {
@@ -260,7 +257,7 @@ export default function OrderComplete() {
                   onClick={handleVerify}
                   className="w-full mt-3 bg-green-600/30 border border-green-500/50 hover:bg-green-600/40 text-green-400 uppercase text-xs font-semibold"
                 >
-                  CONFIRM I HAVE PAID
+                  I HAVE PAID FIAT
                 </Button>
               )}
             </div>
@@ -293,7 +290,7 @@ export default function OrderComplete() {
                   onClick={handleVerify}
                   className="w-full mt-3 bg-purple-600/30 border border-purple-500/50 hover:bg-purple-600/40 text-purple-400 uppercase text-xs font-semibold"
                 >
-                  CONFIRM I HAVE RECEIVED
+                  I HAVE TRANSFERRED CRYPTO
                 </Button>
               )}
             </div>

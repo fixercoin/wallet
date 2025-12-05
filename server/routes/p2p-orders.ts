@@ -74,7 +74,7 @@ function normalizeOrder(order: any): P2POrder {
     amountTokens: order.amountTokens ?? parseFloat(order.token_amount || 0),
     amountPKR: order.amountPKR ?? order.pkr_amount,
     pricePKRPerQuote: order.pricePKRPerQuote,
-    paymentMethod: order.paymentMethod || order.payment_method,
+    payment_method: order.paymentMethod || order.payment_method,
     status: (order.status || "PENDING") as P2POrder["status"],
     createdAt: order.createdAt || order.created_at || Date.now(),
     updatedAt: order.updatedAt || order.updated_at || Date.now(),

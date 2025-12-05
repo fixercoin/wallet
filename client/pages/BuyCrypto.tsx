@@ -168,6 +168,33 @@ export default function BuyCrypto() {
     fetchRate();
   }, [selectedToken]);
 
+  // Fetch payment method from KV for the current wallet
+  useEffect(() => {
+    const fetchPaymentMethod = async () => {
+      if (!wallet?.publicKey) {
+        setPaymentMethod(null);
+        return;
+      }
+
+      setFetchingPaymentMethod(true);
+      try {
+        const methods = await getPaymentMethodsByWallet(wallet.publicKey);
+        if (methods.length > 0) {
+          setPaymentMethod(methods[0]);
+        } else {
+          setPaymentMethod(null);
+        }
+      } catch (error) {
+        console.error("Error fetching payment method:", error);
+        setPaymentMethod(null);
+      } finally {
+        setFetchingPaymentMethod(false);
+      }
+    };
+
+    fetchPaymentMethod();
+  }, [wallet?.publicKey]);
+
   // Estimate tokens on amount/rate change
   useEffect(() => {
     if (amountPKR && exchangeRate > 0) {

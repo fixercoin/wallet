@@ -31,6 +31,7 @@ const TOKEN_MINTS: Record<string, string> = {
   USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
   FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
   LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+  FXM: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
 };
 
 const FALLBACK_USD: Record<string, number> = {
@@ -39,6 +40,7 @@ const FALLBACK_USD: Record<string, number> = {
   USDC: 1.0,
   USDT: 1.0,
   LOCKER: 0.00001112, // Real-time market price
+  FXM: 0.000003567, // Real-time market price
 };
 
 /**
@@ -115,6 +117,20 @@ async function getDerivedTokenPrice(
       }
     }
 
+    // If DexScreener failed, try Jupiter API
+    if (tokenPrice === null) {
+      console.log(
+        `[Derived Price] DexScreener failed for ${tokenSymbol}, trying Jupiter...`,
+      );
+      const jupiterPrice = await fetchPriceFromJupiter(tokenMint);
+      if (jupiterPrice !== null) {
+        tokenPrice = jupiterPrice;
+        console.log(
+          `[Derived Price] ✅ Got ${tokenSymbol} price from Jupiter: $${jupiterPrice.toFixed(8)}`,
+        );
+      }
+    }
+
     // If we still don't have a price, return null
     if (tokenPrice === null || !isFinite(tokenPrice) || tokenPrice <= 0) {
       console.warn(
@@ -184,9 +200,27 @@ export const handleDexscreenerPrice: RequestHandler = async (req, res) => {
       );
     }
 
-    // Fallback response - return zero price but valid JSON
+    // Try Jupiter API as fallback
     console.log(
-      `[DexScreener Price] Returning zero price fallback for ${token}`,
+      `[DexScreener Price] DexScreener failed for ${token}, trying Jupiter API...`,
+    );
+    const jupiterPrice = await fetchPriceFromJupiter(token);
+    if (jupiterPrice !== null) {
+      console.log(
+        `[DexScreener Price] ✅ Got price from Jupiter: $${jupiterPrice}`,
+      );
+      return res.json({
+        token,
+        price: jupiterPrice,
+        priceUsd: jupiterPrice.toString(),
+        data: null,
+        source: "jupiter",
+      });
+    }
+
+    // Fallback response - return zero price if both APIs fail
+    console.log(
+      `[DexScreener Price] Both DexScreener and Jupiter failed for ${token}`,
     );
     return res.json({
       token,
@@ -194,7 +228,7 @@ export const handleDexscreenerPrice: RequestHandler = async (req, res) => {
       priceUsd: "0",
       data: null,
       source: "fallback",
-      error: "Token price not available from DexScreener",
+      error: "Token price not available from DexScreener or Jupiter",
     });
   } catch (error) {
     console.error(`[DexScreener Price] Handler error:`, error);
@@ -239,7 +273,9 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
         }
       }
 
-      console.warn(`[SOL Price] Invalid or missing price data, using fallback`);
+      console.warn(
+        `[SOL Price] Invalid or missing price data from DexScreener`,
+      );
     } catch (error) {
       console.warn(
         `[SOL Price] DexScreener fetch failed:`,
@@ -247,8 +283,28 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
       );
     }
 
+    // Try Jupiter API as fallback
+    console.log(`[SOL Price] Trying Jupiter API for SOL price...`);
+    const jupiterPrice = await fetchPriceFromJupiter(SOL_MINT);
+    if (jupiterPrice !== null) {
+      console.log(
+        `[SOL Price] ✅ Got SOL price from Jupiter: $${jupiterPrice}`,
+      );
+      return res.json({
+        token: "SOL",
+        price: jupiterPrice,
+        priceUsd: jupiterPrice,
+        priceChange24h: 0,
+        volume24h: 0,
+        marketCap: 0,
+        source: "jupiter",
+      });
+    }
+
     // Fallback response with status 200 (not 502) to ensure client receives valid JSON
-    console.log(`[SOL Price] Returning fallback price: $${FALLBACK_SOL_PRICE}`);
+    console.log(
+      `[SOL Price] Both DexScreener and Jupiter failed, using hardcoded fallback: $${FALLBACK_SOL_PRICE}`,
+    );
     return res.json({
       token: "SOL",
       price: FALLBACK_SOL_PRICE,
@@ -272,6 +328,60 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
     });
   }
 };
+
+/**
+ * Fetch price from Jupiter API as fallback
+ */
+async function fetchPriceFromJupiter(mint: string): Promise<number | null> {
+  try {
+    console.log(`[Jupiter Fallback] Fetching price for ${mint} from Jupiter`);
+
+    const params = new URLSearchParams({ ids: mint });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    const response = await fetch(`https://price.jup.ag/v4/price?${params}`, {
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+      },
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.warn(
+        `[Jupiter Fallback] API returned ${response.status} for mint ${mint}`,
+      );
+      return null;
+    }
+
+    const data = (await response.json()) as {
+      data?: Record<string, { price: number }>;
+    };
+
+    if (data.data && data.data[mint] && data.data[mint].price) {
+      const price = data.data[mint].price;
+      if (isFinite(price) && price > 0) {
+        console.log(
+          `[Jupiter Fallback] ✅ Got price for ${mint} from Jupiter: $${price}`,
+        );
+        return price;
+      }
+    }
+
+    console.warn(`[Jupiter Fallback] No valid price data for ${mint}`);
+    return null;
+  } catch (error) {
+    console.warn(
+      `[Jupiter Fallback] Failed to fetch price:`,
+      error instanceof Error ? error.message : String(error),
+    );
+    return null;
+  }
+}
 
 export const handleTokenPrice: RequestHandler = async (req, res) => {
   try {
@@ -388,6 +498,20 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
               console.warn(`[Token Price] Token lookup failed:`, e);
             }
           }
+
+          // If DexScreener completely failed, try Jupiter as fallback
+          if (priceUsd === null && mint) {
+            console.log(
+              `[Token Price] DexScreener failed for ${token}, trying Jupiter fallback...`,
+            );
+            const jupiterPrice = await fetchPriceFromJupiter(mint);
+            if (jupiterPrice !== null) {
+              priceUsd = jupiterPrice;
+              console.log(
+                `[Token Price] ✅ Got ${token} price from Jupiter: $${jupiterPrice}`,
+              );
+            }
+          }
         }
       } else if (mint) {
         const pairAddress = MINT_TO_PAIR_ADDRESS[mint];
@@ -444,6 +568,20 @@ export const handleTokenPrice: RequestHandler = async (req, res) => {
             }
           } catch (e) {
             console.warn(`[Token Price] Token lookup failed:`, e);
+          }
+        }
+
+        // If DexScreener completely failed, try Jupiter as fallback
+        if (priceUsd === null && mint) {
+          console.log(
+            `[Token Price] DexScreener failed for ${token}, trying Jupiter fallback...`,
+          );
+          const jupiterPrice = await fetchPriceFromJupiter(mint);
+          if (jupiterPrice !== null) {
+            priceUsd = jupiterPrice;
+            console.log(
+              `[Token Price] ✅ Got ${token} price from Jupiter: $${jupiterPrice}`,
+            );
           }
         }
       }

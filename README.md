@@ -1,6 +1,6 @@
-# Wallet-c36 Netlify Serverless Setup
+# Wallet-c36 Cloudflare Pages Serverless Setup
 
-This project is configured for Netlify with serverless functions.
+This project is configured for Cloudflare Pages with serverless functions.
 Frontend builds to `dist` and serverless functions are in `netlify/functions/`.
 
 ## Key endpoints
@@ -19,9 +19,9 @@ Frontend builds to `dist` and serverless functions are in `netlify/functions/`.
 2. Run dev server: `npm run dev` (starts both frontend on 5173 and backend on 3000)
 3. Frontend will proxy `/api` requests to the local Express backend
 
-## Deploy to Netlify
+## Deploy to Cloudflare Pages
 
-1. Connect your repository to Netlify:
+1. Connect your repository to Cloudflare Pages:
    - Go to https://netlify.com
    - Click "New site from Git"
    - Select your repository
@@ -31,7 +31,7 @@ Frontend builds to `dist` and serverless functions are in `netlify/functions/`.
    - Publish directory: `dist`
    - Functions directory: `netlify/functions`
 
-3. Set environment variables in Netlify dashboard:
+3. Set environment variables in Cloudflare Pages dashboard:
 
    **Required:**
    - `SOLANA_RPC` - Solana RPC endpoint (e.g., https://api.mainnet-beta.solana.com)
@@ -43,8 +43,8 @@ Frontend builds to `dist` and serverless functions are in `netlify/functions/`.
    - `BIRDEYE_API_KEY` - Get from https://birdeye.so/
 
 4. Deploy:
-   - Netlify will auto-build and deploy when you push to your repository
-   - Or use Netlify CLI: `netlify deploy --prod`
+   - Cloudflare Pages will auto-build and deploy when you push to your repository
+   - Or use Cloudflare Pages CLI: `netlify deploy --prod`
 
 ## Project Structure
 
@@ -53,12 +53,12 @@ Frontend builds to `dist` and serverless functions are in `netlify/functions/`.
 │   ├── components/        # UI components
 │   ├── pages/             # Page routes
 │   └── lib/               # Utilities and hooks
-├── netlify/functions/     # Netlify serverless functions
+├── netlify/functions/     # Cloudflare Pages serverless functions
 │   ├── api.ts            # Main API handler
 │   └── api/              # Nested API routes
 ├── server/               # Express backend for local development
 ├── vite.config.mjs      # Vite configuration
-├── netlify.toml         # Netlify configuration
+├── wrangler.toml         # Cloudflare Pages configuration
 ├── tsconfig.json        # TypeScript configuration
 └── package.json         # Dependencies
 ```
@@ -71,11 +71,11 @@ Frontend builds to `dist` and serverless functions are in `netlify/functions/`.
 - Backend runs on http://localhost:3000 (Express)
 - Frontend proxies `/api/*` to backend via vite.config.mjs
 
-**Production (Netlify):**
+**Production (Cloudflare Pages):**
 
 - Frontend builds to `dist/` directory
 - API requests to `/api/*` are redirected to `/.netlify/functions/api/:splat`
-- Netlify serverless functions handle all API requests
+- Cloudflare Pages serverless functions handle all API requests
 - Frontend is served with SPA fallback for client-side routing
 
 ## Troubleshooting
@@ -94,6 +94,6 @@ Frontend builds to `dist` and serverless functions are in `netlify/functions/`.
 
 **Functions not working in production:**
 
-- Check Netlify function logs in dashboard
-- Verify environment variables are set in Netlify settings
-- Ensure RPC endpoint is accessible from Netlify servers
+- Check Cloudflare Pages function logs in dashboard
+- Verify environment variables are set in Cloudflare Pages settings
+- Ensure RPC endpoint is accessible from Cloudflare Pages servers

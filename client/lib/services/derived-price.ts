@@ -12,6 +12,14 @@ export interface DerivedPrice {
   updatedAt: number;
 }
 
+export interface GenericTokenPrice {
+  mint: string;
+  tokensPerSol: number; // how many token units per 1 SOL
+  tokenUsd: number; // USD price per 1 token
+  solUsd: number; // SOL USD price used
+  updatedAt: number;
+}
+
 const DECIMALS: Record<SupportedToken | "SOL", number> = {
   SOL: 9,
   FIXERCOIN: 6,
@@ -20,9 +28,11 @@ const DECIMALS: Record<SupportedToken | "SOL", number> = {
 
 const FALLBACK_USD: Record<SupportedToken | "SOL", number> = {
   SOL: 149.38, // Real-time market price
-  FIXERCOIN: 0.00008139, // Real-time market price
-  LOCKER: 0.00001112, // Real-time market price
+  FIXERCOIN: 0.000042, // Fallback price for pump.fun token
+  LOCKER: 0.000008, // Fallback price for pump.fun token
 };
+
+const genericTokenCache = new Map<string, GenericTokenPrice>();
 
 const cache = new Map<SupportedToken, DerivedPrice>();
 const CACHE_TTL_MS = 30_000;
@@ -43,25 +53,73 @@ async function getSolUsd(): Promise<number> {
 async function getTokensPerSol(token: SupportedToken): Promise<number | null> {
   try {
     const solMint = TOKEN_MINTS.SOL;
-    const tokenMint = TOKEN_MINTS[token];
+    const tokenMintOrig = TOKEN_MINTS[token];
 
-    // Use Jupiter API to get 1 SOL quote
+    // Build candidate mint variants to handle accidental suffixes like "pump" or "ixpump"
+    const candidates = [tokenMintOrig];
+    if (tokenMintOrig.endsWith("ixpump")) {
+      candidates.push(tokenMintOrig.slice(0, -6));
+    }
+    if (tokenMintOrig.endsWith("pump")) {
+      candidates.push(tokenMintOrig.slice(0, -4));
+    }
+
+    // Ensure unique
+    const uniqCandidates = Array.from(new Set(candidates.filter(Boolean)));
+
+    // Try Jupiter for each candidate mint
     const rawAmt = jupiterAPI.formatSwapAmount(1, DECIMALS.SOL);
-    const q = await jupiterAPI.getQuote(solMint, tokenMint, rawAmt as any);
+    for (const candidateMint of uniqCandidates) {
+      try {
+        const q = await jupiterAPI.getQuote(
+          solMint,
+          candidateMint,
+          rawAmt as any,
+        );
+        if (!q || !q.outAmount || q.outAmount === "0") {
+          console.warn(`No Jupiter quote for candidate ${candidateMint}`);
+          continue;
+        }
 
-    if (!q) {
-      console.warn(`No Jupiter quote for ${token}`);
-      return null;
+        const out = jupiterAPI.parseSwapAmount(q.outAmount, DECIMALS[token]);
+        if (!Number.isFinite(out) || out <= 0) {
+          console.warn(
+            `Invalid quote output for candidate ${candidateMint}: ${out}`,
+          );
+          continue;
+        }
+
+        console.log(
+          `${token}: 1 SOL = ${out.toFixed(2)} tokens (from Jupiter, mint=${candidateMint})`,
+        );
+        return out;
+      } catch (err) {
+        console.warn(`Jupiter error for candidate ${candidateMint}:`, err);
+      }
     }
 
-    const out = jupiterAPI.parseSwapAmount(q.outAmount, DECIMALS[token]);
-    if (!Number.isFinite(out) || out <= 0) {
-      console.warn(`Invalid quote output for ${token}: ${out}`);
-      return null;
+    // If Jupiter failed, try DexScreener price-based estimation using any candidate mint
+    for (const candidateMint of uniqCandidates) {
+      try {
+        const dexData = await getUsdFromDexscreener(token, candidateMint);
+        if (dexData && dexData > 0) {
+          // derive tokensPerSol from SOL USD price and token USD price
+          const solUsd = await getSolUsd();
+          const tokensPerSol = solUsd / dexData;
+          console.log(
+            `${token}: estimated 1 SOL = ${tokensPerSol.toFixed(2)} tokens (from DexScreener, mint=${candidateMint})`,
+          );
+          return tokensPerSol;
+        }
+      } catch (err) {
+        console.warn(`DexScreener fallback failed for ${candidateMint}:`, err);
+      }
     }
 
-    console.log(`${token}: 1 SOL = ${out.toFixed(2)} tokens (from Jupiter)`);
-    return out;
+    console.warn(
+      `No quote found for ${token} (candidates: ${uniqCandidates.join(",")})`,
+    );
+    return null;
   } catch (error) {
     console.warn(`Error getting ${token} from Jupiter:`, error);
     return null;
@@ -82,9 +140,11 @@ async function getUsdFromServer(token: SupportedToken): Promise<number | null> {
 
 async function getUsdFromDexscreener(
   token: SupportedToken,
+  mint?: string,
 ): Promise<number | null> {
   try {
-    const data = await dexscreenerAPI.getTokenByMint(TOKEN_MINTS[token]);
+    const lookupMint = mint || TOKEN_MINTS[token];
+    const data = await dexscreenerAPI.getTokenByMint(lookupMint);
     const p = data?.priceUsd ? parseFloat(data.priceUsd) : NaN;
     return Number.isFinite(p) && p > 0 ? p : null;
   } catch {
@@ -131,5 +191,68 @@ export async function getDerivedPrice(
     updatedAt: now,
   };
   cache.set(token, result);
+  return result;
+}
+
+async function getGenericTokensPerSol(
+  tokenMint: string,
+  tokenDecimals: number,
+): Promise<number | null> {
+  try {
+    // Use DexScreener to get token USD price
+    const dexData = await dexscreenerAPI.getTokenByMint(tokenMint);
+    if (dexData?.priceUsd) {
+      const tokenUsd = parseFloat(dexData.priceUsd);
+      if (Number.isFinite(tokenUsd) && tokenUsd > 0) {
+        const solUsd = await getSolUsd();
+        const tokensPerSol = solUsd / tokenUsd;
+        console.log(
+          `1 SOL = ${tokensPerSol.toFixed(2)} tokens (mint=${tokenMint}, from DexScreener)`,
+        );
+        return tokensPerSol;
+      }
+    }
+
+    console.warn(`No price data found for token ${tokenMint} on DexScreener`);
+    return null;
+  } catch (error) {
+    console.warn(`Error getting tokens per SOL for ${tokenMint}:`, error);
+    return null;
+  }
+}
+
+export async function getTokenPriceBySol(
+  mint: string,
+  decimals: number,
+): Promise<GenericTokenPrice | null> {
+  const now = Date.now();
+  const cached = genericTokenCache.get(mint);
+  if (cached && now - cached.updatedAt < CACHE_TTL_MS) return cached;
+
+  const [solUsd, tps] = await Promise.all([
+    getSolUsd(),
+    getGenericTokensPerSol(mint, decimals),
+  ]);
+
+  let tokensPerSol = tps ?? 0;
+  let tokenUsd = 0;
+
+  if (tokensPerSol > 0) {
+    tokenUsd = solUsd / tokensPerSol;
+  } else {
+    // If DexScreener failed, return null
+    // The caller should handle fallback to existing price data
+    console.warn(`Unable to calculate price for token ${mint}`);
+    return null;
+  }
+
+  const result: GenericTokenPrice = {
+    mint,
+    tokensPerSol,
+    tokenUsd,
+    solUsd,
+    updatedAt: now,
+  };
+  genericTokenCache.set(mint, result);
   return result;
 }

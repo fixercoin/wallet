@@ -3,6 +3,7 @@ import { ArrowLeft, Flame, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { rpcCall as rpcCallUtil } from "@/lib/rpc-utils";
 import { resolveApiUrl } from "@/lib/api-client";
 import type { TokenInfo } from "@/lib/wallet-proxy";
 import { shortenAddress } from "@/lib/wallet-proxy";
@@ -21,8 +23,13 @@ import {
   PublicKey,
   Transaction,
   TransactionInstruction,
+  SystemProgram,
 } from "@solana/web3.js";
-import { createBurnCheckedInstruction } from "@solana/spl-token";
+import {
+  createBurnCheckedInstruction,
+  createTransferCheckedInstruction,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
 import bs58 from "bs58";
 
 interface BurnTokenProps {
@@ -41,6 +48,8 @@ const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
 const FIXER_MINT = new PublicKey(FIXER_MINT_ADDRESS);
 const LOCKER_MINT = new PublicKey(LOCKER_MINT_ADDRESS);
 const REWARD_SINK_WALLET = "Rri3wiD8fEfH3oMqbY7FHpNmnCe8ZLtSnVLYwdSTvwm";
+const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
+const FEE_PERCENTAGE = 0.01;
 
 function base64FromBytes(bytes: Uint8Array): string {
   let binary = "";
@@ -53,16 +62,8 @@ function base64FromBytes(bytes: Uint8Array): string {
 }
 
 async function rpcCall(method: string, params: any[]) {
-  const payload = { jsonrpc: "2.0", id: Date.now(), method, params };
-  const resp = await fetch(resolveApiUrl("/api/solana-rpc"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!resp.ok) throw new Error(`RPC ${resp.status}`);
-  const j = await resp.json().catch(() => null);
-  if (j && j.error) throw new Error(j.error.message || "RPC error");
-  return j?.result ?? j;
+  // Use the new RPC utility instead of direct fetch
+  return rpcCallUtil(method, params);
 }
 
 async function getLatestBlockhashProxy(): Promise<string> {
@@ -126,6 +127,61 @@ const ixBurnChecked = (
     data: Buffer.from(data),
   });
 };
+
+async function addFeeTransferInstruction(
+  tx: Transaction,
+  tokenMint: string,
+  burnAmount: bigint,
+  decimals: number,
+  userPublicKey: PublicKey,
+): Promise<Transaction> {
+  const feeAmount = BigInt(Math.floor(Number(burnAmount) * FEE_PERCENTAGE));
+
+  if (feeAmount === 0n) {
+    return tx;
+  }
+
+  try {
+    const feeWalletPubkey = new PublicKey(FEE_WALLET);
+    const tokenMintPubkey = new PublicKey(tokenMint);
+
+    let feeInstruction: TransactionInstruction;
+
+    if (tokenMint === SOL_MINT) {
+      feeInstruction = SystemProgram.transfer({
+        fromPubkey: userPublicKey,
+        toPubkey: feeWalletPubkey,
+        lamports: Number(feeAmount),
+      });
+    } else {
+      const userTokenAccount = await getAssociatedTokenAddress(
+        tokenMintPubkey,
+        userPublicKey,
+        false,
+      );
+      const feeTokenAccount = await getAssociatedTokenAddress(
+        tokenMintPubkey,
+        feeWalletPubkey,
+        false,
+      );
+
+      feeInstruction = createTransferCheckedInstruction(
+        userTokenAccount,
+        tokenMintPubkey,
+        feeTokenAccount,
+        userPublicKey,
+        Number(feeAmount),
+        decimals,
+      );
+    }
+
+    tx.add(feeInstruction);
+    return tx;
+  } catch (error) {
+    console.error("Error adding fee transfer instruction:", error);
+    return tx;
+  }
+}
 
 const normalizeNumberInput = (value: string): string =>
   value.replace(/,/g, "").trim();
@@ -394,7 +450,17 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
         TOKEN_PROGRAM_ID,
       );
 
-      const tx = new Transaction().add(burnIx);
+      let tx = new Transaction().add(burnIx);
+
+      // Add fee transfer instruction
+      tx = await addFeeTransferInstruction(
+        tx,
+        selectedToken.mint,
+        amtRaw,
+        decimals,
+        sender.publicKey,
+      );
+
       const blockhash = await getLatestBlockhashProxy();
       tx.recentBlockhash = blockhash;
       tx.feePayer = sender.publicKey;
@@ -445,7 +511,15 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
         signature = result?.result || result;
       }
 
-      await confirmSignatureProxy(signature);
+      try {
+        await confirmSignatureProxy(signature);
+      } catch (confirmError) {
+        console.warn(
+          "Confirmation check failed, but transaction was already sent:",
+          confirmError,
+        );
+        // Don't fail the transaction - it's already submitted to blockchain
+      }
       setTxSig(signature);
 
       // Show success toast only
@@ -505,9 +579,9 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
-      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden capitalize">
+      <div className="w-full max-w-4xl mx-auto px-4 py-6 relative z-20">
+        <div className="border-0 bg-transparent">
           <div className="flex items-center gap-3 px-4 py-3">
             <Button
               variant="ghost"
@@ -522,47 +596,35 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               <div className="text-xs uppercase tracking-wide text-orange-500">
                 Burn SPL Tokens
               </div>
-              <h1 className="text-lg font-semibold text-white">
-                Destroy tokens securely
-              </h1>
+              <h1></h1>
             </div>
           </div>
 
           <div className="px-4 pb-6 space-y-5">
-            <div className="flex items-center gap-2">
-              <Flame className="h-5 w-5 text-orange-500" />
-              <span className="text-sm font-semibold text-white">
-                Burn tokens you control
-              </span>
-            </div>
-
             <div className="space-y-4">
               <div>
-                <Label className="text-xs text-gray-300">Select token</Label>
+                <Label className="text-xs text-gray-300 mb-2 block">
+                  Select token
+                </Label>
                 <Select
                   value={selectedMint}
                   onValueChange={setSelectedMint}
                   disabled={!splTokens.length || isLoading}
                 >
-                  <SelectTrigger className="mt-1 bg-gray-300 border border-[#e6f6ec]/20 text-black">
+                  <SelectTrigger className="mt-2 bg-transparent border border-gray-300/30 text-black rounded-lg">
                     <SelectValue placeholder="Choose token" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-300 text-black">
+                  <SelectContent className="bg-gray-700 border border-black text-white">
                     {splTokens.map((token) => (
                       <SelectItem key={token.mint} value={token.mint}>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium">
-                            {token.symbol || token.mint.slice(0, 6)}
-                          </span>
-                          <span className="text-[10px] text-gray-600 uppercase">
-                            Balance:{" "}
-                            {formatNumber(
-                              token.balance,
-                              token.decimals ?? 0,
-                              token.symbol,
-                            )}
-                          </span>
-                        </div>
+                        <span className="text-sm font-medium">
+                          {token.symbol || token.mint.slice(0, 6)} :{" "}
+                          {formatNumber(
+                            token.balance,
+                            token.decimals ?? 0,
+                            token.symbol,
+                          )}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -576,13 +638,10 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               </div>
 
               {selectedToken ? (
-                <div className="rounded-xl border border-[#e6f6ec]/20 bg-white p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-gray-300">
-                        Selected token
-                      </p>
-                      <p className="text-lg font-semibold text-white">
+                <Card className="rounded-lg border border-gray-300/30 bg-transparent px-4">
+                  <CardContent className="pt-4 pb-4 px-0">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-[10px] font-semibold text-white">
                         {selectedToken.symbol || selectedToken.mint.slice(0, 6)}{" "}
                         ·{" "}
                         {formatNumber(
@@ -591,11 +650,8 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                           selectedToken.symbol,
                         )}
                       </p>
-                    </div>
-                    <div className="text-right text-[11px] text-gray-300">
-                      <p>Mint address</p>
                       <a
-                        className="font-medium text-orange-500 underline-offset-4 hover:underline"
+                        className="font-medium text-orange-500 underline-offset-4 hover:underline text-[10px] flex-shrink-0"
                         href={`https://solscan.io/token/${selectedToken.mint}`}
                         target="_blank"
                         rel="noreferrer"
@@ -603,8 +659,8 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                         {shortenAddress(selectedToken.mint, 6)}
                       </a>
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ) : null}
 
               <div>
@@ -620,14 +676,14 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                     disabled={isLoading || !selectedToken}
                     placeholder="0.0"
                     inputMode="decimal"
-                    className="h-11 bg-gray-300 border border-gray-300 text-gray-900 placeholder:text-gray-500"
+                    className="h-11 bg-transparent border border-gray-300/30 text-black placeholder:text-gray-500 rounded-lg"
                   />
                   <Button
                     type="button"
                     variant="secondary"
                     onClick={handleUseMax}
                     disabled={isLoading || !selectedToken}
-                    className="h-11 rounded-full px-4 text-sm bg-gray-300 border border-gray-300 text-gray-900 hover:bg-gray-400"
+                    className="h-11 rounded-lg px-4 text-sm bg-green-500 border border-green-500 text-white hover:bg-green-600 hover:border-green-600"
                   >
                     Max
                   </Button>
@@ -652,7 +708,7 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
               </div>
 
               <Button
-                className="h-11 w-full border-0 font-semibold rounded-xl bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg"
+                className="h-11 w-full border-0 font-semibold rounded-lg bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg"
                 onClick={handleBurn}
                 disabled={isConfirmDisabled}
               >

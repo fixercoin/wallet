@@ -76,7 +76,7 @@ class JupiterAPI {
     },
   ): Promise<JupiterQuoteResponse | null> {
     // Retry logic for transient failures
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         const params = new URLSearchParams({
           inputMint,
@@ -91,80 +91,103 @@ class JupiterAPI {
 
         const path = `/api/jupiter/quote?${params.toString()}`;
         console.log(
-          `Jupiter quote request (attempt ${attempt}/2): ${inputMint} -> ${outputMint}`,
+          `Jupiter quote request (attempt ${attempt}/3): ${inputMint} -> ${outputMint}`,
         );
 
-        const response = await fetchWithFallback(path, { method: "GET" }).catch(
-          () => new Response("", { status: 0 } as any),
-        );
-        const txt = await response.text().catch(() => "");
-
-        if (!response.ok) {
-          try {
-            const errorData = txt ? JSON.parse(txt) : {};
-            const errorCode = errorData?.code;
-
-            // If no route found, return null (don't retry for this)
-            if (
-              errorCode === "NO_ROUTE_FOUND" ||
-              response.status === 404 ||
-              response.status === 400
-            ) {
-              console.warn(
-                `No route available from Jupiter for ${inputMint} -> ${outputMint} (${response.status})`,
-              );
-              return null;
-            }
-          } catch (parseErr) {
-            console.debug("Could not parse error response:", parseErr);
-          }
-
-          // For server errors or rate limits, retry
-          if (response.status === 429 || response.status >= 500) {
-            console.warn(
-              `Jupiter API error ${response.status} (attempt ${attempt}/2), retrying...`,
-            );
-            if (attempt < 2) {
-              await new Promise((r) => setTimeout(r, attempt * 1000));
-              continue;
-            }
-          }
-
-          console.warn(
-            "Jupiter quote unavailable (proxy):",
-            response.status,
-            txt.substring(0, 100),
-          );
-          return null;
-        }
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 45000);
 
         try {
-          const quote = JSON.parse(txt);
-          console.log(
-            `✅ Jupiter quote success (attempt ${attempt}): ${quote.outAmount}`,
-          );
-          return quote;
-        } catch (e) {
-          console.warn("Failed to parse Jupiter proxy quote response:", e);
-          return null;
+          const response = await fetch(path, {
+            method: "GET",
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+
+          const txt = await response.text().catch(() => "");
+
+          if (!response.ok) {
+            try {
+              const errorData = txt ? JSON.parse(txt) : {};
+              const errorCode = errorData?.code;
+
+              // If no route found, return null (don't retry for this)
+              if (
+                errorCode === "NO_ROUTE_FOUND" ||
+                response.status === 404 ||
+                response.status === 400
+              ) {
+                console.warn(
+                  `No route available from Jupiter for ${inputMint} -> ${outputMint} (${response.status})`,
+                );
+                return null;
+              }
+            } catch (parseErr) {
+              console.debug("Could not parse error response:", parseErr);
+            }
+
+            // For server errors or rate limits, retry
+            if (response.status === 429 || response.status >= 500) {
+              console.warn(
+                `Jupiter API error ${response.status} (attempt ${attempt}/3), retrying...`,
+              );
+              if (attempt < 3) {
+                await new Promise((r) => setTimeout(r, attempt * 1500));
+                continue;
+              }
+            }
+
+            console.warn(
+              "Jupiter quote unavailable (proxy):",
+              response.status,
+              txt.substring(0, 100),
+            );
+            return null;
+          }
+
+          try {
+            const raw = JSON.parse(txt);
+            const quote =
+              raw && typeof raw === "object" && "quote" in raw
+                ? raw.quote
+                : raw;
+            console.log(
+              `✅ Jupiter quote success (attempt ${attempt}): ${quote?.outAmount}`,
+            );
+            if (!quote || !quote.outAmount || quote.outAmount === "0") {
+              console.warn("Parsed Jupiter quote has no outAmount:", raw);
+              return null;
+            }
+            return quote;
+          } catch (e) {
+            console.warn("Failed to parse Jupiter proxy quote response:", e);
+            return null;
+          }
+        } catch (fetchError) {
+          clearTimeout(timeoutId);
+          throw fetchError;
         }
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        if (
-          attempt < 2 &&
-          (msg.includes("timeout") || msg.includes("ECONNREFUSED"))
-        ) {
+        const isNetworkError =
+          msg.includes("Failed to fetch") ||
+          msg.includes("timeout") ||
+          msg.includes("ECONNREFUSED") ||
+          msg.includes("NetworkError") ||
+          msg.includes("abort");
+
+        if (attempt < 3 && isNetworkError) {
           console.warn(
-            `Jupiter transient error (attempt ${attempt}/2), retrying: ${msg}`,
+            `Jupiter transient error (attempt ${attempt}/3), retrying: ${msg}`,
           );
-          await new Promise((r) => setTimeout(r, attempt * 1000));
+          await new Promise((r) => setTimeout(r, attempt * 1500));
           continue;
         }
         console.error(
           `Error fetching quote from Jupiter (attempt ${attempt}):`,
           error,
         );
-        if (attempt === 2) return null;
+        if (attempt === 3) return null;
       }
     }
 
@@ -186,117 +209,139 @@ class JupiterAPI {
       );
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 45000);
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(swapRequest),
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timeoutId));
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(swapRequest),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        const txt = await response.text().catch(() => "");
-        let errorObj: any = {};
-        try {
-          errorObj = JSON.parse(txt);
-        } catch {
-          errorObj = { error: txt };
-        }
-
-        console.error(
-          `Jupiter swap error response (attempt ${retryCount + 1}):`,
-          response.status,
-          errorObj,
-        );
-
-        const errorMsg =
-          errorObj?.error ||
-          errorObj?.message ||
-          errorObj?.details ||
-          txt ||
-          "Unknown error";
-
-        // Detect Jupiter error 1016 (swap simulation failed / stale quote)
-        const isError1016 =
-          errorObj?.code === 1016 ||
-          errorMsg.includes("1016") ||
-          errorMsg.includes("Swap simulation failed") ||
-          errorMsg.includes("simulation") ||
-          errorMsg.includes("stale") ||
-          response.status === 530;
-
-        if (isError1016) {
-          // Attempt to refresh the quote and retry automatically
-          const qr = swapRequest.quoteResponse;
-          if (
-            retryCount < maxRetries &&
-            qr?.inputMint &&
-            qr?.outputMint &&
-            qr?.inAmount
-          ) {
-            console.warn(
-              "STALE_QUOTE detected. Refreshing quote and retrying swap...",
-            );
-            try {
-              const refreshedQuote = await this.getQuote(
-                qr.inputMint,
-                qr.outputMint,
-                parseInt(qr.inAmount),
-                typeof qr.slippageBps === "number" ? qr.slippageBps : 120,
-              );
-              if (refreshedQuote) {
-                const refreshedReq: JupiterSwapRequest = {
-                  ...swapRequest,
-                  quoteResponse: refreshedQuote,
-                };
-                return this.getSwapTransaction(
-                  refreshedReq,
-                  retryCount + 1,
-                  maxRetries,
-                );
-              }
-            } catch (e) {
-              console.warn("Quote refresh failed after STALE_QUOTE:", e);
-            }
+        if (!response.ok) {
+          const txt = await response.text().catch(() => "");
+          let errorObj: any = {};
+          try {
+            errorObj = JSON.parse(txt);
+          } catch {
+            errorObj = { error: txt };
           }
+
+          console.error(
+            `Jupiter swap error response (attempt ${retryCount + 1}):`,
+            response.status,
+            errorObj,
+          );
+
+          const errorMsg =
+            errorObj?.error ||
+            errorObj?.message ||
+            errorObj?.details ||
+            txt ||
+            "Unknown error";
+
+          // Detect Jupiter error 1016 (swap simulation failed / stale quote)
+          const isError1016 =
+            errorObj?.code === 1016 ||
+            errorMsg.includes("1016") ||
+            errorMsg.includes("Swap simulation failed") ||
+            errorMsg.includes("simulation") ||
+            errorMsg.includes("stale") ||
+            response.status === 530;
+
+          if (isError1016) {
+            // Attempt to refresh the quote and retry automatically
+            const qr = swapRequest.quoteResponse;
+            if (
+              retryCount < maxRetries &&
+              qr?.inputMint &&
+              qr?.outputMint &&
+              qr?.inAmount
+            ) {
+              console.warn(
+                "STALE_QUOTE detected. Refreshing quote and retrying swap...",
+              );
+              try {
+                const refreshedQuote = await this.getQuote(
+                  qr.inputMint,
+                  qr.outputMint,
+                  parseInt(qr.inAmount),
+                  typeof qr.slippageBps === "number" ? qr.slippageBps : 120,
+                );
+                if (refreshedQuote) {
+                  const refreshedReq: JupiterSwapRequest = {
+                    ...swapRequest,
+                    quoteResponse: refreshedQuote,
+                  };
+                  return this.getSwapTransaction(
+                    refreshedReq,
+                    retryCount + 1,
+                    maxRetries,
+                  );
+                }
+              } catch (e) {
+                console.warn("Quote refresh failed after STALE_QUOTE:", e);
+              }
+            }
+            throw new Error(
+              "STALE_QUOTE: The quote expired or changed. Try again after requesting a new quote.",
+            );
+          }
+
+          // For 502/503 errors (gateway/service unavailable), retry with same quote
+          if (
+            (response.status === 502 || response.status === 503) &&
+            retryCount < maxRetries
+          ) {
+            console.log(`Retrying swap after ${response.status} error...`);
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            return this.getSwapTransaction(
+              swapRequest,
+              retryCount + 1,
+              maxRetries,
+            );
+          }
+
           throw new Error(
-            "STALE_QUOTE: The quote expired or changed. Try again after requesting a new quote.",
+            `Jupiter swap failed (${response.status}): ${errorMsg}${
+              errorObj?.details ? ` - ${errorObj.details}` : ""
+            }`,
           );
         }
 
-        // For 502/503 errors (gateway/service unavailable), retry with same quote
-        if (
-          (response.status === 502 || response.status === 503) &&
-          retryCount < maxRetries
-        ) {
-          console.log(`Retrying swap after ${response.status} error...`);
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-          return this.getSwapTransaction(
-            swapRequest,
-            retryCount + 1,
-            maxRetries,
+        const data = await response.json();
+        if (!data.swapTransaction) {
+          console.warn(
+            "Jupiter swap response missing swapTransaction field:",
+            Object.keys(data),
           );
         }
-
-        throw new Error(
-          `Jupiter swap failed (${response.status}): ${errorMsg}${
-            errorObj?.details ? ` - ${errorObj.details}` : ""
-          }`,
-        );
+        return data;
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        throw fetchError;
       }
-
-      const data = await response.json();
-      if (!data.swapTransaction) {
-        console.warn(
-          "Jupiter swap response missing swapTransaction field:",
-          Object.keys(data),
-        );
-      }
-      return data;
     } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      const isNetworkError =
+        msg.includes("Failed to fetch") ||
+        msg.includes("timeout") ||
+        msg.includes("ECONNREFUSED") ||
+        msg.includes("NetworkError") ||
+        msg.includes("abort");
+
+      if (retryCount < maxRetries && isNetworkError) {
+        console.warn(
+          `Jupiter swap transient error (attempt ${retryCount + 1}/${maxRetries + 1}), retrying: ${msg}`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        return this.getSwapTransaction(swapRequest, retryCount + 1, maxRetries);
+      }
+
       console.error(
         "Error getting swap transaction from Jupiter proxy:",
         error,
@@ -325,6 +370,8 @@ class JupiterAPI {
   }
 
   async getTokenPrices(tokenMints: string[]): Promise<Record<string, number>> {
+    if (tokenMints.length === 0) return {};
+
     try {
       const ids = tokenMints.join(",");
 
@@ -333,37 +380,48 @@ class JupiterAPI {
       );
 
       const url = resolveApiUrl(`/api/jupiter/price?ids=${ids}`);
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-      }).catch(() => new Response("", { status: 0 } as any));
 
-      if (!response.ok) {
-        throw new Error(`Jupiter Price API error: ${response.status}`);
-      }
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      const data = await response.json();
-      const prices: Record<string, number> = {};
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
 
-      if (data.data) {
-        for (const [mint, priceData] of Object.entries(data.data || {})) {
-          if (
-            priceData &&
-            typeof priceData === "object" &&
-            "price" in priceData
-          ) {
-            prices[mint] = (priceData as any).price;
+        if (!response.ok) {
+          throw new Error(`Jupiter Price API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const prices: Record<string, number> = {};
+
+        if (data.data) {
+          for (const [mint, priceData] of Object.entries(data.data || {})) {
+            if (
+              priceData &&
+              typeof priceData === "object" &&
+              "price" in priceData
+            ) {
+              prices[mint] = (priceData as any).price;
+            }
           }
         }
-      }
 
-      console.log(
-        `Successfully fetched ${Object.keys(prices).length} prices from Jupiter`,
-      );
-      return prices;
+        console.log(
+          `Successfully fetched ${Object.keys(prices).length} prices from Jupiter`,
+        );
+        return prices;
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        throw fetchError;
+      }
     } catch (error) {
       console.error("Error fetching token prices from Jupiter:", error);
       // Return empty object - let callers handle fallback to other providers
@@ -414,39 +472,57 @@ class JupiterAPI {
   async getStrictTokenList(): Promise<JupiterToken[]> {
     // Try multiple endpoints and strategies
     const endpoints = [
-      { url: "/api/jupiter/tokens?type=strict", name: "strict" },
-      { url: "/api/jupiter/tokens?type=all", name: "all" },
-      { url: "https://token.jup.ag/strict", name: "direct-strict" },
-      { url: "https://token.jup.ag/all", name: "direct-all" },
-      { url: "https://cache.jup.ag/tokens", name: "cache" },
+      { url: "/api/jupiter/tokens?type=strict", name: "strict", direct: false },
+      { url: "/api/jupiter/tokens?type=all", name: "all", direct: false },
+      {
+        url: "https://token.jup.ag/strict",
+        name: "direct-strict",
+        direct: true,
+      },
+      { url: "https://token.jup.ag/all", name: "direct-all", direct: true },
+      { url: "https://cache.jup.ag/tokens", name: "cache", direct: true },
     ];
 
     for (const endpoint of endpoints) {
-      try {
-        console.log(`Fetching Jupiter tokens from: ${endpoint.name}`);
-        const resp = endpoint.url.startsWith("/api/")
-          ? await fetchWithFallback(endpoint.url, { method: "GET" }).catch(
-              () => new Response("", { status: 0 } as any),
-            )
-          : await this.fetchWithTimeout(endpoint.url, 10000).catch(
-              () => new Response("", { status: 0 } as any),
-            );
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          console.log(
+            `Fetching Jupiter tokens from: ${endpoint.name} (attempt ${attempt}/2)`,
+          );
 
-        if (resp.ok) {
-          const data = await resp.json();
-          if (Array.isArray(data) && data.length > 0) {
-            console.log(
-              `✅ Successfully loaded ${data.length} tokens from ${endpoint.name}`,
-            );
-            return data as JupiterToken[];
+          let resp: Response;
+          if (endpoint.direct) {
+            resp = await this.fetchWithTimeout(endpoint.url, 15000);
+          } else {
+            resp = await fetchWithFallback(endpoint.url, { method: "GET" });
+          }
+
+          if (resp.ok) {
+            const data = await resp.json();
+            if (Array.isArray(data) && data.length > 0) {
+              console.log(
+                `✅ Successfully loaded ${data.length} tokens from ${endpoint.name}`,
+              );
+              return data as JupiterToken[];
+            }
+          } else {
+            console.warn(`[${endpoint.name}] HTTP ${resp.status}, retrying...`);
+            if (attempt < 2) {
+              await new Promise((r) => setTimeout(r, 1500));
+              continue;
+            }
+          }
+          break;
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.warn(
+            `[${endpoint.name}] Failed (attempt ${attempt}/2): ${msg}`,
+          );
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 1500));
+            continue;
           }
         }
-      } catch (e) {
-        console.warn(
-          `Failed to fetch from ${endpoint.name}:`,
-          e instanceof Error ? e.message : String(e),
-        );
-        // Continue to next endpoint
       }
     }
 

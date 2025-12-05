@@ -1,0 +1,35 @@
+name = "fixorium-pages"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Cloudflare Pages build configuration
+[build]
+command = "npm run build"
+cwd = "./"
+
+# Cloudflare Pages output directory
+pages_build_output_dir = "dist"
+
+# Environment variables available at build time and to Functions (VITE_ prefix exposed to client)
+[vars]
+VITE_API_URL = ""
+VITE_API_BASE_URL = ""
+
+# KV namespace bindings for Pages Functions
+# These bindings are available in functions/api/* routes
+[[kv_namespaces]]
+binding = "STAKING_KV"
+id = "YOUR_PRODUCTION_NAMESPACE_ID"
+preview_id = "YOUR_PREVIEW_NAMESPACE_ID"
+
+# Enable KV for Pages Functions (development environment)
+[env.development.kv_namespaces]
+binding = "STAKING_KV"
+id = "YOUR_PREVIEW_NAMESPACE_ID"
+preview_id = "YOUR_PREVIEW_NAMESPACE_ID"
+
+# Enable KV for Pages Functions (production environment)
+[env.production.kv_namespaces]
+binding = "STAKING_KV"
+id = "YOUR_PRODUCTION_NAMESPACE_ID"
+preview_id = "YOUR_PREVIEW_NAMESPACE_ID"

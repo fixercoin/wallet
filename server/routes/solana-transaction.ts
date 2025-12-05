@@ -1,4 +1,5 @@
 import { RequestHandler } from "express";
+import bs58 from "bs58";
 
 const RPC_ENDPOINTS = [
   process.env.SOLANA_RPC_URL || "",
@@ -102,8 +103,11 @@ export const handleSolanaSend: RequestHandler = async (req, res) => {
     console.log(`[Solana Send] Sending transaction (${txBuffer.length} bytes)`);
 
     try {
+      // Convert bytes to Base58 for RPC (Solana RPC expects Base58, not Base64)
+      const txBase58 = bs58.encode(txBuffer);
+
       const signature = await callSolanaRpc("sendTransaction", [
-        signedBase64,
+        txBase58,
         { skipPreflight: false, preflightCommitment: "processed" },
       ]);
 
@@ -187,8 +191,11 @@ export const handleSolanaSimulate: RequestHandler = async (req, res) => {
     );
 
     try {
+      // Convert bytes to Base58 for RPC (Solana RPC expects Base58, not Base64)
+      const txBase58 = bs58.encode(txBuffer);
+
       const result = await callSolanaRpc("simulateTransaction", [
-        signedBase64,
+        txBase58,
         { signers: [], commitment: "processed" },
       ]);
 

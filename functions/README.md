@@ -1,17 +1,17 @@
-# Netlify Functions
+# Cloudflare Pages Functions
 
-This folder contains the legacy function definitions. They have been moved to `netlify/functions/` for Netlify serverless deployment.
+This folder contains the legacy function definitions. They have been moved to `netlify/functions/` for Cloudflare Pages serverless deployment.
 
-The main API handler is at `netlify/functions/api.ts` which is a comprehensive Netlify serverless function that handles all API routes.
+The main API handler is at `netlify/functions/api.ts` which is a comprehensive Cloudflare Pages serverless function that handles all API routes.
 
-## For Netlify Deployment
+## For Cloudflare Pages Deployment
 
 All serverless functions are now in the `netlify/functions/` directory:
 
 - `netlify/functions/api.ts` - Main API handler that routes all `/api/*` requests
 - `netlify/functions/api/pumpfun/*` - Pump.fun specific routes
 
-When deploying to Netlify, the functions will automatically be deployed from the `netlify/functions/` directory.
+When deploying to Cloudflare Pages, the functions will automatically be deployed from the `netlify/functions/` directory.
 
 ## Local Development
 

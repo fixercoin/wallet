@@ -1,4 +1,4 @@
-# Cloudflare to Netlify Migration Summary
+# Cloudflare to Cloudflare Pages Migration Summary
 
 ## What was removed
 
@@ -16,7 +16,7 @@ All Cloudflare-specific files and configurations have been removed:
 
 ### Configuration Files
 
-**`.env`** - Updated to use Netlify endpoints
+**`.env`** - Updated to use Cloudflare Pages endpoints
 
 - Removed Cloudflare Worker URL references
 - VITE_API_BASE_URL now empty (uses relative /api paths)
@@ -26,20 +26,20 @@ All Cloudflare-specific files and configurations have been removed:
 
 - ❌ Removed `deploy:cloudflare` script
 
-**`README.md`** - Complete rewrite for Netlify
+**`README.md`** - Complete rewrite for Cloudflare Pages
 
-- Updated with Netlify deployment instructions
+- Updated with Cloudflare Pages deployment instructions
 - Simplified project structure documentation
-- Added troubleshooting guide for Netlify
+- Added troubleshooting guide for Cloudflare Pages
 
-**`netlify.toml`** - Already properly configured
+**`wrangler.toml`** - Already properly configured
 
 - Build command: `pnpm build`
 - Functions directory: `netlify/functions`
 - API redirect: `/api/*` → `/.netlify/functions/api/:splat`
 - SPA fallback for client-side routing
 
-**`functions/README.md`** - Updated to reference Netlify
+**`functions/README.md`** - Updated to reference Cloudflare Pages
 
 - Points users to `netlify/functions/` for actual functions
 - Explains local development with Express server
@@ -70,18 +70,18 @@ All Cloudflare-specific files and configurations have been removed:
 **`server/index.ts`**
 
 - Changed export from Cloudflare Workers compatibility to simple handler export
-- Now exports handler for Node.js/Netlify compatibility
+- Now exports handler for Node.js/Cloudflare Pages compatibility
 
 **`functions/api/[[path]].ts`**
 
-- Updated service name from "Cloudflare Pages" to "Netlify"
+- Updated service name from "Cloudflare Pages" to "Cloudflare Pages"
 
 **`utils/p2pStore.ts`**
 
 - Updated comment about file system operations
-- Now mentions Netlify serverless functions instead of Cloudflare Workers
+- Now mentions Cloudflare Pages serverless functions instead of Cloudflare Workers
 
-## How to Deploy to Netlify
+## How to Deploy to Cloudflare Pages
 
 ### Step 1: Connect Your Repository
 
@@ -91,7 +91,7 @@ All Cloudflare-specific files and configurations have been removed:
 
 ### Step 2: Configure Build Settings
 
-Netlify should auto-detect these, but verify:
+Cloudflare Pages should auto-detect these, but verify:
 
 - **Build command:** `pnpm build`
 - **Publish directory:** `dist`
@@ -99,7 +99,7 @@ Netlify should auto-detect these, but verify:
 
 ### Step 3: Set Environment Variables
 
-In Netlify dashboard, go to **Site settings** → **Build & deploy** → **Environment**
+In Cloudflare Pages dashboard, go to **Site settings** → **Build & deploy** → **Environment**
 
 Add these environment variables:
 
@@ -115,8 +115,8 @@ EASYPAY_MSISDN=your_number
 ### Step 4: Deploy
 
 - Push your code to the connected repository
-- Netlify will automatically build and deploy
-- Or use Netlify CLI: `netlify deploy --prod`
+- Cloudflare Pages will automatically build and deploy
+- Or use Cloudflare Pages CLI: `netlify deploy --prod`
 
 ## How It Works
 
@@ -132,21 +132,21 @@ Proxy: /api → localhost:3000
 Express API Server (3000)
 ```
 
-### Production (Netlify)
+### Production (Cloudflare Pages)
 
 ```
 Browser
     ↓
-Netlify CDN (dist/)
+Cloudflare Pages CDN (dist/)
     ↓
 Redirect: /api/* → /.netlify/functions/api/:splat
     ↓
-Netlify Serverless Functions
+Cloudflare Pages Serverless Functions
 ```
 
 ## Key Differences from Cloudflare
 
-| Aspect               | Cloudflare                 | Netlify                    |
+| Aspect               | Cloudflare                 | Cloudflare Pages           |
 | -------------------- | -------------------------- | -------------------------- |
 | **Deployment Model** | Edge Workers               | Serverless Functions       |
 | **Language**         | JavaScript/WebAssembly     | Node.js                    |
@@ -154,13 +154,13 @@ Netlify Serverless Functions
 | **Build**            | Git-based or manual        | Git-based (auto)           |
 | **Environment**      | Global edge locations      | Serverless Lambda (US)     |
 | **API Handler**      | `cloudflare/src/worker.ts` | `netlify/functions/api.ts` |
-| **Configuration**    | `wrangler.toml`            | `netlify.toml`             |
+| **Configuration**    | `wrangler.toml`            | `wrangler.toml`            |
 
-## Benefits of Netlify
+## Benefits of Cloudflare Pages
 
 ✅ **Simpler Setup** - No complex Worker configuration
 ✅ **Node.js Compatibility** - Use any Node.js library
-✅ **Better DX** - Netlify CLI and dashboard integration
+✅ **Better DX** - Cloudflare Pages CLI and dashboard integration
 ✅ **Native Git Integration** - Auto-deploy on push
 ✅ **Easier Debugging** - Standard serverless function logs
 ✅ **Cost Effective** - Free tier generous limits
@@ -171,13 +171,13 @@ Netlify Serverless Functions
 
 - Check `netlify/functions/` directory exists
 - Verify TypeScript compiles: `npx tsc --noEmit`
-- Check Netlify deploy logs in dashboard
+- Check Cloudflare Pages deploy logs in dashboard
 
 ### API calls failing
 
-- Ensure `netlify.toml` redirects are configured
+- Ensure `wrangler.toml` redirects are configured
 - Check that functions have access to environment variables
-- Verify RPC endpoint is accessible from Netlify
+- Verify RPC endpoint is accessible from Cloudflare Pages
 
 ### Build failing
 
@@ -190,7 +190,7 @@ Netlify Serverless Functions
 1. ✅ Remove Cloudflare files (done)
 2. ✅ Update configuration (done)
 3. ✅ Update documentation (done)
-4. 📝 Connect to Netlify and deploy
+4. 📝 Connect to Cloudflare Pages and deploy
 5. 📝 Test all API endpoints
 6. 📝 Monitor serverless function logs
 7. 📝 Set up auto-deploy from main branch

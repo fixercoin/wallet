@@ -4,12 +4,10 @@ import { TokenInfo } from "@/lib/wallet";
 
 interface TokenQuickInfoCardProps {
   token: TokenInfo;
-  variant?: "light" | "dark";
 }
 
 export const TokenQuickInfoCard: React.FC<TokenQuickInfoCardProps> = ({
   token,
-  variant = "light",
 }) => {
   const currentPrice = token.price || 0;
   const priceChangePercent =
@@ -19,11 +17,7 @@ export const TokenQuickInfoCard: React.FC<TokenQuickInfoCardProps> = ({
   const isPositive = priceChangePercent !== null && priceChangePercent >= 0;
 
   return (
-    <div
-      className={`rounded-lg border border-black p-4 ${
-        variant === "light" ? "bg-white/50" : "bg-gray-800/50"
-      }`}
-    >
+    <div className={`rounded-lg border border-gray-300/30 p-4 bg-transparent`}>
       <div className="flex items-center justify-between gap-3">
         {/* Token Logo and Price */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -31,21 +25,13 @@ export const TokenQuickInfoCard: React.FC<TokenQuickInfoCardProps> = ({
             <img
               src={token.logoURI}
               alt={token.symbol}
-              className={`h-10 w-10 rounded-full border flex-shrink-0 ${
-                variant === "light" ? "border-gray-200" : "border-gray-700"
-              }`}
+              className="h-10 w-10 rounded-full border border-gray-300/30 flex-shrink-0"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).style.display = "none";
               }}
             />
           ) : (
-            <div
-              className={`h-10 w-10 rounded-full flex-shrink-0 ${
-                variant === "light"
-                  ? "bg-white/80 text-gray-900"
-                  : "bg-gray-700 text-white"
-              } flex items-center justify-center text-sm font-bold`}
-            >
+            <div className="h-10 w-10 rounded-full flex-shrink-0 bg-white/80 text-gray-900 flex items-center justify-center text-sm font-bold">
               {token.symbol?.slice(0, 1) || "?"}
             </div>
           )}
@@ -55,11 +41,7 @@ export const TokenQuickInfoCard: React.FC<TokenQuickInfoCardProps> = ({
             <div className="text-[10px] font-semibold text-gray-500 uppercase">
               Current Price
             </div>
-            <div
-              className={`text-[10px] font-bold ${
-                variant === "light" ? "text-gray-900" : "text-white"
-              }`}
-            >
+            <div className="text-[10px] font-bold text-gray-900">
               $
               {currentPrice.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
@@ -91,13 +73,7 @@ export const TokenQuickInfoCard: React.FC<TokenQuickInfoCardProps> = ({
               <span className="text-[9px] text-gray-500">24h</span>
             </div>
           ) : (
-            <span
-              className={`text-[10px] font-medium ${
-                variant === "light" ? "text-gray-500" : "text-gray-400"
-              }`}
-            >
-              —
-            </span>
+            <span className="text-[10px] font-medium text-gray-500">—</span>
           )}
         </div>
       </div>

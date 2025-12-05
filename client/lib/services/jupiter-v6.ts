@@ -42,6 +42,7 @@ export interface JupiterTokenPrice {
   price: number;
 }
 
+// Use server-side proxies to avoid CORS issues
 const JUPITER_V6_ENDPOINTS = {
   quote: "/api/jupiter/quote",
   swap: "/api/jupiter/swap",
@@ -82,15 +83,37 @@ class JupiterV6API {
       );
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        console.error("Jupiter quote error:", error);
+        const errorText = await response.text().catch(() => "");
+        let errorData = {};
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || `HTTP ${response.status}` };
+        }
+        console.error("[SwapInterface] Quote error:", {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorData,
+        });
         return null;
       }
 
-      const data: JupiterQuoteResponse = await response.json();
-      return data;
+      const rawData: any = await response.json();
+
+      // Some proxies return { source: 'jupiter', quote: {...} }
+      const data =
+        rawData && typeof rawData === "object" && "quote" in rawData
+          ? rawData.quote
+          : rawData;
+
+      if (!data || !data.outAmount || data.outAmount === "0") {
+        console.warn("[SwapInterface] Quote returned no outAmount:", rawData);
+        return null;
+      }
+
+      return data as JupiterQuoteResponse;
     } catch (error) {
-      console.error("Jupiter getQuote error:", error);
+      console.error("[SwapInterface] Quote error:", error);
       throw error;
     }
   }
@@ -116,14 +139,14 @@ class JupiterV6API {
       );
 
       if (!response.ok) {
-        console.error("Jupiter price error:", response.status);
+        console.error("[SwapInterface] Price error:", response.status);
         return {};
       }
 
       const data = await response.json();
       return data.data || {};
     } catch (error) {
-      console.error("Jupiter getTokenPrices error:", error);
+      console.error("[SwapInterface] Price error:", error);
       return {};
     }
   }
@@ -161,21 +184,38 @@ class JupiterV6API {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        console.error("Jupiter swap error:", error);
+        const errorText = await response.text().catch(() => "");
+        let errorData: any = {};
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText || `HTTP ${response.status}` };
+        }
+        console.error("[SwapInterface] Swap error:", {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorData,
+        });
 
-        // Check for specific error codes
-        if (error.error === "STALE_QUOTE") {
+        // Handle stale/expired quotes explicitly (409, 530, or error code 1016)
+        if (
+          errorData?.error === "STALE_QUOTE" ||
+          errorData?.code === 1016 ||
+          response.status === 409 ||
+          response.status === 530
+        ) {
           throw new Error("Quote expired - please refresh and try again");
         }
 
-        throw new Error(error.error || "Failed to create swap");
+        throw new Error(
+          errorData.error || errorData.message || "Failed to create swap",
+        );
       }
 
       const data: JupiterSwapResponse = await response.json();
       return data;
     } catch (error) {
-      console.error("Jupiter createSwap error:", error);
+      console.error("[SwapInterface] Swap error:", error);
       throw error;
     }
   }
@@ -204,14 +244,24 @@ class JupiterV6API {
 
   /**
    * Validate swap is still valid (not stale)
+   * Checks if the quote has a valid contextSlot
    */
-  isQuoteValid(
-    quoteResponse: JupiterQuoteResponse,
-    maxAgeSeconds: number = 30,
-  ): boolean {
+  isQuoteValid(quoteResponse: JupiterQuoteResponse): boolean {
+    if (!quoteResponse) return false;
     if (!quoteResponse.contextSlot) return false;
-    // Note: In real implementation, would compare with current slot
+    // Quote is valid as long as it has a contextSlot
+    // Age validation should be done separately with timestamp
     return true;
+  }
+
+  /**
+   * Check if a quote age is still acceptable for execution
+   * Jupiter quotes expire after ~30 seconds of inactivity
+   */
+  isQuoteAgeAcceptable(quoteAgeMs: number): boolean {
+    // Be conservative: treat quotes > 20 seconds old as stale
+    // This gives cushion for network delays and processing
+    return quoteAgeMs < 20000;
   }
 }
 

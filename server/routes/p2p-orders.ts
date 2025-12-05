@@ -2,19 +2,32 @@ import { RequestHandler } from "express";
 
 export interface P2POrder {
   id: string;
-  type: "buy" | "sell";
-  creator_wallet: string;
+  type: "BUY" | "SELL";
+  creator_wallet?: string;
+  walletAddress?: string;
   token: string;
-  token_amount: string;
-  pkr_amount: number;
-  payment_method: string;
-  status: "active" | "pending" | "completed" | "cancelled" | "disputed";
-  online: boolean;
-  created_at: number;
-  updated_at: number;
+  amountTokens?: number;
+  token_amount?: string;
+  amountPKR?: number;
+  pkr_amount?: number;
+  pricePKRPerQuote?: number;
+  payment_method?: string;
+  paymentMethodId?: string;
+  status: "PENDING" | "active" | "pending" | "completed" | "cancelled" | "disputed";
+  online?: boolean;
+  created_at?: number;
+  createdAt?: number;
+  updated_at?: number;
+  updatedAt?: number;
   account_name?: string;
+  accountName?: string;
   account_number?: string;
+  accountNumber?: string;
   wallet_address?: string;
+  buyerWallet?: string;
+  sellerWallet?: string;
+  adminWallet?: string;
+  orderId?: string;
 }
 
 export interface TradeRoom {
@@ -32,7 +45,7 @@ export interface TradeRoom {
   updated_at: number;
 }
 
-// In-memory store for development (will be replaced with database)
+// In-memory store for development (will be replaced with Cloudflare KV in production)
 const orders: Map<string, P2POrder> = new Map();
 const rooms: Map<string, TradeRoom> = new Map();
 const messages: Map<
@@ -44,6 +57,28 @@ const messages: Map<
     created_at: number;
   }>
 > = new Map();
+
+// Helper to normalize order fields
+function normalizeOrder(order: any): P2POrder {
+  return {
+    id: order.id || order.orderId,
+    type: order.type as "BUY" | "SELL",
+    walletAddress: order.walletAddress || order.creator_wallet,
+    token: order.token,
+    amountTokens: order.amountTokens ?? parseFloat(order.token_amount || 0),
+    amountPKR: order.amountPKR ?? order.pkr_amount,
+    pricePKRPerQuote: order.pricePKRPerQuote,
+    paymentMethod: order.paymentMethod || order.payment_method,
+    status: (order.status || "PENDING") as P2POrder["status"],
+    createdAt: order.createdAt || order.created_at || Date.now(),
+    updatedAt: order.updatedAt || order.updated_at || Date.now(),
+    accountName: order.accountName || order.account_name,
+    accountNumber: order.accountNumber || order.account_number,
+    buyerWallet: order.buyerWallet,
+    sellerWallet: order.sellerWallet,
+    adminWallet: order.adminWallet,
+  };
+}
 
 // Helper functions
 function generateId(prefix: string): string {

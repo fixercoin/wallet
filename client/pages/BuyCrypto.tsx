@@ -343,7 +343,7 @@ export default function BuyCrypto() {
             </Button>
 
             <Button
-              onClick={() => navigate("/p2p")}
+              onClick={() => navigate("/")}
               variant="outline"
               className="w-full h-12 rounded-lg font-semibold transition-all duration-200 border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 text-white"
             >

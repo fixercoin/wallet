@@ -107,6 +107,148 @@ class InMemoryKVStorage implements KVStorageBackend {
 }
 
 /**
+ * Cloudflare KV storage using REST API
+ * For use with Cloudflare Workers or Pages Functions
+ */
+class CloudflareKVStorage implements KVStorageBackend {
+  private accountId: string;
+  private namespaceId: string;
+  private apiToken: string;
+  private baseUrl: string;
+
+  constructor(accountId: string, namespaceId: string, apiToken: string) {
+    if (!accountId || !namespaceId || !apiToken) {
+      throw new Error(
+        "Cloudflare KV credentials missing: CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_NAMESPACE_ID, CLOUDFLARE_API_TOKEN",
+      );
+    }
+    this.accountId = accountId;
+    this.namespaceId = namespaceId;
+    this.apiToken = apiToken;
+    this.baseUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces/${namespaceId}`;
+  }
+
+  private getHeaders(): Record<string, string> {
+    return {
+      Authorization: `Bearer ${this.apiToken}`,
+      "Content-Type": "application/json",
+    };
+  }
+
+  async get(key: string): Promise<string | null> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/values/${encodeURIComponent(key)}`,
+        {
+          method: "GET",
+          headers: this.getHeaders(),
+        },
+      );
+
+      if (response.status === 404) {
+        return null;
+      }
+
+      if (!response.ok) {
+        console.error(
+          `Cloudflare KV GET error for key ${key}:`,
+          response.status,
+          await response.text(),
+        );
+        return null;
+      }
+
+      return await response.text();
+    } catch (error) {
+      console.error(`Error getting key ${key} from Cloudflare KV:`, error);
+      return null;
+    }
+  }
+
+  async put(key: string, value: string): Promise<void> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/values/${encodeURIComponent(key)}`,
+        {
+          method: "PUT",
+          headers: this.getHeaders(),
+          body: value,
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Cloudflare KV PUT error: ${response.status} ${await response.text()}`,
+        );
+      }
+    } catch (error) {
+      console.error(`Error putting key ${key} to Cloudflare KV:`, error);
+      throw error;
+    }
+  }
+
+  async delete(key: string): Promise<void> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/values/${encodeURIComponent(key)}`,
+        {
+          method: "DELETE",
+          headers: this.getHeaders(),
+        },
+      );
+
+      if (!response.ok && response.status !== 404) {
+        throw new Error(
+          `Cloudflare KV DELETE error: ${response.status} ${await response.text()}`,
+        );
+      }
+    } catch (error) {
+      console.error(`Error deleting key ${key} from Cloudflare KV:`, error);
+      throw error;
+    }
+  }
+
+  async list(options?: any): Promise<any> {
+    try {
+      const params = new URLSearchParams();
+      if (options?.prefix) {
+        params.append("prefix", options.prefix);
+      }
+      if (options?.limit) {
+        params.append("limit", options.limit.toString());
+      }
+      if (options?.cursor) {
+        params.append("cursor", options.cursor);
+      }
+
+      const url = `${this.baseUrl}/keys?${params.toString()}`;
+      const response = await fetch(url, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        console.error(
+          `Cloudflare KV LIST error:`,
+          response.status,
+          await response.text(),
+        );
+        return { keys: [] };
+      }
+
+      const data = await response.json();
+      return {
+        keys: data.result || [],
+        cursor: data.result_info?.cursor,
+      };
+    } catch (error) {
+      console.error(`Error listing keys from Cloudflare KV:`, error);
+      return { keys: [] };
+    }
+  }
+}
+
+/**
  * KV Storage manager that provides a unified interface
  */
 export class KVStorage {
@@ -122,6 +264,34 @@ export class KVStorage {
 
   static createMemoryStorage(): KVStorage {
     return new KVStorage(new InMemoryKVStorage());
+  }
+
+  static createCloudflareStorage(
+    accountId: string,
+    namespaceId: string,
+    apiToken: string,
+  ): KVStorage {
+    return new KVStorage(
+      new CloudflareKVStorage(accountId, namespaceId, apiToken),
+    );
+  }
+
+  static createAutoStorage(): KVStorage {
+    // Try to auto-detect Cloudflare KV credentials from environment
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    const namespaceId = process.env.CLOUDFLARE_NAMESPACE_ID;
+    const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+
+    if (accountId && namespaceId && apiToken) {
+      console.log("[KVStorage] Using Cloudflare KV storage backend");
+      return new KVStorage(
+        new CloudflareKVStorage(accountId, namespaceId, apiToken),
+      );
+    }
+
+    // Fall back to file-based storage in development
+    console.log("[KVStorage] Using file-based KV storage backend");
+    return new KVStorage(new FileKVStorage());
   }
 
   async get(key: string): Promise<string | null> {
@@ -146,14 +316,19 @@ let globalKVStorage: KVStorage | null = null;
 
 export function initializeKVStorage(backend?: KVStorageBackend): KVStorage {
   if (!globalKVStorage) {
-    globalKVStorage = new KVStorage(backend || new FileKVStorage());
+    if (backend) {
+      globalKVStorage = new KVStorage(backend);
+    } else {
+      // Auto-detect storage backend based on environment
+      globalKVStorage = KVStorage.createAutoStorage();
+    }
   }
   return globalKVStorage;
 }
 
 export function getKVStorage(): KVStorage {
   if (!globalKVStorage) {
-    globalKVStorage = new KVStorage(new FileKVStorage());
+    globalKVStorage = KVStorage.createAutoStorage();
   }
   return globalKVStorage;
 }

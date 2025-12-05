@@ -60,6 +60,9 @@ export default function BuyTrade() {
       : room.seller_wallet || "";
   }, [room, wallet?.publicKey]);
 
+  const syncIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
+  const lastMessageCountRef = React.useRef(0);
+
   type Phase =
     | "entry"
     | "awaiting_seller_approval"

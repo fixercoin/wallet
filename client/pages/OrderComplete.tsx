@@ -189,7 +189,7 @@ export default function OrderComplete() {
   };
 
   const handleVerify = async () => {
-    if (!order) return;
+    if (!order || !wallet?.publicKey) return;
 
     const isBuyerAction = isBuyer;
 
@@ -199,59 +199,83 @@ export default function OrderComplete() {
       setSellerVerified(true);
     }
 
-    const msg: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      roomId,
-      senderWallet: wallet?.publicKey || "",
-      senderRole: isBuyer ? "buyer" : "seller",
-      type: "verification",
-      text: `${isBuyer ? "Buyer" : "Seller"} has verified and confirmed payment`,
-      timestamp: Date.now(),
-      metadata: {
-        type: "verification",
-      },
-    };
+    const verificationText = `${isBuyer ? "Buyer" : "Seller"} has verified and confirmed payment`;
 
-    setChatLog((prev) => [...prev, msg]);
-    // Save message to localStorage
-    saveChatMessage(msg);
-
-    const otherWalletKey = isBuyerAction
-      ? order.sellerWallet
-      : order.buyerWallet;
-
-    if (isBuyerAction) {
-      await createNotification(
-        otherWalletKey,
-        "payment_confirmed",
-        "BUY",
-        order.id,
-        "Buyer has confirmed payment",
-        {
-          token: order.token,
-          amountTokens: order.amountTokens,
-          amountPKR: order.amountPKR,
-        },
+    try {
+      // Save verification to server
+      const serverMsg = await saveServerChatMessage(
+        roomId,
+        wallet.publicKey,
+        verificationText
       );
-    } else {
-      await createNotification(
-        otherWalletKey,
-        "received_confirmed",
-        "BUY",
-        order.id,
-        "Seller has confirmed receiving payment",
-        {
-          token: order.token,
-          amountTokens: order.amountTokens,
-          amountPKR: order.amountPKR,
-        },
-      );
+
+      if (serverMsg) {
+        serverMsg.senderRole = isBuyer ? "buyer" : "seller";
+        serverMsg.type = "verification";
+        setChatLog((prev) => [...prev, serverMsg]);
+        lastMessageCountRef.current += 1;
+      } else {
+        // Fallback to localStorage
+        const msg: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId,
+          senderWallet: wallet.publicKey,
+          senderRole: isBuyer ? "buyer" : "seller",
+          type: "verification",
+          text: verificationText,
+          timestamp: Date.now(),
+          metadata: {
+            type: "verification",
+          },
+        };
+        setChatLog((prev) => [...prev, msg]);
+        saveChatMessage(msg);
+      }
+
+      const otherWalletKey = isBuyerAction
+        ? order.sellerWallet
+        : order.buyerWallet;
+
+      if (isBuyerAction) {
+        await createNotification(
+          otherWalletKey,
+          "payment_confirmed",
+          "BUY",
+          order.id,
+          "Buyer has confirmed payment",
+          {
+            token: order.token,
+            amountTokens: order.amountTokens,
+            amountPKR: order.amountPKR,
+          },
+        );
+      } else {
+        await createNotification(
+          otherWalletKey,
+          "received_confirmed",
+          "BUY",
+          order.id,
+          "Seller has confirmed receiving payment",
+          {
+            token: order.token,
+            amountTokens: order.amountTokens,
+            amountPKR: order.amountPKR,
+          },
+        );
+      }
+
+      toast({
+        title: "Verification confirmed",
+        description: "Your verification has been recorded",
+      });
+    } catch (error) {
+      console.error("Failed to verify:", error);
+      toast({
+        title: "Verification error",
+        description: "Failed to record verification",
+        variant: "destructive",
+      });
     }
-
-    toast({
-      title: "Verification confirmed",
-      description: "Your verification has been recorded",
-    });
   };
 
   return (

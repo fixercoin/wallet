@@ -307,14 +307,19 @@ let globalKVStorage: KVStorage | null = null;
 
 export function initializeKVStorage(backend?: KVStorageBackend): KVStorage {
   if (!globalKVStorage) {
-    globalKVStorage = new KVStorage(backend || new FileKVStorage());
+    if (backend) {
+      globalKVStorage = new KVStorage(backend);
+    } else {
+      // Auto-detect storage backend based on environment
+      globalKVStorage = KVStorage.createAutoStorage();
+    }
   }
   return globalKVStorage;
 }
 
 export function getKVStorage(): KVStorage {
   if (!globalKVStorage) {
-    globalKVStorage = new KVStorage(new FileKVStorage());
+    globalKVStorage = KVStorage.createAutoStorage();
   }
   return globalKVStorage;
 }

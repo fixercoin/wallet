@@ -191,6 +191,18 @@ export default function BuyNow() {
     } catch {}
   };
 
+  const updatePendingOrder = (updatedOrder: any) => {
+    try {
+      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
+      const arr = Array.isArray(cur) ? cur : [];
+      const index = arr.findIndex((o: any) => o.id === updatedOrder.id);
+      if (index >= 0) {
+        arr[index] = { ...updatedOrder, status: "pending" };
+        localStorage.setItem("orders_pending", JSON.stringify(arr));
+      }
+    } catch {}
+  };
+
   const handleBuyClick = async () => {
     if (!wallet) {
       toast({
@@ -211,7 +223,7 @@ export default function BuyNow() {
     const pricePKRPerQuote = exchangeRate;
     setLoading(true);
     try {
-      const orderId = `BUY-${Date.now()}`;
+      const orderId = editingOrder?.id || `BUY-${Date.now()}`;
       const order = {
         id: orderId,
         type: "BUY",
@@ -225,7 +237,9 @@ export default function BuyNow() {
           accountNumber: "030107044833",
         },
         buyerWallet: wallet.publicKey,
-        createdAt: Date.now(),
+        walletAddress: wallet.publicKey,
+        createdAt: editingOrder?.createdAt || Date.now(),
+        updatedAt: Date.now(),
         status: "pending",
       };
 
@@ -233,7 +247,11 @@ export default function BuyNow() {
         localStorage.setItem("buynote_order", JSON.stringify(order));
       } catch {}
 
-      addPendingOrder(order);
+      if (editingOrder) {
+        updatePendingOrder(order);
+      } else {
+        addPendingOrder(order);
+      }
 
       try {
         const response = await fetch("/api/p2p/orders", {

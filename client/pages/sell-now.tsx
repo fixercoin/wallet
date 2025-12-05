@@ -25,6 +25,10 @@ import {
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { ADMIN_WALLET } from "@/lib/p2p";
+import {
+  PaymentMethod,
+  getPaymentMethodsByWallet,
+} from "@/lib/p2p-payment-methods";
 
 interface TokenOption {
   id: string;
@@ -77,6 +81,10 @@ export default function SellNow() {
   const [editingOrder, setEditingOrder] = useState<any>(
     (location.state as any)?.editingOrder || null,
   );
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
+    null,
+  );
+  const [fetchingPaymentMethod, setFetchingPaymentMethod] = useState(false);
 
   const OFFER_PASSWORD = "######Pakistan";
 
@@ -160,6 +168,32 @@ export default function SellNow() {
     fetchRate();
   }, [selectedToken]);
 
+  useEffect(() => {
+    const fetchPaymentMethod = async () => {
+      if (!wallet?.publicKey) {
+        setPaymentMethod(null);
+        return;
+      }
+
+      setFetchingPaymentMethod(true);
+      try {
+        const methods = await getPaymentMethodsByWallet(wallet.publicKey);
+        if (methods.length > 0) {
+          setPaymentMethod(methods[0]);
+        } else {
+          setPaymentMethod(null);
+        }
+      } catch (error) {
+        console.error("Error fetching payment method:", error);
+        setPaymentMethod(null);
+      } finally {
+        setFetchingPaymentMethod(false);
+      }
+    };
+
+    fetchPaymentMethod();
+  }, [wallet?.publicKey]);
+
   const saveOrderToAPI = async (order: any) => {
     try {
       const response = await fetch("/api/p2p/orders", {
@@ -175,8 +209,7 @@ export default function SellNow() {
           paymentMethodId: order.paymentMethod,
           status: "PENDING",
           orderId: order.id,
-          sellerWallet: order.sellerWallet,
-          buyerWallet: order.buyerWallet,
+          sellerWallet: wallet.publicKey,
         }),
       });
 
@@ -204,6 +237,17 @@ export default function SellNow() {
       });
       return;
     }
+
+    if (!paymentMethod) {
+      toast({
+        title: "Payment Method Required",
+        description: "Please add a payment method first",
+        variant: "destructive",
+      });
+      setShowPaymentDialog(true);
+      return;
+    }
+
     const amount = Number(sellAmountTokens);
     if (
       !sellAmountTokens ||
@@ -228,7 +272,7 @@ export default function SellNow() {
         amountTokens: amount,
         amountPKR: amount * exchangeRate,
         pricePKRPerQuote: exchangeRate,
-        paymentMethod: "easypaisa",
+        paymentMethod: paymentMethod.id,
         sellerWallet: wallet.publicKey,
         walletAddress: wallet.publicKey,
         createdAt: editingOrder?.createdAt || Date.now(),
@@ -353,7 +397,9 @@ export default function SellNow() {
                 loading ||
                 !sellAmountTokens ||
                 Number(sellAmountTokens) <= 0 ||
-                !exchangeRate
+                !exchangeRate ||
+                !paymentMethod ||
+                fetchingPaymentMethod
               }
               className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -362,6 +408,13 @@ export default function SellNow() {
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   Processing...
                 </>
+              ) : fetchingPaymentMethod ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Loading Payment Method...
+                </>
+              ) : !paymentMethod ? (
+                "ADD PAYMENT METHOD FIRST"
               ) : editingOrder ? (
                 "UPDATE SELL ORDER"
               ) : (

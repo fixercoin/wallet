@@ -23,6 +23,10 @@ import {
 } from "@/components/ui/dialog";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
+import {
+  PaymentMethod,
+  getPaymentMethodsByWallet,
+} from "@/lib/p2p-payment-methods";
 
 interface TokenOption {
   id: string;
@@ -69,6 +73,10 @@ export default function BuyCrypto() {
   const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
   const [offerPassword, setOfferPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
+    null,
+  );
+  const [fetchingPaymentMethod, setFetchingPaymentMethod] = useState(false);
 
   const OFFER_PASSWORD = "######Pakistan";
 
@@ -160,6 +168,33 @@ export default function BuyCrypto() {
     fetchRate();
   }, [selectedToken]);
 
+  // Fetch payment method from KV for the current wallet
+  useEffect(() => {
+    const fetchPaymentMethod = async () => {
+      if (!wallet?.publicKey) {
+        setPaymentMethod(null);
+        return;
+      }
+
+      setFetchingPaymentMethod(true);
+      try {
+        const methods = await getPaymentMethodsByWallet(wallet.publicKey);
+        if (methods.length > 0) {
+          setPaymentMethod(methods[0]);
+        } else {
+          setPaymentMethod(null);
+        }
+      } catch (error) {
+        console.error("Error fetching payment method:", error);
+        setPaymentMethod(null);
+      } finally {
+        setFetchingPaymentMethod(false);
+      }
+    };
+
+    fetchPaymentMethod();
+  }, [wallet?.publicKey]);
+
   // Estimate tokens on amount/rate change
   useEffect(() => {
     if (amountPKR && exchangeRate > 0) {
@@ -178,6 +213,17 @@ export default function BuyCrypto() {
       });
       return;
     }
+
+    if (!paymentMethod) {
+      toast({
+        title: "Payment Method Required",
+        description: "Please add a payment method first",
+        variant: "destructive",
+      });
+      setShowPaymentDialog(true);
+      return;
+    }
+
     if (!amountPKR || Number(amountPKR) <= 0 || !exchangeRate) {
       toast({
         title: "Invalid Amount",
@@ -197,7 +243,7 @@ export default function BuyCrypto() {
         amountTokens: Number(amountPKR) / exchangeRate,
         amountPKR: Number(amountPKR),
         pricePKRPerQuote,
-        paymentMethod: "easypaisa",
+        paymentMethod: paymentMethod.id,
       };
 
       const savedOrder = await saveOrderToKV(order);
@@ -328,7 +374,9 @@ export default function BuyCrypto() {
                 loading ||
                 !amountPKR ||
                 Number(amountPKR) <= 0 ||
-                estimatedTokens === 0
+                estimatedTokens === 0 ||
+                !paymentMethod ||
+                fetchingPaymentMethod
               }
               className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -337,6 +385,13 @@ export default function BuyCrypto() {
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   Processing...
                 </>
+              ) : fetchingPaymentMethod ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Loading Payment Method...
+                </>
+              ) : !paymentMethod ? (
+                "ADD PAYMENT METHOD FIRST"
               ) : (
                 `BUY CRYPTO`
               )}

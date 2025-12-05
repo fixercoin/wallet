@@ -177,7 +177,7 @@ export default function SellOrder() {
                 className="text-center text-white/70 py-8"
                 style={{ fontSize: "12px" }}
               >
-                No sell orders or active stakes
+                No sell order
               </div>
             )}
           {!loadingStakes && stakes.length > 0 && (

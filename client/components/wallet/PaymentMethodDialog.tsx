@@ -204,7 +204,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-md bg-[#1a2540] border border-gray-600/50 shadow-lg">
         <DialogHeader>
-          <DialogTitle className="uppercase">
+          <DialogTitle className="uppercase text-white">
             {isEditing
               ? savedMethodId
                 ? "EDIT PAYMENT METHOD"

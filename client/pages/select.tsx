@@ -291,34 +291,6 @@ export default function Select() {
       </div>
 
       <div className="w-full mx-auto px-6 relative z-20 flex flex-col items-center gap-2">
-        <div className="w-full max-w-4xl order-0 mt-6 flex items-center justify-end">
-          <span className="text-sm text-white/70 select-none">
-            info@fixorium.com.pk
-          </span>
-        </div>
-        <img
-          src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2Fda8d138bd45a4eceb9b1e4baae32a4a2?format=webp&width=800"
-          alt="Payment illustration"
-          className="mx-auto mb-4 max-h-[220px] w-full object-contain"
-        />
-        <div className="mt-2 w-full max-w-4xl rounded-3xl p-6 order-2">
-          <div className="grid grid-cols-2 gap-4 w-full">
-            <Button
-              onClick={() => navigate("/buy-now")}
-              className="w-full py-3 h-12 rounded-xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-base shadow-lg active:scale-95"
-            >
-              BUY
-            </Button>
-
-            <Button
-              onClick={() => navigate("/sell-now")}
-              className="w-full py-3 h-12 rounded-xl bg-gradient-to-br from-[#FF5A8C] to-[#FF7A5C] hover:shadow-xl hover:scale-105 transition-all duration-300 text-white font-semibold text-base shadow-lg active:scale-95"
-            >
-              SELL
-            </Button>
-          </div>
-        </div>
-
         {wallet?.publicKey && (
           <div className="w-full max-w-4xl order-1">
             {/* Orders list displayed as prompt messages - moved above image */}
@@ -327,39 +299,65 @@ export default function Select() {
                 <div className="text-sm text-white/60">Loading orders...</div>
               ) : orders.length === 0 ? (
                 payload && payload.roomId ? (
-                  <div className="p-4 bg-[#0f1520]/50 border border-white/3">
+                  <div className="p-6 bg-gradient-to-br from-[#0f1520]/80 to-[#1a2540]/80 border border-[#FF7A5C]/40 rounded-lg">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <div className="font-semibold text-sm text-white/90">
-                          Order {payload.roomId}
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-2 h-2 rounded-full bg-[#FF7A5C]"></div>
+                          <div className="font-bold text-base text-white uppercase">
+                            {action === "buyer_paid"
+                              ? "PAYMENT RECEIVED"
+                              : "ASSET SENT"}
+                          </div>
                         </div>
-                        <div className="text-xs text-white/70 mt-1">
-                          {action === "buyer_paid"
-                            ? `Buyer paid ${payload.amountPKR?.toLocaleString?.() ?? payload.amountPKR} PKR for ~${Number(payload.estimatedTokens || 0).toFixed(6)} ${payload.token}`
-                            : `Seller sent ${Number(payload.amountTokens || 0).toFixed(6)} ${payload.token}`}
-                        </div>
-                        <div className="text-xs text-white/60 mt-2">
-                          Payment: {payload.paymentMethod || "—"}
+                        <div className="space-y-3 mt-3">
+                          <div>
+                            <span className="text-xs text-white/60 uppercase block">
+                              Order ID
+                            </span>
+                            <span className="font-mono text-sm text-white/90 mt-1 block break-all">
+                              {payload.roomId}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-white/60 uppercase block">
+                              Amount
+                            </span>
+                            <span className="text-sm text-white/90 mt-1 font-semibold">
+                              {action === "buyer_paid"
+                                ? `${payload.amountPKR?.toLocaleString?.() ?? payload.amountPKR} PKR for ~${Number(payload.estimatedTokens || 0).toFixed(6)} ${payload.token}`
+                                : `${Number(payload.amountTokens || 0).toFixed(6)} ${payload.token}`}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-white/60 uppercase block">
+                              Payment Method
+                            </span>
+                            <span className="text-sm text-white/90 mt-1 font-semibold capitalize">
+                              {payload.paymentMethod || "—"}
+                            </span>
+                          </div>
                         </div>
                       </div>
                       <div className="flex-shrink-0">
                         <Button
                           onClick={() =>
-                            navigate("/express/buy-trade", {
+                            navigate("/order-complete", {
                               state: {
                                 order: {
                                   id: payload.roomId,
                                   token: payload.token,
                                   pricePKRPerQuote: payload.pricePKRPerQuote,
                                   paymentMethod: payload.paymentMethod,
+                                  amountPKR: payload.amountPKR,
                                   type:
                                     action === "buyer_paid" ? "buy" : "sell",
                                 },
-                                openChat: true,
+                                confirmation: confirmationData,
                               },
                             })
                           }
-                          className="ml-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+                          className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white font-semibold uppercase hover:shadow-lg transition-all"
                         >
                           Continue
                         </Button>
@@ -411,22 +409,17 @@ export default function Select() {
               )}
             </div>
 
-            <div className="w-full rounded-2xl p-6 bg-transparent flex items-center justify-center">
-              {loadingOrders ? (
-                <div className="text-sm text-white/60">Loading orders...</div>
-              ) : orders.length === 0 && !payload ? (
-                <div className="text-sm text-white/60">
-                  FIXORIUM P2P — SECURE, FAST, AND LOW-FEE PEER-TO-PEER CRYPTO
-                  TRADING. NO ORDERS AVAILABLE.
-                </div>
-              ) : (
-                <img
-                  src="https://cdn.builder.io/api/v1/image/assets%2F252abe93ac584677b311bb7cf6df36d9%2F7f9abc82a07a45b0bbb91d5f4765fb76?format=webp&width=800"
-                  alt="Payment illustration"
-                  className="max-h-[320px] w-full object-contain"
-                />
-              )}
-            </div>
+            {loadingOrders && (
+              <div className="text-sm text-white/60 text-center py-8">
+                Loading orders...
+              </div>
+            )}
+            {!loadingOrders && orders.length === 0 && !payload && (
+              <div className="text-sm text-white/60 text-center py-8">
+                FIXORIUM P2P — SECURE, FAST, AND LOW-FEE PEER-TO-PEER CRYPTO
+                TRADING. NO ORDERS AVAILABLE.
+              </div>
+            )}
           </div>
         )}
       </div>

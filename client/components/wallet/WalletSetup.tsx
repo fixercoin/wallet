@@ -84,7 +84,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       setIsLoading(true);
       setError(null);
 
-      // Set the wallet
+      // Set the wallet - this updates context and triggers localStorage save
       setWallet(wallet);
 
       // Prefetch address data via RPC providers

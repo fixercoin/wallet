@@ -655,6 +655,11 @@ export async function createServer(): Promise<express.Application> {
   app.put("/api/p2p/orders/:orderId", handleUpdateP2POrder);
   app.delete("/api/p2p/orders/:orderId", handleDeleteP2POrder);
 
+  // P2P Payment Methods routes
+  app.get("/api/p2p/payment-methods", handleGetPaymentMethods);
+  app.post("/api/p2p/payment-methods", handleSavePaymentMethod);
+  app.delete("/api/p2p/payment-methods", handleDeletePaymentMethod);
+
   // Trade Rooms routes
   app.get("/api/p2p/rooms", handleListTradeRooms);
   app.post("/api/p2p/rooms", handleCreateTradeRoom);

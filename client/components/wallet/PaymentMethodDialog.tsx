@@ -217,47 +217,47 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
           {!isEditing && savedMethodId ? (
             // View mode - show saved information
             <div className="space-y-4 text-sm">
-              <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800">
-                <p className="text-xs text-gray-600 dark:text-gray-400 uppercase font-semibold mb-1">
+              <div className="p-3 rounded-lg bg-[#0f1729] border border-gray-600">
+                <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
                   Name
                 </p>
-                <p className="text-gray-900 dark:text-white font-medium">
+                <p className="text-white font-medium">
                   {userName}
                 </p>
               </div>
 
-              <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800">
-                <p className="text-xs text-gray-600 dark:text-gray-400 uppercase font-semibold mb-1">
+              <div className="p-3 rounded-lg bg-[#0f1729] border border-gray-600">
+                <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
                   Payment Method
                 </p>
-                <p className="text-gray-900 dark:text-white font-medium">
+                <p className="text-white font-medium">
                   {paymentMethod}
                 </p>
               </div>
 
-              <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800">
-                <p className="text-xs text-gray-600 dark:text-gray-400 uppercase font-semibold mb-1">
+              <div className="p-3 rounded-lg bg-[#0f1729] border border-gray-600">
+                <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
                   Account Name
                 </p>
-                <p className="text-gray-900 dark:text-white font-medium">
+                <p className="text-white font-medium">
                   {accountName}
                 </p>
               </div>
 
-              <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800">
-                <p className="text-xs text-gray-600 dark:text-gray-400 uppercase font-semibold mb-1">
+              <div className="p-3 rounded-lg bg-[#0f1729] border border-gray-600">
+                <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
                   Account Number
                 </p>
-                <p className="text-gray-900 dark:text-white font-medium">
+                <p className="text-white font-medium">
                   {accountNumber}
                 </p>
               </div>
 
-              <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800">
-                <p className="text-xs text-gray-600 dark:text-gray-400 uppercase font-semibold mb-1">
+              <div className="p-3 rounded-lg bg-[#0f1729] border border-gray-600">
+                <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
                   Solana Wallet Address
                 </p>
-                <p className="text-gray-900 dark:text-white font-medium break-all text-xs">
+                <p className="text-white font-medium break-all text-xs">
                   {solanawWalletAddress}
                 </p>
               </div>

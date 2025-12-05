@@ -192,10 +192,14 @@ export default function OrderComplete() {
     if (!order || !wallet?.publicKey) return;
 
     const isBuyerAction = isBuyer;
+    let newBuyerVerified = buyerVerified;
+    let newSellerVerified = sellerVerified;
 
     if (isBuyerAction) {
+      newBuyerVerified = true;
       setBuyerVerified(true);
     } else {
+      newSellerVerified = true;
       setSellerVerified(true);
     }
 
@@ -264,6 +268,39 @@ export default function OrderComplete() {
         );
       }
 
+      // If both are now verified, move order to completed
+      if (newBuyerVerified && newSellerVerified) {
+        try {
+          const completedOrders = JSON.parse(
+            localStorage.getItem("orders_completed") || "[]",
+          );
+          const completedOrder = {
+            ...order,
+            status: "completed",
+            completedAt: Date.now(),
+            buyerVerified: true,
+            sellerVerified: true,
+          };
+          completedOrders.unshift(completedOrder);
+          localStorage.setItem("orders_completed", JSON.stringify(completedOrders));
+
+          const pendingOrders = JSON.parse(
+            localStorage.getItem("orders_pending") || "[]",
+          );
+          const filteredPending = pendingOrders.filter(
+            (o: any) => o.id !== order.id,
+          );
+          localStorage.setItem("orders_pending", JSON.stringify(filteredPending));
+
+          toast({
+            title: "Order Completed",
+            description: "Both parties have verified. Order is now complete.",
+          });
+        } catch (error) {
+          console.error("Failed to move order to completed:", error);
+        }
+      }
+
       toast({
         title: "Verification confirmed",
         description: "Your verification has been recorded",
@@ -273,6 +310,40 @@ export default function OrderComplete() {
       toast({
         title: "Verification error",
         description: "Failed to record verification",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelOrder = () => {
+    if (!order) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this order? This action cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const pendingOrders = JSON.parse(
+        localStorage.getItem("orders_pending") || "[]",
+      );
+      const filteredOrders = pendingOrders.filter(
+        (o: any) => o.id !== order.id,
+      );
+      localStorage.setItem("orders_pending", JSON.stringify(filteredOrders));
+
+      toast({
+        title: "Order Cancelled",
+        description: "The order has been successfully cancelled.",
+      });
+
+      navigate("/p2p");
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel the order.",
         variant: "destructive",
       });
     }

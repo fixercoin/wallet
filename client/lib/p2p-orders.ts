@@ -52,7 +52,9 @@ export async function getOrdersByWallet(
  */
 export async function getOrder(orderId: string): Promise<P2POrder | null> {
   try {
-    const response = await fetch(`${API_BASE}?id=${encodeURIComponent(orderId)}`);
+    const response = await fetch(
+      `${API_BASE}?id=${encodeURIComponent(orderId)}`,
+    );
     if (!response.ok) {
       if (response.status === 404) {
         return null;

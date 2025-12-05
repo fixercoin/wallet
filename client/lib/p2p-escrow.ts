@@ -66,7 +66,9 @@ export async function createEscrow(
  */
 export async function getEscrow(escrowId: string): Promise<Escrow | null> {
   try {
-    const response = await fetch(`${API_BASE}?id=${encodeURIComponent(escrowId)}`);
+    const response = await fetch(
+      `${API_BASE}?id=${encodeURIComponent(escrowId)}`,
+    );
     if (!response.ok) {
       if (response.status === 404) {
         return null;

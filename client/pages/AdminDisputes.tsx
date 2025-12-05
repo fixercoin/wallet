@@ -5,11 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Check, X, AlertCircle } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { ADMIN_WALLET } from "@/lib/p2p";
-import {
-  getOpenDisputes,
-  resolveDispute,
-  Dispute,
-} from "@/lib/p2p-disputes";
+import { getOpenDisputes, resolveDispute, Dispute } from "@/lib/p2p-disputes";
 import {
   Dialog,
   DialogContent,
@@ -77,7 +73,11 @@ export default function AdminDisputes() {
 
     try {
       setResolving(true);
-      await resolveDispute(selectedDispute.id, resolutionType, wallet.publicKey);
+      await resolveDispute(
+        selectedDispute.id,
+        resolutionType,
+        wallet.publicKey,
+      );
       toast.success("Dispute resolved successfully");
       setShowResolutionDialog(false);
       setSelectedDispute(null);
@@ -228,7 +228,9 @@ export default function AdminDisputes() {
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-gray-300">Resolution</p>
+                <p className="text-sm font-semibold text-gray-300">
+                  Resolution
+                </p>
 
                 <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-700 hover:border-purple-500/50 cursor-pointer transition-colors">
                   <input
@@ -238,7 +240,10 @@ export default function AdminDisputes() {
                     checked={resolutionType === "RELEASE_TO_SELLER"}
                     onChange={(e) =>
                       setResolutionType(
-                        e.target.value as "RELEASE_TO_SELLER" | "REFUND_TO_BUYER" | "SPLIT",
+                        e.target.value as
+                          | "RELEASE_TO_SELLER"
+                          | "REFUND_TO_BUYER"
+                          | "SPLIT",
                       )
                     }
                     className="w-4 h-4 accent-purple-600"
@@ -259,7 +264,10 @@ export default function AdminDisputes() {
                     checked={resolutionType === "REFUND_TO_BUYER"}
                     onChange={(e) =>
                       setResolutionType(
-                        e.target.value as "RELEASE_TO_SELLER" | "REFUND_TO_BUYER" | "SPLIT",
+                        e.target.value as
+                          | "RELEASE_TO_SELLER"
+                          | "REFUND_TO_BUYER"
+                          | "SPLIT",
                       )
                     }
                     className="w-4 h-4 accent-purple-600"
@@ -280,13 +288,18 @@ export default function AdminDisputes() {
                     checked={resolutionType === "SPLIT"}
                     onChange={(e) =>
                       setResolutionType(
-                        e.target.value as "RELEASE_TO_SELLER" | "REFUND_TO_BUYER" | "SPLIT",
+                        e.target.value as
+                          | "RELEASE_TO_SELLER"
+                          | "REFUND_TO_BUYER"
+                          | "SPLIT",
                       )
                     }
                     className="w-4 h-4 accent-purple-600"
                   />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-white">Split 50/50</p>
+                    <p className="text-sm font-medium text-white">
+                      Split 50/50
+                    </p>
                     <p className="text-xs text-gray-400">
                       Both parties get half
                     </p>

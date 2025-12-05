@@ -2,7 +2,7 @@
 
 ## Base URL
 
-- **Production:** `https://fixorium-proxy.khanbabusargodha.workers.dev`
+- **Production:** `https://proxy.fixorium.com.pk`
 - **Frontend:** `https://wallet-c36.fixorium.com.pk/api`
 
 ---
@@ -181,34 +181,6 @@ GET /api/account?publicKey={walletAddress}
 - `publicKey` (required): Wallet address to query
 
 ---
-
-## Payment Integration
-
-### Create Payment Intent (Razorpay)
-
-```
-POST /api/payments/create-intent
-```
-
-**Body:**
-
-```json
-{
-  "walletAddress": "...",
-  "amount": 50000,
-  "currency": "INR",
-  "tokenType": "USDC",
-  "email": "user@example.com",
-  "contact": "+92123456789"
-}
-```
-
-### Payment Webhook Handler
-
-```
-POST /api/webhooks/payment
-X-Razorpay-Signature: {signature}
-```
 
 ---
 

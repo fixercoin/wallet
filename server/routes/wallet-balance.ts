@@ -13,19 +13,25 @@ const RPC_ENDPOINTS = [
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
     : "",
-  // Fallback public endpoints
-  "https://api.mainnet-beta.solana.com",
-  "https://rpc.ankr.com/solana",
+  // Shyft RPC with embedded API key (reliable fallback)
+  "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7",
+  // Fallback public endpoints (prefer publicnode and ankr first)
   "https://solana.publicnode.com",
+  "https://rpc.ankr.com/solana",
+  "https://api.mainnet-beta.solana.com",
 ].filter(Boolean);
 
 export const handleWalletBalance: RequestHandler = async (req, res) => {
   try {
-    const { publicKey } = req.query;
+    // Accept multiple parameter names: publicKey, wallet, or address
+    const publicKey =
+      (req.query.publicKey as string) ||
+      (req.query.wallet as string) ||
+      (req.query.address as string);
 
     if (!publicKey || typeof publicKey !== "string") {
       return res.status(400).json({
-        error: "Missing or invalid 'publicKey' parameter",
+        error: "Missing or invalid wallet address parameter",
       });
     }
 

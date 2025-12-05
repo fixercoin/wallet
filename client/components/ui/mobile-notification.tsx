@@ -47,6 +47,13 @@ export const MobileNotification: React.FC<MobileNotificationProps> = ({
       return `${amount.toFixed(6)} SOL`;
     }
 
+    if (token === "FIXERCOIN" || token === "LOCKER") {
+      return `${amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })} ${token}`;
+    }
+
     return `${amount.toLocaleString()} ${token}`;
   };
 
@@ -77,7 +84,7 @@ export const MobileNotification: React.FC<MobileNotificationProps> = ({
               ? "bg-gradient-to-r from-emerald-500/90 to-green-600/90"
               : "bg-gradient-to-r from-blue-500/90 to-purple-600/90"
           } 
-          backdrop-blur-xl border border-white/20 shadow-2xl
+          backdrop-blur-xl border border-white/5 shadow-2xl
           transform transition-all duration-300 ease-out
           ${
             isAnimating

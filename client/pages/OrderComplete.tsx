@@ -483,6 +483,16 @@ export default function OrderComplete() {
                 </div>
               </div>
             )}
+
+            {/* Cancel Order Button */}
+            {!(buyerVerified && sellerVerified) && (
+              <button
+                onClick={handleCancelOrder}
+                className="w-full mt-4 px-4 py-3 rounded-lg bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 text-red-400 uppercase text-xs font-semibold transition-colors"
+              >
+                CANCEL ORDER
+              </button>
+            )}
           </div>
         </div>
 

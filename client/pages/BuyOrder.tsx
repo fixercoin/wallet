@@ -156,7 +156,7 @@ export default function BuyOrder() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate("/buy-now", {
+                            navigate("/buy-crypto", {
                               state: { editingOrder: order },
                             });
                           }}

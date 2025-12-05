@@ -27,9 +27,10 @@ class FileKVStorage implements KVStorageBackend {
   }
 
   private getFilePath(key: string): string {
-    // Sanitize key to be a valid filename
-    const safeKey = key.replace(/[^a-zA-Z0-9._-]/g, "_");
-    return path.join(this.dataDir, safeKey);
+    // Encode key to be a valid filename across all platforms
+    // Use URL encoding to preserve key structure
+    const encodedKey = encodeURIComponent(key);
+    return path.join(this.dataDir, encodedKey);
   }
 
   async get(key: string): Promise<string | null> {
@@ -71,7 +72,7 @@ class FileKVStorage implements KVStorageBackend {
     try {
       const files = fs.readdirSync(this.dataDir);
       return {
-        keys: files.map((f) => ({ name: f })),
+        keys: files.map((f) => ({ name: decodeURIComponent(f) })),
       };
     } catch (error) {
       console.error("Error listing keys:", error);

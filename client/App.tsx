@@ -154,6 +154,7 @@ import BuyActiveOrders from "./pages/BuyActiveOrders";
 import SellActiveOrders from "./pages/SellActiveOrders";
 import BuyOrder from "./pages/BuyOrder";
 import SellOrder from "./pages/SellOrder";
+import AdminDisputes from "./pages/AdminDisputes";
 import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
@@ -202,6 +203,7 @@ function AppRoutes() {
       <Route path="/p2p" element={<P2PHome />} />
       <Route path="/p2p/buy-active-orders" element={<BuyActiveOrders />} />
       <Route path="/p2p/sell-active-orders" element={<SellActiveOrders />} />
+      <Route path="/p2p/admin-disputes" element={<AdminDisputes />} />
       <Route path="/express/buy-trade" element={<BuyTrade />} />
       <Route path="/order-complete" element={<OrderComplete />} />
       <Route path="/search" element={<TokenSearchPage />} />
@@ -220,6 +222,7 @@ function AppContent() {
       "/p2p",
       "/p2p/buy-active-orders",
       "/p2p/sell-active-orders",
+      "/p2p/admin-disputes",
       "/express/buy-trade",
       "/buy-now",
       "/sell-now",

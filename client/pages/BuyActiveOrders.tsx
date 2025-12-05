@@ -15,6 +15,7 @@ import { ShoppingCart, TrendingUp } from "lucide-react";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { getOrdersByWallet, P2POrder } from "@/lib/p2p-orders";
+import { useP2PPolling } from "@/hooks/use-p2p-polling";
 import { ADMIN_WALLET } from "@/lib/p2p";
 
 export default function BuyActiveOrders() {
@@ -42,6 +43,21 @@ export default function BuyActiveOrders() {
     setPasswordError("");
     navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
   };
+
+  // Use polling for real-time order updates
+  useP2PPolling(
+    (fetchedOrders) => {
+      const buyOrders = fetchedOrders.filter((order) => order.type === "BUY");
+      setOrders(buyOrders);
+      setLoadingOrders(false);
+    },
+    {
+      walletAddress: wallet?.publicKey,
+      status: "PENDING",
+      pollInterval: 3000,
+      enabled: !!wallet?.publicKey,
+    },
+  );
 
   useEffect(() => {
     const loadOrders = async () => {

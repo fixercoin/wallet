@@ -70,7 +70,8 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
           }
         } else {
           // Check if there's already a saved payment method for this wallet
-          const existingMethods = await getPaymentMethodsByWallet(walletAddress);
+          const existingMethods =
+            await getPaymentMethodsByWallet(walletAddress);
           if (existingMethods.length > 0) {
             const existing = existingMethods[0]; // Use the first/latest method
             setSavedMethodId(existing.id);
@@ -275,9 +276,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   className={`uppercase ${errors.userName ? "border-red-500" : ""}`}
                 />
                 {errors.userName && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {errors.userName}
-                  </p>
+                  <p className="text-xs text-red-500 mt-1">{errors.userName}</p>
                 )}
               </div>
 

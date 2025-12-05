@@ -133,7 +133,9 @@ export default function SellOrder() {
               <Card
                 key={order.id}
                 className="bg-transparent border border-gray-300/30 hover:border-gray-300/50 transition-colors cursor-pointer w-full"
-                onClick={() => navigate(`/order/${encodeURIComponent(order.id)}`)}
+                onClick={() =>
+                  navigate(`/order/${encodeURIComponent(order.id)}`)
+                }
               >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between gap-4">

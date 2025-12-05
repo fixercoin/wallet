@@ -46,17 +46,7 @@ export default function BuyOrder() {
     const loadOrders = () => {
       try {
         setLoadingOrders(true);
-        const pendingOrders = JSON.parse(
-          localStorage.getItem("orders_pending") || "[]",
-        );
-        const completedOrders = JSON.parse(
-          localStorage.getItem("orders_completed") || "[]",
-        );
-        const completedIds = new Set(completedOrders.map((o: any) => o.id));
-
-        const buyOrders = pendingOrders.filter(
-          (order: any) => order.type === "BUY" && !completedIds.has(order.id),
-        );
+        const buyOrders = getFilteredPendingOrders("BUY");
         setOrders(buyOrders);
       } catch (error) {
         console.error("Error loading orders from localStorage:", error);

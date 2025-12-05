@@ -111,8 +111,8 @@ export function NotificationCenter() {
                               token: notification.orderData.token,
                               amountTokens: notification.orderData.amountTokens,
                               amountPKR: notification.orderData.amountPKR,
-                              senderWallet: notification.senderWallet,
-                              recipientWallet: notification.recipientWallet,
+                              buyerWallet: notification.orderType === "BUY" ? notification.senderWallet : notification.recipientWallet,
+                              sellerWallet: notification.orderType === "BUY" ? notification.recipientWallet : notification.senderWallet,
                             },
                             openChat: true,
                           }

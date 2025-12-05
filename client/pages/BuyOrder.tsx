@@ -48,9 +48,7 @@ export default function BuyOrder() {
     const loadOrders = async () => {
       try {
         setLoadingOrders(true);
-        const response = await fetch(
-          `/api/p2p/orders?type=BUY`,
-        );
+        const response = await fetch(`/api/p2p/orders?type=BUY`);
         if (!response.ok) {
           console.error("Failed to load orders:", response.status);
           setOrders([]);

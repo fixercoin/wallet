@@ -99,6 +99,7 @@ export default function OrderComplete() {
           roomId,
           senderWallet: wallet?.publicKey || "",
           senderRole: isBuyer ? "buyer" : "seller",
+          type: "attachment",
           text: "📎 Proof",
           timestamp: Date.now(),
           metadata: {
@@ -108,8 +109,8 @@ export default function OrderComplete() {
         };
 
         setChatLog((prev) => [...prev, msg]);
-        await saveChatMessage(roomId, msg);
-        await sendChatMessage(roomId, msg);
+        // Save message to localStorage
+        saveChatMessage(msg);
       } catch (error) {
         console.error("Failed to upload attachment:", error);
         toast({

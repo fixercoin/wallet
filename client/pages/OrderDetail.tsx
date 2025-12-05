@@ -277,6 +277,12 @@ export default function OrderDetail() {
                 COMPLETE ORDER
               </Button>
               <Button
+                onClick={handleCancelOrder}
+                className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 text-red-400"
+              >
+                CANCEL ORDER
+              </Button>
+              <Button
                 onClick={goBack}
                 variant="outline"
                 className="w-full h-12 rounded-lg font-semibold transition-all duration-200 border border-gray-300/30 text-gray-300 hover:bg-gray-300/10"

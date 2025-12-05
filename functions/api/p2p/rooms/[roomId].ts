@@ -15,14 +15,22 @@ interface TradeRoom {
   buyer_wallet: string;
   seller_wallet: string;
   order_id: string;
-  status: "pending" | "payment_confirmed" | "assets_transferred" | "completed" | "cancelled";
+  status:
+    | "pending"
+    | "payment_confirmed"
+    | "assets_transferred"
+    | "completed"
+    | "cancelled";
   created_at: number;
   updated_at: number;
 }
 
 function applyCors(headers: Headers) {
   headers.set("Access-Control-Allow-Origin", "*");
-  headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS",
+  );
   headers.set("Access-Control-Allow-Headers", "Content-Type");
   headers.set("Vary", "Origin");
   return headers;

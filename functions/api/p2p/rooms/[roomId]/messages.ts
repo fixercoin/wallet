@@ -21,7 +21,10 @@ interface TradeMessage {
 
 function applyCors(headers: Headers) {
   headers.set("Access-Control-Allow-Origin", "*");
-  headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS",
+  );
   headers.set("Access-Control-Allow-Headers", "Content-Type");
   headers.set("Vary", "Origin");
   return headers;
@@ -41,10 +44,7 @@ function generateId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function getMessages(
-  kv: any,
-  roomId: string,
-): Promise<TradeMessage[]> {
+async function getMessages(kv: any, roomId: string): Promise<TradeMessage[]> {
   try {
     const key = `p2p:room:${roomId}:messages`;
     const data = await kv.get(key);

@@ -92,9 +92,7 @@ function generateId(prefix: string): string {
 }
 
 // Helper to get all order IDs for a wallet
-async function getOrderIdsForWallet(
-  walletAddress: string,
-): Promise<string[]> {
+async function getOrderIdsForWallet(walletAddress: string): Promise<string[]> {
   const kv = getKVStorage();
   const key = `orders:wallet:${walletAddress}`;
   const json = await kv.get(key);

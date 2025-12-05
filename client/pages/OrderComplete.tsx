@@ -9,7 +9,6 @@ import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import {
   saveChatMessage,
   loadChatHistory,
-  sendChatMessage,
   type ChatMessage,
 } from "@/lib/p2p-chat";
 

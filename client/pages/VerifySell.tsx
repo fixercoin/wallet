@@ -105,8 +105,49 @@ export default function VerifySell() {
 
   useEffect(() => {
     if (!selectedOrder) return;
-    const history = loadChatHistory(selectedOrder.roomId);
-    setChatLog(history);
+
+    const loadHistory = async () => {
+      try {
+        // Load from server (source of truth)
+        const history = await loadServerChatHistory(selectedOrder.roomId);
+        setChatLog(history);
+        lastMessageCountRef.current = history.length;
+      } catch {
+        // Fallback to localStorage
+        const history = loadChatHistory(selectedOrder.roomId);
+        setChatLog(history);
+        lastMessageCountRef.current = history.length;
+      }
+    };
+
+    loadHistory();
+  }, [selectedOrder]);
+
+  // Poll for new messages every 2 seconds
+  useEffect(() => {
+    if (!selectedOrder) return;
+
+    const setupPolling = () => {
+      syncIntervalRef.current = setInterval(async () => {
+        try {
+          const messages = await loadServerChatHistory(selectedOrder.roomId);
+          if (messages.length !== lastMessageCountRef.current) {
+            setChatLog(messages);
+            lastMessageCountRef.current = messages.length;
+          }
+        } catch (error) {
+          // Silently fail on poll errors
+        }
+      }, 2000);
+    };
+
+    setupPolling();
+
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+      }
+    };
   }, [selectedOrder]);
 
   const moveOrderToCompleted = () => {

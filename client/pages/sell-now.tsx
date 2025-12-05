@@ -237,6 +237,17 @@ export default function SellNow() {
       });
       return;
     }
+
+    if (!paymentMethod) {
+      toast({
+        title: "Payment Method Required",
+        description: "Please add a payment method first",
+        variant: "destructive",
+      });
+      setShowPaymentDialog(true);
+      return;
+    }
+
     const amount = Number(sellAmountTokens);
     if (
       !sellAmountTokens ||
@@ -261,7 +272,7 @@ export default function SellNow() {
         amountTokens: amount,
         amountPKR: amount * exchangeRate,
         pricePKRPerQuote: exchangeRate,
-        paymentMethod: "easypaisa",
+        paymentMethod: paymentMethod.id,
         sellerWallet: wallet.publicKey,
         walletAddress: wallet.publicKey,
         createdAt: editingOrder?.createdAt || Date.now(),

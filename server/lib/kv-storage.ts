@@ -72,7 +72,7 @@ class FileKVStorage implements KVStorageBackend {
     try {
       const files = fs.readdirSync(this.dataDir);
       return {
-        keys: files.map((f) => ({ name: f })),
+        keys: files.map((f) => ({ name: decodeURIComponent(f) })),
       };
     } catch (error) {
       console.error("Error listing keys:", error);

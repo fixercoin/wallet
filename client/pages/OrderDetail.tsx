@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
+import { cancelOrder } from "@/lib/kv-orders-sync";
 
 export default function OrderDetail() {
   const { formatCurrency } = useCurrency();

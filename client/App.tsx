@@ -222,6 +222,7 @@ function AppContent() {
       "/p2p",
       "/p2p/buy-active-orders",
       "/p2p/sell-active-orders",
+      "/p2p/admin-disputes",
       "/express/buy-trade",
       "/buy-now",
       "/sell-now",

@@ -2,19 +2,38 @@ import { RequestHandler } from "express";
 
 export interface P2POrder {
   id: string;
-  type: "buy" | "sell";
-  creator_wallet: string;
+  type: "BUY" | "SELL";
+  creator_wallet?: string;
+  walletAddress?: string;
   token: string;
-  token_amount: string;
-  pkr_amount: number;
-  payment_method: string;
-  status: "active" | "pending" | "completed" | "cancelled" | "disputed";
-  online: boolean;
-  created_at: number;
-  updated_at: number;
+  amountTokens?: number;
+  token_amount?: string;
+  amountPKR?: number;
+  pkr_amount?: number;
+  pricePKRPerQuote?: number;
+  payment_method?: string;
+  paymentMethodId?: string;
+  status:
+    | "PENDING"
+    | "active"
+    | "pending"
+    | "completed"
+    | "cancelled"
+    | "disputed";
+  online?: boolean;
+  created_at?: number;
+  createdAt?: number;
+  updated_at?: number;
+  updatedAt?: number;
   account_name?: string;
+  accountName?: string;
   account_number?: string;
+  accountNumber?: string;
   wallet_address?: string;
+  buyerWallet?: string;
+  sellerWallet?: string;
+  adminWallet?: string;
+  orderId?: string;
 }
 
 export interface TradeRoom {
@@ -32,7 +51,7 @@ export interface TradeRoom {
   updated_at: number;
 }
 
-// In-memory store for development (will be replaced with database)
+// In-memory store for development (will be replaced with Cloudflare KV in production)
 const orders: Map<string, P2POrder> = new Map();
 const rooms: Map<string, TradeRoom> = new Map();
 const messages: Map<
@@ -45,6 +64,28 @@ const messages: Map<
   }>
 > = new Map();
 
+// Helper to normalize order fields
+function normalizeOrder(order: any): P2POrder {
+  return {
+    id: order.id || order.orderId,
+    type: order.type as "BUY" | "SELL",
+    walletAddress: order.walletAddress || order.creator_wallet,
+    token: order.token,
+    amountTokens: order.amountTokens ?? parseFloat(order.token_amount || 0),
+    amountPKR: order.amountPKR ?? order.pkr_amount,
+    pricePKRPerQuote: order.pricePKRPerQuote,
+    paymentMethod: order.paymentMethod || order.payment_method,
+    status: (order.status || "PENDING") as P2POrder["status"],
+    createdAt: order.createdAt || order.created_at || Date.now(),
+    updatedAt: order.updatedAt || order.updated_at || Date.now(),
+    accountName: order.accountName || order.account_name,
+    accountNumber: order.accountNumber || order.account_number,
+    buyerWallet: order.buyerWallet,
+    sellerWallet: order.sellerWallet,
+    adminWallet: order.adminWallet,
+  };
+}
+
 // Helper functions
 function generateId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -53,17 +94,29 @@ function generateId(prefix: string): string {
 // P2P Orders endpoints
 export const handleListP2POrders: RequestHandler = async (req, res) => {
   try {
-    const { type, status, token, online } = req.query;
+    const { type, status, token, wallet, id } = req.query;
 
     let filtered = Array.from(orders.values());
 
-    if (type) filtered = filtered.filter((o) => o.type === type);
+    if (wallet) {
+      filtered = filtered.filter(
+        (o) =>
+          o.walletAddress === wallet ||
+          o.creator_wallet === wallet ||
+          o.buyerWallet === wallet ||
+          o.sellerWallet === wallet,
+      );
+    }
+
+    if (type) filtered = filtered.filter((o) => o.type === String(type));
     if (status) filtered = filtered.filter((o) => o.status === status);
     if (token) filtered = filtered.filter((o) => o.token === token);
-    if (online === "true") filtered = filtered.filter((o) => o.online);
-    if (online === "false") filtered = filtered.filter((o) => !o.online);
+    if (id) filtered = filtered.filter((o) => o.id === id);
 
-    filtered.sort((a, b) => b.created_at - a.created_at);
+    filtered.sort(
+      (a, b) =>
+        (b.createdAt || b.created_at || 0) - (a.createdAt || a.created_at || 0),
+    );
 
     res.json({ orders: filtered });
   } catch (error) {
@@ -76,46 +129,67 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
   try {
     const {
       type,
+      walletAddress,
       creator_wallet,
       token,
+      amountTokens,
       token_amount,
+      amountPKR,
       pkr_amount,
+      pricePKRPerQuote,
       payment_method,
-      online,
+      paymentMethodId,
+      status,
+      orderId,
+      buyerWallet,
+      sellerWallet,
+      adminWallet,
+      accountName,
       account_name,
+      accountNumber,
       account_number,
-      wallet_address,
     } = req.body;
 
-    if (
-      !type ||
-      !creator_wallet ||
-      !token ||
-      !token_amount ||
-      !pkr_amount ||
-      !payment_method
-    ) {
-      return res.status(400).json({ error: "Missing required fields" });
+    // Support both naming conventions
+    const finalWallet = walletAddress || creator_wallet;
+    const finalType = type?.toUpperCase() || "BUY";
+    const finalToken = token;
+    const finalAmount =
+      amountTokens !== undefined ? amountTokens : parseFloat(token_amount || 0);
+    const finalPKR =
+      amountPKR !== undefined ? amountPKR : parseFloat(pkr_amount || 0);
+    const finalPrice = pricePKRPerQuote;
+
+    if (!finalType || !finalWallet || !finalToken) {
+      return res.status(400).json({
+        error:
+          "Missing required fields: type, walletAddress (or creator_wallet), and token",
+      });
     }
 
-    const id = generateId("order");
+    const id = orderId || generateId("order");
     const now = Date.now();
 
     const order: P2POrder = {
       id,
-      type,
-      creator_wallet,
-      token,
-      token_amount: String(token_amount),
-      pkr_amount: Number(pkr_amount),
-      payment_method,
-      status: "active",
-      online: online !== false,
+      type: finalType as "BUY" | "SELL",
+      walletAddress: finalWallet,
+      creator_wallet: finalWallet,
+      token: finalToken,
+      amountTokens: finalAmount,
+      amountPKR: finalPKR,
+      pricePKRPerQuote: finalPrice,
+      paymentMethod: payment_method || paymentMethodId,
+      status: (status || "PENDING") as P2POrder["status"],
+      createdAt: now,
       created_at: now,
+      updatedAt: now,
       updated_at: now,
-      account_name,
-      account_number,
-      wallet_address: type === "sell" ? wallet_address : undefined,
+      accountName: accountName || account_name,
+      accountNumber: accountNumber || account_number,
+      buyerWallet,
+      sellerWallet,
+      adminWallet,
     };
 
     orders.set(id, order);
@@ -156,7 +230,9 @@ export const handleUpdateP2POrder: RequestHandler = async (req, res) => {
       ...order,
       ...req.body,
       id: order.id,
+      createdAt: order.createdAt,
       created_at: order.created_at,
+      updatedAt: Date.now(),
       updated_at: Date.now(),
     };
 
@@ -276,6 +352,13 @@ export const handleUpdateTradeRoom: RequestHandler = async (req, res) => {
     res.status(500).json({ error: "Failed to update room" });
   }
 };
+
+// Export P2P Order handlers for use in main server file
+export const handleListP2POrdersRoute = handleListP2POrders;
+export const handleCreateP2POrderRoute = handleCreateP2POrder;
+export const handleGetP2POrderRoute = handleGetP2POrder;
+export const handleUpdateP2POrderRoute = handleUpdateP2POrder;
+export const handleDeleteP2POrderRoute = handleDeleteP2POrder;
 
 // Trade Messages endpoints
 export const handleListTradeMessages: RequestHandler = async (req, res) => {

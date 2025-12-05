@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Send, AlertTriangle, Check } from "lucide-react";
+import { ArrowLeft, Send, AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { rpcCall } from "@/lib/rpc-utils";
@@ -40,147 +40,56 @@ const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
 );
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
-const FEE_AMOUNT_SOL = 0.002;
+const FEE_AMOUNT_SOL = 0.0007;
 
-const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
-  if (!show) return null;
-
-  const colors = [
-    "#ff006e",
-    "#fb5607",
-    "#ffbe0b",
-    "#8338ec",
-    "#3a86ff",
-    "#06ffa5",
-    "#ff006e",
-    "#fb5607",
-    "#ffbe0b",
-    "#8338ec",
-    "#3a86ff",
-    "#06ffa5",
-    "#ff006e",
-    "#fb5607",
-    "#ffbe0b",
-    "#8338ec",
-    "#3a86ff",
-    "#06ffa5",
-    "#ff006e",
-    "#fb5607",
-    "#ffbe0b",
-    "#8338ec",
-    "#3a86ff",
-    "#06ffa5",
-    "#ff006e",
-    "#fb5607",
-    "#ffbe0b",
-    "#8338ec",
-    "#3a86ff",
-    "#06ffa5",
-    "#ff006e",
-    "#fb5607",
-    "#ffbe0b",
-    "#8338ec",
-    "#3a86ff",
-    "#06ffa5",
-  ];
-
-  const particles = Array.from({ length: 60 }).map((_, i) => {
-    const angle = (i / 60) * Math.PI * 2;
-    const distance = 200 + Math.random() * 150;
-    const tx = Math.cos(angle) * distance;
-    const ty = Math.sin(angle) * distance;
-    const size = 8 + Math.random() * 16;
-    const delay = Math.random() * 0.1;
-
-    return {
-      tx,
-      ty,
-      id: i,
-      color: colors[i % colors.length],
-      size,
-      delay,
-    };
-  });
-
+const SuccessDialog: React.FC<{ onContinue: () => void }> = ({
+  onContinue,
+}) => {
   return (
-    <div className="fixed inset-0 pointer-events-none z-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1f1f1f]">
       <style>{`
-        @keyframes burst-particle {
+        @keyframes slide-in {
           0% {
-            opacity: 1;
-            transform: translate(0, 0) scale(1) rotate(0deg);
-          }
-          50% {
-            opacity: 1;
+            opacity: 0;
+            transform: scale(0.95) translateY(-20px);
           }
           100% {
-            opacity: 0;
-            transform: translate(var(--tx), var(--ty)) scale(0) rotate(360deg);
+            opacity: 1;
+            transform: scale(1) translateY(0);
           }
         }
-        @keyframes bloom-pulse {
-          0% {
-            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7), inset 0 0 20px rgba(255, 255, 255, 0.3);
-          }
-          50% {
-            box-shadow: 0 0 30px 15px rgba(255, 255, 255, 0.2), inset 0 0 30px rgba(255, 255, 255, 0.5);
-          }
-          100% {
-            box-shadow: 0 0 60px 30px rgba(255, 255, 255, 0), inset 0 0 20px rgba(255, 255, 255, 0);
-          }
-        }
-        @keyframes success-pop {
-          0% {
-            transform: scale(0);
-            opacity: 0;
-          }
-          60% {
-            transform: scale(1.2);
-            opacity: 1;
-          }
-          100% {
-            transform: scale(1);
-            opacity: 1;
-          }
+        .success-dialog {
+          animation: slide-in 0.4s ease-out forwards;
         }
       `}</style>
 
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          style={
-            {
-              position: "fixed",
-              left: "50%",
-              top: "50%",
-              width: `${p.size}px`,
-              height: `${p.size}px`,
-              backgroundColor: p.color,
-              borderRadius: "50%",
-              marginLeft: `-${p.size / 2}px`,
-              marginTop: `-${p.size / 2}px`,
-              "--tx": `${p.tx}px`,
-              "--ty": `${p.ty}px`,
-              animation: `burst-particle 1.6s ease-out forwards`,
-              animationDelay: `${p.delay}s`,
-              boxShadow: `0 0 ${p.size}px ${p.color}80, 0 0 ${p.size * 2}px ${p.color}40`,
-            } as any
-          }
-        />
-      ))}
+      <div className="relative z-50 w-full max-w-sm bg-[#2a2a2a] border border-gray-600 rounded-lg shadow-2xl success-dialog">
+        <div className="p-8 flex flex-col items-center text-center space-y-6">
+          <div className="relative w-20 h-20 flex items-center justify-center">
+            <div className="absolute inset-0 bg-green-500/20 rounded-full blur-lg animate-pulse" />
+            <div className="relative w-16 h-16 flex items-center justify-center bg-gradient-to-br from-green-100 to-green-200 rounded-full border-2 border-green-500">
+              <Check className="w-8 h-8 text-green-600" strokeWidth={3} />
+            </div>
+          </div>
 
-      <div
-        style={{
-          position: "fixed",
-          left: "50%",
-          top: "50%",
-          marginLeft: "-50px",
-          marginTop: "-50px",
-          animation: "bloom-pulse 1.6s ease-out forwards",
-        }}
-      >
-        <div className="w-24 h-24 bg-gradient-to-r from-green-400 via-emerald-400 to-green-600 rounded-full flex items-center justify-center shadow-2xl box-border border-4 border-white">
-          <Check className="w-12 h-12 text-white" strokeWidth={3} />
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Transaction Sent!
+            </h2>
+            <p className="text-sm text-gray-600">
+              Your transaction has been successfully submitted to the Solana
+              blockchain.
+            </p>
+          </div>
+
+          <div className="w-full pt-4">
+            <Button
+              onClick={onContinue}
+              className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 rounded transition-all duration-200 uppercase"
+            >
+              Done
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -200,20 +109,14 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   const [memo, setMemo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<"form" | "confirm" | "success">("form");
+  const [step, setStep] = useState<"form" | "confirm" | "sending" | "success">(
+    "form",
+  );
   const [txSignature, setTxSignature] = useState<string | null>(null);
   const [selectedMint, setSelectedMint] = useState<string>(
     initialMint || TOKEN_MINTS.SOL,
   );
   const [pendingTransactionSend, setPendingTransactionSend] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-
-  useEffect(() => {
-    if (step === "success") {
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
-    }
-  }, [step]);
 
   const selectedToken: TokenInfo | undefined = useMemo(
     () => tokens.find((t) => t.mint === selectedMint),
@@ -221,19 +124,17 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   );
 
   const availableTokens = useMemo(() => {
-    // Show SOL first, then tokens with positive balance; always include FIXERCOIN, USDC, and USDT
+    // Show SOL first, then tokens with positive balance; always include FIXERCOIN and USDC
     const sol = tokens.find((t) => t.symbol === "SOL");
     const rest = tokens
-      .filter((t) => t.symbol !== "SOL")
+      .filter((t) => t.symbol !== "SOL" && t.symbol !== "USDT")
       .filter(
         (t) =>
           (t.balance || 0) > 0 ||
           t.symbol === "FIXERCOIN" ||
           t.symbol === "USDC" ||
-          t.symbol === "USDT" ||
           t.mint === TOKEN_MINTS.FIXERCOIN ||
-          t.mint === TOKEN_MINTS.USDC ||
-          t.mint === TOKEN_MINTS.USDT,
+          t.mint === TOKEN_MINTS.USDC,
       )
       .sort((a, b) => (b.balance || 0) - (a.balance || 0));
     return sol ? [sol, ...rest] : rest;
@@ -269,14 +170,19 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     }
 
     setError(null);
-    setStep("confirm");
+    setStep("sending");
+    setIsLoading(true);
+    const ok = await handleConfirmTransaction();
+    if (!ok) {
+      setStep("form");
+    }
   };
 
-  const handleConfirmTransaction = async () => {
+  const handleConfirmTransaction = async (): Promise<boolean> => {
     if (selectedSymbol === "SOL") {
-      await handleSendSOL();
+      return await handleSendSOL();
     } else {
-      await handleSendSPL();
+      return await handleSendSPL();
     }
   };
 
@@ -313,6 +219,21 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     return btoa(bin);
   };
 
+  const isNetworkError = (errorMsg: string): boolean => {
+    const lowerMsg = (errorMsg || "").toLowerCase();
+    return (
+      lowerMsg.includes("fetch") ||
+      lowerMsg.includes("network") ||
+      lowerMsg.includes("timeout") ||
+      lowerMsg.includes("abort") ||
+      lowerMsg.includes("connection") ||
+      lowerMsg.includes("econnrefused") ||
+      lowerMsg.includes("enotfound") ||
+      lowerMsg.includes("failed to fetch") ||
+      lowerMsg.includes("net::")
+    );
+  };
+
   const postTx = async (url: string, b64: string) => {
     // Use the new RPC utility instead of direct fetch
     try {
@@ -323,6 +244,12 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       return result as string;
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
+
+      // Detect network connection errors
+      if (isNetworkError(msg)) {
+        throw new Error(`Network connection issue: ${msg}`);
+      }
+
       throw new Error(`Failed to send transaction: ${msg}`);
     }
   };
@@ -345,7 +272,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   const confirmSignatureProxy = async (sig: string): Promise<void> => {
     // Use RPC call to check transaction confirmation
     const started = Date.now();
-    const timeoutMs = 20000;
+    const timeoutMs = 40000;
     while (Date.now() - started < timeoutMs) {
       try {
         const statusRes = await rpcCall("getSignatureStatuses", [
@@ -439,8 +366,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     });
   };
 
-  const handleSendSOL = async () => {
-    if (!wallet) return;
+  const handleSendSOL = async (): Promise<boolean> => {
+    if (!wallet) return false;
 
     setIsLoading(true);
     setError(null);
@@ -559,7 +486,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }
       }
 
-      await confirmSignatureProxy(signature);
+      try {
+        await confirmSignatureProxy(signature);
+      } catch (confirmError) {
+        console.warn(
+          "Confirmation check failed, but transaction was already sent:",
+          confirmError,
+        );
+        // Don't fail the transaction - it's already submitted to blockchain
+      }
 
       setTxSignature(signature);
       setStep("success");
@@ -572,12 +507,24 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         title: "Transaction Sent",
         description: `Successfully sent ${amount} SOL`,
       });
+      return true;
     } catch (error) {
       console.error("Transaction error:", error);
       let message =
         error instanceof Error ? error.message : "Transaction failed";
       const m = (message || "").toLowerCase();
+
       if (
+        m.includes("network") ||
+        m.includes("connection") ||
+        m.includes("timeout") ||
+        m.includes("failed to fetch") ||
+        m.includes("econnrefused") ||
+        m.includes("enotfound")
+      ) {
+        message =
+          "Network connection issue. Please check your internet connection and try again. If the problem persists, the RPC service may be temporarily unavailable.";
+      } else if (
         m.includes("insufficient") ||
         m.includes("insufficient lamports") ||
         m.includes("insufficient sol") ||
@@ -612,13 +559,14 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         description: message,
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSendSPL = async () => {
-    if (!wallet || !selectedToken) return;
+  const handleSendSPL = async (): Promise<boolean> => {
+    if (!wallet || !selectedToken) return false;
 
     setIsLoading(true);
     setError(null);
@@ -686,9 +634,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         ]);
         const exists = !!ataInfo?.value;
         if (!exists) {
-          const rent = await rpcCall("getMinimumBalanceForRentExemption", [
-            165,
-          ]);
+          const rent = await rpcCall(
+            "getMinimumBalanceForRentExemption",
+            [165],
+          );
           rentLamports = typeof rent === "number" ? rent : rent?.value || 0;
         }
       } catch {}
@@ -769,7 +718,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }
       }
 
-      await confirmSignatureProxy(signature);
+      try {
+        await confirmSignatureProxy(signature);
+      } catch (confirmError) {
+        console.warn(
+          "Confirmation check failed, but transaction was already sent:",
+          confirmError,
+        );
+        // Don't fail the transaction - it's already submitted to blockchain
+      }
 
       setTxSignature(signature);
       setStep("success");
@@ -783,12 +740,24 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         title: "Transaction Sent",
         description: `Successfully sent ${amount} ${selectedToken.symbol}`,
       });
+      return true;
     } catch (error) {
       console.error("SPL Transaction error:", error);
       let message =
         error instanceof Error ? error.message : "Transaction failed";
       const m = (message || "").toLowerCase();
+
       if (
+        m.includes("network") ||
+        m.includes("connection") ||
+        m.includes("timeout") ||
+        m.includes("failed to fetch") ||
+        m.includes("econnrefused") ||
+        m.includes("enotfound")
+      ) {
+        message =
+          "Network connection issue. Please check your internet connection and try again. If the problem persists, the RPC service may be temporarily unavailable.";
+      } else if (
         m.includes("insufficient") ||
         m.includes("rent") ||
         m.includes("no room for fees")
@@ -814,6 +783,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         description: message,
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -836,82 +806,56 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   const formatAmount = (value: string): string => {
     const num = parseFloat(value);
-    if (isNaN(num)) return "0.00";
-    if (selectedSymbol === "FIXERCOIN" || selectedSymbol === "LOCKER") {
-      return num.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-    }
-    const fractionDigits = 6;
+    if (isNaN(num)) return "0.000";
     return num.toLocaleString(undefined, {
-      minimumFractionDigits: Math.min(2, fractionDigits),
-      maximumFractionDigits: fractionDigits,
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
     });
   };
 
   if (step === "success") {
     return (
       <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4 relative z-0">
-        <BloomExplosion show={showSuccess} />
-        <div className="w-full max-w-md relative z-10">
-          <div className="bg-transparent p-8 text-center">
-            <div className="mb-6">
-              <div className="mx-auto w-16 h-16 bg-emerald-500/10 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 ring-2 ring-emerald-200/30">
-                <Check className="h-8 w-8 text-emerald-500" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Transaction Sent!
-              </h3>
-              <p className="text-gray-600">
-                Your transfer has been successfully sent
-              </p>
-            </div>
+        <SuccessDialog onContinue={handleNewTransaction} />
+      </div>
+    );
+  }
 
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Amount:</span>
-                <span className="font-medium text-gray-900">
-                  {amount} {selectedSymbol}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">To:</span>
-                <span className="font-mono text-xs text-gray-900">
-                  {recipient.slice(0, 8)}...{recipient.slice(-8)}
-                </span>
-              </div>
-              {txSignature && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Signature:</span>
-                  <a
-                    href={`https://explorer.solana.com/tx/${txSignature}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-mono text-xs text-gray-900 hover:underline"
-                  >
-                    {txSignature.slice(0, 8)}...{txSignature.slice(-8)}
-                  </a>
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <Button
-                variant="outline"
-                onClick={handleNewTransaction}
-                className="flex-1 bg-white/50 text-gray-900 hover:bg-gray-50 uppercase"
-              >
-                Send Another
-              </Button>
-              <Button
-                onClick={onBack}
-                className="flex-1 bg-gradient-to-r from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] hover:from-[#f0fff4] hover:to-[#a7f3d0] text-gray-900 uppercase"
-              >
-                Back to Wallet
-              </Button>
+  if (step === "sending") {
+    return (
+      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4 relative z-0">
+        <div className="text-center space-y-6 max-w-sm">
+          <div className="flex justify-center">
+            <div className="relative">
+              <div className="absolute inset-0 bg-green-500/20 rounded-full blur-xl animate-pulse" />
+              <Loader2 className="w-16 h-16 text-green-600 animate-spin relative" />
             </div>
           </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Processing Transaction
+            </h2>
+            <p className="text-gray-600">
+              Please wait while your transaction is being sent to the blockchain
+            </p>
+          </div>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
+              <span className="text-gray-700">Signing transaction...</span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-2 h-2 bg-gray-400 rounded-full" />
+              <span className="text-gray-500">Sending to network...</span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-2 h-2 bg-gray-400 rounded-full" />
+              <span className="text-gray-500">Confirming on blockchain...</span>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-6">
+            This may take up to 40 seconds with slow network connection
+          </p>
         </div>
       </div>
     );
@@ -919,25 +863,16 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col">
-      {/* Decorative curved accent background elements */}
-
-      {/* Form Container - Centered */}
-      <div className="flex-1 flex items-center justify-center relative z-20">
-        <div className="w-full max-w-md px-4 py-6">
-          <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
-            {isLoading && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/10 rounded-2xl">
-                <div className="text-gray-900">Processing transaction...</div>
-              </div>
-            )}
-
-            <div className="space-y-6 p-6">
-              <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
+      <div className="flex flex-col relative z-20 pt-4">
+        <div className="w-full">
+          <div className="border-0 bg-transparent">
+            <div className="space-y-6 px-6 py-4">
+              <div className="flex items-center gap-3 pb-2">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={onBack}
-                  className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                  className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
                   aria-label="Back"
                 >
                   <ArrowLeft className="h-4 w-4" />
@@ -957,10 +892,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       value={selectedMint}
                       onValueChange={setSelectedMint}
                     >
-                      <SelectTrigger className="w-full bg-transparent border border-gray-700 text-white placeholder:text-gray-400 uppercase">
+                      <SelectTrigger className="w-full bg-transparent border border-gray-700 text-white placeholder:text-gray-400 uppercase rounded-lg">
                         <SelectValue placeholder="SELECT TOKEN" />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-800 border border-gray-700 text-white">
+                      <SelectContent className="bg-gray-800 border border-gray-700 text-white rounded-lg">
                         {availableTokens.map((t) => (
                           <SelectItem
                             key={t.mint}
@@ -970,11 +905,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                             <div className="flex items-center justify-between w-full">
                               <span className="font-medium text-white">
                                 {t.symbol} ~{" "}
-                                {(t.symbol === "SOL"
-                                  ? balance
-                                  : t.balance || 0
+                                {(
+                                  Math.floor(
+                                    (t.symbol === "SOL"
+                                      ? balance
+                                      : t.balance || 0) * 1000,
+                                  ) / 1000
                                 ).toLocaleString(undefined, {
-                                  maximumFractionDigits: 8,
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3,
                                 })}
                               </span>
                             </div>
@@ -996,7 +935,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       placeholder="ENTER SOLANA ADDRESS"
                       value={recipient}
                       onChange={(e) => setRecipient(e.target.value)}
-                      className="font-mono text-sm bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                      className="font-mono text-sm bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground rounded-lg"
                     />
                   </div>
 
@@ -1006,14 +945,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         htmlFor="amount"
                         className="text-[hsl(var(--foreground))] uppercase"
                       >
-                        Amount ({selectedSymbol})
+                        {selectedSymbol}
                       </Label>
                       <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                        Balance:{" "}
-                        {selectedBalance.toLocaleString(undefined, {
-                          maximumFractionDigits: 8,
-                        })}{" "}
-                        {selectedSymbol}
+                        {(
+                          Math.floor(selectedBalance * 1000) / 1000
+                        ).toLocaleString(undefined, {
+                          minimumFractionDigits: 3,
+                          maximumFractionDigits: 3,
+                        })}
                       </span>
                     </div>
                     <Input
@@ -1023,7 +963,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       placeholder="0.00"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      className="bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                      className="bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground rounded-lg"
                     />
                     <div className="flex gap-2">
                       <Button
@@ -1032,7 +972,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.25).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase"
+                        className="bg-[#064e3b]/50 border border-[#22c55e]/30 text-white hover:bg-[#16a34a]/20 uppercase rounded-lg"
                       >
                         25%
                       </Button>
@@ -1042,7 +982,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.5).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase"
+                        className="bg-[#064e3b]/50 border border-[#22c55e]/30 text-white hover:bg-[#16a34a]/20 uppercase rounded-lg"
                       >
                         50%
                       </Button>
@@ -1052,7 +992,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.75).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase"
+                        className="bg-[#064e3b]/50 border border-[#22c55e]/30 text-white hover:bg-[#16a34a]/20 uppercase rounded-lg"
                       >
                         75%
                       </Button>
@@ -1062,7 +1002,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         onClick={() =>
                           setAmount((selectedBalance * 0.99).toString())
                         }
-                        className="bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase"
+                        className="bg-[#064e3b]/50 border border-[#22c55e]/30 text-white hover:bg-[#16a34a]/20 uppercase rounded-lg"
                       >
                         Max
                       </Button>
@@ -1081,13 +1021,13 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                       placeholder="ADD A NOTE"
                       value={memo}
                       onChange={(e) => setMemo(e.target.value)}
-                      className="bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground"
+                      className="bg-transparent border border-gray-700 text-white caret-white placeholder:text-gray-300 placeholder:text-muted-foreground rounded-lg"
                     />
                   </div>
 
                   <Button
                     onClick={handleContinue}
-                    className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg uppercase"
+                    className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase rounded-lg"
                     disabled={!recipient || !amount}
                   >
                     Continue
@@ -1148,14 +1088,14 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     <Button
                       variant="outline"
                       onClick={() => setStep("form")}
-                      className="flex-1 bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white hover:bg-[#FF7A5C]/10 uppercase"
+                      className="flex-1 bg-[#064e3b]/50 border border-[#22c55e]/30 text-white hover:bg-[#16a34a]/20 uppercase rounded-lg"
                       disabled={isLoading}
                     >
                       Back
                     </Button>
                     <Button
                       onClick={handleConfirmTransaction}
-                      className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg uppercase"
+                      className="flex-1 bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase rounded-lg"
                       disabled={isLoading}
                     >
                       {isLoading ? "Sending..." : "Send Transaction"}

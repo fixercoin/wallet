@@ -89,7 +89,7 @@ async function tryDexscreener(path, retries = 3) {
         const res = await timeoutFetch(
           url,
           { headers: { Accept: "application/json" } },
-          10000,
+          20000,
         );
 
         // Handle rate limiting with exponential backoff

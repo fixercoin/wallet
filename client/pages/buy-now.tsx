@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, ShoppingCart, TrendingUp } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { useOrderNotifications } from "@/hooks/use-order-notifications";
+import { ADMIN_WALLET } from "@/lib/p2p";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
@@ -14,6 +16,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 
 interface TokenOption {
   id: string;
@@ -64,8 +75,10 @@ const DEFAULT_TOKENS: TokenOption[] = [
 
 export default function BuyNow() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { wallet } = useWallet();
   const { toast } = useToast();
+  const { createNotification } = useOrderNotifications();
 
   const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
@@ -76,6 +89,42 @@ export default function BuyNow() {
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [fetchingRate, setFetchingRate] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
+    string | undefined
+  >();
+  const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
+  const [offerPassword, setOfferPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [editingOrder, setEditingOrder] = useState<any>(
+    (location.state as any)?.editingOrder || null,
+  );
+
+  const OFFER_PASSWORD = "######Pakistan";
+
+  const handleOfferAction = (action: "buy" | "sell") => {
+    if (offerPassword !== OFFER_PASSWORD) {
+      setPasswordError("Invalid password");
+      return;
+    }
+    setShowCreateOfferDialog(false);
+    setOfferPassword("");
+    setPasswordError("");
+    navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
+  };
+
+  // Load editing order data if available
+  useEffect(() => {
+    if (editingOrder) {
+      // Find the token from the order
+      const token = tokens.find((t) => t.id === editingOrder.token);
+      if (token) {
+        setSelectedToken(token);
+      }
+      // Set the amount
+      setAmountPKR(String(editingOrder.amountPKR || ""));
+    }
+  }, [editingOrder, tokens]);
 
   useEffect(() => {
     const fetchTokens = async () => {
@@ -93,7 +142,9 @@ export default function BuyNow() {
           } as TokenOption;
         });
         setTokens(enriched);
-        setSelectedToken(enriched[0]);
+        if (!editingOrder) {
+          setSelectedToken(enriched[0]);
+        }
       } catch (error) {
         console.warn("DexScreener fetch failed, using defaults", error);
         setTokens(DEFAULT_TOKENS);
@@ -131,13 +182,40 @@ export default function BuyNow() {
     }
   }, [amountPKR, exchangeRate]);
 
-  const addPendingOrder = (o: any) => {
+  const saveOrderToAPI = async (order: any) => {
     try {
-      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
-      const arr = Array.isArray(cur) ? cur : [];
-      arr.unshift({ ...o, status: "pending" });
-      localStorage.setItem("orders_pending", JSON.stringify(arr));
-    } catch {}
+      const response = await fetch("/api/p2p/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "BUY",
+          walletAddress: wallet.publicKey,
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+          pricePKRPerQuote: order.pricePKRPerQuote,
+          paymentMethodId: order.paymentMethod,
+          status: "PENDING",
+          orderId: order.id,
+          accountName: order.seller?.accountName,
+          accountNumber: order.seller?.accountNumber,
+          buyerWallet: order.buyerWallet,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error(
+          "Failed to save order to API:",
+          response.status,
+          await response.text(),
+        );
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error("Error saving order to API:", error);
+      return false;
+    }
   };
 
   const handleBuyClick = async () => {
@@ -160,9 +238,12 @@ export default function BuyNow() {
     const pricePKRPerQuote = exchangeRate;
     setLoading(true);
     try {
+      const orderId = editingOrder?.id || `BUY-${Date.now()}`;
       const order = {
-        id: `ORD-${Date.now()}`,
+        id: orderId,
+        type: "BUY",
         token: selectedToken.id,
+        amountTokens: Number(amountPKR) / exchangeRate,
         amountPKR: Number(amountPKR),
         pricePKRPerQuote,
         paymentMethod: "easypaisa",
@@ -171,16 +252,44 @@ export default function BuyNow() {
           accountNumber: "030107044833",
         },
         buyerWallet: wallet.publicKey,
-        createdAt: Date.now(),
+        walletAddress: wallet.publicKey,
+        createdAt: editingOrder?.createdAt || Date.now(),
+        updatedAt: Date.now(),
+        status: "PENDING",
       };
-      try {
-        localStorage.setItem("buynote_order", JSON.stringify(order));
-      } catch {}
-      addPendingOrder(order);
-      navigate("/buynote");
+
+      const saved = await saveOrderToAPI(order);
+      if (!saved) {
+        throw new Error("Failed to save order to the server");
+      }
+
+      if (!editingOrder) {
+        await createNotification(
+          ADMIN_WALLET,
+          "order_created",
+          "BUY",
+          orderId,
+          `New buy order created: ${Number(amountPKR).toFixed(2)} PKR for ${selectedToken.id}`,
+          {
+            token: selectedToken.id,
+            amountTokens: Number(amountPKR) / exchangeRate,
+            amountPKR: Number(amountPKR),
+          },
+        );
+      }
+
+      toast({
+        title: "Success",
+        description: editingOrder
+          ? "Buy order updated successfully"
+          : "Buy order created successfully",
+        duration: 2000,
+      });
+
+      navigate("/buy-order");
     } catch (error: any) {
       toast({
-        title: "Failed to start chat",
+        title: "Failed to save order",
         description: error?.message || String(error),
         variant: "destructive",
       });
@@ -298,6 +407,8 @@ export default function BuyNow() {
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   Processing...
                 </>
+              ) : editingOrder ? (
+                "UPDATE BUY ORDER"
               ) : (
                 "PAY TO BUY CRYPTO CURRENCY"
               )}
@@ -305,6 +416,90 @@ export default function BuyNow() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Payment Method Dialog */}
+      <PaymentMethodDialog
+        open={showPaymentDialog}
+        onOpenChange={(open) => {
+          setShowPaymentDialog(open);
+          if (!open) {
+            setEditingPaymentMethodId(undefined);
+          }
+        }}
+        walletAddress={wallet?.publicKey || ""}
+        paymentMethodId={editingPaymentMethodId}
+        onSave={() => {
+          setEditingPaymentMethodId(undefined);
+        }}
+      />
+
+      {/* Create Offer Dialog */}
+      <Dialog
+        open={showCreateOfferDialog}
+        onOpenChange={(open) => {
+          setShowCreateOfferDialog(open);
+          if (!open) {
+            setOfferPassword("");
+            setPasswordError("");
+          }
+        }}
+      >
+        <DialogContent className="bg-[#1a2847] border border-gray-300/30 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white uppercase">
+              CREATE OFFER
+            </DialogTitle>
+            <DialogDescription className="text-white/70 uppercase">
+              CHOOSE WHETHER YOU WANT TO BUY OR SELL CRYPTO
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-2 uppercase">
+                Password
+              </label>
+              <input
+                type="password"
+                value={offerPassword}
+                onChange={(e) => {
+                  setOfferPassword(e.target.value);
+                  setPasswordError("");
+                }}
+                placeholder="Enter password"
+                className="w-full px-4 py-2 rounded-lg bg-[#1a2540]/50 border border-gray-300/30 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-gray-300/50"
+              />
+              {passwordError && (
+                <p className="text-red-500 text-xs mt-1">{passwordError}</p>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                onClick={() => handleOfferAction("buy")}
+                className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-600/20 to-blue-600/10 border border-blue-500/30 hover:border-blue-500/50 text-white font-semibold rounded-lg transition-all uppercase"
+              >
+                <ShoppingCart className="w-8 h-8" />
+                <span>BUY CRYPTO</span>
+              </Button>
+              <Button
+                onClick={() => handleOfferAction("sell")}
+                className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-green-600/20 to-green-600/10 border border-green-500/30 hover:border-green-500/50 text-white font-semibold rounded-lg transition-all uppercase"
+              >
+                <TrendingUp className="w-8 h-8" />
+                <span>SELL CRYPTO</span>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bottom Navigation */}
+      <P2PBottomNavigation
+        onPaymentClick={() => {
+          setEditingPaymentMethodId(undefined);
+          setShowPaymentDialog(true);
+        }}
+        onCreateOfferClick={() => setShowCreateOfferDialog(true)}
+      />
     </div>
   );
 }

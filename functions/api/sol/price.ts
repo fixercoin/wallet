@@ -32,7 +32,7 @@ async function handler(request: Request): Promise<Response> {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 18000);
 
     // Try CoinGecko API first
     try {
@@ -108,25 +108,24 @@ async function handler(request: Request): Promise<Response> {
       // Birdeye also failed
     }
 
-    // If all else fails, return cached fallback price
+    // If all else fails, return 503 Service Unavailable so client will retry
+    console.error("[SOL Price] Both CoinGecko and Birdeye APIs failed");
     return new Response(
       JSON.stringify({
-        price: 100,
-        price_change_24h: 0,
-        market_cap: 0,
-        volume_24h: 0,
+        error: "All price APIs failed - CoinGecko and Birdeye unavailable",
+        details: "Service temporarily unavailable",
       }),
       {
-        status: 200,
+        status: 503,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
-          "Cache-Control": "public, max-age=60",
+          "Cache-Control": "public, max-age=5",
         },
       },
     );
   } catch (error: any) {
-    // Always return 200 with fallback price to ensure client can parse response
+    // Return 503 on error so client retries
     const isTimeout =
       error?.name === "AbortError" || error?.message?.includes("timeout");
 
@@ -137,21 +136,15 @@ async function handler(request: Request): Promise<Response> {
 
     return new Response(
       JSON.stringify({
-        price: 100,
-        price_change_24h: 0,
-        market_cap: 0,
-        volume_24h: 0,
-        source: "fallback",
-        error: isTimeout
-          ? "Request timeout - using fallback price"
-          : "API error - using fallback price",
+        error: isTimeout ? "Request timeout" : "Fetch failed",
+        details: error?.message || String(error),
       }),
       {
-        status: 200,
+        status: 503,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
-          "Cache-Control": "public, max-age=60",
+          "Cache-Control": "public, max-age=5",
         },
       },
     );

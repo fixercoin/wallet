@@ -9,7 +9,6 @@ import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import {
   saveChatMessage,
   loadChatHistory,
-  sendChatMessage,
   type ChatMessage,
 } from "@/lib/p2p-chat";
 
@@ -29,24 +28,37 @@ export default function OrderComplete() {
   const [buyerVerified, setBuyerVerified] = useState(false);
   const [sellerVerified, setSellerVerified] = useState(false);
 
+  // Ensure roomId is always set from order or location state
   const roomId = order?.id || order?.roomId || "global";
 
   // Determine if current user is buyer based on wallet
-  const isBuyer = order?.buyerWallet === wallet?.publicKey;
+  // If we can't determine, assume the user is a participant
+  const isBuyer = order?.buyerWallet
+    ? order.buyerWallet === wallet?.publicKey
+    : true;
 
+  // Initialize chatroom when component mounts
   useEffect(() => {
-    const loadChat = async () => {
+    const initializeChatroom = async () => {
       try {
-        const messages = await loadChatHistory(roomId);
+        // Load chat history for this room
+        const messages = loadChatHistory(roomId);
         setChatLog(Array.isArray(messages) ? messages : []);
       } catch (error) {
         console.error("Failed to load chat:", error);
+        setChatLog([]);
       } finally {
         setLoading(false);
       }
     };
-    loadChat();
-  }, [roomId]);
+
+    // Only initialize if we have valid order and room info
+    if (order && roomId && wallet?.publicKey) {
+      initializeChatroom();
+    } else {
+      setLoading(false);
+    }
+  }, [roomId, order?.id, wallet?.publicKey]);
 
   const handleSendMessage = async () => {
     if (!messageInput.trim()) return;
@@ -57,6 +69,7 @@ export default function OrderComplete() {
         roomId,
         senderWallet: wallet?.publicKey || "",
         senderRole: isBuyer ? "buyer" : "seller",
+        type: "message",
         text: messageInput,
         timestamp: Date.now(),
       };
@@ -64,8 +77,8 @@ export default function OrderComplete() {
       setChatLog((prev) => [...prev, msg]);
       setMessageInput("");
 
-      await saveChatMessage(roomId, msg);
-      await sendChatMessage(roomId, msg);
+      // Save message to localStorage
+      saveChatMessage(msg);
     } catch (error) {
       console.error("Failed to send message:", error);
       toast({
@@ -85,6 +98,7 @@ export default function OrderComplete() {
           roomId,
           senderWallet: wallet?.publicKey || "",
           senderRole: isBuyer ? "buyer" : "seller",
+          type: "attachment",
           text: "📎 Proof",
           timestamp: Date.now(),
           metadata: {
@@ -94,8 +108,8 @@ export default function OrderComplete() {
         };
 
         setChatLog((prev) => [...prev, msg]);
-        await saveChatMessage(roomId, msg);
-        await sendChatMessage(roomId, msg);
+        // Save message to localStorage
+        saveChatMessage(msg);
       } catch (error) {
         console.error("Failed to upload attachment:", error);
         toast({
@@ -123,6 +137,7 @@ export default function OrderComplete() {
       roomId,
       senderWallet: wallet?.publicKey || "",
       senderRole: isBuyer ? "buyer" : "seller",
+      type: "verification",
       text: `${isBuyer ? "Buyer" : "Seller"} has verified and confirmed payment`,
       timestamp: Date.now(),
       metadata: {
@@ -131,8 +146,8 @@ export default function OrderComplete() {
     };
 
     setChatLog((prev) => [...prev, msg]);
-    await saveChatMessage(roomId, msg);
-    await sendChatMessage(roomId, msg);
+    // Save message to localStorage
+    saveChatMessage(msg);
 
     const otherWalletKey = isBuyerAction
       ? order.sellerWallet

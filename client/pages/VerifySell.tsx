@@ -167,29 +167,45 @@ export default function VerifySell() {
   };
 
   const handleVerified = async () => {
-    if (!selectedOrder) return;
+    if (!selectedOrder || !wallet?.publicKey) return;
     setLoading(true);
 
     try {
       setPhase("chat");
 
-      const message: ChatMessage = {
-        id: `msg-${Date.now()}`,
-        roomId: selectedOrder.roomId,
-        senderWallet: wallet?.publicKey || "",
-        senderRole: "seller",
-        type: "seller_verified",
-        text: "Seller verified payment. Ready to transfer assets.",
-        timestamp: Date.now(),
-      };
+      const text = "Seller verified payment. Ready to transfer assets.";
 
-      saveChatMessage(message);
-      setChatLog((prev) => [...prev, message]);
+      // Save to server
+      const serverMsg = await saveServerChatMessage(
+        selectedOrder.roomId,
+        wallet.publicKey,
+        text
+      );
+
+      if (serverMsg) {
+        serverMsg.senderRole = "seller";
+        serverMsg.type = "seller_verified";
+        setChatLog((prev) => [...prev, serverMsg]);
+        lastMessageCountRef.current += 1;
+      } else {
+        // Fallback
+        const message: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId: selectedOrder.roomId,
+          senderWallet: wallet.publicKey,
+          senderRole: "seller",
+          type: "seller_verified",
+          text,
+          timestamp: Date.now(),
+        };
+        saveChatMessage(message);
+        setChatLog((prev) => [...prev, message]);
+      }
 
       const notification: ChatNotification = {
         type: "status_change",
         roomId: selectedOrder.roomId,
-        initiatorWallet: wallet?.publicKey || "",
+        initiatorWallet: wallet.publicKey,
         initiatorRole: "seller",
         message: "Seller verified payment",
         timestamp: Date.now(),

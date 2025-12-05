@@ -1,4 +1,5 @@
 import { RequestHandler } from "express";
+import { getKVStorage } from "../lib/kv-storage";
 
 export interface P2POrder {
   id: string;
@@ -51,8 +52,7 @@ export interface TradeRoom {
   updated_at: number;
 }
 
-// In-memory store for development (will be replaced with Cloudflare KV in production)
-const orders: Map<string, P2POrder> = new Map();
+// In-memory stores for trade rooms and messages
 const rooms: Map<string, TradeRoom> = new Map();
 const messages: Map<
   string,
@@ -74,7 +74,7 @@ function normalizeOrder(order: any): P2POrder {
     amountTokens: order.amountTokens ?? parseFloat(order.token_amount || 0),
     amountPKR: order.amountPKR ?? order.pkr_amount,
     pricePKRPerQuote: order.pricePKRPerQuote,
-    paymentMethod: order.paymentMethod || order.payment_method,
+    payment_method: order.paymentMethod || order.payment_method,
     status: (order.status || "PENDING") as P2POrder["status"],
     createdAt: order.createdAt || order.created_at || Date.now(),
     updatedAt: order.updatedAt || order.updated_at || Date.now(),
@@ -91,27 +91,112 @@ function generateId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// Helper to get all order IDs for a wallet
+async function getOrderIdsForWallet(walletAddress: string): Promise<string[]> {
+  const kv = getKVStorage();
+  const key = `orders:wallet:${walletAddress}`;
+  const json = await kv.get(key);
+  return json ? JSON.parse(json) : [];
+}
+
+// Helper to save order IDs for a wallet
+async function saveOrderIdsForWallet(
+  walletAddress: string,
+  orderIds: string[],
+): Promise<void> {
+  const kv = getKVStorage();
+  const key = `orders:wallet:${walletAddress}`;
+  await kv.put(key, JSON.stringify(orderIds));
+}
+
+// Helper to get an order by ID
+async function getOrderById(orderId: string): Promise<P2POrder | null> {
+  const kv = getKVStorage();
+  const key = `orders:${orderId}`;
+  const json = await kv.get(key);
+  return json ? JSON.parse(json) : null;
+}
+
+// Helper to save an order
+async function saveOrder(order: P2POrder): Promise<void> {
+  const kv = getKVStorage();
+  const key = `orders:${order.id}`;
+  await kv.put(key, JSON.stringify(order));
+
+  // Update wallet's order list
+  const walletAddress = order.walletAddress || order.creator_wallet;
+  if (walletAddress) {
+    const orderIds = await getOrderIdsForWallet(walletAddress);
+    if (!orderIds.includes(order.id)) {
+      orderIds.push(order.id);
+      await saveOrderIdsForWallet(walletAddress, orderIds);
+    }
+  }
+}
+
+// Helper to delete an order
+async function deleteOrderById(
+  orderId: string,
+  walletAddress: string,
+): Promise<void> {
+  const kv = getKVStorage();
+  const key = `orders:${orderId}`;
+  await kv.delete(key);
+
+  // Update wallet's order list
+  const orderIds = await getOrderIdsForWallet(walletAddress);
+  const filtered = orderIds.filter((id) => id !== orderId);
+  await saveOrderIdsForWallet(walletAddress, filtered);
+}
+
 // P2P Orders endpoints
 export const handleListP2POrders: RequestHandler = async (req, res) => {
   try {
     const { type, status, token, wallet, id } = req.query;
 
-    let filtered = Array.from(orders.values());
+    let filtered: P2POrder[] = [];
 
     if (wallet) {
-      filtered = filtered.filter(
-        (o) =>
-          o.walletAddress === wallet ||
-          o.creator_wallet === wallet ||
-          o.buyerWallet === wallet ||
-          o.sellerWallet === wallet,
-      );
+      // Get orders for specific wallet
+      const orderIds = await getOrderIdsForWallet(wallet as string);
+      for (const orderId of orderIds) {
+        const order = await getOrderById(orderId);
+        if (order) {
+          filtered.push(order);
+        }
+      }
+    } else if (id) {
+      // Get single order by ID
+      const order = await getOrderById(id as string);
+      if (order) {
+        filtered.push(order);
+      }
+    } else {
+      // Get all orders (from all wallets)
+      const kv = getKVStorage();
+      const listResult = await kv.list();
+      const keys = listResult.keys || [];
+
+      for (const key of keys) {
+        if (key.name.startsWith("orders:") && !key.name.includes("wallet:")) {
+          const order = await getOrderById(key.name.replace("orders:", ""));
+          if (order) {
+            filtered.push(order);
+          }
+        }
+      }
     }
 
-    if (type) filtered = filtered.filter((o) => o.type === String(type));
-    if (status) filtered = filtered.filter((o) => o.status === status);
-    if (token) filtered = filtered.filter((o) => o.token === token);
-    if (id) filtered = filtered.filter((o) => o.id === id);
+    // Apply filters
+    if (type) {
+      filtered = filtered.filter((o) => o.type === String(type).toUpperCase());
+    }
+    if (status) {
+      filtered = filtered.filter((o) => o.status === status);
+    }
+    if (token) {
+      filtered = filtered.filter((o) => o.token === token);
+    }
 
     filtered.sort(
       (a, b) =>
@@ -179,7 +264,7 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
       amountTokens: finalAmount,
       amountPKR: finalPKR,
       pricePKRPerQuote: finalPrice,
-      paymentMethod: payment_method || paymentMethodId,
+      payment_method: payment_method || paymentMethodId,
       status: (status || "PENDING") as P2POrder["status"],
       createdAt: now,
       created_at: now,
@@ -192,7 +277,7 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
       adminWallet,
     };
 
-    orders.set(id, order);
+    await saveOrder(order);
 
     res.status(201).json({ order });
   } catch (error) {
@@ -204,7 +289,7 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
 export const handleGetP2POrder: RequestHandler = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const order = orders.get(orderId);
+    const order = await getOrderById(orderId);
 
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
@@ -220,7 +305,7 @@ export const handleGetP2POrder: RequestHandler = async (req, res) => {
 export const handleUpdateP2POrder: RequestHandler = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const order = orders.get(orderId);
+    const order = await getOrderById(orderId);
 
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
@@ -236,7 +321,7 @@ export const handleUpdateP2POrder: RequestHandler = async (req, res) => {
       updated_at: Date.now(),
     };
 
-    orders.set(orderId, updated);
+    await saveOrder(updated);
     res.json({ order: updated });
   } catch (error) {
     console.error("Update P2P order error:", error);
@@ -247,13 +332,25 @@ export const handleUpdateP2POrder: RequestHandler = async (req, res) => {
 export const handleDeleteP2POrder: RequestHandler = async (req, res) => {
   try {
     const { orderId } = req.params;
+    const walletAddress =
+      (req.query.wallet as string) ||
+      (req.body.walletAddress as string) ||
+      (req.body.creator_wallet as string) ||
+      "";
 
-    if (!orders.has(orderId)) {
+    if (!walletAddress) {
+      return res.status(400).json({
+        error: "Missing wallet address",
+      });
+    }
+
+    const order = await getOrderById(orderId);
+    if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    orders.delete(orderId);
-    res.json({ ok: true });
+    await deleteOrderById(orderId, walletAddress);
+    res.json({ message: "Order deleted" });
   } catch (error) {
     console.error("Delete P2P order error:", error);
     res.status(500).json({ error: "Failed to delete order" });
@@ -263,22 +360,20 @@ export const handleDeleteP2POrder: RequestHandler = async (req, res) => {
 // Trade Rooms endpoints
 export const handleListTradeRooms: RequestHandler = async (req, res) => {
   try {
-    const { wallet } = req.query;
+    const { buyer_wallet, seller_wallet, status } = req.query;
 
     let filtered = Array.from(rooms.values());
 
-    if (wallet) {
-      filtered = filtered.filter(
-        (r) => r.buyer_wallet === wallet || r.seller_wallet === wallet,
-      );
-    }
-
-    filtered.sort((a, b) => b.created_at - a.created_at);
+    if (buyer_wallet)
+      filtered = filtered.filter((r) => r.buyer_wallet === buyer_wallet);
+    if (seller_wallet)
+      filtered = filtered.filter((r) => r.seller_wallet === seller_wallet);
+    if (status) filtered = filtered.filter((r) => r.status === status);
 
     res.json({ rooms: filtered });
   } catch (error) {
     console.error("List trade rooms error:", error);
-    res.status(500).json({ error: "Failed to list rooms" });
+    res.status(500).json({ error: "Failed to list trade rooms" });
   }
 };
 
@@ -287,7 +382,9 @@ export const handleCreateTradeRoom: RequestHandler = async (req, res) => {
     const { buyer_wallet, seller_wallet, order_id } = req.body;
 
     if (!buyer_wallet || !seller_wallet || !order_id) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return res.status(400).json({
+        error: "Missing required fields",
+      });
     }
 
     const id = generateId("room");
@@ -304,11 +401,10 @@ export const handleCreateTradeRoom: RequestHandler = async (req, res) => {
     };
 
     rooms.set(id, room);
-
     res.status(201).json({ room });
   } catch (error) {
     console.error("Create trade room error:", error);
-    res.status(500).json({ error: "Failed to create room" });
+    res.status(500).json({ error: "Failed to create trade room" });
   }
 };
 
@@ -318,13 +414,13 @@ export const handleGetTradeRoom: RequestHandler = async (req, res) => {
     const room = rooms.get(roomId);
 
     if (!room) {
-      return res.status(404).json({ error: "Room not found" });
+      return res.status(404).json({ error: "Trade room not found" });
     }
 
     res.json({ room });
   } catch (error) {
     console.error("Get trade room error:", error);
-    res.status(500).json({ error: "Failed to get room" });
+    res.status(500).json({ error: "Failed to get trade room" });
   }
 };
 
@@ -334,7 +430,7 @@ export const handleUpdateTradeRoom: RequestHandler = async (req, res) => {
     const room = rooms.get(roomId);
 
     if (!room) {
-      return res.status(404).json({ error: "Room not found" });
+      return res.status(404).json({ error: "Trade room not found" });
     }
 
     const updated: TradeRoom = {
@@ -349,23 +445,15 @@ export const handleUpdateTradeRoom: RequestHandler = async (req, res) => {
     res.json({ room: updated });
   } catch (error) {
     console.error("Update trade room error:", error);
-    res.status(500).json({ error: "Failed to update room" });
+    res.status(500).json({ error: "Failed to update trade room" });
   }
 };
 
-// Export P2P Order handlers for use in main server file
-export const handleListP2POrdersRoute = handleListP2POrders;
-export const handleCreateP2POrderRoute = handleCreateP2POrder;
-export const handleGetP2POrderRoute = handleGetP2POrder;
-export const handleUpdateP2POrderRoute = handleUpdateP2POrder;
-export const handleDeleteP2POrderRoute = handleDeleteP2POrder;
-
-// Trade Messages endpoints
 export const handleListTradeMessages: RequestHandler = async (req, res) => {
   try {
     const { roomId } = req.params;
-
     const roomMessages = messages.get(roomId) || [];
+
     res.json({ messages: roomMessages });
   } catch (error) {
     console.error("List trade messages error:", error);
@@ -376,28 +464,24 @@ export const handleListTradeMessages: RequestHandler = async (req, res) => {
 export const handleAddTradeMessage: RequestHandler = async (req, res) => {
   try {
     const { roomId } = req.params;
-    const { sender_wallet, message, attachment_url } = req.body;
+    const { sender_wallet, message } = req.body;
 
     if (!sender_wallet || !message) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return res.status(400).json({
+        error: "Missing required fields",
+      });
     }
 
-    const id = generateId("msg");
-    const now = Date.now();
-
+    const roomMessages = messages.get(roomId) || [];
     const msg = {
-      id,
+      id: generateId("msg"),
       sender_wallet,
       message,
-      attachment_url,
-      created_at: now,
+      created_at: Date.now(),
     };
 
-    if (!messages.has(roomId)) {
-      messages.set(roomId, []);
-    }
-
-    messages.get(roomId)!.push(msg);
+    roomMessages.push(msg);
+    messages.set(roomId, roomMessages);
 
     res.status(201).json({ message: msg });
   } catch (error) {

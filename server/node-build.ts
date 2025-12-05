@@ -1,8 +1,12 @@
 import { createServer } from "./index";
 import express from "express";
 import * as nodePath from "path";
+import { initializeKVStorage } from "./lib/kv-storage";
 
 (async () => {
+  // Initialize KV storage for persistent order data
+  initializeKVStorage();
+
   // Create the API app (routes already have /api prefix)
   const app = await createServer();
   const port = process.env.PORT || 3000;

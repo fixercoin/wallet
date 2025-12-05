@@ -419,6 +419,8 @@ export default function BuyNow() {
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   Processing...
                 </>
+              ) : editingOrder ? (
+                "UPDATE BUY ORDER"
               ) : (
                 "PAY TO BUY CRYPTO CURRENCY"
               )}

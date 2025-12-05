@@ -177,7 +177,7 @@ export default function BuyOrder() {
                 className="text-center text-white/70 py-8"
                 style={{ fontSize: "12px" }}
               >
-                No buy orders or active stakes
+                No buy order
               </div>
             )}
           {!loadingStakes && stakes.length > 0 && (

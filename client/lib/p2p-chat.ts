@@ -198,6 +198,52 @@ export function clearNotificationsForRoom(roomId: string) {
   }
 }
 
+// WEBSOCKET: Connect to real-time chat room
+export function connectToRoom(
+  roomId: string,
+  onMessage: (message: ChatMessage) => void,
+  onError?: (error: Event) => void
+): () => void {
+  try {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/ws/p2p/${encodeURIComponent(roomId)}`;
+
+    const ws = new WebSocket(wsUrl);
+    wsConnections.set(roomId, ws);
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = parseWebSocketMessage(event.data);
+        if (msg) {
+          onMessage(msg);
+        }
+      } catch (e) {
+        console.error("Failed to parse WebSocket message:", e);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+      if (onError) onError(error);
+    };
+
+    ws.onclose = () => {
+      wsConnections.delete(roomId);
+    };
+
+    // Return disconnect function
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+      wsConnections.delete(roomId);
+    };
+  } catch (error) {
+    console.error("Failed to connect to WebSocket:", error);
+    return () => {}; // No-op disconnect
+  }
+}
+
 // Send notification to WebSocket room
 export function broadcastNotification(
   send: any,

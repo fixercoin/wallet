@@ -1,8 +1,5 @@
-// Production deployment defaults
-const FIXORIUM_API_BASE = "https://wallet.fixorium.com.pk/api";
-const CLOUDFLARE_WORKER_BASE =
-  "https://fixorium-proxy.khanbabusargodha.workers.dev/api";
-const LOCALHOST_API_BASE = "http://localhost:5173"; // Local fallback
+// API base resolution prefers env (VITE_API_BASE_URL or VITE_API_URL),
+// then defaults to the Cloudflare Worker domain
 
 // Track which API base is currently working
 let workingApiBase: string | null = null;
@@ -16,12 +13,22 @@ const normalizeBase = (value: string | null | undefined): string => {
 };
 
 const determineBase = (): string => {
-  const envBase = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
-  if (envBase) return envBase;
-  // Use cached working base if available
+  // Try primary env var
+  const envBasePrimary = normalizeBase(import.meta.env?.VITE_API_BASE_URL);
+  if (envBasePrimary) {
+    return envBasePrimary;
+  }
+
+  // Try alternative env var
+  const envBaseAlt = normalizeBase((import.meta as any)?.env?.VITE_API_URL);
+  if (envBaseAlt) {
+    return envBaseAlt;
+  }
+
   if (workingApiBase) return workingApiBase;
-  // Try Fixorium API first (known working), then Cloudflare Worker as fallback
-  return FIXORIUM_API_BASE;
+
+  // Default to relative /api (served by the same origin - for SPA on Worker)
+  return "";
 };
 
 let cachedBase: string | null = null;
@@ -73,6 +80,27 @@ export const resolveApiUrl = (path: string): string => {
   return `${baseNorm}${normalizedPath}`;
 };
 
+// Get API key from environment variables
+export const getApiKey = (): string | null => {
+  return (import.meta.env.VITE_API_KEY || null) as string | null;
+};
+
+// Helper to add API key header to requests
+export const getApiHeaders = (
+  additionalHeaders?: Record<string, string>,
+): Record<string, string> => {
+  const headers: Record<string, string> = {
+    ...additionalHeaders,
+  };
+
+  const apiKey = getApiKey();
+  if (apiKey) {
+    headers["x-api-key"] = apiKey;
+  }
+
+  return headers;
+};
+
 // Fetch wrapper with automatic fallback support
 export const fetchWithFallback = async (
   path: string,
@@ -82,8 +110,13 @@ export const fetchWithFallback = async (
   const currentBase = getApiBaseUrl();
 
   try {
+    const mergedHeaders = getApiHeaders(
+      (options?.headers as Record<string, string>) || {},
+    );
+
     const response = await fetch(url, {
       ...options,
+      headers: mergedHeaders,
       // Add timeout if not present
       signal: options?.signal || AbortSignal.timeout?.(30000),
     });
@@ -95,41 +128,7 @@ export const fetchWithFallback = async (
 
     return response;
   } catch (error) {
-    // Try fallback endpoint if primary fails
-    const fallbackBase =
-      currentBase === FIXORIUM_API_BASE
-        ? CLOUDFLARE_WORKER_BASE
-        : FIXORIUM_API_BASE;
-
-    if (fallbackBase && fallbackBase !== currentBase) {
-      console.warn(
-        `[API] Primary endpoint (${currentBase}) failed. Trying fallback: ${fallbackBase}`,
-      );
-
-      const fallbackUrl =
-        fallbackBase + (path.startsWith("/") ? "" : "/") + path;
-
-      try {
-        const fallbackResponse = await fetch(fallbackUrl, {
-          ...options,
-          signal: options?.signal || AbortSignal.timeout?.(30000),
-        });
-
-        if (fallbackResponse.ok) {
-          workingApiBase = fallbackBase;
-          cachedBase = fallbackBase;
-          return fallbackResponse;
-        }
-      } catch (fallbackError) {
-        console.warn(
-          "[API] Fallback endpoint also failed:",
-          fallbackError instanceof Error
-            ? fallbackError.message
-            : String(fallbackError),
-        );
-      }
-    }
-
-    throw error;
+    // No external fallback; surface the error to caller
+    throw error as any;
   }
 };

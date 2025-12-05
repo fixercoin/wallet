@@ -48,36 +48,46 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
       // Validate the address format
       new PublicKey(contractAddress.trim());
 
-      // For demonstration, we'll create a mock token info
-      // In a real app, you would fetch this from the blockchain or a token metadata service
+      const mint = contractAddress.trim();
+
+      // Try to fetch from DexScreener first for metadata and logo
+      let dexToken: any = null;
+      try {
+        const response = await fetch(
+          `/api/dexscreener/token?mint=${encodeURIComponent(mint)}`,
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.pairs?.[0]) {
+            dexToken = data.pairs[0];
+          }
+        }
+      } catch {
+        // DexScreener lookup failed, will use fallback
+      }
+
+      // Create token info with data from DexScreener or fallback
       const mockTokenInfo: TokenInfo = {
-        mint: contractAddress.trim(),
-        symbol: "UNKNOWN",
-        name: "Unknown Token",
+        mint,
+        symbol: dexToken?.baseToken?.symbol || "UNKNOWN",
+        name: dexToken?.baseToken?.name || "Unknown Token",
         decimals: 9,
-        logoURI: "/placeholder.svg",
+        logoURI: dexToken?.info?.imageUrl || "/placeholder.svg",
         balance: 0,
       };
 
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Special handling for FIXERCOIN
-      if (contractAddress.trim() === TOKEN_MINTS.FIXERCOIN) {
+      // Special handling for known tokens
+      if (mint === TOKEN_MINTS.FIXERCOIN) {
         mockTokenInfo.symbol = "FIXERCOIN";
         mockTokenInfo.name = "FIXERCOIN";
         mockTokenInfo.decimals = 6;
         mockTokenInfo.logoURI = "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png";
-        mockTokenInfo.marketCap = 1200000; // $1.2M
-        mockTokenInfo.volume24h = 456000; // $456K
-        mockTokenInfo.liquidity = 234000; // $234K
+        mockTokenInfo.marketCap = 1200000;
+        mockTokenInfo.volume24h = 456000;
+        mockTokenInfo.liquidity = 234000;
       }
 
-      // Special handling for LOCKER
-      if (
-        contractAddress.trim() ===
-        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump"
-      ) {
+      if (mint === "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump") {
         mockTokenInfo.symbol = "LOCKER";
         mockTokenInfo.name = "LOCKER";
         mockTokenInfo.decimals = 6;
@@ -86,6 +96,14 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
         mockTokenInfo.marketCap = 0;
         mockTokenInfo.volume24h = 0;
         mockTokenInfo.liquidity = 0;
+      }
+
+      if (mint === "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump") {
+        mockTokenInfo.symbol = "FXM";
+        mockTokenInfo.name = "Fixorium";
+        mockTokenInfo.decimals = 6;
+        mockTokenInfo.logoURI =
+          "https://cdn.builder.io/api/v1/image/assets%2Feff28b05195a4f5f8e8aaeec5f72bbfe%2Fc78ec8b33eec40be819bca514ed06f2a?format=webp&width=800";
       }
 
       setTokenInfo(mockTokenInfo);
@@ -122,10 +140,10 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-gray-800 border-gray-700 text-white">
         <DialogHeader>
-          <DialogTitle>Add Custom Token</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-white">Add Custom Token</DialogTitle>
+          <DialogDescription className="text-gray-400">
             Enter the contract address of the token you want to add to your
             wallet.
           </DialogDescription>
@@ -133,27 +151,34 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="contract-address">Contract Address</Label>
+            <Label htmlFor="contract-address" className="text-gray-300">
+              Contract Address
+            </Label>
             <Input
               id="contract-address"
               placeholder="Enter token contract address..."
               value={contractAddress}
               onChange={(e) => setContractAddress(e.target.value)}
-              className="font-mono text-sm"
+              className="font-mono text-sm bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
             />
           </div>
 
           {error && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+            <Alert
+              variant="destructive"
+              className="bg-red-900/50 border-red-700"
+            >
+              <AlertTriangle className="h-4 w-4 text-red-400" />
+              <AlertDescription className="text-red-300">
+                {error}
+              </AlertDescription>
             </Alert>
           )}
 
           {tokenInfo && (
-            <Alert>
-              <CheckCircle className="h-4 w-4" />
-              <AlertDescription>
+            <Alert className="bg-green-900/50 border-green-700">
+              <CheckCircle className="h-4 w-4 text-green-400" />
+              <AlertDescription className="text-green-300">
                 <div className="space-y-1">
                   <div>
                     <strong>Token:</strong> {tokenInfo.name} ({tokenInfo.symbol}
@@ -175,7 +200,7 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
             <Button
               onClick={validateAndFetchToken}
               disabled={!contractAddress.trim() || isLoading}
-              className="flex-1"
+              className="flex-1 rounded-[4px] bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white"
             >
               {isLoading ? "Validating..." : "Validate Token"}
             </Button>
@@ -183,13 +208,17 @@ export const AddTokenDialog: React.FC<AddTokenDialogProps> = ({
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={handleClose}>
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            className="rounded-[4px] bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+          >
             Cancel
           </Button>
           <Button
             onClick={handleAddToken}
             disabled={!tokenInfo}
-            className="bg-green-600 hover:bg-green-700"
+            className="rounded-[4px] bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white"
           >
             Add Token
           </Button>

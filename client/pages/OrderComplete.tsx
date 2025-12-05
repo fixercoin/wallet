@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Plus, Send, CheckCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,9 @@ import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import {
   saveChatMessage,
   loadChatHistory,
+  loadServerChatHistory,
+  saveServerChatMessage,
+  syncChatMessagesFromServer,
   type ChatMessage,
 } from "@/lib/p2p-chat";
 
@@ -27,6 +30,8 @@ export default function OrderComplete() {
   const [loading, setLoading] = useState(true);
   const [buyerVerified, setBuyerVerified] = useState(false);
   const [sellerVerified, setSellerVerified] = useState(false);
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastMessageCountRef = useRef(0);
 
   // Ensure roomId is always set from order or location state
   const roomId = order?.id || order?.roomId || "global";
@@ -37,16 +42,19 @@ export default function OrderComplete() {
     ? order.buyerWallet === wallet?.publicKey
     : true;
 
-  // Initialize chatroom when component mounts
+  // Initialize chatroom and set up polling when component mounts
   useEffect(() => {
     const initializeChatroom = async () => {
       try {
-        // Load chat history for this room
-        const messages = loadChatHistory(roomId);
+        // Load chat history from SERVER (source of truth)
+        const messages = await loadServerChatHistory(roomId);
         setChatLog(Array.isArray(messages) ? messages : []);
+        lastMessageCountRef.current = messages.length;
       } catch (error) {
         console.error("Failed to load chat:", error);
-        setChatLog([]);
+        // Fallback to localStorage
+        const messages = loadChatHistory(roomId);
+        setChatLog(Array.isArray(messages) ? messages : []);
       } finally {
         setLoading(false);
       }
@@ -60,27 +68,77 @@ export default function OrderComplete() {
     }
   }, [roomId, order?.id, wallet?.publicKey]);
 
+  // Poll for new messages every 2 seconds to sync with other party
+  useEffect(() => {
+    if (!order || !roomId || !wallet?.publicKey) return;
+
+    const setupPolling = () => {
+      syncIntervalRef.current = setInterval(async () => {
+        try {
+          const messages = await loadServerChatHistory(roomId);
+          // Only update if message count changed
+          if (messages.length !== lastMessageCountRef.current) {
+            setChatLog(messages);
+            lastMessageCountRef.current = messages.length;
+          }
+        } catch (error) {
+          console.error("Failed to sync messages:", error);
+        }
+      }, 2000); // Poll every 2 seconds
+    };
+
+    setupPolling();
+
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+      }
+    };
+  }, [roomId, order?.id, wallet?.publicKey]);
+
   const handleSendMessage = async () => {
-    if (!messageInput.trim()) return;
+    if (!messageInput.trim() || !wallet?.publicKey) return;
+
+    const text = messageInput;
+    setMessageInput("");
 
     try {
-      const msg: ChatMessage = {
-        id: `msg-${Date.now()}`,
+      // Save message to SERVER first
+      const serverMsg = await saveServerChatMessage(
         roomId,
-        senderWallet: wallet?.publicKey || "",
-        senderRole: isBuyer ? "buyer" : "seller",
-        type: "message",
-        text: messageInput,
-        timestamp: Date.now(),
-      };
+        wallet.publicKey,
+        text,
+      );
 
-      setChatLog((prev) => [...prev, msg]);
-      setMessageInput("");
+      if (serverMsg) {
+        // Message saved to server, add to local chat
+        serverMsg.senderRole = isBuyer ? "buyer" : "seller";
+        setChatLog((prev) => [...prev, serverMsg]);
+        lastMessageCountRef.current += 1;
+      } else {
+        // Fallback: save to localStorage if server fails
+        const msg: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId,
+          senderWallet: wallet.publicKey,
+          senderRole: isBuyer ? "buyer" : "seller",
+          type: "message",
+          text,
+          timestamp: Date.now(),
+        };
+        setChatLog((prev) => [...prev, msg]);
+        saveChatMessage(msg);
 
-      // Save message to localStorage
-      saveChatMessage(msg);
+        toast({
+          title: "Message sent locally",
+          description: "Server connection may be unstable",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Failed to send message:", error);
+      // Restore input on error
+      setMessageInput(text);
       toast({
         title: "Failed to send message",
         variant: "destructive",
@@ -92,11 +150,15 @@ export default function OrderComplete() {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const dataUrl = e.target?.result as string;
+      if (!wallet?.publicKey) return;
+
       try {
+        // For now, send proof as text message with embedded data (in production, upload to cloud storage)
+        // In production, you'd upload to S3/Cloudinary and get a URL
         const msg: ChatMessage = {
           id: `msg-${Date.now()}`,
           roomId,
-          senderWallet: wallet?.publicKey || "",
+          senderWallet: wallet.publicKey,
           senderRole: isBuyer ? "buyer" : "seller",
           type: "attachment",
           text: "📎 Proof",
@@ -108,8 +170,13 @@ export default function OrderComplete() {
         };
 
         setChatLog((prev) => [...prev, msg]);
-        // Save message to localStorage
+        // Save message to localStorage (server doesn't handle attachments yet)
         saveChatMessage(msg);
+
+        toast({
+          title: "Proof attached",
+          description: "Your proof has been added to the chat",
+        });
       } catch (error) {
         console.error("Failed to upload attachment:", error);
         toast({
@@ -122,7 +189,7 @@ export default function OrderComplete() {
   };
 
   const handleVerify = async () => {
-    if (!order) return;
+    if (!order || !wallet?.publicKey) return;
 
     const isBuyerAction = isBuyer;
 
@@ -132,59 +199,83 @@ export default function OrderComplete() {
       setSellerVerified(true);
     }
 
-    const msg: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      roomId,
-      senderWallet: wallet?.publicKey || "",
-      senderRole: isBuyer ? "buyer" : "seller",
-      type: "verification",
-      text: `${isBuyer ? "Buyer" : "Seller"} has verified and confirmed payment`,
-      timestamp: Date.now(),
-      metadata: {
-        type: "verification",
-      },
-    };
+    const verificationText = `${isBuyer ? "Buyer" : "Seller"} has verified and confirmed payment`;
 
-    setChatLog((prev) => [...prev, msg]);
-    // Save message to localStorage
-    saveChatMessage(msg);
-
-    const otherWalletKey = isBuyerAction
-      ? order.sellerWallet
-      : order.buyerWallet;
-
-    if (isBuyerAction) {
-      await createNotification(
-        otherWalletKey,
-        "payment_confirmed",
-        "BUY",
-        order.id,
-        "Buyer has confirmed payment",
-        {
-          token: order.token,
-          amountTokens: order.amountTokens,
-          amountPKR: order.amountPKR,
-        },
+    try {
+      // Save verification to server
+      const serverMsg = await saveServerChatMessage(
+        roomId,
+        wallet.publicKey,
+        verificationText,
       );
-    } else {
-      await createNotification(
-        otherWalletKey,
-        "received_confirmed",
-        "BUY",
-        order.id,
-        "Seller has confirmed receiving payment",
-        {
-          token: order.token,
-          amountTokens: order.amountTokens,
-          amountPKR: order.amountPKR,
-        },
-      );
+
+      if (serverMsg) {
+        serverMsg.senderRole = isBuyer ? "buyer" : "seller";
+        serverMsg.type = "verification";
+        setChatLog((prev) => [...prev, serverMsg]);
+        lastMessageCountRef.current += 1;
+      } else {
+        // Fallback to localStorage
+        const msg: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId,
+          senderWallet: wallet.publicKey,
+          senderRole: isBuyer ? "buyer" : "seller",
+          type: "verification",
+          text: verificationText,
+          timestamp: Date.now(),
+          metadata: {
+            type: "verification",
+          },
+        };
+        setChatLog((prev) => [...prev, msg]);
+        saveChatMessage(msg);
+      }
+
+      const otherWalletKey = isBuyerAction
+        ? order.sellerWallet
+        : order.buyerWallet;
+
+      if (isBuyerAction) {
+        await createNotification(
+          otherWalletKey,
+          "payment_confirmed",
+          "BUY",
+          order.id,
+          "Buyer has confirmed payment",
+          {
+            token: order.token,
+            amountTokens: order.amountTokens,
+            amountPKR: order.amountPKR,
+          },
+        );
+      } else {
+        await createNotification(
+          otherWalletKey,
+          "received_confirmed",
+          "BUY",
+          order.id,
+          "Seller has confirmed receiving payment",
+          {
+            token: order.token,
+            amountTokens: order.amountTokens,
+            amountPKR: order.amountPKR,
+          },
+        );
+      }
+
+      toast({
+        title: "Verification confirmed",
+        description: "Your verification has been recorded",
+      });
+    } catch (error) {
+      console.error("Failed to verify:", error);
+      toast({
+        title: "Verification error",
+        description: "Failed to record verification",
+        variant: "destructive",
+      });
     }
-
-    toast({
-      title: "Verification confirmed",
-      description: "Your verification has been recorded",
-    });
   };
 
   return (

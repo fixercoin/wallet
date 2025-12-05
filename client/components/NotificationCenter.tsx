@@ -3,10 +3,14 @@ import { Bell, X, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useNavigate } from "react-router-dom";
+import { useWallet } from "@/contexts/WalletContext";
 
 export function NotificationCenter() {
   const { notifications, unreadCount, markAsRead } = useOrderNotifications();
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const { wallet } = useWallet();
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -96,6 +100,23 @@ export function NotificationCenter() {
                         if (!notification.read) {
                           markAsRead(notification.id);
                         }
+
+                        setIsOpen(false);
+
+                        navigate("/order-complete", {
+                          state: {
+                            order: {
+                              id: notification.orderId,
+                              type: notification.orderType,
+                              token: notification.orderData.token,
+                              amountTokens: notification.orderData.amountTokens,
+                              amountPKR: notification.orderData.amountPKR,
+                              senderWallet: notification.senderWallet,
+                              recipientWallet: notification.recipientWallet,
+                            },
+                            openChat: true,
+                          }
+                        });
                       }}
                     >
                       <div className="flex gap-3">

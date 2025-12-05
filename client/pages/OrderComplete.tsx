@@ -97,26 +97,48 @@ export default function OrderComplete() {
   }, [roomId, order?.id, wallet?.publicKey]);
 
   const handleSendMessage = async () => {
-    if (!messageInput.trim()) return;
+    if (!messageInput.trim() || !wallet?.publicKey) return;
+
+    const text = messageInput;
+    setMessageInput("");
 
     try {
-      const msg: ChatMessage = {
-        id: `msg-${Date.now()}`,
+      // Save message to SERVER first
+      const serverMsg = await saveServerChatMessage(
         roomId,
-        senderWallet: wallet?.publicKey || "",
-        senderRole: isBuyer ? "buyer" : "seller",
-        type: "message",
-        text: messageInput,
-        timestamp: Date.now(),
-      };
+        wallet.publicKey,
+        text
+      );
 
-      setChatLog((prev) => [...prev, msg]);
-      setMessageInput("");
+      if (serverMsg) {
+        // Message saved to server, add to local chat
+        serverMsg.senderRole = isBuyer ? "buyer" : "seller";
+        setChatLog((prev) => [...prev, serverMsg]);
+        lastMessageCountRef.current += 1;
+      } else {
+        // Fallback: save to localStorage if server fails
+        const msg: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId,
+          senderWallet: wallet.publicKey,
+          senderRole: isBuyer ? "buyer" : "seller",
+          type: "message",
+          text,
+          timestamp: Date.now(),
+        };
+        setChatLog((prev) => [...prev, msg]);
+        saveChatMessage(msg);
 
-      // Save message to localStorage
-      saveChatMessage(msg);
+        toast({
+          title: "Message sent locally",
+          description: "Server connection may be unstable",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Failed to send message:", error);
+      // Restore input on error
+      setMessageInput(text);
       toast({
         title: "Failed to send message",
         variant: "destructive",

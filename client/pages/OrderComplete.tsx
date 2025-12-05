@@ -297,8 +297,8 @@ export default function OrderComplete() {
     }
   };
 
-  const handleCancelOrder = () => {
-    if (!order) return;
+  const handleCancelOrder = async () => {
+    if (!order || !wallet?.publicKey) return;
 
     const confirmed = window.confirm(
       "Are you sure you want to cancel this order? This action cannot be undone."
@@ -307,13 +307,7 @@ export default function OrderComplete() {
     if (!confirmed) return;
 
     try {
-      const pendingOrders = JSON.parse(
-        localStorage.getItem("orders_pending") || "[]",
-      );
-      const filteredOrders = pendingOrders.filter(
-        (o: any) => o.id !== order.id,
-      );
-      localStorage.setItem("orders_pending", JSON.stringify(filteredOrders));
+      await cancelOrder(order.id, wallet.publicKey);
 
       toast({
         title: "Order Cancelled",

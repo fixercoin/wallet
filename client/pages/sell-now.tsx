@@ -391,6 +391,8 @@ export default function SellNow() {
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   Processing...
                 </>
+              ) : editingOrder ? (
+                "UPDATE SELL ORDER"
               ) : (
                 "SELL FOR PKR"
               )}

@@ -75,6 +75,7 @@ const DEFAULT_TOKENS: TokenOption[] = [
 
 export default function BuyNow() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { wallet } = useWallet();
   const { toast } = useToast();
   const { createNotification } = useOrderNotifications();
@@ -95,6 +96,9 @@ export default function BuyNow() {
   const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
   const [offerPassword, setOfferPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [editingOrder, setEditingOrder] = useState<any>(
+    (location.state as any)?.editingOrder || null,
+  );
 
   const OFFER_PASSWORD = "######Pakistan";
 

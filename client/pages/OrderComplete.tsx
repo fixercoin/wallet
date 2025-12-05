@@ -134,7 +134,9 @@ export default function OrderComplete() {
     await saveChatMessage(roomId, msg);
     await sendChatMessage(roomId, msg);
 
-    const otherWalletKey = isBuyerAction ? order.sellerWallet : order.buyerWallet;
+    const otherWalletKey = isBuyerAction
+      ? order.sellerWallet
+      : order.buyerWallet;
 
     if (isBuyerAction) {
       await createNotification(

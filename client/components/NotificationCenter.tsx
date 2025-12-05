@@ -111,11 +111,17 @@ export function NotificationCenter() {
                               token: notification.orderData.token,
                               amountTokens: notification.orderData.amountTokens,
                               amountPKR: notification.orderData.amountPKR,
-                              buyerWallet: notification.orderType === "BUY" ? notification.senderWallet : notification.recipientWallet,
-                              sellerWallet: notification.orderType === "BUY" ? notification.recipientWallet : notification.senderWallet,
+                              buyerWallet:
+                                notification.orderType === "BUY"
+                                  ? notification.senderWallet
+                                  : notification.recipientWallet,
+                              sellerWallet:
+                                notification.orderType === "BUY"
+                                  ? notification.recipientWallet
+                                  : notification.senderWallet,
                             },
                             openChat: true,
-                          }
+                          },
                         });
                       }}
                     >

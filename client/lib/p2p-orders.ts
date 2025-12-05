@@ -11,9 +11,11 @@ export interface P2POrder {
   amountTokens: number;
   amountPKR: number;
   paymentMethodId: string;
-  status: "PENDING" | "COMPLETED" | "CANCELLED";
+  status: "PENDING" | "COMPLETED" | "CANCELLED" | "ESCROW_LOCKED" | "DISPUTED";
   createdAt: number;
   updatedAt: number;
+  escrowId?: string;
+  matchedWith?: string;
 }
 
 const API_BASE = "/api/p2p/orders";

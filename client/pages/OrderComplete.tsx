@@ -30,6 +30,8 @@ export default function OrderComplete() {
   const [loading, setLoading] = useState(true);
   const [buyerVerified, setBuyerVerified] = useState(false);
   const [sellerVerified, setSellerVerified] = useState(false);
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastMessageCountRef = useRef(0);
 
   // Ensure roomId is always set from order or location state
   const roomId = order?.id || order?.roomId || "global";
@@ -40,16 +42,19 @@ export default function OrderComplete() {
     ? order.buyerWallet === wallet?.publicKey
     : true;
 
-  // Initialize chatroom when component mounts
+  // Initialize chatroom and set up polling when component mounts
   useEffect(() => {
     const initializeChatroom = async () => {
       try {
-        // Load chat history for this room
-        const messages = loadChatHistory(roomId);
+        // Load chat history from SERVER (source of truth)
+        const messages = await loadServerChatHistory(roomId);
         setChatLog(Array.isArray(messages) ? messages : []);
+        lastMessageCountRef.current = messages.length;
       } catch (error) {
         console.error("Failed to load chat:", error);
-        setChatLog([]);
+        // Fallback to localStorage
+        const messages = loadChatHistory(roomId);
+        setChatLog(Array.isArray(messages) ? messages : []);
       } finally {
         setLoading(false);
       }
@@ -61,6 +66,34 @@ export default function OrderComplete() {
     } else {
       setLoading(false);
     }
+  }, [roomId, order?.id, wallet?.publicKey]);
+
+  // Poll for new messages every 2 seconds to sync with other party
+  useEffect(() => {
+    if (!order || !roomId || !wallet?.publicKey) return;
+
+    const setupPolling = () => {
+      syncIntervalRef.current = setInterval(async () => {
+        try {
+          const messages = await loadServerChatHistory(roomId);
+          // Only update if message count changed
+          if (messages.length !== lastMessageCountRef.current) {
+            setChatLog(messages);
+            lastMessageCountRef.current = messages.length;
+          }
+        } catch (error) {
+          console.error("Failed to sync messages:", error);
+        }
+      }, 2000); // Poll every 2 seconds
+    };
+
+    setupPolling();
+
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+      }
+    };
   }, [roomId, order?.id, wallet?.publicKey]);
 
   const handleSendMessage = async () => {

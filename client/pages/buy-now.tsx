@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, ShoppingCart, TrendingUp } from "lucide-react";
@@ -75,6 +75,7 @@ const DEFAULT_TOKENS: TokenOption[] = [
 
 export default function BuyNow() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { wallet } = useWallet();
   const { toast } = useToast();
   const { createNotification } = useOrderNotifications();
@@ -95,6 +96,9 @@ export default function BuyNow() {
   const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
   const [offerPassword, setOfferPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [editingOrder, setEditingOrder] = useState<any>(
+    (location.state as any)?.editingOrder || null,
+  );
 
   const OFFER_PASSWORD = "######Pakistan";
 
@@ -108,6 +112,19 @@ export default function BuyNow() {
     setPasswordError("");
     navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
   };
+
+  // Load editing order data if available
+  useEffect(() => {
+    if (editingOrder) {
+      // Find the token from the order
+      const token = tokens.find((t) => t.id === editingOrder.token);
+      if (token) {
+        setSelectedToken(token);
+      }
+      // Set the amount
+      setAmountPKR(String(editingOrder.amountPKR || ""));
+    }
+  }, [editingOrder, tokens]);
 
   useEffect(() => {
     const fetchTokens = async () => {
@@ -125,7 +142,9 @@ export default function BuyNow() {
           } as TokenOption;
         });
         setTokens(enriched);
-        setSelectedToken(enriched[0]);
+        if (!editingOrder) {
+          setSelectedToken(enriched[0]);
+        }
       } catch (error) {
         console.warn("DexScreener fetch failed, using defaults", error);
         setTokens(DEFAULT_TOKENS);
@@ -172,6 +191,18 @@ export default function BuyNow() {
     } catch {}
   };
 
+  const updatePendingOrder = (updatedOrder: any) => {
+    try {
+      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
+      const arr = Array.isArray(cur) ? cur : [];
+      const index = arr.findIndex((o: any) => o.id === updatedOrder.id);
+      if (index >= 0) {
+        arr[index] = { ...updatedOrder, status: "pending" };
+        localStorage.setItem("orders_pending", JSON.stringify(arr));
+      }
+    } catch {}
+  };
+
   const handleBuyClick = async () => {
     if (!wallet) {
       toast({
@@ -192,7 +223,7 @@ export default function BuyNow() {
     const pricePKRPerQuote = exchangeRate;
     setLoading(true);
     try {
-      const orderId = `BUY-${Date.now()}`;
+      const orderId = editingOrder?.id || `BUY-${Date.now()}`;
       const order = {
         id: orderId,
         type: "BUY",
@@ -206,7 +237,9 @@ export default function BuyNow() {
           accountNumber: "030107044833",
         },
         buyerWallet: wallet.publicKey,
-        createdAt: Date.now(),
+        walletAddress: wallet.publicKey,
+        createdAt: editingOrder?.createdAt || Date.now(),
+        updatedAt: Date.now(),
         status: "pending",
       };
 
@@ -214,7 +247,11 @@ export default function BuyNow() {
         localStorage.setItem("buynote_order", JSON.stringify(order));
       } catch {}
 
-      addPendingOrder(order);
+      if (editingOrder) {
+        updatePendingOrder(order);
+      } else {
+        addPendingOrder(order);
+      }
 
       try {
         const response = await fetch("/api/p2p/orders", {
@@ -238,23 +275,33 @@ export default function BuyNow() {
         console.error("Error saving to KV storage:", kvError);
       }
 
-      await createNotification(
-        ADMIN_WALLET,
-        "order_created",
-        "BUY",
-        orderId,
-        `New buy order created: ${Number(amountPKR).toFixed(2)} PKR for ${selectedToken.id}`,
-        {
-          token: selectedToken.id,
-          amountTokens: Number(amountPKR) / exchangeRate,
-          amountPKR: Number(amountPKR),
-        },
-      );
+      if (!editingOrder) {
+        await createNotification(
+          ADMIN_WALLET,
+          "order_created",
+          "BUY",
+          orderId,
+          `New buy order created: ${Number(amountPKR).toFixed(2)} PKR for ${selectedToken.id}`,
+          {
+            token: selectedToken.id,
+            amountTokens: Number(amountPKR) / exchangeRate,
+            amountPKR: Number(amountPKR),
+          },
+        );
+      }
 
-      navigate("/sell-order");
+      toast({
+        title: "Success",
+        description: editingOrder
+          ? "Buy order updated successfully"
+          : "Buy order created successfully",
+        duration: 2000,
+      });
+
+      navigate("/buy-order");
     } catch (error: any) {
       toast({
-        title: "Failed to start chat",
+        title: "Failed to save order",
         description: error?.message || String(error),
         variant: "destructive",
       });
@@ -372,6 +419,8 @@ export default function BuyNow() {
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   Processing...
                 </>
+              ) : editingOrder ? (
+                "UPDATE BUY ORDER"
               ) : (
                 "PAY TO BUY CRYPTO CURRENCY"
               )}

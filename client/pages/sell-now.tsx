@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, ShoppingCart, TrendingUp } from "lucide-react";
@@ -54,6 +54,7 @@ const DEFAULT_TOKENS: TokenOption[] = [
 
 export default function SellNow() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { wallet, tokens: walletTokens = [] } = useWallet();
   const { toast } = useToast();
   const { createNotification } = useOrderNotifications();
@@ -73,6 +74,9 @@ export default function SellNow() {
   const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
   const [offerPassword, setOfferPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [editingOrder, setEditingOrder] = useState<any>(
+    (location.state as any)?.editingOrder || null,
+  );
 
   const OFFER_PASSWORD = "######Pakistan";
 
@@ -95,6 +99,19 @@ export default function SellNow() {
     return t?.balance || 0;
   }, [walletTokens, selectedToken]);
 
+  // Load editing order data if available
+  useEffect(() => {
+    if (editingOrder) {
+      // Find the token from the order
+      const token = tokens.find((t) => t.id === editingOrder.token);
+      if (token) {
+        setSelectedToken(token);
+      }
+      // Set the amount
+      setSellAmountTokens(String(editingOrder.amountTokens || ""));
+    }
+  }, [editingOrder, tokens]);
+
   useEffect(() => {
     const fetchTokens = async () => {
       try {
@@ -111,7 +128,9 @@ export default function SellNow() {
           } as TokenOption;
         });
         setTokens(enriched);
-        setSelectedToken(enriched[0]);
+        if (!editingOrder) {
+          setSelectedToken(enriched[0]);
+        }
       } catch (error) {
         console.warn("DexScreener fetch failed, using defaults", error);
         setTokens(DEFAULT_TOKENS);
@@ -147,6 +166,18 @@ export default function SellNow() {
       const arr = Array.isArray(cur) ? cur : [];
       arr.unshift({ ...o, status: "pending" });
       localStorage.setItem("orders_pending", JSON.stringify(arr));
+    } catch {}
+  };
+
+  const updatePendingOrder = (updatedOrder: any) => {
+    try {
+      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
+      const arr = Array.isArray(cur) ? cur : [];
+      const index = arr.findIndex((o: any) => o.id === updatedOrder.id);
+      if (index >= 0) {
+        arr[index] = { ...updatedOrder, status: "pending" };
+        localStorage.setItem("orders_pending", JSON.stringify(arr));
+      }
     } catch {}
   };
 
@@ -189,7 +220,7 @@ export default function SellNow() {
     setLoading(true);
     try {
       const buyerWallet = getAvailableBuyerWallet();
-      const orderId = `SELL-${Date.now()}`;
+      const orderId = editingOrder?.id || `SELL-${Date.now()}`;
       const order = {
         id: orderId,
         type: "SELL",
@@ -199,9 +230,11 @@ export default function SellNow() {
         pricePKRPerQuote: exchangeRate,
         paymentMethod: "easypaisa",
         sellerWallet: wallet.publicKey,
+        walletAddress: wallet.publicKey,
         adminWallet: ADMIN_WALLET,
         buyerWallet: buyerWallet,
-        createdAt: Date.now(),
+        createdAt: editingOrder?.createdAt || Date.now(),
+        updatedAt: Date.now(),
         status: "pending",
       };
 
@@ -209,7 +242,11 @@ export default function SellNow() {
         localStorage.setItem("sellnote_order", JSON.stringify(order));
       } catch {}
 
-      addPendingOrder(order);
+      if (editingOrder) {
+        updatePendingOrder(order);
+      } else {
+        addPendingOrder(order);
+      }
 
       try {
         const response = await fetch("/api/p2p/orders", {
@@ -233,23 +270,33 @@ export default function SellNow() {
         console.error("Error saving to KV storage:", kvError);
       }
 
-      await createNotification(
-        ADMIN_WALLET,
-        "order_created",
-        "SELL",
-        orderId,
-        `New sell order created: ${amount.toFixed(6)} ${selectedToken.id} for ${(amount * exchangeRate).toFixed(2)} PKR`,
-        {
-          token: selectedToken.id,
-          amountTokens: amount,
-          amountPKR: amount * exchangeRate,
-        },
-      );
+      if (!editingOrder) {
+        await createNotification(
+          ADMIN_WALLET,
+          "order_created",
+          "SELL",
+          orderId,
+          `New sell order created: ${amount.toFixed(6)} ${selectedToken.id} for ${(amount * exchangeRate).toFixed(2)} PKR`,
+          {
+            token: selectedToken.id,
+            amountTokens: amount,
+            amountPKR: amount * exchangeRate,
+          },
+        );
+      }
 
-      navigate("/buy-order");
+      toast({
+        title: "Success",
+        description: editingOrder
+          ? "Sell order updated successfully"
+          : "Sell order created successfully",
+        duration: 2000,
+      });
+
+      navigate("/sell-order");
     } catch (error: any) {
       toast({
-        title: "Failed to start chat",
+        title: "Failed to save order",
         description: error?.message || String(error),
         variant: "destructive",
       });
@@ -344,6 +391,8 @@ export default function SellNow() {
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   Processing...
                 </>
+              ) : editingOrder ? (
+                "UPDATE SELL ORDER"
               ) : (
                 "SELL FOR PKR"
               )}

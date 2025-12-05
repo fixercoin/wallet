@@ -20,6 +20,7 @@ import {
   PaymentMethod,
   savePaymentMethod,
   getPaymentMethod,
+  getPaymentMethodsByWallet,
 } from "@/lib/p2p-payment-methods";
 import { useToast } from "@/hooks/use-toast";
 
@@ -40,6 +41,8 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [savedMethodId, setSavedMethodId] = useState<string | undefined>();
   const [userName, setUserName] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"EASYPAISA">("EASYPAISA");
   const [accountName, setAccountName] = useState("");
@@ -47,31 +50,64 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const [solanawWalletAddress, setSolanawWalletAddress] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Load existing payment method if editing
+  // Load existing payment method if editing or if one exists for the wallet
   useEffect(() => {
     const loadPaymentMethod = async () => {
-      if (paymentMethodId && open) {
-        const existing = await getPaymentMethod(paymentMethodId);
-        if (existing) {
-          setUserName(existing.userName);
-          setPaymentMethod(existing.paymentMethod);
-          setAccountName(existing.accountName);
-          setAccountNumber(existing.accountNumber);
-          setSolanawWalletAddress(existing.solanawWalletAddress);
+      if (!open) return;
+
+      try {
+        if (paymentMethodId) {
+          // Loading a specific payment method for editing
+          const existing = await getPaymentMethod(paymentMethodId);
+          if (existing) {
+            setSavedMethodId(existing.id);
+            setUserName(existing.userName);
+            setPaymentMethod(existing.paymentMethod);
+            setAccountName(existing.accountName);
+            setAccountNumber(existing.accountNumber);
+            setSolanawWalletAddress(existing.solanawWalletAddress);
+            setIsEditing(false);
+          }
+        } else {
+          // Check if there's already a saved payment method for this wallet
+          const existingMethods =
+            await getPaymentMethodsByWallet(walletAddress);
+          if (existingMethods.length > 0) {
+            const existing = existingMethods[0]; // Use the first/latest method
+            setSavedMethodId(existing.id);
+            setUserName(existing.userName);
+            setPaymentMethod(existing.paymentMethod);
+            setAccountName(existing.accountName);
+            setAccountNumber(existing.accountNumber);
+            setSolanawWalletAddress(existing.solanawWalletAddress);
+            setIsEditing(false);
+          } else {
+            // No saved method, show blank form for new entry
+            setSavedMethodId(undefined);
+            setUserName("");
+            setPaymentMethod("EASYPAISA");
+            setAccountName("");
+            setAccountNumber("");
+            setSolanawWalletAddress("");
+            setIsEditing(true);
+            setErrors({});
+          }
         }
-      } else if (open) {
-        // Reset for new entry
+      } catch (error) {
+        console.error("Error loading payment method:", error);
+        // If there's an error, default to edit mode with blank form
+        setSavedMethodId(undefined);
         setUserName("");
         setPaymentMethod("EASYPAISA");
         setAccountName("");
         setAccountNumber("");
         setSolanawWalletAddress("");
-        setErrors({});
+        setIsEditing(true);
       }
     };
 
     loadPaymentMethod();
-  }, [paymentMethodId, open]);
+  }, [paymentMethodId, open, walletAddress]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -111,7 +147,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 
     setLoading(true);
     try {
-      const savedMethod = savePaymentMethod(
+      const savedMethod = await savePaymentMethod(
         {
           walletAddress,
           userName: userName.trim(),
@@ -120,16 +156,18 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
           accountNumber: accountNumber.trim(),
           solanawWalletAddress: solanawWalletAddress.trim(),
         },
-        paymentMethodId,
+        savedMethodId || paymentMethodId,
       );
 
       toast({
         title: "Success",
         description: "Payment method saved successfully",
+        duration: 3000,
       });
 
+      setSavedMethodId(savedMethod.id);
+      setIsEditing(false);
       onSave?.(savedMethod);
-      onOpenChange(false);
     } catch (error) {
       const message =
         error instanceof Error
@@ -145,100 +183,186 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
     }
   };
 
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    if (isEditing && !savedMethodId) {
+      // If editing a new unsaved method, close the dialog
+      onOpenChange(false);
+    } else if (isEditing && savedMethodId) {
+      // If editing an existing saved method, go back to view mode
+      setIsEditing(false);
+    } else {
+      // If in view mode, close the dialog
+      onOpenChange(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-md">
         <DialogHeader>
           <DialogTitle className="uppercase">
-            {paymentMethodId ? "EDIT PAYMENT METHOD" : "ADD PAYMENT METHOD"}
+            {isEditing
+              ? savedMethodId
+                ? "EDIT PAYMENT METHOD"
+                : "ADD PAYMENT METHOD"
+              : "PAYMENT METHOD"}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* User Name */}
-          <div>
-            <Input
-              id="userName"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              placeholder="ENTER YOUR NAME"
-              disabled={loading}
-              className={`uppercase ${errors.userName ? "border-red-500" : ""}`}
-            />
-            {errors.userName && (
-              <p className="text-xs text-red-500 mt-1">{errors.userName}</p>
-            )}
-          </div>
+          {!isEditing && savedMethodId ? (
+            // View mode - show saved information
+            <div className="space-y-4 text-sm">
+              <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800">
+                <p className="text-xs text-gray-600 dark:text-gray-400 uppercase font-semibold mb-1">
+                  Name
+                </p>
+                <p className="text-gray-900 dark:text-white font-medium">
+                  {userName}
+                </p>
+              </div>
 
-          {/* Payment Method */}
-          <div>
-            <Select
-              value={paymentMethod}
-              onValueChange={(value) => setPaymentMethod(value as "EASYPAISA")}
-              disabled={loading}
-            >
-              <SelectTrigger id="paymentMethod" className="uppercase">
-                <SelectValue placeholder="SELECT PAYMENT METHOD" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="EASYPAISA">EASYPAISA</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800">
+                <p className="text-xs text-gray-600 dark:text-gray-400 uppercase font-semibold mb-1">
+                  Payment Method
+                </p>
+                <p className="text-gray-900 dark:text-white font-medium">
+                  {paymentMethod}
+                </p>
+              </div>
 
-          {/* Account Name */}
-          <div>
-            <Input
-              id="accountName"
-              value={accountName}
-              onChange={(e) => setAccountName(e.target.value)}
-              placeholder="ENTER ACCOUNT NAME"
-              disabled={loading}
-              className={`uppercase ${errors.accountName ? "border-red-500" : ""}`}
-            />
-          </div>
+              <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800">
+                <p className="text-xs text-gray-600 dark:text-gray-400 uppercase font-semibold mb-1">
+                  Account Name
+                </p>
+                <p className="text-gray-900 dark:text-white font-medium">
+                  {accountName}
+                </p>
+              </div>
 
-          {/* Account Number */}
-          <div>
-            <Input
-              id="accountNumber"
-              value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
-              placeholder="ENTER ACCOUNT NUMBER"
-              disabled={loading}
-              className={errors.accountNumber ? "border-red-500" : ""}
-            />
-          </div>
+              <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800">
+                <p className="text-xs text-gray-600 dark:text-gray-400 uppercase font-semibold mb-1">
+                  Account Number
+                </p>
+                <p className="text-gray-900 dark:text-white font-medium">
+                  {accountNumber}
+                </p>
+              </div>
 
-          {/* Solana Wallet Address */}
-          <div>
-            <Input
-              id="solanawWalletAddress"
-              value={solanawWalletAddress}
-              onChange={(e) => setSolanawWalletAddress(e.target.value)}
-              placeholder="ENTER SOLANA WALLET ADDRESS"
-              disabled={loading}
-              className={`uppercase ${errors.solanawWalletAddress ? "border-red-500" : ""}`}
-            />
-          </div>
+              <div className="p-3 rounded-lg bg-gray-100 dark:bg-gray-800">
+                <p className="text-xs text-gray-600 dark:text-gray-400 uppercase font-semibold mb-1">
+                  Solana Wallet Address
+                </p>
+                <p className="text-gray-900 dark:text-white font-medium break-all text-xs">
+                  {solanawWalletAddress}
+                </p>
+              </div>
+            </div>
+          ) : (
+            // Edit mode - show form
+            <>
+              {/* User Name */}
+              <div>
+                <Input
+                  id="userName"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="ENTER YOUR NAME"
+                  disabled={loading}
+                  className={`uppercase ${errors.userName ? "border-red-500" : ""}`}
+                />
+                {errors.userName && (
+                  <p className="text-xs text-red-500 mt-1">{errors.userName}</p>
+                )}
+              </div>
+
+              {/* Payment Method */}
+              <div>
+                <Select
+                  value={paymentMethod}
+                  onValueChange={(value) =>
+                    setPaymentMethod(value as "EASYPAISA")
+                  }
+                  disabled={loading}
+                >
+                  <SelectTrigger id="paymentMethod" className="uppercase">
+                    <SelectValue placeholder="SELECT PAYMENT METHOD" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EASYPAISA">EASYPAISA</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Account Name */}
+              <div>
+                <Input
+                  id="accountName"
+                  value={accountName}
+                  onChange={(e) => setAccountName(e.target.value)}
+                  placeholder="ENTER ACCOUNT NAME"
+                  disabled={loading}
+                  className={`uppercase ${errors.accountName ? "border-red-500" : ""}`}
+                />
+              </div>
+
+              {/* Account Number */}
+              <div>
+                <Input
+                  id="accountNumber"
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  placeholder="ENTER ACCOUNT NUMBER"
+                  disabled={loading}
+                  className={errors.accountNumber ? "border-red-500" : ""}
+                />
+              </div>
+
+              {/* Solana Wallet Address */}
+              <div>
+                <Input
+                  id="solanawWalletAddress"
+                  value={solanawWalletAddress}
+                  onChange={(e) => setSolanawWalletAddress(e.target.value)}
+                  placeholder="ENTER SOLANA WALLET ADDRESS"
+                  disabled={loading}
+                  className={`uppercase ${errors.solanawWalletAddress ? "border-red-500" : ""}`}
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <DialogFooter className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={handleCancel}
             disabled={loading}
             className="uppercase"
           >
-            CANCEL
+            {isEditing ? "CANCEL" : "CLOSE"}
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={loading}
-            className="bg-[#22c55e] hover:bg-[#16a34a] uppercase"
-          >
-            {loading ? "SAVING..." : paymentMethodId ? "UPDATE" : "SAVE"}
-          </Button>
+          {!isEditing && savedMethodId ? (
+            <Button
+              onClick={handleEditClick}
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 uppercase"
+            >
+              EDIT
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSave}
+              disabled={loading}
+              className="bg-[#22c55e] hover:bg-[#16a34a] uppercase"
+            >
+              {loading ? "SAVING..." : "SAVE"}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

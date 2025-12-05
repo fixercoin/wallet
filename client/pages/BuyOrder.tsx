@@ -126,45 +126,66 @@ export default function BuyOrder() {
               No buy orders yet
             </div>
           )}
-          {orders.map((order) => (
-            <Card
-              key={order.id}
-              className="bg-transparent border border-gray-300/30 hover:border-gray-300/50 transition-colors cursor-pointer w-full"
-              onClick={() => navigate(`/order/${encodeURIComponent(order.id)}`)}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <div
-                      className="font-semibold text-white"
-                      style={{ fontSize: "12px" }}
-                    >
-                      <span>BUY-{order.id.split("-").pop()}</span>
-                      <span className="text-[#FF7A5C] ml-3">
-                        LIMIT {Number(order.amountPKR || 0).toFixed(2)} PKR
-                      </span>
+          {orders.map((order) => {
+            const isOrderCreator = order.walletAddress === wallet?.publicKey;
+            return (
+              <Card
+                key={order.id}
+                className="bg-transparent border border-gray-300/30 hover:border-gray-300/50 transition-colors cursor-pointer w-full"
+                onClick={() =>
+                  navigate(`/order/${encodeURIComponent(order.id)}`)
+                }
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div
+                        className="font-semibold text-white"
+                        style={{ fontSize: "12px" }}
+                      >
+                        <span>BUY-{order.id.split("-").pop()}</span>
+                        <span className="text-[#FF7A5C] ml-3">
+                          LIMIT {Number(order.amountPKR || 0).toFixed(2)} PKR
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 flex-shrink-0">
+                      {isOrderCreator && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate("/buy-now", {
+                              state: { editingOrder: order },
+                            });
+                          }}
+                          className="px-4 py-3 rounded-lg bg-blue-600/80 hover:bg-blue-700 text-white transition-colors uppercase font-semibold"
+                          style={{ fontSize: "12px" }}
+                        >
+                          EDIT
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (wallet?.publicKey === ADMIN_WALLET) {
+                            navigate("/order-complete", {
+                              state: { order, openChat: true },
+                            });
+                          } else {
+                            navigate(`/order/${encodeURIComponent(order.id)}`);
+                          }
+                        }}
+                        className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white hover:shadow-lg transition-colors uppercase font-semibold"
+                        style={{ fontSize: "12px" }}
+                      >
+                        BUY
+                      </button>
                     </div>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (wallet?.publicKey === ADMIN_WALLET) {
-                        navigate("/order-complete", {
-                          state: { order, openChat: true },
-                        });
-                      } else {
-                        navigate(`/order/${encodeURIComponent(order.id)}`);
-                      }
-                    }}
-                    className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white hover:shadow-lg transition-colors uppercase font-semibold flex-shrink-0"
-                    style={{ fontSize: "12px" }}
-                  >
-                    BUY
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 

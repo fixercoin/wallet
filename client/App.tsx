@@ -211,11 +211,38 @@ function AppRoutes() {
 }
 
 function AppContent() {
+  const location = useLocation();
+
+  // Check if current route is a P2P page
+  const isP2PPage = () => {
+    const path = location.pathname;
+    const p2pRoutes = [
+      "/p2p",
+      "/p2p/buy-active-orders",
+      "/p2p/sell-active-orders",
+      "/express/buy-trade",
+      "/buy-now",
+      "/sell-now",
+      "/buynote",
+      "/sellnote",
+      "/verify-sell",
+      "/order-complete",
+      "/orders/",
+      "/order/",
+      "/buy-order",
+      "/sell-order",
+    ];
+
+    return p2pRoutes.some((route) => path.startsWith(route));
+  };
+
   return (
     <div className="min-h-screen pb-4">
-      <div className="fixed top-4 right-4 z-40">
-        <NotificationCenter />
-      </div>
+      {isP2PPage() && (
+        <div className="fixed top-4 right-4 z-40">
+          <NotificationCenter />
+        </div>
+      )}
       <AppRoutes />
     </div>
   );

@@ -30,7 +30,8 @@ export interface ServerMessage {
 
 const CHAT_STORAGE_PREFIX = "p2p_chat_";
 const NOTIFICATIONS_KEY = "p2p_notifications";
-const API_BASE = (import.meta as any).env?.VITE_P2P_API || window.location.origin;
+const API_BASE =
+  (import.meta as any).env?.VITE_P2P_API || window.location.origin;
 
 // WebSocket connection pool
 const wsConnections: Map<string, WebSocket> = new Map();
@@ -58,10 +59,12 @@ export function loadChatHistory(roomId: string): ChatMessage[] {
 }
 
 // SERVER-SIDE: Load chat history from server (source of truth)
-export async function loadServerChatHistory(roomId: string): Promise<ChatMessage[]> {
+export async function loadServerChatHistory(
+  roomId: string,
+): Promise<ChatMessage[]> {
   try {
     const res = await fetch(
-      `${API_BASE}/api/p2p/rooms/${encodeURIComponent(roomId)}/messages`
+      `${API_BASE}/api/p2p/rooms/${encodeURIComponent(roomId)}/messages`,
     );
     if (!res.ok) return loadChatHistory(roomId); // Fallback to localStorage
 
@@ -76,7 +79,9 @@ export async function loadServerChatHistory(roomId: string): Promise<ChatMessage
       senderRole: "buyer" as const, // Will be determined by order context
       type: "message",
       text: msg.message,
-      metadata: msg.attachment_url ? { attachmentUrl: msg.attachment_url } : undefined,
+      metadata: msg.attachment_url
+        ? { attachmentUrl: msg.attachment_url }
+        : undefined,
       timestamp: msg.created_at,
     }));
   } catch (error) {
@@ -90,7 +95,7 @@ export async function saveServerChatMessage(
   roomId: string,
   senderWallet: string,
   text: string,
-  attachmentUrl?: string
+  attachmentUrl?: string,
 ): Promise<ChatMessage | null> {
   try {
     const res = await fetch(
@@ -104,7 +109,7 @@ export async function saveServerChatMessage(
           message: text,
           attachment_url: attachmentUrl,
         }),
-      }
+      },
     );
 
     if (!res.ok) {
@@ -122,7 +127,9 @@ export async function saveServerChatMessage(
       senderRole: "buyer" as const,
       type: "message",
       text: msg.message,
-      metadata: msg.attachment_url ? { attachmentUrl: msg.attachment_url } : undefined,
+      metadata: msg.attachment_url
+        ? { attachmentUrl: msg.attachment_url }
+        : undefined,
       timestamp: msg.created_at,
     };
   } catch (error) {
@@ -134,7 +141,7 @@ export async function saveServerChatMessage(
 // Polling: Sync messages periodically
 export async function syncChatMessagesFromServer(
   roomId: string,
-  onNewMessages?: (messages: ChatMessage[]) => void
+  onNewMessages?: (messages: ChatMessage[]) => void,
 ): Promise<void> {
   try {
     const messages = await loadServerChatHistory(roomId);
@@ -202,7 +209,7 @@ export function clearNotificationsForRoom(roomId: string) {
 export function connectToRoom(
   roomId: string,
   onMessage: (message: ChatMessage) => void,
-  onError?: (error: Event) => void
+  onError?: (error: Event) => void,
 ): () => void {
   try {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";

@@ -138,7 +138,7 @@ export default function BuyTrade() {
       const serverMsg = await saveServerChatMessage(
         derivedRoomId,
         wallet.publicKey,
-        text
+        text,
       );
 
       if (serverMsg) {
@@ -339,7 +339,7 @@ export default function BuyTrade() {
       const serverMsg = await saveServerChatMessage(
         derivedRoomId,
         wallet.publicKey,
-        text
+        text,
       );
 
       if (serverMsg) {

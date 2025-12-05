@@ -179,7 +179,7 @@ export default function VerifySell() {
       const serverMsg = await saveServerChatMessage(
         selectedOrder.roomId,
         wallet.publicKey,
-        text
+        text,
       );
 
       if (serverMsg) {
@@ -240,7 +240,7 @@ export default function VerifySell() {
       const serverMsg = await saveServerChatMessage(
         selectedOrder.roomId,
         wallet.publicKey,
-        text
+        text,
       );
 
       if (serverMsg) {

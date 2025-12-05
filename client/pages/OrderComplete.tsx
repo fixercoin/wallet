@@ -107,7 +107,7 @@ export default function OrderComplete() {
       const serverMsg = await saveServerChatMessage(
         roomId,
         wallet.publicKey,
-        text
+        text,
       );
 
       if (serverMsg) {
@@ -206,7 +206,7 @@ export default function OrderComplete() {
       const serverMsg = await saveServerChatMessage(
         roomId,
         wallet.publicKey,
-        verificationText
+        verificationText,
       );
 
       if (serverMsg) {

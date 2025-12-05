@@ -266,7 +266,7 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
       amountTokens: finalAmount,
       amountPKR: finalPKR,
       pricePKRPerQuote: finalPrice,
-      paymentMethod: payment_method || paymentMethodId,
+      payment_method: payment_method || paymentMethodId,
       status: (status || "PENDING") as P2POrder["status"],
       createdAt: now,
       created_at: now,

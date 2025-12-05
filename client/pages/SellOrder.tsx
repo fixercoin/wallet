@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
+import { getPaymentMethodsByWallet } from "@/lib/p2p-payment-methods";
 import { ADMIN_WALLET } from "@/lib/p2p";
 
 export default function SellOrder() {
@@ -90,12 +91,28 @@ export default function SellOrder() {
       }
     };
 
+    const loadPaymentMethods = async () => {
+      if (!wallet?.publicKey) return;
+      try {
+        const paymentMethods = await getPaymentMethodsByWallet(
+          wallet.publicKey,
+        );
+        if (paymentMethods.length > 0) {
+          setEditingPaymentMethodId(paymentMethods[0].id);
+        }
+      } catch (error) {
+        console.error("Error loading payment methods:", error);
+      }
+    };
+
     loadOrders();
     loadStakes();
+    loadPaymentMethods();
 
     const interval = setInterval(() => {
       loadOrders();
       loadStakes();
+      loadPaymentMethods();
     }, 5000);
     return () => clearInterval(interval);
   }, [wallet]);

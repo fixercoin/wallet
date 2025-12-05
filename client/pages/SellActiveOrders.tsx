@@ -15,6 +15,7 @@ import { ShoppingCart, TrendingUp } from "lucide-react";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { getOrdersByWallet, P2POrder } from "@/lib/p2p-orders";
+import { getPaymentMethodsByWallet } from "@/lib/p2p-payment-methods";
 import { useP2PPolling } from "@/hooks/use-p2p-polling";
 import { ADMIN_WALLET } from "@/lib/p2p";
 
@@ -60,7 +61,7 @@ export default function SellActiveOrders() {
   );
 
   useEffect(() => {
-    const loadOrders = async () => {
+    const loadData = async () => {
       if (!wallet?.publicKey) {
         setOrders([]);
         setLoadingOrders(false);
@@ -69,6 +70,8 @@ export default function SellActiveOrders() {
 
       try {
         setLoadingOrders(true);
+
+        // Fetch orders
         const fetchedOrders = await getOrdersByWallet(
           wallet.publicKey,
           "PENDING",
@@ -77,15 +80,25 @@ export default function SellActiveOrders() {
           (order) => order.type === "SELL",
         );
         setOrders(sellOrders);
+
+        // Fetch payment methods from Cloudflare KV
+        const paymentMethods = await getPaymentMethodsByWallet(
+          wallet.publicKey,
+        );
+
+        // Use the first payment method if available
+        if (paymentMethods.length > 0) {
+          setEditingPaymentMethodId(paymentMethods[0].id);
+        }
       } catch (error) {
-        console.error("Error loading orders:", error);
+        console.error("Error loading data:", error);
         setOrders([]);
       } finally {
         setLoadingOrders(false);
       }
     };
 
-    loadOrders();
+    loadData();
   }, [wallet?.publicKey]);
 
   if (!wallet) {

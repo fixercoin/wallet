@@ -156,23 +156,14 @@ export const handleListP2POrders: RequestHandler = async (req, res) => {
 
     let filtered: P2POrder[] = [];
 
-    if (wallet) {
-      // Get orders for specific wallet
-      const orderIds = await getOrderIdsForWallet(wallet as string);
-      for (const orderId of orderIds) {
-        const order = await getOrderById(orderId);
-        if (order) {
-          filtered.push(order);
-        }
-      }
-    } else if (id) {
+    if (id) {
       // Get single order by ID
       const order = await getOrderById(id as string);
       if (order) {
         filtered.push(order);
       }
     } else {
-      // Get all orders (from all wallets)
+      // Get all orders from KV
       const kv = getKVStorage();
       const listResult = await kv.list();
       const keys = listResult.keys || [];
@@ -188,6 +179,16 @@ export const handleListP2POrders: RequestHandler = async (req, res) => {
     }
 
     // Apply filters
+    if (wallet) {
+      // Normalize wallet address for comparison (handle both formats)
+      const queryWallet = String(wallet).toLowerCase().trim();
+      filtered = filtered.filter((o) => {
+        const orderWallet = (o.walletAddress || o.creator_wallet || "")
+          .toLowerCase()
+          .trim();
+        return orderWallet === queryWallet;
+      });
+    }
     if (type) {
       filtered = filtered.filter((o) => o.type === String(type).toUpperCase());
     }

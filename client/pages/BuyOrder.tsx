@@ -48,8 +48,13 @@ export default function BuyOrder() {
         const pendingOrders = JSON.parse(
           localStorage.getItem("orders_pending") || "[]",
         );
+        const completedOrders = JSON.parse(
+          localStorage.getItem("orders_completed") || "[]",
+        );
+        const completedIds = new Set(completedOrders.map((o: any) => o.id));
+
         const buyOrders = pendingOrders.filter(
-          (order: any) => order.type === "BUY",
+          (order: any) => order.type === "BUY" && !completedIds.has(order.id),
         );
         setOrders(buyOrders);
       } catch (error) {

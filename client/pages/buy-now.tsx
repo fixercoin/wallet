@@ -182,25 +182,40 @@ export default function BuyNow() {
     }
   }, [amountPKR, exchangeRate]);
 
-  const addPendingOrder = (o: any) => {
+  const saveOrderToAPI = async (order: any) => {
     try {
-      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
-      const arr = Array.isArray(cur) ? cur : [];
-      arr.unshift({ ...o, status: "pending" });
-      localStorage.setItem("orders_pending", JSON.stringify(arr));
-    } catch {}
-  };
+      const response = await fetch("/api/p2p/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "BUY",
+          walletAddress: wallet.publicKey,
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+          pricePKRPerQuote: order.pricePKRPerQuote,
+          paymentMethodId: order.paymentMethod,
+          status: "PENDING",
+          orderId: order.id,
+          accountName: order.seller?.accountName,
+          accountNumber: order.seller?.accountNumber,
+          buyerWallet: order.buyerWallet,
+        }),
+      });
 
-  const updatePendingOrder = (updatedOrder: any) => {
-    try {
-      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
-      const arr = Array.isArray(cur) ? cur : [];
-      const index = arr.findIndex((o: any) => o.id === updatedOrder.id);
-      if (index >= 0) {
-        arr[index] = { ...updatedOrder, status: "pending" };
-        localStorage.setItem("orders_pending", JSON.stringify(arr));
+      if (!response.ok) {
+        console.error(
+          "Failed to save order to API:",
+          response.status,
+          await response.text(),
+        );
+        return false;
       }
-    } catch {}
+      return true;
+    } catch (error) {
+      console.error("Error saving order to API:", error);
+      return false;
+    }
   };
 
   const handleBuyClick = async () => {
@@ -240,39 +255,12 @@ export default function BuyNow() {
         walletAddress: wallet.publicKey,
         createdAt: editingOrder?.createdAt || Date.now(),
         updatedAt: Date.now(),
-        status: "pending",
+        status: "PENDING",
       };
 
-      try {
-        localStorage.setItem("buynote_order", JSON.stringify(order));
-      } catch {}
-
-      if (editingOrder) {
-        updatePendingOrder(order);
-      } else {
-        addPendingOrder(order);
-      }
-
-      try {
-        const response = await fetch("/api/p2p/orders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            walletAddress: wallet.publicKey,
-            type: "BUY",
-            token: selectedToken.id,
-            amountTokens: Number(amountPKR) / exchangeRate,
-            amountPKR: Number(amountPKR),
-            paymentMethodId: "easypaisa",
-            status: "PENDING",
-            orderId,
-          }),
-        });
-        if (!response.ok) {
-          console.error("Failed to save order to KV:", response.status);
-        }
-      } catch (kvError) {
-        console.error("Error saving to KV storage:", kvError);
+      const saved = await saveOrderToAPI(order);
+      if (!saved) {
+        throw new Error("Failed to save order to the server");
       }
 
       if (!editingOrder) {

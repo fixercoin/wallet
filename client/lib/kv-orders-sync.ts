@@ -13,36 +13,38 @@ interface OrderSyncOperation {
 }
 
 /**
- * Update order status in KV storage
+ * Update order status in KV storage (API-based)
  */
 export async function syncOrderStatusToKV(
   operation: OrderSyncOperation,
 ): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE}/p2p/orders`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `${API_BASE}/p2p/orders/${operation.orderId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: operation.status,
+        }),
       },
-      body: JSON.stringify({
-        orderId: operation.orderId,
-        status: operation.status,
-      }),
-    });
+    );
 
     if (!response.ok) {
       console.warn(
-        `Failed to sync order ${operation.orderId} status to KV:`,
+        `Failed to sync order ${operation.orderId} status to API:`,
         response.status,
       );
     }
   } catch (error) {
-    console.warn("Error syncing order status to KV:", error);
+    console.warn("Error syncing order status to API:", error);
   }
 }
 
 /**
- * Delete order from KV storage
+ * Delete order from KV storage (API-based)
  */
 export async function syncOrderCancelToKV(
   orderId: string,
@@ -50,7 +52,7 @@ export async function syncOrderCancelToKV(
 ): Promise<void> {
   try {
     const response = await fetch(
-      `${API_BASE}/p2p/orders?wallet=${encodeURIComponent(walletAddress)}&id=${encodeURIComponent(orderId)}`,
+      `${API_BASE}/p2p/orders/${encodeURIComponent(orderId)}`,
       {
         method: "DELETE",
       },
@@ -58,12 +60,12 @@ export async function syncOrderCancelToKV(
 
     if (!response.ok) {
       console.warn(
-        `Failed to delete order ${orderId} from KV:`,
+        `Failed to delete order ${orderId} from API:`,
         response.status,
       );
     }
   } catch (error) {
-    console.warn("Error deleting order from KV:", error);
+    console.warn("Error deleting order from API:", error);
   }
 }
 

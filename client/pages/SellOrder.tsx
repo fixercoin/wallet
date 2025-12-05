@@ -14,7 +14,6 @@ import {
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { ADMIN_WALLET } from "@/lib/p2p";
-import { getFilteredPendingOrders } from "@/lib/kv-orders-sync";
 
 export default function SellOrder() {
   const navigate = useNavigate();
@@ -43,13 +42,20 @@ export default function SellOrder() {
   };
 
   useEffect(() => {
-    const loadOrders = () => {
+    const loadOrders = async () => {
       try {
         setLoadingOrders(true);
-        const sellOrders = getFilteredPendingOrders("SELL");
-        setOrders(sellOrders);
+        const response = await fetch("/api/p2p/orders?type=SELL");
+        if (!response.ok) {
+          console.error("Failed to load orders:", response.status);
+          setOrders([]);
+          return;
+        }
+        const data = await response.json();
+        const orders = Array.isArray(data.orders) ? data.orders : [];
+        setOrders(orders);
       } catch (error) {
-        console.error("Error loading orders from localStorage:", error);
+        console.error("Error loading orders from API:", error);
         setOrders([]);
       } finally {
         setLoadingOrders(false);

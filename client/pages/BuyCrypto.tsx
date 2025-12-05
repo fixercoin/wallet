@@ -83,13 +83,33 @@ export default function BuyCrypto() {
     navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
   };
 
-  const addPendingOrder = (o: any) => {
+  const saveOrderToKV = async (order: any) => {
     try {
-      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
-      const arr = Array.isArray(cur) ? cur : [];
-      arr.unshift({ ...o, status: "pending" });
-      localStorage.setItem("orders_pending", JSON.stringify(arr));
-    } catch {}
+      const response = await fetch("/api/p2p/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          walletAddress: wallet.publicKey,
+          type: order.type,
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+          pricePKRPerQuote: order.pricePKRPerQuote,
+          paymentMethodId: order.paymentMethod,
+          status: "PENDING",
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to save order to KV:", response.status);
+        return false;
+      }
+      const data = await response.json();
+      return data.order || data.data;
+    } catch (error) {
+      console.error("Error saving order to KV:", error);
+      return false;
+    }
   };
 
   // Load token logos/prices (best-effort)
@@ -172,28 +192,29 @@ export default function BuyCrypto() {
     setLoading(true);
     try {
       const order = {
-        id: `ORD-${Date.now()}`,
         type: "BUY",
         token: selectedToken.id,
+        amountTokens: Number(amountPKR) / exchangeRate,
         amountPKR: Number(amountPKR),
         pricePKRPerQuote,
         paymentMethod: "easypaisa",
-        seller: {
-          accountName: "ameer nawaz khan",
-          accountNumber: "030107044833",
-        },
-        buyerWallet: wallet.publicKey,
-        walletAddress: walletAddress || wallet.publicKey,
-        createdAt: Date.now(),
       };
-      try {
-        localStorage.setItem("buynote_order", JSON.stringify(order));
-      } catch {}
-      addPendingOrder(order);
+
+      const savedOrder = await saveOrderToKV(order);
+      if (!savedOrder) {
+        throw new Error("Failed to save order to Cloudflare KV");
+      }
+
+      toast({
+        title: "Success",
+        description: "Buy order created successfully",
+        duration: 2000,
+      });
+
       navigate("/buy-order");
     } catch (error: any) {
       toast({
-        title: "Failed to start chat",
+        title: "Failed to create order",
         description: error?.message || String(error),
         variant: "destructive",
       });

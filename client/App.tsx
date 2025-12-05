@@ -127,7 +127,6 @@ import VerifySell from "./pages/VerifySell";
 import OrdersList from "./pages/OrdersList";
 import OrderDetail from "./pages/OrderDetail";
 import Select from "./pages/select";
-import BuyNow from "./pages/buy-now";
 import SellNow from "./pages/sell-now";
 import AdminBroadcast from "./pages/AdminBroadcast";
 import SwapPage from "./pages/Swap";
@@ -165,7 +164,6 @@ function AppRoutes() {
       <Route path="/" element={<Index />} />
       <Route path="/swap" element={<SwapPage />} />
       <Route path="/select" element={<Select />} />
-      <Route path="/buy-now" element={<BuyNow />} />
       <Route path="/sell-now" element={<SellNow />} />
       <Route path="/buy-crypto" element={<BuyCrypto />} />
       <Route path="/buy-order" element={<BuyOrder />} />
@@ -224,7 +222,6 @@ function AppContent() {
       "/p2p/sell-active-orders",
       "/p2p/admin-disputes",
       "/express/buy-trade",
-      "/buy-now",
       "/sell-now",
       "/buynote",
       "/sellnote",

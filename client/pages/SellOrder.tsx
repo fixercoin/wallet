@@ -43,9 +43,12 @@ export default function SellOrder() {
 
   useEffect(() => {
     const loadOrders = async () => {
+      if (!wallet) return;
       try {
         setLoadingOrders(true);
-        const response = await fetch("/api/p2p/orders?type=SELL");
+        const response = await fetch(
+          `/api/p2p/orders?type=SELL&wallet=${wallet.publicKey}`,
+        );
         if (!response.ok) {
           console.error("Failed to load orders:", response.status);
           setOrders([]);
@@ -64,9 +67,9 @@ export default function SellOrder() {
 
     loadOrders();
 
-    const interval = setInterval(loadOrders, 1000);
+    const interval = setInterval(loadOrders, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [wallet]);
 
   if (!wallet) {
     return (

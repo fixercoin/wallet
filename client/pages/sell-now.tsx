@@ -176,7 +176,6 @@ export default function SellNow() {
           status: "PENDING",
           orderId: order.id,
           sellerWallet: order.sellerWallet,
-          adminWallet: order.adminWallet,
           buyerWallet: order.buyerWallet,
         }),
       });
@@ -232,7 +231,6 @@ export default function SellNow() {
         paymentMethod: "easypaisa",
         sellerWallet: wallet.publicKey,
         walletAddress: wallet.publicKey,
-        adminWallet: ADMIN_WALLET,
         createdAt: editingOrder?.createdAt || Date.now(),
         updatedAt: Date.now(),
         status: "PENDING",

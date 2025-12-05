@@ -46,12 +46,9 @@ export default function BuyOrder() {
 
   useEffect(() => {
     const loadOrders = async () => {
-      if (!wallet) return;
       try {
         setLoadingOrders(true);
-        const response = await fetch(
-          `/api/p2p/orders?type=BUY&wallet=${wallet.publicKey}`,
-        );
+        const response = await fetch(`/api/p2p/orders?type=BUY`);
         if (!response.ok) {
           console.error("Failed to load orders:", response.status);
           setOrders([]);

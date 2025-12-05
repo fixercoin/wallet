@@ -229,22 +229,42 @@ export default function VerifySell() {
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedOrder || !wallet) return;
 
-    const message: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      roomId: selectedOrder.roomId,
-      senderWallet: wallet.publicKey,
-      senderRole: "seller",
-      type: "text",
-      text: messageInput,
-      timestamp: Date.now(),
-    };
-
-    saveChatMessage(message);
-    setChatLog((prev) => [...prev, message]);
+    const text = messageInput.trim();
     setMessageInput("");
+
+    try {
+      // Save to server
+      const serverMsg = await saveServerChatMessage(
+        selectedOrder.roomId,
+        wallet.publicKey,
+        text
+      );
+
+      if (serverMsg) {
+        serverMsg.senderRole = "seller";
+        setChatLog((prev) => [...prev, serverMsg]);
+        lastMessageCountRef.current += 1;
+      } else {
+        // Fallback
+        const message: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId: selectedOrder.roomId,
+          senderWallet: wallet.publicKey,
+          senderRole: "seller",
+          type: "text",
+          text,
+          timestamp: Date.now(),
+        };
+        saveChatMessage(message);
+        setChatLog((prev) => [...prev, message]);
+      }
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      setMessageInput(text);
+    }
   };
 
   const handleCompleted = async () => {

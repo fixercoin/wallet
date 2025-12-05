@@ -14,6 +14,7 @@ import {
   syncChatMessagesFromServer,
   type ChatMessage,
 } from "@/lib/p2p-chat";
+import { completeOrder, cancelOrder } from "@/lib/kv-orders-sync";
 
 export default function OrderComplete() {
   const navigate = useNavigate();

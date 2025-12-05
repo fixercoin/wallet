@@ -374,7 +374,9 @@ export default function BuyCrypto() {
                 loading ||
                 !amountPKR ||
                 Number(amountPKR) <= 0 ||
-                estimatedTokens === 0
+                estimatedTokens === 0 ||
+                !paymentMethod ||
+                fetchingPaymentMethod
               }
               className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -383,6 +385,13 @@ export default function BuyCrypto() {
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   Processing...
                 </>
+              ) : fetchingPaymentMethod ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Loading Payment Method...
+                </>
+              ) : !paymentMethod ? (
+                "ADD PAYMENT METHOD FIRST"
               ) : (
                 `BUY CRYPTO`
               )}

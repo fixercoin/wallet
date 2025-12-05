@@ -150,11 +150,15 @@ export default function OrderComplete() {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const dataUrl = e.target?.result as string;
+      if (!wallet?.publicKey) return;
+
       try {
+        // For now, send proof as text message with embedded data (in production, upload to cloud storage)
+        // In production, you'd upload to S3/Cloudinary and get a URL
         const msg: ChatMessage = {
           id: `msg-${Date.now()}`,
           roomId,
-          senderWallet: wallet?.publicKey || "",
+          senderWallet: wallet.publicKey,
           senderRole: isBuyer ? "buyer" : "seller",
           type: "attachment",
           text: "📎 Proof",
@@ -166,8 +170,13 @@ export default function OrderComplete() {
         };
 
         setChatLog((prev) => [...prev, msg]);
-        // Save message to localStorage
+        // Save message to localStorage (server doesn't handle attachments yet)
         saveChatMessage(msg);
+
+        toast({
+          title: "Proof attached",
+          description: "Your proof has been added to the chat",
+        });
       } catch (error) {
         console.error("Failed to upload attachment:", error);
         toast({

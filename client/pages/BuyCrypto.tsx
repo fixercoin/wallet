@@ -23,6 +23,10 @@ import {
 } from "@/components/ui/dialog";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
+import {
+  PaymentMethod,
+  getPaymentMethodsByWallet,
+} from "@/lib/p2p-payment-methods";
 
 interface TokenOption {
   id: string;

@@ -3,7 +3,8 @@
  * Syncs order operations with both localStorage and Cloudflare KV
  */
 
-const API_BASE = process.env.VITE_API_BASE_URL || process.env.VITE_API_URL || "/api";
+const API_BASE =
+  process.env.VITE_API_BASE_URL || process.env.VITE_API_URL || "/api";
 
 interface OrderSyncOperation {
   orderId: string;
@@ -14,7 +15,9 @@ interface OrderSyncOperation {
 /**
  * Update order status in KV storage
  */
-export async function syncOrderStatusToKV(operation: OrderSyncOperation): Promise<void> {
+export async function syncOrderStatusToKV(
+  operation: OrderSyncOperation,
+): Promise<void> {
   try {
     const response = await fetch(`${API_BASE}/p2p/orders`, {
       method: "PUT",
@@ -116,7 +119,10 @@ export function addCompletedOrderToLS(order: any): void {
 /**
  * Mark order as completed (localStorage + KV)
  */
-export async function completeOrder(order: any, walletAddress: string): Promise<void> {
+export async function completeOrder(
+  order: any,
+  walletAddress: string,
+): Promise<void> {
   addCompletedOrderToLS(order);
   removeOrderFromLS(order.id);
   await syncOrderStatusToKV({
@@ -129,7 +135,10 @@ export async function completeOrder(order: any, walletAddress: string): Promise<
 /**
  * Cancel order (localStorage + KV)
  */
-export async function cancelOrder(orderId: string, walletAddress: string): Promise<void> {
+export async function cancelOrder(
+  orderId: string,
+  walletAddress: string,
+): Promise<void> {
   removeOrderFromLS(orderId);
   await syncOrderCancelToKV(orderId, walletAddress);
 }
@@ -142,16 +151,16 @@ export function getFilteredPendingOrders(type?: "BUY" | "SELL"): any[] {
   const completed = getCompletedOrdersFromLS();
   const completedIds = new Set(completed.map((o: any) => o.id));
 
-  const filtered = pending.filter(
-    (order: any) => !completedIds.has(order.id),
-  );
+  const filtered = pending.filter((order: any) => !completedIds.has(order.id));
 
   if (type) {
     return filtered.filter((order: any) => {
       if (type === "BUY") {
         return order.type === "BUY";
       } else if (type === "SELL") {
-        return order.type === "SELL" || (order.amountTokens && !order.amountPKR);
+        return (
+          order.type === "SELL" || (order.amountTokens && !order.amountPKR)
+        );
       }
       return true;
     });

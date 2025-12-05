@@ -875,7 +875,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   aria-label="Refresh balance"
                   title="Refresh balance and tokens"
                 >
-                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                  <RefreshCw
+                    className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
                 </Button>
 
                 {/* Search button */}

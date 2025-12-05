@@ -19,17 +19,17 @@ VITE_API_BASE_URL = ""
 # These bindings are available in functions/api/* routes
 [[kv_namespaces]]
 binding = "STAKING_KV"
-id = "295bfeb238c344ccb5afdd2bb93e497f"
-preview_id = "d7ce3f94e821495d8c93952fdc8868b6"
+id = "YOUR_PRODUCTION_NAMESPACE_ID"
+preview_id = "YOUR_PREVIEW_NAMESPACE_ID"
 
 # Enable KV for Pages Functions (development environment)
 [env.development.kv_namespaces]
 binding = "STAKING_KV"
-id = "295bfeb238c344ccb5afdd2bb93e497f"
-preview_id = "d7ce3f94e821495d8c93952fdc8868b6"
+id = "YOUR_PREVIEW_NAMESPACE_ID"
+preview_id = "YOUR_PREVIEW_NAMESPACE_ID"
 
 # Enable KV for Pages Functions (production environment)
 [env.production.kv_namespaces]
 binding = "STAKING_KV"
-id = "295bfeb238c344ccb5afdd2bb93e497f"
-preview_id = "d7ce3f94e821495d8c93952fdc8868b6"
+id = "YOUR_PRODUCTION_NAMESPACE_ID"
+preview_id = "YOUR_PREVIEW_NAMESPACE_ID"

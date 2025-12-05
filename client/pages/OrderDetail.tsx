@@ -86,6 +86,40 @@ export default function OrderDetail() {
 
   const goBack = () => navigate(-1);
 
+  const handleCancelOrder = () => {
+    if (!order) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this order? This action cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const pendingOrders = JSON.parse(
+        localStorage.getItem("orders_pending") || "[]",
+      );
+      const filteredOrders = pendingOrders.filter(
+        (o: any) => o.id !== order.id,
+      );
+      localStorage.setItem("orders_pending", JSON.stringify(filteredOrders));
+
+      toast({
+        title: "Order Cancelled",
+        description: "The order has been successfully cancelled.",
+      });
+
+      navigate(-1);
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel the order.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div
       className="express-p2p-page min-h-screen bg-gradient-to-br from-[#1a2847] via-[#16223a] to-[#0f1520] text-white relative overflow-hidden text-[10px]"

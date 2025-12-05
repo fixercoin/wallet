@@ -20,6 +20,7 @@ import {
   PaymentMethod,
   savePaymentMethod,
   getPaymentMethod,
+  getPaymentMethodsByWallet,
 } from "@/lib/p2p-payment-methods";
 import { useToast } from "@/hooks/use-toast";
 
@@ -40,6 +41,8 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [savedMethodId, setSavedMethodId] = useState<string | undefined>();
   const [userName, setUserName] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"EASYPAISA">("EASYPAISA");
   const [accountName, setAccountName] = useState("");
@@ -47,31 +50,63 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
   const [solanawWalletAddress, setSolanawWalletAddress] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Load existing payment method if editing
+  // Load existing payment method if editing or if one exists for the wallet
   useEffect(() => {
     const loadPaymentMethod = async () => {
-      if (paymentMethodId && open) {
-        const existing = await getPaymentMethod(paymentMethodId);
-        if (existing) {
-          setUserName(existing.userName);
-          setPaymentMethod(existing.paymentMethod);
-          setAccountName(existing.accountName);
-          setAccountNumber(existing.accountNumber);
-          setSolanawWalletAddress(existing.solanawWalletAddress);
+      if (!open) return;
+
+      try {
+        if (paymentMethodId) {
+          // Loading a specific payment method for editing
+          const existing = await getPaymentMethod(paymentMethodId);
+          if (existing) {
+            setSavedMethodId(existing.id);
+            setUserName(existing.userName);
+            setPaymentMethod(existing.paymentMethod);
+            setAccountName(existing.accountName);
+            setAccountNumber(existing.accountNumber);
+            setSolanawWalletAddress(existing.solanawWalletAddress);
+            setIsEditing(false);
+          }
+        } else {
+          // Check if there's already a saved payment method for this wallet
+          const existingMethods = await getPaymentMethodsByWallet(walletAddress);
+          if (existingMethods.length > 0) {
+            const existing = existingMethods[0]; // Use the first/latest method
+            setSavedMethodId(existing.id);
+            setUserName(existing.userName);
+            setPaymentMethod(existing.paymentMethod);
+            setAccountName(existing.accountName);
+            setAccountNumber(existing.accountNumber);
+            setSolanawWalletAddress(existing.solanawWalletAddress);
+            setIsEditing(false);
+          } else {
+            // No saved method, show blank form for new entry
+            setSavedMethodId(undefined);
+            setUserName("");
+            setPaymentMethod("EASYPAISA");
+            setAccountName("");
+            setAccountNumber("");
+            setSolanawWalletAddress("");
+            setIsEditing(true);
+            setErrors({});
+          }
         }
-      } else if (open) {
-        // Reset for new entry
+      } catch (error) {
+        console.error("Error loading payment method:", error);
+        // If there's an error, default to edit mode with blank form
+        setSavedMethodId(undefined);
         setUserName("");
         setPaymentMethod("EASYPAISA");
         setAccountName("");
         setAccountNumber("");
         setSolanawWalletAddress("");
-        setErrors({});
+        setIsEditing(true);
       }
     };
 
     loadPaymentMethod();
-  }, [paymentMethodId, open]);
+  }, [paymentMethodId, open, walletAddress]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};

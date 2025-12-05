@@ -31,12 +31,8 @@ export default function OrderComplete() {
 
   const roomId = order?.id || order?.roomId || "global";
 
-  // Determine if current user is buyer based on wallet and order type
-  const isBuyer = order?.type?.toLowerCase() === "buy"
-    ? order?.senderWallet === wallet?.publicKey || !order?.senderWallet
-    : order?.type?.toUpperCase() === "BUY"
-      ? order?.senderWallet === wallet?.publicKey || !order?.senderWallet
-      : false;
+  // Determine if current user is buyer based on wallet
+  const isBuyer = order?.buyerWallet === wallet?.publicKey;
 
   useEffect(() => {
     const loadChat = async () => {

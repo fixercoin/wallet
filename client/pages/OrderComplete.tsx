@@ -70,6 +70,7 @@ export default function OrderComplete() {
         roomId,
         senderWallet: wallet?.publicKey || "",
         senderRole: isBuyer ? "buyer" : "seller",
+        type: "message",
         text: messageInput,
         timestamp: Date.now(),
       };
@@ -77,8 +78,8 @@ export default function OrderComplete() {
       setChatLog((prev) => [...prev, msg]);
       setMessageInput("");
 
-      await saveChatMessage(roomId, msg);
-      await sendChatMessage(roomId, msg);
+      // Save message to localStorage
+      saveChatMessage(msg);
     } catch (error) {
       console.error("Failed to send message:", error);
       toast({

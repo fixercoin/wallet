@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 import { useWallet } from "@/contexts/WalletContext";
 import { copyToClipboard, shortenAddress } from "@/lib/wallet";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
   Dialog,

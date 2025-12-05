@@ -300,20 +300,41 @@ export default function BuyTrade() {
     }
   }, [counterpartyWallet, toWallet]);
 
-  const sendTextMessage = () => {
+  const sendTextMessage = async () => {
     if (!messageInput.trim() || !derivedRoomId || !wallet) return;
-    const message: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      roomId: derivedRoomId,
-      senderWallet: wallet.publicKey,
-      senderRole: userRole,
-      type: "message",
-      text: messageInput.trim(),
-      timestamp: Date.now(),
-    };
-    saveChatMessage(message);
-    setChatLog((prev) => [...prev, message]);
+    const text = messageInput.trim();
     setMessageInput("");
+
+    try {
+      // Save to server first
+      const serverMsg = await saveServerChatMessage(
+        derivedRoomId,
+        wallet.publicKey,
+        text
+      );
+
+      if (serverMsg) {
+        serverMsg.senderRole = userRole;
+        setChatLog((prev) => [...prev, serverMsg]);
+        lastMessageCountRef.current += 1;
+      } else {
+        // Fallback to localStorage
+        const message: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId: derivedRoomId,
+          senderWallet: wallet.publicKey,
+          senderRole: userRole,
+          type: "message",
+          text,
+          timestamp: Date.now(),
+        };
+        saveChatMessage(message);
+        setChatLog((prev) => [...prev, message]);
+      }
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      setMessageInput(text);
+    }
   };
 
   const handleReceived = () => {

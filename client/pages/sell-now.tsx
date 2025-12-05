@@ -99,6 +99,19 @@ export default function SellNow() {
     return t?.balance || 0;
   }, [walletTokens, selectedToken]);
 
+  // Load editing order data if available
+  useEffect(() => {
+    if (editingOrder) {
+      // Find the token from the order
+      const token = tokens.find((t) => t.id === editingOrder.token);
+      if (token) {
+        setSelectedToken(token);
+      }
+      // Set the amount
+      setSellAmountTokens(String(editingOrder.amountTokens || ""));
+    }
+  }, [editingOrder, tokens]);
+
   useEffect(() => {
     const fetchTokens = async () => {
       try {
@@ -115,7 +128,9 @@ export default function SellNow() {
           } as TokenOption;
         });
         setTokens(enriched);
-        setSelectedToken(enriched[0]);
+        if (!editingOrder) {
+          setSelectedToken(enriched[0]);
+        }
       } catch (error) {
         console.warn("DexScreener fetch failed, using defaults", error);
         setTokens(DEFAULT_TOKENS);

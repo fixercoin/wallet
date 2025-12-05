@@ -1,25 +1,35 @@
-name = "wallet-c36"
-main = "src/worker.ts"
-compatibility_date = "2024-12-01"
+name = "fixorium-pages"
+compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Cloudflare Pages build configuration
 [build]
-command = "npm install && npm run build"
-cwd = "."
-watch_paths = ["src/**/*.ts", "client/**/*.ts", "client/**/*.tsx"]
+command = "npm run build"
+cwd = "./"
 
-[env.production]
-name = "wallet-c36-prod"
-routes = [
-  { pattern = "fixorium-proxy.khanbabusargodha.workers.dev/*", zone_name = "workers.dev" },
-  { pattern = "wallet.fixorium.com.pk/api/*", zone_name = "fixorium.com.pk" },
-  { pattern = "app.fixorium.com.pk/api/*", zone_name = "fixorium.com.pk" }
-]
+# Cloudflare Pages output directory
+pages_build_output_dir = "dist"
 
-[env.staging]
-name = "wallet-c36-staging"
-route = "wallet-staging.fixorium.com.pk/*"
-
+# Environment variables available at build time and to Functions (VITE_ prefix exposed to client)
 [vars]
-SOLANA_RPC = "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7"
-BIRDEYE_API_KEY = "cecae2ad38d7461eaf382f533726d9bb"
+VITE_API_URL = ""
+VITE_API_BASE_URL = ""
+
+# KV namespace bindings for Pages Functions
+# These bindings are available in functions/api/* routes
+[[kv_namespaces]]
+binding = "STAKING_KV"
+id = "YOUR_PRODUCTION_NAMESPACE_ID"
+preview_id = "YOUR_PREVIEW_NAMESPACE_ID"
+
+# Enable KV for Pages Functions (development environment)
+[env.development.kv_namespaces]
+binding = "STAKING_KV"
+id = "YOUR_PREVIEW_NAMESPACE_ID"
+preview_id = "YOUR_PREVIEW_NAMESPACE_ID"
+
+# Enable KV for Pages Functions (production environment)
+[env.production.kv_namespaces]
+binding = "STAKING_KV"
+id = "YOUR_PRODUCTION_NAMESPACE_ID"
+preview_id = "YOUR_PREVIEW_NAMESPACE_ID"

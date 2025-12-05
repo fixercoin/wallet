@@ -6,7 +6,7 @@ export const onRequest: PagesFunction = async ({ request, env, url }) => {
   if (!inputMint || !outputMint || !amount)
     return Response.json(
       { error: "inputMint, outputMint, amount required" },
-      { status: 400 }
+      { status: 400 },
     );
 
   const headers = { "Content-Type": "application/json" };
@@ -24,19 +24,62 @@ export const onRequest: PagesFunction = async ({ request, env, url }) => {
     return null;
   };
 
-  // 1️⃣ Try Pump.fun
-  const pumpQuote = await fetchQuote(env.PUMPFUN_QUOTE, { inputMint, outputMint, amount });
-  if (pumpQuote) return Response.json({ source: "pumpfun", quote: pumpQuote });
+  // 1️⃣ Try Pump.fun if configured
+  if (env.PUMPFUN_QUOTE) {
+    const pumpQuote = await fetchQuote(env.PUMPFUN_QUOTE, {
+      inputMint,
+      outputMint,
+      amount,
+    });
+    if (pumpQuote)
+      return Response.json({ source: "pumpfun", quote: pumpQuote });
+  }
 
-  // 2️⃣ Try Meteora (replace with actual API if available)
-  const meteoraUrl = "https://meteora-api.fake/quote"; // <-- put real Meteora URL
-  const meteoraQuote = await fetchQuote(meteoraUrl, { inputMint, outputMint, amount });
-  if (meteoraQuote) return Response.json({ source: "meteora", quote: meteoraQuote });
+  // 2️⃣ Try Jupiter (public API)
+  try {
+    const params = new URLSearchParams({ inputMint, outputMint, amount });
+    const jupUrl = `https://quote-api.jup.ag/v6/quote?${params.toString()}`;
+    const jupResp = await fetch(jupUrl, { method: "GET" });
+    if (jupResp.ok) {
+      const jupData = await jupResp.json();
+      if (jupData && jupData.outAmount && jupData.outAmount !== "0") {
+        return Response.json({ source: "jupiter", quote: jupData });
+      }
+    }
+  } catch (e) {
+    // ignore and fallback
+  }
 
-  // 3️⃣ Try Raydium (replace with real API endpoint)
-  const raydiumUrl = "https://api.raydium.io/swap/quote"; // <-- put real Raydium quote endpoint
-  const raydiumQuote = await fetchQuote(raydiumUrl, { inputMint, outputMint, amount });
-  if (raydiumQuote) return Response.json({ source: "raydium", quote: raydiumQuote });
+  // 3️⃣ Fallback: use DexScreener token price to return indicative USD-based quote
+  try {
+    const dexsUrl = `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(outputMint)}`;
+    const dexsResp = await fetch(dexsUrl, { method: "GET" });
+    if (dexsResp.ok) {
+      const dexsData = await dexsResp.json();
+      const priceUsd = Number(dexsData?.pairs?.[0]?.priceUsd) || null;
+      if (priceUsd && priceUsd > 0) {
+        // estimate out amount assuming input is SOL; convert amount (lamports) to SOL
+        const solToLamports = 1_000_000_000n;
+        const inLamports = BigInt(amount);
+        const inSol = Number(inLamports) / Number(solToLamports);
+        // use rough SOL price from DexScreener for SOL token
+        const solDexsResp = await fetch(
+          `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent("So11111111111111111111111111111111111111112")}`,
+        );
+        const solData = solDexsResp.ok ? await solDexsResp.json() : null;
+        const solUsd = Number(solData?.pairs?.[0]?.priceUsd) || 0;
+        if (solUsd > 0) {
+          const estimatedOut = (inSol * solUsd) / priceUsd;
+          return Response.json({
+            source: "indicative",
+            quote: { inAmount: Number(inSol), outEstimated: estimatedOut },
+          });
+        }
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
 
   // If all fail
   return Response.json({ error: "no_quote_available" }, { status: 502 });

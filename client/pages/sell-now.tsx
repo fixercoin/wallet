@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/dialog";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
-import { ADMIN_WALLET } from "@/lib/p2p";
 
 interface TokenOption {
   id: string;

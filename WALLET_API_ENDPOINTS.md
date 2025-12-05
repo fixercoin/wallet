@@ -2,7 +2,7 @@
 
 ## Base URL
 
-- **Production:** `https://fixorium-proxy.khanbabusargodha.workers.dev`
+- **Production:** `https://proxy.fixorium.com.pk`
 - **Frontend:** `https://wallet-c36.fixorium.com.pk/api`
 
 ---
@@ -56,17 +56,6 @@ Authorization: Bearer {ADMIN_TOKEN}
 
 ## Token Price Data
 
-### DexTools Price Lookup
-
-```
-GET /api/dextools/price?tokenAddress={address}&chainId=solana
-```
-
-**Parameters:**
-
-- `tokenAddress` (required): Token contract address
-- `chainId` (optional): Default is `solana`
-
 ### DexScreener Price Lookup
 
 ```
@@ -76,16 +65,6 @@ GET /api/dexscreener/price?token={tokenAddress}
 **Parameters:**
 
 - `token` (required): Token contract address
-
-### CoinMarketCap Price Quotes
-
-```
-GET /api/coinmarketcap/quotes?symbols=SOL,USDC,BTC
-```
-
-**Parameters:**
-
-- `symbols` (required): Comma-separated token symbols
 
 ---
 
@@ -202,34 +181,6 @@ GET /api/account?publicKey={walletAddress}
 - `publicKey` (required): Wallet address to query
 
 ---
-
-## Payment Integration
-
-### Create Payment Intent (Razorpay)
-
-```
-POST /api/payments/create-intent
-```
-
-**Body:**
-
-```json
-{
-  "walletAddress": "...",
-  "amount": 50000,
-  "currency": "INR",
-  "tokenType": "USDC",
-  "email": "user@example.com",
-  "contact": "+92123456789"
-}
-```
-
-### Payment Webhook Handler
-
-```
-POST /api/webhooks/payment
-X-Razorpay-Signature: {signature}
-```
 
 ---
 

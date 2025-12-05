@@ -9,35 +9,38 @@ import {
   Send,
   Download,
   RefreshCw,
+  RotateCw,
   Copy,
   ArrowUpRight,
   ArrowDownLeft,
+  ArrowRightLeft,
   TrendingUp,
   Settings,
   Bot,
   Plus,
   Menu,
   Gift,
-  Flame,
   Lock,
-  Coins,
   Bell,
   X,
   Clock,
+  Coins,
+  Search as SearchIcon,
+  MessageSquare,
 } from "lucide-react";
 import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import {
   getPaymentReceivedNotifications,
   saveNotification,
 } from "@/lib/p2p-chat";
-import { useDurableRoom } from "@/hooks/useDurableRoom";
 import { useWallet } from "@/contexts/WalletContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
+import { formatAmountCompact } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useStakingTokens } from "@/hooks/use-staking-tokens";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
-import { TokenSelectionDialog } from "./TokenSelectionDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +48,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
+import { FlyingPrizeBox } from "./FlyingPrizeBox";
+import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
+import bs58 from "bs58";
+import nacl from "tweetnacl";
+import { getUnreadNotifications } from "@/lib/p2p-chat";
+import { PriceLoader } from "@/components/ui/price-loader";
+import { Zap } from "lucide-react";
 
 interface DashboardProps {
   onSend: () => void;
@@ -58,13 +69,8 @@ interface DashboardProps {
   onAccounts?: () => void;
   onLock: () => void;
   onBurn: () => void;
+  onStakeTokens?: () => void;
 }
-
-import { useNavigate } from "react-router-dom";
-import { FlyingPrizeBox } from "./FlyingPrizeBox";
-import { resolveApiUrl } from "@/lib/api-client";
-import bs58 from "bs58";
-import nacl from "tweetnacl";
 
 const QUEST_TASKS = [
   {
@@ -108,28 +114,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onAccounts,
   onLock,
   onBurn,
+  onStakeTokens,
 }) => {
   const {
     wallet,
     balance,
     tokens,
     isLoading,
+    isUsingCache,
     refreshBalance,
     refreshTokens,
     addCustomToken,
     removeToken,
   } = useWallet();
   const { toast } = useToast();
-  const { events } = useDurableRoom("global", API_BASE);
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
-  const [selectedToken, setSelectedToken] = useState<TokenInfo | null>(null);
-  const [showTokenDialog, setShowTokenDialog] = useState(false);
-  const [isDeletingToken, setIsDeletingToken] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const { isStaking } = useStakingTokens(wallet?.publicKey || null);
 
   // Quest state (per-wallet, persisted locally)
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
@@ -196,7 +202,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const shareOnX = () => {
-    const text = encodeURIComponent("Fixercoin updates 🚀 #Fixercoin");
+    const text = encodeURIComponent("Fixercoin updates ��� #Fixercoin");
     const shareUrl = encodeURIComponent("https://fixorium.com.pk");
     const intent = `https://twitter.com/intent/tweet?text=${text}&url=${shareUrl}`;
     try {
@@ -266,13 +272,40 @@ export const Dashboard: React.FC<DashboardProps> = ({
       }
     };
 
-    const id = window.setInterval(tick, 10000);
+    const id = window.setInterval(tick, 60000); // Auto-refresh every 1 minute
 
     return () => {
       cancelled = true;
       clearInterval(id);
     };
   }, [refreshBalance, refreshTokens]);
+
+  // Monitor unread notifications
+  useEffect(() => {
+    if (!wallet) return;
+
+    const updateUnreadCount = () => {
+      const unread = getUnreadNotifications(wallet.publicKey);
+      setUnreadCount(unread.length);
+    };
+
+    updateUnreadCount();
+
+    // Check for updates every 2 seconds
+    const interval = setInterval(updateUnreadCount, 2000);
+
+    // Also listen for storage changes
+    const handleStorageChange = () => {
+      updateUnreadCount();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [wallet]);
 
   // Check for pending payment verifications if admin
   useEffect(() => {
@@ -295,27 +328,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   }, [wallet?.publicKey]);
 
-  // Persist incoming notifications and update pending badge (admin only)
-  useEffect(() => {
-    if (!wallet?.publicKey) return;
-    const last = events?.[events.length - 1];
-    if (!last || last.kind !== "notification") return;
-    const notif = last.data as any;
-    if (!notif?.initiatorWallet || notif.initiatorWallet === wallet.publicKey)
-      return;
-    try {
-      saveNotification(notif);
-    } catch {}
-    if (
-      ADMIN_WALLET &&
-      String(wallet.publicKey).toLowerCase() ===
-        String(ADMIN_WALLET).toLowerCase()
-    ) {
-      const updated = getPaymentReceivedNotifications(wallet.publicKey);
-      setPendingOrdersCount(updated.length);
-    }
-  }, [events, wallet?.publicKey]);
-
   // Periodically check Express P2P service health (require consecutive failures before marking down)
   const healthFailureRef = useRef(0);
   useEffect(() => {
@@ -326,18 +338,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
       try {
         const controller = new AbortController();
         const to = setTimeout(() => controller.abort(), 4000);
-        // Health check via pumpfun/quote endpoint with minimal valid parameters
-        const res = await fetch("/api/pumpfun/quote", {
-          method: "POST",
+        // Health check via reliable ping endpoint
+        const res = await fetchWithFallback("/api/ping", {
+          method: "GET",
           signal: controller.signal,
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            inputMint: "So11111111111111111111111111111111111111112",
-            outputMint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-            amount: 1000000,
-          }),
         });
         clearTimeout(to);
 
@@ -430,46 +437,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const handleTokenCardClick = (token: TokenInfo) => {
-    setSelectedToken(token);
-    setShowTokenDialog(true);
+    onTokenClick(token.mint);
   };
 
-  const handleDeleteToken = async () => {
-    if (!selectedToken) return;
-
-    try {
-      setIsDeletingToken(true);
-      removeToken(selectedToken.mint);
-
-      toast({
-        title: "Token Removed",
-        description: `${selectedToken.symbol} has been removed from your wallet`,
-      });
-
-      setShowTokenDialog(false);
-      setSelectedToken(null);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to remove token",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeletingToken(false);
-    }
-  };
-
-  const handleTokenContinue = () => {
-    if (selectedToken) {
-      setShowTokenDialog(false);
-      setSelectedToken(null);
-      onTokenClick(selectedToken.mint);
-    }
-  };
-
-  const formatBalance = (amount: number | undefined): string => {
+  const formatBalance = (
+    amount: number | undefined,
+    symbol?: string,
+  ): string => {
     if (!amount || isNaN(amount)) return "0.00";
+    // FIXERCOIN and LOCKER always show exactly 2 decimal places
+    if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
     return amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 6,
@@ -489,10 +471,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const formatTokenPriceDisplay = (price?: number): string => {
-    if (typeof price !== "number" || !isFinite(price)) return "0.000000";
+    if (typeof price !== "number" || !isFinite(price)) return "0.00000000";
     if (price >= 1) return price.toFixed(2);
     if (price >= 0.01) return price.toFixed(4);
-    return price.toFixed(6);
+    if (price >= 0.0001) return price.toFixed(6);
+    return price.toFixed(8);
   };
 
   const [usdToPkr, setUsdToPkr] = useState<number>(() => {
@@ -510,7 +493,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/forex/rate?base=USD&symbols=PKR");
+        const res = await fetch(
+          resolveApiUrl("/api/forex/rate?base=USD&symbols=PKR"),
+        );
         if (!res.ok) return;
         const data = await res.json();
         const rate = data?.rates?.PKR;
@@ -600,8 +585,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const sortedTokens = useMemo(() => {
-    const priority = ["SOL", "USDC", "USDT", "FIXERCOIN", "LOCKER"];
-    const arr = [...tokens];
+    const priority = ["SOL", "USDC", "FIXERCOIN", "LOCKER"];
+    const arr = [...tokens].filter((t) => t.symbol !== "USDT");
     arr.sort((a, b) => {
       const aSym = (a.symbol || "").toUpperCase();
       const bSym = (b.symbol || "").toUpperCase();
@@ -621,7 +606,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
   if (!wallet) return null;
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
+    <div
+      className="express-p2p-page min-h-screen text-gray-900 relative overflow-y-auto"
+      style={{ backgroundColor: "#f3f4f6" }}
+    >
       {/* Decorative bottom green wave (SVG) */}
       <svg
         className="bottom-wave z-0"
@@ -631,15 +619,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
         aria-hidden
       >
         <defs>
-          <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0%" stopColor="#e6ffed" />
-            <stop offset="60%" stopColor="#c6f6d5" />
-            <stop offset="100%" stopColor="#22c55e" />
+          <linearGradient id="g-dashboard" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stopColor="rgba(34, 197, 94, 0.2)" />
+            <stop offset="60%" stopColor="rgba(22, 163, 74, 0.15)" />
+            <stop offset="100%" stopColor="rgba(34, 197, 94, 0.3)" />
           </linearGradient>
         </defs>
         <path
           d="M0,80 C240,180 480,20 720,80 C960,140 1200,40 1440,110 L1440,220 L0,220 Z"
-          fill="url(#g1)"
+          fill="url(#g-dashboard)"
           opacity="0.95"
         />
       </svg>
@@ -669,8 +657,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* About */}
               <p className="text-xs text-gray-300 leading-relaxed">
                 A community challenge inside the Fixorium Wallet. Complete
-                simple tasks, earn rewards, and join random prize draws — all
-                directly from your wallet.
+                simple tasks, earn rewards, and join random prize draws �����
+                all directly from your wallet.
               </p>
 
               {/* How it works */}
@@ -735,12 +723,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Rewards */}
               <div className="bg-white/5 rounded-lg p-3 border border-[#22c55e]/20">
                 <h3 className="text-sm font-bold text-white mb-3">
-                  🎁 Rewards
+                  ���� Rewards
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
-                  <p>💰 {REWARD_PER_TASK} FIXERCOIN per task</p>
+                  <p>����� {REWARD_PER_TASK} FIXERCOIN per task</p>
                   <p>🖼️ NFTs and airdrops</p>
-                  <p>⚡ Early access to wallet updates</p>
+                  <p>���� Early access to wallet updates</p>
                   <p>👑 Premium features for top participants</p>
                 </div>
               </div>
@@ -791,14 +779,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       )}
 
-      <div className="w-full max-w-md mx-auto px-4 py-2 relative z-20">
+      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2 relative z-20">
         {/* Balance Section */}
-        <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2" />
-
-            <div className="flex items-center gap-2">
-              {/* Moved dropdown menu from TopBar: action menu for wallet (now right-aligned) */}
+        <div className="w-full mt-2 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
+          <img
+            src="https://cdn.builder.io/api/v1/image/assets%2F544a1f0862d54740bb19cea328eb3490%2F144647ed9eb7478cac472b3cb771e9ae?format=webp&width=800"
+            alt="Balance card background"
+            className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
+            style={{
+              backgroundColor: "#1f1f1f",
+            }}
+          />
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-2 gap-2">
+              {/* Dropdown menu - moved to left */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -809,205 +803,233 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <Menu className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="start">
                   <DropdownMenuItem
                     onSelect={() => onAccounts?.()}
                     className="flex items-center gap-2 text-xs"
                   >
                     <Wallet className="h-4 w-4" />
-                    <span>MY-WALLET</span>
+                    <span>MY WALLET</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => navigate("/autobot")}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <ArrowRightLeft className="h-4 w-4" />
+                    <span>TRADE</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => navigate("/burn")}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Zap className="h-4 w-4" />
+                    <span>TOKEN</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => onLock()}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Lock className="h-4 w-4" />
+                    <span>LOCK</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={onAirdrop}
                     className="flex items-center gap-2 text-xs"
                   >
                     <Gift className="h-4 w-4" />
-                    <span>C-BUILDER</span>
+                    <span>AIRDROP</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={onBurn}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Flame className="h-4 w-4" />
-                    <span>SPL-BURN</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={onLock}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Lock className="h-4 w-4" />
-                    <span>LOCK-SPL</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => navigate("/fixorium/token-listing")}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Coins className="h-4 w-4" />
-                    <span>LISTING</span>
-                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onSelect={() => navigate("/wallet/history")}
                     className="flex items-center gap-2 text-xs"
                   >
                     <Clock className="h-4 w-4" />
-                    <span>HISTORY</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={onSettings}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>SETTINGS</span>
+                    <span>WALLET HISTORY</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <div className="flex items-center gap-2 ml-auto">
+                {/* Search button */}
+                <Button
+                  onClick={() => navigate("/search")}
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-[#22c55e] ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                  aria-label="Search tokens"
+                  title="Search tokens"
+                >
+                  <SearchIcon className="h-4 w-4" />
+                </Button>
+
+                {/* Settings button */}
+                <Button
+                  onClick={onSettings}
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                  aria-label="Settings"
+                  title="Settings"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
-          <div className="text-center space-y-2">
-            {wallet
-              ? (() => {
-                  const total = getTotalPortfolioValue();
-                  const hasAnyBalance =
-                    tokens.some(
-                      (t) => typeof t.balance === "number" && t.balance > 0,
-                    ) ||
-                    (typeof balance === "number" && balance > 0);
-                  if (!hasAnyBalance) {
-                    // Show both USD and PKR even when zero
-                    const usdZero = `$${(0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                    const pkrZero = `PKR ${(0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+            <div className="text-center space-y-2 mt-8">
+              {wallet
+                ? (() => {
+                    const total = getTotalPortfolioValue();
+                    const hasAnyBalance =
+                      tokens.some(
+                        (t) => typeof t.balance === "number" && t.balance > 0,
+                      ) ||
+                      (typeof balance === "number" && balance > 0);
+                    if (!hasAnyBalance) {
+                      // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
+                      const usdZero = `0.000 $`;
+                      return (
+                        <>
+                          <div className="text-3xl text-gray-900 leading-tight">
+                            {showBalance ? `${usdZero}` : "****"}
+                          </div>
+                          <div className="text-xs mt-1">
+                            <span
+                              style={{ color: "#FACC15", display: "block" }}
+                            >
+                              {showBalance ? `▲ + 0.000 0.00 %` : "24h: ****"}
+                            </span>
+                          </div>
+                        </>
+                      );
+                    }
+
+                    let totalChange24h = 0;
+                    let hasValidPriceChange = false;
+                    tokens.forEach((token) => {
+                      if (
+                        typeof token.balance === "number" &&
+                        typeof token.price === "number" &&
+                        typeof token.priceChange24h === "number" &&
+                        isFinite(token.balance) &&
+                        isFinite(token.price) &&
+                        isFinite(token.priceChange24h) &&
+                        token.balance > 0 &&
+                        token.price > 0
+                      ) {
+                        const currentValue = token.balance * token.price;
+                        const previousPrice =
+                          token.price / (1 + token.priceChange24h / 100);
+                        const previousValue = token.balance * previousPrice;
+                        const change = currentValue - previousValue;
+                        totalChange24h += change;
+                        hasValidPriceChange = true;
+                      }
+                    });
+
+                    const change24hPercent = hasValidPriceChange
+                      ? (totalChange24h / (total - totalChange24h)) * 100
+                      : 0;
+                    const isPositive = totalChange24h >= 0;
+
                     return (
                       <>
-                        <div className="text-2xl font-bold text-gray-900 leading-tight">
-                          {showBalance ? `${usdZero}` : "****"}
+                        <div className="text-3xl text-gray-900 leading-tight">
+                          {showBalance ? (
+                            <>
+                              <span
+                                style={{
+                                  fontVariantNumeric: "tabular-nums",
+                                  fontFamily: "Arial",
+                                }}
+                              >
+                                {total.toLocaleString(undefined, {
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3,
+                                })}
+                              </span>
+                              {" $"}
+                            </>
+                          ) : (
+                            "****"
+                          )}
                         </div>
-                        <div className="text-sm text-gray-700 mt-1">
-                          {showBalance ? `${pkrZero}` : "****"}
-                        </div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          {showBalance ? `+ ${usdZero} (0.00%)` : "24h: ****"}
-                        </div>
+                        {showBalance ? (
+                          <div className="text-xs mt-1">
+                            <span
+                              style={{
+                                color: isPositive ? "#FACC15" : "#F87171",
+                                display: "block",
+                              }}
+                            >
+                              {isPositive ? "▲" : "▼"} {isPositive ? "+" : "-"}{" "}
+                              {Math.abs(totalChange24h).toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3,
+                                },
+                              )}{" "}
+                              {Math.abs(
+                                isFinite(change24hPercent)
+                                  ? change24hPercent
+                                  : 0,
+                              ).toFixed(2)}
+                              %
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-400 mt-1">****</div>
+                        )}
                       </>
                     );
-                  }
+                  })()
+                : "Connect wallet to see balance"}
+            </div>
 
-                  let totalChange24h = 0;
-                  let hasValidPriceChange = false;
-                  tokens.forEach((token) => {
-                    if (
-                      typeof token.balance === "number" &&
-                      typeof token.price === "number" &&
-                      typeof token.priceChange24h === "number" &&
-                      isFinite(token.balance) &&
-                      isFinite(token.price) &&
-                      isFinite(token.priceChange24h) &&
-                      token.balance > 0 &&
-                      token.price > 0
-                    ) {
-                      const currentValue = token.balance * token.price;
-                      const previousPrice =
-                        token.price / (1 + token.priceChange24h / 100);
-                      const previousValue = token.balance * previousPrice;
-                      const change = currentValue - previousValue;
-                      totalChange24h += change;
-                      hasValidPriceChange = true;
-                    }
-                  });
+            {/* Action Buttons */}
+            <div className="flex items-center justify-around gap-2 sm:gap-3 mt-6 w-full px-0">
+              <Button
+                onClick={onSend}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <Send className="h-8 w-8 text-[#22c55e]" />
+                <span>SEND</span>
+              </Button>
 
-                  const change24hPercent = hasValidPriceChange
-                    ? (totalChange24h / (total - totalChange24h)) * 100
-                    : 0;
-                  const isPositive = totalChange24h >= 0;
+              <Button
+                onClick={onReceive}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <Download className="h-8 w-8 text-[#22c55e]" />
+                <span>RECEIVE</span>
+              </Button>
 
-                  return (
-                    <>
-                      <div className="text-2xl font-bold text-gray-900 leading-tight">
-                        {showBalance
-                          ? `${total.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })} USD`
-                          : "****"}
-                      </div>
-                      <div className="text-sm text-gray-700 mt-1">
-                        {showBalance
-                          ? `PKR ${(total * (usdToPkr || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                          : "****"}
-                      </div>
-                      {showBalance ? (
-                        <>
-                          {hasValidPriceChange && (
-                            <div className="flex items-center justify-center gap-2 mt-1">
-                              {isPositive ? (
-                                <>
-                                  <ArrowUpRight className="h-3 w-3 text-green-400" />
-                                  <span className="text-xs font-medium text-green-400">
-                                    +
-                                    {Math.abs(totalChange24h).toLocaleString(
-                                      undefined,
-                                      {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                      },
-                                    )}{" "}
-                                    (+{change24hPercent.toFixed(2)}%)
-                                  </span>
-                                </>
-                              ) : (
-                                <>
-                                  <ArrowDownLeft className="h-3 w-3 text-red-400" />
-                                  <span className="text-xs font-medium text-red-400">
-                                    -
-                                    {Math.abs(totalChange24h).toLocaleString(
-                                      undefined,
-                                      {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                      },
-                                    )}{" "}
-                                    ({change24hPercent.toFixed(2)}%)
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          )}
-                          {!hasValidPriceChange && (
-                            <div className="text-xs text-gray-400 mt-1">
-                              No data available
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="text-xs text-gray-400 mt-1">****</div>
-                      )}
-                    </>
-                  );
-                })()
-              : "Connect wallet to see balance"}
-          </div>
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3 mt-6">
-            <Button
-              onClick={onSend}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
-            >
-              SEND
-            </Button>
+              <Button
+                onClick={onSwap}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <ArrowRightLeft className="h-8 w-8 text-[#22c55e]" />
+                <span>SWAP</span>
+              </Button>
+            </div>
 
-            <Button
-              onClick={onReceive}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#22c55e]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
-            >
-              RECEIVE
-            </Button>
-
-            <Button
-              onClick={onSwap}
-              className="flex-1 h-10 rounded-xl font-semibold text-xs bg-[#064e3b]/50 hover:bg-[#16a34a]/20 border border-[#22c55e]/30 text-white flex items-center justify-center"
-            >
-              SWAP
-            </Button>
+            {/* P2P EXPRESS SERVICE Button with Notification Badge */}
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mt-4 w-full px-0">
+              <Button
+                onClick={() => navigate("/p2p")}
+                className="relative flex-1 bg-[#2a2a2a] border border-[#22c55e]/30 rounded-md px-4 py-3 text-center hover:bg-[#2a2a2a]/80 transition-colors text-white font-bold text-xs h-auto py-3"
+              >
+                P2P - EXCHANGE NOW
+                {unreadCount > 0 && (
+                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#FF7A5C] rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  </div>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -1031,68 +1053,114 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         )}
 
-        <div className="space-y-0">
+        <style>{`
+          @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+          }
+          .token-price-blink {
+            animation: blink 1.2s ease-in-out infinite;
+          }
+        `}</style>
+
+        <div className="w-full space-y-0">
           {sortedTokens.map((token, index) => {
-            const percentChange =
-              typeof token.priceChange24h === "number" &&
-              isFinite(token.priceChange24h)
-                ? token.priceChange24h
-                : null;
-            const isPositive = (percentChange ?? 0) >= 0;
+            const tokenBalance =
+              typeof token.balance === "number" &&
+              typeof token.price === "number" &&
+              isFinite(token.balance) &&
+              isFinite(token.price)
+                ? token.balance * token.price
+                : 0;
 
             return (
-              <div key={token.mint}>
-                <Card className="bg-transparent rounded-md border-0">
-                  <CardContent className="p-0">
+              <div key={token.mint} className="w-full">
+                <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
+                  <CardContent className="w-full p-0">
                     <div
-                      className="flex items-center justify-between p-4 rounded-md hover:bg-[#083c2c]/60 cursor-pointer transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-4"
                       onClick={() => handleTokenCardClick(token)}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Avatar className="h-10 w-10 flex-shrink-0">
                           <AvatarImage src={token.logoURI} alt={token.symbol} />
-                          <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-sm">
+                          <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-xs">
                             {token.symbol.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="font-semibold text-white text-sm">
-                              {token.symbol}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="text-xs text-gray-300">
-                              ${formatTokenPriceDisplay(token.price)}
-                            </span>
-                            {percentChange !== null ? (
-                              <span className="flex items-center gap-1">
-                                <span
-                                  className={`text-xs font-medium ${
-                                    isPositive
-                                      ? "text-green-400"
-                                      : "text-red-400"
-                                  }`}
-                                >
-                                  {isPositive ? "+" : ""}
-                                  {percentChange.toFixed(2)}%
-                                </span>
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-semibold text-white truncate uppercase">
+                              {token.name}
+                            </p>
+                            {isStaking(token.mint) && (
+                              <span className="text-xs font-semibold text-yellow-500 whitespace-nowrap">
+                                STAKING
                               </span>
-                            ) : (
-                              <span className="text-xs text-gray-400">—</span>
                             )}
                           </div>
+                          <p className="text-xs font-semibold text-white truncate flex items-baseline gap-1">
+                            <span>
+                              {
+                                formatAmountCompact(
+                                  token.balance,
+                                  token.symbol,
+                                ).split(/\s+/)[0]
+                              }
+                            </span>
+                            <span
+                              className="text-xs"
+                              style={{ fontSize: "0.65rem" }}
+                            >
+                              {token.symbol.toUpperCase()}
+                            </span>
+                          </p>
                         </div>
                       </div>
 
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-white">
-                          {formatBalance(token.balance || 0)}
-                        </p>
-                        <p className="text-xs text-gray-300">
-                          {typeof token.price === "number" && token.price > 0
-                            ? `$${formatBalance((token.balance || 0) * token.price)}`
-                            : "$0.00"}
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <div
+                          className={`text-xs whitespace-nowrap ${
+                            typeof token.price === "number" &&
+                            isFinite(token.price) &&
+                            token.price !== 0
+                              ? "font-semibold"
+                              : ""
+                          }`}
+                        >
+                          {typeof token.price === "number" &&
+                          isFinite(token.price) ? (
+                            <span style={{ color: "#ffffff" }}>
+                              $
+                              {token.price.toFixed(
+                                ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
+                              )}
+                            </span>
+                          ) : [
+                              "SOL",
+                              "USDC",
+                              "FIXERCOIN",
+                              "LOCKER",
+                              "FXM",
+                            ].includes(token.symbol) ? (
+                            <PriceLoader />
+                          ) : (
+                            <span style={{ color: "#999999" }}>
+                              $0.00000000
+                            </span>
+                          )}
+                        </div>
+
+                        <p
+                          className={`text-xs text-white whitespace-nowrap ${
+                            tokenBalance > 0 ? "font-semibold" : ""
+                          }`}
+                        >
+                          $
+                          {tokenBalance.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </p>
                       </div>
                     </div>
@@ -1118,16 +1186,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         open={showAddTokenDialog}
         onOpenChange={setShowAddTokenDialog}
         onTokenAdd={addCustomToken}
-      />
-
-      {/* Token Selection Dialog */}
-      <TokenSelectionDialog
-        token={selectedToken}
-        open={showTokenDialog}
-        onOpenChange={setShowTokenDialog}
-        onDelete={handleDeleteToken}
-        onContinue={handleTokenContinue}
-        isDeleting={isDeletingToken}
       />
     </div>
   );

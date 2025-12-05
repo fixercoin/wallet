@@ -9,7 +9,7 @@ This guide shows how to integrate the Cloudflare Worker APIs into your React fro
 In your `.env.local` or environment variables, set:
 
 ```
-VITE_API_BASE_URL=https://fixorium-proxy.khanbabusargodha.workers.dev
+VITE_API_BASE_URL=https://proxy.fixorium.com.pk
 ```
 
 Or for development:
@@ -124,24 +124,6 @@ export const walletApi = {
       `${API_BASE}/account?publicKey=${encodeURIComponent(publicKey)}`,
     );
     if (!response.ok) throw new Error("Failed to fetch account");
-    return response.json();
-  },
-
-  // Create payment intent
-  async createPaymentIntent(params: {
-    walletAddress: string;
-    amount: number;
-    currency: string;
-    tokenType: string;
-    email: string;
-    contact: string;
-  }) {
-    const response = await fetch(`${API_BASE}/payments/create-intent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
-    });
-    if (!response.ok) throw new Error("Failed to create payment intent");
     return response.json();
   },
 

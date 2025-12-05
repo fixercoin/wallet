@@ -75,6 +75,11 @@ import {
   handleRewardStatus,
   handleStakingConfig,
 } from "./routes/staking";
+import {
+  handleGetPaymentMethods,
+  handleSavePaymentMethod,
+  handleDeletePaymentMethod,
+} from "./routes/p2p-payment-methods";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();

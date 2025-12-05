@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Plus, Send, CheckCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,9 @@ import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import {
   saveChatMessage,
   loadChatHistory,
+  loadServerChatHistory,
+  saveServerChatMessage,
+  syncChatMessagesFromServer,
   type ChatMessage,
 } from "@/lib/p2p-chat";
 

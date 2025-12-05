@@ -209,8 +209,7 @@ export default function SellNow() {
           paymentMethodId: order.paymentMethod,
           status: "PENDING",
           orderId: order.id,
-          sellerWallet: order.sellerWallet,
-          buyerWallet: order.buyerWallet,
+          sellerWallet: wallet.publicKey,
         }),
       });
 

@@ -203,6 +203,7 @@ function AppRoutes() {
       <Route path="/p2p" element={<P2PHome />} />
       <Route path="/p2p/buy-active-orders" element={<BuyActiveOrders />} />
       <Route path="/p2p/sell-active-orders" element={<SellActiveOrders />} />
+      <Route path="/p2p/admin-disputes" element={<AdminDisputes />} />
       <Route path="/express/buy-trade" element={<BuyTrade />} />
       <Route path="/order-complete" element={<OrderComplete />} />
       <Route path="/search" element={<TokenSearchPage />} />

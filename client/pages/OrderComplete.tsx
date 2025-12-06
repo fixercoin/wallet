@@ -113,7 +113,9 @@ export default function OrderComplete() {
           // Update local states with the latest values from KV
           setBuyerPaymentConfirmed(updatedOrder.buyerPaymentConfirmed ?? false);
           setSellerPaymentReceived(updatedOrder.sellerPaymentReceived ?? false);
-          setSellerTransferInitiated(updatedOrder.sellerTransferInitiated ?? false);
+          setSellerTransferInitiated(
+            updatedOrder.sellerTransferInitiated ?? false,
+          );
           setBuyerCryptoReceived(updatedOrder.buyerCryptoReceived ?? false);
           setOrder(updatedOrder);
         }

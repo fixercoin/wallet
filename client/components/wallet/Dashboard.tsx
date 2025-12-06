@@ -922,26 +922,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
                       const usdZero = `0.000 $`;
                       return (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-center gap-4 relative">
-                            <div className="text-3xl text-gray-900 leading-tight">
-                              {showBalance ? `${usdZero}` : "****"}
-                            </div>
-                            <div className="absolute right-0">
-                              <Button
-                                onClick={onReceive}
-                                className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-md whitespace-nowrap h-auto"
-                              >
-                                DEPOSIT
-                              </Button>
-                            </div>
+                        <div className="flex items-center justify-center gap-4 relative">
+                          <div className="text-3xl text-gray-900 leading-tight">
+                            {showBalance ? `${usdZero}` : "****"}
                           </div>
-                          <div className="text-xs text-center">
-                            <span
-                              style={{ color: "#FACC15", display: "block" }}
+                          <div className="absolute right-0">
+                            <Button
+                              onClick={onReceive}
+                              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-md whitespace-nowrap h-auto"
                             >
-                              {showBalance ? `▲ + 0.000 0.00 %` : "24h: ****"}
-                            </span>
+                              DEPOSIT
+                            </Button>
                           </div>
                         </div>
                       );

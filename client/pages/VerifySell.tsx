@@ -10,6 +10,7 @@ import {
   Clock,
   Copy,
   Send,
+  Plus,
   ShoppingCart,
   TrendingUp,
 } from "lucide-react";

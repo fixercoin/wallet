@@ -20,7 +20,7 @@ import {
   Plus,
   Menu,
   Gift,
-  Lock,
+  Unlock,
   Bell,
   X,
   Clock,
@@ -829,27 +829,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onSelect={() => navigate("/autobot")}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <ArrowRightLeft className="h-4 w-4" />
-                    <span>TRADE</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => navigate("/burn")}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Zap className="h-4 w-4" />
-                    <span>TOKEN</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => onLock()}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Lock className="h-4 w-4" />
-                    <span>LOCK</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
                     onSelect={onAirdrop}
                     className="flex items-center gap-2 text-xs"
                   >
@@ -924,11 +903,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
                       const usdZero = `0.000 $`;
                       return (
-                        <div className="flex items-center justify-center gap-4 relative">
+                        <div className="flex items-center justify-between gap-4 w-full">
                           <div className="text-3xl text-gray-900 leading-tight">
                             {showBalance ? `${usdZero}` : "****"}
                           </div>
-                          <div className="absolute right-0">
+                          <div>
                             <Button
                               onClick={onP2PTrade || onReceive}
                               className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-sm whitespace-nowrap h-auto"
@@ -969,7 +948,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     const isPositive = totalChange24h >= 0;
 
                     return (
-                      <div className="flex items-center justify-center gap-4 relative">
+                      <div className="flex items-center justify-between gap-4 w-full">
                         <div className="text-3xl text-gray-900 leading-tight">
                           {showBalance ? (
                             <>
@@ -990,7 +969,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             "****"
                           )}
                         </div>
-                        <div className="absolute right-0">
+                        <div>
                           <Button
                             onClick={onP2PTrade || onReceive}
                             className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-sm whitespace-nowrap h-auto"
@@ -1034,7 +1013,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {/* Additional Action Buttons: TRADE, BURN, LOCK */}
             <div className="flex items-center justify-around gap-2 sm:gap-3 mt-3 w-full px-0">
               <Button
-                onClick={onP2PTrade}
+                onClick={onAutoBot}
                 className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
                 <ArrowRightLeft className="h-8 w-8 text-[#22c55e]" />
@@ -1053,7 +1032,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onClick={onLock}
                 className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
-                <Lock className="h-8 w-8 text-[#22c55e]" />
+                <Unlock className="h-8 w-8 text-[#22c55e]" />
                 <span>LOCK UP</span>
               </Button>
             </div>

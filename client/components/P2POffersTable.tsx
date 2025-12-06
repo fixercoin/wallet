@@ -176,30 +176,38 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
-              <tr
-                key={order.id}
-                className="border-b border-gray-300/20 hover:bg-[#1a2847]/30 transition-colors"
-              >
-                <td className="px-4 py-3 text-white/80">
-                  {getCreatorName(order)}
-                </td>
-                <td className="px-4 py-3 text-white/80">{getPrice(order)}</td>
-                <td className="px-4 py-3 text-white/80">{getLimit(order)}</td>
-                <td className="px-4 py-3 text-white/80">
-                  {order.payment_method || order.paymentMethodId || "—"}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <Button
-                    onClick={() => handleProceed(order)}
-                    size="sm"
-                    className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-3 rounded h-auto"
-                  >
-                    {orderType === "BUY" ? "Buy" : "Sell"}
-                  </Button>
-                </td>
-              </tr>
-            ))}
+            {orders.map((order) => {
+              const limits = getLimit(order);
+              return (
+                <tr
+                  key={order.id}
+                  className="border-b border-gray-300/20 hover:bg-[#1a2847]/30 transition-colors"
+                >
+                  <td className="px-4 py-3 text-white/80">
+                    {getCreatorName(order)}
+                  </td>
+                  <td className="px-4 py-3 text-white/80">{getPrice(order)}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col text-white/80">
+                      <span className="text-xs text-white/60">Min</span>
+                      <span>{limits.min}</span>
+                      <span className="text-xs text-white/60 mt-1">Max</span>
+                      <span>{limits.max}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-white/80">Easypaisa</td>
+                  <td className="px-4 py-3 text-right">
+                    <Button
+                      onClick={() => handleProceed(order)}
+                      size="sm"
+                      className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-3 rounded h-auto"
+                    >
+                      {orderType === "BUY" ? "Buy" : "Sell"}
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

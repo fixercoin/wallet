@@ -196,7 +196,6 @@ export default function SellOrder() {
             <Button
               onClick={handleSubmitOrder}
               disabled={
-                submitting ||
                 loadingRate ||
                 !amountUSDC ||
                 amountUSDC === "0" ||
@@ -204,7 +203,7 @@ export default function SellOrder() {
               }
               className="w-full py-3 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white hover:shadow-lg transition-colors uppercase font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? "Submitting..." : "Submit Order"}
+              Submit Order
             </Button>
           </CardContent>
         </Card>

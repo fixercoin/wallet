@@ -94,10 +94,13 @@ export default function BuyCrypto() {
     navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
   };
 
-  const saveOrderToKV = async (order: any) => {
+  const saveOrderToKV = async (order: any, isUpdate: boolean = false) => {
     try {
-      const response = await fetch("/api/p2p/orders", {
-        method: "POST",
+      const method = isUpdate ? "PUT" : "POST";
+      const url = isUpdate ? `/api/p2p/orders/${editingOrder.id}` : "/api/p2p/orders";
+
+      const response = await fetch(url, {
+        method: method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           walletAddress: wallet.publicKey,
@@ -114,13 +117,13 @@ export default function BuyCrypto() {
       });
 
       if (!response.ok) {
-        console.error("Failed to save order to KV:", response.status);
+        console.error(`Failed to ${isUpdate ? "update" : "save"} order:`, response.status);
         return false;
       }
       const data = await response.json();
       return data.order || data.data;
     } catch (error) {
-      console.error("Error saving order to KV:", error);
+      console.error(`Error ${isUpdate ? "updating" : "saving"} order:`, error);
       return false;
     }
   };

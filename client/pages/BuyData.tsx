@@ -101,12 +101,18 @@ export default function BuyData() {
         defaultToken={selectedOffer?.token || "USDC"}
         defaultPrice={selectedOffer?.pricePKRPerQuote || exchangeRate}
         minAmount={
-          selectedOffer?.minAmountTokens || selectedOffer?.minAmountPKR || 0
+          selectedOffer?.minAmountTokens
+            ? selectedOffer.minAmountTokens
+            : selectedOffer?.minAmountPKR
+              ? selectedOffer.minAmountPKR / (selectedOffer?.pricePKRPerQuote || exchangeRate)
+              : 0
         }
         maxAmount={
-          selectedOffer?.maxAmountTokens ||
-          selectedOffer?.maxAmountPKR ||
-          Infinity
+          selectedOffer?.maxAmountTokens
+            ? selectedOffer.maxAmountTokens
+            : selectedOffer?.maxAmountPKR
+              ? selectedOffer.maxAmountPKR / (selectedOffer?.pricePKRPerQuote || exchangeRate)
+              : Infinity
         }
         onConfirm={async (details) => {
           try {

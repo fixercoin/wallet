@@ -47,6 +47,40 @@ export default function BuyActiveOrders() {
     navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
   };
 
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      setCancelling(orderId);
+      const walletAddress = wallet?.publicKey;
+      if (!walletAddress) {
+        throw new Error("Wallet address not found");
+      }
+
+      const response = await fetch(
+        `/api/p2p/orders/${encodeURIComponent(orderId)}?wallet=${encodeURIComponent(walletAddress)}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || `Failed to cancel order: ${response.status}`,
+        );
+      }
+
+      setOrders((prevOrders) => prevOrders.filter((o) => o.id !== orderId));
+      toast.success("Order cancelled successfully");
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to cancel order";
+      toast.error(errorMsg);
+      console.error("Error cancelling order:", err);
+    } finally {
+      setCancelling(null);
+    }
+  };
+
   // Use polling for real-time order updates
   useP2PPolling(
     (fetchedOrders) => {

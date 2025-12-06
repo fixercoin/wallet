@@ -181,7 +181,7 @@ export default function BuyActiveOrders() {
             <Card
               key={order.id}
               className="bg-transparent border border-gray-300/30 hover:border-gray-300/50 transition-colors cursor-pointer"
-              onClick={() => navigate(`/order/${encodeURIComponent(order.id)}`)}
+              onClick={() => navigate("/order-complete", { state: { order, openChat: true } })}
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between gap-4">

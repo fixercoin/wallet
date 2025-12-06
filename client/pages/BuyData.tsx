@@ -104,14 +104,16 @@ export default function BuyData() {
           selectedOffer?.minAmountTokens
             ? selectedOffer.minAmountTokens
             : selectedOffer?.minAmountPKR
-              ? selectedOffer.minAmountPKR / (selectedOffer?.pricePKRPerQuote || exchangeRate)
+              ? selectedOffer.minAmountPKR /
+                (selectedOffer?.pricePKRPerQuote || exchangeRate)
               : 0
         }
         maxAmount={
           selectedOffer?.maxAmountTokens
             ? selectedOffer.maxAmountTokens
             : selectedOffer?.maxAmountPKR
-              ? selectedOffer.maxAmountPKR / (selectedOffer?.pricePKRPerQuote || exchangeRate)
+              ? selectedOffer.maxAmountPKR /
+                (selectedOffer?.pricePKRPerQuote || exchangeRate)
               : Infinity
         }
         onConfirm={async (details) => {

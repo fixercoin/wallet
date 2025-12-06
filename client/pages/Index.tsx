@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
+import { useNavigate } from "react-router-dom";
 import { WalletSetup } from "@/components/wallet/WalletSetup";
 import { Dashboard } from "@/components/wallet/Dashboard";
 import { SendTransaction } from "@/components/wallet/SendTransaction";

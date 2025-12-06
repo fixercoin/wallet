@@ -243,6 +243,33 @@ export default function SellOrder() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Payment Method Dialog */}
+      <PaymentMethodDialog
+        open={showPaymentDialog}
+        onOpenChange={(open) => {
+          setShowPaymentDialog(open);
+          if (!open) {
+            setEditingPaymentMethodId(undefined);
+          }
+        }}
+        walletAddress={wallet?.publicKey || ""}
+        paymentMethodId={editingPaymentMethodId}
+        onSave={() => {
+          setEditingPaymentMethodId(undefined);
+        }}
+      />
+
+      {/* Bottom Navigation */}
+      <P2PBottomNavigation
+        onPaymentClick={() => {
+          setEditingPaymentMethodId(undefined);
+          setShowPaymentDialog(true);
+        }}
+        onCreateOfferClick={() => {
+          navigate("/sell-now");
+        }}
+      />
     </div>
   );
 }

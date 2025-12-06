@@ -1035,25 +1035,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="flex items-center justify-around gap-2 sm:gap-3 mt-3 w-full px-0">
               <Button
                 onClick={onP2PTrade}
-                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-white/10 border border-white/20 text-white transition-colors"
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
-                <ArrowRightLeft className="h-8 w-8 text-white/60" />
+                <ArrowRightLeft className="h-8 w-8 text-[#22c55e]" />
                 <span>LIMIT ORDER</span>
               </Button>
 
               <Button
                 onClick={onBurn}
-                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-white/10 border border-white/20 text-white transition-colors"
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
-                <Zap className="h-8 w-8 text-white/60" />
+                <Zap className="h-8 w-8 text-[#22c55e]" />
                 <span>BURNING</span>
               </Button>
 
               <Button
                 onClick={onLock}
-                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-white/10 border border-white/20 text-white transition-colors"
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
-                <Lock className="h-8 w-8 text-white/60" />
+                <Lock className="h-8 w-8 text-[#22c55e]" />
                 <span>LOCK UP</span>
               </Button>
             </div>

@@ -358,7 +358,7 @@ export const getKnownTokens = (): Record<string, TokenMetadata> => {
 };
 
 /**
- * Fetch balance for a specific token mint
+ * Fetch balance for a specific token mint using Helius
  * This is useful for custom tokens that might not be in the general token list
  */
 export const getTokenBalanceForMint = async (
@@ -366,7 +366,6 @@ export const getTokenBalanceForMint = async (
   tokenMint: string,
 ): Promise<number | null> => {
   try {
-    // Try via API proxy first with retries
     const response = await makeRpcCall(
       "getTokenAccountsByOwner",
       [
@@ -374,7 +373,7 @@ export const getTokenBalanceForMint = async (
         { mint: tokenMint },
         { encoding: "jsonParsed", commitment: "confirmed" },
       ],
-      2, // Increase retries
+      2,
     );
 
     const value = (response as any)?.value || [];
@@ -392,77 +391,16 @@ export const getTokenBalanceForMint = async (
       }
 
       console.log(
-        `[Token Balance] Fetched ${tokenMint}: ${balance} via proxy RPC`,
+        `[Token Balance] Fetched ${tokenMint}: ${balance} via Helius`,
       );
       return balance;
     }
+    return null;
   } catch (error) {
-    console.warn(
-      `[Token Balance] Proxy RPC failed for ${tokenMint}, attempting direct web3.js fallback:`,
+    console.error(
+      `[Token Balance] Failed to fetch balance for ${tokenMint} from Helius:`,
       error,
     );
+    return null;
   }
-
-  // Fallback: Try direct web3.js Connection with multiple endpoints
-  const allEndpoints = [SOLANA_RPC_URL, ...PUBLIC_RPC_ENDPOINTS].filter(
-    Boolean,
-  );
-  const uniqueEndpoints = Array.from(new Set(allEndpoints));
-
-  for (let endpointIndex = 0; endpointIndex < uniqueEndpoints.length; endpointIndex++) {
-    const endpoint = uniqueEndpoints[endpointIndex];
-    for (let attempt = 0; attempt <= 1; attempt++) {
-      try {
-        const conn = new Connection(endpoint, { commitment: "confirmed" });
-        const accounts = await conn.getParsedTokenAccountsByOwner(
-          new PublicKey(walletAddress),
-          { mint: new PublicKey(tokenMint) },
-        );
-
-        if (accounts.value.length > 0) {
-          const account = accounts.value[0];
-          const parsedInfo = account.account.data.parsed.info;
-          const decimals = parsedInfo.tokenAmount.decimals;
-
-          let balance = 0;
-          if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
-            balance = parsedInfo.tokenAmount.uiAmount;
-          } else if (parsedInfo.tokenAmount.amount) {
-            const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
-            balance = Number(rawAmount) / Math.pow(10, decimals || 0);
-          }
-
-          console.log(
-            `[Token Balance] Fetched ${tokenMint}: ${balance} via web3.js fallback`,
-          );
-          return balance;
-        }
-      } catch (error) {
-        const errorMsg =
-          error instanceof Error ? error.message : String(error);
-        const isRateLimit =
-          errorMsg.includes("503") ||
-          errorMsg.includes("429") ||
-          errorMsg.includes("not available");
-
-        if (isRateLimit && attempt < 1) {
-          const delayMs = Math.min(2000 * Math.pow(2, attempt), 15000);
-          console.warn(
-            `[Token Balance] Rate limited on endpoint, retrying in ${delayMs}ms`,
-          );
-          await new Promise((resolve) => setTimeout(resolve, delayMs));
-        } else {
-          console.warn(
-            `[Token Balance] Failed on ${endpoint.substring(0, 40)}... for ${tokenMint}:`,
-            errorMsg,
-          );
-        }
-      }
-    }
-  }
-
-  console.warn(
-    `[Token Balance] Failed to fetch balance for ${tokenMint} on all endpoints`,
-  );
-  return null;
 };

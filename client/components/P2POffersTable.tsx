@@ -214,50 +214,64 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
 
       {/* Mobile Cards */}
       <div className="sm:hidden space-y-3">
-        {orders.map((order) => (
-          <div
-            key={order.id}
-            className="p-3 rounded-lg bg-[#1a2847]/50 border border-gray-300/30 overflow-x-auto"
-          >
-            <div className="flex items-center gap-3 whitespace-nowrap min-w-min">
-              <div className="flex flex-col flex-shrink-0">
-                <p className="text-xs text-white/60 uppercase">Advertiser</p>
-                <p className="text-xs font-semibold text-white/90">
-                  {getCreatorName(order)}
-                </p>
-              </div>
+        {orders.map((order) => {
+          const limits = getLimit(order);
+          return (
+            <div
+              key={order.id}
+              className="p-3 rounded-lg bg-[#1a2847]/50 border border-gray-300/30"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 flex flex-col gap-2">
+                  <div className="flex flex-col">
+                    <p className="text-xs text-white/60 uppercase">Advertiser</p>
+                    <p className="text-xs font-semibold text-white/90">
+                      {getCreatorName(order)}
+                    </p>
+                  </div>
 
-              <div className="flex flex-col flex-shrink-0">
-                <p className="text-xs text-white/60 uppercase">Price</p>
-                <p className="text-xs font-semibold text-white/90">
-                  {getPrice(order)}
-                </p>
-              </div>
+                  <div className="flex flex-col">
+                    <p className="text-xs text-white/60 uppercase">Price</p>
+                    <p className="text-xs font-semibold text-white/90">
+                      {getPrice(order)}
+                    </p>
+                  </div>
 
-              <div className="flex flex-col flex-shrink-0">
-                <p className="text-xs text-white/60 uppercase">Limit</p>
-                <p className="text-xs font-semibold text-white/90">
-                  {getLimit(order)}
-                </p>
-              </div>
+                  <div className="flex flex-col">
+                    <p className="text-xs text-white/60 uppercase">Limit</p>
+                    <div className="text-xs font-semibold text-white/90">
+                      <div className="flex gap-4">
+                        <div>
+                          <span className="text-white/60">Min: </span>
+                          <span>{limits.min}</span>
+                        </div>
+                        <div>
+                          <span className="text-white/60">Max: </span>
+                          <span>{limits.max}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-              <div className="flex flex-col flex-shrink-0">
-                <p className="text-xs text-white/60 uppercase">Payment</p>
-                <p className="text-xs font-semibold text-white/90">
-                  {order.payment_method || order.paymentMethodId || "—"}
-                </p>
-              </div>
+                  <div className="flex flex-col">
+                    <p className="text-xs text-white/60 uppercase">Payment</p>
+                    <p className="text-xs font-semibold text-white/90">
+                      Easypaisa
+                    </p>
+                  </div>
+                </div>
 
-              <Button
-                onClick={() => handleProceed(order)}
-                size="sm"
-                className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-2 rounded h-auto flex-shrink-0"
-              >
-                {orderType === "BUY" ? "Buy" : "Sell"}
-              </Button>
+                <Button
+                  onClick={() => handleProceed(order)}
+                  size="sm"
+                  className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-3 rounded h-auto flex-shrink-0 self-end"
+                >
+                  {orderType === "BUY" ? "Buy" : "Sell"}
+                </Button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

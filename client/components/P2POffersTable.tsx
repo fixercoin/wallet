@@ -323,10 +323,10 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                     <Button
                       onClick={() => handleEdit(order)}
                       size="sm"
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded h-auto flex items-center gap-1 uppercase font-semibold"
+                      className="bg-transparent hover:bg-white/10 text-white text-xs py-1 px-2 rounded h-auto flex items-center gap-1 transition-colors"
+                      title="Edit offer"
                     >
-                      <Edit2 className="w-3 h-3" />
-                      EDIT
+                      <Edit2 className="w-4 h-4" />
                     </Button>
                   )}
                   <Button

@@ -70,6 +70,7 @@ interface DashboardProps {
   onLock: () => void;
   onBurn: () => void;
   onStakeTokens?: () => void;
+  onP2PTrade?: () => void;
 }
 
 const QUEST_TASKS = [

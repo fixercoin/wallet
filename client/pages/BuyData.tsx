@@ -7,6 +7,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+import { P2POffersTable } from "@/components/P2POffersTable";
 
 interface BuyOrderData {
   id: string;
@@ -135,6 +136,17 @@ export default function BuyData() {
           </p>
         </div>
       </div>
+
+      {/* Available Offers */}
+      <P2POffersTable
+        orderType="BUY"
+        exchangeRate={280}
+        onSelectOffer={(order) => {
+          toast.success(
+            `Selected offer from ${order.walletAddress || order.creator_wallet}`,
+          );
+        }}
+      />
 
       {/* Loading State */}
       {loading && (

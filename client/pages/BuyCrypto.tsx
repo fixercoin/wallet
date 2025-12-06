@@ -368,9 +368,11 @@ export default function BuyCrypto() {
               onClick={handleBuyClick}
               disabled={
                 loading ||
-                !amountPKR ||
-                Number(amountPKR) <= 0 ||
-                estimatedTokens === 0 ||
+                !minAmountPKR ||
+                !maxAmountPKR ||
+                Number(minAmountPKR) <= 0 ||
+                Number(maxAmountPKR) <= 0 ||
+                Number(minAmountPKR) >= Number(maxAmountPKR) ||
                 !paymentMethod ||
                 fetchingPaymentMethod
               }

@@ -262,7 +262,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                 LIMIT
               </th>
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
-                PAYMENT
+                PAY
               </th>
               <th className="px-4 py-3 text-center text-white/70 font-semibold"></th>
             </tr>
@@ -283,13 +283,11 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   </td>
                   <td className="px-4 py-3 text-white/80 uppercase">
                     <span className="text-[10px]">
-                      {orderType === "BUY"
-                        ? `MIN: ${limits.min} | MAX: ${limits.max}`
-                        : `${limits.min} - ${limits.max}`}
+                      {`${limits.min} - ${limits.max}`}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-white/80 uppercase">
-                    EASYPAISA
+                    <span className="text-[10px] font-semibold">EASYPAISA</span>
                   </td>
                   <td className="px-4 py-3 flex flex-col items-center justify-center gap-2">
                     {isAdvertiser(order) && (
@@ -376,15 +374,13 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                     LIMIT
                   </p>
                   <p className="text-[10px] font-semibold text-white/90 uppercase">
-                    {orderType === "BUY"
-                      ? `MIN: ${limits.min} | MAX: ${limits.max}`
-                      : `${limits.min} - ${limits.max}`}
+                    {`${limits.min} - ${limits.max}`}
                   </p>
                 </div>
 
                 <div className="flex flex-col">
                   <p className="text-[10px] text-white/60 font-semibold uppercase mb-2">
-                    PAYMENT
+                    PAY
                   </p>
                   <p className="text-[10px] font-semibold text-white/90 uppercase">
                     EASYPAISA

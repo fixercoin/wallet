@@ -829,27 +829,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onSelect={() => navigate("/autobot")}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <ArrowRightLeft className="h-4 w-4" />
-                    <span>TRADE</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => navigate("/burn")}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Zap className="h-4 w-4" />
-                    <span>TOKEN</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => onLock()}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Lock className="h-4 w-4" />
-                    <span>LOCK</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
                     onSelect={onAirdrop}
                     className="flex items-center gap-2 text-xs"
                   >

@@ -247,20 +247,36 @@ export default function SellNow() {
       return;
     }
 
-    const amount = Number(sellAmountTokens);
-    if (
-      !sellAmountTokens ||
-      !isFinite(amount) ||
-      amount <= 0 ||
-      !exchangeRate
-    ) {
+    const minAmount = Number(minAmountUSDC);
+    const maxAmount = Number(maxAmountUSDC);
+
+    if (!minAmountUSDC || !isFinite(minAmount) || minAmount <= 0) {
       toast({
-        title: "Invalid Amount",
-        description: "Enter a valid token amount",
+        title: "Invalid Minimum Amount",
+        description: "Enter a valid minimum USDC amount",
         variant: "destructive",
       });
       return;
     }
+
+    if (!maxAmountUSDC || !isFinite(maxAmount) || maxAmount <= 0) {
+      toast({
+        title: "Invalid Maximum Amount",
+        description: "Enter a valid maximum USDC amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (minAmount >= maxAmount) {
+      toast({
+        title: "Invalid Range",
+        description: "Maximum amount must be greater than minimum amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const orderId = editingOrder?.id || `SELL-${Date.now()}`;
@@ -268,8 +284,8 @@ export default function SellNow() {
         id: orderId,
         type: "SELL",
         token: selectedToken.id,
-        amountTokens: amount,
-        amountPKR: amount * exchangeRate,
+        minAmountTokens: minAmount,
+        maxAmountTokens: maxAmount,
         pricePKRPerQuote: exchangeRate,
         paymentMethod: paymentMethod.id,
         sellerWallet: wallet.publicKey,

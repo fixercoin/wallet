@@ -2,6 +2,8 @@ import cors from "cors";
 import express from "express";
 import { handleSolanaRpc } from "./routes/solana-proxy";
 import { handleWalletBalance } from "./routes/wallet-balance";
+import { handleGetTokenBalance } from "./routes/token-balance";
+import { handleGetTokenAccounts } from "./routes/token-accounts";
 import { handleExchangeRate } from "./routes/exchange-rate";
 import {
   handleDexscreenerTokens,
@@ -248,6 +250,30 @@ export async function createServer(): Promise<express.Application> {
     } catch (e: any) {
       return res.status(500).json({
         error: "Failed to fetch wallet balance",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  // Token balance endpoint
+  app.get("/api/wallet/token-balance", async (req, res) => {
+    try {
+      await handleGetTokenBalance(req, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch token balance",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  // Token accounts endpoint
+  app.get("/api/wallet/token-accounts", async (req, res) => {
+    try {
+      await handleGetTokenAccounts(req, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch token accounts",
         details: e?.message || String(e),
       });
     }

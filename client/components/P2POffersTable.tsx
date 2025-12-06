@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Loader2, Edit2 } from "lucide-react";
+import { Loader2, Edit2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useWallet } from "@/contexts/WalletContext";
 
@@ -51,6 +51,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
   const [orders, setOrders] = useState<P2POrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -168,6 +169,40 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
     }
   };
 
+  const handleCancel = async (order: P2POrder) => {
+    try {
+      setCancelling(order.id);
+      const walletAddress = wallet?.publicKey;
+      if (!walletAddress) {
+        throw new Error("Wallet address not found");
+      }
+
+      const response = await fetch(
+        `/api/p2p/orders/${encodeURIComponent(order.id)}?wallet=${encodeURIComponent(walletAddress)}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || `Failed to cancel offer: ${response.status}`,
+        );
+      }
+
+      setOrders((prevOrders) => prevOrders.filter((o) => o.id !== order.id));
+      toast.success("Offer cancelled successfully");
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to cancel offer";
+      toast.error(errorMsg);
+      console.error("Error cancelling offer:", err);
+    } finally {
+      setCancelling(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="w-full px-4 py-8">
@@ -248,14 +283,29 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   </td>
                   <td className="px-4 py-3 text-right flex gap-2 justify-end items-center">
                     {isAdvertiser(order) && (
-                      <Button
-                        onClick={() => handleEdit(order)}
-                        size="sm"
-                        className="bg-transparent hover:bg-white/10 text-white text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
-                        title="Edit offer"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
+                      <>
+                        <Button
+                          onClick={() => handleEdit(order)}
+                          size="sm"
+                          className="bg-transparent hover:bg-white/10 text-white text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
+                          title="Edit offer"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          onClick={() => handleCancel(order)}
+                          disabled={cancelling === order.id}
+                          size="sm"
+                          className="bg-transparent hover:bg-red-500/20 text-red-400 hover:text-red-300 text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
+                          title="Cancel offer"
+                        >
+                          {cancelling === order.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <X className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </>
                     )}
                     <Button
                       onClick={() => handleProceed(order)}
@@ -320,14 +370,29 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
 
                 <div className="flex flex-row items-center justify-end h-full gap-2">
                   {isAdvertiser(order) && (
-                    <Button
-                      onClick={() => handleEdit(order)}
-                      size="sm"
-                      className="bg-transparent hover:bg-white/10 text-white text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
-                      title="Edit offer"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
+                    <>
+                      <Button
+                        onClick={() => handleEdit(order)}
+                        size="sm"
+                        className="bg-transparent hover:bg-white/10 text-white text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
+                        title="Edit offer"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        onClick={() => handleCancel(order)}
+                        disabled={cancelling === order.id}
+                        size="sm"
+                        className="bg-transparent hover:bg-red-500/20 text-red-400 hover:text-red-300 text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
+                        title="Cancel offer"
+                      >
+                        {cancelling === order.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <X className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </>
                   )}
                   <Button
                     onClick={() => handleProceed(order)}

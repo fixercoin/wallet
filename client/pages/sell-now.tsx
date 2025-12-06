@@ -49,7 +49,7 @@ const DEFAULT_TOKENS: TokenOption[] = [
     id: "USDC",
     name: "USDC",
     symbol: "USDC",
-    logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5Au7BXRSpJfDw3gEPrwwAau4vTNihtQ5go5Q/logo.png",
+    logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
     mint: SUPPORTED_TOKEN_MINTS.USDC,
   },
 ];
@@ -97,13 +97,58 @@ export default function SellNow() {
     navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
   };
 
+  const [usdcDirectBalance, setUsdcDirectBalance] = useState<number | null>(
+    null,
+  );
+  const [fetchingUsdcBalance, setFetchingUsdcBalance] = useState(false);
+
+  // Direct USDC balance fetch via server API
+  useEffect(() => {
+    const fetchUsdcDirectBalance = async () => {
+      if (!wallet?.publicKey) return;
+
+      setFetchingUsdcBalance(true);
+      try {
+        const response = await fetch(
+          `/api/wallet/token-balance?wallet=${encodeURIComponent(wallet.publicKey)}&mint=${encodeURIComponent(SUPPORTED_TOKEN_MINTS.USDC)}`,
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const balance = typeof data.balance === "number" ? data.balance : 0;
+        setUsdcDirectBalance(balance);
+        console.log("[SellNow] Server USDC balance fetched:", balance);
+      } catch (err) {
+        console.warn("[SellNow] Server USDC balance fetch failed:", err);
+        setUsdcDirectBalance(0);
+      } finally {
+        setFetchingUsdcBalance(false);
+      }
+    };
+
+    if (selectedToken.symbol === "USDC") {
+      fetchUsdcDirectBalance();
+    }
+  }, [wallet?.publicKey, selectedToken.symbol]);
+
   const selectedTokenBalance = useMemo(() => {
     const t = (walletTokens || []).find(
       (tk) =>
         (tk.symbol || "").toUpperCase() === selectedToken.symbol.toUpperCase(),
     );
-    return t?.balance || 0;
-  }, [walletTokens, selectedToken]);
+    const balance = t?.balance || 0;
+
+    // For USDC, prioritize direct balance if available and valid
+    if (selectedToken.symbol === "USDC" && usdcDirectBalance !== null) {
+      // Use direct balance if it's more recent (non-zero or explicitly fetched)
+      return usdcDirectBalance > 0 ? usdcDirectBalance : balance;
+    }
+
+    return balance;
+  }, [walletTokens, selectedToken, usdcDirectBalance]);
 
   // Load editing order data if available
   useEffect(() => {
@@ -338,8 +383,17 @@ export default function SellNow() {
                 AVAILABLE BALANCE
               </div>
               <div className="mt-1 text-sm">
-                <span className="font-semibold">
-                  {selectedTokenBalance.toFixed(6)} {selectedToken.symbol}
+                <span className="font-semibold flex items-center gap-2">
+                  {fetchingUsdcBalance && selectedToken.symbol === "USDC" ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Fetching...</span>
+                    </>
+                  ) : (
+                    <>
+                      {selectedTokenBalance.toFixed(6)} {selectedToken.symbol}
+                    </>
+                  )}
                 </span>
               </div>
             </div>

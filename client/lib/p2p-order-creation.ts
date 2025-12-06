@@ -59,13 +59,15 @@ export async function createOrderFromOffer(
   const offerCreatorWallet = offer.walletAddress || offer.creator_wallet || "";
 
   // Use trade details if provided (from dialog), otherwise use offer details
-  const amountTokens = tradeDetails?.amountTokens ||
+  const amountTokens =
+    tradeDetails?.amountTokens ||
     (typeof offer.amountTokens === "number"
       ? offer.amountTokens
       : typeof offer.token_amount === "string"
         ? parseFloat(offer.token_amount)
         : 0);
-  const amountPKR = tradeDetails?.amountPKR ||
+  const amountPKR =
+    tradeDetails?.amountPKR ||
     (typeof offer.amountPKR === "number"
       ? offer.amountPKR
       : typeof offer.pkr_amount === "number"

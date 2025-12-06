@@ -1,13 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Plus, Send, CheckCircle, Clock, Copy, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Send,
+  CheckCircle,
+  Clock,
+  Copy,
+  Check,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { listTradeMessages, addTradeMessage } from "@/lib/p2p-api";
-import { getOrderFromStorage, updateOrderInStorage } from "@/lib/p2p-order-creation";
+import {
+  getOrderFromStorage,
+  updateOrderInStorage,
+} from "@/lib/p2p-order-creation";
 import type { CreatedOrder } from "@/lib/p2p-order-creation";
 import type { TradeMessage } from "@/lib/p2p-api";
 
@@ -292,7 +303,8 @@ export default function OrderComplete() {
                   Amount
                 </div>
                 <div className="text-sm text-white/90">
-                  {order.amountTokens.toFixed(6)} {order.token} = {order.amountPKR.toFixed(0)} PKR
+                  {order.amountTokens.toFixed(6)} {order.token} ={" "}
+                  {order.amountPKR.toFixed(0)} PKR
                 </div>
               </div>
 
@@ -309,13 +321,15 @@ export default function OrderComplete() {
                 <div className="text-xs text-white/70 font-semibold uppercase mb-1">
                   Status
                 </div>
-                <div className={`text-sm font-semibold ${
-                  order.status === "COMPLETED"
-                    ? "text-green-400"
-                    : order.status === "CANCELLED"
-                      ? "text-red-400"
-                      : "text-yellow-400"
-                }`}>
+                <div
+                  className={`text-sm font-semibold ${
+                    order.status === "COMPLETED"
+                      ? "text-green-400"
+                      : order.status === "CANCELLED"
+                        ? "text-red-400"
+                        : "text-yellow-400"
+                  }`}
+                >
                   {order.status}
                 </div>
               </div>

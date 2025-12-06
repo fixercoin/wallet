@@ -81,7 +81,9 @@ export default function SellData() {
           selectedOffer?.minAmountTokens || selectedOffer?.minAmountPKR || 0
         }
         maxAmount={
-          selectedOffer?.maxAmountTokens || selectedOffer?.maxAmountPKR || Infinity
+          selectedOffer?.maxAmountTokens ||
+          selectedOffer?.maxAmountPKR ||
+          Infinity
         }
         onConfirm={async (details) => {
           try {

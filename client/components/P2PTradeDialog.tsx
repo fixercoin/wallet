@@ -177,7 +177,8 @@ export const P2PTradeDialog: React.FC<P2PTradeDialogProps> = ({
                 Summary
               </div>
               <div className="text-sm text-white/90">
-                {amountTokens} {defaultToken} = {parseFloat(amountPKR).toFixed(2)} PKR
+                {amountTokens} {defaultToken} ={" "}
+                {parseFloat(amountPKR).toFixed(2)} PKR
               </div>
             </div>
           )}

@@ -120,7 +120,7 @@ export default function SellOrder() {
       }
 
       toast.success("Sell order submitted successfully!");
-      navigate("/");
+      navigate("/selldata");
     } catch (error) {
       console.error("Error submitting order:", error);
       toast.error(

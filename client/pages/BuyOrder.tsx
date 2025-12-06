@@ -100,7 +100,7 @@ export default function BuyOrder() {
       }
 
       toast.success("Buy order submitted successfully!");
-      navigate("/");
+      navigate("/buydata");
     } catch (error) {
       console.error("Error submitting order:", error);
       toast.error(

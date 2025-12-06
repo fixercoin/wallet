@@ -159,8 +159,8 @@ export default function SellNow() {
         setSelectedToken(token);
       }
       // Set the min/max amounts
-      setMinAmountUSDC(String(editingOrder.minAmountTokens || ""));
-      setMaxAmountUSDC(String(editingOrder.maxAmountTokens || ""));
+      setMinAmountPKR(String(editingOrder.minAmountPKR || editingOrder.minAmountTokens || ""));
+      setMaxAmountPKR(String(editingOrder.maxAmountPKR || editingOrder.maxAmountTokens || ""));
     }
   }, [editingOrder, tokens]);
 
@@ -249,8 +249,8 @@ export default function SellNow() {
           token: order.token,
           amountTokens: order.amountTokens,
           amountPKR: order.amountPKR,
-          minAmountTokens: order.minAmountTokens,
-          maxAmountTokens: order.maxAmountTokens,
+          minAmountPKR: order.minAmountPKR,
+          maxAmountPKR: order.maxAmountPKR,
           pricePKRPerQuote: order.pricePKRPerQuote,
           paymentMethodId: order.paymentMethod,
           status: "PENDING",
@@ -294,10 +294,10 @@ export default function SellNow() {
       return;
     }
 
-    const minAmount = Number(minAmountUSDC);
-    const maxAmount = Number(maxAmountUSDC);
+    const minAmount = Number(minAmountPKR);
+    const maxAmount = Number(maxAmountPKR);
 
-    if (!minAmountUSDC || !isFinite(minAmount) || minAmount <= 0) {
+    if (!minAmountPKR || !isFinite(minAmount) || minAmount <= 0) {
       toast({
         title: "Invalid Minimum Amount",
         description: "Enter a valid minimum USDC amount",
@@ -306,7 +306,7 @@ export default function SellNow() {
       return;
     }
 
-    if (!maxAmountUSDC || !isFinite(maxAmount) || maxAmount <= 0) {
+    if (!maxAmountPKR || !isFinite(maxAmount) || maxAmount <= 0) {
       toast({
         title: "Invalid Maximum Amount",
         description: "Enter a valid maximum USDC amount",
@@ -331,8 +331,8 @@ export default function SellNow() {
         id: orderId,
         type: "SELL",
         token: selectedToken.id,
-        minAmountTokens: minAmount,
-        maxAmountTokens: maxAmount,
+        minAmountPKR: minAmount,
+        maxAmountPKR: maxAmount,
         pricePKRPerQuote: exchangeRate,
         paymentMethod: paymentMethod.id,
         sellerWallet: wallet.publicKey,
@@ -404,9 +404,9 @@ export default function SellNow() {
               </label>
               <input
                 type="number"
-                value={minAmountUSDC}
-                onChange={(e) => setMinAmountUSDC(e.target.value)}
-                placeholder="Enter minimum amount in USDC"
+                value={minAmountPKR}
+                onChange={(e) => setMinAmountPKR(e.target.value)}
+                placeholder="Enter minimum amount in PKR"
                 className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
                 min="0"
                 step="0.000001"
@@ -419,9 +419,9 @@ export default function SellNow() {
               </label>
               <input
                 type="number"
-                value={maxAmountUSDC}
-                onChange={(e) => setMaxAmountUSDC(e.target.value)}
-                placeholder="Enter maximum amount in USDC"
+                value={maxAmountPKR}
+                onChange={(e) => setMaxAmountPKR(e.target.value)}
+                placeholder="Enter maximum amount in PKR"
                 className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
                 min="0"
                 step="0.000001"
@@ -432,10 +432,10 @@ export default function SellNow() {
               onClick={handleSellClick}
               disabled={
                 loading ||
-                !minAmountUSDC ||
-                !maxAmountUSDC ||
-                Number(minAmountUSDC) <= 0 ||
-                Number(maxAmountUSDC) <= 0 ||
+                !minAmountPKR ||
+                !maxAmountPKR ||
+                Number(minAmountPKR) <= 0 ||
+                Number(maxAmountPKR) <= 0 ||
                 Number(minAmountUSDC) >= Number(maxAmountUSDC) ||
                 !paymentMethod ||
                 fetchingPaymentMethod

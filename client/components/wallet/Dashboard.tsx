@@ -1032,7 +1032,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onClick={onLock}
                 className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
-                <Lock className="h-8 w-8 text-[#22c55e]" />
+                <Shield className="h-8 w-8 text-[#22c55e]" />
                 <span>LOCK UP</span>
               </Button>
             </div>

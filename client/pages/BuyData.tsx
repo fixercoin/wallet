@@ -1,32 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2POffersTable } from "@/components/P2POffersTable";
-
-interface BuyOrderData {
-  id: string;
-  type: "BUY" | "SELL";
-  walletAddress?: string;
-  creator_wallet?: string;
-  token: string;
-  amountTokens?: number;
-  token_amount?: string;
-  amountPKR?: number;
-  pkr_amount?: number;
-  pricePKRPerQuote?: number;
-  payment_method?: string;
-  status: string;
-  createdAt?: number;
-  created_at?: number;
-  updatedAt?: number;
-  updated_at?: number;
-}
 
 export default function BuyData() {
   const navigate = useNavigate();

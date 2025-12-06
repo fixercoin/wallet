@@ -99,24 +99,26 @@ export default function SellNow() {
   };
 
   const [usdcDirectBalance, setUsdcDirectBalance] = useState<number | null>(null);
+  const [fetchingUsdcBalance, setFetchingUsdcBalance] = useState(false);
 
   // Direct USDC balance fetch as fallback
   useEffect(() => {
     const fetchUsdcDirectBalance = async () => {
       if (!wallet?.publicKey) return;
 
+      setFetchingUsdcBalance(true);
       try {
-        const response = await fetch(
-          `/api/wallet/token-balance?wallet=${wallet.publicKey}&mint=${SUPPORTED_TOKEN_MINTS.USDC}`,
+        const balance = await getTokenBalanceForMint(
+          wallet.publicKey,
+          SUPPORTED_TOKEN_MINTS.USDC,
         );
-        if (response.ok) {
-          const data = await response.json();
-          const balance = typeof data.balance === "number" ? data.balance : 0;
-          setUsdcDirectBalance(balance);
-          console.log("[SellNow] Direct USDC balance:", balance);
-        }
+        setUsdcDirectBalance(balance ?? 0);
+        console.log("[SellNow] Direct USDC balance fetched:", balance);
       } catch (err) {
-        console.warn("[SellNow] Direct balance fetch failed:", err);
+        console.warn("[SellNow] Direct USDC balance fetch failed:", err);
+        setUsdcDirectBalance(0);
+      } finally {
+        setFetchingUsdcBalance(false);
       }
     };
 

@@ -6,6 +6,7 @@ import { dirname, join } from "path";
 // Import all route handlers
 import { handleSolanaRpc } from "./routes/solana-proxy.js";
 import { handleWalletBalance } from "./routes/wallet-balance.js";
+import { handleGetTokenAccounts } from "./routes/token-accounts.js";
 import { handleExchangeRate } from "./routes/exchange-rate.js";
 import {
   handleDexscreenerTokens,
@@ -180,6 +181,18 @@ app.get("/api/wallet/balance", async (req, res) => {
   } catch (e) {
     return res.status(500).json({
       error: "Failed to fetch wallet balance",
+      details: e?.message || String(e),
+    });
+  }
+});
+
+// Token accounts endpoint
+app.get("/api/wallet/token-accounts", async (req, res) => {
+  try {
+    await handleGetTokenAccounts(req, res);
+  } catch (e) {
+    return res.status(500).json({
+      error: "Failed to fetch token accounts",
       details: e?.message || String(e),
     });
   }

@@ -18,7 +18,9 @@ function buildRpcEndpoints(env: Env): string[] {
   if (env.SOLANA_RPC_URL) endpoints.push(env.SOLANA_RPC_URL);
   if (env.HELIUS_RPC_URL) endpoints.push(env.HELIUS_RPC_URL);
   if (env.HELIUS_API_KEY) {
-    endpoints.push(`https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`);
+    endpoints.push(
+      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
+    );
   }
   if (env.ALCHEMY_RPC_URL) endpoints.push(env.ALCHEMY_RPC_URL);
   if (env.MORALIS_RPC_URL) endpoints.push(env.MORALIS_RPC_URL);
@@ -281,11 +283,26 @@ async function handler(request: Request, env?: Env): Promise<Response> {
   }
 }
 
-export const onRequest = async ({ request, env }: { request: Request; env: Env }) =>
-  handler(request, env);
+export const onRequest = async ({
+  request,
+  env,
+}: {
+  request: Request;
+  env: Env;
+}) => handler(request, env);
 
-export const onRequestGet = async ({ request, env }: { request: Request; env: Env }) =>
-  handler(request, env);
+export const onRequestGet = async ({
+  request,
+  env,
+}: {
+  request: Request;
+  env: Env;
+}) => handler(request, env);
 
-export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) =>
-  handler(request, env);
+export const onRequestPost = async ({
+  request,
+  env,
+}: {
+  request: Request;
+  env: Env;
+}) => handler(request, env);

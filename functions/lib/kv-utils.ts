@@ -363,7 +363,7 @@ export class KVStore {
    * Create or update an order
    */
   async saveOrder(
-    order: Omit<P2POrder, "id" | "createdAt" | "updatedAt">,
+    order: Omit<P2POrder, "id" | "createdAt" | "updatedAt"> & { [key: string]: any },
     orderId?: string,
   ): Promise<P2POrder> {
     const id =
@@ -378,7 +378,7 @@ export class KVStore {
       id,
       createdAt: existing?.createdAt || now,
       updatedAt: now,
-    };
+    } as P2POrder;
 
     await this.kv.put(`orders:${id}`, JSON.stringify(p2pOrder));
 

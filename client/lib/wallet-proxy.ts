@@ -145,10 +145,14 @@ export const getTokenAccounts = async (
 
     const data = await response.json();
     const tokenAccounts = data.tokens || [];
-    const isUsingFallback = data.warning && data.warning.includes("unavailable");
+    const isUsingFallback =
+      data.warning && data.warning.includes("unavailable");
 
     if (isUsingFallback) {
-      console.warn(`[TokenAccounts] Server returned fallback data:`, data.warning);
+      console.warn(
+        `[TokenAccounts] Server returned fallback data:`,
+        data.warning,
+      );
     }
 
     // Merge with default tokens to ensure all known tokens are included

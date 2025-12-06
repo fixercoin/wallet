@@ -32,6 +32,7 @@ export default function BuyActiveOrders() {
   const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
   const [offerPassword, setOfferPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [cancelling, setCancelling] = useState<string | null>(null);
 
   const OFFER_PASSWORD = "######Pakistan";
 

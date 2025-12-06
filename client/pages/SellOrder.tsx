@@ -7,6 +7,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+import { P2POffersTable } from "@/components/P2POffersTable";
 
 const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
@@ -208,6 +209,17 @@ export default function SellOrder() {
           </CardContent>
         </Card>
       </div>
+
+      {/* P2P Offers Table */}
+      <P2POffersTable
+        orderType="SELL"
+        exchangeRate={exchangeRate || 280}
+        onSelectOffer={(order) => {
+          toast.success(
+            `Selected offer from ${order.walletAddress || order.creator_wallet}`,
+          );
+        }}
+      />
 
       {/* Payment Method Dialog */}
       <PaymentMethodDialog

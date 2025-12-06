@@ -92,7 +92,14 @@ export async function createServer(): Promise<express.Application> {
 
   // Middleware
   app.use(cors());
-  app.use(express.json());
+
+  // Custom JSON parser with error handling for iconv-lite issues
+  app.use(
+    express.json({
+      strict: true,
+      type: "application/json",
+    }),
+  );
 
   // DexScreener routes
   app.get("/api/dexscreener/tokens", async (req, res) => {
@@ -575,9 +582,11 @@ export async function createServer(): Promise<express.Application> {
   // Token price endpoint (simple, robust fallback + stablecoins)
   app.get("/api/token/price", async (req, res) => {
     try {
-      const tokenParam = String(
+      // Normalize token parameter by extracting the token symbol before any suffix (e.g., "USDC:1" -> "USDC")
+      let tokenParam = String(
         req.query.token || req.query.symbol || "FIXERCOIN",
       ).toUpperCase();
+      tokenParam = tokenParam.split(":")[0];
       const mintParam = String(req.query.mint || "");
 
       const FALLBACK_USD: Record<string, number> = {

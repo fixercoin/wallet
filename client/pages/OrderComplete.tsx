@@ -458,7 +458,9 @@ export default function OrderComplete() {
         {/* ORDER DETAILS CARD - TOP */}
         <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30 mb-6">
           <CardContent className="p-4">
-            <h2 className="text-lg font-bold text-white mb-4 uppercase">Order Details</h2>
+            <h2 className="text-lg font-bold text-white mb-4 uppercase">
+              Order Details
+            </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <div className="text-xs text-white/70 font-semibold uppercase mb-1">
@@ -576,7 +578,9 @@ export default function OrderComplete() {
           {/* LEFT COLUMN - BUYER CONFIRMATION */}
           <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30">
             <CardContent className="p-4 space-y-3">
-              <h2 className="text-lg font-bold text-white uppercase mb-4">Buyer Confirmation</h2>
+              <h2 className="text-lg font-bold text-white uppercase mb-4">
+                Buyer Confirmation
+              </h2>
 
               {!isBuyer && (
                 <div className="text-xs text-white/60 bg-[#1a2540]/50 p-3 rounded-lg mb-4">
@@ -611,7 +615,8 @@ export default function OrderComplete() {
 
               {!buyerCryptoReceived && (
                 <div className="p-3 bg-blue-600/20 border border-blue-500/30 rounded-lg text-xs text-blue-300">
-                  <strong>Step 1:</strong> Buyer confirms payment was sent to seller's account
+                  <strong>Step 1:</strong> Buyer confirms payment was sent to
+                  seller's account
                 </div>
               )}
             </CardContent>
@@ -620,7 +625,9 @@ export default function OrderComplete() {
           {/* RIGHT COLUMN - SELLER CONFIRMATION */}
           <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30">
             <CardContent className="p-4 space-y-3">
-              <h2 className="text-lg font-bold text-white uppercase mb-4">Seller Confirmation</h2>
+              <h2 className="text-lg font-bold text-white uppercase mb-4">
+                Seller Confirmation
+              </h2>
 
               {!buyerPaymentConfirmed && (
                 <div className="text-xs text-white/60 bg-[#1a2540]/50 p-3 rounded-lg mb-4">
@@ -633,7 +640,9 @@ export default function OrderComplete() {
                   <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-purple-500/20">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-semibold uppercase text-white">
-                        {isBuyer ? "Seller Received Payment" : "You Received Payment"}
+                        {isBuyer
+                          ? "Seller Received Payment"
+                          : "You Received Payment"}
                       </span>
                       {sellerPaymentReceived ? (
                         <CheckCircle className="w-5 h-5 text-green-500" />
@@ -688,26 +697,28 @@ export default function OrderComplete() {
                     </div>
                   )}
 
-                  {isBuyer && sellerTransferInitiated && !buyerCryptoReceived && (
-                    <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-orange-500/20">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-semibold uppercase text-white">
-                          You Received Crypto
-                        </span>
-                        {buyerCryptoReceived ? (
-                          <CheckCircle className="w-5 h-5 text-green-500" />
-                        ) : (
-                          <Clock className="w-5 h-5 text-yellow-500" />
-                        )}
+                  {isBuyer &&
+                    sellerTransferInitiated &&
+                    !buyerCryptoReceived && (
+                      <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-orange-500/20">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-semibold uppercase text-white">
+                            You Received Crypto
+                          </span>
+                          {buyerCryptoReceived ? (
+                            <CheckCircle className="w-5 h-5 text-green-500" />
+                          ) : (
+                            <Clock className="w-5 h-5 text-yellow-500" />
+                          )}
+                        </div>
+                        <Button
+                          onClick={handleBuyerCryptoReceived}
+                          className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
+                        >
+                          I Received USDC
+                        </Button>
                       </div>
-                      <Button
-                        onClick={handleBuyerCryptoReceived}
-                        className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
-                      >
-                        I Received USDC
-                      </Button>
-                    </div>
-                  )}
+                    )}
 
                   {buyerCryptoReceived && (
                     <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
@@ -722,7 +733,8 @@ export default function OrderComplete() {
 
                   {!isBuyer && (
                     <div className="p-3 bg-orange-600/20 border border-orange-500/30 rounded-lg text-xs text-orange-300">
-                      <strong>Step 2:</strong> Confirm payment received, then release crypto to buyer
+                      <strong>Step 2:</strong> Confirm payment received, then
+                      release crypto to buyer
                     </div>
                   )}
                 </>

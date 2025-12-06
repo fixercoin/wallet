@@ -1,6 +1,6 @@
 /**
  * Supabase P2P Database Schema
- * 
+ *
  * IMPORTANT: Copy ONLY the SQL code between the backticks of P2P_SQL_SCHEMAS below
  * Do NOT copy the TypeScript code or comments outside the backticks
  */
@@ -226,7 +226,13 @@ export interface P2POrder {
   amount_tokens: number;
   amount_pkr: number;
   payment_method_id?: string;
-  status: "PENDING" | "COMPLETED" | "CANCELLED" | "ESCROW_LOCKED" | "DISPUTED" | "ACTIVE";
+  status:
+    | "PENDING"
+    | "COMPLETED"
+    | "CANCELLED"
+    | "ESCROW_LOCKED"
+    | "DISPUTED"
+    | "ACTIVE";
   min_amount_pkr?: number;
   max_amount_pkr?: number;
   min_amount_tokens?: number;
@@ -294,7 +300,10 @@ export interface OrderNotification {
   order_id: string;
   recipient_wallet: string;
   sender_wallet: string;
-  notification_type: "order_created" | "payment_confirmed" | "received_confirmed";
+  notification_type:
+    | "order_created"
+    | "payment_confirmed"
+    | "received_confirmed";
   order_type: "BUY" | "SELL";
   message: string;
   order_data: {
@@ -312,7 +321,12 @@ export interface TradeRoom {
   buyer_wallet: string;
   seller_wallet: string;
   order_id: string;
-  status: "pending" | "payment_confirmed" | "assets_transferred" | "completed" | "cancelled";
+  status:
+    | "pending"
+    | "payment_confirmed"
+    | "assets_transferred"
+    | "completed"
+    | "cancelled";
   created_at: number;
   updated_at: number;
   created_timestamp: string;

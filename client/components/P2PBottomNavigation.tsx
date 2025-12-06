@@ -1,6 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ShoppingCart, TrendingUp } from "lucide-react";
 
 interface P2PBottomNavigationProps {
   onPaymentClick?: () => void;
@@ -12,6 +20,7 @@ export const P2PBottomNavigation: React.FC<P2PBottomNavigationProps> = ({
   onCreateOfferClick,
 }) => {
   const navigate = useNavigate();
+  const [showPostDialog, setShowPostDialog] = useState(false);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95 p-4 pb-8">

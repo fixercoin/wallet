@@ -64,7 +64,8 @@ export default function SellNow() {
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
     DEFAULT_TOKENS[0],
   );
-  const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
+  const [minAmountUSDC, setMinAmountUSDC] = useState<string>("");
+  const [maxAmountUSDC, setMaxAmountUSDC] = useState<string>("");
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [fetchingRate, setFetchingRate] = useState(false);
@@ -112,8 +113,9 @@ export default function SellNow() {
       if (token) {
         setSelectedToken(token);
       }
-      // Set the amount
-      setSellAmountTokens(String(editingOrder.amountTokens || ""));
+      // Set the min/max amounts
+      setMinAmountUSDC(String(editingOrder.minAmountTokens || ""));
+      setMaxAmountUSDC(String(editingOrder.maxAmountTokens || ""));
     }
   }, [editingOrder, tokens]);
 
@@ -245,20 +247,36 @@ export default function SellNow() {
       return;
     }
 
-    const amount = Number(sellAmountTokens);
-    if (
-      !sellAmountTokens ||
-      !isFinite(amount) ||
-      amount <= 0 ||
-      !exchangeRate
-    ) {
+    const minAmount = Number(minAmountUSDC);
+    const maxAmount = Number(maxAmountUSDC);
+
+    if (!minAmountUSDC || !isFinite(minAmount) || minAmount <= 0) {
       toast({
-        title: "Invalid Amount",
-        description: "Enter a valid token amount",
+        title: "Invalid Minimum Amount",
+        description: "Enter a valid minimum USDC amount",
         variant: "destructive",
       });
       return;
     }
+
+    if (!maxAmountUSDC || !isFinite(maxAmount) || maxAmount <= 0) {
+      toast({
+        title: "Invalid Maximum Amount",
+        description: "Enter a valid maximum USDC amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (minAmount >= maxAmount) {
+      toast({
+        title: "Invalid Range",
+        description: "Maximum amount must be greater than minimum amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const orderId = editingOrder?.id || `SELL-${Date.now()}`;
@@ -266,8 +284,8 @@ export default function SellNow() {
         id: orderId,
         type: "SELL",
         token: selectedToken.id,
-        amountTokens: amount,
-        amountPKR: amount * exchangeRate,
+        minAmountTokens: minAmount,
+        maxAmountTokens: maxAmount,
         pricePKRPerQuote: exchangeRate,
         paymentMethod: paymentMethod.id,
         sellerWallet: wallet.publicKey,
@@ -326,60 +344,43 @@ export default function SellNow() {
 
             <div>
               <label className="block font-medium text-white/80 mb-2 uppercase">
-                AMOUNT ({selectedToken.symbol})
+                MINIMUM AMOUNT (USDC)
               </label>
               <input
                 type="number"
-                value={sellAmountTokens}
-                onChange={(e) => setSellAmountTokens(e.target.value)}
-                placeholder={`Enter amount in ${selectedToken.symbol}`}
+                value={minAmountUSDC}
+                onChange={(e) => setMinAmountUSDC(e.target.value)}
+                placeholder="Enter minimum amount in USDC"
                 className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
                 min="0"
                 step="0.000001"
               />
             </div>
 
-            <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">
-                    EXCHANGE RATE:
-                  </span>
-                  {fetchingRate ? (
-                    <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
-                  ) : (
-                    <span className="font-semibold text-[#FF7A5C]">
-                      1 {selectedToken.symbol} ={" "}
-                      {exchangeRate > 0
-                        ? exchangeRate < 1
-                          ? exchangeRate.toFixed(6)
-                          : exchangeRate.toFixed(2)
-                        : "0.00"}{" "}
-                      PKR
-                    </span>
-                  )}
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">
-                    YOU WILL RECEIVE:
-                  </span>
-                  <span className="font-bold text-[#FF7A5C]">
-                    {(
-                      Number(sellAmountTokens || 0) * (exchangeRate || 0)
-                    ).toFixed(2)}{" "}
-                    PKR
-                  </span>
-                </div>
-              </div>
+            <div>
+              <label className="block font-medium text-white/80 mb-2 uppercase">
+                MAXIMUM AMOUNT (USDC)
+              </label>
+              <input
+                type="number"
+                value={maxAmountUSDC}
+                onChange={(e) => setMaxAmountUSDC(e.target.value)}
+                placeholder="Enter maximum amount in USDC"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                min="0"
+                step="0.000001"
+              />
             </div>
 
             <Button
               onClick={handleSellClick}
               disabled={
                 loading ||
-                !sellAmountTokens ||
-                Number(sellAmountTokens) <= 0 ||
-                !exchangeRate ||
+                !minAmountUSDC ||
+                !maxAmountUSDC ||
+                Number(minAmountUSDC) <= 0 ||
+                Number(maxAmountUSDC) <= 0 ||
+                Number(minAmountUSDC) >= Number(maxAmountUSDC) ||
                 !paymentMethod ||
                 fetchingPaymentMethod
               }

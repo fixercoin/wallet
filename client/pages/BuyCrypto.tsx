@@ -60,9 +60,9 @@ export default function BuyCrypto() {
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
     DEFAULT_TOKENS[0],
   );
-  const [amountPKR, setAmountPKR] = useState<string>("");
+  const [minAmountPKR, setMinAmountPKR] = useState<string>("");
+  const [maxAmountPKR, setMaxAmountPKR] = useState<string>("");
   const [walletAddress, setWalletAddress] = useState<string>("");
-  const [estimatedTokens, setEstimatedTokens] = useState<number>(0);
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [fetchingRate, setFetchingRate] = useState(false);
@@ -195,15 +195,6 @@ export default function BuyCrypto() {
     fetchPaymentMethod();
   }, [wallet?.publicKey]);
 
-  // Estimate tokens on amount/rate change
-  useEffect(() => {
-    if (amountPKR && exchangeRate > 0) {
-      setEstimatedTokens(Number(amountPKR) / exchangeRate);
-    } else {
-      setEstimatedTokens(0);
-    }
-  }, [amountPKR, exchangeRate]);
-
   const handleBuyClick = async () => {
     if (!wallet) {
       toast({
@@ -224,10 +215,31 @@ export default function BuyCrypto() {
       return;
     }
 
-    if (!amountPKR || Number(amountPKR) <= 0 || !exchangeRate) {
+    const minAmount = Number(minAmountPKR);
+    const maxAmount = Number(maxAmountPKR);
+
+    if (!minAmountPKR || minAmount <= 0) {
       toast({
-        title: "Invalid Amount",
-        description: "Enter a valid PKR amount",
+        title: "Invalid Minimum Amount",
+        description: "Enter a valid minimum PKR amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!maxAmountPKR || maxAmount <= 0) {
+      toast({
+        title: "Invalid Maximum Amount",
+        description: "Enter a valid maximum PKR amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (minAmount >= maxAmount) {
+      toast({
+        title: "Invalid Range",
+        description: "Maximum amount must be greater than minimum amount",
         variant: "destructive",
       });
       return;
@@ -240,8 +252,8 @@ export default function BuyCrypto() {
       const order = {
         type: "BUY",
         token: selectedToken.id,
-        amountTokens: Number(amountPKR) / exchangeRate,
-        amountPKR: Number(amountPKR),
+        minAmountPKR: minAmount,
+        maxAmountPKR: maxAmount,
         pricePKRPerQuote,
         paymentMethod: paymentMethod.id,
       };
@@ -310,13 +322,28 @@ export default function BuyCrypto() {
 
             <div>
               <label className="block font-medium text-white/80 mb-2 uppercase">
-                AMOUNT (PKR)
+                MINIMUM AMOUNT PKR
               </label>
               <input
                 type="number"
-                value={amountPKR}
-                onChange={(e) => setAmountPKR(e.target.value)}
-                placeholder="Enter amount in PKR"
+                value={minAmountPKR}
+                onChange={(e) => setMinAmountPKR(e.target.value)}
+                placeholder="Enter minimum amount in PKR"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                min="0"
+                step="100"
+              />
+            </div>
+
+            <div>
+              <label className="block font-medium text-white/80 mb-2 uppercase">
+                MAXIMUM AMOUNT PKR
+              </label>
+              <input
+                type="number"
+                value={maxAmountPKR}
+                onChange={(e) => setMaxAmountPKR(e.target.value)}
+                placeholder="Enter maximum amount in PKR"
                 className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
                 min="0"
                 step="100"
@@ -336,45 +363,15 @@ export default function BuyCrypto() {
               />
             </div>
 
-            <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">
-                    EXCHANGE RATE:
-                  </span>
-                  {fetchingRate ? (
-                    <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
-                  ) : (
-                    <span className="font-semibold text-[#FF7A5C]">
-                      1 {selectedToken.symbol} ={" "}
-                      {exchangeRate > 0
-                        ? exchangeRate < 1
-                          ? exchangeRate.toFixed(6)
-                          : exchangeRate.toFixed(2)
-                        : "0.00"}{" "}
-                      PKR
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">
-                    YOU WILL RECEIVE:
-                  </span>
-                  <span className="font-bold text-[#FF7A5C]">
-                    {estimatedTokens.toFixed(6)} {selectedToken.symbol}
-                  </span>
-                </div>
-              </div>
-            </div>
-
             <Button
               onClick={handleBuyClick}
               disabled={
                 loading ||
-                !amountPKR ||
-                Number(amountPKR) <= 0 ||
-                estimatedTokens === 0 ||
+                !minAmountPKR ||
+                !maxAmountPKR ||
+                Number(minAmountPKR) <= 0 ||
+                Number(maxAmountPKR) <= 0 ||
+                Number(minAmountPKR) >= Number(maxAmountPKR) ||
                 !paymentMethod ||
                 fetchingPaymentMethod
               }

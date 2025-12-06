@@ -232,7 +232,6 @@ export default function OrderComplete() {
     if (!order || !wallet?.publicKey) return;
 
     try {
-      setBuyerPaymentConfirmed(true);
       updateOrderInStorage(order.id, { status: "PENDING" });
 
       if (order.roomId) {
@@ -263,7 +262,6 @@ export default function OrderComplete() {
     } catch (error) {
       console.error("Error confirming payment:", error);
       toast.error("Failed to confirm");
-      setBuyerPaymentConfirmed(false);
     }
   };
 
@@ -271,8 +269,6 @@ export default function OrderComplete() {
     if (!order || !wallet?.publicKey) return;
 
     try {
-      setSellerPaymentReceived(true);
-
       if (order.roomId) {
         await addTradeMessage({
           room_id: order.roomId,
@@ -301,7 +297,6 @@ export default function OrderComplete() {
     } catch (error) {
       console.error("Error confirming payment received:", error);
       toast.error("Failed to confirm");
-      setSellerPaymentReceived(false);
     }
   };
 
@@ -309,8 +304,6 @@ export default function OrderComplete() {
     if (!order || !wallet?.publicKey) return;
 
     try {
-      setSellerTransferInitiated(true);
-
       if (order.roomId) {
         await addTradeMessage({
           room_id: order.roomId,
@@ -337,7 +330,6 @@ export default function OrderComplete() {
     } catch (error) {
       console.error("Error confirming transfer:", error);
       toast.error("Failed to confirm transfer");
-      setSellerTransferInitiated(false);
     }
   };
 
@@ -345,7 +337,6 @@ export default function OrderComplete() {
     if (!order || !wallet?.publicKey) return;
 
     try {
-      setBuyerCryptoReceived(true);
       updateOrderInStorage(order.id, { status: "COMPLETED" });
 
       if (order.roomId) {
@@ -377,7 +368,6 @@ export default function OrderComplete() {
     } catch (error) {
       console.error("Error confirming crypto receipt:", error);
       toast.error("Failed to confirm receipt");
-      setBuyerCryptoReceived(false);
     }
   };
 

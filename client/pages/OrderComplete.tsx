@@ -27,6 +27,7 @@ export default function OrderComplete() {
   const navigate = useNavigate();
   const location = useLocation() as any;
   const { wallet } = useWallet();
+  const { createNotification } = useOrderNotifications();
 
   const [order, setOrder] = useState<CreatedOrder | null>(null);
   const [loading, setLoading] = useState(true);

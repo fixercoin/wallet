@@ -35,6 +35,7 @@ export interface P2POrder {
 interface P2POffersTableProps {
   orderType: "BUY" | "SELL";
   onSelectOffer?: (order: P2POrder) => void;
+  onEditOffer?: (order: P2POrder) => void;
   exchangeRate?: number;
 }
 

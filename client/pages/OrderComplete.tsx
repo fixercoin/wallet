@@ -232,7 +232,7 @@ export default function OrderComplete() {
 
     try {
       setBuyerPaymentConfirmed(true);
-      updateOrderInStorage(order.id, {
+      await updateOrderInBothStorages(order.id, {
         status: "PENDING",
         buyerPaymentConfirmed: true,
       });

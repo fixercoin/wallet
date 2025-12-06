@@ -3,7 +3,8 @@
 
 export const SOLANA_RPC_URL = (() => {
   // PRIORITY 1: Use Helius RPC endpoint exclusively
-  const heliusEndpoint = "https://mainnet.helius-rpc.com/?api-key=48e91c19-c676-4c4a-a0dd-a9b4f258d151";
+  const heliusEndpoint =
+    "https://mainnet.helius-rpc.com/?api-key=48e91c19-c676-4c4a-a0dd-a9b4f258d151";
 
   // Prefer Vite/browser env in client builds
   try {

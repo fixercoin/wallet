@@ -119,9 +119,7 @@ export const makeRpcCall = async (
         if (!response.ok) {
           const responseText = await response.text().catch(() => "");
           const errorMsg = `HTTP ${response.status} ${response.statusText}: ${responseText}`;
-          console.warn(
-            `[RPC] ${method} on Helius returned ${response.status}`,
-          );
+          console.warn(`[RPC] ${method} on Helius returned ${response.status}`);
 
           if (response.status === 429 || response.status === 503) {
             lastErrorStatus = response.status;
@@ -154,8 +152,7 @@ export const makeRpcCall = async (
           return data?.result ?? data ?? text;
         }
       } catch (error) {
-        const errorMsg =
-          error instanceof Error ? error.message : String(error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
         const isTimeout =
           errorMsg.includes("abort") || errorMsg.includes("timeout");
         const isCors =
@@ -166,9 +163,7 @@ export const makeRpcCall = async (
         if (isTimeout) {
           console.warn(`[RPC] ${method} on Helius timed out after 12s`);
         } else if (isCors) {
-          console.warn(
-            `[RPC] ${method} on Helius blocked by CORS policy`,
-          );
+          console.warn(`[RPC] ${method} on Helius blocked by CORS policy`);
         } else {
           console.warn(`[RPC] ${method} on Helius failed:`, errorMsg);
         }
@@ -178,7 +173,8 @@ export const makeRpcCall = async (
 
       // Retry if we have attempts left
       if (attempt < retries) {
-        const isRateLimited = lastErrorStatus === 429 || lastErrorStatus === 503;
+        const isRateLimited =
+          lastErrorStatus === 429 || lastErrorStatus === 503;
         const baseDelay = isRateLimited ? 3000 : 800;
         const delayMs = baseDelay * Math.pow(2, attempt);
         const cappedDelayMs = Math.min(delayMs, 30000); // Cap at 30 seconds
@@ -247,49 +243,52 @@ export const getTokenAccounts = async (publicKey: string) => {
       3, // Retry up to 3 times via Helius
     );
 
-    console.log(
-      `[Token Accounts] Helius response received:`,
-      response,
-    );
+    console.log(`[Token Accounts] Helius response received:`, response);
 
     const value = (response as any)?.value || [];
     if (Array.isArray(value)) {
       console.log(
         `[Token Accounts] Got ${value.length} token accounts from Helius`,
       );
-      return value.map((account: any) => {
-        try {
-          const parsedInfo = account.account.data.parsed.info;
-          const mint = parsedInfo.mint;
-          const decimals = parsedInfo.tokenAmount.decimals;
+      return value
+        .map((account: any) => {
+          try {
+            const parsedInfo = account.account.data.parsed.info;
+            const mint = parsedInfo.mint;
+            const decimals = parsedInfo.tokenAmount.decimals;
 
-          // Extract balance - prefer uiAmount, fall back to calculating from raw amount
-          let balance = 0;
-          if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
-            balance = parsedInfo.tokenAmount.uiAmount;
-          } else if (parsedInfo.tokenAmount.amount) {
-            // Convert raw amount to UI amount using decimals
-            const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
-            balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+            // Extract balance - prefer uiAmount, fall back to calculating from raw amount
+            let balance = 0;
+            if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
+              balance = parsedInfo.tokenAmount.uiAmount;
+            } else if (parsedInfo.tokenAmount.amount) {
+              // Convert raw amount to UI amount using decimals
+              const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+              balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+            }
+
+            const metadata = KNOWN_TOKENS[mint] || {
+              mint,
+              symbol: "UNKNOWN",
+              name: "Unknown Token",
+              decimals,
+            };
+
+            return {
+              ...metadata,
+              balance,
+              decimals: decimals || metadata.decimals,
+            };
+          } catch (parseError) {
+            console.error(
+              "[Token Accounts] Error parsing account:",
+              account,
+              parseError,
+            );
+            return null;
           }
-
-          const metadata = KNOWN_TOKENS[mint] || {
-            mint,
-            symbol: "UNKNOWN",
-            name: "Unknown Token",
-            decimals,
-          };
-
-          return {
-            ...metadata,
-            balance,
-            decimals: decimals || metadata.decimals,
-          };
-        } catch (parseError) {
-          console.error("[Token Accounts] Error parsing account:", account, parseError);
-          return null;
-        }
-      }).filter((token) => token !== null);
+        })
+        .filter((token) => token !== null);
     }
     return [];
   } catch (error) {

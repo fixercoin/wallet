@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Loader2, Edit2 } from "lucide-react";
+import { Loader2, Edit2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useWallet } from "@/contexts/WalletContext";
 
@@ -51,6 +51,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
   const [orders, setOrders] = useState<P2POrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -165,6 +166,32 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
       onEditOffer(order);
     } else {
       navigate(`/buy-crypto?edit=${order.id}`);
+    }
+  };
+
+  const handleCancel = async (order: P2POrder) => {
+    try {
+      setCancelling(order.id);
+      const response = await fetch(
+        `/api/p2p/orders/${encodeURIComponent(order.id)}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to cancel offer: ${response.status}`);
+      }
+
+      setOrders((prevOrders) => prevOrders.filter((o) => o.id !== order.id));
+      toast.success("Offer cancelled successfully");
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to cancel offer";
+      toast.error(errorMsg);
+      console.error("Error cancelling offer:", err);
+    } finally {
+      setCancelling(null);
     }
   };
 

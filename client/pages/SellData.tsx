@@ -14,6 +14,16 @@ export default function SellData() {
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
   >();
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Auto-refresh data every 10 seconds
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshKey((prev) => prev + 1);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   if (!wallet) {
     return (
@@ -34,7 +44,7 @@ export default function SellData() {
       style={{ fontSize: "12px", backgroundColor: "#1a1a1a", color: "#fff" }}
     >
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4">
+      <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4 flex items-center justify-between">
         <button
           onClick={() => navigate("/")}
           className="text-gray-300 hover:text-gray-100 transition-colors"
@@ -42,10 +52,18 @@ export default function SellData() {
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
+        <button
+          onClick={() => setRefreshKey((prev) => prev + 1)}
+          className="text-gray-300 hover:text-gray-100 transition-colors text-xs font-semibold"
+          title="Refresh offers"
+        >
+          REFRESH
+        </button>
       </div>
 
       {/* Available Offers */}
       <P2POffersTable
+        key={refreshKey}
         orderType="SELL"
         exchangeRate={280}
         onSelectOffer={(order) => {

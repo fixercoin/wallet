@@ -91,7 +91,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
 
   const getCreatorName = (order: P2POrder): string => {
     const wallet = order.walletAddress || order.creator_wallet || "Unknown";
-    return wallet.slice(0, 8) + "..." + wallet.slice(-4);
+    return wallet.slice(0, 4);
   };
 
   const getPrice = (order: P2POrder): string => {
@@ -122,8 +122,8 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
       const minFormatted = typeof min === "number" ? min.toFixed(0) : min;
       const maxFormatted = typeof max === "number" ? max.toFixed(0) : max;
       return {
-        min: `${minFormatted} PKR`,
-        max: `${maxFormatted} PKR`,
+        min: minFormatted.toString(),
+        max: maxFormatted.toString(),
       };
     } else {
       const min =
@@ -149,8 +149,8 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
       const minFormatted = typeof min === "number" ? min.toFixed(3) : min;
       const maxFormatted = typeof max === "number" ? max.toFixed(3) : max;
       return {
-        min: `${minFormatted} USDC`,
-        max: `${maxFormatted} USDC`,
+        min: minFormatted.toString(),
+        max: maxFormatted.toString(),
       };
     }
   };
@@ -285,7 +285,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                     <span className="text-[10px]">
                       {orderType === "BUY"
                         ? `MIN: ${limits.min} | MAX: ${limits.max}`
-                        : `${limits.min.replace(" USDC", "")} - ${limits.max}`}
+                        : `${limits.min} - ${limits.max}`}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-white/80 uppercase">
@@ -367,7 +367,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   <p className="text-[10px] font-semibold text-white/90 uppercase">
                     {orderType === "BUY"
                       ? `MIN: ${limits.min} | MAX: ${limits.max}`
-                      : `${limits.min.replace(" USDC", "")} - ${limits.max}`}
+                      : `${limits.min} - ${limits.max}`}
                   </p>
                 </div>
 

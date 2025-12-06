@@ -967,64 +967,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     const isPositive = totalChange24h >= 0;
 
                     return (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-center gap-4 relative">
-                          <div className="text-3xl text-gray-900 leading-tight">
-                            {showBalance ? (
-                              <>
-                                <span
-                                  style={{
-                                    fontVariantNumeric: "tabular-nums",
-                                    fontFamily: "Arial",
-                                  }}
-                                >
-                                  {total.toLocaleString(undefined, {
-                                    minimumFractionDigits: 3,
-                                    maximumFractionDigits: 3,
-                                  })}
-                                </span>
-                                {" $"}
-                              </>
-                            ) : (
-                              "****"
-                            )}
-                          </div>
-                          <div className="absolute right-0">
-                            <Button
-                              onClick={onReceive}
-                              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-md whitespace-nowrap h-auto"
-                            >
-                              DEPOSIT
-                            </Button>
-                          </div>
-                        </div>
-                        {showBalance ? (
-                          <div className="text-xs text-center">
-                            <span
-                              style={{
-                                color: isPositive ? "#FACC15" : "#F87171",
-                                display: "block",
-                              }}
-                            >
-                              {isPositive ? "▲" : "▼"} {isPositive ? "+" : "-"}{" "}
-                              {Math.abs(totalChange24h).toLocaleString(
-                                undefined,
-                                {
+                      <div className="flex items-center justify-center gap-4 relative">
+                        <div className="text-3xl text-gray-900 leading-tight">
+                          {showBalance ? (
+                            <>
+                              <span
+                                style={{
+                                  fontVariantNumeric: "tabular-nums",
+                                  fontFamily: "Arial",
+                                }}
+                              >
+                                {total.toLocaleString(undefined, {
                                   minimumFractionDigits: 3,
                                   maximumFractionDigits: 3,
-                                },
-                              )}{" "}
-                              {Math.abs(
-                                isFinite(change24hPercent)
-                                  ? change24hPercent
-                                  : 0,
-                              ).toFixed(2)}
-                              %
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="text-xs text-gray-400 text-center">****</div>
-                        )}
+                                })}
+                              </span>
+                              {" $"}
+                            </>
+                          ) : (
+                            "****"
+                          )}
+                        </div>
+                        <div className="absolute right-0">
+                          <Button
+                            onClick={onReceive}
+                            className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-md whitespace-nowrap h-auto"
+                          >
+                            DEPOSIT
+                          </Button>
+                        </div>
                       </div>
                     );
                   })()

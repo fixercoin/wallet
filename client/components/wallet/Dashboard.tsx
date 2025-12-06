@@ -20,7 +20,7 @@ import {
   Plus,
   Menu,
   Gift,
-  Shield,
+  Unlock,
   Bell,
   X,
   Clock,

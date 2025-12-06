@@ -132,7 +132,12 @@ class BirdeyeAPI {
 
     if (toFetch.length > 0) {
       try {
-        const promises = toFetch.map((mint) => this.getTokenPrice(mint));
+        const promises = toFetch.map((mint) =>
+          this.getTokenPrice(mint).catch((error) => {
+            console.warn(`[Birdeye] Failed to fetch price for ${mint}:`, error);
+            return null;
+          }),
+        );
         const results = await Promise.all(promises);
         fetchedTokens = results.filter((t): t is BirdeyeToken => t !== null);
 

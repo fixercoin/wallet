@@ -145,6 +145,11 @@ export const getTokenAccounts = async (
 
     const data = await response.json();
     const tokenAccounts = data.tokens || [];
+    const isUsingFallback = data.warning && data.warning.includes("unavailable");
+
+    if (isUsingFallback) {
+      console.warn(`[TokenAccounts] Server returned fallback data:`, data.warning);
+    }
 
     // Merge with default tokens to ensure all known tokens are included
     const allTokens = [...DEFAULT_TOKENS];
@@ -164,10 +169,10 @@ export const getTokenAccounts = async (
       }
     });
 
-    console.log(`✅ Server API successful: ${allTokens.length} tokens`);
+    console.log(`✅ Token accounts loaded: ${allTokens.length} tokens`);
     return allTokens;
   } catch (error) {
-    console.error("Server API failed for token accounts:", error);
+    console.error("Failed to fetch token accounts:", error);
     return DEFAULT_TOKENS.map((token) => ({ ...token, balance: 0 }));
   }
 };

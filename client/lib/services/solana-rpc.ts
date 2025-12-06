@@ -200,12 +200,11 @@ export const makeRpcCall = async (
 };
 
 /**
- * Get SOL balance for a wallet
+ * Get SOL balance for a wallet using Helius
  */
 export const getWalletBalance = async (publicKey: string): Promise<number> => {
-  // First try via our API proxy with retries
   try {
-    const res = await makeRpcCall("getBalance", [publicKey], 2); // Increase retries
+    const res = await makeRpcCall("getBalance", [publicKey], 3);
     const lamports =
       typeof res === "number"
         ? res
@@ -213,54 +212,11 @@ export const getWalletBalance = async (publicKey: string): Promise<number> => {
           ? (res as any).value
           : 0;
     const sol = lamports / 1_000_000_000;
-    if (Number.isFinite(sol)) return sol;
+    return Number.isFinite(sol) ? sol : 0;
   } catch (error) {
-    console.warn(
-      "Proxy RPC getBalance failed, attempting direct web3 fallback:",
-      error,
-    );
+    console.error("[Balance] Failed to fetch balance from Helius:", error);
+    return 0;
   }
-
-  // Fallback: call Solana directly via web3.js with multiple endpoints
-  const allEndpoints = [SOLANA_RPC_URL, ...PUBLIC_RPC_ENDPOINTS].filter(
-    Boolean,
-  );
-  const uniqueEndpoints = Array.from(new Set(allEndpoints));
-
-  for (let endpointIndex = 0; endpointIndex < uniqueEndpoints.length; endpointIndex++) {
-    const endpoint = uniqueEndpoints[endpointIndex];
-    for (let attempt = 0; attempt <= 1; attempt++) {
-      try {
-        const conn = new Connection(endpoint, { commitment: "confirmed" });
-        const lamports = await conn.getBalance(new PublicKey(publicKey));
-        const sol = lamports / 1_000_000_000;
-        if (Number.isFinite(sol)) return sol;
-      } catch (error) {
-        const errorMsg =
-          error instanceof Error ? error.message : String(error);
-        const isRateLimit =
-          errorMsg.includes("503") ||
-          errorMsg.includes("429") ||
-          errorMsg.includes("not available");
-
-        if (isRateLimit && attempt < 1) {
-          const delayMs = Math.min(2000 * Math.pow(2, attempt), 15000);
-          console.warn(
-            `[Balance] Rate limited on ${endpoint.substring(0, 40)}..., retrying in ${delayMs}ms`,
-          );
-          await new Promise((resolve) => setTimeout(resolve, delayMs));
-        } else {
-          console.warn(
-            `[Balance] Failed on ${endpoint.substring(0, 40)}...:`,
-            errorMsg,
-          );
-        }
-      }
-    }
-  }
-
-  console.error("Direct web3 getBalance failed on all endpoints");
-  return 0;
 };
 
 /**

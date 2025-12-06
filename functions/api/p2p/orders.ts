@@ -47,29 +47,10 @@ export const onRequestGet = async ({
 
     const url = new URL(request.url);
     const walletAddress = url.searchParams.get("wallet");
-    const idFromQuery = url.searchParams.get("id");
     const status = url.searchParams.get("status");
     const type = url.searchParams.get("type");
 
-    // Extract orderId from URL path (/api/p2p/orders/:orderId) or query params
-    const pathParts = url.pathname.split("/");
-    const idFromPath = pathParts[pathParts.length - 1] && pathParts[pathParts.length - 1] !== "orders" ? pathParts[pathParts.length - 1] : null;
-    const orderId = idFromPath || idFromQuery;
-
     const kvStore = new KVStore(env.STAKING_KV);
-
-    if (orderId) {
-      // Get single order by ID
-      const order = await kvStore.getOrder(orderId);
-      if (!order) {
-        return jsonResponse(404, { error: "Order not found" });
-      }
-      return jsonResponse(200, {
-        success: true,
-        data: order,
-        orders: [order],
-      });
-    }
 
     if (walletAddress) {
       // Get all orders for specific wallet

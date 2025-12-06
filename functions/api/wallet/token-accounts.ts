@@ -2,11 +2,36 @@ export const config = {
   runtime: "nodejs_esmsh",
 };
 
-const RPC_ENDPOINTS = [
-  "https://solana.publicnode.com",
-  "https://api.mainnet-beta.solana.com",
-  "https://rpc.ankr.com/solana",
-];
+interface Env {
+  SOLANA_RPC_URL?: string;
+  HELIUS_RPC_URL?: string;
+  HELIUS_API_KEY?: string;
+  ALCHEMY_RPC_URL?: string;
+  MORALIS_RPC_URL?: string;
+}
+
+// Build RPC endpoints from environment and fallbacks
+function buildRpcEndpoints(env: Env): string[] {
+  const endpoints: string[] = [];
+
+  // Add environment-configured endpoints first (highest priority)
+  if (env.SOLANA_RPC_URL) endpoints.push(env.SOLANA_RPC_URL);
+  if (env.HELIUS_RPC_URL) endpoints.push(env.HELIUS_RPC_URL);
+  if (env.HELIUS_API_KEY) {
+    endpoints.push(
+      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
+    );
+  }
+  if (env.ALCHEMY_RPC_URL) endpoints.push(env.ALCHEMY_RPC_URL);
+  if (env.MORALIS_RPC_URL) endpoints.push(env.MORALIS_RPC_URL);
+
+  // Add public fallback endpoints
+  endpoints.push("https://solana.publicnode.com");
+  endpoints.push("https://rpc.ankr.com/solana");
+  endpoints.push("https://api.mainnet-beta.solana.com");
+
+  return [...new Set(endpoints)]; // Remove duplicates
+}
 
 // Known token metadata for common tokens
 const KNOWN_TOKENS: Record<string, any> = {
@@ -44,7 +69,7 @@ const KNOWN_TOKENS: Record<string, any> = {
 
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
-async function handler(request: Request): Promise<Response> {
+async function handler(request: Request, env?: Env): Promise<Response> {
   // Handle CORS preflight
   if (request.method === "OPTIONS") {
     return new Response(null, {
@@ -114,6 +139,7 @@ async function handler(request: Request): Promise<Response> {
     };
 
     let lastError: string | null = null;
+    const RPC_ENDPOINTS = buildRpcEndpoints(env || {});
 
     // Try each RPC endpoint
     for (const endpoint of RPC_ENDPOINTS) {
@@ -257,11 +283,26 @@ async function handler(request: Request): Promise<Response> {
   }
 }
 
-export const onRequest = async ({ request }: { request: Request }) =>
-  handler(request);
+export const onRequest = async ({
+  request,
+  env,
+}: {
+  request: Request;
+  env: Env;
+}) => handler(request, env);
 
-export const onRequestGet = async ({ request }: { request: Request }) =>
-  handler(request);
+export const onRequestGet = async ({
+  request,
+  env,
+}: {
+  request: Request;
+  env: Env;
+}) => handler(request, env);
 
-export const onRequestPost = async ({ request }: { request: Request }) =>
-  handler(request);
+export const onRequestPost = async ({
+  request,
+  env,
+}: {
+  request: Request;
+  env: Env;
+}) => handler(request, env);

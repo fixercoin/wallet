@@ -70,6 +70,7 @@ interface DashboardProps {
   onLock: () => void;
   onBurn: () => void;
   onStakeTokens?: () => void;
+  onP2PTrade?: () => void;
 }
 
 const QUEST_TASKS = [
@@ -115,6 +116,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onLock,
   onBurn,
   onStakeTokens,
+  onP2PTrade,
 }) => {
   const {
     wallet,
@@ -928,10 +930,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </div>
                           <div className="absolute right-0">
                             <Button
-                              onClick={onReceive}
-                              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-md whitespace-nowrap h-auto"
+                              onClick={onP2PTrade || onReceive}
+                              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-sm whitespace-nowrap h-auto"
                             >
-                              DEPOSIT
+                              P2P TRADE
                             </Button>
                           </div>
                         </div>
@@ -990,10 +992,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                         <div className="absolute right-0">
                           <Button
-                            onClick={onReceive}
-                            className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-md whitespace-nowrap h-auto"
+                            onClick={onP2PTrade || onReceive}
+                            className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-sm whitespace-nowrap h-auto"
                           >
-                            DEPOSIT
+                            P2P TRADE
                           </Button>
                         </div>
                       </div>
@@ -1029,26 +1031,30 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </Button>
             </div>
 
-            {/* P2P EXPRESS SERVICE Button with Notification Badge */}
-            <div className="flex items-center justify-center gap-2 sm:gap-3 mt-4 w-full px-0">
+            {/* Additional Action Buttons: TRADE, BURN, LOCK */}
+            <div className="flex items-center justify-around gap-2 sm:gap-3 mt-3 w-full px-0">
               <Button
-                onClick={() => navigate("/buy-order")}
-                className="relative flex-1 flex items-center bg-transparent border border-[#22c55e]/40 rounded-md px-4 py-3 hover:bg-[#22c55e]/10 transition-colors text-white text-xs h-auto py-3"
+                onClick={onP2PTrade}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
-                <Bell className="h-4 w-4 text-[#22c55e] flex-shrink-0" />
-                <span
-                  className="flex-1 text-center"
-                  style={{ wordSpacing: "0.3em" }}
-                >
-                  P2P TRADE SERVICE
-                </span>
-                {unreadCount > 0 && (
-                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#FF7A5C] rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  </div>
-                )}
+                <ArrowRightLeft className="h-8 w-8 text-[#22c55e]" />
+                <span>LIMIT ORDER</span>
+              </Button>
+
+              <Button
+                onClick={onBurn}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <Zap className="h-8 w-8 text-[#22c55e]" />
+                <span>BURNING</span>
+              </Button>
+
+              <Button
+                onClick={onLock}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <Lock className="h-8 w-8 text-[#22c55e]" />
+                <span>LOCK UP</span>
               </Button>
             </div>
           </div>

@@ -315,7 +315,10 @@ export const onRequestDelete = async ({
 
     const url = new URL(request.url);
     const walletAddress = url.searchParams.get("wallet");
-    const orderId = url.searchParams.get("id");
+
+    // Extract orderId from URL path (/api/p2p/orders/:orderId)
+    const pathParts = url.pathname.split("/");
+    const orderId = pathParts[pathParts.length - 1];
 
     if (!walletAddress || !orderId) {
       return jsonResponse(400, {

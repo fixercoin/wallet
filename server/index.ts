@@ -254,6 +254,18 @@ export async function createServer(): Promise<express.Application> {
     }
   });
 
+  // Token balance endpoint
+  app.get("/api/wallet/token-balance", async (req, res) => {
+    try {
+      await handleGetTokenBalance(req, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch token balance",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
   // Unified swap & quote proxies (forward to Fixorium worker or configured API)
   // Local handler: attempt Meteora swap locally first to avoid dependency on remote worker
 

@@ -18,7 +18,6 @@ export default function SellOrder() {
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [usdcBalance, setUsdcBalance] = useState<number>(0);
   const [loadingRate, setLoadingRate] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined

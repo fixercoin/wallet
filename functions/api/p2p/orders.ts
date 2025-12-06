@@ -233,63 +233,7 @@ export const onRequestPost = async ({
   }
 };
 
-export const onRequestPut = async ({
-  request,
-  env,
-}: {
-  request: Request;
-  env: Env;
-}) => {
-  try {
-    if (!env.STAKING_KV) {
-      return jsonResponse(500, {
-        error: "KV storage not configured",
-      });
-    }
-
-    const url = new URL(request.url);
-    const body = await request.json();
-
-    // Extract orderId from URL path (/api/p2p/orders/:orderId) or request body
-    const pathParts = url.pathname.split("/");
-    const idFromPath = pathParts[pathParts.length - 1] && pathParts[pathParts.length - 1] !== "orders" ? pathParts[pathParts.length - 1] : null;
-    const orderId = idFromPath || body.orderId;
-    const { status } = body;
-
-    if (!orderId) {
-      return jsonResponse(400, { error: "Missing order ID" });
-    }
-
-    const kvStore = new KVStore(env.STAKING_KV);
-    const order = await kvStore.getOrder(orderId);
-
-    if (!order) {
-      return jsonResponse(404, { error: "Order not found" });
-    }
-
-    const updatedOrder = await kvStore.saveOrder(
-      {
-        walletAddress: order.walletAddress,
-        type: order.type,
-        token: order.token,
-        amountTokens: order.amountTokens,
-        amountPKR: order.amountPKR,
-        paymentMethodId: order.paymentMethodId,
-        status: status || order.status,
-      },
-      orderId,
-    );
-
-    return jsonResponse(200, {
-      success: true,
-      data: updatedOrder,
-    });
-  } catch (error) {
-    console.error("Error in /api/p2p/orders PUT:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return jsonResponse(500, { error: message });
-  }
-};
+// Note: PUT for individual orders is handled in functions/api/p2p/orders/[orderId].ts
 
 export const onRequestDelete = async ({
   request,

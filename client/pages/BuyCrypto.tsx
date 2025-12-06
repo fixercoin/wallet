@@ -60,9 +60,9 @@ export default function BuyCrypto() {
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
     DEFAULT_TOKENS[0],
   );
-  const [amountPKR, setAmountPKR] = useState<string>("");
+  const [minAmountPKR, setMinAmountPKR] = useState<string>("");
+  const [maxAmountPKR, setMaxAmountPKR] = useState<string>("");
   const [walletAddress, setWalletAddress] = useState<string>("");
-  const [estimatedTokens, setEstimatedTokens] = useState<number>(0);
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [fetchingRate, setFetchingRate] = useState(false);

@@ -1031,29 +1031,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </Button>
             </div>
 
-            {/* P2P EXPRESS SERVICE Button with Notification Badge */}
-            <div className="flex items-center justify-center gap-2 sm:gap-3 mt-4 w-full px-0">
-              <Button
-                onClick={() => navigate("/buy-order")}
-                className="relative flex-1 flex items-center bg-transparent border border-[#22c55e]/40 rounded-md px-4 py-3 hover:bg-[#22c55e]/10 transition-colors text-white text-xs h-auto py-3"
-              >
-                <Bell className="h-4 w-4 text-[#22c55e] flex-shrink-0" />
-                <span
-                  className="flex-1 text-center"
-                  style={{ wordSpacing: "0.3em" }}
-                >
-                  P2P TRADE SERVICE
-                </span>
-                {unreadCount > 0 && (
-                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#FF7A5C] rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  </div>
-                )}
-              </Button>
-            </div>
-
             {/* Additional Action Buttons: TRADE, BURN, LOCK */}
             <div className="flex items-center justify-around gap-2 sm:gap-3 mt-3 w-full px-0">
               <Button
@@ -1078,6 +1055,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
               >
                 <Lock className="h-8 w-8 text-white/60" />
                 <span>LOCK</span>
+              </Button>
+            </div>
+
+            {/* P2P EXPRESS SERVICE Button with Notification Badge */}
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mt-4 w-full px-0">
+              <Button
+                onClick={() => navigate("/buy-order")}
+                className="relative flex-1 flex items-center bg-transparent border border-[#22c55e]/40 rounded-md px-4 py-3 hover:bg-[#22c55e]/10 transition-colors text-white text-xs h-auto py-3"
+              >
+                <Bell className="h-4 w-4 text-[#22c55e] flex-shrink-0" />
+                <span
+                  className="flex-1 text-center"
+                  style={{ wordSpacing: "0.3em" }}
+                >
+                  P2P TRADE SERVICE
+                </span>
+                {unreadCount > 0 && (
+                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#FF7A5C] rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  </div>
+                )}
               </Button>
             </div>
           </div>

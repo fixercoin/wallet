@@ -135,27 +135,7 @@ export const P2PTradeDialog: React.FC<P2PTradeDialogProps> = ({
             </div>
           </div>
 
-          {/* Amount in Tokens */}
-          <div>
-            <label className="block text-xs font-semibold text-white/80 uppercase mb-2">
-              Amount ({defaultToken})
-            </label>
-            <input
-              type="number"
-              step="0.000001"
-              placeholder="0.000000"
-              value={amountTokens}
-              onChange={(e) => handleTokensChange(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]/50"
-            />
-            {minAmount > 0 && maxAmount < Infinity && (
-              <div className="text-xs text-white/60 mt-1">
-                Min: {minAmount.toFixed(6)} | Max: {maxAmount.toFixed(6)}
-              </div>
-            )}
-          </div>
-
-          {/* Amount in PKR */}
+          {/* Amount in PKR - Primary Input */}
           <div>
             <label className="block text-xs font-semibold text-white/80 uppercase mb-2">
               Amount (PKR)
@@ -168,6 +148,21 @@ export const P2PTradeDialog: React.FC<P2PTradeDialogProps> = ({
               onChange={(e) => handlePKRChange(e.target.value)}
               className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]/50"
             />
+          </div>
+
+          {/* Estimated Amount in USDC */}
+          <div>
+            <label className="block text-xs font-semibold text-white/80 uppercase mb-2">
+              Estimated {defaultToken}
+            </label>
+            <div className="px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold">
+              {amountTokens ? parseFloat(amountTokens).toFixed(6) : "0.000000"} {defaultToken}
+            </div>
+            {minAmount > 0 && maxAmount < Infinity && (
+              <div className="text-xs text-white/60 mt-1">
+                Min: {minAmount.toFixed(6)} | Max: {maxAmount.toFixed(6)}
+              </div>
+            )}
           </div>
 
           {/* Calculation Preview */}

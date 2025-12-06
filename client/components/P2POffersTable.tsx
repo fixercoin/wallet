@@ -171,7 +171,6 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                 PAYMENT
               </th>
               <th className="px-4 py-3 text-center text-white/70 font-semibold">
-                ←→
               </th>
             </tr>
           </thead>
@@ -238,7 +237,6 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                 </div>
 
                 <div className="flex flex-col items-end justify-end h-full">
-                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">←→</p>
                   <Button
                     onClick={() => handleProceed(order)}
                     size="sm"

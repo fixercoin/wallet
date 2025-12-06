@@ -41,6 +41,10 @@ export interface CreatedOrder {
   status: "PENDING" | "PAYMENT_CONFIRMED" | "COMPLETED" | "CANCELLED";
   createdAt: number;
   roomId?: string;
+  buyerPaymentConfirmed?: boolean;
+  sellerPaymentReceived?: boolean;
+  sellerTransferInitiated?: boolean;
+  buyerCryptoReceived?: boolean;
 }
 
 export interface TradeDetailsInput {

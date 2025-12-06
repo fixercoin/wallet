@@ -21,6 +21,11 @@ import {
   getOrderFromStorage,
   updateOrderInStorage,
 } from "@/lib/p2p-order-creation";
+import {
+  syncOrderFromStorage,
+  updateOrderInBothStorages,
+  deleteOrderFromAPI,
+} from "@/lib/p2p-order-api";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import type { CreatedOrder } from "@/lib/p2p-order-creation";
 import type { TradeMessage } from "@/lib/p2p-api";
@@ -47,18 +52,35 @@ export default function OrderComplete() {
   const previousMessageCountRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load order from state or storage
+  // Load order from state or storage (with KV fallback)
   useEffect(() => {
-    const stateOrder = location.state?.order as CreatedOrder | undefined;
+    const loadOrder = async () => {
+      const stateOrder = location.state?.order as CreatedOrder | undefined;
 
-    if (stateOrder) {
-      setOrder(stateOrder);
-    } else if (location.state?.orderId) {
-      const storedOrder = getOrderFromStorage(location.state.orderId);
-      setOrder(storedOrder);
-    }
+      let loadedOrder: CreatedOrder | null = null;
 
-    setLoading(false);
+      if (stateOrder) {
+        loadedOrder = stateOrder;
+      } else if (location.state?.orderId) {
+        // Try to load from KV first, then fall back to localStorage
+        loadedOrder = await syncOrderFromStorage(location.state.orderId);
+      }
+
+      if (loadedOrder) {
+        setOrder(loadedOrder);
+        // Restore confirmation states from stored order
+        setBuyerPaymentConfirmed(loadedOrder.buyerPaymentConfirmed ?? false);
+        setSellerPaymentReceived(loadedOrder.sellerPaymentReceived ?? false);
+        setSellerTransferInitiated(
+          loadedOrder.sellerTransferInitiated ?? false,
+        );
+        setBuyerCryptoReceived(loadedOrder.buyerCryptoReceived ?? false);
+      }
+
+      setLoading(false);
+    };
+
+    loadOrder();
   }, [location.state]);
 
   // Fetch exchange rate from API (same as BuyData and SellData)
@@ -212,7 +234,10 @@ export default function OrderComplete() {
 
     try {
       setBuyerPaymentConfirmed(true);
-      updateOrderInStorage(order.id, { status: "PENDING" });
+      await updateOrderInBothStorages(order.id, {
+        status: "PENDING",
+        buyerPaymentConfirmed: true,
+      });
 
       if (order.roomId) {
         await addTradeMessage({
@@ -251,6 +276,9 @@ export default function OrderComplete() {
 
     try {
       setSellerPaymentReceived(true);
+      await updateOrderInBothStorages(order.id, {
+        sellerPaymentReceived: true,
+      });
 
       if (order.roomId) {
         await addTradeMessage({
@@ -289,6 +317,9 @@ export default function OrderComplete() {
 
     try {
       setSellerTransferInitiated(true);
+      await updateOrderInBothStorages(order.id, {
+        sellerTransferInitiated: true,
+      });
 
       if (order.roomId) {
         await addTradeMessage({
@@ -325,7 +356,10 @@ export default function OrderComplete() {
 
     try {
       setBuyerCryptoReceived(true);
-      updateOrderInStorage(order.id, { status: "COMPLETED" });
+      await updateOrderInBothStorages(order.id, {
+        status: "COMPLETED",
+        buyerCryptoReceived: true,
+      });
 
       if (order.roomId) {
         await addTradeMessage({
@@ -364,7 +398,13 @@ export default function OrderComplete() {
     if (!order || !wallet?.publicKey) return;
 
     try {
-      updateOrderInStorage(order.id, { status: "CANCELLED" });
+      await updateOrderInBothStorages(order.id, {
+        status: "CANCELLED",
+        buyerPaymentConfirmed: false,
+        sellerPaymentReceived: false,
+        sellerTransferInitiated: false,
+        buyerCryptoReceived: false,
+      });
 
       // Send cancellation message to chat
       if (order.roomId) {

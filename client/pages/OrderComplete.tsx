@@ -340,7 +340,10 @@ export default function OrderComplete() {
 
     try {
       setBuyerCryptoReceived(true);
-      updateOrderInStorage(order.id, { status: "COMPLETED" });
+      updateOrderInStorage(order.id, {
+        status: "COMPLETED",
+        buyerCryptoReceived: true,
+      });
 
       if (order.roomId) {
         await addTradeMessage({

@@ -179,15 +179,23 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
     }
 
     console.error(
-      "[TokenAccounts] All RPC endpoints failed",
+      "[TokenAccounts] All RPC endpoints failed:",
       lastError?.message,
     );
-    return res.status(500).json({
-      error:
-        lastError?.message ||
-        "Failed to fetch token accounts - all RPC endpoints failed",
+
+    // Return default tokens as fallback when all RPC endpoints fail
+    // This ensures the UI still shows known tokens with 0 balance
+    const defaultTokens = Object.values(KNOWN_TOKENS).map((token) => ({
+      ...token,
+      balance: 0,
+    }));
+
+    return res.status(200).json({
       publicKey,
-      tokens: [],
+      tokens: defaultTokens,
+      count: defaultTokens.length,
+      warning:
+        "Token accounts unavailable - returning default tokens with zero balance",
     });
   } catch (error) {
     console.error("[TokenAccounts] Error:", error);

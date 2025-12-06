@@ -84,6 +84,9 @@ export const makeRpcCall = async (
   }
 
   const requestPromise = (async () => {
+    console.log(
+      `[RPC] Using endpoint: ${HELIUS_RPC_ENDPOINT.substring(0, 50)}...`,
+    );
     let lastError: Error | null = null;
     let lastErrorStatus: number | null = null;
 
@@ -92,6 +95,10 @@ export const makeRpcCall = async (
         const controller = new AbortController();
         const timeoutMs = 12000; // 12s timeout
         const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+        console.log(
+          `[RPC] Calling ${method} on Helius (attempt ${attempt + 1}/${retries + 1})`,
+        );
 
         const response = await fetch(HELIUS_RPC_ENDPOINT, {
           method: "POST",

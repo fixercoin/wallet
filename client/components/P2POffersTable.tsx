@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Edit2 } from "lucide-react";
 import { toast } from "sonner";
+import { useWallet } from "@/contexts/WalletContext";
 
 export interface P2POrder {
   id: string;

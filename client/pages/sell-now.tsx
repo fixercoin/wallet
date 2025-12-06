@@ -344,51 +344,32 @@ export default function SellNow() {
 
             <div>
               <label className="block font-medium text-white/80 mb-2 uppercase">
-                AMOUNT ({selectedToken.symbol})
+                MINIMUM AMOUNT (USDC)
               </label>
               <input
                 type="number"
-                value={sellAmountTokens}
-                onChange={(e) => setSellAmountTokens(e.target.value)}
-                placeholder={`Enter amount in ${selectedToken.symbol}`}
+                value={minAmountUSDC}
+                onChange={(e) => setMinAmountUSDC(e.target.value)}
+                placeholder="Enter minimum amount in USDC"
                 className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
                 min="0"
                 step="0.000001"
               />
             </div>
 
-            <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">
-                    EXCHANGE RATE:
-                  </span>
-                  {fetchingRate ? (
-                    <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
-                  ) : (
-                    <span className="font-semibold text-[#FF7A5C]">
-                      1 {selectedToken.symbol} ={" "}
-                      {exchangeRate > 0
-                        ? exchangeRate < 1
-                          ? exchangeRate.toFixed(6)
-                          : exchangeRate.toFixed(2)
-                        : "0.00"}{" "}
-                      PKR
-                    </span>
-                  )}
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">
-                    YOU WILL RECEIVE:
-                  </span>
-                  <span className="font-bold text-[#FF7A5C]">
-                    {(
-                      Number(sellAmountTokens || 0) * (exchangeRate || 0)
-                    ).toFixed(2)}{" "}
-                    PKR
-                  </span>
-                </div>
-              </div>
+            <div>
+              <label className="block font-medium text-white/80 mb-2 uppercase">
+                MAXIMUM AMOUNT (USDC)
+              </label>
+              <input
+                type="number"
+                value={maxAmountUSDC}
+                onChange={(e) => setMaxAmountUSDC(e.target.value)}
+                placeholder="Enter maximum amount in USDC"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                min="0"
+                step="0.000001"
+              />
             </div>
 
             <Button

@@ -7,13 +7,17 @@ import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
-import { P2POffersTable } from "@/components/P2POffersTable";
-
 const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
 export default function SellOrder() {
   const navigate = useNavigate();
   const { wallet, tokens } = useWallet();
+
+  // Redirect to selldata on mount
+  useEffect(() => {
+    navigate("/selldata", { replace: true });
+  }, [navigate]);
+
   const [amountUSDC, setAmountUSDC] = useState<string>("");
   const [estimatedPKR, setEstimatedPKR] = useState<number>(0);
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
@@ -142,22 +146,20 @@ export default function SellOrder() {
         </div>
       </div>
 
-      {/* Wallet USDC Balance */}
-      <div className="w-full px-4 py-2">
-        <div className="text-center text-white/60" style={{ fontSize: "11px" }}>
-          Available USDC Balance: {usdcBalance.toFixed(6)} USDC
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="w-full px-4 py-8">
         <Card className="bg-transparent border border-gray-300/30">
           <CardContent className="p-6 space-y-6">
             {/* Amount Input */}
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-3 uppercase">
-                Amount in USDC
-              </label>
+              <div className="flex justify-between items-center mb-3">
+                <label className="block text-sm font-medium text-white/80 uppercase">
+                  Amount in USDC
+                </label>
+                <p className="text-xs text-white/60">
+                  Available: {usdcBalance.toFixed(6)} USDC
+                </p>
+              </div>
               <input
                 type="number"
                 value={amountUSDC}
@@ -209,17 +211,6 @@ export default function SellOrder() {
           </CardContent>
         </Card>
       </div>
-
-      {/* P2P Offers Table */}
-      <P2POffersTable
-        orderType="SELL"
-        exchangeRate={exchangeRate || 280}
-        onSelectOffer={(order) => {
-          toast.success(
-            `Selected offer from ${order.walletAddress || order.creator_wallet}`,
-          );
-        }}
-      />
 
       {/* Payment Method Dialog */}
       <PaymentMethodDialog

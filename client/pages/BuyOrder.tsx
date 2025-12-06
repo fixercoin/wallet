@@ -7,13 +7,17 @@ import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
-import { P2POffersTable } from "@/components/P2POffersTable";
-
 const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
 export default function BuyOrder() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
+
+  // Redirect to buydata on mount
+  useEffect(() => {
+    navigate("/buydata", { replace: true });
+  }, [navigate]);
+
   const [amountPKR, setAmountPKR] = useState<string>("");
   const [estimatedUSDC, setEstimatedUSDC] = useState<number>(0);
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
@@ -174,17 +178,6 @@ export default function BuyOrder() {
           </CardContent>
         </Card>
       </div>
-
-      {/* P2P Offers Table */}
-      <P2POffersTable
-        orderType="BUY"
-        exchangeRate={exchangeRate || 280}
-        onSelectOffer={(order) => {
-          toast.success(
-            `Selected offer from ${order.walletAddress || order.creator_wallet}`,
-          );
-        }}
-      />
 
       {/* Payment Method Dialog */}
       <PaymentMethodDialog

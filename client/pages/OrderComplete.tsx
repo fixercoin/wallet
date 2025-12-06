@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Plus, Send, CheckCircle, Clock } from "lucide-react";
+import { ArrowLeft, Plus, Send, CheckCircle, Clock, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
@@ -24,7 +25,10 @@ export default function OrderComplete() {
   const { createNotification } = useOrderNotifications();
 
   const order = location.state?.order || null;
+  const offer = location.state?.offer || null;
+  const orderType = location.state?.orderType || null;
   const confirmation = location.state?.confirmation || null;
+  const [copiedValue, setCopiedValue] = useState<string | null>(null);
 
   const [chatLog, setChatLog] = useState<ChatMessage[]>([]);
   const [messageInput, setMessageInput] = useState<string>("");

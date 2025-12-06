@@ -1,20 +1,35 @@
 /**
  * POST /api/staking/withdraw
  * Withdraw from a completed stake and process rewards
+ *
+ * This endpoint signs and sends the withdrawal transfer from vault wallet.
+ * Requires VAULT_PRIVATE_KEY environment variable to be set with base58-encoded private key.
  */
 
 import nacl from "tweetnacl";
 import bs58 from "bs58";
-import { KVStore } from "../../lib/kv-utils.ts";
-import { REWARD_CONFIG, RewardDistribution } from "../../lib/reward-config.ts";
+import { PublicKey } from "@solana/web3.js";
+import { KVStore } from "../../lib/kv-utils";
+import {
+  REWARD_CONFIG,
+  RewardDistribution,
+  calculateReward,
+  generateStakeId,
+} from "../../lib/reward-config";
+import {
+  signAndSendVaultTransfer,
+  validateVaultBalance,
+} from "../../lib/vault-transfer";
 
 interface Env {
-  STAKING_KV: KVNamespace;
+  STAKING_KV: any;
+  [key: string]: any;
 }
 
 interface WithdrawRequest {
   wallet: string;
   stakeId: string;
+  transferTxSignature: string; // Transaction signature of the withdrawal transfer (vault → user)
   message: string;
   signature: string;
 }
@@ -60,14 +75,33 @@ export const onRequestPost = async ({
   env: Env;
 }) => {
   try {
+    // Verify KV binding is available
+    if (!env.STAKING_KV) {
+      console.error(
+        "STAKING_KV binding not found in env. Available bindings:",
+        Object.keys(env),
+      );
+      return jsonResponse(500, {
+        error:
+          "KV storage not configured. Please verify wrangler.toml bindings.",
+      });
+    }
+
     const body: WithdrawRequest = await request.json();
 
     // Validate inputs
-    const { wallet, stakeId, message, signature } = body;
+    const { wallet, stakeId, transferTxSignature, message, signature } = body;
 
     if (!wallet || !stakeId) {
       return jsonResponse(400, {
         error: "Missing required fields: wallet, stakeId",
+      });
+    }
+
+    if (!transferTxSignature) {
+      return jsonResponse(400, {
+        error:
+          "Missing transfer transaction signature. Please sign and send the withdrawal transfer transaction first.",
       });
     }
 
@@ -106,6 +140,53 @@ export const onRequestPost = async ({
       });
     }
 
+    // Get vault private key from environment
+    const vaultPrivateKey = env.VAULT_PRIVATE_KEY;
+    if (!vaultPrivateKey) {
+      console.error("VAULT_PRIVATE_KEY not configured in environment");
+      return jsonResponse(500, {
+        error: "Vault is not configured for withdrawals",
+        details: "VAULT_PRIVATE_KEY environment variable is missing",
+      });
+    }
+
+    // Calculate total amount to transfer (staked + reward)
+    const totalAmount = stake.amount + stake.rewardAmount;
+
+    // Validate vault has sufficient balance
+    const hasBalance = await validateVaultBalance(
+      vaultPrivateKey,
+      new PublicKey(stake.tokenMint),
+      totalAmount,
+      6, // Assuming 6 decimals - this should be configurable
+    );
+
+    if (!hasBalance) {
+      return jsonResponse(500, {
+        error: "Vault does not have sufficient balance for withdrawal",
+        details: `Required: ${totalAmount}, Contact administrator`,
+      });
+    }
+
+    let withdrawalTxSignature: string;
+    try {
+      // Send withdrawal transfer from vault to recipient
+      withdrawalTxSignature = await signAndSendVaultTransfer({
+        vaultPrivateKeyBase58: vaultPrivateKey,
+        recipientWallet: new PublicKey(wallet),
+        mint: new PublicKey(stake.tokenMint),
+        amount: totalAmount,
+        decimals: 6, // Should be configurable
+      });
+    } catch (error) {
+      console.error("Vault transfer failed:", error);
+      return jsonResponse(500, {
+        error: "Failed to process withdrawal",
+        details:
+          error instanceof Error ? error.message : "Unknown transfer error",
+      });
+    }
+
     // Update stake status
     await kvStore.updateStake(stakeId, {
       status: "withdrawn",
@@ -124,6 +205,7 @@ export const onRequestPost = async ({
       rewardAmount: stake.rewardAmount,
       tokenMint: stake.tokenMint,
       status: "processed",
+      txHash: withdrawalTxSignature,
       createdAt: now,
       processedAt: now,
     };
@@ -135,16 +217,19 @@ export const onRequestPost = async ({
       data: {
         stake: updatedStake,
         totalAmount: stake.amount + stake.rewardAmount,
+        transferTxSignature: withdrawalTxSignature,
         reward: {
           amount: stake.rewardAmount,
           tokenMint: stake.tokenMint,
           payerWallet: REWARD_CONFIG.rewardWallet,
           recipientWallet: wallet,
-          status: "ready_for_distribution",
+          status: "processed",
+          txHash: withdrawalTxSignature,
         },
       },
     });
   } catch (error) {
+    console.error("Error in /api/staking/withdraw:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return jsonResponse(500, { error: message });
   }

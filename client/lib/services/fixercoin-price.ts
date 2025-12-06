@@ -1,4 +1,5 @@
 import { dexscreenerAPI } from "./dexscreener";
+import { solPriceService } from "./sol-price";
 import { saveServicePrice } from "./offline-cache";
 import {
   retryWithExponentialBackoff,
@@ -17,6 +18,7 @@ export interface FixercoinPriceData {
 }
 
 const FIXERCOIN_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+const SOL_MINT = "So11111111111111111111111111111111111111112";
 
 class FixercoinPriceService {
   private cachedData: FixercoinPriceData | null = null;
@@ -38,52 +40,162 @@ class FixercoinPriceService {
       }
     }
 
-    // Use retry logic to fetch price from DexScreener
+    // Use retry logic to fetch price using conversion logic
     const priceData = await retryWithExponentialBackoff(
       async () => {
-        console.log("Fetching fresh FIXERCOIN price from DexScreener API...");
-
-        // Fetch directly from DexScreener with no fallback
-        const tokens = await dexscreenerAPI.getTokensByMints([FIXERCOIN_MINT]);
-
-        if (!tokens || tokens.length === 0) {
-          throw new Error("FIXERCOIN not found on DexScreener");
-        }
-
-        const token = tokens[0];
-        const price = token.priceUsd ? parseFloat(token.priceUsd) : null;
-        const priceChange24h = token.priceChange?.h24 || 0;
-        const volume24h = token.volume?.h24 || 0;
-        const liquidity = token.liquidity?.usd;
-        const marketCap = token.marketCap;
-
-        if (!price || price <= 0) {
-          throw new Error(`Invalid FIXERCOIN price from DexScreener: ${price}`);
-        }
-
-        const priceData: FixercoinPriceData = {
-          price,
-          priceChange24h,
-          volume24h,
-          liquidity,
-          marketCap,
-          lastUpdated: new Date(),
-          derivationMethod: "DexScreener API (live)",
-        };
-
-        this.cachedData = priceData;
-        this.lastFetchTime = new Date();
         console.log(
-          `✅ FIXERCOIN price updated: $${priceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${priceData.derivationMethod}`,
+          "Fetching fresh FIXERCOIN price using DexScreener conversion logic...",
         );
 
-        // Save to localStorage for offline support
-        saveServicePrice("FIXERCOIN", {
-          price: priceData.price,
-          priceChange24h: priceData.priceChange24h,
-        });
+        try {
+          // Fetch SOL/FIXERCOIN pair from DexScreener
+          const pairs = await dexscreenerAPI.getTokensByMints([
+            FIXERCOIN_MINT,
+            SOL_MINT,
+          ]);
 
-        return priceData;
+          if (!pairs || pairs.length === 0) {
+            throw new Error(
+              "Could not fetch FIXERCOIN/SOL pair from DexScreener",
+            );
+          }
+
+          // Find the pair where FIXERCOIN and SOL interact
+          // We need to get the exchange rate: how many FIXERCOIN per 1 SOL
+          const fixercoinPair = pairs.find(
+            (p) =>
+              (p.baseToken?.address === FIXERCOIN_MINT ||
+                p.quoteToken?.address === FIXERCOIN_MINT) &&
+              (p.baseToken?.address === SOL_MINT ||
+                p.quoteToken?.address === SOL_MINT),
+          );
+
+          if (!fixercoinPair) {
+            throw new Error(
+              "SOL/FIXERCOIN pair not found on DexScreener - cannot calculate conversion rate",
+            );
+          }
+
+          // Get SOL price in USDT
+          const solPriceData = await solPriceService.getSolPrice();
+          if (!solPriceData || solPriceData.price <= 0) {
+            throw new Error("Could not fetch SOL price in USDT");
+          }
+
+          // Calculate FIXERCOIN price based on conversion logic:
+          // If 1 SOL = X FIXERCOIN, then 1 FIXERCOIN = SOL_PRICE / X
+          let fixercoinPrice: number;
+          let priceChange24h: number = fixercoinPair.priceChange?.h24 || 0;
+          let volume24h: number = fixercoinPair.volume?.h24 || 0;
+
+          const priceNative = fixercoinPair.priceNative
+            ? parseFloat(fixercoinPair.priceNative)
+            : null;
+
+          if (!priceNative || priceNative <= 0) {
+            throw new Error("Invalid price native value from DexScreener pair");
+          }
+
+          // priceNative is the price in the quote token
+          // If FIXERCOIN is the base, then priceNative = SOL per FIXERCOIN
+          // So FIXERCOIN in USDT = priceNative * SOL_PRICE
+          // If SOL is the base, then priceNative = FIXERCOIN per SOL
+          // So FIXERCOIN in USDT = SOL_PRICE / priceNative
+
+          if (fixercoinPair.baseToken?.address === FIXERCOIN_MINT) {
+            // FIXERCOIN/SOL pair: priceNative is SOL per FIXERCOIN
+            fixercoinPrice = priceNative * solPriceData.price;
+            console.log(
+              `[FixercoinPrice] FIXERCOIN/SOL pair: priceNative=${priceNative} SOL/FIXERCOIN, SOL price=${solPriceData.price} USDT, FIXERCOIN price=${fixercoinPrice} USDT`,
+            );
+          } else {
+            // SOL/FIXERCOIN pair: priceNative is FIXERCOIN per SOL
+            fixercoinPrice = solPriceData.price / priceNative;
+            console.log(
+              `[FixercoinPrice] SOL/FIXERCOIN pair: priceNative=${priceNative} FIXERCOIN/SOL, SOL price=${solPriceData.price} USDT, FIXERCOIN price=${fixercoinPrice} USDT`,
+            );
+          }
+
+          if (!fixercoinPrice || fixercoinPrice <= 0) {
+            throw new Error(
+              `Invalid FIXERCOIN price from conversion logic: ${fixercoinPrice}`,
+            );
+          }
+
+          const priceData: FixercoinPriceData = {
+            price: fixercoinPrice,
+            priceChange24h,
+            volume24h,
+            liquidity: fixercoinPair.liquidity?.usd,
+            marketCap: fixercoinPair.marketCap,
+            lastUpdated: new Date(),
+            derivationMethod: "DexScreener SOL/FIXERCOIN conversion (live)",
+          };
+
+          this.cachedData = priceData;
+          this.lastFetchTime = new Date();
+          console.log(
+            `✅ FIXERCOIN price updated: $${priceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${priceData.derivationMethod}`,
+          );
+
+          // Save to localStorage for offline support
+          saveServicePrice("FIXERCOIN", {
+            price: priceData.price,
+            priceChange24h: priceData.priceChange24h,
+          });
+
+          return priceData;
+        } catch (conversionError) {
+          // If conversion logic fails, fall back to direct FIXERCOIN price from DexScreener
+          console.warn(
+            `[FixercoinPrice] Conversion logic failed: ${conversionError instanceof Error ? conversionError.message : String(conversionError)}. Falling back to direct DexScreener price...`,
+          );
+
+          const tokens = await dexscreenerAPI.getTokensByMints([
+            FIXERCOIN_MINT,
+          ]);
+
+          if (!tokens || tokens.length === 0) {
+            throw new Error("FIXERCOIN not found on DexScreener for fallback");
+          }
+
+          const token = tokens[0];
+          const price = token.priceUsd ? parseFloat(token.priceUsd) : null;
+          const priceChange24h = token.priceChange?.h24 || 0;
+          const volume24h = token.volume?.h24 || 0;
+          const liquidity = token.liquidity?.usd;
+          const marketCap = token.marketCap;
+
+          if (!price || price <= 0) {
+            throw new Error(
+              `Invalid FIXERCOIN price from direct DexScreener fallback: ${price}`,
+            );
+          }
+
+          const fallbackPriceData: FixercoinPriceData = {
+            price,
+            priceChange24h,
+            volume24h,
+            liquidity,
+            marketCap,
+            lastUpdated: new Date(),
+            derivationMethod: "DexScreener Direct (fallback)",
+          };
+
+          this.cachedData = fallbackPriceData;
+          this.lastFetchTime = new Date();
+          console.log(
+            `✅ FIXERCOIN price updated (FALLBACK): $${fallbackPriceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${fallbackPriceData.derivationMethod}`,
+          );
+
+          // Save to localStorage for offline support
+          saveServicePrice("FIXERCOIN", {
+            price: fallbackPriceData.price,
+            priceChange24h: fallbackPriceData.priceChange24h,
+          });
+
+          return fallbackPriceData;
+        }
       },
       this.TOKEN_NAME,
       AGGRESSIVE_RETRY_OPTIONS,

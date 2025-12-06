@@ -1,20 +1,27 @@
 /**
  * POST /api/staking/create
- * Create a new stake
+ * Create a new stake after confirming token transfer
+ *
+ * This endpoint expects the user to have already:
+ * 1. Built a transfer transaction (tokens: user wallet → vault wallet)
+ * 2. Signed and sent the transaction
+ * 3. Confirmed the transaction on-chain
+ * Then call this endpoint with the transaction signature to record the stake
  */
 
 import nacl from "tweetnacl";
 import bs58 from "bs58";
-import { KVStore } from "../../lib/kv-utils.ts";
+import { KVStore } from "../../lib/kv-utils";
 import {
   REWARD_CONFIG,
   Stake,
   calculateReward,
   generateStakeId,
-} from "../../lib/reward-config.ts";
+} from "../../lib/reward-config";
 
 interface Env {
-  STAKING_KV: KVNamespace;
+  STAKING_KV: any;
+  [key: string]: any;
 }
 
 interface CreateStakeRequest {
@@ -22,8 +29,9 @@ interface CreateStakeRequest {
   tokenMint: string;
   amount: number;
   periodDays: number;
+  transferTxSignature: string; // Transaction signature of the token transfer
   message: string;
-  signature: string;
+  messageSignature: string;
 }
 
 function applyCors(headers: Headers) {
@@ -59,6 +67,20 @@ function verifySignature(
   }
 }
 
+/**
+ * Verify transaction signature is valid (format check)
+ * Full validation requires RPC access to confirm the transaction actually occurred
+ */
+function isValidTransactionSignature(signature: string): boolean {
+  try {
+    const decoded = bs58.decode(signature);
+    // Transaction signatures should be 64 bytes
+    return decoded.length === 64;
+  } catch {
+    return false;
+  }
+}
+
 export const onRequestPost = async ({
   request,
   env,
@@ -67,14 +89,47 @@ export const onRequestPost = async ({
   env: Env;
 }) => {
   try {
+    // Verify KV binding is available
+    if (!env.STAKING_KV) {
+      console.error(
+        "STAKING_KV binding not found in env. Available bindings:",
+        Object.keys(env),
+      );
+      return jsonResponse(500, {
+        error:
+          "KV storage not configured. Please verify wrangler.toml bindings.",
+      });
+    }
+
     const body: CreateStakeRequest = await request.json();
 
     // Validate inputs
-    const { wallet, tokenMint, amount, periodDays, message, signature } = body;
+    const {
+      wallet,
+      tokenMint,
+      amount,
+      periodDays,
+      transferTxSignature,
+      message,
+      messageSignature,
+    } = body;
 
     if (!wallet || !tokenMint || !amount || !periodDays) {
       return jsonResponse(400, {
         error: "Missing required fields: wallet, tokenMint, amount, periodDays",
+      });
+    }
+
+    if (!transferTxSignature) {
+      return jsonResponse(400, {
+        error:
+          "Missing transfer transaction signature. Please sign and send the token transfer transaction first.",
+      });
+    }
+
+    if (!isValidTransactionSignature(transferTxSignature)) {
+      return jsonResponse(400, {
+        error: "Invalid transaction signature format",
       });
     }
 
@@ -84,19 +139,27 @@ export const onRequestPost = async ({
       });
     }
 
-    // Verify signature
-    if (!verifySignature(message, signature, wallet)) {
-      return jsonResponse(401, { error: "Invalid signature" });
+    // Verify message signature
+    if (!verifySignature(message, messageSignature, wallet)) {
+      return jsonResponse(401, { error: "Invalid message signature" });
     }
 
     // Validate period
-    if (![30, 60, 90].includes(periodDays)) {
+    const validPeriods = [
+      10 / (24 * 60), // 10 minutes
+      10, // 10 days
+      30, // 30 days
+      60, // 60 days
+      90, // 90 days
+    ];
+    if (!validPeriods.some((p) => Math.abs(p - periodDays) < 0.0001)) {
       return jsonResponse(400, {
-        error: "Invalid period. Must be 30, 60, or 90 days",
+        error:
+          "Invalid period. Must be 10 minutes, 10 days, 30 days, 60 days, or 90 days",
       });
     }
 
-    // Create stake
+    // Create stake record
     const now = Date.now();
     const endTime = now + periodDays * 24 * 60 * 60 * 1000;
     const rewardAmount = calculateReward(amount, periodDays);
@@ -125,9 +188,12 @@ export const onRequestPost = async ({
       data: {
         ...stake,
         timeRemainingMs: periodDays * 24 * 60 * 60 * 1000,
+        vaultWallet: REWARD_CONFIG.vaultWallet,
+        transferTxSignature,
       },
     });
   } catch (error) {
+    console.error("Error in /api/staking/create:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return jsonResponse(500, { error: message });
   }

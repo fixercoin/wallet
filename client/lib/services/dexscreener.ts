@@ -299,6 +299,19 @@ class DexscreenerAPI {
           fetchedTokens.push(stale.token);
         }
       });
+
+      // If we still don't have results for what was requested, throw error so client retries
+      const gotMints = new Set(
+        fetchedTokens
+          .flatMap((t) => [t.baseToken?.address, t.quoteToken?.address])
+          .filter(Boolean) as string[],
+      );
+      const stillMissing = toFetch.filter((m) => !gotMints.has(m));
+      if (stillMissing.length > 0) {
+        throw new Error(
+          `DexScreener API failed and no cache available for ${stillMissing.join(", ")}: ${lastError}`,
+        );
+      }
     }
 
     // Update cache with fetched results (only if we got meaningful data)

@@ -48,15 +48,19 @@ class PumpFunPriceService {
    */
   async getTokenPrice(mint: string): Promise<number | null> {
     try {
+      console.log(`[PumpFun] Getting price for ${mint}...`);
       const token = await this.getToken(mint);
-      if (!token) return null;
+      if (!token) {
+        console.warn(`[PumpFun] No token data returned for ${mint}`);
+        return null;
+      }
 
       // Calculate price from virtual reserves
       // price = virtualSolReserves / virtualTokenReserves
       if (token.virtual_sol_reserves > 0 && token.virtual_token_reserves > 0) {
         const price = token.virtual_sol_reserves / token.virtual_token_reserves;
         console.log(
-          `[PumpFun] ${mint}: price=$${price.toFixed(8)} (from virtual reserves)`,
+          `[PumpFun] ✅ ${mint}: price=$${price.toFixed(8)} SOL (from virtual reserves)`,
         );
 
         // Save to localStorage for offline support
@@ -68,9 +72,12 @@ class PumpFunPriceService {
         return price;
       }
 
+      console.warn(
+        `[PumpFun] Invalid reserves for ${mint}: virtual_sol=${token.virtual_sol_reserves}, virtual_token=${token.virtual_token_reserves}`,
+      );
       return null;
     } catch (error) {
-      console.warn(
+      console.error(
         `[PumpFun] Error getting price for ${mint}:`,
         error instanceof Error ? error.message : String(error),
       );
@@ -79,16 +86,9 @@ class PumpFunPriceService {
       const cached = getCachedServicePrice(mint);
       if (cached && cached.price > 0) {
         console.log(
-          `[PumpFun] Using cached price for ${mint}: $${cached.price}`,
+          `[PumpFun] Using cached price for ${mint}: ${cached.price}`,
         );
         return cached.price;
-      }
-
-      // Return fallback price
-      const fallback = FALLBACK_PRICES[mint];
-      if (fallback) {
-        console.log(`[PumpFun] Using fallback price for ${mint}: $${fallback}`);
-        return fallback;
       }
 
       return null;

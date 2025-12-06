@@ -137,7 +137,7 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder=""
+          placeholder="Search tokens..."
           className={
             inputClassName
               ? `pl-9 ${inputClassName}`

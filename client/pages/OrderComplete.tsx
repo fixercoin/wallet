@@ -574,265 +574,250 @@ export default function OrderComplete() {
         {/* TWO-COLUMN LAYOUT - BUYER & SELLER CONFIRMATIONS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* LEFT COLUMN - BUYER CONFIRMATION */}
-          <div>
-            {isBuyer ? (
-              <>
-                {/* Buyer Payment Status */}
-                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-blue-500/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold uppercase text-white">
-                      Your Payment
-                    </span>
-                    {buyerPaymentConfirmed ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-yellow-500" />
-                    )}
-                  </div>
-                  {!buyerPaymentConfirmed ? (
-                    <Button
-                      onClick={handleBuyerConfirmPayment}
-                      className="w-full bg-green-600/30 border border-green-500/50 hover:bg-green-600/40 text-green-400 uppercase text-xs font-semibold py-2"
-                    >
-                      Confirm Payment Sent
-                    </Button>
-                  ) : (
-                    <div className="text-xs text-green-400 font-semibold">
-                      ✓ Payment Confirmed
-                    </div>
-                  )}
-                </div>
+          <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30">
+            <CardContent className="p-4 space-y-3">
+              <h2 className="text-lg font-bold text-white uppercase mb-4">Buyer Confirmation</h2>
 
-                {/* Seller Payment Received Status */}
-                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-purple-500/20">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold uppercase text-white">
-                      Seller Received Payment
-                    </span>
-                    {sellerPaymentReceived ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-yellow-500" />
-                    )}
-                  </div>
-                  <div className="text-xs text-white/60">
-                    {sellerPaymentReceived
-                      ? "✓ Waiting for crypto transfer..."
-                      : "Waiting for seller to confirm..."}
-                  </div>
+              {!isBuyer && (
+                <div className="text-xs text-white/60 bg-[#1a2540]/50 p-3 rounded-lg mb-4">
+                  Waiting for buyer to confirm payment...
                 </div>
+              )}
 
-                {/* Seller Transfer Status */}
-                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-orange-500/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold uppercase text-white">
-                      Crypto Transfer
-                    </span>
-                    {sellerTransferInitiated ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-yellow-500" />
-                    )}
-                  </div>
-                  {sellerTransferInitiated && !buyerCryptoReceived ? (
-                    <Button
-                      onClick={handleBuyerCryptoReceived}
-                      className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
-                    >
-                      I Received Crypto
-                    </Button>
-                  ) : buyerCryptoReceived ? (
-                    <div className="text-xs text-orange-400 font-semibold">
-                      ✓ Crypto Received
-                    </div>
-                  ) : (
-                    <div className="text-xs text-white/60">
-                      Waiting for seller to transfer...
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Buyer Payment Status (seller view) */}
-                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-blue-500/20">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold uppercase text-white">
-                      Buyer Payment
-                    </span>
-                    {buyerPaymentConfirmed ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-yellow-500" />
-                    )}
-                  </div>
-                  <div className="text-xs text-white/60">
-                    {buyerPaymentConfirmed
-                      ? "✓ Buyer confirmed payment"
-                      : "Waiting for buyer to confirm..."}
-                  </div>
-                </div>
-
-                {/* Seller Payment Received Status */}
-                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-purple-500/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold uppercase text-white">
-                      You Received Payment
-                    </span>
-                    {sellerPaymentReceived ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-yellow-500" />
-                    )}
-                  </div>
-                  {!sellerPaymentReceived && buyerPaymentConfirmed ? (
-                    <Button
-                      onClick={handleSellerPaymentReceived}
-                      className="w-full bg-purple-600/30 border border-purple-500/50 hover:bg-purple-600/40 text-purple-400 uppercase text-xs font-semibold py-2"
-                    >
-                      I Have Received Payment
-                    </Button>
-                  ) : (
-                    <div className="text-xs text-purple-400 font-semibold">
-                      ✓ Payment Received
-                    </div>
-                  )}
-                </div>
-
-                {/* Seller Transfer Status */}
-                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-orange-500/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold uppercase text-white">
-                      Crypto Transfer
-                    </span>
-                    {sellerTransferInitiated ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-yellow-500" />
-                    )}
-                  </div>
-                  {!sellerTransferInitiated && sellerPaymentReceived ? (
-                    <Button
-                      onClick={handleSellerTransfer}
-                      className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
-                    >
-                      I Have Transfer Sent
-                    </Button>
-                  ) : sellerTransferInitiated ? (
-                    <div className="text-xs text-orange-400 font-semibold">
-                      ✓ Transfer Initiated
-                    </div>
-                  ) : (
-                    <div className="text-xs text-white/60">
-                      Waiting for buyer payment confirmation...
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-
-            {buyerCryptoReceived && (
-              <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
-                <div className="flex items-center gap-2 text-green-400">
-                  <CheckCircle className="w-5 h-5" />
-                  <span className="text-sm font-semibold uppercase">
-                    Order Completed
+              <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-blue-500/20">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold uppercase text-white">
+                    {isBuyer ? "Your Payment" : "Buyer's Payment"}
                   </span>
+                  {buyerPaymentConfirmed ? (
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <Clock className="w-5 h-5 text-yellow-500" />
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN - CHAT */}
-        <div className="space-y-4">
-          <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30 flex flex-col h-full min-h-[600px]">
-            <CardContent className="p-4 flex flex-col h-full">
-              <h2 className="text-lg font-bold text-white mb-4 uppercase">
-                Chat
-              </h2>
-
-              {/* Messages Container */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-4 p-3 bg-[#1a2540]/30 rounded-lg border border-white/5">
-                {messages.length === 0 ? (
-                  <div className="text-center text-white/60 text-xs py-8">
-                    No messages yet. Start chatting!
-                  </div>
+                {isBuyer && !buyerPaymentConfirmed ? (
+                  <Button
+                    onClick={handleBuyerConfirmPayment}
+                    className="w-full bg-green-600/30 border border-green-500/50 hover:bg-green-600/40 text-green-400 uppercase text-xs font-semibold py-2"
+                  >
+                    I Have Sent PKR Payment
+                  </Button>
                 ) : (
-                  messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`text-xs p-3 rounded-lg ${
-                        msg.sender_wallet === wallet.publicKey
-                          ? "bg-[#FF7A5C]/20 text-white/90 ml-4"
-                          : "bg-[#1a2540]/50 text-white/70 mr-4"
-                      }`}
-                    >
-                      <div className="font-semibold text-white/80 uppercase text-xs mb-1">
-                        {msg.sender_wallet === order.buyerWallet
-                          ? "BUYER"
-                          : "SELLER"}
+                  <div className="text-xs text-green-400 font-semibold">
+                    ✓ Payment Confirmed
+                  </div>
+                )}
+              </div>
+
+              {!buyerCryptoReceived && (
+                <div className="p-3 bg-blue-600/20 border border-blue-500/30 rounded-lg text-xs text-blue-300">
+                  <strong>Step 1:</strong> Buyer confirms payment was sent to seller's account
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* RIGHT COLUMN - SELLER CONFIRMATION */}
+          <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30">
+            <CardContent className="p-4 space-y-3">
+              <h2 className="text-lg font-bold text-white uppercase mb-4">Seller Confirmation</h2>
+
+              {!buyerPaymentConfirmed && (
+                <div className="text-xs text-white/60 bg-[#1a2540]/50 p-3 rounded-lg mb-4">
+                  Inactive until buyer confirms payment
+                </div>
+              )}
+
+              {buyerPaymentConfirmed && (
+                <>
+                  <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-purple-500/20">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-semibold uppercase text-white">
+                        {isBuyer ? "Seller Received Payment" : "You Received Payment"}
+                      </span>
+                      {sellerPaymentReceived ? (
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <Clock className="w-5 h-5 text-yellow-500" />
+                      )}
+                    </div>
+                    {!isBuyer && !sellerPaymentReceived ? (
+                      <Button
+                        onClick={handleSellerPaymentReceived}
+                        className="w-full bg-purple-600/30 border border-purple-500/50 hover:bg-purple-600/40 text-purple-400 uppercase text-xs font-semibold py-2"
+                      >
+                        I Have Received Payment
+                      </Button>
+                    ) : (
+                      <div className="text-xs text-purple-400 font-semibold">
+                        ✓ Payment Received
                       </div>
-                      {msg.attachment_url && (
-                        <div className="mb-2">
-                          <img
-                            src={msg.attachment_url}
-                            alt="Proof"
-                            className="max-w-[200px] rounded-lg"
-                          />
+                    )}
+                  </div>
+
+                  {sellerPaymentReceived && (
+                    <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-orange-500/20">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-semibold uppercase text-white">
+                          Crypto Transfer
+                        </span>
+                        {sellerTransferInitiated ? (
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                        ) : (
+                          <Clock className="w-5 h-5 text-yellow-500" />
+                        )}
+                      </div>
+                      {!isBuyer && !sellerTransferInitiated ? (
+                        <Button
+                          onClick={handleSellerTransfer}
+                          className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
+                        >
+                          Release USDC to Buyer
+                        </Button>
+                      ) : (
+                        <div className="text-xs text-orange-400 font-semibold">
+                          ✓ Transfer Initiated
                         </div>
                       )}
-                      <div className="break-words">{msg.message}</div>
-                      <div className="text-xs text-white/50 mt-2">
-                        {new Date(msg.created_at).toLocaleTimeString()}
+                    </div>
+                  )}
+
+                  {isBuyer && sellerPaymentReceived && (
+                    <div className="p-3 bg-orange-600/20 border border-orange-500/30 rounded-lg text-xs text-orange-300">
+                      Waiting for seller to transfer crypto...
+                    </div>
+                  )}
+
+                  {isBuyer && sellerTransferInitiated && !buyerCryptoReceived && (
+                    <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-orange-500/20">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-semibold uppercase text-white">
+                          You Received Crypto
+                        </span>
+                        {buyerCryptoReceived ? (
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                        ) : (
+                          <Clock className="w-5 h-5 text-yellow-500" />
+                        )}
+                      </div>
+                      <Button
+                        onClick={handleBuyerCryptoReceived}
+                        className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
+                      >
+                        I Received USDC
+                      </Button>
+                    </div>
+                  )}
+
+                  {buyerCryptoReceived && (
+                    <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
+                      <div className="flex items-center gap-2 text-green-400">
+                        <CheckCircle className="w-5 h-5" />
+                        <span className="text-sm font-semibold uppercase">
+                          Order Completed
+                        </span>
                       </div>
                     </div>
-                  ))
-                )}
-                <div ref={messagesEndRef} />
-              </div>
+                  )}
 
-              {/* Message Input */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 hover:bg-[#1a2540]/70 text-white disabled:opacity-50 transition-colors"
-                  title="Upload proof image"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  disabled={uploading}
-                />
-                <input
-                  type="text"
-                  className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40 text-sm"
-                  placeholder="Type a message..."
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter" && !sending) {
-                      handleSendMessage();
-                    }
-                  }}
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!messageInput.trim() || sending}
-                  className="px-3 py-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white disabled:opacity-50"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
+                  {!isBuyer && (
+                    <div className="p-3 bg-orange-600/20 border border-orange-500/30 rounded-lg text-xs text-orange-300">
+                      <strong>Step 2:</strong> Confirm payment received, then release crypto to buyer
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
+
+        {/* FULL-WIDTH CHAT SECTION BELOW */}
+        <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30">
+          <CardContent className="p-4 flex flex-col h-full min-h-[400px]">
+            <h2 className="text-lg font-bold text-white mb-4 uppercase">
+              Chat
+            </h2>
+
+            {/* Messages Container */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-4 p-3 bg-[#1a2540]/30 rounded-lg border border-white/5">
+              {messages.length === 0 ? (
+                <div className="text-center text-white/60 text-xs py-8">
+                  No messages yet. Start chatting!
+                </div>
+              ) : (
+                messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`text-xs p-3 rounded-lg ${
+                      msg.sender_wallet === wallet.publicKey
+                        ? "bg-[#FF7A5C]/20 text-white/90 ml-4"
+                        : "bg-[#1a2540]/50 text-white/70 mr-4"
+                    }`}
+                  >
+                    <div className="font-semibold text-white/80 uppercase text-xs mb-1">
+                      {msg.sender_wallet === order.buyerWallet
+                        ? "BUYER"
+                        : "SELLER"}
+                    </div>
+                    {msg.attachment_url && (
+                      <div className="mb-2">
+                        <img
+                          src={msg.attachment_url}
+                          alt="Proof"
+                          className="max-w-[200px] rounded-lg"
+                        />
+                      </div>
+                    )}
+                    <div className="break-words">{msg.message}</div>
+                    <div className="text-xs text-white/50 mt-2">
+                      {new Date(msg.created_at).toLocaleTimeString()}
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Message Input */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 hover:bg-[#1a2540]/70 text-white disabled:opacity-50 transition-colors"
+                title="Upload proof image"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                disabled={uploading}
+              />
+              <input
+                type="text"
+                className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40 text-sm"
+                placeholder="Type a message..."
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter" && !sending) {
+                    handleSendMessage();
+                  }
+                }}
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!messageInput.trim() || sending}
+                className="px-3 py-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white disabled:opacity-50"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Bottom Navigation */}

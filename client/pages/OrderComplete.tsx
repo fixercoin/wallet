@@ -52,28 +52,33 @@ export default function OrderComplete() {
   const previousMessageCountRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load order from state or storage
+  // Load order from state or storage (with KV fallback)
   useEffect(() => {
-    const stateOrder = location.state?.order as CreatedOrder | undefined;
+    const loadOrder = async () => {
+      const stateOrder = location.state?.order as CreatedOrder | undefined;
 
-    let loadedOrder: CreatedOrder | null = null;
+      let loadedOrder: CreatedOrder | null = null;
 
-    if (stateOrder) {
-      loadedOrder = stateOrder;
-    } else if (location.state?.orderId) {
-      loadedOrder = getOrderFromStorage(location.state.orderId);
-    }
+      if (stateOrder) {
+        loadedOrder = stateOrder;
+      } else if (location.state?.orderId) {
+        // Try to load from KV first, then fall back to localStorage
+        loadedOrder = await syncOrderFromStorage(location.state.orderId);
+      }
 
-    if (loadedOrder) {
-      setOrder(loadedOrder);
-      // Restore confirmation states from stored order
-      setBuyerPaymentConfirmed(loadedOrder.buyerPaymentConfirmed ?? false);
-      setSellerPaymentReceived(loadedOrder.sellerPaymentReceived ?? false);
-      setSellerTransferInitiated(loadedOrder.sellerTransferInitiated ?? false);
-      setBuyerCryptoReceived(loadedOrder.buyerCryptoReceived ?? false);
-    }
+      if (loadedOrder) {
+        setOrder(loadedOrder);
+        // Restore confirmation states from stored order
+        setBuyerPaymentConfirmed(loadedOrder.buyerPaymentConfirmed ?? false);
+        setSellerPaymentReceived(loadedOrder.sellerPaymentReceived ?? false);
+        setSellerTransferInitiated(loadedOrder.sellerTransferInitiated ?? false);
+        setBuyerCryptoReceived(loadedOrder.buyerCryptoReceived ?? false);
+      }
 
-    setLoading(false);
+      setLoading(false);
+    };
+
+    loadOrder();
   }, [location.state]);
 
   // Fetch exchange rate from API (same as BuyData and SellData)

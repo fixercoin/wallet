@@ -362,7 +362,7 @@ export default function OrderComplete() {
                   Price
                 </div>
                 <div className="text-sm text-white/90">
-                  1 {order.token} = {order.pricePKRPerQuote.toFixed(2)} PKR
+                  1 {order.token} = {exchangeRate.toFixed(2)} PKR
                 </div>
               </div>
 

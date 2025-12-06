@@ -217,7 +217,17 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                     <span className="text-xs">MIN: {limits.min} | MAX: {limits.max}</span>
                   </td>
                   <td className="px-4 py-3 text-white/80 uppercase">EASYPAISA</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right flex gap-2 justify-end">
+                    {isAdvertiser(order) && (
+                      <Button
+                        onClick={() => handleEdit(order)}
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-3 rounded h-auto flex items-center gap-1"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                        EDIT
+                      </Button>
+                    )}
                     <Button
                       onClick={() => handleProceed(order)}
                       size="sm"

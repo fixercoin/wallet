@@ -179,15 +179,16 @@ export const makeRpcCall = async (
 
       // All endpoints failed for this attempt, retry if we have attempts left
       if (attempt < retries) {
-        const isRateLimited = lastErrorStatus === 429;
-        const baseDelay = isRateLimited ? 2000 : 800;
+        const isRateLimited = lastErrorStatus === 429 || lastErrorStatus === 503;
+        const baseDelay = isRateLimited ? 3000 : 800;
         const delayMs = baseDelay * Math.pow(2, attempt);
+        const cappedDelayMs = Math.min(delayMs, 30000); // Cap at 30 seconds
 
         console.warn(
-          `[RPC] ${method} failed on all endpoints (attempt ${attempt + 1}/${retries + 1}), retrying in ${delayMs}ms`,
+          `[RPC] ${method} failed on all endpoints (attempt ${attempt + 1}/${retries + 1}), retrying in ${cappedDelayMs}ms`,
         );
 
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        await new Promise((resolve) => setTimeout(resolve, cappedDelayMs));
       }
     }
 

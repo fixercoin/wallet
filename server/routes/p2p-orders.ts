@@ -245,6 +245,10 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
       token_amount,
       amountPKR,
       pkr_amount,
+      minAmountPKR,
+      maxAmountPKR,
+      minAmountTokens,
+      maxAmountTokens,
       pricePKRPerQuote,
       payment_method,
       paymentMethodId,
@@ -279,7 +283,7 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
     const id = orderId || generateId("order");
     const now = Date.now();
 
-    const order: P2POrder = {
+    const order: any = {
       id,
       type: finalType as "BUY" | "SELL",
       walletAddress: finalWallet,
@@ -299,6 +303,11 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
       buyerWallet,
       sellerWallet,
       adminWallet,
+      // Marketplace fields for min/max amounts
+      ...(minAmountPKR !== undefined && { minAmountPKR }),
+      ...(maxAmountPKR !== undefined && { maxAmountPKR }),
+      ...(minAmountTokens !== undefined && { minAmountTokens }),
+      ...(maxAmountTokens !== undefined && { maxAmountTokens }),
     };
 
     await saveOrder(order);

@@ -267,6 +267,18 @@ export async function createServer(): Promise<express.Application> {
     }
   });
 
+  // Token accounts endpoint
+  app.get("/api/wallet/token-accounts", async (req, res) => {
+    try {
+      await handleGetTokenAccounts(req, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch token accounts",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
   // Unified swap & quote proxies (forward to Fixorium worker or configured API)
   // Local handler: attempt Meteora swap locally first to avoid dependency on remote worker
 

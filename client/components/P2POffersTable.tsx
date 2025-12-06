@@ -216,7 +216,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
               key={order.id}
               className="p-4 rounded-lg bg-[#1a2847]/50 border border-gray-300/30"
             >
-              <div className="grid grid-cols-4 gap-3 items-start">
+              <div className="grid grid-cols-5 gap-3 items-start">
                 <div className="flex flex-col">
                   <p className="text-xs text-white/60 font-semibold uppercase mb-2">ADVERTISER</p>
                   <p className="text-xs font-semibold text-white/90 uppercase">{getCreatorName(order)}</p>
@@ -236,16 +236,17 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   <p className="text-xs text-white/60 font-semibold uppercase mb-2">PAYMENT</p>
                   <p className="text-xs font-semibold text-white/90 uppercase">EASYPAISA</p>
                 </div>
-              </div>
 
-              <div className="mt-3 flex justify-end">
-                <Button
-                  onClick={() => handleProceed(order)}
-                  size="sm"
-                  className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-3 rounded h-auto uppercase font-semibold"
-                >
-                  {orderType === "BUY" ? "BUY" : "SELL"}
-                </Button>
+                <div className="flex flex-col items-end justify-end h-full">
+                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">ACTION</p>
+                  <Button
+                    onClick={() => handleProceed(order)}
+                    size="sm"
+                    className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-3 rounded h-auto uppercase font-semibold"
+                  >
+                    {orderType === "BUY" ? "BUY" : "SELL"}
+                  </Button>
+                </div>
               </div>
             </div>
           );

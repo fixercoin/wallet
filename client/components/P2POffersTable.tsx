@@ -46,6 +46,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
   onEditOffer,
   exchangeRate = 280,
 }) => {
+  const navigate = useNavigate();
   const { wallet } = useWallet();
   const [orders, setOrders] = useState<P2POrder[]>([]);
   const [loading, setLoading] = useState(true);

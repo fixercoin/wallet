@@ -198,10 +198,19 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
         "Token accounts unavailable - returning default tokens with zero balance",
     });
   } catch (error) {
-    console.error("[TokenAccounts] Error:", error);
-    res.status(500).json({
-      error: error instanceof Error ? error.message : "Internal server error",
-      tokens: [],
+    console.error("[TokenAccounts] Unexpected error:", error);
+
+    // Return default tokens even on unexpected errors
+    const defaultTokens = Object.values(KNOWN_TOKENS).map((token) => ({
+      ...token,
+      balance: 0,
+    }));
+
+    return res.status(200).json({
+      publicKey: (req.query.publicKey as string) || "unknown",
+      tokens: defaultTokens,
+      count: defaultTokens.length,
+      warning: "Token accounts unavailable due to server error",
     });
   }
 };

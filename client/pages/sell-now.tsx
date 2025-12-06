@@ -436,7 +436,7 @@ export default function SellNow() {
                 !maxAmountPKR ||
                 Number(minAmountPKR) <= 0 ||
                 Number(maxAmountPKR) <= 0 ||
-                Number(minAmountUSDC) >= Number(maxAmountUSDC) ||
+                Number(minAmountPKR) >= Number(maxAmountPKR) ||
                 !paymentMethod ||
                 fetchingPaymentMethod
               }

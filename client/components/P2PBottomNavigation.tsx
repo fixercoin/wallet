@@ -62,36 +62,72 @@ export const P2PBottomNavigation: React.FC<P2PBottomNavigationProps> = ({
 
       {/* Post Dialog */}
       <Dialog open={showPostDialog} onOpenChange={setShowPostDialog}>
-        <DialogContent className="bg-[#1a2847] border border-gray-300/30 text-white">
+        <DialogContent className="bg-[#1a2847] border border-gray-300/30 text-white max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-white uppercase">
               CREATE POST
             </DialogTitle>
             <DialogDescription className="text-white/70 uppercase">
-              SELECT WHETHER YOU WANT TO BUY OR SELL CRYPTO
+              CREATE POST HERE
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4">
-            <Button
-              onClick={() => {
-                setShowPostDialog(false);
-                navigate("/buy-crypto");
-              }}
-              className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-600/20 to-blue-600/10 border border-blue-500/30 hover:border-blue-500/50 text-white font-semibold rounded-lg transition-all uppercase"
-            >
-              <ShoppingCart className="w-8 h-8" />
-              <span>BUY CRYPTO</span>
-            </Button>
-            <Button
-              onClick={() => {
-                setShowPostDialog(false);
-                navigate("/sell-now");
-              }}
-              className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-green-600/20 to-green-600/10 border border-green-500/30 hover:border-green-500/50 text-white font-semibold rounded-lg transition-all uppercase"
-            >
-              <TrendingUp className="w-8 h-8" />
-              <span>SELL CRYPTO</span>
-            </Button>
+
+          <div className="space-y-4">
+            {/* Server Selection */}
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-3 uppercase">
+                SELECT SERVER
+              </label>
+              <div className="space-y-2">
+                {SERVERS.map((server) => (
+                  <Button
+                    key={server.id}
+                    onClick={() => setSelectedServer(server.id)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all ${
+                      selectedServer === server.id
+                        ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+                        : "bg-[#1a2540]/50 border border-gray-300/30 text-gray-300 hover:bg-[#1a2540]/70"
+                    }`}
+                  >
+                    <span className="font-semibold uppercase">{server.name}</span>
+                    <span className="text-xs text-gray-400">pwd: {server.password}</span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Buy or Sell Selection */}
+            {selectedServer && (
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-3 uppercase">
+                  POST TYPE
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    onClick={() => {
+                      setShowPostDialog(false);
+                      setSelectedServer(null);
+                      navigate("/buy-crypto");
+                    }}
+                    className="h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-600/20 to-blue-600/10 border border-blue-500/30 hover:border-blue-500/50 text-white font-semibold rounded-lg transition-all uppercase"
+                  >
+                    <ShoppingCart className="w-6 h-6" />
+                    <span className="text-xs">BUY</span>
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowPostDialog(false);
+                      setSelectedServer(null);
+                      navigate("/sell-now");
+                    }}
+                    className="h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-green-600/20 to-green-600/10 border border-green-500/30 hover:border-green-500/50 text-white font-semibold rounded-lg transition-all uppercase"
+                  >
+                    <TrendingUp className="w-6 h-6" />
+                    <span className="text-xs">SELL</span>
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

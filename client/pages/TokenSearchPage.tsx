@@ -134,7 +134,7 @@ export default function TokenSearchPage() {
       </svg>
 
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-br from-[#1f1f1f] via-[#1a2f1f] to-[#0f4620] border-b border-[#22c55e]/30 shadow-sm">
+      <div className="sticky top-0 z-40 bg-transparent border-b border-[#22c55e]/30 shadow-sm backdrop-blur-sm">
         <div className="w-full max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <Button
             onClick={() => navigate(-1)}

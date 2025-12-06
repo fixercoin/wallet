@@ -249,7 +249,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
 
       {/* Desktop Table */}
       <div className="hidden sm:block overflow-x-auto rounded-lg border border-gray-300/30">
-        <table className="w-full text-xs">
+        <table className="w-full text-[10px]">
           <thead>
             <tr className="bg-[#1a2847]/50 border-b border-gray-300/30">
               <th className="px-4 py-3 text-left text-white/70 font-semibold">

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
@@ -20,6 +20,29 @@ export default function SellData() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showTradeDialog, setShowTradeDialog] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<P2POrder | null>(null);
+  const [exchangeRate, setExchangeRate] = useState<number>(280);
+  const [fetchingRate, setFetchingRate] = useState(false);
+
+  // Fetch exchange rate on mount
+  useEffect(() => {
+    const fetchRate = async () => {
+      setFetchingRate(true);
+      try {
+        const response = await fetch("/api/token/price?token=USDC");
+        if (!response.ok) throw new Error("Failed to fetch rate");
+        const data = await response.json();
+        const rate = data.rate || data.priceInPKR || 280;
+        setExchangeRate(typeof rate === "number" && rate > 0 ? rate : 280);
+      } catch (error) {
+        console.error("Exchange rate error:", error);
+        setExchangeRate(280);
+      } finally {
+        setFetchingRate(false);
+      }
+    };
+
+    fetchRate();
+  }, []);
 
   // Auto-refresh data every 10 seconds
   React.useEffect(() => {
@@ -63,7 +86,7 @@ export default function SellData() {
       <P2POffersTable
         key={refreshKey}
         orderType="SELL"
-        exchangeRate={280}
+        exchangeRate={exchangeRate}
         onSelectOffer={(offer) => {
           setSelectedOffer(offer);
           setShowTradeDialog(true);
@@ -76,7 +99,7 @@ export default function SellData() {
         onOpenChange={setShowTradeDialog}
         orderType="SELL"
         defaultToken={selectedOffer?.token || "USDC"}
-        defaultPrice={selectedOffer?.pricePKRPerQuote || 280}
+        defaultPrice={selectedOffer?.pricePKRPerQuote || exchangeRate}
         minAmount={
           selectedOffer?.minAmountTokens || selectedOffer?.minAmountPKR || 0
         }

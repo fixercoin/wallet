@@ -47,24 +47,10 @@ export const onRequestGet = async ({
 
     const url = new URL(request.url);
     const walletAddress = url.searchParams.get("wallet");
-    const orderId = url.searchParams.get("id");
     const status = url.searchParams.get("status");
     const type = url.searchParams.get("type");
 
     const kvStore = new KVStore(env.STAKING_KV);
-
-    if (orderId) {
-      // Get single order by ID
-      const order = await kvStore.getOrder(orderId);
-      if (!order) {
-        return jsonResponse(404, { error: "Order not found" });
-      }
-      return jsonResponse(200, {
-        success: true,
-        data: order,
-        orders: [order],
-      });
-    }
 
     if (walletAddress) {
       // Get all orders for specific wallet
@@ -247,95 +233,9 @@ export const onRequestPost = async ({
   }
 };
 
-export const onRequestPut = async ({
-  request,
-  env,
-}: {
-  request: Request;
-  env: Env;
-}) => {
-  try {
-    if (!env.STAKING_KV) {
-      return jsonResponse(500, {
-        error: "KV storage not configured",
-      });
-    }
+// Note: PUT for individual orders is handled in functions/api/p2p/orders/[orderId].ts
 
-    const body = await request.json();
-    const { orderId, status } = body;
-
-    if (!orderId) {
-      return jsonResponse(400, { error: "Missing order ID" });
-    }
-
-    const kvStore = new KVStore(env.STAKING_KV);
-    const order = await kvStore.getOrder(orderId);
-
-    if (!order) {
-      return jsonResponse(404, { error: "Order not found" });
-    }
-
-    const updatedOrder = await kvStore.saveOrder(
-      {
-        walletAddress: order.walletAddress,
-        type: order.type,
-        token: order.token,
-        amountTokens: order.amountTokens,
-        amountPKR: order.amountPKR,
-        paymentMethodId: order.paymentMethodId,
-        status: status || order.status,
-      },
-      orderId,
-    );
-
-    return jsonResponse(200, {
-      success: true,
-      data: updatedOrder,
-    });
-  } catch (error) {
-    console.error("Error in /api/p2p/orders PUT:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return jsonResponse(500, { error: message });
-  }
-};
-
-export const onRequestDelete = async ({
-  request,
-  env,
-}: {
-  request: Request;
-  env: Env;
-}) => {
-  try {
-    if (!env.STAKING_KV) {
-      return jsonResponse(500, {
-        error: "KV storage not configured",
-      });
-    }
-
-    const url = new URL(request.url);
-    const walletAddress = url.searchParams.get("wallet");
-    const orderId = url.searchParams.get("id");
-
-    if (!walletAddress || !orderId) {
-      return jsonResponse(400, {
-        error: "Missing wallet address or order ID",
-      });
-    }
-
-    const kvStore = new KVStore(env.STAKING_KV);
-    await kvStore.deleteOrder(orderId, walletAddress);
-
-    return jsonResponse(200, {
-      success: true,
-      message: "Order deleted",
-    });
-  } catch (error) {
-    console.error("Error in /api/p2p/orders DELETE:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return jsonResponse(500, { error: message });
-  }
-};
+// Note: DELETE for individual orders is handled in functions/api/p2p/orders/[orderId].ts
 
 export const onRequestOptions = async () => {
   return new Response(null, {

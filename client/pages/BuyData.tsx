@@ -6,7 +6,9 @@ import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2POffersTable } from "@/components/P2POffersTable";
+import { P2PTradeDialog, type TradeDetails } from "@/components/P2PTradeDialog";
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
+import type { P2POrder } from "@/components/P2POffersTable";
 
 export default function BuyData() {
   const navigate = useNavigate();
@@ -16,6 +18,8 @@ export default function BuyData() {
     string | undefined
   >();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showTradeDialog, setShowTradeDialog] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState<P2POrder | null>(null);
 
   // Auto-refresh data every 10 seconds
   React.useEffect(() => {
@@ -67,17 +71,37 @@ export default function BuyData() {
         key={refreshKey}
         orderType="BUY"
         exchangeRate={280}
-        onSelectOffer={async (offer) => {
+        onSelectOffer={(offer) => {
+          setSelectedOffer(offer);
+          setShowTradeDialog(true);
+        }}
+      />
+
+      {/* Trade Dialog */}
+      <P2PTradeDialog
+        open={showTradeDialog}
+        onOpenChange={setShowTradeDialog}
+        orderType="BUY"
+        defaultToken={selectedOffer?.token || "USDC"}
+        defaultPrice={selectedOffer?.pricePKRPerQuote || 280}
+        minAmount={
+          selectedOffer?.minAmountTokens || selectedOffer?.minAmountPKR || 0
+        }
+        maxAmount={
+          selectedOffer?.maxAmountTokens || selectedOffer?.maxAmountPKR || Infinity
+        }
+        onConfirm={async (details) => {
           try {
-            if (!wallet?.publicKey) {
-              toast.error("Wallet not connected");
+            if (!wallet?.publicKey || !selectedOffer) {
+              toast.error("Missing information");
               return;
             }
 
             const createdOrder = await createOrderFromOffer(
-              offer,
+              selectedOffer,
               wallet.publicKey,
               "BUY",
+              details,
             );
 
             toast.success("Order created successfully!");

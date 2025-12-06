@@ -128,6 +128,34 @@ export default function BuyCrypto() {
     }
   };
 
+  // Load editing order if edit parameter exists
+  useEffect(() => {
+    const fetchEditingOrder = async () => {
+      if (!editOrderId || !wallet?.publicKey) return;
+
+      try {
+        const response = await fetch(`/api/p2p/orders/${editOrderId}`);
+        if (!response.ok) throw new Error("Failed to fetch order");
+
+        const data = await response.json();
+        const order = data.order || data;
+
+        setEditingOrder(order);
+        setMinAmountPKR(String(order.minAmountPKR || ""));
+        setMaxAmountPKR(String(order.maxAmountPKR || ""));
+      } catch (error) {
+        console.error("Error fetching order:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load order data",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchEditingOrder();
+  }, [editOrderId, wallet?.publicKey, toast]);
+
   // Load token logos/prices (best-effort)
   useEffect(() => {
     const fetchTokens = async () => {

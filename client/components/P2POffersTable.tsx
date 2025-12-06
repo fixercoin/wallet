@@ -129,20 +129,28 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
       const min =
         order.minAmountTokens !== undefined && order.minAmountTokens !== null
           ? order.minAmountTokens
-          : order.amountTokens !== undefined && order.amountTokens !== null
-            ? order.amountTokens
-            : parseFloat(order.token_amount || "0") || 0;
+          : order.minAmountPKR !== undefined && order.minAmountPKR !== null
+            ? order.minAmountPKR
+            : order.amountTokens !== undefined && order.amountTokens !== null
+              ? order.amountTokens
+              : order.amountPKR !== undefined && order.amountPKR !== null
+                ? order.amountPKR
+                : 0;
       const max =
         order.maxAmountTokens !== undefined && order.maxAmountTokens !== null
           ? order.maxAmountTokens
-          : order.amountTokens !== undefined && order.amountTokens !== null
-            ? order.amountTokens
-            : parseFloat(order.token_amount || "0") || 0;
-      const minFormatted = typeof min === "number" ? min.toFixed(2) : min;
-      const maxFormatted = typeof max === "number" ? max.toFixed(2) : max;
+          : order.maxAmountPKR !== undefined && order.maxAmountPKR !== null
+            ? order.maxAmountPKR
+            : order.amountTokens !== undefined && order.amountTokens !== null
+              ? order.amountTokens
+              : order.amountPKR !== undefined && order.amountPKR !== null
+                ? order.amountPKR
+                : 0;
+      const minFormatted = typeof min === "number" ? min.toFixed(3) : min;
+      const maxFormatted = typeof max === "number" ? max.toFixed(3) : max;
       return {
-        min: minFormatted,
-        max: maxFormatted,
+        min: `${minFormatted} USDC`,
+        max: `${maxFormatted} USDC`,
       };
     }
   };

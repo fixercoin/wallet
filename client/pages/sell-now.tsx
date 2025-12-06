@@ -64,8 +64,8 @@ export default function SellNow() {
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
     DEFAULT_TOKENS[0],
   );
-  const [minAmountUSDC, setMinAmountUSDC] = useState<string>("");
-  const [maxAmountUSDC, setMaxAmountUSDC] = useState<string>("");
+  const [minAmountTokens, setMinAmountTokens] = useState<string>("");
+  const [maxAmountTokens, setMaxAmountTokens] = useState<string>("");
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [fetchingRate, setFetchingRate] = useState(false);
@@ -159,8 +159,12 @@ export default function SellNow() {
         setSelectedToken(token);
       }
       // Set the min/max amounts
-      setMinAmountUSDC(String(editingOrder.minAmountTokens || ""));
-      setMaxAmountUSDC(String(editingOrder.maxAmountTokens || ""));
+      setMinAmountTokens(
+        String(editingOrder.minAmountTokens || editingOrder.minAmountPKR || ""),
+      );
+      setMaxAmountTokens(
+        String(editingOrder.maxAmountTokens || editingOrder.maxAmountPKR || ""),
+      );
     }
   }, [editingOrder, tokens]);
 
@@ -294,10 +298,10 @@ export default function SellNow() {
       return;
     }
 
-    const minAmount = Number(minAmountUSDC);
-    const maxAmount = Number(maxAmountUSDC);
+    const minAmount = Number(minAmountTokens);
+    const maxAmount = Number(maxAmountTokens);
 
-    if (!minAmountUSDC || !isFinite(minAmount) || minAmount <= 0) {
+    if (!minAmountTokens || !isFinite(minAmount) || minAmount <= 0) {
       toast({
         title: "Invalid Minimum Amount",
         description: "Enter a valid minimum USDC amount",
@@ -306,7 +310,7 @@ export default function SellNow() {
       return;
     }
 
-    if (!maxAmountUSDC || !isFinite(maxAmount) || maxAmount <= 0) {
+    if (!maxAmountTokens || !isFinite(maxAmount) || maxAmount <= 0) {
       toast({
         title: "Invalid Maximum Amount",
         description: "Enter a valid maximum USDC amount",
@@ -404,8 +408,8 @@ export default function SellNow() {
               </label>
               <input
                 type="number"
-                value={minAmountUSDC}
-                onChange={(e) => setMinAmountUSDC(e.target.value)}
+                value={minAmountTokens}
+                onChange={(e) => setMinAmountTokens(e.target.value)}
                 placeholder="Enter minimum amount in USDC"
                 className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
                 min="0"
@@ -419,8 +423,8 @@ export default function SellNow() {
               </label>
               <input
                 type="number"
-                value={maxAmountUSDC}
-                onChange={(e) => setMaxAmountUSDC(e.target.value)}
+                value={maxAmountTokens}
+                onChange={(e) => setMaxAmountTokens(e.target.value)}
                 placeholder="Enter maximum amount in USDC"
                 className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
                 min="0"
@@ -432,11 +436,11 @@ export default function SellNow() {
               onClick={handleSellClick}
               disabled={
                 loading ||
-                !minAmountUSDC ||
-                !maxAmountUSDC ||
-                Number(minAmountUSDC) <= 0 ||
-                Number(maxAmountUSDC) <= 0 ||
-                Number(minAmountUSDC) >= Number(maxAmountUSDC) ||
+                !minAmountTokens ||
+                !maxAmountTokens ||
+                Number(minAmountTokens) <= 0 ||
+                Number(maxAmountTokens) <= 0 ||
+                Number(minAmountTokens) >= Number(maxAmountTokens) ||
                 !paymentMethod ||
                 fetchingPaymentMethod
               }

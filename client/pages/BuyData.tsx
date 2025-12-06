@@ -49,20 +49,13 @@ export default function BuyData() {
       style={{ fontSize: "12px", backgroundColor: "#1a1a1a", color: "#fff" }}
     >
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4 flex items-center justify-between">
+      <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4">
         <button
           onClick={() => navigate("/")}
           className="text-gray-300 hover:text-gray-100 transition-colors"
           aria-label="Back"
         >
           <ArrowLeft className="w-6 h-6" />
-        </button>
-        <button
-          onClick={() => setRefreshKey((prev) => prev + 1)}
-          className="text-gray-300 hover:text-gray-100 transition-colors text-xs font-semibold"
-          title="Refresh offers"
-        >
-          REFRESH
         </button>
       </div>
 

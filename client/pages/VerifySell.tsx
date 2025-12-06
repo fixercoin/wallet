@@ -362,22 +362,9 @@ export default function VerifySell() {
         metadata: { attachmentDataUrl: dataUrl, filename: file.name },
         timestamp: Date.now(),
       };
-      const serverMsg = await saveServerChatMessage(
-        selectedOrder.roomId,
-        wallet.publicKey,
-        message.text,
-      );
-
-      if (serverMsg) {
-        serverMsg.senderRole = "seller";
-        serverMsg.type = "attachment";
-        serverMsg.metadata = { attachmentDataUrl: dataUrl, filename: file.name };
-        setChatLog((prev) => [...prev, serverMsg]);
-        lastMessageCountRef.current += 1;
-      } else {
-        saveChatMessage(message);
-        setChatLog((prev) => [...prev, message]);
-      }
+      saveChatMessage(message);
+      setChatLog((prev) => [...prev, message]);
+      lastMessageCountRef.current += 1;
     } catch (e) {
       console.error("Attachment failed", e);
       toast({

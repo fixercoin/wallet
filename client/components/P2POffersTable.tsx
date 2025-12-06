@@ -206,10 +206,31 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
             className="p-3 rounded-lg bg-[#1a2847]/50 border border-gray-300/30 overflow-x-auto"
           >
             <div className="flex items-center gap-3 whitespace-nowrap min-w-min">
-              <div className="flex flex-col">
+              <div className="flex flex-col flex-shrink-0">
                 <p className="text-xs text-white/60 uppercase">Advertiser</p>
                 <p className="text-xs font-semibold text-white/90">
                   {getCreatorName(order)}
+                </p>
+              </div>
+
+              <div className="flex flex-col flex-shrink-0">
+                <p className="text-xs text-white/60 uppercase">Price</p>
+                <p className="text-xs font-semibold text-white/90">
+                  {getPrice(order)}
+                </p>
+              </div>
+
+              <div className="flex flex-col flex-shrink-0">
+                <p className="text-xs text-white/60 uppercase">Limit</p>
+                <p className="text-xs font-semibold text-white/90">
+                  {getLimit(order)}
+                </p>
+              </div>
+
+              <div className="flex flex-col flex-shrink-0">
+                <p className="text-xs text-white/60 uppercase">Payment</p>
+                <p className="text-xs font-semibold text-white/90">
+                  {order.payment_method || order.paymentMethodId || "—"}
                 </p>
               </div>
 
@@ -220,27 +241,6 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
               >
                 {orderType === "BUY" ? "Buy" : "Sell"}
               </Button>
-
-              <div className="flex flex-col">
-                <p className="text-xs text-white/60 uppercase">Price</p>
-                <p className="text-xs font-semibold text-white/90">
-                  {getPrice(order)}
-                </p>
-              </div>
-
-              <div className="flex flex-col">
-                <p className="text-xs text-white/60 uppercase">Limit</p>
-                <p className="text-xs font-semibold text-white/90">
-                  {getLimit(order)}
-                </p>
-              </div>
-
-              <div className="flex flex-col">
-                <p className="text-xs text-white/60 uppercase">Payment</p>
-                <p className="text-xs font-semibold text-white/90">
-                  {order.payment_method || order.paymentMethodId || "—"}
-                </p>
-              </div>
             </div>
           </div>
         ))}

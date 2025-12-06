@@ -15,12 +15,21 @@ interface P2PBottomNavigationProps {
   onCreateOfferClick?: () => void;
 }
 
+const SERVERS = [
+  { id: 1, name: "Server 1", password: "123" },
+  { id: 2, name: "Server 2", password: "123" },
+  { id: 3, name: "Server 3", password: "123" },
+  { id: 4, name: "Server 4", password: "123" },
+  { id: 5, name: "Server 5", password: "123" },
+];
+
 export const P2PBottomNavigation: React.FC<P2PBottomNavigationProps> = ({
   onPaymentClick,
   onCreateOfferClick,
 }) => {
   const navigate = useNavigate();
   const [showPostDialog, setShowPostDialog] = useState(false);
+  const [selectedServer, setSelectedServer] = useState<number | null>(null);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95 p-4 pb-8">

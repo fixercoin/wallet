@@ -11,6 +11,10 @@ export interface P2POrder {
   token_amount?: string;
   amountPKR?: number;
   pkr_amount?: number;
+  minAmountPKR?: number;
+  maxAmountPKR?: number;
+  minAmountTokens?: number;
+  maxAmountTokens?: number;
   pricePKRPerQuote?: number;
   payment_method?: string;
   paymentMethodId?: string;

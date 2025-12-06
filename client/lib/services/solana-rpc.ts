@@ -63,13 +63,9 @@ export const KNOWN_TOKENS: Record<string, TokenMetadata> = {
 // Request queue to prevent duplicate requests
 const requestQueue = new Map<string, Promise<any>>();
 
-// Public RPC endpoints for fallback (only CORS-enabled endpoints)
-// NOTE: These endpoints are explicitly tested to support CORS from browsers
-// Best practice: use backend proxy for sendTransaction/simulateTransaction
-const PUBLIC_RPC_ENDPOINTS = [
-  "https://solana-rpc.publicnode.com/",
-  "https://solana.publicnode.com",
-];
+// Use Helius RPC exclusively for reliability
+// Helius is the primary RPC endpoint with rate limit protection and CORS support
+const HELIUS_RPC_ENDPOINT = SOLANA_RPC_URL;
 
 /**
  * Make a Solana JSON RPC call directly to public endpoints

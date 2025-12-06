@@ -376,8 +376,17 @@ export default function SellNow() {
                 AVAILABLE BALANCE
               </div>
               <div className="mt-1 text-sm">
-                <span className="font-semibold">
-                  {selectedTokenBalance.toFixed(6)} {selectedToken.symbol}
+                <span className="font-semibold flex items-center gap-2">
+                  {fetchingUsdcBalance && selectedToken.symbol === "USDC" ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Fetching...</span>
+                    </>
+                  ) : (
+                    <>
+                      {selectedTokenBalance.toFixed(6)} {selectedToken.symbol}
+                    </>
+                  )}
                 </span>
               </div>
             </div>

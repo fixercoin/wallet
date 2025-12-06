@@ -210,6 +210,15 @@ export default function SellOrder() {
         </Card>
       </div>
 
+      {/* P2P Offers Table */}
+      <P2POffersTable
+        orderType="SELL"
+        exchangeRate={exchangeRate || 280}
+        onSelectOffer={(order) => {
+          toast.success(`Selected offer from ${order.walletAddress || order.creator_wallet}`);
+        }}
+      />
+
       {/* Payment Method Dialog */}
       <PaymentMethodDialog
         open={showPaymentDialog}

@@ -50,7 +50,7 @@ const DEFAULT_TOKENS: TokenOption[] = [
     id: "USDC",
     name: "USDC",
     symbol: "USDC",
-    logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5Au7BXRSpJfDw3gEPrwwAau4vTNihtQ5go5Q/logo.png",
+    logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
     mint: SUPPORTED_TOKEN_MINTS.USDC,
   },
 ];

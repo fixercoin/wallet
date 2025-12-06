@@ -18,7 +18,6 @@ export default function SellOrder() {
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [usdcBalance, setUsdcBalance] = useState<number>(0);
   const [loadingRate, setLoadingRate] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
@@ -73,62 +72,32 @@ export default function SellOrder() {
     }
   }, [amountUSDC, exchangeRate]);
 
-  const handleSubmitOrder = async () => {
-    try {
-      if (!wallet?.publicKey) {
-        toast.error("Please connect your wallet first");
-        return;
-      }
-
-      const usdcAmount = parseFloat(amountUSDC);
-      if (isNaN(usdcAmount) || usdcAmount <= 0) {
-        toast.error("Please enter a valid USDC amount");
-        return;
-      }
-
-      if (usdcAmount > usdcBalance) {
-        toast.error(
-          `Insufficient USDC balance. You have ${usdcBalance.toFixed(6)} USDC`,
-        );
-        return;
-      }
-
-      if (!exchangeRate) {
-        toast.error("Exchange rate not available");
-        return;
-      }
-
-      setSubmitting(true);
-
-      const response = await fetch("/api/p2p/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: "SELL",
-          amountUSDC: usdcAmount,
-          estimatedPKR: estimatedPKR,
-          pricePerUSDC: exchangeRate,
-          walletAddress: wallet.publicKey,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to submit order");
-      }
-
-      toast.success("Sell order submitted successfully!");
-      navigate("/");
-    } catch (error) {
-      console.error("Error submitting order:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to submit order",
-      );
-    } finally {
-      setSubmitting(false);
+  const handleSubmitOrder = () => {
+    if (!wallet?.publicKey) {
+      toast.error("Please connect your wallet first");
+      return;
     }
+
+    const usdcAmount = parseFloat(amountUSDC);
+    if (isNaN(usdcAmount) || usdcAmount <= 0) {
+      toast.error("Please enter a valid USDC amount");
+      return;
+    }
+
+    if (usdcAmount > usdcBalance) {
+      toast.error(
+        `Insufficient USDC balance. You have ${usdcBalance.toFixed(6)} USDC`,
+      );
+      return;
+    }
+
+    if (!exchangeRate) {
+      toast.error("Exchange rate not available");
+      return;
+    }
+
+    toast.success("Form submitted. Navigating to your orders...");
+    navigate("/selldata");
   };
 
   if (!wallet) {
@@ -227,7 +196,6 @@ export default function SellOrder() {
             <Button
               onClick={handleSubmitOrder}
               disabled={
-                submitting ||
                 loadingRate ||
                 !amountUSDC ||
                 amountUSDC === "0" ||
@@ -235,7 +203,7 @@ export default function SellOrder() {
               }
               className="w-full py-3 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white hover:shadow-lg transition-colors uppercase font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? "Submitting..." : "Submit Order"}
+              Submit Order
             </Button>
           </CardContent>
         </Card>

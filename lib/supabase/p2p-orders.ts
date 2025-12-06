@@ -103,7 +103,14 @@ export async function getOrdersFromSupabase(filters?: {
  * Create a new order
  */
 export async function createOrderInSupabase(
-  order: Omit<P2POrder, "id" | "created_at" | "updated_at" | "created_timestamp" | "updated_timestamp">,
+  order: Omit<
+    P2POrder,
+    | "id"
+    | "created_at"
+    | "updated_at"
+    | "created_timestamp"
+    | "updated_timestamp"
+  >,
 ): Promise<P2POrder> {
   try {
     const now = Date.now();

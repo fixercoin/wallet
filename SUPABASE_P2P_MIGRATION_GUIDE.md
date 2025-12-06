@@ -10,9 +10,11 @@ This guide explains how to migrate P2P functionality from Cloudflare KV to Supab
 ## Files Created
 
 ### 1. **lib/supabase/niazi.tsx** - SQL Schema & Interfaces
+
 Complete SQL schema definitions for all P2P tables and TypeScript interfaces for type safety.
 
 **Tables Created:**
+
 - `p2p_orders` - All buy/sell orders
 - `payment_methods` - Payment method details
 - `escrow` - Escrow management
@@ -24,6 +26,7 @@ Complete SQL schema definitions for all P2P tables and TypeScript interfaces for
 - `rewards` - Reward distribution
 
 **How to Use:**
+
 1. Go to your Supabase dashboard: https://pcuhmppymboyukkdxuba.supabase.co
 2. Navigate to SQL Editor
 3. Copy the entire SQL schema from `P2P_SQL_SCHEMAS` constant in `niazi.tsx`
@@ -31,18 +34,22 @@ Complete SQL schema definitions for all P2P tables and TypeScript interfaces for
 5. Click Execute to create all tables
 
 ### 2. **lib/supabase/client.ts** - Supabase Client
+
 Initializes and exports the Supabase client with proper configuration.
 
 **Usage:**
+
 ```typescript
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from "@/lib/supabase/client";
 
 // Use in any component or function
-const { data, error } = await supabase.from('p2p_orders').select('*');
+const { data, error } = await supabase.from("p2p_orders").select("*");
 ```
 
 ### 3. **lib/supabase/p2p-orders.ts** - Order Management
+
 Functions for managing P2P orders:
+
 - `getOrderFromSupabase()` - Get single order
 - `getOrdersByWalletFromSupabase()` - Get wallet's orders
 - `getOrdersFromSupabase()` - Get filtered orders
@@ -52,7 +59,9 @@ Functions for managing P2P orders:
 - `subscribeToOrderUpdates()` - Real-time subscriptions
 
 ### 4. **lib/supabase/p2p-payment-methods.ts** - Payment Methods
+
 Functions for managing payment methods:
+
 - `getPaymentMethodsByWalletFromSupabase()`
 - `getPaymentMethodFromSupabase()`
 - `savePaymentMethodToSupabase()`
@@ -60,7 +69,9 @@ Functions for managing payment methods:
 - `getPaymentMethodByAccountFromSupabase()`
 
 ### 5. **lib/supabase/p2p-escrow.ts** - Escrow Management
+
 Functions for escrow operations:
+
 - `createEscrowInSupabase()`
 - `getEscrowFromSupabase()`
 - `getEscrowsByOrderFromSupabase()`
@@ -69,7 +80,9 @@ Functions for escrow operations:
 - `subscribeToEscrowUpdates()` - Real-time updates
 
 ### 6. **lib/supabase/p2p-disputes.ts** - Dispute Management
+
 Functions for dispute handling:
+
 - `createDisputeInSupabase()`
 - `getDisputeFromSupabase()`
 - `getAllDisputesFromSupabase()`
@@ -78,28 +91,34 @@ Functions for dispute handling:
 - `subscribeToOpenDisputes()` - Real-time updates
 
 ### 7. **lib/supabase/p2p-notifications.ts** - Notifications & Chat
+
 Functions for notifications and trade messages:
 
 **Notifications:**
+
 - `getNotificationsByWalletFromSupabase()`
 - `createNotificationInSupabase()`
 - `markNotificationAsReadInSupabase()`
 - `subscribeToNotifications()` - Real-time updates
 
 **Trade Rooms:**
+
 - `createTradeRoomInSupabase()`
 - `getTradeRoomFromSupabase()`
 - `updateTradeRoomStatusInSupabase()`
 
 **Trade Messages:**
+
 - `sendTradeMessageInSupabase()`
 - `getTradeMessagesFromSupabase()`
 - `subscribeToTradeMessages()` - Real-time updates
 
 ### 8. **wrangler-supabase.toml** - Cloudflare Configuration
+
 Updated Cloudflare Pages configuration with Supabase environment variables.
 
 **Key Changes:**
+
 - Removed KV namespace bindings (no longer needed)
 - Added Supabase URL and Anon Key to environment variables
 - Kept all other Cloudflare Pages settings
@@ -128,15 +147,17 @@ Updated Cloudflare Pages configuration with Supabase environment variables.
 Replace all API calls to Cloudflare KV endpoints with Supabase functions.
 
 **Before (Cloudflare KV):**
+
 ```typescript
-import { getOrdersByWalletFromAPI } from '@/lib/p2p-order-api';
+import { getOrdersByWalletFromAPI } from "@/lib/p2p-order-api";
 
 const orders = await getOrdersByWalletFromAPI(walletAddress);
 ```
 
 **After (Supabase):**
+
 ```typescript
-import { getOrdersByWalletFromSupabase } from '@/lib/supabase/p2p-orders';
+import { getOrdersByWalletFromSupabase } from "@/lib/supabase/p2p-orders";
 
 const orders = await getOrdersByWalletFromSupabase(walletAddress);
 ```
@@ -160,33 +181,37 @@ const orders = await getOrdersByWalletFromSupabase(walletAddress);
 ## API Function Mapping
 
 ### Orders
-| Old Function | New Function |
-|---|---|
-| `getOrderFromAPI()` | `getOrderFromSupabase()` |
+
+| Old Function                 | New Function                      |
+| ---------------------------- | --------------------------------- |
+| `getOrderFromAPI()`          | `getOrderFromSupabase()`          |
 | `getOrdersByWalletFromAPI()` | `getOrdersByWalletFromSupabase()` |
-| `createOrderInAPI()` | `createOrderInSupabase()` |
-| `updateOrderInAPI()` | `updateOrderInSupabase()` |
-| `deleteOrderFromAPI()` | `deleteOrderFromSupabase()` |
+| `createOrderInAPI()`         | `createOrderInSupabase()`         |
+| `updateOrderInAPI()`         | `updateOrderInSupabase()`         |
+| `deleteOrderFromAPI()`       | `deleteOrderFromSupabase()`       |
 
 ### Payment Methods
-| Old Function | New Function |
-|---|---|
+
+| Old Function                  | New Function                              |
+| ----------------------------- | ----------------------------------------- |
 | `getPaymentMethodsByWallet()` | `getPaymentMethodsByWalletFromSupabase()` |
-| `savePaymentMethod()` | `savePaymentMethodToSupabase()` |
-| `deletePaymentMethod()` | `deletePaymentMethodFromSupabase()` |
+| `savePaymentMethod()`         | `savePaymentMethodToSupabase()`           |
+| `deletePaymentMethod()`       | `deletePaymentMethodFromSupabase()`       |
 
 ### Escrow
-| Old Function | New Function |
-|---|---|
-| `createEscrow()` | `createEscrowInSupabase()` |
-| `getEscrow()` | `getEscrowFromSupabase()` |
+
+| Old Function           | New Function                     |
+| ---------------------- | -------------------------------- |
+| `createEscrow()`       | `createEscrowInSupabase()`       |
+| `getEscrow()`          | `getEscrowFromSupabase()`        |
 | `updateEscrowStatus()` | `updateEscrowStatusInSupabase()` |
 
 ### Disputes
-| Old Function | New Function |
-|---|---|
-| `createDispute()` | `createDisputeInSupabase()` |
-| `getDispute()` | `getDisputeFromSupabase()` |
+
+| Old Function       | New Function                 |
+| ------------------ | ---------------------------- |
+| `createDispute()`  | `createDisputeInSupabase()`  |
+| `getDispute()`     | `getDisputeFromSupabase()`   |
 | `resolveDispute()` | `resolveDisputeInSupabase()` |
 
 ## Real-Time Subscriptions
@@ -194,12 +219,13 @@ const orders = await getOrdersByWalletFromSupabase(walletAddress);
 Supabase supports real-time updates using PostgreSQL's LISTEN/NOTIFY.
 
 **Example:**
+
 ```typescript
-import { subscribeToOrderUpdates } from '@/lib/supabase/p2p-orders';
+import { subscribeToOrderUpdates } from "@/lib/supabase/p2p-orders";
 
 // Subscribe to updates for a specific order
 const unsubscribe = subscribeToOrderUpdates(orderId, (updatedOrder) => {
-  console.log('Order updated:', updatedOrder);
+  console.log("Order updated:", updatedOrder);
 });
 
 // Clean up subscription when component unmounts
@@ -220,16 +246,19 @@ const unsubscribe = subscribeToOrderUpdates(orderId, (updatedOrder) => {
 ## Troubleshooting
 
 ### Tables not created
+
 - Check if SQL was pasted correctly
 - Verify all SQL statements executed without errors
 - Try creating tables one at a time
 
 ### Authentication errors
+
 - Verify Supabase credentials are correct
 - Check environment variables in Cloudflare
 - Ensure anon key has proper permissions
 
 ### Data not syncing
+
 - Check browser console for errors
 - Verify Supabase project is active
 - Test with Supabase SQL editor directly
@@ -237,6 +266,7 @@ const unsubscribe = subscribeToOrderUpdates(orderId, (updatedOrder) => {
 ## Files to Remove/Update
 
 ### Can Remove:
+
 - `functions/api/p2p/orders.ts` - KV-based orders endpoint
 - `functions/api/p2p/notifications.ts` - KV-based notifications endpoint
 - `functions/api/p2p/payment-methods.ts` - KV-based payments endpoint
@@ -245,6 +275,7 @@ const unsubscribe = subscribeToOrderUpdates(orderId, (updatedOrder) => {
 - `server/routes/p2p-payment-methods.ts` - Express KV routes
 
 ### Need to Update:
+
 - Any component using old API endpoints
 - Replace with Supabase client functions
 - Update imports and function calls
@@ -252,6 +283,7 @@ const unsubscribe = subscribeToOrderUpdates(orderId, (updatedOrder) => {
 ## Support
 
 For issues:
+
 1. Check Supabase documentation: https://supabase.com/docs
 2. Review the SQL schema in `niazi.tsx`
 3. Check browser console for client-side errors

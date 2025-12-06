@@ -12,7 +12,11 @@ import type { Escrow } from "./niazi";
 export async function createEscrowInSupabase(
   escrowData: Omit<
     Escrow,
-    "id" | "created_at" | "updated_at" | "created_timestamp" | "updated_timestamp"
+    | "id"
+    | "created_at"
+    | "updated_at"
+    | "created_timestamp"
+    | "updated_timestamp"
   >,
 ): Promise<Escrow> {
   try {
@@ -196,10 +200,7 @@ export async function deleteEscrowFromSupabase(
   escrowId: string,
 ): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from("escrow")
-      .delete()
-      .eq("id", escrowId);
+    const { error } = await supabase.from("escrow").delete().eq("id", escrowId);
 
     if (error) {
       console.error("Error deleting escrow:", error);

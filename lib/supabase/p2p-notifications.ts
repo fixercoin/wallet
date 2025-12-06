@@ -74,7 +74,10 @@ export async function getNotificationFromSupabase(
  * Create a notification
  */
 export async function createNotificationInSupabase(
-  notification: Omit<OrderNotification, "id" | "created_at" | "created_timestamp">,
+  notification: Omit<
+    OrderNotification,
+    "id" | "created_at" | "created_timestamp"
+  >,
 ): Promise<OrderNotification> {
   try {
     const now = Date.now();
@@ -173,9 +176,8 @@ export function subscribeToNotifications(
         filter: `recipient_wallet=eq.${walletAddress}`,
       },
       async () => {
-        const notifications = await getNotificationsByWalletFromSupabase(
-          walletAddress,
-        );
+        const notifications =
+          await getNotificationsByWalletFromSupabase(walletAddress);
         callback(notifications);
       },
     )
@@ -196,7 +198,11 @@ export function subscribeToNotifications(
 export async function createTradeRoomInSupabase(
   roomData: Omit<
     TradeRoom,
-    "id" | "created_at" | "updated_at" | "created_timestamp" | "updated_timestamp"
+    | "id"
+    | "created_at"
+    | "updated_at"
+    | "created_timestamp"
+    | "updated_timestamp"
   >,
 ): Promise<TradeRoom> {
   try {
@@ -300,10 +306,7 @@ export async function updateTradeRoomStatusInSupabase(
  * Send a trade message
  */
 export async function sendTradeMessageInSupabase(
-  messageData: Omit<
-    TradeMessage,
-    "id" | "created_at" | "created_timestamp"
-  >,
+  messageData: Omit<TradeMessage, "id" | "created_at" | "created_timestamp">,
 ): Promise<TradeMessage> {
   try {
     const now = Date.now();

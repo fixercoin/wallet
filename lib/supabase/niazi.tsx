@@ -1,7 +1,7 @@
 /**
  * Supabase P2P Database Schema
  * This file contains all SQL schemas needed to migrate P2P functionality from Cloudflare KV to Supabase
- * 
+ *
  * Copy and paste these SQL commands into Supabase SQL Editor to create the necessary tables
  */
 
@@ -258,7 +258,13 @@ export interface P2POrder {
   amount_tokens: number;
   amount_pkr: number;
   payment_method_id?: string;
-  status: "PENDING" | "COMPLETED" | "CANCELLED" | "ESCROW_LOCKED" | "DISPUTED" | "ACTIVE";
+  status:
+    | "PENDING"
+    | "COMPLETED"
+    | "CANCELLED"
+    | "ESCROW_LOCKED"
+    | "DISPUTED"
+    | "ACTIVE";
   min_amount_pkr?: number;
   max_amount_pkr?: number;
   min_amount_tokens?: number;
@@ -326,7 +332,10 @@ export interface OrderNotification {
   order_id: string;
   recipient_wallet: string;
   sender_wallet: string;
-  notification_type: "order_created" | "payment_confirmed" | "received_confirmed";
+  notification_type:
+    | "order_created"
+    | "payment_confirmed"
+    | "received_confirmed";
   order_type: "BUY" | "SELL";
   message: string;
   order_data: {
@@ -344,7 +353,12 @@ export interface TradeRoom {
   buyer_wallet: string;
   seller_wallet: string;
   order_id: string;
-  status: "pending" | "payment_confirmed" | "assets_transferred" | "completed" | "cancelled";
+  status:
+    | "pending"
+    | "payment_confirmed"
+    | "assets_transferred"
+    | "completed"
+    | "cancelled";
   created_at: number;
   updated_at: number;
   created_timestamp: string;
@@ -393,25 +407,25 @@ export interface Reward {
 
 /**
  * SETUP INSTRUCTIONS FOR SUPABASE MIGRATION:
- * 
+ *
  * 1. Go to your Supabase project: https://pcuhmppymboyukkdxuba.supabase.co
- * 
+ *
  * 2. Navigate to the SQL Editor section
- * 
+ *
  * 3. Copy the entire SQL schema from P2P_SQL_SCHEMAS constant above
- * 
+ *
  * 4. Paste it into a new SQL query in Supabase SQL Editor
- * 
+ *
  * 5. Click "Execute" or press Cmd+Enter to run all the SQL commands
- * 
+ *
  * 6. Verify that all tables are created successfully by checking the "Tables" section
- * 
+ *
  * 7. Your Supabase database is now ready for P2P functionality!
- * 
+ *
  * CREDENTIALS:
  * - Project URL: https://pcuhmppymboyukkdxuba.supabase.co
  * - Anon Key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjdWhtcHB5bWJveXVra2R4dWJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyNTk3MTIsImV4cCI6MjA3NTgzNTcxMn0.9OhZ6BpUE5K0e1OfGlNN10Vs2lhXa4NXQtEAJBAfspM
- * 
+ *
  * Use these credentials in your Supabase client initialization.
  */
 

@@ -65,7 +65,11 @@ export async function getPaymentMethodFromSupabase(
 export async function savePaymentMethodToSupabase(
   method: Omit<
     PaymentMethod,
-    "id" | "created_at" | "updated_at" | "created_timestamp" | "updated_timestamp"
+    | "id"
+    | "created_at"
+    | "updated_at"
+    | "created_timestamp"
+    | "updated_timestamp"
   >,
   methodId?: string,
 ): Promise<PaymentMethod> {
@@ -162,7 +166,10 @@ export async function getPaymentMethodByAccountFromSupabase(
 
     return data as PaymentMethod;
   } catch (error) {
-    console.error("Error fetching payment method by account from Supabase:", error);
+    console.error(
+      "Error fetching payment method by account from Supabase:",
+      error,
+    );
     return null;
   }
 }

@@ -43,9 +43,7 @@ export type Database = {
           Database["public"]["Tables"]["p2p_orders"]["Row"],
           "id" | "created_at" | "updated_at"
         >;
-        Update: Partial<
-          Database["public"]["Tables"]["p2p_orders"]["Insert"]
-        >;
+        Update: Partial<Database["public"]["Tables"]["p2p_orders"]["Insert"]>;
       };
       payment_methods: {
         Row: {
@@ -101,9 +99,7 @@ export type Database = {
           Database["public"]["Tables"]["disputes"]["Row"],
           "id" | "created_at" | "updated_at"
         >;
-        Update: Partial<
-          Database["public"]["Tables"]["disputes"]["Insert"]
-        >;
+        Update: Partial<Database["public"]["Tables"]["disputes"]["Insert"]>;
       };
       order_notifications: {
         Row: {
@@ -140,9 +136,7 @@ export type Database = {
           Database["public"]["Tables"]["trade_rooms"]["Row"],
           "id" | "created_at" | "updated_at"
         >;
-        Update: Partial<
-          Database["public"]["Tables"]["trade_rooms"]["Insert"]
-        >;
+        Update: Partial<Database["public"]["Tables"]["trade_rooms"]["Insert"]>;
       };
       trade_messages: {
         Row: {

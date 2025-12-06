@@ -12,7 +12,11 @@ import type { Dispute } from "./niazi";
 export async function createDisputeInSupabase(
   disputeData: Omit<
     Dispute,
-    "id" | "created_at" | "updated_at" | "created_timestamp" | "updated_timestamp"
+    | "id"
+    | "created_at"
+    | "updated_at"
+    | "created_timestamp"
+    | "updated_timestamp"
   >,
 ): Promise<Dispute> {
   try {

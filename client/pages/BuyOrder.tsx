@@ -87,9 +87,10 @@ export default function BuyOrder() {
         },
         body: JSON.stringify({
           type: "BUY",
+          token: USDC_MINT,
+          amountTokens: estimatedUSDC,
           amountPKR: pkrAmount,
-          estimatedUSDC: estimatedUSDC,
-          pricePerUSDC: exchangeRate,
+          pricePKRPerQuote: exchangeRate,
           walletAddress: wallet.publicKey,
         }),
       });

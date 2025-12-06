@@ -931,7 +931,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               onClick={onReceive}
                               className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-md whitespace-nowrap h-auto"
                             >
-                              DEPOSIT
+                              P2P TRADE
                             </Button>
                           </div>
                         </div>
@@ -993,7 +993,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             onClick={onReceive}
                             className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-md whitespace-nowrap h-auto"
                           >
-                            DEPOSIT
+                            P2P TRADE
                           </Button>
                         </div>
                       </div>

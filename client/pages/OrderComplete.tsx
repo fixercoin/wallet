@@ -382,7 +382,13 @@ export default function OrderComplete() {
     if (!order || !wallet?.publicKey) return;
 
     try {
-      updateOrderInStorage(order.id, { status: "CANCELLED" });
+      updateOrderInStorage(order.id, {
+        status: "CANCELLED",
+        buyerPaymentConfirmed: false,
+        sellerPaymentReceived: false,
+        sellerTransferInitiated: false,
+        buyerCryptoReceived: false,
+      });
 
       // Send cancellation message to chat
       if (order.roomId) {

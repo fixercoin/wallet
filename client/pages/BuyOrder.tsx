@@ -7,6 +7,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+import { P2POffersTable } from "@/components/P2POffersTable";
 
 const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 

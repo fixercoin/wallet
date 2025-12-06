@@ -15,7 +15,9 @@ export async function getOrderFromAPI(
   orderId: string,
 ): Promise<CreatedOrder | null> {
   try {
-    const response = await fetch(`${API_BASE}?id=${encodeURIComponent(orderId)}`);
+    const response = await fetch(
+      `${API_BASE}?id=${encodeURIComponent(orderId)}`,
+    );
     if (!response.ok) {
       if (response.status === 404) {
         return null;

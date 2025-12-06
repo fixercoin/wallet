@@ -71,7 +71,9 @@ export default function OrderComplete() {
         // Restore confirmation states from stored order
         setBuyerPaymentConfirmed(loadedOrder.buyerPaymentConfirmed ?? false);
         setSellerPaymentReceived(loadedOrder.sellerPaymentReceived ?? false);
-        setSellerTransferInitiated(loadedOrder.sellerTransferInitiated ?? false);
+        setSellerTransferInitiated(
+          loadedOrder.sellerTransferInitiated ?? false,
+        );
         setBuyerCryptoReceived(loadedOrder.buyerCryptoReceived ?? false);
       }
 

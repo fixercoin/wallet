@@ -162,9 +162,17 @@ export const makeRpcCall = async (
             error instanceof Error ? error.message : String(error);
           const isTimeout =
             errorMsg.includes("abort") || errorMsg.includes("timeout");
+          const isCors =
+            errorMsg.includes("Failed to fetch") ||
+            errorMsg.includes("CORS") ||
+            errorMsg.includes("cors");
 
           if (isTimeout) {
             console.warn(`[RPC] ${method} on ${endpoint} timed out after 12s`);
+          } else if (isCors) {
+            console.warn(
+              `[RPC] ${method} on ${endpoint} blocked by CORS policy - skipping endpoint`,
+            );
           } else {
             console.warn(`[RPC] ${method} on ${endpoint} failed:`, errorMsg);
           }

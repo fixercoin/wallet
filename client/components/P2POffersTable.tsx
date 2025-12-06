@@ -253,7 +253,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
           <thead>
             <tr className="bg-[#1a2847]/50 border-b border-gray-300/30">
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
-                ADVERTISER
+                POST
               </th>
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
                 PRICE
@@ -344,7 +344,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
               <div className="grid grid-cols-5 gap-3 items-start">
                 <div className="flex flex-col">
                   <p className="text-[10px] text-white/60 font-semibold uppercase mb-2">
-                    ADVERTISER
+                    POST
                   </p>
                   <p className="text-[10px] font-semibold text-white/90 uppercase">
                     {getCreatorName(order)}

@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, X, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,

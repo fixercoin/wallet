@@ -225,6 +225,10 @@ export const getWalletBalance = async (publicKey: string): Promise<number> => {
 export const getTokenAccounts = async (publicKey: string) => {
   const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
+  console.log(
+    `[Token Accounts] Fetching token accounts for ${publicKey} using Helius...`,
+  );
+
   try {
     const response = await makeRpcCall(
       "getTokenAccountsByOwner",
@@ -236,39 +240,49 @@ export const getTokenAccounts = async (publicKey: string) => {
       3, // Retry up to 3 times via Helius
     );
 
+    console.log(
+      `[Token Accounts] Helius response received:`,
+      response,
+    );
+
     const value = (response as any)?.value || [];
     if (Array.isArray(value)) {
       console.log(
         `[Token Accounts] Got ${value.length} token accounts from Helius`,
       );
       return value.map((account: any) => {
-        const parsedInfo = account.account.data.parsed.info;
-        const mint = parsedInfo.mint;
-        const decimals = parsedInfo.tokenAmount.decimals;
+        try {
+          const parsedInfo = account.account.data.parsed.info;
+          const mint = parsedInfo.mint;
+          const decimals = parsedInfo.tokenAmount.decimals;
 
-        // Extract balance - prefer uiAmount, fall back to calculating from raw amount
-        let balance = 0;
-        if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
-          balance = parsedInfo.tokenAmount.uiAmount;
-        } else if (parsedInfo.tokenAmount.amount) {
-          // Convert raw amount to UI amount using decimals
-          const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
-          balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+          // Extract balance - prefer uiAmount, fall back to calculating from raw amount
+          let balance = 0;
+          if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
+            balance = parsedInfo.tokenAmount.uiAmount;
+          } else if (parsedInfo.tokenAmount.amount) {
+            // Convert raw amount to UI amount using decimals
+            const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+            balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+          }
+
+          const metadata = KNOWN_TOKENS[mint] || {
+            mint,
+            symbol: "UNKNOWN",
+            name: "Unknown Token",
+            decimals,
+          };
+
+          return {
+            ...metadata,
+            balance,
+            decimals: decimals || metadata.decimals,
+          };
+        } catch (parseError) {
+          console.error("[Token Accounts] Error parsing account:", account, parseError);
+          return null;
         }
-
-        const metadata = KNOWN_TOKENS[mint] || {
-          mint,
-          symbol: "UNKNOWN",
-          name: "Unknown Token",
-          decimals,
-        };
-
-        return {
-          ...metadata,
-          balance,
-          decimals: decimals || metadata.decimals,
-        };
-      });
+      }).filter((token) => token !== null);
     }
     return [];
   } catch (error) {

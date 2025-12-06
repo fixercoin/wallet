@@ -910,64 +910,72 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   MY PORTFOLIO
                 </div>
               </div>
-              <div className="text-center space-y-2">
-                {wallet
-                  ? (() => {
-                      const total = getTotalPortfolioValue();
-                      const hasAnyBalance =
-                        tokens.some(
-                          (t) => typeof t.balance === "number" && t.balance > 0,
-                        ) ||
-                        (typeof balance === "number" && balance > 0);
-                      if (!hasAnyBalance) {
-                        // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
-                        const usdZero = `0.000 $`;
-                        return (
-                          <>
+              {wallet
+                ? (() => {
+                    const total = getTotalPortfolioValue();
+                    const hasAnyBalance =
+                      tokens.some(
+                        (t) => typeof t.balance === "number" && t.balance > 0,
+                      ) ||
+                      (typeof balance === "number" && balance > 0);
+                    if (!hasAnyBalance) {
+                      // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
+                      const usdZero = `0.000 $`;
+                      return (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-4">
                             <div className="text-3xl text-gray-900 leading-tight">
                               {showBalance ? `${usdZero}` : "****"}
                             </div>
-                            <div className="text-xs mt-1">
-                              <span
-                                style={{ color: "#FACC15", display: "block" }}
-                              >
-                                {showBalance ? `▲ + 0.000 0.00 %` : "24h: ****"}
-                              </span>
-                            </div>
-                          </>
-                        );
+                            <Button
+                              onClick={onReceive}
+                              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-md whitespace-nowrap"
+                            >
+                              DEPOSIT
+                            </Button>
+                          </div>
+                          <div className="text-xs">
+                            <span
+                              style={{ color: "#FACC15", display: "block" }}
+                            >
+                              {showBalance ? `▲ + 0.000 0.00 %` : "24h: ****"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    let totalChange24h = 0;
+                    let hasValidPriceChange = false;
+                    tokens.forEach((token) => {
+                      if (
+                        typeof token.balance === "number" &&
+                        typeof token.price === "number" &&
+                        typeof token.priceChange24h === "number" &&
+                        isFinite(token.balance) &&
+                        isFinite(token.price) &&
+                        isFinite(token.priceChange24h) &&
+                        token.balance > 0 &&
+                        token.price > 0
+                      ) {
+                        const currentValue = token.balance * token.price;
+                        const previousPrice =
+                          token.price / (1 + token.priceChange24h / 100);
+                        const previousValue = token.balance * previousPrice;
+                        const change = currentValue - previousValue;
+                        totalChange24h += change;
+                        hasValidPriceChange = true;
                       }
+                    });
 
-                      let totalChange24h = 0;
-                      let hasValidPriceChange = false;
-                      tokens.forEach((token) => {
-                        if (
-                          typeof token.balance === "number" &&
-                          typeof token.price === "number" &&
-                          typeof token.priceChange24h === "number" &&
-                          isFinite(token.balance) &&
-                          isFinite(token.price) &&
-                          isFinite(token.priceChange24h) &&
-                          token.balance > 0 &&
-                          token.price > 0
-                        ) {
-                          const currentValue = token.balance * token.price;
-                          const previousPrice =
-                            token.price / (1 + token.priceChange24h / 100);
-                          const previousValue = token.balance * previousPrice;
-                          const change = currentValue - previousValue;
-                          totalChange24h += change;
-                          hasValidPriceChange = true;
-                        }
-                      });
+                    const change24hPercent = hasValidPriceChange
+                      ? (totalChange24h / (total - totalChange24h)) * 100
+                      : 0;
+                    const isPositive = totalChange24h >= 0;
 
-                      const change24hPercent = hasValidPriceChange
-                        ? (totalChange24h / (total - totalChange24h)) * 100
-                        : 0;
-                      const isPositive = totalChange24h >= 0;
-
-                      return (
-                        <>
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-4">
                           <div className="text-3xl text-gray-900 leading-tight">
                             {showBalance ? (
                               <>
@@ -988,38 +996,44 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               "****"
                             )}
                           </div>
-                          {showBalance ? (
-                            <div className="text-xs mt-1">
-                              <span
-                                style={{
-                                  color: isPositive ? "#FACC15" : "#F87171",
-                                  display: "block",
-                                }}
-                              >
-                                {isPositive ? "▲" : "▼"} {isPositive ? "+" : "-"}{" "}
-                                {Math.abs(totalChange24h).toLocaleString(
-                                  undefined,
-                                  {
-                                    minimumFractionDigits: 3,
-                                    maximumFractionDigits: 3,
-                                  },
-                                )}{" "}
-                                {Math.abs(
-                                  isFinite(change24hPercent)
-                                    ? change24hPercent
-                                    : 0,
-                                ).toFixed(2)}
-                                %
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="text-xs text-gray-400 mt-1">****</div>
-                          )}
-                        </>
-                      );
-                    })()
-                  : "Connect wallet to see balance"}
-              </div>
+                          <Button
+                            onClick={onReceive}
+                            className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-md whitespace-nowrap"
+                          >
+                            DEPOSIT
+                          </Button>
+                        </div>
+                        {showBalance ? (
+                          <div className="text-xs">
+                            <span
+                              style={{
+                                color: isPositive ? "#FACC15" : "#F87171",
+                                display: "block",
+                              }}
+                            >
+                              {isPositive ? "▲" : "▼"} {isPositive ? "+" : "-"}{" "}
+                              {Math.abs(totalChange24h).toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3,
+                                },
+                              )}{" "}
+                              {Math.abs(
+                                isFinite(change24hPercent)
+                                  ? change24hPercent
+                                  : 0,
+                              ).toFixed(2)}
+                              %
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-400">****</div>
+                        )}
+                      </div>
+                    );
+                  })()
+                : "Connect wallet to see balance"}
             </div>
 
             {/* Action Buttons */}

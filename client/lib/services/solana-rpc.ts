@@ -129,8 +129,8 @@ export const makeRpcCall = async (
               `[RPC] ${method} on ${endpoint} returned ${response.status}`,
             );
 
-            if (response.status === 429) {
-              lastErrorStatus = 429;
+            if (response.status === 429 || response.status === 503) {
+              lastErrorStatus = response.status;
             }
 
             lastError = new Error(errorMsg);

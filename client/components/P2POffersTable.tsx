@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Edit2 } from "lucide-react";
 import { toast } from "sonner";
+import { useWallet } from "@/contexts/WalletContext";
 
 export interface P2POrder {
   id: string;
@@ -13,6 +14,10 @@ export interface P2POrder {
   token_amount?: string;
   amountPKR?: number;
   pkr_amount?: number;
+  minAmountPKR?: number;
+  maxAmountPKR?: number;
+  minAmountTokens?: number;
+  maxAmountTokens?: number;
   pricePKRPerQuote?: number;
   payment_method?: string;
   paymentMethodId?: string;
@@ -30,14 +35,17 @@ export interface P2POrder {
 interface P2POffersTableProps {
   orderType: "BUY" | "SELL";
   onSelectOffer?: (order: P2POrder) => void;
+  onEditOffer?: (order: P2POrder) => void;
   exchangeRate?: number;
 }
 
 export const P2POffersTable: React.FC<P2POffersTableProps> = ({
   orderType,
   onSelectOffer,
+  onEditOffer,
   exchangeRate = 280,
 }) => {
+  const { wallet } = useWallet();
   const [orders, setOrders] = useState<P2POrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,17 +98,42 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
     return exchangeRate.toFixed(2);
   };
 
-  const getLimit = (order: P2POrder): string => {
+  const getLimit = (order: P2POrder): { min: string; max: string } => {
     if (orderType === "BUY") {
-      const min = order.amountPKR || order.pkr_amount || 0;
+      const min =
+        order.minAmountPKR || order.amountPKR || order.pkr_amount || 0;
+      const max =
+        order.maxAmountPKR || order.amountPKR || order.pkr_amount || 0;
       const minFormatted = typeof min === "number" ? min.toFixed(0) : min;
-      return `${minFormatted} PKR`;
+      const maxFormatted = typeof max === "number" ? max.toFixed(0) : max;
+      return {
+        min: `${minFormatted} PKR`,
+        max: `${maxFormatted} PKR`,
+      };
     } else {
       const min =
-        order.amountTokens || parseFloat(order.token_amount || "0") || 0;
+        order.minAmountTokens ||
+        order.amountTokens ||
+        parseFloat(order.token_amount || "0") ||
+        0;
+      const max =
+        order.maxAmountTokens ||
+        order.amountTokens ||
+        parseFloat(order.token_amount || "0") ||
+        0;
       const minFormatted = typeof min === "number" ? min.toFixed(2) : min;
-      return `${minFormatted} ${order.token || "USDC"}`;
+      const maxFormatted = typeof max === "number" ? max.toFixed(2) : max;
+      return {
+        min: minFormatted,
+        max: maxFormatted,
+      };
     }
+  };
+
+  const isAdvertiser = (order: P2POrder): boolean => {
+    const creatorWallet = order.walletAddress || order.creator_wallet;
+    const userWallet = wallet?.publicKey;
+    return creatorWallet && userWallet && creatorWallet === userWallet;
   };
 
   const handleProceed = (order: P2POrder) => {
@@ -108,6 +141,14 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
       onSelectOffer(order);
     } else {
       toast.info("Selected offer: " + getCreatorName(order));
+    }
+  };
+
+  const handleEdit = (order: P2POrder) => {
+    if (onEditOffer) {
+      onEditOffer(order);
+    } else {
+      toast.info("Edit offer: " + getCreatorName(order));
     }
   };
 
@@ -144,7 +185,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
   return (
     <div className="w-full px-4 py-6">
       <h3 className="text-sm font-semibold text-white/90 mb-4 uppercase">
-        Available Offers
+        AVAILABLE OFFERS
       </h3>
 
       {/* Desktop Table */}
@@ -153,97 +194,137 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
           <thead>
             <tr className="bg-[#1a2847]/50 border-b border-gray-300/30">
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
-                Advertiser
+                ADVERTISER
               </th>
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
-                Price
+                PRICE
               </th>
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
-                Limit
+                LIMIT
               </th>
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
-                Payment
+                PAYMENT
               </th>
-              <th className="px-4 py-3 text-center text-white/70 font-semibold">
-                Action
-              </th>
+              <th className="px-4 py-3 text-center text-white/70 font-semibold"></th>
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
-              <tr
-                key={order.id}
-                className="border-b border-gray-300/20 hover:bg-[#1a2847]/30 transition-colors"
-              >
-                <td className="px-4 py-3 text-white/80">
-                  {getCreatorName(order)}
-                </td>
-                <td className="px-4 py-3 text-white/80">{getPrice(order)}</td>
-                <td className="px-4 py-3 text-white/80">{getLimit(order)}</td>
-                <td className="px-4 py-3 text-white/80">
-                  {order.payment_method || order.paymentMethodId || "—"}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <Button
-                    onClick={() => handleProceed(order)}
-                    size="sm"
-                    className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-3 rounded h-auto"
-                  >
-                    {orderType === "BUY" ? "Buy" : "Sell"}
-                  </Button>
-                </td>
-              </tr>
-            ))}
+            {orders.map((order) => {
+              const limits = getLimit(order);
+              return (
+                <tr
+                  key={order.id}
+                  className="border-b border-gray-300/20 hover:bg-[#1a2847]/30 transition-colors"
+                >
+                  <td className="px-4 py-3 text-white/80 uppercase">
+                    {getCreatorName(order)}
+                  </td>
+                  <td className="px-4 py-3 text-white/80 uppercase">
+                    {getPrice(order)}
+                  </td>
+                  <td className="px-4 py-3 text-white/80 uppercase">
+                    <span className="text-xs">
+                      MIN: {limits.min} | MAX: {limits.max}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-white/80 uppercase">
+                    EASYPAISA
+                  </td>
+                  <td className="px-4 py-3 text-right flex gap-2 justify-end">
+                    {isAdvertiser(order) && (
+                      <Button
+                        onClick={() => handleEdit(order)}
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-3 rounded h-auto flex items-center gap-1"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                        EDIT
+                      </Button>
+                    )}
+                    <Button
+                      onClick={() => handleProceed(order)}
+                      size="sm"
+                      className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-3 rounded h-auto"
+                    >
+                      {orderType === "BUY" ? "BUY" : "SELL"}
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
       {/* Mobile Cards */}
       <div className="sm:hidden space-y-3">
-        {orders.map((order) => (
-          <div
-            key={order.id}
-            className="p-3 rounded-lg bg-[#1a2847]/50 border border-gray-300/30 overflow-x-auto"
-          >
-            <div className="flex items-center gap-3 whitespace-nowrap min-w-min">
-              <div className="flex flex-col flex-shrink-0">
-                <p className="text-xs text-white/60 uppercase">Advertiser</p>
-                <p className="text-xs font-semibold text-white/90">
-                  {getCreatorName(order)}
-                </p>
-              </div>
+        {orders.map((order) => {
+          const limits = getLimit(order);
+          return (
+            <div
+              key={order.id}
+              className="p-4 rounded-lg bg-[#1a2847]/50 border border-gray-300/30"
+            >
+              <div className="grid grid-cols-5 gap-3 items-start">
+                <div className="flex flex-col">
+                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">
+                    ADVERTISER
+                  </p>
+                  <p className="text-xs font-semibold text-white/90 uppercase">
+                    {getCreatorName(order)}
+                  </p>
+                </div>
 
-              <div className="flex flex-col flex-shrink-0">
-                <p className="text-xs text-white/60 uppercase">Price</p>
-                <p className="text-xs font-semibold text-white/90">
-                  {getPrice(order)}
-                </p>
-              </div>
+                <div className="flex flex-col">
+                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">
+                    PRICE
+                  </p>
+                  <p className="text-xs font-semibold text-white/90 uppercase">
+                    {getPrice(order)}
+                  </p>
+                </div>
 
-              <div className="flex flex-col flex-shrink-0">
-                <p className="text-xs text-white/60 uppercase">Limit</p>
-                <p className="text-xs font-semibold text-white/90">
-                  {getLimit(order)}
-                </p>
-              </div>
+                <div className="flex flex-col">
+                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">
+                    LIMIT
+                  </p>
+                  <p className="text-xs font-semibold text-white/90 uppercase">
+                    MIN: {limits.min} | MAX: {limits.max}
+                  </p>
+                </div>
 
-              <div className="flex flex-col flex-shrink-0">
-                <p className="text-xs text-white/60 uppercase">Payment</p>
-                <p className="text-xs font-semibold text-white/90">
-                  {order.payment_method || order.paymentMethodId || "—"}
-                </p>
-              </div>
+                <div className="flex flex-col">
+                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">
+                    PAYMENT
+                  </p>
+                  <p className="text-xs font-semibold text-white/90 uppercase">
+                    EASYPAISA
+                  </p>
+                </div>
 
-              <Button
-                onClick={() => handleProceed(order)}
-                size="sm"
-                className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-2 rounded h-auto flex-shrink-0"
-              >
-                {orderType === "BUY" ? "Buy" : "Sell"}
-              </Button>
+                <div className="flex flex-col items-end justify-end h-full gap-2">
+                  {isAdvertiser(order) && (
+                    <Button
+                      onClick={() => handleEdit(order)}
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded h-auto flex items-center gap-1 uppercase font-semibold"
+                    >
+                      <Edit2 className="w-3 h-3" />
+                      EDIT
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => handleProceed(order)}
+                    size="sm"
+                    className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-3 rounded h-auto uppercase font-semibold"
+                  >
+                    {orderType === "BUY" ? "BUY" : "SELL"}
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

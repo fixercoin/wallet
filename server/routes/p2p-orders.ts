@@ -11,6 +11,10 @@ export interface P2POrder {
   token_amount?: string;
   amountPKR?: number;
   pkr_amount?: number;
+  minAmountPKR?: number;
+  maxAmountPKR?: number;
+  minAmountTokens?: number;
+  maxAmountTokens?: number;
   pricePKRPerQuote?: number;
   payment_method?: string;
   paymentMethodId?: string;
@@ -73,6 +77,10 @@ function normalizeOrder(order: any): P2POrder {
     token: order.token,
     amountTokens: order.amountTokens ?? parseFloat(order.token_amount || 0),
     amountPKR: order.amountPKR ?? order.pkr_amount,
+    minAmountPKR: order.minAmountPKR,
+    maxAmountPKR: order.maxAmountPKR,
+    minAmountTokens: order.minAmountTokens,
+    maxAmountTokens: order.maxAmountTokens,
     pricePKRPerQuote: order.pricePKRPerQuote,
     payment_method: order.paymentMethod || order.payment_method,
     status: (order.status || "PENDING") as P2POrder["status"],

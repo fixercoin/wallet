@@ -172,15 +172,23 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
   const handleCancel = async (order: P2POrder) => {
     try {
       setCancelling(order.id);
+      const walletAddress = wallet?.publicKey;
+      if (!walletAddress) {
+        throw new Error("Wallet address not found");
+      }
+
       const response = await fetch(
-        `/api/p2p/orders/${encodeURIComponent(order.id)}`,
+        `/api/p2p/orders/${encodeURIComponent(order.id)}?wallet=${encodeURIComponent(walletAddress)}`,
         {
           method: "DELETE",
         },
       );
 
       if (!response.ok) {
-        throw new Error(`Failed to cancel offer: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || `Failed to cancel offer: ${response.status}`,
+        );
       }
 
       setOrders((prevOrders) => prevOrders.filter((o) => o.id !== order.id));

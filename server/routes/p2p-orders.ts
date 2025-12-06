@@ -193,7 +193,22 @@ export const handleListP2POrders: RequestHandler = async (req, res) => {
       filtered = filtered.filter((o) => o.type === String(type).toUpperCase());
     }
     if (status) {
-      filtered = filtered.filter((o) => o.status === status);
+      // Case-insensitive status comparison and treat "active", "PENDING", "pending" as equivalent for active orders
+      const statusFilter = String(status).toLowerCase();
+      const activeStatuses = ["active", "pending"];
+
+      if (activeStatuses.includes(statusFilter)) {
+        // If looking for active/pending, include all active-like statuses
+        filtered = filtered.filter((o) => {
+          const orderStatus = String(o.status).toLowerCase();
+          return activeStatuses.includes(orderStatus);
+        });
+      } else {
+        // For other statuses, do exact match (case-insensitive)
+        filtered = filtered.filter((o) =>
+          String(o.status).toLowerCase() === statusFilter
+        );
+      }
     }
     if (token) {
       filtered = filtered.filter((o) => o.token === token);

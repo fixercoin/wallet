@@ -220,13 +220,11 @@ export const getWalletBalance = async (publicKey: string): Promise<number> => {
 };
 
 /**
- * Get all token accounts for a wallet
- * Includes multiple fallback RPC endpoints for reliability
+ * Get all token accounts for a wallet using Helius
  */
 export const getTokenAccounts = async (publicKey: string) => {
   const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
-  // Try via API proxy first with multiple retries
   try {
     const response = await makeRpcCall(
       "getTokenAccountsByOwner",
@@ -235,13 +233,13 @@ export const getTokenAccounts = async (publicKey: string) => {
         { programId: TOKEN_PROGRAM_ID },
         { encoding: "jsonParsed", commitment: "confirmed" },
       ],
-      3, // Increase retries for token accounts
+      3, // Retry up to 3 times via Helius
     );
 
     const value = (response as any)?.value || [];
-    if (Array.isArray(value) && value.length >= 0) {
+    if (Array.isArray(value)) {
       console.log(
-        `[Token Accounts] Got ${value.length} token accounts from proxy RPC`,
+        `[Token Accounts] Got ${value.length} token accounts from Helius`,
       );
       return value.map((account: any) => {
         const parsedInfo = account.account.data.parsed.info;
@@ -272,97 +270,14 @@ export const getTokenAccounts = async (publicKey: string) => {
         };
       });
     }
+    return [];
   } catch (error) {
-    console.warn(
-      "[Token Accounts] Proxy RPC getTokenAccountsByOwner failed, attempting direct web3.js fallback with multiple endpoints:",
+    console.error(
+      "[Token Accounts] Failed to fetch token accounts from Helius:",
       error,
     );
+    return [];
   }
-
-  // Fallback: Try direct web3.js Connection with multiple endpoints
-  const allEndpoints = [SOLANA_RPC_URL, ...PUBLIC_RPC_ENDPOINTS].filter(
-    Boolean,
-  );
-  const uniqueEndpoints = Array.from(new Set(allEndpoints));
-
-  let lastError: Error | null = null;
-
-  for (let endpointIndex = 0; endpointIndex < uniqueEndpoints.length; endpointIndex++) {
-    const endpoint = uniqueEndpoints[endpointIndex];
-    for (let attempt = 0; attempt <= 2; attempt++) {
-      try {
-        console.log(
-          `[Token Accounts] Attempting direct web3.js fallback (endpoint ${endpointIndex + 1}/${uniqueEndpoints.length}, attempt ${attempt + 1}/3): ${endpoint.substring(0, 40)}...`,
-        );
-        const conn = new Connection(endpoint, { commitment: "confirmed" });
-        const accounts = await conn.getParsedTokenAccountsByOwner(
-          new PublicKey(publicKey),
-          { programId: new PublicKey(TOKEN_PROGRAM_ID) },
-        );
-
-        console.log(
-          `[Token Accounts] Got ${accounts.value.length} token accounts from web3.js fallback`,
-        );
-
-        return accounts.value.map((account: any) => {
-          const parsedInfo = account.account.data.parsed.info;
-          const mint = parsedInfo.mint;
-          const decimals = parsedInfo.tokenAmount.decimals;
-
-          // Extract balance - prefer uiAmount, fall back to calculating from raw amount
-          let balance = 0;
-          if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
-            balance = parsedInfo.tokenAmount.uiAmount;
-          } else if (parsedInfo.tokenAmount.amount) {
-            // Convert raw amount to UI amount using decimals
-            const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
-            balance = Number(rawAmount) / Math.pow(10, decimals || 0);
-          }
-
-          const metadata = KNOWN_TOKENS[mint] || {
-            mint,
-            symbol: "UNKNOWN",
-            name: "Unknown Token",
-            decimals,
-          };
-
-          return {
-            ...metadata,
-            balance,
-            decimals: decimals || metadata.decimals,
-          };
-        });
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-        const errorMsg =
-          error instanceof Error ? error.message : String(error);
-
-        const isRateLimit =
-          errorMsg.includes("503") ||
-          errorMsg.includes("429") ||
-          errorMsg.includes("not available");
-
-        if (isRateLimit && attempt < 2) {
-          const delayMs = Math.min(3000 * Math.pow(2, attempt), 30000);
-          console.warn(
-            `[Token Accounts] Rate limited on ${endpoint.substring(0, 40)}..., retrying in ${delayMs}ms`,
-          );
-          await new Promise((resolve) => setTimeout(resolve, delayMs));
-        } else {
-          console.warn(
-            `[Token Accounts] Failed on ${endpoint.substring(0, 40)}...:`,
-            errorMsg,
-          );
-        }
-      }
-    }
-  }
-
-  console.error(
-    "[Token Accounts] Direct web3.js fallback failed on all endpoints:",
-    lastError,
-  );
-  return [];
 };
 
 /**

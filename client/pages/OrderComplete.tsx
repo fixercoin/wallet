@@ -36,8 +36,10 @@ export default function OrderComplete() {
   const [messages, setMessages] = useState<TradeMessage[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [buyerConfirmed, setBuyerConfirmed] = useState(false);
-  const [sellerConfirmed, setSellerConfirmed] = useState(false);
+  const [buyerPaymentConfirmed, setBuyerPaymentConfirmed] = useState(false);
+  const [sellerPaymentReceived, setSellerPaymentReceived] = useState(false);
+  const [sellerTransferInitiated, setSellerTransferInitiated] = useState(false);
+  const [buyerCryptoReceived, setBuyerCryptoReceived] = useState(false);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(280);
   const [uploading, setUploading] = useState(false);

@@ -472,15 +472,17 @@ export const getTokenBalanceForMint = async (
   walletAddress: string,
   tokenMint: string,
 ): Promise<number | null> => {
-  const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
-
   try {
-    // Try via API proxy first
-    const response = await makeRpcCall("getTokenAccountsByOwner", [
-      walletAddress,
-      { mint: tokenMint },
-      { encoding: "jsonParsed", commitment: "confirmed" },
-    ]);
+    // Try via API proxy first with retries
+    const response = await makeRpcCall(
+      "getTokenAccountsByOwner",
+      [
+        walletAddress,
+        { mint: tokenMint },
+        { encoding: "jsonParsed", commitment: "confirmed" },
+      ],
+      2, // Increase retries
+    );
 
     const value = (response as any)?.value || [];
     if (Array.isArray(value) && value.length > 0) {
@@ -508,38 +510,66 @@ export const getTokenBalanceForMint = async (
     );
   }
 
-  // Fallback: Try direct web3.js Connection
-  try {
-    const conn = new Connection(SOLANA_RPC_URL, { commitment: "confirmed" });
-    const accounts = await conn.getParsedTokenAccountsByOwner(
-      new PublicKey(walletAddress),
-      { mint: new PublicKey(tokenMint) },
-    );
+  // Fallback: Try direct web3.js Connection with multiple endpoints
+  const allEndpoints = [SOLANA_RPC_URL, ...PUBLIC_RPC_ENDPOINTS].filter(
+    Boolean,
+  );
+  const uniqueEndpoints = Array.from(new Set(allEndpoints));
 
-    if (accounts.value.length > 0) {
-      const account = accounts.value[0];
-      const parsedInfo = account.account.data.parsed.info;
-      const decimals = parsedInfo.tokenAmount.decimals;
+  for (let endpointIndex = 0; endpointIndex < uniqueEndpoints.length; endpointIndex++) {
+    const endpoint = uniqueEndpoints[endpointIndex];
+    for (let attempt = 0; attempt <= 1; attempt++) {
+      try {
+        const conn = new Connection(endpoint, { commitment: "confirmed" });
+        const accounts = await conn.getParsedTokenAccountsByOwner(
+          new PublicKey(walletAddress),
+          { mint: new PublicKey(tokenMint) },
+        );
 
-      let balance = 0;
-      if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
-        balance = parsedInfo.tokenAmount.uiAmount;
-      } else if (parsedInfo.tokenAmount.amount) {
-        const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
-        balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+        if (accounts.value.length > 0) {
+          const account = accounts.value[0];
+          const parsedInfo = account.account.data.parsed.info;
+          const decimals = parsedInfo.tokenAmount.decimals;
+
+          let balance = 0;
+          if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
+            balance = parsedInfo.tokenAmount.uiAmount;
+          } else if (parsedInfo.tokenAmount.amount) {
+            const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+            balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+          }
+
+          console.log(
+            `[Token Balance] Fetched ${tokenMint}: ${balance} via web3.js fallback`,
+          );
+          return balance;
+        }
+      } catch (error) {
+        const errorMsg =
+          error instanceof Error ? error.message : String(error);
+        const isRateLimit =
+          errorMsg.includes("503") ||
+          errorMsg.includes("429") ||
+          errorMsg.includes("not available");
+
+        if (isRateLimit && attempt < 1) {
+          const delayMs = Math.min(2000 * Math.pow(2, attempt), 15000);
+          console.warn(
+            `[Token Balance] Rate limited on endpoint, retrying in ${delayMs}ms`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        } else {
+          console.warn(
+            `[Token Balance] Failed on ${endpoint.substring(0, 40)}... for ${tokenMint}:`,
+            errorMsg,
+          );
+        }
       }
-
-      console.log(
-        `[Token Balance] Fetched ${tokenMint}: ${balance} via web3.js fallback`,
-      );
-      return balance;
     }
-  } catch (webError) {
-    console.warn(
-      `[Token Balance] Direct web3.js fallback also failed for ${tokenMint}:`,
-      webError,
-    );
   }
 
+  console.warn(
+    `[Token Balance] Failed to fetch balance for ${tokenMint} on all endpoints`,
+  );
   return null;
 };

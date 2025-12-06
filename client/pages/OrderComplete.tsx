@@ -108,9 +108,71 @@ export default function OrderComplete() {
     previousMessageCountRef.current = messages.length;
   }, [messages]);
 
+  const isBuyer = wallet?.publicKey === order?.buyerWallet;
+
   const shortenAddress = (addr: string, chars = 6): string => {
     if (!addr) return "";
     return `${addr.slice(0, chars)}...${addr.slice(-chars)}`;
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !order?.roomId || !wallet?.publicKey) return;
+
+    // Validate file type (images only)
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only image files are allowed");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB");
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // Convert image to base64 for storage
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64Data = event.target?.result as string;
+
+        try {
+          await addTradeMessage({
+            room_id: order.roomId,
+            sender_wallet: wallet.publicKey,
+            message: `[Proof Image: ${file.name}]`,
+            attachment_url: base64Data,
+          });
+
+          toast.success("Proof image uploaded!");
+
+          // Reset file input
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+        } catch (error) {
+          console.error("Failed to upload image:", error);
+          toast.error("Failed to upload image");
+        } finally {
+          setUploading(false);
+        }
+      };
+
+      reader.onerror = () => {
+        console.error("Failed to read file");
+        toast.error("Failed to read file");
+        setUploading(false);
+      };
+
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Failed to upload image");
+      setUploading(false);
+    }
   };
 
   const handleCopy = (value: string, label: string) => {

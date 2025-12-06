@@ -206,6 +206,33 @@ export default function BuyOrder() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Payment Method Dialog */}
+      <PaymentMethodDialog
+        open={showPaymentDialog}
+        onOpenChange={(open) => {
+          setShowPaymentDialog(open);
+          if (!open) {
+            setEditingPaymentMethodId(undefined);
+          }
+        }}
+        walletAddress={wallet?.publicKey || ""}
+        paymentMethodId={editingPaymentMethodId}
+        onSave={() => {
+          setEditingPaymentMethodId(undefined);
+        }}
+      />
+
+      {/* Bottom Navigation */}
+      <P2PBottomNavigation
+        onPaymentClick={() => {
+          setEditingPaymentMethodId(undefined);
+          setShowPaymentDialog(true);
+        }}
+        onCreateOfferClick={() => {
+          navigate("/buy-crypto");
+        }}
+      />
     </div>
   );
 }

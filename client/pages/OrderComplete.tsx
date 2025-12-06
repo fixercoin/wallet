@@ -396,7 +396,7 @@ export default function OrderComplete() {
     if (!order || !wallet?.publicKey) return;
 
     try {
-      updateOrderInStorage(order.id, {
+      await updateOrderInBothStorages(order.id, {
         status: "CANCELLED",
         buyerPaymentConfirmed: false,
         sellerPaymentReceived: false,

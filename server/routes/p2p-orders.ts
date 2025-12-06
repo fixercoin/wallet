@@ -344,7 +344,7 @@ export const handleUpdateP2POrder: RequestHandler = async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    const updated: P2POrder = {
+    const updated: any = {
       ...order,
       ...req.body,
       id: order.id,
@@ -352,6 +352,12 @@ export const handleUpdateP2POrder: RequestHandler = async (req, res) => {
       created_at: order.created_at,
       updatedAt: Date.now(),
       updated_at: Date.now(),
+      // Preserve marketplace fields if not in update body
+      ...(req.body.minAmountPKR !== undefined && { minAmountPKR: req.body.minAmountPKR }),
+      ...(req.body.maxAmountPKR !== undefined && { maxAmountPKR: req.body.maxAmountPKR }),
+      ...(req.body.minAmountTokens !== undefined && { minAmountTokens: req.body.minAmountTokens }),
+      ...(req.body.maxAmountTokens !== undefined && { maxAmountTokens: req.body.maxAmountTokens }),
+      ...(req.body.pricePKRPerQuote !== undefined && { pricePKRPerQuote: req.body.pricePKRPerQuote }),
     };
 
     await saveOrder(updated);

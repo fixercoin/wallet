@@ -104,7 +104,7 @@ export default function BuyOrder() {
     } catch (error) {
       console.error("Error submitting order:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to submit order"
+        error instanceof Error ? error.message : "Failed to submit order",
       );
     } finally {
       setSubmitting(false);
@@ -178,9 +178,7 @@ export default function BuyOrder() {
               </label>
               <div className="w-full px-4 py-3 rounded-lg bg-[#1a2847]/50 border border-gray-300/30 text-white/70 flex items-center">
                 <span className="text-lg font-semibold">
-                  {estimatedUSDC > 0
-                    ? estimatedUSDC.toFixed(6)
-                    : "0.000000"}{" "}
+                  {estimatedUSDC > 0 ? estimatedUSDC.toFixed(6) : "0.000000"}{" "}
                   USDC
                 </span>
               </div>
@@ -198,7 +196,9 @@ export default function BuyOrder() {
             {/* Submit Button */}
             <Button
               onClick={handleSubmitOrder}
-              disabled={submitting || loadingRate || !amountPKR || amountPKR === "0"}
+              disabled={
+                submitting || loadingRate || !amountPKR || amountPKR === "0"
+              }
               className="w-full py-3 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white hover:shadow-lg transition-colors uppercase font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? "Submitting..." : "Submit Order"}

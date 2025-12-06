@@ -195,7 +195,6 @@ export default function BuyCrypto() {
     fetchPaymentMethod();
   }, [wallet?.publicKey]);
 
-
   const handleBuyClick = async () => {
     if (!wallet) {
       toast({

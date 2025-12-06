@@ -88,7 +88,7 @@ export default function SellOrder() {
 
       if (usdcAmount > usdcBalance) {
         toast.error(
-          `Insufficient USDC balance. You have ${usdcBalance.toFixed(6)} USDC`
+          `Insufficient USDC balance. You have ${usdcBalance.toFixed(6)} USDC`,
         );
         return;
       }
@@ -124,7 +124,7 @@ export default function SellOrder() {
     } catch (error) {
       console.error("Error submitting order:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to submit order"
+        error instanceof Error ? error.message : "Failed to submit order",
       );
     } finally {
       setSubmitting(false);
@@ -209,10 +209,7 @@ export default function SellOrder() {
               </label>
               <div className="w-full px-4 py-3 rounded-lg bg-[#1a2847]/50 border border-gray-300/30 text-white/70 flex items-center">
                 <span className="text-lg font-semibold">
-                  {estimatedPKR > 0
-                    ? estimatedPKR.toFixed(2)
-                    : "0.00"}{" "}
-                  PKR
+                  {estimatedPKR > 0 ? estimatedPKR.toFixed(2) : "0.00"} PKR
                 </span>
               </div>
             </div>

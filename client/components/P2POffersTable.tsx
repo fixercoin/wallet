@@ -127,30 +127,30 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
       };
     } else {
       const min =
-        order.minAmountPKR !== undefined && order.minAmountPKR !== null
-          ? order.minAmountPKR
-          : order.minAmountTokens !== undefined && order.minAmountTokens !== null
-            ? order.minAmountTokens
-            : order.amountPKR !== undefined && order.amountPKR !== null
-              ? order.amountPKR
-              : order.amountTokens !== undefined && order.amountTokens !== null
-                ? order.amountTokens
+        order.minAmountTokens !== undefined && order.minAmountTokens !== null
+          ? order.minAmountTokens
+          : order.minAmountPKR !== undefined && order.minAmountPKR !== null
+            ? order.minAmountPKR
+            : order.amountTokens !== undefined && order.amountTokens !== null
+              ? order.amountTokens
+              : order.amountPKR !== undefined && order.amountPKR !== null
+                ? order.amountPKR
                 : 0;
       const max =
-        order.maxAmountPKR !== undefined && order.maxAmountPKR !== null
-          ? order.maxAmountPKR
-          : order.maxAmountTokens !== undefined && order.maxAmountTokens !== null
-            ? order.maxAmountTokens
-            : order.amountPKR !== undefined && order.amountPKR !== null
-              ? order.amountPKR
-              : order.amountTokens !== undefined && order.amountTokens !== null
-                ? order.amountTokens
+        order.maxAmountTokens !== undefined && order.maxAmountTokens !== null
+          ? order.maxAmountTokens
+          : order.maxAmountPKR !== undefined && order.maxAmountPKR !== null
+            ? order.maxAmountPKR
+            : order.amountTokens !== undefined && order.amountTokens !== null
+              ? order.amountTokens
+              : order.amountPKR !== undefined && order.amountPKR !== null
+                ? order.amountPKR
                 : 0;
-      const minFormatted = typeof min === "number" ? min.toFixed(0) : min;
-      const maxFormatted = typeof max === "number" ? max.toFixed(0) : max;
+      const minFormatted = typeof min === "number" ? min.toFixed(3) : min;
+      const maxFormatted = typeof max === "number" ? max.toFixed(3) : max;
       return {
-        min: `${minFormatted} PKR`,
-        max: `${maxFormatted} PKR`,
+        min: `${minFormatted} USDC`,
+        max: `${maxFormatted} USDC`,
       };
     }
   };

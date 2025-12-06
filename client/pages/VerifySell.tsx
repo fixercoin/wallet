@@ -311,6 +311,83 @@ export default function VerifySell() {
     }
   };
 
+  async function resizeImageToDataUrl(
+    file: File,
+    maxDim = 1024,
+    quality = 0.8,
+  ): Promise<string> {
+    const img = document.createElement("img");
+    const fileUrl = URL.createObjectURL(file);
+    try {
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = reject;
+        img.src = fileUrl;
+      });
+      const canvas = document.createElement("canvas");
+      let { width, height } = img;
+      if (width > height) {
+        if (width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        }
+      } else {
+        if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas unsupported");
+      ctx.drawImage(img, 0, 0, width, height);
+      return canvas.toDataURL("image/jpeg", quality);
+    } finally {
+      URL.revokeObjectURL(fileUrl);
+    }
+  }
+
+  async function handleImageAttachment(file: File) {
+    if (!file || !selectedOrder || !wallet) return;
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      const message: ChatMessage = {
+        id: `msg-${Date.now()}`,
+        roomId: selectedOrder.roomId,
+        senderWallet: wallet.publicKey,
+        senderRole: "seller",
+        type: "attachment",
+        text: "Sent a proof image",
+        metadata: { attachmentDataUrl: dataUrl, filename: file.name },
+        timestamp: Date.now(),
+      };
+      const serverMsg = await saveServerChatMessage(
+        selectedOrder.roomId,
+        wallet.publicKey,
+        message.text,
+      );
+
+      if (serverMsg) {
+        serverMsg.senderRole = "seller";
+        serverMsg.type = "attachment";
+        serverMsg.metadata = { attachmentDataUrl: dataUrl, filename: file.name };
+        setChatLog((prev) => [...prev, serverMsg]);
+        lastMessageCountRef.current += 1;
+      } else {
+        saveChatMessage(message);
+        setChatLog((prev) => [...prev, message]);
+      }
+    } catch (e) {
+      console.error("Attachment failed", e);
+      toast({
+        title: "Upload failed",
+        description: "Could not attach image",
+        variant: "destructive",
+      });
+    }
+  }
+
   // Select Phase
   if (phase === "select" || orders.length === 0) {
     return (

@@ -55,6 +55,24 @@ export default function OrderComplete() {
     setLoading(false);
   }, [location.state]);
 
+  // Fetch exchange rate from API (same as BuyData and SellData)
+  useEffect(() => {
+    const fetchRate = async () => {
+      try {
+        const response = await fetch("/api/token/price?token=USDC");
+        if (!response.ok) throw new Error("Failed to fetch rate");
+        const data = await response.json();
+        const rate = data.rate || data.priceInPKR || 280;
+        setExchangeRate(typeof rate === "number" && rate > 0 ? rate : 280);
+      } catch (error) {
+        console.error("Exchange rate error:", error);
+        setExchangeRate(280);
+      }
+    };
+
+    fetchRate();
+  }, []);
+
   // Load chat messages
   useEffect(() => {
     const loadMessages = async () => {

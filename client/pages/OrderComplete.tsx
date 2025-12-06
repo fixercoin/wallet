@@ -315,7 +315,9 @@ export default function OrderComplete() {
 
     try {
       setSellerTransferInitiated(true);
-      updateOrderInStorage(order.id, { sellerTransferInitiated: true });
+      await updateOrderInBothStorages(order.id, {
+        sellerTransferInitiated: true,
+      });
 
       if (order.roomId) {
         await addTradeMessage({

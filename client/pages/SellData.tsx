@@ -86,7 +86,7 @@ export default function SellData() {
       <P2POffersTable
         key={refreshKey}
         orderType="SELL"
-        exchangeRate={280}
+        exchangeRate={exchangeRate}
         onSelectOffer={(offer) => {
           setSelectedOffer(offer);
           setShowTradeDialog(true);
@@ -99,7 +99,7 @@ export default function SellData() {
         onOpenChange={setShowTradeDialog}
         orderType="SELL"
         defaultToken={selectedOffer?.token || "USDC"}
-        defaultPrice={selectedOffer?.pricePKRPerQuote || 280}
+        defaultPrice={selectedOffer?.pricePKRPerQuote || exchangeRate}
         minAmount={
           selectedOffer?.minAmountTokens || selectedOffer?.minAmountPKR || 0
         }

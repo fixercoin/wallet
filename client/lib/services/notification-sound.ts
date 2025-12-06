@@ -23,7 +23,9 @@ export function playNotificationSound() {
 
     // Resume audio context if suspended (required for user interaction)
     if (context.state === "suspended") {
-      context.resume().catch((e) => console.error("Failed to resume audio:", e));
+      context
+        .resume()
+        .catch((e) => console.error("Failed to resume audio:", e));
     }
 
     // Create oscillators and gainNodes for bell-like sound
@@ -66,9 +68,15 @@ export function playNotificationSound() {
     gain3.connect(context.destination);
 
     osc3.frequency.setValueAtTime(1046.5, now + delayBetweenStrikes);
-    osc3.frequency.exponentialRampToValueAtTime(800, now + delayBetweenStrikes + duration * 0.7);
+    osc3.frequency.exponentialRampToValueAtTime(
+      800,
+      now + delayBetweenStrikes + duration * 0.7,
+    );
     gain3.gain.setValueAtTime(0.25, now + delayBetweenStrikes);
-    gain3.gain.exponentialRampToValueAtTime(0.01, now + delayBetweenStrikes + duration * 0.7);
+    gain3.gain.exponentialRampToValueAtTime(
+      0.01,
+      now + delayBetweenStrikes + duration * 0.7,
+    );
 
     osc3.start(now + delayBetweenStrikes);
     osc3.stop(now + delayBetweenStrikes + duration * 0.7);
@@ -85,7 +93,9 @@ export function playSingleBellSound() {
     const context = getAudioContext();
 
     if (context.state === "suspended") {
-      context.resume().catch((e) => console.error("Failed to resume audio:", e));
+      context
+        .resume()
+        .catch((e) => console.error("Failed to resume audio:", e));
     }
 
     const now = context.currentTime;

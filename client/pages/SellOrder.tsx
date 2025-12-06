@@ -140,22 +140,20 @@ export default function SellOrder() {
         </div>
       </div>
 
-      {/* Wallet USDC Balance */}
-      <div className="w-full px-4 py-2">
-        <div className="text-center text-white/60" style={{ fontSize: "11px" }}>
-          Available USDC Balance: {usdcBalance.toFixed(6)} USDC
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="w-full px-4 py-8">
         <Card className="bg-transparent border border-gray-300/30">
           <CardContent className="p-6 space-y-6">
             {/* Amount Input */}
             <div>
-              <label className="block text-sm font-medium text-white/80 mb-3 uppercase">
-                Amount in USDC
-              </label>
+              <div className="flex justify-between items-center mb-3">
+                <label className="block text-sm font-medium text-white/80 uppercase">
+                  Amount in USDC
+                </label>
+                <p className="text-xs text-white/60">
+                  Available: {usdcBalance.toFixed(6)} USDC
+                </p>
+              </div>
               <input
                 type="number"
                 value={amountUSDC}

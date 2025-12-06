@@ -36,7 +36,7 @@ export default function SellData() {
       {/* Header */}
       <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4">
         <button
-          onClick={() => navigate("/sell-order")}
+          onClick={() => navigate("/")}
           className="text-gray-300 hover:text-gray-100 transition-colors"
           aria-label="Back"
         >

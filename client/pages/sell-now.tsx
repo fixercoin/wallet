@@ -400,7 +400,7 @@ export default function SellNow() {
 
             <div>
               <label className="block font-medium text-white/80 mb-2 uppercase">
-                MINIMUM AMOUNT (USDC)
+                MINIMUM AMOUNT (PKR)
               </label>
               <input
                 type="number"

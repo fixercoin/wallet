@@ -45,10 +45,10 @@ export interface CreatedOrder {
 
 export async function createOrderFromOffer(
   offer: P2POfferFromTable,
-  buyerWallet: string,
+  currentUserWallet: string,
   orderType: "BUY" | "SELL",
 ): Promise<CreatedOrder> {
-  const sellerWallet = offer.walletAddress || offer.creator_wallet || "";
+  const offerCreatorWallet = offer.walletAddress || offer.creator_wallet || "";
   const amountTokens =
     typeof offer.amountTokens === "number"
       ? offer.amountTokens
@@ -65,10 +65,17 @@ export async function createOrderFromOffer(
 
   const orderId = `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+  // Determine buyer and seller based on order type
+  let buyerWallet: string;
+  let sellerWallet: string;
   let sellerPaymentMethod = undefined;
 
   if (orderType === "BUY") {
-    // If buyer, we need seller's payment method
+    // User is buying: they are the buyer, offer creator is the seller
+    buyerWallet = currentUserWallet;
+    sellerWallet = offerCreatorWallet;
+
+    // For buyers, we need seller's payment method
     try {
       const paymentMethods = await getPaymentMethodsByWallet(sellerWallet);
       if (paymentMethods.length > 0) {
@@ -81,14 +88,18 @@ export async function createOrderFromOffer(
     } catch (error) {
       console.error("Failed to get seller payment method:", error);
     }
+  } else {
+    // User is selling: they are the seller, offer creator is the buyer
+    buyerWallet = offerCreatorWallet;
+    sellerWallet = currentUserWallet;
   }
 
   // Create trade room
   let roomId = undefined;
   try {
     const room = await createTradeRoom({
-      buyer_wallet: orderType === "BUY" ? buyerWallet : sellerWallet,
-      seller_wallet: orderType === "BUY" ? sellerWallet : buyerWallet,
+      buyer_wallet: buyerWallet,
+      seller_wallet: sellerWallet,
       order_id: orderId,
     });
     roomId = room.id;
@@ -96,7 +107,7 @@ export async function createOrderFromOffer(
     // Add initial message
     await addTradeMessage({
       room_id: roomId,
-      sender_wallet: buyerWallet,
+      sender_wallet: currentUserWallet,
       message: `Order created: ${orderType} order for ${amountTokens} ${offer.token}`,
     });
   } catch (error) {
@@ -108,8 +119,8 @@ export async function createOrderFromOffer(
     id: orderId,
     type: orderType,
     offerId: offer.id,
-    buyerWallet: orderType === "BUY" ? buyerWallet : sellerWallet,
-    sellerWallet: orderType === "BUY" ? sellerWallet : buyerWallet,
+    buyerWallet,
+    sellerWallet,
     token: offer.token,
     amountTokens,
     amountPKR,

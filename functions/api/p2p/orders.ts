@@ -47,9 +47,14 @@ export const onRequestGet = async ({
 
     const url = new URL(request.url);
     const walletAddress = url.searchParams.get("wallet");
-    const orderId = url.searchParams.get("id");
+    const idFromQuery = url.searchParams.get("id");
     const status = url.searchParams.get("status");
     const type = url.searchParams.get("type");
+
+    // Extract orderId from URL path (/api/p2p/orders/:orderId) or query params
+    const pathParts = url.pathname.split("/");
+    const idFromPath = pathParts[pathParts.length - 1] && pathParts[pathParts.length - 1] !== "orders" ? pathParts[pathParts.length - 1] : null;
+    const orderId = idFromPath || idFromQuery;
 
     const kvStore = new KVStore(env.STAKING_KV);
 

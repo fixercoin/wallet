@@ -45,7 +45,26 @@ export default function OrderComplete() {
   // If we can't determine, assume the user is a participant
   const isBuyer = order?.buyerWallet
     ? order.buyerWallet === wallet?.publicKey
-    : true;
+    : orderType === "BUY" ? true : false;
+
+  // Check if this is a new offer or existing order
+  const isNewOffer = offer !== null && order === null;
+
+  const handleCopy = (value: string, label: string) => {
+    navigator.clipboard.writeText(value);
+    setCopiedValue(value);
+    toast({
+      title: "Copied!",
+      description: `${label} copied to clipboard`,
+      duration: 2000,
+    });
+    setTimeout(() => setCopiedValue(null), 2000);
+  };
+
+  const shortenAddress = (address: string, chars = 6) => {
+    if (!address) return "";
+    return `${address.slice(0, chars)}...${address.slice(-chars)}`;
+  };
 
   // Initialize chatroom and set up polling when component mounts
   useEffect(() => {

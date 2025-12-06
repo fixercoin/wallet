@@ -300,17 +300,25 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                           title="Edit offer"
                           role="button"
                           tabIndex={0}
-                          onKeyDown={(e) => e.key === 'Enter' && handleEdit(order)}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleEdit(order)
+                          }
                         >
                           <Edit2 className="w-4 h-4" />
                         </div>
                         <div
                           onClick={() => handleCancel(order)}
-                          className={cancelling === order.id ? "cursor-pointer text-red-500 transition-colors" : "cursor-pointer text-red-400 hover:text-red-300 transition-colors"}
+                          className={
+                            cancelling === order.id
+                              ? "cursor-pointer text-red-500 transition-colors"
+                              : "cursor-pointer text-red-400 hover:text-red-300 transition-colors"
+                          }
                           title="Cancel offer"
                           role="button"
                           tabIndex={0}
-                          onKeyDown={(e) => e.key === 'Enter' && handleCancel(order)}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleCancel(order)
+                          }
                         >
                           {cancelling === order.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -392,17 +400,25 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                         title="Edit offer"
                         role="button"
                         tabIndex={0}
-                        onKeyDown={(e) => e.key === 'Enter' && handleEdit(order)}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleEdit(order)
+                        }
                       >
                         <Edit2 className="w-4 h-4" />
                       </div>
                       <div
                         onClick={() => handleCancel(order)}
-                        className={cancelling === order.id ? "cursor-pointer text-red-500 transition-colors" : "cursor-pointer text-red-400 hover:text-red-300 transition-colors"}
+                        className={
+                          cancelling === order.id
+                            ? "cursor-pointer text-red-500 transition-colors"
+                            : "cursor-pointer text-red-400 hover:text-red-300 transition-colors"
+                        }
                         title="Cancel offer"
                         role="button"
                         tabIndex={0}
-                        onKeyDown={(e) => e.key === 'Enter' && handleCancel(order)}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleCancel(order)
+                        }
                       >
                         {cancelling === order.id ? (
                           <Loader2 className="w-4 h-4 animate-spin" />

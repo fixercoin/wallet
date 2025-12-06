@@ -30,6 +30,13 @@ export interface P2POrder {
   updatedAt: number;
   escrowId?: string;
   matchedWith?: string;
+  minAmountPKR?: number;
+  maxAmountPKR?: number;
+  minAmountTokens?: number;
+  maxAmountTokens?: number;
+  pricePKRPerQuote?: number;
+  sellerWallet?: string;
+  buyerWallet?: string;
 }
 
 export interface OrderNotification {

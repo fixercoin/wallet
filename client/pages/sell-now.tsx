@@ -7,7 +7,6 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
-import { getTokenBalanceForMint } from "@/lib/services/solana-rpc";
 import {
   Select,
   SelectContent,

@@ -90,16 +90,22 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
     return exchangeRate.toFixed(2);
   };
 
-  const getLimit = (order: P2POrder): string => {
+  const getLimit = (order: P2POrder): { min: string; max: string } => {
     if (orderType === "BUY") {
       const min = order.amountPKR || order.pkr_amount || 0;
       const minFormatted = typeof min === "number" ? min.toFixed(0) : min;
-      return `${minFormatted} PKR`;
+      return {
+        min: `${minFormatted} PKR`,
+        max: `${minFormatted} PKR`
+      };
     } else {
       const min =
         order.amountTokens || parseFloat(order.token_amount || "0") || 0;
       const minFormatted = typeof min === "number" ? min.toFixed(2) : min;
-      return `${minFormatted} ${order.token || "USDC"}`;
+      return {
+        min: minFormatted,
+        max: minFormatted
+      };
     }
   };
 

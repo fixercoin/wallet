@@ -244,23 +244,31 @@ export default function SellNow() {
 
   const saveOrderToAPI = async (order: any) => {
     try {
+      const orderPayload: any = {
+        type: "SELL",
+        walletAddress: wallet.publicKey,
+        token: order.token,
+        minAmountTokens: order.minAmountTokens,
+        maxAmountTokens: order.maxAmountTokens,
+        pricePKRPerQuote: order.pricePKRPerQuote,
+        paymentMethodId: order.paymentMethod,
+        status: "PENDING",
+        orderId: order.id,
+        sellerWallet: wallet.publicKey,
+      };
+
+      // Only include amountTokens and amountPKR if they are defined
+      if (order.amountTokens !== undefined) {
+        orderPayload.amountTokens = order.amountTokens;
+      }
+      if (order.amountPKR !== undefined) {
+        orderPayload.amountPKR = order.amountPKR;
+      }
+
       const response = await fetch("/api/p2p/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "SELL",
-          walletAddress: wallet.publicKey,
-          token: order.token,
-          amountTokens: order.amountTokens,
-          amountPKR: order.amountPKR,
-          minAmountTokens: order.minAmountTokens,
-          maxAmountTokens: order.maxAmountTokens,
-          pricePKRPerQuote: order.pricePKRPerQuote,
-          paymentMethodId: order.paymentMethod,
-          status: "PENDING",
-          orderId: order.id,
-          sellerWallet: wallet.publicKey,
-        }),
+        body: JSON.stringify(orderPayload),
       });
 
       if (!response.ok) {

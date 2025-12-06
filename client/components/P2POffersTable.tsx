@@ -249,7 +249,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
 
       {/* Desktop Table */}
       <div className="hidden sm:block overflow-x-auto rounded-lg border border-gray-300/30">
-        <table className="w-full text-xs">
+        <table className="w-full text-[10px]">
           <thead>
             <tr className="bg-[#1a2847]/50 border-b border-gray-300/30">
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
@@ -282,8 +282,10 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                     {getPrice(order)}
                   </td>
                   <td className="px-4 py-3 text-white/80 uppercase">
-                    <span className="text-xs">
-                      MIN: {limits.min} | MAX: {limits.max}
+                    <span className="text-[10px]">
+                      {orderType === "BUY"
+                        ? `MIN: ${limits.min} | MAX: ${limits.max}`
+                        : `${limits.min.replace(" USDC", "")} - ${limits.max}`}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-white/80 uppercase">
@@ -341,37 +343,39 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
             >
               <div className="grid grid-cols-5 gap-3 items-start">
                 <div className="flex flex-col">
-                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">
+                  <p className="text-[10px] text-white/60 font-semibold uppercase mb-2">
                     ADVERTISER
                   </p>
-                  <p className="text-xs font-semibold text-white/90 uppercase">
+                  <p className="text-[10px] font-semibold text-white/90 uppercase">
                     {getCreatorName(order)}
                   </p>
                 </div>
 
                 <div className="flex flex-col">
-                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">
+                  <p className="text-[10px] text-white/60 font-semibold uppercase mb-2">
                     PRICE
                   </p>
-                  <p className="text-xs font-semibold text-white/90 uppercase">
+                  <p className="text-[10px] font-semibold text-white/90 uppercase">
                     {getPrice(order)}
                   </p>
                 </div>
 
                 <div className="flex flex-col">
-                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">
+                  <p className="text-[10px] text-white/60 font-semibold uppercase mb-2">
                     LIMIT
                   </p>
-                  <p className="text-xs font-semibold text-white/90 uppercase">
-                    MIN: {limits.min} | MAX: {limits.max}
+                  <p className="text-[10px] font-semibold text-white/90 uppercase">
+                    {orderType === "BUY"
+                      ? `MIN: ${limits.min} | MAX: ${limits.max}`
+                      : `${limits.min.replace(" USDC", "")} - ${limits.max}`}
                   </p>
                 </div>
 
                 <div className="flex flex-col">
-                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">
+                  <p className="text-[10px] text-white/60 font-semibold uppercase mb-2">
                     PAYMENT
                   </p>
-                  <p className="text-xs font-semibold text-white/90 uppercase">
+                  <p className="text-[10px] font-semibold text-white/90 uppercase">
                     EASYPAISA
                   </p>
                 </div>
@@ -382,7 +386,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                       <Button
                         onClick={() => handleEdit(order)}
                         size="sm"
-                        className="bg-transparent hover:bg-white/10 text-white text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
+                        className="bg-transparent hover:bg-white/10 text-white text-[10px] py-1 px-2 rounded h-auto flex items-center transition-colors"
                         title="Edit offer"
                       >
                         <Edit2 className="w-4 h-4" />
@@ -391,7 +395,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                         onClick={() => handleCancel(order)}
                         disabled={cancelling === order.id}
                         size="sm"
-                        className="bg-transparent hover:bg-red-500/20 text-red-400 hover:text-red-300 text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
+                        className="bg-transparent hover:bg-red-500/20 text-red-400 hover:text-red-300 text-[10px] py-1 px-2 rounded h-auto flex items-center transition-colors"
                         title="Cancel offer"
                       >
                         {cancelling === order.id ? (
@@ -405,7 +409,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   <Button
                     onClick={() => handleProceed(order)}
                     size="sm"
-                    className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-3 rounded h-auto uppercase font-semibold"
+                    className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-[10px] py-1 px-3 rounded h-auto uppercase font-semibold"
                   >
                     {orderType === "BUY" ? "BUY" : "SELL"}
                   </Button>

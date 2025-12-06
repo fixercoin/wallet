@@ -204,6 +204,8 @@ export default function SellNow() {
           token: order.token,
           amountTokens: order.amountTokens,
           amountPKR: order.amountPKR,
+          minAmountTokens: order.minAmountTokens,
+          maxAmountTokens: order.maxAmountTokens,
           pricePKRPerQuote: order.pricePKRPerQuote,
           paymentMethodId: order.paymentMethod,
           status: "PENDING",

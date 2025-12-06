@@ -186,7 +186,9 @@ export default function BuyData() {
                         Amount (PKR)
                       </p>
                       <p className="text-white text-lg font-semibold">
-                        {order.amountPKR?.toFixed(2) || order.pkr_amount || "N/A"}{" "}
+                        {order.amountPKR?.toFixed(2) ||
+                          order.pkr_amount ||
+                          "N/A"}{" "}
                         PKR
                       </p>
                     </div>
@@ -215,8 +217,12 @@ export default function BuyData() {
                   )}
 
                   <div className="text-xs text-white/50 pt-2 border-t border-gray-700/50">
-                    <p>Created: {formatDate(order.createdAt || order.created_at)}</p>
-                    <p>Updated: {formatDate(order.updatedAt || order.updated_at)}</p>
+                    <p>
+                      Created: {formatDate(order.createdAt || order.created_at)}
+                    </p>
+                    <p>
+                      Updated: {formatDate(order.updatedAt || order.updated_at)}
+                    </p>
                   </div>
                 </CardContent>
               </Card>

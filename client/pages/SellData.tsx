@@ -65,7 +65,9 @@ export default function SellData() {
       } catch (error) {
         console.error("Error fetching sell orders:", error);
         toast.error(
-          error instanceof Error ? error.message : "Failed to fetch sell orders",
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch sell orders",
         );
       } finally {
         setLoading(false);
@@ -186,7 +188,9 @@ export default function SellData() {
                         Amount (PKR)
                       </p>
                       <p className="text-white text-lg font-semibold">
-                        {order.amountPKR?.toFixed(2) || order.pkr_amount || "N/A"}{" "}
+                        {order.amountPKR?.toFixed(2) ||
+                          order.pkr_amount ||
+                          "N/A"}{" "}
                         PKR
                       </p>
                     </div>
@@ -215,8 +219,12 @@ export default function SellData() {
                   )}
 
                   <div className="text-xs text-white/50 pt-2 border-t border-gray-700/50">
-                    <p>Created: {formatDate(order.createdAt || order.created_at)}</p>
-                    <p>Updated: {formatDate(order.updatedAt || order.updated_at)}</p>
+                    <p>
+                      Created: {formatDate(order.createdAt || order.created_at)}
+                    </p>
+                    <p>
+                      Updated: {formatDate(order.updatedAt || order.updated_at)}
+                    </p>
                   </div>
                 </CardContent>
               </Card>

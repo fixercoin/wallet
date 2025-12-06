@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2POffersTable } from "@/components/P2POffersTable";
+import { createOrderFromOffer } from "@/lib/p2p-order-creation";
 
 export default function SellData() {
   const navigate = useNavigate();
@@ -66,8 +67,25 @@ export default function SellData() {
         key={refreshKey}
         orderType="SELL"
         exchangeRate={280}
-        onSelectOffer={(order) => {
-          navigate("/order-complete", { state: { offer: order, orderType: "SELL" } });
+        onSelectOffer={async (offer) => {
+          try {
+            if (!wallet?.publicKey) {
+              toast.error("Wallet not connected");
+              return;
+            }
+
+            const createdOrder = await createOrderFromOffer(
+              offer,
+              wallet.publicKey,
+              "SELL",
+            );
+
+            toast.success("Order created successfully!");
+            navigate("/order-complete", { state: { order: createdOrder } });
+          } catch (error) {
+            console.error("Error creating order:", error);
+            toast.error("Failed to create order");
+          }
         }}
       />
 

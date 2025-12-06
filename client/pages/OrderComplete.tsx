@@ -38,8 +38,10 @@ export default function OrderComplete() {
   const [sellerConfirmed, setSellerConfirmed] = useState(false);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(280);
+  const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load order from state or storage
   useEffect(() => {

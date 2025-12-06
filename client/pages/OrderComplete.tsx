@@ -25,6 +25,7 @@ export default function OrderComplete() {
   const [sellerConfirmed, setSellerConfirmed] = useState(false);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const previousMessageCountRef = useRef(0);
 
   // Load order from state or storage
   useEffect(() => {
@@ -60,9 +61,15 @@ export default function OrderComplete() {
     return () => clearInterval(interval);
   }, [order?.roomId]);
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom only when a NEW message arrives (not on every poll)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Only scroll if message count increased (new message added)
+    if (messages.length > previousMessageCountRef.current) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+    previousMessageCountRef.current = messages.length;
   }, [messages]);
 
   const shortenAddress = (addr: string, chars = 6): string => {

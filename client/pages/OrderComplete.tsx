@@ -178,6 +178,20 @@ export default function OrderComplete() {
         });
       }
 
+      // Send notification to buyer
+      await createNotification(
+        order.buyerWallet,
+        "received_confirmed",
+        order.type,
+        order.id,
+        `Seller confirmed transfer of ${order.amountTokens.toFixed(6)} ${order.token}`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+
       toast.success("Transfer confirmed!");
 
       // Check if both confirmed

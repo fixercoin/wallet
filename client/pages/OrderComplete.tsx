@@ -348,6 +348,178 @@ export default function OrderComplete() {
     }
   };
 
+  if (!wallet) {
+    return (
+      <div className="w-full min-h-screen pb-24 bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95">
+        <div className="text-center pt-20 text-white/70">
+          Please connect your wallet first
+        </div>
+      </div>
+    );
+  }
+
+  // New Offer Flow
+  if (isNewOffer) {
+    const getCreatorName = (): string => {
+      const addr = offer.walletAddress || offer.creator_wallet || "Unknown";
+      return shortenAddress(addr, 8);
+    };
+
+    const getPrice = (): string => {
+      if (offer.pricePKRPerQuote) {
+        return offer.pricePKRPerQuote.toFixed(2);
+      }
+      return "280";
+    };
+
+    const getLimit = (): { min: string; max: string } => {
+      if (orderType === "BUY") {
+        const min = offer.minAmountPKR || offer.amountPKR || offer.pkr_amount || 0;
+        const max = offer.maxAmountPKR || offer.amountPKR || offer.pkr_amount || 0;
+        return {
+          min: `${(typeof min === "number" ? min : 0).toFixed(0)} PKR`,
+          max: `${(typeof max === "number" ? max : 0).toFixed(0)} PKR`,
+        };
+      } else {
+        const min = offer.minAmountTokens || offer.minAmountPKR || offer.amountTokens || offer.amountPKR || 0;
+        const max = offer.maxAmountTokens || offer.maxAmountPKR || offer.amountTokens || offer.amountPKR || 0;
+        return {
+          min: `${(typeof min === "number" ? min : 0).toFixed(3)} USDC`,
+          max: `${(typeof max === "number" ? max : 0).toFixed(3)} USDC`,
+        };
+      }
+    };
+
+    const limits = getLimit();
+
+    return (
+      <div className="w-full min-h-screen pb-32 bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95 text-white">
+        {/* Header */}
+        <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-gray-300 hover:text-gray-100 transition-colors"
+            aria-label="Back"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-white font-bold text-lg mt-2 uppercase">
+            {orderType === "BUY" ? "Confirm Purchase" : "Confirm Sale"}
+          </h1>
+        </div>
+
+        {/* Offer Details */}
+        <div className="max-w-md mx-auto px-4 py-6 space-y-4">
+          <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30">
+            <CardContent className="space-y-0 p-0">
+              <div className="p-4 border-b border-gray-300/20">
+                <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                  Advertiser
+                </div>
+                <div className="font-semibold text-white/90 uppercase">
+                  {getCreatorName()}
+                </div>
+              </div>
+
+              <div className="p-4 border-b border-gray-300/20">
+                <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                  Price
+                </div>
+                <div className="font-semibold text-white/90">
+                  {getPrice()} PKR per Quote
+                </div>
+              </div>
+
+              <div className="p-4 border-b border-gray-300/20">
+                <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                  Limit
+                </div>
+                <div className="font-semibold text-white/90 text-sm">
+                  MIN: {limits.min}
+                </div>
+                <div className="font-semibold text-white/90 text-sm">
+                  MAX: {limits.max}
+                </div>
+              </div>
+
+              <div className="p-4 border-b border-gray-300/20">
+                <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                  Payment Method
+                </div>
+                <div className="font-semibold text-white/90 uppercase">
+                  {offer.payment_method || "EASYPAISA"}
+                </div>
+              </div>
+
+              <div className="p-4 border-b border-gray-300/20">
+                <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                  Order Type
+                </div>
+                <div className={`font-semibold uppercase text-sm ${
+                  orderType === "BUY" ? "text-blue-400" : "text-green-400"
+                }`}>
+                  {orderType === "BUY" ? "Buy Crypto" : "Sell Crypto"}
+                </div>
+              </div>
+
+              <div className="p-4">
+                <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                  Creator Wallet
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="font-mono text-xs text-white/90">
+                    {shortenAddress(offer.walletAddress || offer.creator_wallet || "", 12)}
+                  </div>
+                  <button
+                    onClick={() => handleCopy(offer.walletAddress || offer.creator_wallet || "", "Wallet")}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    {copiedValue === (offer.walletAddress || offer.creator_wallet) ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            <Button
+              onClick={() => {
+                // TODO: Create actual order for this offer
+                toast({
+                  title: "Order Created",
+                  description: "Proceeding to order completion page",
+                });
+                // Navigate to order completion after creating order
+                navigate(-1);
+              }}
+              className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl uppercase"
+            >
+              {orderType === "BUY" ? "Confirm Purchase" : "Confirm Sale"}
+            </Button>
+            <Button
+              onClick={() => navigate(-1)}
+              variant="outline"
+              className="w-full h-12 rounded-lg font-semibold transition-all duration-200 border border-gray-300/30 text-gray-300 hover:bg-gray-300/10"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+
+        {/* Bottom Navigation */}
+        <P2PBottomNavigation
+          onPaymentClick={() => {}}
+          onCreateOfferClick={() => {}}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full min-h-screen pb-32 bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95 text-white">
       {/* Header */}

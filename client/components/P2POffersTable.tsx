@@ -92,19 +92,24 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
 
   const getLimit = (order: P2POrder): { min: string; max: string } => {
     if (orderType === "BUY") {
-      const min = order.amountPKR || order.pkr_amount || 0;
+      const min = (order as any).minAmountPKR || order.amountPKR || order.pkr_amount || 0;
+      const max = (order as any).maxAmountPKR || order.amountPKR || order.pkr_amount || 0;
       const minFormatted = typeof min === "number" ? min.toFixed(0) : min;
+      const maxFormatted = typeof max === "number" ? max.toFixed(0) : max;
       return {
         min: `${minFormatted} PKR`,
-        max: `${minFormatted} PKR`
+        max: `${maxFormatted} PKR`
       };
     } else {
       const min =
-        order.amountTokens || parseFloat(order.token_amount || "0") || 0;
+        (order as any).minAmountTokens || order.amountTokens || parseFloat(order.token_amount || "0") || 0;
+      const max =
+        (order as any).maxAmountTokens || order.amountTokens || parseFloat(order.token_amount || "0") || 0;
       const minFormatted = typeof min === "number" ? min.toFixed(2) : min;
+      const maxFormatted = typeof max === "number" ? max.toFixed(2) : max;
       return {
         min: minFormatted,
-        max: minFormatted
+        max: maxFormatted
       };
     }
   };

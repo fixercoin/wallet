@@ -6,6 +6,9 @@ import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2POffersTable } from "@/components/P2POffersTable";
+import { P2PTradeDialog, type TradeDetails } from "@/components/P2PTradeDialog";
+import { createOrderFromOffer } from "@/lib/p2p-order-creation";
+import type { P2POrder } from "@/components/P2POffersTable";
 
 export default function SellData() {
   const navigate = useNavigate();
@@ -15,6 +18,8 @@ export default function SellData() {
     string | undefined
   >();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showTradeDialog, setShowTradeDialog] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState<P2POrder | null>(null);
 
   // Auto-refresh data every 10 seconds
   React.useEffect(() => {
@@ -44,20 +49,13 @@ export default function SellData() {
       style={{ fontSize: "12px", backgroundColor: "#1a1a1a", color: "#fff" }}
     >
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4 flex items-center justify-between">
+      <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4">
         <button
           onClick={() => navigate("/")}
           className="text-gray-300 hover:text-gray-100 transition-colors"
           aria-label="Back"
         >
           <ArrowLeft className="w-6 h-6" />
-        </button>
-        <button
-          onClick={() => setRefreshKey((prev) => prev + 1)}
-          className="text-gray-300 hover:text-gray-100 transition-colors text-xs font-semibold"
-          title="Refresh offers"
-        >
-          REFRESH
         </button>
       </div>
 
@@ -66,10 +64,47 @@ export default function SellData() {
         key={refreshKey}
         orderType="SELL"
         exchangeRate={280}
-        onSelectOffer={(order) => {
-          toast.success(
-            `Selected offer from ${order.walletAddress || order.creator_wallet}`,
-          );
+        onSelectOffer={(offer) => {
+          setSelectedOffer(offer);
+          setShowTradeDialog(true);
+        }}
+      />
+
+      {/* Trade Dialog */}
+      <P2PTradeDialog
+        open={showTradeDialog}
+        onOpenChange={setShowTradeDialog}
+        orderType="SELL"
+        defaultToken={selectedOffer?.token || "USDC"}
+        defaultPrice={selectedOffer?.pricePKRPerQuote || 280}
+        minAmount={
+          selectedOffer?.minAmountTokens || selectedOffer?.minAmountPKR || 0
+        }
+        maxAmount={
+          selectedOffer?.maxAmountTokens ||
+          selectedOffer?.maxAmountPKR ||
+          Infinity
+        }
+        onConfirm={async (details) => {
+          try {
+            if (!wallet?.publicKey || !selectedOffer) {
+              toast.error("Missing information");
+              return;
+            }
+
+            const createdOrder = await createOrderFromOffer(
+              selectedOffer,
+              wallet.publicKey,
+              "SELL",
+              details,
+            );
+
+            toast.success("Order created successfully!");
+            navigate("/order-complete", { state: { order: createdOrder } });
+          } catch (error) {
+            console.error("Error creating order:", error);
+            toast.error("Failed to create order");
+          }
         }}
       />
 

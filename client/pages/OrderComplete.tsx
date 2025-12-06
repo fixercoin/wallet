@@ -25,6 +25,7 @@ import {
   syncOrderFromStorage,
   updateOrderInBothStorages,
   deleteOrderFromAPI,
+  getOrderFromAPI,
 } from "@/lib/p2p-order-api";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import type { CreatedOrder } from "@/lib/p2p-order-creation";

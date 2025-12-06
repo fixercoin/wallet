@@ -354,7 +354,7 @@ export default function OrderComplete() {
 
     try {
       setBuyerCryptoReceived(true);
-      updateOrderInStorage(order.id, {
+      await updateOrderInBothStorages(order.id, {
         status: "COMPLETED",
         buyerCryptoReceived: true,
       });

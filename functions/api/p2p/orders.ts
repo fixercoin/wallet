@@ -46,15 +46,12 @@ export const onRequestGet = async ({
     const walletAddress = url.searchParams.get("wallet");
     const orderId = url.searchParams.get("id");
     const status = url.searchParams.get("status");
-
-    if (!walletAddress) {
-      return jsonResponse(400, { error: "Missing wallet address" });
-    }
+    const type = url.searchParams.get("type");
 
     const kvStore = new KVStore(env.STAKING_KV);
 
     if (orderId) {
-      // Get single order
+      // Get single order by ID
       const order = await kvStore.getOrder(orderId);
       if (!order) {
         return jsonResponse(404, { error: "Order not found" });
@@ -62,22 +59,98 @@ export const onRequestGet = async ({
       return jsonResponse(200, {
         success: true,
         data: order,
+        orders: [order],
       });
-    } else {
-      // Get all orders for wallet
+    }
+
+    if (walletAddress) {
+      // Get all orders for specific wallet
       let orders = await kvStore.getOrdersByWallet(walletAddress);
 
       // Filter by status if provided
       if (status) {
-        orders = orders.filter((o) => o.status === status);
+        const statusLower = status.toLowerCase();
+        orders = orders.filter(
+          (o) =>
+            o.status.toLowerCase() === statusLower ||
+            (statusLower === "active" &&
+              (o.status === "PENDING" || o.status === "pending")),
+        );
+      }
+
+      // Filter by type if provided
+      if (type) {
+        orders = orders.filter((o) => o.type === type.toUpperCase());
       }
 
       return jsonResponse(200, {
         success: true,
         data: orders,
+        orders: orders,
         count: orders.length,
       });
     }
+
+    // Get ALL orders (for marketplace/offers display)
+    if (type || status) {
+      // For marketplace, we need to scan all orders
+      // This is a workaround - ideally we'd have a global index
+      const allOrders: any[] = [];
+
+      // Query KV for all order keys
+      const listResult = await env.STAKING_KV.list({ prefix: "orders:" });
+      const keys = listResult.keys || [];
+
+      for (const key of keys) {
+        // Skip wallet index keys
+        if (key.name.includes("wallet:")) continue;
+
+        const orderJson = await env.STAKING_KV.get(key.name);
+        if (orderJson) {
+          try {
+            const order = JSON.parse(orderJson);
+
+            // Apply filters
+            let include = true;
+
+            if (type && order.type !== type.toUpperCase()) {
+              include = false;
+            }
+
+            if (status && include) {
+              const statusLower = status.toLowerCase();
+              const orderStatus = order.status.toLowerCase();
+              if (statusLower === "active") {
+                include =
+                  orderStatus === "pending" || orderStatus === "pending";
+              } else if (statusLower !== orderStatus) {
+                include = false;
+              }
+            }
+
+            if (include) {
+              allOrders.push(order);
+            }
+          } catch (e) {
+            console.error("Failed to parse order:", key.name, e);
+          }
+        }
+      }
+
+      // Sort by createdAt descending
+      allOrders.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+      return jsonResponse(200, {
+        success: true,
+        data: allOrders,
+        orders: allOrders,
+        count: allOrders.length,
+      });
+    }
+
+    return jsonResponse(400, {
+      error: "Provide wallet, id, type, or status parameter",
+    });
   } catch (error) {
     console.error("Error in /api/p2p/orders GET:", error);
     const message = error instanceof Error ? error.message : "Unknown error";

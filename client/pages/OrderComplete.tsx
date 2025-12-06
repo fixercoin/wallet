@@ -264,6 +264,7 @@ export default function OrderComplete() {
 
     try {
       setSellerPaymentReceived(true);
+      updateOrderInStorage(order.id, { sellerPaymentReceived: true });
 
       if (order.roomId) {
         await addTradeMessage({

@@ -6,7 +6,11 @@ export interface OrderNotification {
   orderId: string;
   recipientWallet: string;
   senderWallet: string;
-  type: "order_created" | "payment_confirmed" | "received_confirmed";
+  type:
+    | "order_created"
+    | "payment_confirmed"
+    | "received_confirmed"
+    | "order_cancelled";
   orderType: "BUY" | "SELL";
   message: string;
   orderData: {

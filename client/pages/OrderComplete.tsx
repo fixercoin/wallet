@@ -8,6 +8,8 @@ import {
   Clock,
   Copy,
   Check,
+  X,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,8 +40,10 @@ export default function OrderComplete() {
   const [sellerConfirmed, setSellerConfirmed] = useState(false);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(280);
+  const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load order from state or storage
   useEffect(() => {
@@ -104,9 +108,71 @@ export default function OrderComplete() {
     previousMessageCountRef.current = messages.length;
   }, [messages]);
 
+  const isBuyer = wallet?.publicKey === order?.buyerWallet;
+
   const shortenAddress = (addr: string, chars = 6): string => {
     if (!addr) return "";
     return `${addr.slice(0, chars)}...${addr.slice(-chars)}`;
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !order?.roomId || !wallet?.publicKey) return;
+
+    // Validate file type (images only)
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only image files are allowed");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB");
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // Convert image to base64 for storage
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64Data = event.target?.result as string;
+
+        try {
+          await addTradeMessage({
+            room_id: order.roomId,
+            sender_wallet: wallet.publicKey,
+            message: `[Proof Image: ${file.name}]`,
+            attachment_url: base64Data,
+          });
+
+          toast.success("Proof image uploaded!");
+
+          // Reset file input
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+        } catch (error) {
+          console.error("Failed to upload image:", error);
+          toast.error("Failed to upload image");
+        } finally {
+          setUploading(false);
+        }
+      };
+
+      reader.onerror = () => {
+        console.error("Failed to read file");
+        toast.error("Failed to read file");
+        setUploading(false);
+      };
+
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Failed to upload image");
+      setUploading(false);
+    }
   };
 
   const handleCopy = (value: string, label: string) => {
@@ -144,7 +210,7 @@ export default function OrderComplete() {
 
     try {
       setBuyerConfirmed(true);
-      updateOrderInStorage(order.id, { status: "PAYMENT_CONFIRMED" });
+      updateOrderInStorage(order.id, { status: "PENDING" });
 
       if (order.roomId) {
         await addTradeMessage({
@@ -187,7 +253,7 @@ export default function OrderComplete() {
 
     try {
       setSellerConfirmed(true);
-      updateOrderInStorage(order.id, { status: "PAYMENT_CONFIRMED" });
+      updateOrderInStorage(order.id, { status: "PENDING" });
 
       if (order.roomId) {
         await addTradeMessage({
@@ -226,18 +292,37 @@ export default function OrderComplete() {
   };
 
   const handleCancelOrder = async () => {
-    if (!order) return;
-
-    const confirmed = window.confirm(
-      "Are you sure you want to cancel this order? This action cannot be undone.",
-    );
-
-    if (!confirmed) return;
+    if (!order || !wallet?.publicKey) return;
 
     try {
       updateOrderInStorage(order.id, { status: "CANCELLED" });
-      toast.success("Order cancelled");
-      navigate(-1);
+
+      // Send cancellation message to chat
+      if (order.roomId) {
+        await addTradeMessage({
+          room_id: order.roomId,
+          sender_wallet: wallet.publicKey,
+          message: "❌ Order cancelled",
+        });
+      }
+
+      // Notify the other party
+      const otherParty = isBuyer ? order.sellerWallet : order.buyerWallet;
+      await createNotification(
+        otherParty,
+        "order_cancelled",
+        order.type,
+        order.id,
+        `${isBuyer ? "Buyer" : "Seller"} cancelled the order`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+
+      toast.success("Order cancelled and other party notified");
+      setTimeout(() => navigate(-1), 1000);
     } catch (error) {
       console.error("Error cancelling order:", error);
       toast.error("Failed to cancel order");
@@ -270,23 +355,34 @@ export default function OrderComplete() {
     );
   }
 
-  const isBuyer = wallet.publicKey === order.buyerWallet;
   const counterpartyWallet = isBuyer ? order.sellerWallet : order.buyerWallet;
 
   return (
     <div className="w-full min-h-screen pb-32 bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95 text-white">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4 border-b border-gray-300/20">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-gray-300 hover:text-gray-100 transition-colors"
-          aria-label="Back"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-        <h1 className="text-white font-bold text-lg mt-2 uppercase">
-          {isBuyer ? "BUY ORDER" : "SELL ORDER"}
-        </h1>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-gray-300 hover:text-gray-100 transition-colors"
+            aria-label="Back"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-white font-bold text-lg uppercase flex-1 ml-4">
+            {isBuyer ? "BUY ORDER" : "SELL ORDER"}
+          </h1>
+          {order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
+            <button
+              onClick={handleCancelOrder}
+              className="relative p-2 rounded-lg hover:bg-red-600/20 transition-colors text-red-400"
+              aria-label="Cancel Order"
+              title="Cancel order"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Two-Column Layout */}
@@ -553,15 +649,6 @@ export default function OrderComplete() {
                 </div>
               </div>
             )}
-
-            {order.status !== "COMPLETED" && (
-              <Button
-                onClick={handleCancelOrder}
-                className="w-full bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 text-red-400 uppercase text-xs font-semibold py-2"
-              >
-                Cancel Order
-              </Button>
-            )}
           </div>
         </div>
 
@@ -594,6 +681,15 @@ export default function OrderComplete() {
                           ? "BUYER"
                           : "SELLER"}
                       </div>
+                      {msg.attachment_url && (
+                        <div className="mb-2">
+                          <img
+                            src={msg.attachment_url}
+                            alt="Proof"
+                            className="max-w-[200px] rounded-lg"
+                          />
+                        </div>
+                      )}
                       <div className="break-words">{msg.message}</div>
                       <div className="text-xs text-white/50 mt-2">
                         {new Date(msg.created_at).toLocaleTimeString()}
@@ -606,6 +702,22 @@ export default function OrderComplete() {
 
               {/* Message Input */}
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 hover:bg-[#1a2540]/70 text-white disabled:opacity-50 transition-colors"
+                  title="Upload proof image"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  disabled={uploading}
+                />
                 <input
                   type="text"
                   className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40 text-sm"

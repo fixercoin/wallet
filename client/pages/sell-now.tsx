@@ -376,9 +376,11 @@ export default function SellNow() {
               onClick={handleSellClick}
               disabled={
                 loading ||
-                !sellAmountTokens ||
-                Number(sellAmountTokens) <= 0 ||
-                !exchangeRate ||
+                !minAmountUSDC ||
+                !maxAmountUSDC ||
+                Number(minAmountUSDC) <= 0 ||
+                Number(maxAmountUSDC) <= 0 ||
+                Number(minAmountUSDC) >= Number(maxAmountUSDC) ||
                 !paymentMethod ||
                 fetchingPaymentMethod
               }

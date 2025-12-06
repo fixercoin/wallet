@@ -1,7 +1,7 @@
 /**
  * Migration endpoint to add missing pricePKRPerQuote field to existing orders
  * POST /api/p2p/migrate-prices
- * 
+ *
  * This migrates all orders that are missing the pricePKRPerQuote field
  * Sets them to 291.90 PKR per USDC (the correct market rate)
  */
@@ -46,7 +46,7 @@ export const onRequestPost = async ({
       });
     }
 
-    const CORRECT_PRICE = 291.90; // Current correct exchange rate
+    const CORRECT_PRICE = 291.9; // Current correct exchange rate
     let migratedCount = 0;
     let errorCount = 0;
     const errors: string[] = [];
@@ -68,14 +68,14 @@ export const onRequestPost = async ({
         // Only migrate if pricePKRPerQuote is missing or not set properly
         if (!order.pricePKRPerQuote || order.pricePKRPerQuote === 280) {
           const oldPrice = order.pricePKRPerQuote || "not set";
-          
+
           order.pricePKRPerQuote = CORRECT_PRICE;
           order.migratedAt = Date.now();
-          
+
           // Save updated order
           await env.STAKING_KV.put(key.name, JSON.stringify(order));
           migratedCount++;
-          
+
           console.log(
             `[Migration] Updated ${key.name}: price changed from ${oldPrice} to ${CORRECT_PRICE}`,
           );

@@ -323,13 +323,28 @@ export default function BuyCrypto() {
 
             <div>
               <label className="block font-medium text-white/80 mb-2 uppercase">
-                AMOUNT (PKR)
+                MINIMUM AMOUNT PKR
               </label>
               <input
                 type="number"
-                value={amountPKR}
-                onChange={(e) => setAmountPKR(e.target.value)}
-                placeholder="Enter amount in PKR"
+                value={minAmountPKR}
+                onChange={(e) => setMinAmountPKR(e.target.value)}
+                placeholder="Enter minimum amount in PKR"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                min="0"
+                step="100"
+              />
+            </div>
+
+            <div>
+              <label className="block font-medium text-white/80 mb-2 uppercase">
+                MAXIMUM AMOUNT PKR
+              </label>
+              <input
+                type="number"
+                value={maxAmountPKR}
+                onChange={(e) => setMaxAmountPKR(e.target.value)}
+                placeholder="Enter maximum amount in PKR"
                 className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
                 min="0"
                 step="100"
@@ -347,38 +362,6 @@ export default function BuyCrypto() {
                 placeholder="Paste your wallet address"
                 className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40 font-mono text-xs"
               />
-            </div>
-
-            <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">
-                    EXCHANGE RATE:
-                  </span>
-                  {fetchingRate ? (
-                    <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
-                  ) : (
-                    <span className="font-semibold text-[#FF7A5C]">
-                      1 {selectedToken.symbol} ={" "}
-                      {exchangeRate > 0
-                        ? exchangeRate < 1
-                          ? exchangeRate.toFixed(6)
-                          : exchangeRate.toFixed(2)
-                        : "0.00"}{" "}
-                      PKR
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">
-                    YOU WILL RECEIVE:
-                  </span>
-                  <span className="font-bold text-[#FF7A5C]">
-                    {estimatedTokens.toFixed(6)} {selectedToken.symbol}
-                  </span>
-                </div>
-              </div>
             </div>
 
             <Button

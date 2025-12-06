@@ -37,6 +37,7 @@ export default function OrderComplete() {
   const [buyerConfirmed, setBuyerConfirmed] = useState(false);
   const [sellerConfirmed, setSellerConfirmed] = useState(false);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
+  const [exchangeRate, setExchangeRate] = useState<number>(280);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
 

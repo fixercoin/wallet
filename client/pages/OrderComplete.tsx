@@ -361,16 +361,28 @@ export default function OrderComplete() {
     <div className="w-full min-h-screen pb-32 bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95 text-white">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4 border-b border-gray-300/20">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-gray-300 hover:text-gray-100 transition-colors"
-          aria-label="Back"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-        <h1 className="text-white font-bold text-lg mt-2 uppercase">
-          {isBuyer ? "BUY ORDER" : "SELL ORDER"}
-        </h1>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-gray-300 hover:text-gray-100 transition-colors"
+            aria-label="Back"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-white font-bold text-lg uppercase flex-1 ml-4">
+            {isBuyer ? "BUY ORDER" : "SELL ORDER"}
+          </h1>
+          {order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
+            <button
+              onClick={handleCancelOrder}
+              className="relative p-2 rounded-lg hover:bg-red-600/20 transition-colors text-red-400"
+              aria-label="Cancel Order"
+              title="Cancel order"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Two-Column Layout */}

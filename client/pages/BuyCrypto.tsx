@@ -102,6 +102,8 @@ export default function BuyCrypto() {
           token: order.token,
           amountTokens: order.amountTokens,
           amountPKR: order.amountPKR,
+          minAmountPKR: order.minAmountPKR,
+          maxAmountPKR: order.maxAmountPKR,
           pricePKRPerQuote: order.pricePKRPerQuote,
           paymentMethodId: order.paymentMethod,
           status: "PENDING",

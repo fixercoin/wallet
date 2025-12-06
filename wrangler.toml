@@ -2,6 +2,11 @@ name = "fixorium-pages"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Cloudflare Pages build configuration
+[build]
+command = "npm run build"
+cwd = "./"
+
 # Cloudflare Pages output directory
 pages_build_output_dir = "dist"
 
@@ -9,3 +14,45 @@ pages_build_output_dir = "dist"
 [vars]
 VITE_API_URL = ""
 VITE_API_BASE_URL = ""
+
+# RPC endpoint configuration (set in Cloudflare dashboard for your environment)
+# - SOLANA_RPC_URL: Primary Solana RPC endpoint
+# - HELIUS_RPC_URL: Helius RPC endpoint URL (if using Helius)
+# - HELIUS_API_KEY: Helius API key (if HELIUS_RPC_URL not directly set)
+# - ALCHEMY_RPC_URL: Alchemy RPC endpoint (optional)
+# - MORALIS_RPC_URL: Moralis RPC endpoint (optional)
+
+# KV namespace bindings for Pages Functions
+# These bindings are available in functions/api/* routes
+[[kv_namespaces]]
+binding = "STAKING_KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
+
+# Alias for backwards compatibility
+[[kv_namespaces]]
+binding = "KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
+
+# Enable KV for Pages Functions (development environment)
+[env.development.kv_namespaces]
+binding = "STAKING_KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
+
+[[env.development.kv_namespaces]]
+binding = "KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
+
+# Enable KV for Pages Functions (production environment)
+[env.production.kv_namespaces]
+binding = "STAKING_KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
+
+[[env.production.kv_namespaces]]
+binding = "KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"

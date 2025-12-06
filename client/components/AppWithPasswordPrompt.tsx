@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { PasswordPromptDialog } from "./PasswordPromptDialog";
+import { useWallet } from "@/contexts/WalletContext";
 
 interface AppWithPasswordPromptProps {
   children: React.ReactNode;
@@ -8,6 +9,7 @@ interface AppWithPasswordPromptProps {
 export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
   children,
 }) => {
+  const { requiresPassword } = useWallet();
   const idleTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -18,7 +20,7 @@ export const AppWithPasswordPrompt: React.FC<AppWithPasswordPromptProps> = ({
 
   return (
     <>
-      <PasswordPromptDialog isOpen={false} onUnlocked={() => {}} />
+      <PasswordPromptDialog isOpen={requiresPassword} onUnlocked={() => {}} />
       {children}
     </>
   );

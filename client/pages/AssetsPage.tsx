@@ -1,108 +1,114 @@
-import React, { useMemo } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import React, { useMemo, useState, useEffect } from "react";
 import { useWallet } from "@/contexts/WalletContext";
-import { TokenInfo } from "@/lib/wallet";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, ExternalLink, Loader2, RefreshCw } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { heliusAPI } from "@/lib/services/helius";
+import { jupiterAPI } from "@/lib/services/jupiter";
 
-export default function AssetsPage() {
+const BASE_SOLSCAN_TX = (sig: string) => `https://solscan.io/tx/${sig}`;
+
+interface ExtendedToken {
+  mint: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  logoURI?: string;
+  balance?: number;
+  price?: number;
+  priceChange24h?: number;
+}
+
+const AssetsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { wallet, tokens, isLoading } = useWallet();
+  const { wallet, tokens, refreshTokens } = useWallet();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUsingCache, setIsUsingCache] = useState(false);
+  const [totalBalance, setTotalBalance] = useState<number>(0);
 
-  const formatTokenPriceDisplay = (price?: number): string => {
-    if (typeof price !== "number" || !isFinite(price)) return "0.00000000";
-    if (price >= 1) return price.toFixed(2);
-    if (price >= 0.01) return price.toFixed(4);
-    if (price >= 0.0001) return price.toFixed(6);
-    return price.toFixed(8);
-  };
+  useEffect(() => {
+    const loadBalance = async () => {
+      if (!wallet?.publicKey) return;
 
-  const formatBalance = (
-    amount: number | undefined,
-    symbol?: string,
-  ): string => {
-    if (!amount || isNaN(amount)) {
-      return symbol === "SOL" ? "0.0000" : "0.00";
-    }
-    if (symbol === "SOL") {
-      return amount.toLocaleString(undefined, {
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4,
-      });
-    }
-    return amount.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
+      setIsLoading(true);
+      try {
+        const response = await heliusAPI.getTokenBalances(
+          wallet.publicKey.toString(),
+        );
+        setIsUsingCache(response.cacheUsed || false);
 
-  const formatTokenAmountCompact = (amount: number | undefined): string => {
-    if (!amount || isNaN(amount) || amount === 0) return "0";
+        let total = 0;
+        tokens.forEach((token) => {
+          if (
+            typeof token.balance === "number" &&
+            typeof token.price === "number"
+          ) {
+            const value = token.balance * token.price;
+            if (isFinite(value)) {
+              total += value;
+            }
+          }
+        });
 
-    const absAmount = Math.abs(amount);
-    if (absAmount >= 1000000) {
-      return (amount / 1000000).toFixed(2).replace(/\.?0+$/, "") + "m";
-    }
-    if (absAmount >= 1000) {
-      return (amount / 1000).toFixed(2).replace(/\.?0+$/, "") + "k";
-    }
-    if (absAmount >= 1) {
-      return amount.toFixed(2).replace(/\.?0+$/, "");
-    }
-    return amount.toFixed(6).replace(/\.?0+$/, "");
-  };
+        setTotalBalance(total);
+      } catch (error) {
+        console.error("Failed to load balance:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadBalance();
+  }, [wallet?.publicKey, tokens]);
 
   const sortedTokens = useMemo(() => {
-    const priority = ["SOL", "USDC", "FIXERCOIN", "LOCKER"];
-    const arr = [...tokens].filter((t) => t.symbol !== "USDT");
-    arr.sort((a, b) => {
-      const aSym = (a.symbol || "").toUpperCase();
-      const bSym = (b.symbol || "").toUpperCase();
-
-      const aIdx = priority.indexOf(aSym);
-      const bIdx = priority.indexOf(bSym);
-
-      if (aIdx >= 0 && bIdx >= 0) return aIdx - bIdx;
-      if (aIdx >= 0) return -1;
-      if (bIdx >= 0) return 1;
-
-      return aSym.localeCompare(bSym);
+    return [...tokens].sort((a, b) => {
+      const aValue = (a.balance || 0) * (a.price || 0);
+      const bValue = (b.balance || 0) * (b.price || 0);
+      return bValue - aValue;
     });
-    return arr;
   }, [tokens]);
 
-  const getTotalPortfolioValue = (): number => {
-    let total = 0;
-
-    tokens.forEach((token) => {
-      if (
-        typeof token.balance === "number" &&
-        typeof token.price === "number" &&
-        isFinite(token.balance) &&
-        isFinite(token.price) &&
-        token.balance > 0 &&
-        token.price > 0
-      ) {
-        const tokenValue = token.balance * token.price;
-        total += tokenValue;
-      }
-    });
-
-    if (!isFinite(total) || total <= 0) return 0;
-    return total;
+  const handleRefresh = async () => {
+    if (!wallet?.publicKey) return;
+    setIsLoading(true);
+    try {
+      await refreshTokens(wallet.publicKey.toString());
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const totalBalance = getTotalPortfolioValue();
+  if (!wallet?.publicKey) {
+    return (
+      <div className="w-full min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-gray-400">Please connect your wallet</p>
+          <Button onClick={() => navigate("/")} variant="outline">
+            Go to Wallet
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className="min-h-screen text-gray-100 pb-20"
-      style={{ backgroundColor: "#1f1f1f" }}
-    >
-      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-4 pt-8">
-        <div className="px-4 sm:px-0 mb-6">
+    <div className="w-full min-h-screen bg-gray-900 text-gray-100">
+      <style>{`
+        @keyframes blink {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
+          }
+        }
+        .blink-animation {
+          animation: blink 1.2s ease-in-out infinite;
+        }
+      `}</style>
+      <div className="w-full max-w-4xl mx-auto px-4 py-4 pt-8">
+        <div className="px-0 mb-6">
           <button
             onClick={() => navigate("/")}
             className="text-white hover:text-gray-300 transition-colors mb-4 flex items-center"
@@ -110,6 +116,15 @@ export default function AssetsPage() {
           >
             <ArrowLeft size={24} />
           </button>
+          {isUsingCache ? (
+            <div className="text-xs px-3 py-1 rounded-full bg-orange-500/20 text-orange-600 border border-orange-500/40 mb-3 inline-flex items-center gap-1.5">
+              <span>⚠️ Unstable Connect - Using Cache</span>
+            </div>
+          ) : (
+            <div className="text-xs px-3 py-1 rounded-full bg-green-500/20 text-green-600 border border-green-500/40 mb-3 inline-flex items-center gap-1.5">
+              <span>✓ Stable Connect</span>
+            </div>
+          )}
           <div className="bg-transparent rounded-lg p-4 border border-[#22c55e]/30 flex items-start justify-between">
             <div>
               <p className="text-xs text-gray-400 mb-1">Total Balance</p>
@@ -138,69 +153,68 @@ export default function AssetsPage() {
           </div>
         ) : (
           <div className="w-full space-y-0">
-            {sortedTokens.map((token, index) => (
-              <div key={token.mint} className="w-full">
-                <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
-                  <CardContent className="w-full p-0">
-                    <div className="w-full px-4 py-3 rounded-none sm:rounded-[2px] flex items-center justify-between gap-3 min-w-0">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <p
-                          className="font-semibold text-white whitespace-nowrap"
-                          style={{ fontSize: "11px" }}
-                        >
-                          {token.symbol}
-                        </p>
-                        <p
-                          className="text-green-400 whitespace-nowrap"
-                          style={{ fontSize: "10px" }}
-                        >
-                          {typeof token.price === "number" && token.price > 0
-                            ? `$${formatTokenPriceDisplay(token.price)}`
-                            : "$0.00"}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <p
-                          className="text-gray-300 whitespace-nowrap font-medium"
-                          style={{ fontSize: "11px" }}
-                        >
-                          {formatTokenAmountCompact(token.balance || 0)}
-                        </p>
-                        <p
-                          className="text-gray-400 whitespace-nowrap"
-                          style={{ fontSize: "10px" }}
-                        >
-                          {typeof token.price === "number" && token.price > 0
-                            ? `$${(token.balance || 0) * token.price > 0 ? formatBalance((token.balance || 0) * token.price) : "0.00"}`
-                            : "$0.00"}
-                        </p>
-                        <button
-                          className={`border rounded px-2 py-1 whitespace-nowrap font-medium transition-all ${
-                            (token.priceChange24h || 0) >= 0
-                              ? "border-green-400 text-green-400 hover:bg-green-400/10"
-                              : "border-red-400 text-red-400 hover:bg-red-400/10"
-                          }`}
-                          style={{
-                            fontSize: "10px",
-                            backgroundColor: "transparent",
-                          }}
-                        >
-                          {typeof token.priceChange24h === "number"
-                            ? `${token.priceChange24h >= 0 ? "+" : ""}${token.priceChange24h.toFixed(2)}%`
-                            : "0.00%"}
-                        </button>
+            {sortedTokens.map((token, index) => {
+              const tokenBalance =
+                typeof token.balance === "number" &&
+                typeof token.price === "number" &&
+                isFinite(token.balance) &&
+                isFinite(token.price)
+                  ? token.balance * token.price
+                  : 0;
+
+              return (
+                <div key={token.mint} className="w-full">
+                  <div className="bg-transparent border border-gray-700 rounded-none cursor-pointer hover:border-gray-600 transition-colors">
+                    <div className="w-full p-0">
+                      <div className="flex items-start gap-4 p-4">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          {token.logoURI && (
+                            <img
+                              src={token.logoURI}
+                              alt={token.symbol}
+                              className="w-12 h-12 rounded-full flex-shrink-0"
+                            />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-sm text-white truncate">
+                              {token.symbol || token.name}
+                            </h3>
+                            <p className="text-xs text-gray-400 mt-0.5 truncate">
+                              {token.name}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-sm font-semibold text-white">
+                            ${tokenBalance.toFixed(2)}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {(token.balance || 0).toFixed(4)} {token.symbol}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-                {index < sortedTokens.length - 1 && (
-                  <Separator className="bg-[#14532d]/30" />
-                )}
-              </div>
-            ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
+
+        <div className="mt-6 flex items-center justify-center gap-2">
+          <Button
+            onClick={handleRefresh}
+            disabled={isLoading}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+            {isLoading ? "Refreshing..." : "Refresh"}
+          </Button>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default AssetsPage;

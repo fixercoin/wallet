@@ -4,9 +4,7 @@ import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
-import { TokenQuickInfoCard } from "./token-detail/TokenQuickInfoCard";
-import { birdeyeAPI } from "@/lib/services/birdeye";
-import { BuySellLine } from "./token-detail/BuySellLine";
+import { TokenDetailsPanel } from "./token-detail/TokenDetailsPanel";
 
 interface TokenDetailProps {
   tokenMint: string;
@@ -27,9 +25,6 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 }) => {
   const { tokens, refreshTokens } = useWallet();
   const { toast } = useToast();
-  const [priceData, setPriceData] = useState<
-    { time: string; price: number; volume: number }[]
-  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [enhancedToken, setEnhancedToken] = useState<TokenInfo | null>(null);
 
@@ -42,59 +37,10 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     }
   }, [token]);
 
-  // Load live price data from Birdeye for this token
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const birdeye = await birdeyeAPI.getTokenByMint(tokenMint);
-        const price = birdeye?.priceUsd
-          ? parseFloat(String(birdeye.priceUsd))
-          : null;
-        const change = birdeye?.priceChange?.h24 ?? 0;
-        const base = price || 0;
-        const data = Array.from({ length: 24 }, (_, i) => {
-          // create simple intraday points around the base price using change to simulate trend
-          const factor =
-            1 +
-            ((Math.sin((i / 24) * Math.PI * 2) * 0.5 + 0.5) *
-              (change / 100 || 0)) /
-              2;
-          return {
-            time: `${i}:00`,
-            price: parseFloat((base * factor).toFixed(8)),
-            volume: birdeye?.volume?.h24 || Math.random() * 100000,
-          };
-        });
-        if (mounted) setPriceData(data);
-      } catch (e) {
-        if (mounted) setPriceData([]);
-      }
-    };
-    load();
-    return () => {
-      mounted = false;
-    };
-  }, [tokenMint]);
-
   const handleRefresh = async () => {
     setIsLoading(true);
     try {
       await refreshTokens();
-      // reload prices
-      const birdeye = await birdeyeAPI
-        .getTokenByMint(tokenMint)
-        .catch(() => null);
-      if (birdeye?.priceUsd) {
-        const base = parseFloat(String(birdeye.priceUsd));
-        const data = Array.from({ length: 24 }, (_, i) => ({
-          time: `${i}:00`,
-          price: base,
-          volume: birdeye.volume?.h24 || 0,
-        }));
-        setPriceData(data);
-      }
-
       toast({
         title: "Refreshed",
         description: "Token data updated",
@@ -158,16 +104,9 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
           </div>
         </div>
 
-        {/* Token Quick Info Card - With padding */}
-        <div className="px-4 py-2">
-          <TokenQuickInfoCard token={displayToken} />
-        </div>
-
-        {/* Chart Section - Full width on mobile */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-hidden">
-            <BuySellLine mint={tokenMint} priceData={priceData} />
-          </div>
+        {/* Token Details Section - Scrollable */}
+        <div className="px-4 py-4 flex-1 flex flex-col overflow-hidden">
+          <TokenDetailsPanel token={displayToken} tokenMint={tokenMint} />
         </div>
 
         {/* QUICK BUY Button - Fixed at bottom with padding */}

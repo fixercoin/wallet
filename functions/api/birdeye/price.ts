@@ -24,7 +24,7 @@ const FALLBACK_PRICES: Record<string, number> = {
 
 async function tryBirdeye(address: string, apiKey: string): Promise<any> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutId = setTimeout(() => controller.abort(), 18000);
 
   try {
     const response = await fetch(
@@ -63,7 +63,7 @@ async function tryBirdeye(address: string, apiKey: string): Promise<any> {
 async function tryDexScreener(address: string): Promise<any> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 18000);
 
     const response = await fetch(
       `${DEXSCREENER_BASE}/tokens/${encodeURIComponent(address)}`,
@@ -112,7 +112,7 @@ async function tryDexScreener(address: string): Promise<any> {
 async function tryJupiter(address: string): Promise<any> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 18000);
 
     const response = await fetch(
       `${JUPITER_PRICE_API}?ids=${encodeURIComponent(address)}`,

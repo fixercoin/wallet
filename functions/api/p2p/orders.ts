@@ -266,8 +266,14 @@ export const onRequestPut = async ({
       });
     }
 
+    const url = new URL(request.url);
     const body = await request.json();
-    const { orderId, status } = body;
+
+    // Extract orderId from URL path (/api/p2p/orders/:orderId) or request body
+    const pathParts = url.pathname.split("/");
+    const idFromPath = pathParts[pathParts.length - 1] && pathParts[pathParts.length - 1] !== "orders" ? pathParts[pathParts.length - 1] : null;
+    const orderId = idFromPath || body.orderId;
+    const { status } = body;
 
     if (!orderId) {
       return jsonResponse(400, { error: "Missing order ID" });

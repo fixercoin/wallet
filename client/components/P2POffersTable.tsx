@@ -294,27 +294,30 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   <td className="px-4 py-3 text-right flex gap-2 justify-end items-center">
                     {isAdvertiser(order) && (
                       <>
-                        <Button
+                        <div
                           onClick={() => handleEdit(order)}
-                          size="sm"
-                          className="bg-transparent hover:bg-white/10 text-white text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
+                          className="cursor-pointer text-white/70 hover:text-white transition-colors"
                           title="Edit offer"
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => e.key === 'Enter' && handleEdit(order)}
                         >
                           <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button
+                        </div>
+                        <div
                           onClick={() => handleCancel(order)}
-                          disabled={cancelling === order.id}
-                          size="sm"
-                          className="bg-transparent hover:bg-red-500/20 text-red-400 hover:text-red-300 text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
+                          className={cancelling === order.id ? "cursor-pointer text-red-500 transition-colors" : "cursor-pointer text-red-400 hover:text-red-300 transition-colors"}
                           title="Cancel offer"
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => e.key === 'Enter' && handleCancel(order)}
                         >
                           {cancelling === order.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <X className="w-4 h-4" />
                           )}
-                        </Button>
+                        </div>
                       </>
                     )}
                     <Button

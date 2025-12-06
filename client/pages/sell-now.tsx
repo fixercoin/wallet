@@ -159,8 +159,12 @@ export default function SellNow() {
         setSelectedToken(token);
       }
       // Set the min/max amounts
-      setMinAmountTokens(String(editingOrder.minAmountTokens || editingOrder.minAmountPKR || ""));
-      setMaxAmountTokens(String(editingOrder.maxAmountTokens || editingOrder.maxAmountPKR || ""));
+      setMinAmountTokens(
+        String(editingOrder.minAmountTokens || editingOrder.minAmountPKR || ""),
+      );
+      setMaxAmountTokens(
+        String(editingOrder.maxAmountTokens || editingOrder.maxAmountPKR || ""),
+      );
     }
   }, [editingOrder, tokens]);
 

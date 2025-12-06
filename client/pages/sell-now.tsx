@@ -415,7 +415,7 @@ export default function SellNow() {
 
             <div>
               <label className="block font-medium text-white/80 mb-2 uppercase">
-                MAXIMUM AMOUNT (PKR)
+                MAXIMUM AMOUNT (USDC)
               </label>
               <input
                 type="number"

@@ -681,6 +681,15 @@ export default function OrderComplete() {
                           ? "BUYER"
                           : "SELLER"}
                       </div>
+                      {msg.attachment_url && (
+                        <div className="mb-2">
+                          <img
+                            src={msg.attachment_url}
+                            alt="Proof"
+                            className="max-w-[200px] rounded-lg"
+                          />
+                        </div>
+                      )}
                       <div className="break-words">{msg.message}</div>
                       <div className="text-xs text-white/50 mt-2">
                         {new Date(msg.created_at).toLocaleTimeString()}

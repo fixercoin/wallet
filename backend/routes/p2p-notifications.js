@@ -10,9 +10,7 @@ export async function handleListNotifications(req, res) {
       });
     }
 
-    let filtered = p2pNotifications.filter(
-      (n) => n.recipientWallet === wallet,
-    );
+    let filtered = p2pNotifications.filter((n) => n.recipientWallet === wallet);
 
     if (unread === "true") {
       filtered = filtered.filter((n) => !n.read);

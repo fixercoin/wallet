@@ -424,7 +424,9 @@ export default function OrderComplete() {
         {/* Two Column Layout - Buyer and Seller */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* BUYER COLUMN */}
-          <Card className={`border ${isBuyer ? "border-blue-500/50" : "border-gray-300/20"} bg-[#0f1520]/50`}>
+          <Card
+            className={`border ${isBuyer ? "border-blue-500/50" : "border-gray-300/20"} bg-[#0f1520]/50`}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold text-white uppercase">
@@ -595,7 +597,9 @@ export default function OrderComplete() {
         {/* CHAT SECTION - FULL WIDTH */}
         <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30">
           <CardContent className="p-4 flex flex-col h-full min-h-[500px]">
-            <h2 className="text-lg font-bold text-white mb-4 uppercase">Chat</h2>
+            <h2 className="text-lg font-bold text-white mb-4 uppercase">
+              Chat
+            </h2>
 
             {/* Messages Container */}
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-4 p-3 bg-[#1a2540]/30 rounded-lg border border-white/5">

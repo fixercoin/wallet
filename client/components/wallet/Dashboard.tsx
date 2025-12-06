@@ -1053,6 +1053,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 )}
               </Button>
             </div>
+
+            {/* Additional Action Buttons: TRADE, BURN, LOCK */}
+            <div className="flex items-center justify-around gap-2 sm:gap-3 mt-3 w-full px-0">
+              <Button
+                onClick={onP2PTrade}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-white/10 border border-white/20 text-white transition-colors"
+              >
+                <ArrowRightLeft className="h-8 w-8 text-white/60" />
+                <span>TRADE</span>
+              </Button>
+
+              <Button
+                onClick={onBurn}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-white/10 border border-white/20 text-white transition-colors"
+              >
+                <Zap className="h-8 w-8 text-white/60" />
+                <span>BURN</span>
+              </Button>
+
+              <Button
+                onClick={onLock}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-white/10 border border-white/20 text-white transition-colors"
+              >
+                <Lock className="h-8 w-8 text-white/60" />
+                <span>LOCK</span>
+              </Button>
+            </div>
           </div>
         </div>
 

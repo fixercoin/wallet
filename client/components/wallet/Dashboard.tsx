@@ -910,7 +910,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <div>
                             <Button
                               onClick={onP2PTrade || onReceive}
-                              className="bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white font-bold text-xs px-3 py-3 rounded-sm whitespace-nowrap h-auto transition-colors"
+                              className="bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white font-bold text-xs px-3 py-4 rounded-md whitespace-nowrap h-auto transition-colors"
                             >
                               P2P TRADE
                             </Button>
@@ -972,7 +972,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <div>
                           <Button
                             onClick={onP2PTrade || onReceive}
-                            className="bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white font-bold text-xs px-3 py-3 rounded-sm whitespace-nowrap h-auto transition-colors"
+                            className="bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white font-bold text-xs px-3 py-4 rounded-md whitespace-nowrap h-auto transition-colors"
                           >
                             P2P TRADE
                           </Button>

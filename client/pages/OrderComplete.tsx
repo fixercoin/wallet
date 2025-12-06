@@ -230,18 +230,37 @@ export default function OrderComplete() {
   };
 
   const handleCancelOrder = async () => {
-    if (!order) return;
-
-    const confirmed = window.confirm(
-      "Are you sure you want to cancel this order? This action cannot be undone.",
-    );
-
-    if (!confirmed) return;
+    if (!order || !wallet?.publicKey) return;
 
     try {
       updateOrderInStorage(order.id, { status: "CANCELLED" });
-      toast.success("Order cancelled");
-      navigate(-1);
+
+      // Send cancellation message to chat
+      if (order.roomId) {
+        await addTradeMessage({
+          room_id: order.roomId,
+          sender_wallet: wallet.publicKey,
+          message: "❌ Order cancelled",
+        });
+      }
+
+      // Notify the other party
+      const otherParty = isBuyer ? order.sellerWallet : order.buyerWallet;
+      await createNotification(
+        otherParty,
+        "order_cancelled",
+        order.type,
+        order.id,
+        `${isBuyer ? "Buyer" : "Seller"} cancelled the order`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+
+      toast.success("Order cancelled and other party notified");
+      setTimeout(() => navigate(-1), 1000);
     } catch (error) {
       console.error("Error cancelling order:", error);
       toast.error("Failed to cancel order");

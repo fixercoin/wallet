@@ -67,9 +67,7 @@ export default function SellData() {
         orderType="SELL"
         exchangeRate={280}
         onSelectOffer={(order) => {
-          toast.success(
-            `Selected offer from ${order.walletAddress || order.creator_wallet}`,
-          );
+          navigate("/order-complete", { state: { offer: order, orderType: "SELL" } });
         }}
       />
 

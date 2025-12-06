@@ -134,13 +134,10 @@ export default function SellNow() {
     );
     const balance = t?.balance || 0;
 
-    // For USDC, use direct balance as fallback if available
-    if (
-      selectedToken.symbol === "USDC" &&
-      usdcDirectBalance !== null &&
-      balance === 0
-    ) {
-      return usdcDirectBalance;
+    // For USDC, prioritize direct balance if available and valid
+    if (selectedToken.symbol === "USDC" && usdcDirectBalance !== null) {
+      // Use direct balance if it's more recent (non-zero or explicitly fetched)
+      return usdcDirectBalance > 0 ? usdcDirectBalance : balance;
     }
 
     return balance;

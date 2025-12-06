@@ -156,7 +156,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                 Advertiser
               </th>
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
-                Price (PKR)
+                Price
               </th>
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
                 Limit

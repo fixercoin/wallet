@@ -84,101 +84,92 @@ export const makeRpcCall = async (
   }
 
   const requestPromise = (async () => {
-    // Combine configured RPC URL with public endpoints
-    const endpoints = [SOLANA_RPC_URL, ...PUBLIC_RPC_ENDPOINTS].filter(Boolean);
-    // Remove duplicates
-    const uniqueEndpoints = Array.from(new Set(endpoints));
-
     let lastError: Error | null = null;
     let lastErrorStatus: number | null = null;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
-      for (const endpoint of uniqueEndpoints) {
-        try {
-          const controller = new AbortController();
-          const timeoutMs = 12000; // 12s timeout per endpoint
-          const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const controller = new AbortController();
+        const timeoutMs = 12000; // 12s timeout
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-          const response = await fetch(endpoint, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              jsonrpc: "2.0",
-              id: Date.now(),
-              method,
-              params,
-            }),
-            signal: controller.signal,
-          });
+        const response = await fetch(HELIUS_RPC_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: Date.now(),
+            method,
+            params,
+          }),
+          signal: controller.signal,
+        });
 
-          clearTimeout(timeout);
+        clearTimeout(timeout);
 
-          if (!response.ok) {
-            const responseText = await response.text().catch(() => "");
-            const errorMsg = `HTTP ${response.status} ${response.statusText}: ${responseText}`;
-            console.warn(
-              `[RPC] ${method} on ${endpoint} returned ${response.status}`,
-            );
+        if (!response.ok) {
+          const responseText = await response.text().catch(() => "");
+          const errorMsg = `HTTP ${response.status} ${response.statusText}: ${responseText}`;
+          console.warn(
+            `[RPC] ${method} on Helius returned ${response.status}`,
+          );
 
-            if (response.status === 429 || response.status === 503) {
-              lastErrorStatus = response.status;
-            }
-
-            lastError = new Error(errorMsg);
-            continue;
+          if (response.status === 429 || response.status === 503) {
+            lastErrorStatus = response.status;
           }
 
+          lastError = new Error(errorMsg);
+        } else {
           const text = await response.text().catch(() => "");
           let data: any = null;
 
           try {
             data = text ? JSON.parse(text) : null;
           } catch (e) {
-            console.warn(`[RPC] Failed to parse response from ${endpoint}`);
+            console.warn(`[RPC] Failed to parse response from Helius`);
             lastError = new Error(`Failed to parse response: ${String(e)}`);
-            continue;
+            throw lastError;
           }
 
           if (data && data.error) {
             const errorMsg = data.error.message || JSON.stringify(data.error);
             console.warn(
-              `[RPC] ${method} on ${endpoint} returned error:`,
+              `[RPC] ${method} on Helius returned error:`,
               data.error,
             );
             lastError = new Error(errorMsg);
-            continue;
+            throw lastError;
           }
 
           // Success!
           return data?.result ?? data ?? text;
-        } catch (error) {
-          const errorMsg =
-            error instanceof Error ? error.message : String(error);
-          const isTimeout =
-            errorMsg.includes("abort") || errorMsg.includes("timeout");
-          const isCors =
-            errorMsg.includes("Failed to fetch") ||
-            errorMsg.includes("CORS") ||
-            errorMsg.includes("cors");
-
-          if (isTimeout) {
-            console.warn(`[RPC] ${method} on ${endpoint} timed out after 12s`);
-          } else if (isCors) {
-            console.warn(
-              `[RPC] ${method} on ${endpoint} blocked by CORS policy - skipping endpoint`,
-            );
-          } else {
-            console.warn(`[RPC] ${method} on ${endpoint} failed:`, errorMsg);
-          }
-
-          lastError = error instanceof Error ? error : new Error(errorMsg);
-          continue;
         }
+      } catch (error) {
+        const errorMsg =
+          error instanceof Error ? error.message : String(error);
+        const isTimeout =
+          errorMsg.includes("abort") || errorMsg.includes("timeout");
+        const isCors =
+          errorMsg.includes("Failed to fetch") ||
+          errorMsg.includes("CORS") ||
+          errorMsg.includes("cors");
+
+        if (isTimeout) {
+          console.warn(`[RPC] ${method} on Helius timed out after 12s`);
+        } else if (isCors) {
+          console.warn(
+            `[RPC] ${method} on Helius blocked by CORS policy`,
+          );
+        } else {
+          console.warn(`[RPC] ${method} on Helius failed:`, errorMsg);
+        }
+
+        lastError = error instanceof Error ? error : new Error(errorMsg);
       }
 
-      // All endpoints failed for this attempt, retry if we have attempts left
+      // Retry if we have attempts left
       if (attempt < retries) {
         const isRateLimited = lastErrorStatus === 429 || lastErrorStatus === 503;
         const baseDelay = isRateLimited ? 3000 : 800;
@@ -186,7 +177,7 @@ export const makeRpcCall = async (
         const cappedDelayMs = Math.min(delayMs, 30000); // Cap at 30 seconds
 
         console.warn(
-          `[RPC] ${method} failed on all endpoints (attempt ${attempt + 1}/${retries + 1}), retrying in ${cappedDelayMs}ms`,
+          `[RPC] ${method} failed (attempt ${attempt + 1}/${retries + 1}), retrying in ${cappedDelayMs}ms`,
         );
 
         await new Promise((resolve) => setTimeout(resolve, cappedDelayMs));
@@ -194,7 +185,7 @@ export const makeRpcCall = async (
     }
 
     throw new Error(
-      `RPC call failed after ${retries + 1} attempts across all endpoints: ${lastError?.message || "Unknown error"}`,
+      `RPC call failed after ${retries + 1} attempts on Helius: ${lastError?.message || "Unknown error"}`,
     );
   })();
 

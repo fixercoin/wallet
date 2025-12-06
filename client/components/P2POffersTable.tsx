@@ -344,35 +344,37 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
               key={order.id}
               className="p-4 rounded-lg bg-[#1a2847]/50 border border-gray-300/30"
             >
-              <div className="grid grid-cols-5 gap-3 items-start">
-                <div className="flex flex-col">
-                  <p className="text-[10px] text-white/60 font-semibold uppercase mb-2">
-                    POST
-                  </p>
-                  <p className="text-[10px] font-semibold text-white/90 uppercase">
-                    {getCreatorName(order)}
-                  </p>
+              <div className="flex justify-between items-center gap-3">
+                <div className="flex gap-4">
+                  <div className="flex flex-col">
+                    <p className="text-[10px] text-white/60 font-semibold uppercase mb-2">
+                      POST
+                    </p>
+                    <p className="text-[10px] font-semibold text-white/90 uppercase">
+                      {getCreatorName(order)}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <p className="text-[10px] text-white/60 font-semibold uppercase mb-2">
+                      PRICE
+                    </p>
+                    <p className="text-[10px] font-semibold text-white/90 uppercase">
+                      {getPrice(order)}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <p className="text-[10px] text-white/60 font-semibold uppercase mb-2">
+                      LIMIT
+                    </p>
+                    <p className="text-[10px] font-semibold text-white/90 uppercase">
+                      {`${limits.min} - ${limits.max}`}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex flex-col">
-                  <p className="text-[10px] text-white/60 font-semibold uppercase mb-2">
-                    PRICE
-                  </p>
-                  <p className="text-[10px] font-semibold text-white/90 uppercase">
-                    {getPrice(order)}
-                  </p>
-                </div>
-
-                <div className="flex flex-col">
-                  <p className="text-[10px] text-white/60 font-semibold uppercase mb-2">
-                    LIMIT
-                  </p>
-                  <p className="text-[10px] font-semibold text-white/90 uppercase">
-                    {`${limits.min} - ${limits.max}`}
-                  </p>
-                </div>
-
-                <div className="flex flex-col items-center justify-center h-full gap-2">
+                <div className="flex items-center justify-end gap-2 flex-shrink-0">
                   {isAdvertiser(order) && (
                     <div className="flex gap-2">
                       <div

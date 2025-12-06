@@ -363,7 +363,9 @@ export class KVStore {
    * Create or update an order
    */
   async saveOrder(
-    order: Omit<P2POrder, "id" | "createdAt" | "updatedAt"> & { [key: string]: any },
+    order: Omit<P2POrder, "id" | "createdAt" | "updatedAt"> & {
+      [key: string]: any;
+    },
     orderId?: string,
   ): Promise<P2POrder> {
     const id =

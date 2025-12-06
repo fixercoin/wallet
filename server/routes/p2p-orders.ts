@@ -353,11 +353,21 @@ export const handleUpdateP2POrder: RequestHandler = async (req, res) => {
       updatedAt: Date.now(),
       updated_at: Date.now(),
       // Preserve marketplace fields if not in update body
-      ...(req.body.minAmountPKR !== undefined && { minAmountPKR: req.body.minAmountPKR }),
-      ...(req.body.maxAmountPKR !== undefined && { maxAmountPKR: req.body.maxAmountPKR }),
-      ...(req.body.minAmountTokens !== undefined && { minAmountTokens: req.body.minAmountTokens }),
-      ...(req.body.maxAmountTokens !== undefined && { maxAmountTokens: req.body.maxAmountTokens }),
-      ...(req.body.pricePKRPerQuote !== undefined && { pricePKRPerQuote: req.body.pricePKRPerQuote }),
+      ...(req.body.minAmountPKR !== undefined && {
+        minAmountPKR: req.body.minAmountPKR,
+      }),
+      ...(req.body.maxAmountPKR !== undefined && {
+        maxAmountPKR: req.body.maxAmountPKR,
+      }),
+      ...(req.body.minAmountTokens !== undefined && {
+        minAmountTokens: req.body.minAmountTokens,
+      }),
+      ...(req.body.maxAmountTokens !== undefined && {
+        maxAmountTokens: req.body.maxAmountTokens,
+      }),
+      ...(req.body.pricePKRPerQuote !== undefined && {
+        pricePKRPerQuote: req.body.pricePKRPerQuote,
+      }),
     };
 
     await saveOrder(updated);

@@ -3,11 +3,13 @@
 ## Completed Tasks ✅
 
 ### 1. Wrangler Configuration
+
 - ✅ Updated `wrangler.toml` with Cloudflare KV namespace ID: `295bfeb238c344ccb5afdd2bb93e497f`
 - ✅ Added STAKING_KV binding for both development and production environments
 - ✅ Added KV alias binding for backwards compatibility
 
 ### 2. API Endpoints
+
 - ✅ Enhanced `functions/api/p2p/orders.ts` GET endpoint to:
   - Fetch orders by wallet address (existing functionality)
   - Fetch specific order by ID (existing functionality)
@@ -22,6 +24,7 @@
   - Support both simple and detailed order structures
 
 ### 3. Data Storage
+
 - ✅ Updated `functions/lib/kv-utils.ts` P2POrder interface to include:
   - `minAmountPKR`, `maxAmountPKR`
   - `minAmountTokens`, `maxAmountTokens`
@@ -29,6 +32,7 @@
   - `sellerWallet`, `buyerWallet`
 
 ### 4. Frontend Integration
+
 - ✅ Updated `client/pages/BuyCrypto.tsx`:
   - Enhanced order payload to include all min/max amounts
   - Improved error handling in API calls
@@ -50,6 +54,7 @@
   - Consistent behavior with BuyData page
 
 ### 5. Documentation
+
 - ✅ Created `CLOUDFLARE_KV_DEPLOYMENT_GUIDE.md` with:
   - Complete API endpoint documentation
   - Request/response examples
@@ -61,6 +66,7 @@
 ## How It Works
 
 ### Order Creation Flow
+
 ```
 BuyCrypto/SellNow Page
     ↓
@@ -78,6 +84,7 @@ Returns created order with ID and timestamps
 ```
 
 ### Order Discovery Flow
+
 ```
 BuyData/SellData Page (Initial Load)
     ↓
@@ -101,6 +108,7 @@ Auto-refresh every 10 seconds OR manual refresh button
 ## Data Structure
 
 ### Order Stored in KV
+
 ```json
 {
   "id": "order_1705680000000_abc123",
@@ -125,10 +133,12 @@ Auto-refresh every 10 seconds OR manual refresh button
 ## KV Storage Schema
 
 ### Keys Used
+
 - `orders:{orderId}` - Individual order document
 - `orders:wallet:{walletAddress}` - Index of orders by wallet
 
 ### Data Persistence
+
 - Orders automatically persist across Cloudflare edge locations
 - No expiry by default (persistent storage)
 - Can be queried and filtered in real-time
@@ -136,11 +146,13 @@ Auto-refresh every 10 seconds OR manual refresh button
 ## Deployment Instructions
 
 ### Step 1: Build the Project
+
 ```bash
 npm run build
 ```
 
 ### Step 2: Deploy to Cloudflare Pages
+
 ```bash
 # Option A: Using Wrangler CLI
 wrangler pages deploy dist
@@ -152,6 +164,7 @@ wrangler pages deploy dist
 ```
 
 ### Step 3: Verify Deployment
+
 ```bash
 # Test the API endpoint
 curl "https://your-project.pages.dev/api/p2p/orders?type=BUY&status=active"
@@ -166,6 +179,7 @@ curl "https://your-project.pages.dev/api/p2p/orders?type=BUY&status=active"
 ```
 
 ### Step 4: Test Create Order
+
 ```bash
 curl -X POST "https://your-project.pages.dev/api/p2p/orders" \
   -H "Content-Type: application/json" \
@@ -182,6 +196,7 @@ curl -X POST "https://your-project.pages.dev/api/p2p/orders" \
 ```
 
 ### Step 5: Monitor KV Usage
+
 1. Go to Cloudflare Dashboard
 2. Navigate to Workers → KV
 3. Select `staking_kv_prod` namespace
@@ -189,20 +204,21 @@ curl -X POST "https://your-project.pages.dev/api/p2p/orders" \
 
 ## What's Different From Dev Server
 
-| Feature | Dev Server | Cloudflare Pages |
-|---------|-----------|-----------------|
-| Storage | File-based `.kv-data/` | Cloudflare KV |
-| Scalability | Single machine | Global edge network |
-| Persistence | Local files | Distributed across datacenters |
-| Performance | Depends on disk I/O | Edge caching |
-| Availability | Single point | 99.99% SLA |
-| Cost | Free (local) | Free tier includes generous KV limits |
+| Feature      | Dev Server             | Cloudflare Pages                      |
+| ------------ | ---------------------- | ------------------------------------- |
+| Storage      | File-based `.kv-data/` | Cloudflare KV                         |
+| Scalability  | Single machine         | Global edge network                   |
+| Persistence  | Local files            | Distributed across datacenters        |
+| Performance  | Depends on disk I/O    | Edge caching                          |
+| Availability | Single point           | 99.99% SLA                            |
+| Cost         | Free (local)           | Free tier includes generous KV limits |
 
 ## Environment Variables
 
 **No additional environment variables required!**
 
 The KV binding is configured in `wrangler.toml` and automatically:
+
 - Injected into Cloudflare Pages Functions
 - Available in all API route handlers as `env.STAKING_KV`
 - Works the same in development and production
@@ -225,11 +241,13 @@ The KV binding is configured in `wrangler.toml` and automatically:
 ## Performance Considerations
 
 ### Current Approach
+
 - GET endpoint scans all keys prefixed with "orders:"
 - Works well for <10,000 orders
 - No pagination (returns all results)
 
 ### Future Optimizations
+
 1. **Add pagination**: Implement cursor-based pagination for large result sets
 2. **Add indexing**: Create separate KV keys for type/status indices
 3. **Add caching**: Cache marketplace view results for 30 seconds
@@ -256,17 +274,20 @@ The KV binding is configured in `wrangler.toml` and automatically:
 ### Common Issues
 
 **Orders not showing up in BuyData/SellData**
+
 - Check that orders are being created (use browser DevTools Network tab)
 - Verify wallet address is correct
 - Check Cloudflare KV Dashboard to see stored data
 - Check function logs in Cloudflare Dashboard
 
 **API returns error**
+
 - Check that KV namespace is properly bound
 - Verify namespace ID is correct: `295bfeb238c344ccb5afdd2bb93e497f`
 - Check function logs for detailed error messages
 
 **Slow performance**
+
 - Consider pagination for large order sets
 - Add KV query caching
 - Use Cloudflare Analytics to monitor

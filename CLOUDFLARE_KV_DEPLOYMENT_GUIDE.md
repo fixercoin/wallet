@@ -1,16 +1,19 @@
 # Cloudflare KV Deployment Guide
 
 ## Overview
+
 This guide explains how to deploy the buy/sell order system to Cloudflare with KV storage enabled.
 
 ## Configuration
 
 ### Cloudflare KV Namespace
+
 - **Namespace ID**: `295bfeb238c344ccb5afdd2bb93e497f`
 - **Namespace Name**: `staking_kv_prod`
 - **Binding**: `STAKING_KV`
 
 The namespace is configured in `wrangler.toml` and automatically bound to:
+
 - Cloudflare Pages Functions at `functions/api/p2p/orders.ts`
 - Development and production environments
 
@@ -21,9 +24,11 @@ No additional environment variables are needed as the KV binding is configured i
 ## API Endpoints
 
 ### POST /api/p2p/orders
+
 Create a new buy or sell order
 
 **Request Body:**
+
 ```json
 {
   "walletAddress": "your_wallet_address",
@@ -40,6 +45,7 @@ Create a new buy or sell order
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -55,14 +61,18 @@ Create a new buy or sell order
     "createdAt": 1234567890,
     "updatedAt": 1234567890
   },
-  "order": { /* same as data */ }
+  "order": {
+    /* same as data */
+  }
 }
 ```
 
 ### GET /api/p2p/orders
+
 Fetch orders with various filters
 
 **Query Parameters:**
+
 - `type`: "BUY" or "SELL" (optional)
 - `status`: "PENDING", "COMPLETED", "CANCELLED", "active" (optional)
 - `wallet`: wallet address to get orders for (optional)
@@ -71,21 +81,25 @@ Fetch orders with various filters
 **Examples:**
 
 Get all active buy orders:
+
 ```
 GET /api/p2p/orders?type=BUY&status=active
 ```
 
 Get orders for a specific wallet:
+
 ```
 GET /api/p2p/orders?wallet=your_wallet_address
 ```
 
 Get a specific order:
+
 ```
 GET /api/p2p/orders?id=order_xxx
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -102,15 +116,19 @@ GET /api/p2p/orders?id=order_xxx
       "createdAt": 1234567890
     }
   ],
-  "orders": [ /* same as data */ ],
+  "orders": [
+    /* same as data */
+  ],
   "count": 1
 }
 ```
 
 ### PUT /api/p2p/orders
+
 Update an order's status
 
 **Request Body:**
+
 ```json
 {
   "orderId": "order_xxx",
@@ -119,15 +137,18 @@ Update an order's status
 ```
 
 ### DELETE /api/p2p/orders
+
 Delete an order
 
 **Query Parameters:**
+
 - `wallet`: wallet address (required)
 - `id`: order ID (required)
 
 ## Data Flow
 
 ### Creating Orders (BuyCrypto/SellNow pages)
+
 1. User fills in order details (min/max amounts, token, payment method)
 2. Form is validated
 3. Order is sent to `POST /api/p2p/orders`
@@ -135,6 +156,7 @@ Delete an order
 5. Order ID is added to wallet's order list: `orders:wallet:{walletAddress}`
 
 ### Fetching Orders (BuyData/SellData pages)
+
 1. Page loads and requests `GET /api/p2p/orders?type=BUY&status=active`
 2. API scans all order keys in KV (`orders:*`)
 3. Orders are filtered by type and status
@@ -146,10 +168,12 @@ Delete an order
 ## KV Storage Keys
 
 ### Order Storage
+
 - `orders:{orderId}` - Individual order data (JSON)
 - `orders:wallet:{walletAddress}` - Array of order IDs for a wallet (JSON)
 
 ### Example Key Structure
+
 ```
 orders:order_1705680000000_abc123
 {
@@ -173,11 +197,13 @@ orders:wallet:your_wallet...
 ## Deployment Steps
 
 ### 1. Prerequisites
+
 - Cloudflare account with KV namespace created
 - `wrangler` CLI installed (`npm install -g wrangler`)
 - Proper authentication: `wrangler login`
 
 ### 2. Deploy to Cloudflare Pages
+
 ```bash
 # Build the project
 npm run build
@@ -187,6 +213,7 @@ wrangler pages deploy dist
 ```
 
 ### 3. Verify Deployment
+
 1. Check Cloudflare Pages dashboard for deployment status
 2. Test API endpoints:
    ```bash
@@ -194,6 +221,7 @@ wrangler pages deploy dist
    ```
 
 ### 4. Monitor KV Storage
+
 - Visit Cloudflare Dashboard → KV
 - Select `staking_kv_prod` namespace
 - View stored keys and data
@@ -201,18 +229,21 @@ wrangler pages deploy dist
 ## Troubleshooting
 
 ### Orders Not Saving
+
 1. Check that `STAKING_KV` binding is configured in wrangler.toml
 2. Verify KV namespace ID is correct: `295bfeb238c344ccb5afdd2bb93e497f`
 3. Check browser console for API errors
 4. Check Cloudflare dashboard for function logs
 
 ### Orders Not Displaying
+
 1. Ensure orders are being created (check KV Dashboard)
 2. Verify API endpoint returns correct data
 3. Check network tab in browser DevTools
 4. Ensure wallet address matches
 
 ### Performance Issues
+
 - For large number of orders, consider implementing pagination
 - KV list operation scans all keys, may be slow with millions of orders
 - Consider adding date-based key prefixes for better scanning
@@ -220,10 +251,12 @@ wrangler pages deploy dist
 ## Features
 
 ### Auto-Refresh
+
 - BuyData and SellData pages auto-refresh every 10 seconds
 - Manual refresh button available for immediate updates
 
 ### Order Fields
+
 - **minAmountPKR/maxAmountPKR**: Price range in PKR
 - **minAmountTokens/maxAmountTokens**: Token amount range
 - **pricePKRPerQuote**: Exchange rate (PKR per token unit)
@@ -231,6 +264,7 @@ wrangler pages deploy dist
 - **createdAt/updatedAt**: Timestamps in milliseconds
 
 ### Data Persistence
+
 - All orders persisted in Cloudflare KV
 - Data survives function restarts
 - Automatically replicated across Cloudflare edge locations

@@ -51,11 +51,21 @@ export default function OrderComplete() {
   useEffect(() => {
     const stateOrder = location.state?.order as CreatedOrder | undefined;
 
+    let loadedOrder: CreatedOrder | null = null;
+
     if (stateOrder) {
-      setOrder(stateOrder);
+      loadedOrder = stateOrder;
     } else if (location.state?.orderId) {
-      const storedOrder = getOrderFromStorage(location.state.orderId);
-      setOrder(storedOrder);
+      loadedOrder = getOrderFromStorage(location.state.orderId);
+    }
+
+    if (loadedOrder) {
+      setOrder(loadedOrder);
+      // Restore confirmation states from stored order
+      setBuyerPaymentConfirmed(loadedOrder.buyerPaymentConfirmed ?? false);
+      setSellerPaymentReceived(loadedOrder.sellerPaymentReceived ?? false);
+      setSellerTransferInitiated(loadedOrder.sellerTransferInitiated ?? false);
+      setBuyerCryptoReceived(loadedOrder.buyerCryptoReceived ?? false);
     }
 
     setLoading(false);

@@ -30,6 +30,26 @@ export const P2PBottomNavigation: React.FC<P2PBottomNavigationProps> = ({
   const navigate = useNavigate();
   const [showPostDialog, setShowPostDialog] = useState(false);
   const [selectedServer, setSelectedServer] = useState<number | null>(null);
+  const [serverPassword, setServerPassword] = useState<string>("");
+  const [passwordVerified, setPasswordVerified] = useState<boolean>(false);
+  const [passwordError, setPasswordError] = useState<string>("");
+
+  const handleServerSelect = (serverId: number) => {
+    setSelectedServer(serverId);
+    setServerPassword("");
+    setPasswordVerified(false);
+    setPasswordError("");
+  };
+
+  const handlePasswordSubmit = () => {
+    if (serverPassword === "123") {
+      setPasswordVerified(true);
+      setPasswordError("");
+    } else {
+      setPasswordError("Incorrect password");
+      setPasswordVerified(false);
+    }
+  };
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95 p-4 pb-8">

@@ -97,7 +97,9 @@ export default function SellNow() {
     navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
   };
 
-  const [usdcDirectBalance, setUsdcDirectBalance] = useState<number | null>(null);
+  const [usdcDirectBalance, setUsdcDirectBalance] = useState<number | null>(
+    null,
+  );
   const [fetchingUsdcBalance, setFetchingUsdcBalance] = useState(false);
 
   // Direct USDC balance fetch via server API

@@ -25,8 +25,7 @@ export const handleGetTokenBalance: RequestHandler = async (req, res) => {
       (req.query.wallet as string) ||
       (req.query.publicKey as string) ||
       (req.query.address as string);
-    const mint =
-      (req.query.mint as string) || (req.query.tokenMint as string);
+    const mint = (req.query.mint as string) || (req.query.tokenMint as string);
 
     if (!wallet || !mint) {
       return res.status(400).json({

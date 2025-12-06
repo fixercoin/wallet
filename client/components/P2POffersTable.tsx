@@ -273,7 +273,17 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   <p className="text-xs font-semibold text-white/90 uppercase">EASYPAISA</p>
                 </div>
 
-                <div className="flex flex-col items-end justify-end h-full">
+                <div className="flex flex-col items-end justify-end h-full gap-2">
+                  {isAdvertiser(order) && (
+                    <Button
+                      onClick={() => handleEdit(order)}
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded h-auto flex items-center gap-1 uppercase font-semibold"
+                    >
+                      <Edit2 className="w-3 h-3" />
+                      EDIT
+                    </Button>
+                  )}
                   <Button
                     onClick={() => handleProceed(order)}
                     size="sm"

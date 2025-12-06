@@ -455,164 +455,126 @@ export default function OrderComplete() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* ORDER DETAILS SECTION */}
-        <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Order Details Card */}
-          <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30">
-            <CardContent className="space-y-0 p-0">
-              <div className="p-4 border-b border-gray-300/20">
+        {/* ORDER DETAILS CARD - TOP */}
+        <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30 mb-6">
+          <CardContent className="p-4">
+            <h2 className="text-lg font-bold text-white mb-4 uppercase">Order Details</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
                 <div className="text-xs text-white/70 font-semibold uppercase mb-1">
                   Order ID
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="font-mono text-sm text-white/90">
-                    {shortenAddress(order.id, 12)}
+                  <div className="font-mono text-xs text-white/90">
+                    {shortenAddress(order.id, 8)}
                   </div>
                   <button
                     onClick={() => handleCopy(order.id, "Order ID")}
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     {copiedValue === order.id ? (
-                      <Check className="w-4 h-4" />
+                      <Check className="w-3 h-3" />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3 h-3" />
                     )}
                   </button>
                 </div>
               </div>
 
-              <div className="p-4 border-b border-gray-300/20">
-                <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                  {isBuyer ? "Seller Wallet" : "Buyer Wallet"}
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="font-mono text-sm text-white/90">
-                    {shortenAddress(counterpartyWallet, 12)}
-                  </div>
-                  <button
-                    onClick={() =>
-                      handleCopy(counterpartyWallet, "Wallet Address")
-                    }
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    {copiedValue === counterpartyWallet ? (
-                      <Check className="w-4 h-4" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div className="p-4 border-b border-gray-300/20">
+              <div>
                 <div className="text-xs text-white/70 font-semibold uppercase mb-1">
                   Token
                 </div>
                 <div className="text-sm text-white/90">{order.token}</div>
               </div>
 
-              <div className="p-4 border-b border-gray-300/20">
+              <div>
                 <div className="text-xs text-white/70 font-semibold uppercase mb-1">
                   Amount
                 </div>
-                <div className="text-sm text-white/90">
-                  {order.amountTokens.toFixed(6)} {order.token} ={" "}
-                  {order.amountPKR.toFixed(0)} PKR
+                <div className="text-xs text-white/90">
+                  {order.amountTokens.toFixed(6)} {order.token}
                 </div>
               </div>
 
-              <div className="p-4 border-b border-gray-300/20">
+              <div>
                 <div className="text-xs text-white/70 font-semibold uppercase mb-1">
                   Price
                 </div>
-                <div className="text-sm text-white/90">
+                <div className="text-xs text-white/90">
                   1 {order.token} = {exchangeRate.toFixed(2)} PKR
                 </div>
               </div>
+            </div>
 
-              <div className="p-4 border-b border-gray-300/20">
-                <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                  Status
+            {!isBuyer && order.sellerPaymentMethod && (
+              <div className="mt-4 pt-4 border-t border-gray-300/20">
+                <div className="text-xs text-white/70 font-semibold uppercase mb-3">
+                  Seller Payment Method
                 </div>
-                <div
-                  className={`text-sm font-semibold ${
-                    order.status === "COMPLETED"
-                      ? "text-green-400"
-                      : order.status === "CANCELLED"
-                        ? "text-red-400"
-                        : "text-yellow-400"
-                  }`}
-                >
-                  {order.status}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-xs text-white/60 uppercase mb-1">
+                      Account Name
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-xs text-white/90 font-mono">
+                        {order.sellerPaymentMethod.accountName}
+                      </div>
+                      <button
+                        onClick={() =>
+                          handleCopy(
+                            order.sellerPaymentMethod!.accountName,
+                            "Account Name",
+                          )
+                        }
+                        className="text-gray-400 hover:text-white transition-colors"
+                      >
+                        {copiedValue ===
+                        order.sellerPaymentMethod.accountName ? (
+                          <Check className="w-3 h-3" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-white/60 uppercase mb-1">
+                      Account Number
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-xs text-white/90 font-mono">
+                        {order.sellerPaymentMethod.accountNumber}
+                      </div>
+                      <button
+                        onClick={() =>
+                          handleCopy(
+                            order.sellerPaymentMethod!.accountNumber,
+                            "Account Number",
+                          )
+                        }
+                        className="text-gray-400 hover:text-white transition-colors"
+                      >
+                        {copiedValue ===
+                        order.sellerPaymentMethod.accountNumber ? (
+                          <Check className="w-3 h-3" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
+            )}
+          </CardContent>
+        </Card>
 
-              {isBuyer && order.sellerPaymentMethod && (
-                <div className="p-4 border-b border-gray-300/20">
-                  <div className="text-xs text-white/70 font-semibold uppercase mb-3">
-                    Seller Payment Method
-                  </div>
-                  <div className="space-y-2">
-                    <div>
-                      <div className="text-xs text-white/60 uppercase mb-1">
-                        Account Name
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm text-white/90 font-mono">
-                          {order.sellerPaymentMethod.accountName}
-                        </div>
-                        <button
-                          onClick={() =>
-                            handleCopy(
-                              order.sellerPaymentMethod!.accountName,
-                              "Account Name",
-                            )
-                          }
-                          className="text-gray-400 hover:text-white transition-colors"
-                        >
-                          {copiedValue ===
-                          order.sellerPaymentMethod.accountName ? (
-                            <Check className="w-4 h-4" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-white/60 uppercase mb-1">
-                        Account Number
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm text-white/90 font-mono">
-                          {order.sellerPaymentMethod.accountNumber}
-                        </div>
-                        <button
-                          onClick={() =>
-                            handleCopy(
-                              order.sellerPaymentMethod!.accountNumber,
-                              "Account Number",
-                            )
-                          }
-                          className="text-gray-400 hover:text-white transition-colors"
-                        >
-                          {copiedValue ===
-                          order.sellerPaymentMethod.accountNumber ? (
-                            <Check className="w-4 h-4" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Confirmation Status */}
-          <div className="space-y-3">
+        {/* TWO-COLUMN LAYOUT - BUYER & SELLER CONFIRMATIONS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* LEFT COLUMN - BUYER CONFIRMATION */}
+          <div>
             {isBuyer ? (
               <>
                 {/* Buyer Payment Status */}

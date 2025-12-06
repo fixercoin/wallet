@@ -55,6 +55,8 @@ export default function BuyCrypto() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const editOrderId = searchParams.get("edit");
 
   const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
@@ -77,6 +79,7 @@ export default function BuyCrypto() {
     null,
   );
   const [fetchingPaymentMethod, setFetchingPaymentMethod] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<any>(null);
 
   const OFFER_PASSWORD = "######Pakistan";
 

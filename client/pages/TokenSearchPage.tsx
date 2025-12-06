@@ -108,8 +108,8 @@ export default function TokenSearchPage() {
 
   return (
     <div
-      className="min-h-screen text-gray-900 relative overflow-y-auto"
-      style={{ backgroundColor: "#f3f4f6" }}
+      className="min-h-screen text-gray-100 relative overflow-y-auto"
+      style={{ backgroundColor: "#1f1f1f" }}
     >
       {/* Decorative bottom green wave (SVG) */}
       <svg
@@ -134,17 +134,17 @@ export default function TokenSearchPage() {
       </svg>
 
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] border-b border-[#22c55e]/20 shadow-sm">
+      <div className="sticky top-0 z-40 bg-gradient-to-br from-[#1f1f1f] via-[#1a2f1f] to-[#0f4620] border-b border-[#22c55e]/30 shadow-sm">
         <div className="w-full max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <Button
             onClick={() => navigate(-1)}
             size="sm"
-            className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-900 ring-0 focus-visible:ring-0 border border-transparent transition-colors"
+            className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-transparent transition-colors"
             aria-label="Back"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-lg font-semibold text-gray-900">Search Tokens</h1>
+          <h1 className="text-lg font-semibold text-white">Search Tokens</h1>
         </div>
       </div>
 

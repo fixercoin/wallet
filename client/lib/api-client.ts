@@ -80,6 +80,27 @@ export const resolveApiUrl = (path: string): string => {
   return `${baseNorm}${normalizedPath}`;
 };
 
+// Get API key from environment variables
+export const getApiKey = (): string | null => {
+  return (import.meta.env.VITE_API_KEY || null) as string | null;
+};
+
+// Helper to add API key header to requests
+export const getApiHeaders = (
+  additionalHeaders?: Record<string, string>,
+): Record<string, string> => {
+  const headers: Record<string, string> = {
+    ...additionalHeaders,
+  };
+
+  const apiKey = getApiKey();
+  if (apiKey) {
+    headers["x-api-key"] = apiKey;
+  }
+
+  return headers;
+};
+
 // Fetch wrapper with automatic fallback support
 export const fetchWithFallback = async (
   path: string,
@@ -89,8 +110,13 @@ export const fetchWithFallback = async (
   const currentBase = getApiBaseUrl();
 
   try {
+    const mergedHeaders = getApiHeaders(
+      (options?.headers as Record<string, string>) || {},
+    );
+
     const response = await fetch(url, {
       ...options,
+      headers: mergedHeaders,
       // Add timeout if not present
       signal: options?.signal || AbortSignal.timeout?.(30000),
     });

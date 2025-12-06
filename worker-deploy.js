@@ -13,50 +13,137 @@ const DEFAULT_RPC_FALLBACKS = [
 
 const MAX_DEX_BATCH = 20;
 
+// Simple in-memory cache with TTL
+const responseCache = new Map();
+
+function getCacheKey(path) {
+  return `dex:${path}`;
+}
+
+function cacheGet(key) {
+  const cached = responseCache.get(key);
+  if (!cached) return null;
+
+  const now = Date.now();
+  if (now - cached.timestamp > cached.ttl) {
+    responseCache.delete(key);
+    return null;
+  }
+
+  return cached.data;
+}
+
+function cacheSet(key, data, ttlMs = 30000) {
+  responseCache.set(key, {
+    data,
+    timestamp: Date.now(),
+    ttl: ttlMs,
+  });
+}
+
 function normalizeBase(v) {
   if (!v) return "";
   return v.replace(/\/+$|^\/+/, "");
 }
 
-async function timeoutFetch(url, opts = {}, ms = 8000) {
+function getBrowserHeaders(overrides = {}) {
+  return {
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    Accept: "application/json",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Cache-Control": "no-cache",
+    Pragma: "no-cache",
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "cross-site",
+    ...overrides,
+  };
+}
+
+async function timeoutFetch(url, opts = {}, ms = 12000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
   try {
-    const response = await fetch(url, { signal: controller.signal, ...opts });
+    const defaultHeaders = getBrowserHeaders(opts.headers || {});
+    const response = await fetch(url, {
+      signal: controller.signal,
+      ...opts,
+      headers: defaultHeaders,
+    });
     return response;
   } finally {
     clearTimeout(id);
   }
 }
 
-async function tryDexscreener(path) {
-  for (const base of DEXSCREENER_BASES) {
-    try {
-      const url = `${base}${path}`;
-      const res = await timeoutFetch(
-        url,
-        { headers: { Accept: "application/json" } },
-        8000,
-      );
-      if (!res.ok) continue;
-      const data = await res.json();
-      return data;
-    } catch (e) {
-      // continue
+async function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function tryDexscreener(path, retries = 3) {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    for (const base of DEXSCREENER_BASES) {
+      try {
+        const url = `${base}${path}`;
+        const res = await timeoutFetch(
+          url,
+          { headers: { Accept: "application/json" } },
+          20000,
+        );
+
+        // Handle rate limiting with exponential backoff
+        if (res.status === 429) {
+          const retryAfter =
+            res.headers.get("Retry-After") || (attempt + 1) * 2000;
+          await sleep(parseInt(retryAfter) || (attempt + 1) * 2000);
+          continue;
+        }
+
+        if (!res.ok) continue;
+        const data = await res.json();
+        return data;
+      } catch (e) {
+        console.error(`DexScreener error (attempt ${attempt + 1}):`, e.message);
+      }
+    }
+
+    if (attempt < retries - 1) {
+      await sleep((attempt + 1) * 1000);
     }
   }
   throw new Error("All DexScreener endpoints failed");
 }
 
-async function tryJupiter(urlCandidates, options = {}, ms = 8000) {
-  for (const candidate of urlCandidates) {
-    try {
-      const res = await timeoutFetch(candidate, options, ms);
-      if (!res) continue;
-      const text = await res.text();
-      return { status: res.status, headers: res.headers, body: text };
-    } catch (e) {
-      // try next
+async function tryJupiter(
+  urlCandidates,
+  options = {},
+  ms = 12000,
+  retries = 3,
+) {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    for (const candidate of urlCandidates) {
+      try {
+        const res = await timeoutFetch(candidate, options, ms);
+        if (!res) continue;
+
+        // Handle rate limiting with exponential backoff
+        if (res.status === 429) {
+          const retryAfter =
+            res.headers.get("Retry-After") || (attempt + 1) * 2000;
+          await sleep(parseInt(retryAfter) || (attempt + 1) * 2000);
+          continue;
+        }
+
+        const text = await res.text();
+        return { status: res.status, headers: res.headers, body: text };
+      } catch (e) {
+        console.error(`Jupiter error (attempt ${attempt + 1}):`, e.message);
+      }
+    }
+
+    if (attempt < retries - 1) {
+      await sleep((attempt + 1) * 1000);
     }
   }
   throw new Error("All Jupiter endpoints failed");
@@ -306,11 +393,23 @@ async function handleDexTokens(reqUrl) {
   for (const batch of batches) {
     try {
       const path = `/tokens/${batch.join(",")}`;
-      const data = await tryDexscreener(path);
+      const cacheKey = getCacheKey(path);
+
+      // Try cache first
+      let data = cacheGet(cacheKey);
+
+      if (!data) {
+        data = await tryDexscreener(path, 2);
+        if (data) {
+          cacheSet(cacheKey, data, 45000); // Cache for 45 seconds
+        }
+      }
+
       if (!data) continue;
       if (data.schemaVersion) schemaVersion = data.schemaVersion;
       if (Array.isArray(data.pairs)) results.push(...data.pairs);
     } catch (e) {
+      console.error(`DexTokens batch error:`, e.message);
       // continue to next batch
     }
   }
@@ -415,9 +514,17 @@ async function handleDexPrice(reqUrl) {
 
     // Fall back to DexScreener
     try {
-      const dexData = await tryDexscreener(
-        `/tokens/${encodeURIComponent(token)}`,
-      );
+      const dexPath = `/tokens/${encodeURIComponent(token)}`;
+      const dexCacheKey = getCacheKey(dexPath);
+
+      let dexData = cacheGet(dexCacheKey);
+      if (!dexData) {
+        dexData = await tryDexscreener(dexPath, 2);
+        if (dexData) {
+          cacheSet(dexCacheKey, dexData, 60000); // Cache for 60 seconds
+        }
+      }
+
       const dexPrice = dexData?.pairs?.[0]?.priceUsd ?? null;
       if (dexPrice) {
         price = Number(dexPrice);
@@ -432,6 +539,7 @@ async function handleDexPrice(reqUrl) {
         }
       }
     } catch (e) {
+      console.error("DexScreener fallback error:", e.message);
       // Continue to Jupiter fallback
     }
 
@@ -652,7 +760,8 @@ async function handleJupiterQuote(reqUrl, env) {
     const result = await tryJupiter(
       candidates,
       { method: "GET", headers },
-      8000,
+      15000,
+      2,
     );
     const ct = result.headers.get("content-type") || "application/json";
     return new Response(result.body, {
@@ -660,6 +769,7 @@ async function handleJupiterQuote(reqUrl, env) {
       headers: { "content-type": ct, ...corsHeaders() },
     });
   } catch (e) {
+    console.error("Jupiter quote error:", e.message);
     return new Response(
       JSON.stringify({
         error: "Failed to fetch Jupiter quote",
@@ -692,7 +802,8 @@ async function handleJupiterPrice(reqUrl, env) {
     const result = await tryJupiter(
       candidates,
       { method: "GET", headers: { Accept: "application/json" } },
-      7000,
+      12000,
+      2,
     );
     const ct = result.headers.get("content-type") || "application/json";
     return new Response(result.body, {
@@ -700,6 +811,7 @@ async function handleJupiterPrice(reqUrl, env) {
       headers: { "content-type": ct, ...corsHeaders() },
     });
   } catch (e) {
+    console.error("Jupiter price error:", e.message);
     return new Response(
       JSON.stringify({
         error: "Failed to fetch Jupiter price",
@@ -737,7 +849,8 @@ async function handleJupiterSwap(req, env) {
     const result = await tryJupiter(
       candidates,
       { method: "POST", headers, body: JSON.stringify(body) },
-      10000,
+      20000,
+      2,
     );
     const ct = result.headers.get("content-type") || "application/json";
     return new Response(result.body, {
@@ -745,6 +858,7 @@ async function handleJupiterSwap(req, env) {
       headers: { "content-type": ct, ...corsHeaders() },
     });
   } catch (e) {
+    console.error("Jupiter swap error:", e.message);
     return new Response(
       JSON.stringify({
         error: "Failed to execute Jupiter swap",

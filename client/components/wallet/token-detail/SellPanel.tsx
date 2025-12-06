@@ -37,7 +37,7 @@ export const SellPanel: React.FC<SellPanelProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => setSellAmount(maxBalance.toString())}
-              className="text-xs h-auto p-0"
+              className="text-xs h-auto p-0 rounded-[2px]"
             >
               Max: {maxBalance.toLocaleString()} {token.symbol}
             </Button>
@@ -83,7 +83,7 @@ export const SellPanel: React.FC<SellPanelProps> = ({
             parseFloat(sellAmount) <= 0 ||
             parseFloat(sellAmount) > maxBalance
           }
-          className="w-full disabled:opacity-50"
+          className="w-full disabled:opacity-50 rounded-[2px]"
         >
           {isLoading ? "Processing..." : `Sell ${token.symbol}`}
         </Button>

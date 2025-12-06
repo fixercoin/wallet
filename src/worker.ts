@@ -486,30 +486,131 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
       );
     }
 
-    const response = await timeoutFetch(`${JUPITER_SWAP_BASE}/swap`, {
-      method: "POST",
-      headers: browserHeaders(),
-      body: JSON.stringify(body),
-    });
+    // Build swap request with proper defaults
+    const swapRequest = {
+      quoteResponse: body.quoteResponse,
+      userPublicKey: body.userPublicKey,
+      wrapAndUnwrapSol:
+        body.wrapAndUnwrapSol !== undefined ? body.wrapAndUnwrapSol : true,
+      useSharedAccounts:
+        body.useSharedAccounts !== undefined ? body.useSharedAccounts : true,
+      computeUnitPriceMicroLamports: body.computeUnitPriceMicroLamports,
+      prioritizationFeeLamports: body.prioritizationFeeLamports,
+      asLegacyTransaction: body.asLegacyTransaction || false,
+      ...body,
+    };
 
-    if (!response.ok) {
-      const text = await response.text().catch(() => "");
-      return new Response(
-        JSON.stringify({
-          error: `Swap failed: ${response.statusText}`,
-          details: text,
-        }),
-        { status: response.status, headers: CORS_HEADERS },
-      );
+    // Try both endpoints with fallback
+    const endpoints = [
+      `${JUPITER_SWAP_BASE}/swap`,
+      "https://quote-api.jup.ag/v6/swap",
+    ];
+
+    let lastError = "";
+    let lastStatus = 500;
+
+    for (let idx = 0; idx < endpoints.length; idx++) {
+      const endpoint = endpoints[idx];
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const response = await timeoutFetch(endpoint, {
+            method: "POST",
+            headers: browserHeaders(),
+            body: JSON.stringify(swapRequest),
+          });
+
+          lastStatus = response.status;
+          const text = await response.text().catch(() => "");
+
+          if (response.ok) {
+            try {
+              const data = JSON.parse(text || "{}");
+              return new Response(JSON.stringify(data), {
+                headers: CORS_HEADERS,
+              });
+            } catch {
+              return new Response(text, { headers: CORS_HEADERS });
+            }
+          }
+
+          // Check for stale quote errors
+          let errorData: any = {};
+          try {
+            errorData = JSON.parse(text);
+          } catch {}
+
+          const lower = (text || "").toLowerCase();
+          const isStaleQuote =
+            lower.includes("1016") ||
+            lower.includes("stale") ||
+            lower.includes("simulation") ||
+            lower.includes("quote expired") ||
+            errorData?.code === 1016;
+
+          if (isStaleQuote) {
+            return new Response(
+              JSON.stringify({
+                error: "STALE_QUOTE",
+                message: "Quote expired - market conditions changed",
+                details: text.slice(0, 300),
+                code: 1016,
+              }),
+              { status: 530, headers: CORS_HEADERS },
+            );
+          }
+
+          // Don't retry client errors
+          if (
+            response.status === 400 ||
+            response.status === 401 ||
+            response.status === 403
+          ) {
+            return new Response(
+              JSON.stringify({
+                error: `Swap request failed: ${response.statusText}`,
+                details: text,
+              }),
+              { status: response.status, headers: CORS_HEADERS },
+            );
+          }
+
+          lastError = text;
+
+          // Retry on rate limit or server errors
+          if (response.status === 429 || response.status >= 500) {
+            if (attempt < 2) {
+              await new Promise((r) => setTimeout(r, 1000 * attempt));
+              continue;
+            }
+          }
+
+          break; // Try next endpoint
+        } catch (e: any) {
+          lastError = String(e?.message || e);
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 500 * attempt));
+            continue;
+          }
+        }
+      }
     }
 
-    const data = await response.json();
-    return new Response(JSON.stringify(data), { headers: CORS_HEADERS });
+    return new Response(
+      JSON.stringify({
+        error: "Swap failed",
+        details: lastError || "Unknown error",
+        statusCode: lastStatus,
+      }),
+      { status: lastStatus >= 400 ? lastStatus : 502, headers: CORS_HEADERS },
+    );
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: String(e?.message || e) }), {
-      status: 500,
-      headers: CORS_HEADERS,
-    });
+    return new Response(
+      JSON.stringify({
+        error: "Failed to create swap",
+        details: String(e?.message || e),
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
   }
 }
 

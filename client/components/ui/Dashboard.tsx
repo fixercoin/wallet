@@ -378,7 +378,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <div className="flex items-center gap-2">
                           <span
                             className={`text-xs text-gray-400 ${
-                              ["SOL", "FIXERCOIN", "LOCKER"].includes(
+                              ["SOL", "FIXERCOIN", "LOCKER", "FXM"].includes(
                                 (token.symbol || "").toUpperCase(),
                               )
                                 ? "animate-price-pulse"

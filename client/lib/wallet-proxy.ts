@@ -132,15 +132,34 @@ export const getTokenAccounts = async (
   publicKey: string,
 ): Promise<TokenInfo[]> => {
   try {
-    console.log(`Fetching token accounts via Solana RPC for: ${publicKey}`);
+    console.log(`Fetching token accounts via server API for: ${publicKey}`);
 
-    const tokenAccounts = await getSolanaTokenAccounts(publicKey);
+    // Call server endpoint instead of RPC directly
+    const response = await fetch(
+      `/api/wallet/token-accounts?publicKey=${encodeURIComponent(publicKey)}`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`Server returned ${response.status}`);
+    }
+
+    const data = await response.json();
+    const tokenAccounts = data.tokens || [];
+    const isUsingFallback =
+      data.warning && data.warning.includes("unavailable");
+
+    if (isUsingFallback) {
+      console.warn(
+        `[TokenAccounts] Server returned fallback data:`,
+        data.warning,
+      );
+    }
 
     // Merge with default tokens to ensure all known tokens are included
     const allTokens = [...DEFAULT_TOKENS];
 
     // Update balances for tokens we found on-chain
-    tokenAccounts.forEach((tokenAccount) => {
+    tokenAccounts.forEach((tokenAccount: TokenInfo) => {
       const existingTokenIndex = allTokens.findIndex(
         (t) => t.mint === tokenAccount.mint,
       );
@@ -154,10 +173,10 @@ export const getTokenAccounts = async (
       }
     });
 
-    console.log(`✅ Solana RPC successful: ${allTokens.length} tokens`);
+    console.log(`✅ Token accounts loaded: ${allTokens.length} tokens`);
     return allTokens;
   } catch (error) {
-    console.error("Solana RPC failed for token accounts:", error);
+    console.error("Failed to fetch token accounts:", error);
     return DEFAULT_TOKENS.map((token) => ({ ...token, balance: 0 }));
   }
 };

@@ -7,6 +7,7 @@ const TOKEN_MINTS = {
   USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
   FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
   LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+  FXM: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
 } as const;
 
 const FALLBACK_RATES: Record<string, number> = {
@@ -15,6 +16,7 @@ const FALLBACK_RATES: Record<string, number> = {
   USDC: 1.0, // $1 USDC
   USDT: 1.0, // $1 USDT
   LOCKER: 0.00001112, // Real-time market price
+  FXM: 0.000003567, // Real-time market price
 };
 
 const PKR_PER_USD = 280; // Approximate conversion rate
@@ -32,11 +34,14 @@ const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
     "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy",
   EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump:
     "7X7KkV94Y9jFhkXEMhgVcMHMRzALiGj5xKmM6TT3cUvK",
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump":
+    "BczJ8jo8Xghx2E6G3QKZiHQ6P5xYa5xP4oWc1F5HPXLX",
 };
 
 const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
   EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump": "FXM",
 };
 
 async function fetchTokenPriceFromDexScreener(
@@ -215,7 +220,9 @@ async function fetchTokenPriceFromDexScreener(
 
 export const handleExchangeRate: RequestHandler = async (req, res) => {
   try {
-    const token = (req.query.token as string) || "FIXERCOIN";
+    // Normalize token parameter by extracting the token symbol before any suffix (e.g., "USDC:1" -> "USDC")
+    let token = (req.query.token as string) || "FIXERCOIN";
+    token = token.split(":")[0].toUpperCase();
 
     let priceUsd: number | null = null;
 

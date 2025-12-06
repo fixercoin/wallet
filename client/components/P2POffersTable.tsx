@@ -365,7 +365,9 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                     LIMIT
                   </p>
                   <p className="text-xs font-semibold text-white/90 uppercase">
-                    MIN: {limits.min} | MAX: {limits.max}
+                    {orderType === "BUY"
+                      ? `MIN: ${limits.min} | MAX: ${limits.max}`
+                      : `${limits.min.replace(" USDC", "")} - ${limits.max}`}
                   </p>
                 </div>
 

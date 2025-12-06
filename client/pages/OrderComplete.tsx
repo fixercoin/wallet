@@ -36,10 +36,6 @@ export default function OrderComplete() {
   const [messages, setMessages] = useState<TradeMessage[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [buyerPaymentConfirmed, setBuyerPaymentConfirmed] = useState(false);
-  const [sellerPaymentReceived, setSellerPaymentReceived] = useState(false);
-  const [sellerTransferInitiated, setSellerTransferInitiated] = useState(false);
-  const [buyerCryptoReceived, setBuyerCryptoReceived] = useState(false);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(280);
   const [uploading, setUploading] = useState(false);
@@ -111,6 +107,31 @@ export default function OrderComplete() {
   }, [messages]);
 
   const isBuyer = wallet?.publicKey === order?.buyerWallet;
+
+  // Derive state from messages to ensure buyer and seller see the same status
+  const buyerPaymentConfirmed = messages.some(
+    (msg) =>
+      msg.sender_wallet === order?.buyerWallet &&
+      msg.message.includes("I have confirmed payment sent"),
+  );
+
+  const sellerPaymentReceived = messages.some(
+    (msg) =>
+      msg.sender_wallet === order?.sellerWallet &&
+      msg.message.includes("I have received payment"),
+  );
+
+  const sellerTransferInitiated = messages.some(
+    (msg) =>
+      msg.sender_wallet === order?.sellerWallet &&
+      msg.message.includes("I have initiated the crypto transfer"),
+  );
+
+  const buyerCryptoReceived = messages.some(
+    (msg) =>
+      msg.sender_wallet === order?.buyerWallet &&
+      msg.message.includes("I have received the crypto transfer"),
+  );
 
   const shortenAddress = (addr: string, chars = 6): string => {
     if (!addr) return "";

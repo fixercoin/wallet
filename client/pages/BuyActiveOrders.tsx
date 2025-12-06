@@ -213,21 +213,38 @@ export default function BuyActiveOrders() {
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (wallet?.publicKey === ADMIN_WALLET) {
-                        navigate("/order-complete", {
-                          state: { order, openChat: true },
-                        });
-                      } else {
-                        navigate(`/order/${encodeURIComponent(order.id)}`);
-                      }
-                    }}
-                    className="px-4 py-2 rounded-lg bg-gray-300/10 border border-gray-300/30 text-gray-300 text-xs hover:bg-gray-300/20 transition-colors uppercase font-semibold flex-shrink-0"
-                  >
-                    View
-                  </button>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCancelOrder(order.id);
+                      }}
+                      disabled={cancelling === order.id}
+                      className="p-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Cancel order"
+                    >
+                      {cancelling === order.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <X className="w-4 h-4" />
+                      )}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (wallet?.publicKey === ADMIN_WALLET) {
+                          navigate("/order-complete", {
+                            state: { order, openChat: true },
+                          });
+                        } else {
+                          navigate(`/order/${encodeURIComponent(order.id)}`);
+                        }
+                      }}
+                      className="px-4 py-2 rounded-lg bg-gray-300/10 border border-gray-300/30 text-gray-300 text-xs hover:bg-gray-300/20 transition-colors uppercase font-semibold"
+                    >
+                      View
+                    </button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

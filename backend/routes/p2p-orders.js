@@ -1,4 +1,161 @@
-let p2pOrders = []; // In-memory storage, replace with Cloudflare KV in production
+// Trade rooms storage
+let tradeRooms = [];
+let tradeMessages = [];
+
+// P2P Orders storage
+let p2pOrders = [];
+
+// ===== TRADE ROOMS & MESSAGES =====
+
+export async function handleListTradeRooms(req, res) {
+  try {
+    const { wallet } = req.query;
+
+    let rooms = tradeRooms;
+    if (wallet) {
+      rooms = rooms.filter(
+        (r) => r.buyer_wallet === wallet || r.seller_wallet === wallet,
+      );
+    }
+
+    return res.json({
+      rooms,
+      count: rooms.length,
+    });
+  } catch (error) {
+    console.error("Error listing trade rooms:", error);
+    return res.status(500).json({
+      error: "Failed to list trade rooms",
+      details: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+export async function handleCreateTradeRoom(req, res) {
+  try {
+    const { buyerWallet, sellerWallet, orderId } = req.body;
+
+    if (!buyerWallet || !sellerWallet || !orderId) {
+      return res.status(400).json({
+        error: "Missing required fields",
+      });
+    }
+
+    const newRoom = {
+      id: `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      buyer_wallet: buyerWallet,
+      seller_wallet: sellerWallet,
+      order_id: orderId,
+      created_at: Date.now(),
+    };
+
+    tradeRooms.push(newRoom);
+
+    return res.status(201).json(newRoom);
+  } catch (error) {
+    console.error("Error creating trade room:", error);
+    return res.status(500).json({
+      error: "Failed to create trade room",
+      details: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+export async function handleGetTradeRoom(req, res) {
+  try {
+    const { roomId } = req.params;
+
+    const room = tradeRooms.find((r) => r.id === roomId);
+
+    if (!room) {
+      return res.status(404).json({ error: "Trade room not found" });
+    }
+
+    return res.json(room);
+  } catch (error) {
+    console.error("Error getting trade room:", error);
+    return res.status(500).json({
+      error: "Failed to get trade room",
+      details: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+export async function handleUpdateTradeRoom(req, res) {
+  try {
+    const { roomId } = req.params;
+    const updates = req.body;
+
+    const roomIndex = tradeRooms.findIndex((r) => r.id === roomId);
+
+    if (roomIndex === -1) {
+      return res.status(404).json({ error: "Trade room not found" });
+    }
+
+    tradeRooms[roomIndex] = { ...tradeRooms[roomIndex], ...updates };
+
+    return res.json(tradeRooms[roomIndex]);
+  } catch (error) {
+    console.error("Error updating trade room:", error);
+    return res.status(500).json({
+      error: "Failed to update trade room",
+      details: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+export async function handleListTradeMessages(req, res) {
+  try {
+    const { roomId } = req.params;
+
+    const messages = tradeMessages.filter((m) => m.room_id === roomId);
+
+    return res.json({
+      messages,
+      count: messages.length,
+    });
+  } catch (error) {
+    console.error("Error listing trade messages:", error);
+    return res.status(500).json({
+      error: "Failed to list messages",
+      details: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+export async function handleAddTradeMessage(req, res) {
+  try {
+    const { roomId } = req.params;
+    const { sender_wallet, message, attachment_url } = req.body;
+
+    if (!sender_wallet || !message) {
+      return res.status(400).json({
+        error: "Missing required fields",
+      });
+    }
+
+    const newMessage = {
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      room_id: roomId,
+      sender_wallet,
+      message,
+      attachment_url: attachment_url || null,
+      created_at: new Date().toISOString(),
+    };
+
+    tradeMessages.push(newMessage);
+
+    return res.status(201).json(newMessage);
+  } catch (error) {
+    console.error("Error adding trade message:", error);
+    return res.status(500).json({
+      error: "Failed to add message",
+      details: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+// ===== P2P ORDERS =====
 
 export async function handleListP2POrders(req, res) {
   try {

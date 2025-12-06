@@ -81,7 +81,18 @@ export const P2PBottomNavigation: React.FC<P2PBottomNavigationProps> = ({
       </div>
 
       {/* Post Dialog */}
-      <Dialog open={showPostDialog} onOpenChange={setShowPostDialog}>
+      <Dialog
+        open={showPostDialog}
+        onOpenChange={(open) => {
+          setShowPostDialog(open);
+          if (!open) {
+            setSelectedServer(null);
+            setServerPassword("");
+            setPasswordVerified(false);
+            setPasswordError("");
+          }
+        }}
+      >
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 text-white max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-white uppercase">
@@ -102,22 +113,56 @@ export const P2PBottomNavigation: React.FC<P2PBottomNavigationProps> = ({
                 {SERVERS.map((server) => (
                   <Button
                     key={server.id}
-                    onClick={() => setSelectedServer(server.id)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all ${
+                    onClick={() => handleServerSelect(server.id)}
+                    className={`w-full px-4 py-3 rounded-lg transition-all font-semibold uppercase ${
                       selectedServer === server.id
                         ? "bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
                         : "bg-[#1a2540]/50 border border-gray-300/30 text-gray-300 hover:bg-[#1a2540]/70"
                     }`}
                   >
-                    <span className="font-semibold uppercase">{server.name}</span>
-                    <span className="text-xs text-gray-400">pwd: {server.password}</span>
+                    {server.name}
                   </Button>
                 ))}
               </div>
             </div>
 
+            {/* Password Input */}
+            {selectedServer && !passwordVerified && (
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2 uppercase">
+                  ENTER PASSWORD
+                </label>
+                <div className="space-y-2">
+                  <input
+                    type="password"
+                    value={serverPassword}
+                    onChange={(e) => {
+                      setServerPassword(e.target.value);
+                      setPasswordError("");
+                    }}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        handlePasswordSubmit();
+                      }
+                    }}
+                    placeholder="Enter password"
+                    className="w-full px-4 py-2 rounded-lg bg-[#1a2540]/50 border border-gray-300/30 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]"
+                  />
+                  {passwordError && (
+                    <p className="text-red-400 text-xs">{passwordError}</p>
+                  )}
+                  <Button
+                    onClick={handlePasswordSubmit}
+                    className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white font-semibold rounded-lg uppercase"
+                  >
+                    VERIFY PASSWORD
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Buy or Sell Selection */}
-            {selectedServer && (
+            {selectedServer && passwordVerified && (
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-3 uppercase">
                   POST TYPE
@@ -127,6 +172,8 @@ export const P2PBottomNavigation: React.FC<P2PBottomNavigationProps> = ({
                     onClick={() => {
                       setShowPostDialog(false);
                       setSelectedServer(null);
+                      setServerPassword("");
+                      setPasswordVerified(false);
                       navigate("/buy-crypto");
                     }}
                     className="h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-600/20 to-blue-600/10 border border-blue-500/30 hover:border-blue-500/50 text-white font-semibold rounded-lg transition-all uppercase"
@@ -138,6 +185,8 @@ export const P2PBottomNavigation: React.FC<P2PBottomNavigationProps> = ({
                     onClick={() => {
                       setShowPostDialog(false);
                       setSelectedServer(null);
+                      setServerPassword("");
+                      setPasswordVerified(false);
                       navigate("/sell-now");
                     }}
                     className="h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-green-600/20 to-green-600/10 border border-green-500/30 hover:border-green-500/50 text-white font-semibold rounded-lg transition-all uppercase"

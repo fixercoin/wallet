@@ -94,6 +94,27 @@ export async function createServer(): Promise<express.Application> {
   app.use(cors());
   app.use(express.json());
 
+  // Error handler for JSON parsing issues
+  app.use((err: any, req: any, res: any, next: any) => {
+    if (err instanceof SyntaxError && "body" in err) {
+      console.error("[JSON Parser] Error parsing JSON:", err.message);
+      return res.status(400).json({
+        error: "Invalid JSON in request body",
+        details: err.message,
+      });
+    }
+    // Specific handling for iconv-lite or other module issues
+    if (err.message && err.message.includes("Cannot find module")) {
+      console.error("[Module Error] Missing module:", err.message);
+      return res.status(500).json({
+        error: "Internal server error - missing dependency",
+        details: err.message,
+      });
+    }
+    // Pass to next error handler
+    next(err);
+  });
+
   // DexScreener routes
   app.get("/api/dexscreener/tokens", async (req, res) => {
     try {

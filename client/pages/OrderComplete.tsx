@@ -19,6 +19,7 @@ import {
   getOrderFromStorage,
   updateOrderInStorage,
 } from "@/lib/p2p-order-creation";
+import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import type { CreatedOrder } from "@/lib/p2p-order-creation";
 import type { TradeMessage } from "@/lib/p2p-api";
 
@@ -26,6 +27,7 @@ export default function OrderComplete() {
   const navigate = useNavigate();
   const location = useLocation() as any;
   const { wallet } = useWallet();
+  const { createNotification } = useOrderNotifications();
 
   const [order, setOrder] = useState<CreatedOrder | null>(null);
   const [loading, setLoading] = useState(true);
@@ -133,6 +135,20 @@ export default function OrderComplete() {
         });
       }
 
+      // Send notification to seller
+      await createNotification(
+        order.sellerWallet,
+        "payment_confirmed",
+        order.type,
+        order.id,
+        `Buyer confirmed payment for ${order.amountTokens.toFixed(6)} ${order.token}`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+
       toast.success("Payment confirmed!");
 
       // Check if both confirmed
@@ -161,6 +177,20 @@ export default function OrderComplete() {
           message: "✅ I have confirmed crypto transfer received",
         });
       }
+
+      // Send notification to buyer
+      await createNotification(
+        order.buyerWallet,
+        "received_confirmed",
+        order.type,
+        order.id,
+        `Seller confirmed transfer of ${order.amountTokens.toFixed(6)} ${order.token}`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
 
       toast.success("Transfer confirmed!");
 

@@ -12,6 +12,12 @@ const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 export default function BuyOrder() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
+
+  // Redirect to buydata on mount
+  useEffect(() => {
+    navigate("/buydata", { replace: true });
+  }, [navigate]);
+
   const [amountPKR, setAmountPKR] = useState<string>("");
   const [estimatedUSDC, setEstimatedUSDC] = useState<number>(0);
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);

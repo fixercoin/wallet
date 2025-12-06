@@ -80,6 +80,12 @@ import {
   handleSavePaymentMethod,
   handleDeletePaymentMethod,
 } from "./routes/p2p-payment-methods";
+import {
+  handleListNotifications,
+  handleCreateNotification,
+  handleMarkNotificationAsRead,
+  handleDeleteNotification,
+} from "./routes/p2p-notifications";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();

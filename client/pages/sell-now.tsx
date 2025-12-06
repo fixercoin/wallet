@@ -97,13 +97,51 @@ export default function SellNow() {
     navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
   };
 
+  const [usdcDirectBalance, setUsdcDirectBalance] = useState<number | null>(null);
+
+  // Direct USDC balance fetch as fallback
+  useEffect(() => {
+    const fetchUsdcDirectBalance = async () => {
+      if (!wallet?.publicKey) return;
+
+      try {
+        const response = await fetch(
+          `/api/wallet/token-balance?wallet=${wallet.publicKey}&mint=${SUPPORTED_TOKEN_MINTS.USDC}`,
+        );
+        if (response.ok) {
+          const data = await response.json();
+          const balance = typeof data.balance === "number" ? data.balance : 0;
+          setUsdcDirectBalance(balance);
+          console.log("[SellNow] Direct USDC balance:", balance);
+        }
+      } catch (err) {
+        console.warn("[SellNow] Direct balance fetch failed:", err);
+      }
+    };
+
+    if (selectedToken.symbol === "USDC") {
+      fetchUsdcDirectBalance();
+    }
+  }, [wallet?.publicKey, selectedToken.symbol]);
+
   const selectedTokenBalance = useMemo(() => {
     const t = (walletTokens || []).find(
       (tk) =>
         (tk.symbol || "").toUpperCase() === selectedToken.symbol.toUpperCase(),
     );
-    return t?.balance || 0;
-  }, [walletTokens, selectedToken]);
+    const balance = t?.balance || 0;
+
+    // For USDC, use direct balance as fallback if available
+    if (
+      selectedToken.symbol === "USDC" &&
+      usdcDirectBalance !== null &&
+      balance === 0
+    ) {
+      return usdcDirectBalance;
+    }
+
+    return balance;
+  }, [walletTokens, selectedToken, usdcDirectBalance]);
 
   // Load editing order data if available
   useEffect(() => {

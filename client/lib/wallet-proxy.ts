@@ -132,15 +132,25 @@ export const getTokenAccounts = async (
   publicKey: string,
 ): Promise<TokenInfo[]> => {
   try {
-    console.log(`Fetching token accounts via Solana RPC for: ${publicKey}`);
+    console.log(`Fetching token accounts via server API for: ${publicKey}`);
 
-    const tokenAccounts = await getSolanaTokenAccounts(publicKey);
+    // Call server endpoint instead of RPC directly
+    const response = await fetch(
+      `/api/wallet/token-accounts?publicKey=${encodeURIComponent(publicKey)}`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`Server returned ${response.status}`);
+    }
+
+    const data = await response.json();
+    const tokenAccounts = data.tokens || [];
 
     // Merge with default tokens to ensure all known tokens are included
     const allTokens = [...DEFAULT_TOKENS];
 
     // Update balances for tokens we found on-chain
-    tokenAccounts.forEach((tokenAccount) => {
+    tokenAccounts.forEach((tokenAccount: TokenInfo) => {
       const existingTokenIndex = allTokens.findIndex(
         (t) => t.mint === tokenAccount.mint,
       );
@@ -154,10 +164,10 @@ export const getTokenAccounts = async (
       }
     });
 
-    console.log(`✅ Solana RPC successful: ${allTokens.length} tokens`);
+    console.log(`✅ Server API successful: ${allTokens.length} tokens`);
     return allTokens;
   } catch (error) {
-    console.error("Solana RPC failed for token accounts:", error);
+    console.error("Server API failed for token accounts:", error);
     return DEFAULT_TOKENS.map((token) => ({ ...token, balance: 0 }));
   }
 };

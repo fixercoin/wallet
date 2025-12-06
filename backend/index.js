@@ -6,6 +6,7 @@ import { dirname, join } from "path";
 // Import all route handlers
 import { handleSolanaRpc } from "./routes/solana-proxy.js";
 import { handleWalletBalance } from "./routes/wallet-balance.js";
+import { handleGetTokenAccounts } from "./routes/token-accounts.js";
 import { handleExchangeRate } from "./routes/exchange-rate.js";
 import {
   handleDexscreenerTokens,
@@ -38,6 +39,19 @@ import {
   handleListTradeMessages,
   handleAddTradeMessage,
 } from "./routes/p2p-orders.js";
+import {
+  handleListP2POrders,
+  handleCreateP2POrder,
+  handleGetP2POrder,
+  handleUpdateP2POrder,
+  handleDeleteP2POrder,
+} from "./routes/p2p-orders.js";
+import {
+  handleListNotifications,
+  handleCreateNotification,
+  handleMarkNotificationAsRead,
+  handleDeleteNotification,
+} from "./routes/p2p-notifications.js";
 import {
   handleListOrders,
   handleCreateOrder,
@@ -180,6 +194,18 @@ app.get("/api/wallet/balance", async (req, res) => {
   } catch (e) {
     return res.status(500).json({
       error: "Failed to fetch wallet balance",
+      details: e?.message || String(e),
+    });
+  }
+});
+
+// Token accounts endpoint
+app.get("/api/wallet/token-accounts", async (req, res) => {
+  try {
+    await handleGetTokenAccounts(req, res);
+  } catch (e) {
+    return res.status(500).json({
+      error: "Failed to fetch token accounts",
       details: e?.message || String(e),
     });
   }
@@ -589,6 +615,107 @@ app.get("/api/p2p/rooms/:roomId", handleGetTradeRoom);
 app.put("/api/p2p/rooms/:roomId", handleUpdateTradeRoom);
 app.get("/api/p2p/rooms/:roomId/messages", handleListTradeMessages);
 app.post("/api/p2p/rooms/:roomId/messages", handleAddTradeMessage);
+
+// P2P Orders routes
+app.get("/api/p2p/orders", async (req, res) => {
+  try {
+    return await handleListP2POrders(req, res);
+  } catch (e) {
+    return res.status(500).json({
+      error: "Failed to list orders",
+      details: e?.message || String(e),
+    });
+  }
+});
+
+app.post("/api/p2p/orders", async (req, res) => {
+  try {
+    return await handleCreateP2POrder(req, res);
+  } catch (e) {
+    return res.status(500).json({
+      error: "Failed to create order",
+      details: e?.message || String(e),
+    });
+  }
+});
+
+app.get("/api/p2p/orders/:orderId", async (req, res) => {
+  try {
+    return await handleGetP2POrder(req, res);
+  } catch (e) {
+    return res.status(500).json({
+      error: "Failed to get order",
+      details: e?.message || String(e),
+    });
+  }
+});
+
+app.put("/api/p2p/orders/:orderId", async (req, res) => {
+  try {
+    return await handleUpdateP2POrder(req, res);
+  } catch (e) {
+    return res.status(500).json({
+      error: "Failed to update order",
+      details: e?.message || String(e),
+    });
+  }
+});
+
+app.delete("/api/p2p/orders/:orderId", async (req, res) => {
+  try {
+    return await handleDeleteP2POrder(req, res);
+  } catch (e) {
+    return res.status(500).json({
+      error: "Failed to delete order",
+      details: e?.message || String(e),
+    });
+  }
+});
+
+// P2P Notifications routes
+app.get("/api/p2p/notifications", async (req, res) => {
+  try {
+    return await handleListNotifications(req, res);
+  } catch (e) {
+    return res.status(500).json({
+      error: "Failed to list notifications",
+      details: e?.message || String(e),
+    });
+  }
+});
+
+app.post("/api/p2p/notifications", async (req, res) => {
+  try {
+    return await handleCreateNotification(req, res);
+  } catch (e) {
+    return res.status(500).json({
+      error: "Failed to create notification",
+      details: e?.message || String(e),
+    });
+  }
+});
+
+app.put("/api/p2p/notifications", async (req, res) => {
+  try {
+    return await handleMarkNotificationAsRead(req, res);
+  } catch (e) {
+    return res.status(500).json({
+      error: "Failed to mark as read",
+      details: e?.message || String(e),
+    });
+  }
+});
+
+app.delete("/api/p2p/notifications", async (req, res) => {
+  try {
+    return await handleDeleteNotification(req, res);
+  } catch (e) {
+    return res.status(500).json({
+      error: "Failed to delete notification",
+      details: e?.message || String(e),
+    });
+  }
+});
 
 // Health check
 app.get("/health", (req, res) => {

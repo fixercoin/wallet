@@ -612,99 +612,161 @@ export default function OrderComplete() {
           <div className="space-y-3">
             {isBuyer ? (
               <>
+                {/* Buyer Payment Status */}
                 <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-blue-500/20">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-semibold uppercase text-white">
-                      Payment Status
+                      Your Payment
                     </span>
-                    {buyerConfirmed ? (
+                    {buyerPaymentConfirmed ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     ) : (
                       <Clock className="w-5 h-5 text-yellow-500" />
                     )}
                   </div>
-                  {!buyerConfirmed && (
+                  {!buyerPaymentConfirmed ? (
                     <Button
-                      onClick={handleBuyerConfirm}
+                      onClick={handleBuyerConfirmPayment}
                       className="w-full bg-green-600/30 border border-green-500/50 hover:bg-green-600/40 text-green-400 uppercase text-xs font-semibold py-2"
                     >
                       Confirm Payment Sent
                     </Button>
-                  )}
-                  {buyerConfirmed && (
+                  ) : (
                     <div className="text-xs text-green-400 font-semibold">
                       ✓ Payment Confirmed
                     </div>
                   )}
                 </div>
 
+                {/* Seller Payment Received Status */}
                 <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-purple-500/20">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-semibold uppercase text-white">
-                      Seller Status
+                      Seller Received Payment
                     </span>
-                    {sellerConfirmed ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-yellow-500" />
-                    )}
-                  </div>
-                  <div className="text-xs text-white/60 mt-1">
-                    {sellerConfirmed
-                      ? "✓ Seller confirmed transfer"
-                      : "Waiting for seller to confirm"}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-blue-500/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold uppercase text-white">
-                      Buyer Status
-                    </span>
-                    {buyerConfirmed ? (
+                    {sellerPaymentReceived ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     ) : (
                       <Clock className="w-5 h-5 text-yellow-500" />
                     )}
                   </div>
                   <div className="text-xs text-white/60">
-                    {buyerConfirmed
-                      ? "✓ Buyer confirmed payment"
-                      : "Waiting for buyer to confirm"}
+                    {sellerPaymentReceived
+                      ? "✓ Waiting for crypto transfer..."
+                      : "Waiting for seller to confirm..."}
                   </div>
                 </div>
 
-                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-purple-500/20">
+                {/* Seller Transfer Status */}
+                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-orange-500/20">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-semibold uppercase text-white">
-                      Transfer Status
+                      Crypto Transfer
                     </span>
-                    {sellerConfirmed ? (
+                    {sellerTransferInitiated ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     ) : (
                       <Clock className="w-5 h-5 text-yellow-500" />
                     )}
                   </div>
-                  {!sellerConfirmed && (
+                  {sellerTransferInitiated && !buyerCryptoReceived ? (
                     <Button
-                      onClick={handleSellerConfirm}
+                      onClick={handleBuyerCryptoReceived}
+                      className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
+                    >
+                      I Received Crypto
+                    </Button>
+                  ) : buyerCryptoReceived ? (
+                    <div className="text-xs text-orange-400 font-semibold">
+                      ✓ Crypto Received
+                    </div>
+                  ) : (
+                    <div className="text-xs text-white/60">
+                      Waiting for seller to transfer...
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Buyer Payment Status (seller view) */}
+                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-blue-500/20">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold uppercase text-white">
+                      Buyer Payment
+                    </span>
+                    {buyerPaymentConfirmed ? (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <Clock className="w-5 h-5 text-yellow-500" />
+                    )}
+                  </div>
+                  <div className="text-xs text-white/60">
+                    {buyerPaymentConfirmed
+                      ? "✓ Buyer confirmed payment"
+                      : "Waiting for buyer to confirm..."}
+                  </div>
+                </div>
+
+                {/* Seller Payment Received Status */}
+                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-purple-500/20">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-semibold uppercase text-white">
+                      You Received Payment
+                    </span>
+                    {sellerPaymentReceived ? (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <Clock className="w-5 h-5 text-yellow-500" />
+                    )}
+                  </div>
+                  {!sellerPaymentReceived && buyerPaymentConfirmed ? (
+                    <Button
+                      onClick={handleSellerPaymentReceived}
                       className="w-full bg-purple-600/30 border border-purple-500/50 hover:bg-purple-600/40 text-purple-400 uppercase text-xs font-semibold py-2"
                     >
-                      Confirm Transfer Sent
+                      I Have Received Payment
                     </Button>
-                  )}
-                  {sellerConfirmed && (
+                  ) : (
                     <div className="text-xs text-purple-400 font-semibold">
-                      ✓ Transfer Confirmed
+                      ✓ Payment Received
+                    </div>
+                  )}
+                </div>
+
+                {/* Seller Transfer Status */}
+                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-orange-500/20">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-semibold uppercase text-white">
+                      Crypto Transfer
+                    </span>
+                    {sellerTransferInitiated ? (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <Clock className="w-5 h-5 text-yellow-500" />
+                    )}
+                  </div>
+                  {!sellerTransferInitiated && sellerPaymentReceived ? (
+                    <Button
+                      onClick={handleSellerTransfer}
+                      className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
+                    >
+                      I Have Transfer Sent
+                    </Button>
+                  ) : sellerTransferInitiated ? (
+                    <div className="text-xs text-orange-400 font-semibold">
+                      ✓ Transfer Initiated
+                    </div>
+                  ) : (
+                    <div className="text-xs text-white/60">
+                      Waiting for buyer payment confirmation...
                     </div>
                   )}
                 </div>
               </>
             )}
 
-            {order.status === "COMPLETED" && (
+            {buyerCryptoReceived && (
               <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
                 <div className="flex items-center gap-2 text-green-400">
                   <CheckCircle className="w-5 h-5" />

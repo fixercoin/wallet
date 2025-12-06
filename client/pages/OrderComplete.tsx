@@ -37,6 +37,7 @@ export default function OrderComplete() {
   const [buyerConfirmed, setBuyerConfirmed] = useState(false);
   const [sellerConfirmed, setSellerConfirmed] = useState(false);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
+  const [exchangeRate, setExchangeRate] = useState<number>(280);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
 
@@ -53,6 +54,24 @@ export default function OrderComplete() {
 
     setLoading(false);
   }, [location.state]);
+
+  // Fetch exchange rate from API (same as BuyData and SellData)
+  useEffect(() => {
+    const fetchRate = async () => {
+      try {
+        const response = await fetch("/api/token/price?token=USDC");
+        if (!response.ok) throw new Error("Failed to fetch rate");
+        const data = await response.json();
+        const rate = data.rate || data.priceInPKR || 280;
+        setExchangeRate(typeof rate === "number" && rate > 0 ? rate : 280);
+      } catch (error) {
+        console.error("Exchange rate error:", error);
+        setExchangeRate(280);
+      }
+    };
+
+    fetchRate();
+  }, []);
 
   // Load chat messages
   useEffect(() => {
@@ -343,7 +362,7 @@ export default function OrderComplete() {
                   Price
                 </div>
                 <div className="text-sm text-white/90">
-                  1 {order.token} = {order.pricePKRPerQuote.toFixed(2)} PKR
+                  1 {order.token} = {exchangeRate.toFixed(2)} PKR
                 </div>
               </div>
 

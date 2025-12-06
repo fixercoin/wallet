@@ -12,12 +12,13 @@ const RPC_ENDPOINTS = [
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
     : "",
-  // Reliable backup endpoints
+  // Well-tested public endpoints
   "https://api.mainnet-beta.solana.com",
-  "https://solana-mainnet.g.alchemy.com/v2/demo",
-  // Additional fallbacks
-  "https://rpc.helius.xyz",
-  "https://solana.publicnode.com",
+  // Community-supported endpoints
+  "https://solana-api.projectserum.com",
+  "https://rpc-mainnet.phantom.app",
+  // Geode Network
+  "https://solana.geode.network",
 ].filter(Boolean);
 
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";

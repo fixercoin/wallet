@@ -318,7 +318,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   </p>
                 </div>
 
-                <div className="flex flex-col items-end justify-end h-full gap-2">
+                <div className="flex flex-row items-center justify-end h-full gap-2">
                   {isAdvertiser(order) && (
                     <Button
                       onClick={() => handleEdit(order)}

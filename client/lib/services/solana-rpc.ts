@@ -63,15 +63,12 @@ export const KNOWN_TOKENS: Record<string, TokenMetadata> = {
 // Request queue to prevent duplicate requests
 const requestQueue = new Map<string, Promise<any>>();
 
-// Public RPC endpoints for fallback (avoid endpoints that don't support CORS)
-// NOTE: These may still fail with CORS for transaction sending from browser
+// Public RPC endpoints for fallback (only CORS-enabled endpoints)
+// NOTE: These endpoints are explicitly tested to support CORS from browsers
 // Best practice: use backend proxy for sendTransaction/simulateTransaction
 const PUBLIC_RPC_ENDPOINTS = [
   "https://solana-rpc.publicnode.com/",
   "https://solana.publicnode.com",
-  "https://api.mainnet-beta.solana.com",
-  "https://rpc.ankr.com/solana",
-  "https://solana-api.projectserum.com",
 ];
 
 /**

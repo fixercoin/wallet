@@ -43,25 +43,35 @@ export interface CreatedOrder {
   roomId?: string;
 }
 
+export interface TradeDetailsInput {
+  token: string;
+  amountTokens: number;
+  amountPKR: number;
+  price: number;
+}
+
 export async function createOrderFromOffer(
   offer: P2POfferFromTable,
   currentUserWallet: string,
   orderType: "BUY" | "SELL",
+  tradeDetails?: TradeDetailsInput,
 ): Promise<CreatedOrder> {
   const offerCreatorWallet = offer.walletAddress || offer.creator_wallet || "";
-  const amountTokens =
-    typeof offer.amountTokens === "number"
+
+  // Use trade details if provided (from dialog), otherwise use offer details
+  const amountTokens = tradeDetails?.amountTokens ||
+    (typeof offer.amountTokens === "number"
       ? offer.amountTokens
       : typeof offer.token_amount === "string"
         ? parseFloat(offer.token_amount)
-        : 0;
-  const amountPKR =
-    typeof offer.amountPKR === "number"
+        : 0);
+  const amountPKR = tradeDetails?.amountPKR ||
+    (typeof offer.amountPKR === "number"
       ? offer.amountPKR
       : typeof offer.pkr_amount === "number"
         ? offer.pkr_amount
-        : 0;
-  const pricePKRPerQuote = offer.pricePKRPerQuote || 280;
+        : 0);
+  const pricePKRPerQuote = tradeDetails?.price || offer.pricePKRPerQuote || 280;
 
   const orderId = `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 

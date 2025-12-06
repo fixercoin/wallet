@@ -291,9 +291,9 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   <td className="px-4 py-3 text-white/80 uppercase">
                     EASYPAISA
                   </td>
-                  <td className="px-4 py-3 text-right flex gap-2 justify-end items-center">
+                  <td className="px-4 py-3 flex flex-col items-center justify-center gap-2">
                     {isAdvertiser(order) && (
-                      <>
+                      <div className="flex gap-2">
                         <div
                           onClick={() => handleEdit(order)}
                           className="cursor-pointer text-white/70 hover:text-white transition-colors"
@@ -318,7 +318,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                             <X className="w-4 h-4" />
                           )}
                         </div>
-                      </>
+                      </div>
                     )}
                     <Button
                       onClick={() => handleProceed(order)}

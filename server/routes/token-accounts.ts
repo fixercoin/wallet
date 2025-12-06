@@ -96,66 +96,83 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
 
     for (const endpoint of RPC_ENDPOINTS) {
       try {
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-          timeout: 10000,
-        });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-        const data = await response.json();
+        try {
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+            signal: controller.signal,
+          });
 
-        if (data.error) {
-          console.warn(
-            `[TokenAccounts] RPC ${endpoint.slice(0, 40)} returned error:`,
-            data.error,
-          );
-          lastError = new Error(data.error.message || "RPC error");
-          continue;
-        }
+          clearTimeout(timeoutId);
 
-        const accounts = data.result?.value || [];
-        const tokens = accounts.map((account: any) => {
-          const parsedInfo = account.account.data.parsed.info;
-          const mint = parsedInfo.mint;
-          const decimals = parsedInfo.tokenAmount.decimals;
-
-          // Extract balance
-          let balance = 0;
-          if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
-            balance = parsedInfo.tokenAmount.uiAmount;
-          } else if (parsedInfo.tokenAmount.amount) {
-            const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
-            balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+          if (!response.ok) {
+            console.warn(
+              `[TokenAccounts] RPC ${endpoint.slice(0, 40)} returned status ${response.status}`,
+            );
+            lastError = new Error(`HTTP ${response.status}`);
+            continue;
           }
 
-          const metadata = KNOWN_TOKENS[mint] || {
-            mint,
-            symbol: "UNKNOWN",
-            name: "Unknown Token",
-            decimals,
-          };
+          const data = await response.json();
 
-          return {
-            ...metadata,
-            balance,
-            decimals: decimals || metadata.decimals,
-          };
-        });
+          if (data.error) {
+            console.warn(
+              `[TokenAccounts] RPC ${endpoint.slice(0, 40)} returned error:`,
+              data.error,
+            );
+            lastError = new Error(data.error.message || "RPC error");
+            continue;
+          }
 
-        console.log(
-          `[TokenAccounts] Found ${tokens.length} token accounts for ${publicKey.slice(0, 8)}`,
-        );
-        return res.json({
-          publicKey,
-          tokens,
-          count: tokens.length,
-        });
+          const accounts = data.result?.value || [];
+          const tokens = accounts.map((account: any) => {
+            const parsedInfo = account.account.data.parsed.info;
+            const mint = parsedInfo.mint;
+            const decimals = parsedInfo.tokenAmount.decimals;
+
+            // Extract balance
+            let balance = 0;
+            if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
+              balance = parsedInfo.tokenAmount.uiAmount;
+            } else if (parsedInfo.tokenAmount.amount) {
+              const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+              balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+            }
+
+            const metadata = KNOWN_TOKENS[mint] || {
+              mint,
+              symbol: "UNKNOWN",
+              name: "Unknown Token",
+              decimals,
+            };
+
+            return {
+              ...metadata,
+              balance,
+              decimals: decimals || metadata.decimals,
+            };
+          });
+
+          console.log(
+            `[TokenAccounts] ✅ Found ${tokens.length} token accounts for ${publicKey.slice(0, 8)} via ${endpoint.slice(0, 40)}`,
+          );
+          return res.json({
+            publicKey,
+            tokens,
+            count: tokens.length,
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
+        const errorMsg = lastError.message || "Unknown error";
         console.warn(
-          `[TokenAccounts] RPC endpoint ${endpoint.slice(0, 40)} failed:`,
-          lastError.message,
+          `[TokenAccounts] RPC endpoint ${endpoint.slice(0, 40)} failed: ${errorMsg}`,
         );
         continue;
       }

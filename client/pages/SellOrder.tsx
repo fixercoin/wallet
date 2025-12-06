@@ -107,9 +107,10 @@ export default function SellOrder() {
         },
         body: JSON.stringify({
           type: "SELL",
-          amountUSDC: usdcAmount,
-          estimatedPKR: estimatedPKR,
-          pricePerUSDC: exchangeRate,
+          token: USDC_MINT,
+          amountTokens: usdcAmount,
+          amountPKR: estimatedPKR,
+          pricePKRPerQuote: exchangeRate,
           walletAddress: wallet.publicKey,
         }),
       });

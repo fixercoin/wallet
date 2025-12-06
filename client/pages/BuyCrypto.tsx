@@ -216,10 +216,31 @@ export default function BuyCrypto() {
       return;
     }
 
-    if (!amountPKR || Number(amountPKR) <= 0 || !exchangeRate) {
+    const minAmount = Number(minAmountPKR);
+    const maxAmount = Number(maxAmountPKR);
+
+    if (!minAmountPKR || minAmount <= 0) {
       toast({
-        title: "Invalid Amount",
-        description: "Enter a valid PKR amount",
+        title: "Invalid Minimum Amount",
+        description: "Enter a valid minimum PKR amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!maxAmountPKR || maxAmount <= 0) {
+      toast({
+        title: "Invalid Maximum Amount",
+        description: "Enter a valid maximum PKR amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (minAmount >= maxAmount) {
+      toast({
+        title: "Invalid Range",
+        description: "Maximum amount must be greater than minimum amount",
         variant: "destructive",
       });
       return;
@@ -232,8 +253,8 @@ export default function BuyCrypto() {
       const order = {
         type: "BUY",
         token: selectedToken.id,
-        amountTokens: Number(amountPKR) / exchangeRate,
-        amountPKR: Number(amountPKR),
+        minAmountPKR: minAmount,
+        maxAmountPKR: maxAmount,
         pricePKRPerQuote,
         paymentMethod: paymentMethod.id,
       };

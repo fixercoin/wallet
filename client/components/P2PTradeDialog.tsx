@@ -156,7 +156,8 @@ export const P2PTradeDialog: React.FC<P2PTradeDialogProps> = ({
               Estimated {defaultToken}
             </label>
             <div className="px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold">
-              {amountTokens ? parseFloat(amountTokens).toFixed(6) : "0.000000"} {defaultToken}
+              {amountTokens ? parseFloat(amountTokens).toFixed(6) : "0.000000"}{" "}
+              {defaultToken}
             </div>
             {minAmount > 0 && maxAmount < Infinity && (
               <div className="text-xs text-white/60 mt-1">

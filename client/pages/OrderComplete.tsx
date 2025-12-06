@@ -102,6 +102,31 @@ export default function OrderComplete() {
     fetchRate();
   }, []);
 
+  // Poll for order status updates to keep state in sync with other party
+  useEffect(() => {
+    if (!order?.id) return;
+
+    const pollOrderStatus = async () => {
+      try {
+        const updatedOrder = await getOrderFromAPI(order.id);
+        if (updatedOrder) {
+          // Update local states with the latest values from KV
+          setBuyerPaymentConfirmed(updatedOrder.buyerPaymentConfirmed ?? false);
+          setSellerPaymentReceived(updatedOrder.sellerPaymentReceived ?? false);
+          setSellerTransferInitiated(updatedOrder.sellerTransferInitiated ?? false);
+          setBuyerCryptoReceived(updatedOrder.buyerCryptoReceived ?? false);
+          setOrder(updatedOrder);
+        }
+      } catch (error) {
+        console.error("Failed to poll order status:", error);
+      }
+    };
+
+    // Poll every 1 second for real-time updates
+    const interval = setInterval(pollOrderStatus, 1000);
+    return () => clearInterval(interval);
+  }, [order?.id]);
+
   // Load chat messages
   useEffect(() => {
     const loadMessages = async () => {

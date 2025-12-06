@@ -137,7 +137,7 @@ export default function TokenSearchPage() {
       <div className="sticky top-0 z-40 bg-transparent border-b border-[#22c55e]/30 shadow-sm backdrop-blur-sm">
         <div className="w-full max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <Button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/")}
             size="sm"
             className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-transparent transition-colors"
             aria-label="Back"

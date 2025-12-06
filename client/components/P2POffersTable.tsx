@@ -287,11 +287,13 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-white/80 uppercase">
-                    <img
-                      src="https://i.postimg.cc/zDkp83J5/acded9d6362d497965c18a071cb9fd.webp"
-                      alt="EasyPaisa"
-                      className="h-6 object-contain"
-                    />
+                    <div className="flex items-center justify-center bg-white/5 rounded-md p-2 w-fit">
+                      <img
+                        src="https://i.postimg.cc/zDkp83J5/acded9d6362d497965c18a071cb9fd.webp"
+                        alt="EasyPaisa"
+                        className="h-6 object-contain"
+                      />
+                    </div>
                   </td>
                   <td className="px-4 py-3 flex flex-col items-center justify-center gap-2">
                     {isAdvertiser(order) && (
@@ -386,11 +388,13 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   <p className="text-[10px] text-white/60 font-semibold uppercase mb-2">
                     PAY
                   </p>
-                  <img
-                    src="https://i.postimg.cc/zDkp83J5/acded9d6362d497965c18a071cb9fd.webp"
-                    alt="EasyPaisa"
-                    className="h-4 object-contain"
-                  />
+                  <div className="flex items-center justify-center bg-white/5 rounded-md p-1.5 w-fit">
+                    <img
+                      src="https://i.postimg.cc/zDkp83J5/acded9d6362d497965c18a071cb9fd.webp"
+                      alt="EasyPaisa"
+                      className="h-4 object-contain"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex flex-col items-center justify-center h-full gap-2">

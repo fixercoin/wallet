@@ -36,8 +36,10 @@ export default function OrderComplete() {
   const [messages, setMessages] = useState<TradeMessage[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [buyerConfirmed, setBuyerConfirmed] = useState(false);
-  const [sellerConfirmed, setSellerConfirmed] = useState(false);
+  const [buyerPaymentConfirmed, setBuyerPaymentConfirmed] = useState(false);
+  const [sellerPaymentReceived, setSellerPaymentReceived] = useState(false);
+  const [sellerTransferInitiated, setSellerTransferInitiated] = useState(false);
+  const [buyerCryptoReceived, setBuyerCryptoReceived] = useState(false);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(280);
   const [uploading, setUploading] = useState(false);
@@ -205,11 +207,11 @@ export default function OrderComplete() {
     }
   };
 
-  const handleBuyerConfirm = async () => {
+  const handleBuyerConfirmPayment = async () => {
     if (!order || !wallet?.publicKey) return;
 
     try {
-      setBuyerConfirmed(true);
+      setBuyerPaymentConfirmed(true);
       updateOrderInStorage(order.id, { status: "PENDING" });
 
       if (order.roomId) {
@@ -234,42 +236,37 @@ export default function OrderComplete() {
         },
       );
 
-      toast.success("Payment confirmed!");
-
-      // Check if both confirmed
-      if (sellerConfirmed) {
-        updateOrderInStorage(order.id, { status: "COMPLETED" });
-        toast.success("Order completed! Both parties confirmed.");
-      }
+      toast.success(
+        "Payment confirmed! Waiting for seller to transfer crypto...",
+      );
     } catch (error) {
       console.error("Error confirming payment:", error);
       toast.error("Failed to confirm");
-      setBuyerConfirmed(false);
+      setBuyerPaymentConfirmed(false);
     }
   };
 
-  const handleSellerConfirm = async () => {
+  const handleSellerPaymentReceived = async () => {
     if (!order || !wallet?.publicKey) return;
 
     try {
-      setSellerConfirmed(true);
-      updateOrderInStorage(order.id, { status: "PENDING" });
+      setSellerPaymentReceived(true);
 
       if (order.roomId) {
         await addTradeMessage({
           room_id: order.roomId,
           sender_wallet: wallet.publicKey,
-          message: "✅ I have confirmed crypto transfer received",
+          message: "✅ I have received payment",
         });
       }
 
       // Send notification to buyer
       await createNotification(
         order.buyerWallet,
-        "received_confirmed",
+        "seller_payment_received",
         order.type,
         order.id,
-        `Seller confirmed transfer of ${order.amountTokens.toFixed(6)} ${order.token}`,
+        `Seller confirmed they received the payment`,
         {
           token: order.token,
           amountTokens: order.amountTokens,
@@ -277,17 +274,89 @@ export default function OrderComplete() {
         },
       );
 
-      toast.success("Transfer confirmed!");
+      toast.success(
+        "Payment received confirmed! Now send the crypto transfer...",
+      );
+    } catch (error) {
+      console.error("Error confirming payment received:", error);
+      toast.error("Failed to confirm");
+      setSellerPaymentReceived(false);
+    }
+  };
 
-      // Check if both confirmed
-      if (buyerConfirmed) {
-        updateOrderInStorage(order.id, { status: "COMPLETED" });
-        toast.success("Order completed! Both parties confirmed.");
+  const handleSellerTransfer = async () => {
+    if (!order || !wallet?.publicKey) return;
+
+    try {
+      setSellerTransferInitiated(true);
+
+      if (order.roomId) {
+        await addTradeMessage({
+          room_id: order.roomId,
+          sender_wallet: wallet.publicKey,
+          message: "✅ I have initiated the crypto transfer",
+        });
       }
+
+      // Send notification to buyer
+      await createNotification(
+        order.buyerWallet,
+        "transfer_initiated",
+        order.type,
+        order.id,
+        `Seller initiated crypto transfer of ${order.amountTokens.toFixed(6)} ${order.token}`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+
+      toast.success("Transfer initiated! Buyer can now confirm receipt...");
     } catch (error) {
       console.error("Error confirming transfer:", error);
-      toast.error("Failed to confirm");
-      setSellerConfirmed(false);
+      toast.error("Failed to confirm transfer");
+      setSellerTransferInitiated(false);
+    }
+  };
+
+  const handleBuyerCryptoReceived = async () => {
+    if (!order || !wallet?.publicKey) return;
+
+    try {
+      setBuyerCryptoReceived(true);
+      updateOrderInStorage(order.id, { status: "COMPLETED" });
+
+      if (order.roomId) {
+        await addTradeMessage({
+          room_id: order.roomId,
+          sender_wallet: wallet.publicKey,
+          message: "✅ I have received the crypto transfer",
+        });
+      }
+
+      // Send notification to seller
+      await createNotification(
+        order.sellerWallet,
+        "crypto_received",
+        order.type,
+        order.id,
+        `Buyer confirmed receipt of ${order.amountTokens.toFixed(6)} ${order.token}`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+
+      toast.success("Order completed successfully!");
+
+      // Navigate away after 2 seconds
+      setTimeout(() => navigate(-1), 2000);
+    } catch (error) {
+      console.error("Error confirming crypto receipt:", error);
+      toast.error("Failed to confirm receipt");
+      setBuyerCryptoReceived(false);
     }
   };
 
@@ -547,99 +616,161 @@ export default function OrderComplete() {
           <div className="space-y-3">
             {isBuyer ? (
               <>
+                {/* Buyer Payment Status */}
                 <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-blue-500/20">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-semibold uppercase text-white">
-                      Payment Status
+                      Your Payment
                     </span>
-                    {buyerConfirmed ? (
+                    {buyerPaymentConfirmed ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     ) : (
                       <Clock className="w-5 h-5 text-yellow-500" />
                     )}
                   </div>
-                  {!buyerConfirmed && (
+                  {!buyerPaymentConfirmed ? (
                     <Button
-                      onClick={handleBuyerConfirm}
+                      onClick={handleBuyerConfirmPayment}
                       className="w-full bg-green-600/30 border border-green-500/50 hover:bg-green-600/40 text-green-400 uppercase text-xs font-semibold py-2"
                     >
                       Confirm Payment Sent
                     </Button>
-                  )}
-                  {buyerConfirmed && (
+                  ) : (
                     <div className="text-xs text-green-400 font-semibold">
                       ✓ Payment Confirmed
                     </div>
                   )}
                 </div>
 
+                {/* Seller Payment Received Status */}
                 <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-purple-500/20">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-semibold uppercase text-white">
-                      Seller Status
+                      Seller Received Payment
                     </span>
-                    {sellerConfirmed ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-yellow-500" />
-                    )}
-                  </div>
-                  <div className="text-xs text-white/60 mt-1">
-                    {sellerConfirmed
-                      ? "✓ Seller confirmed transfer"
-                      : "Waiting for seller to confirm"}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-blue-500/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold uppercase text-white">
-                      Buyer Status
-                    </span>
-                    {buyerConfirmed ? (
+                    {sellerPaymentReceived ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     ) : (
                       <Clock className="w-5 h-5 text-yellow-500" />
                     )}
                   </div>
                   <div className="text-xs text-white/60">
-                    {buyerConfirmed
-                      ? "✓ Buyer confirmed payment"
-                      : "Waiting for buyer to confirm"}
+                    {sellerPaymentReceived
+                      ? "✓ Waiting for crypto transfer..."
+                      : "Waiting for seller to confirm..."}
                   </div>
                 </div>
 
-                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-purple-500/20">
+                {/* Seller Transfer Status */}
+                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-orange-500/20">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-semibold uppercase text-white">
-                      Transfer Status
+                      Crypto Transfer
                     </span>
-                    {sellerConfirmed ? (
+                    {sellerTransferInitiated ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     ) : (
                       <Clock className="w-5 h-5 text-yellow-500" />
                     )}
                   </div>
-                  {!sellerConfirmed && (
+                  {sellerTransferInitiated && !buyerCryptoReceived ? (
                     <Button
-                      onClick={handleSellerConfirm}
+                      onClick={handleBuyerCryptoReceived}
+                      className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
+                    >
+                      I Received Crypto
+                    </Button>
+                  ) : buyerCryptoReceived ? (
+                    <div className="text-xs text-orange-400 font-semibold">
+                      ✓ Crypto Received
+                    </div>
+                  ) : (
+                    <div className="text-xs text-white/60">
+                      Waiting for seller to transfer...
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Buyer Payment Status (seller view) */}
+                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-blue-500/20">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold uppercase text-white">
+                      Buyer Payment
+                    </span>
+                    {buyerPaymentConfirmed ? (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <Clock className="w-5 h-5 text-yellow-500" />
+                    )}
+                  </div>
+                  <div className="text-xs text-white/60">
+                    {buyerPaymentConfirmed
+                      ? "✓ Buyer confirmed payment"
+                      : "Waiting for buyer to confirm..."}
+                  </div>
+                </div>
+
+                {/* Seller Payment Received Status */}
+                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-purple-500/20">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-semibold uppercase text-white">
+                      You Received Payment
+                    </span>
+                    {sellerPaymentReceived ? (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <Clock className="w-5 h-5 text-yellow-500" />
+                    )}
+                  </div>
+                  {!sellerPaymentReceived && buyerPaymentConfirmed ? (
+                    <Button
+                      onClick={handleSellerPaymentReceived}
                       className="w-full bg-purple-600/30 border border-purple-500/50 hover:bg-purple-600/40 text-purple-400 uppercase text-xs font-semibold py-2"
                     >
-                      Confirm Transfer Sent
+                      I Have Received Payment
                     </Button>
-                  )}
-                  {sellerConfirmed && (
+                  ) : (
                     <div className="text-xs text-purple-400 font-semibold">
-                      ✓ Transfer Confirmed
+                      ✓ Payment Received
+                    </div>
+                  )}
+                </div>
+
+                {/* Seller Transfer Status */}
+                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-orange-500/20">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-semibold uppercase text-white">
+                      Crypto Transfer
+                    </span>
+                    {sellerTransferInitiated ? (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <Clock className="w-5 h-5 text-yellow-500" />
+                    )}
+                  </div>
+                  {!sellerTransferInitiated && sellerPaymentReceived ? (
+                    <Button
+                      onClick={handleSellerTransfer}
+                      className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
+                    >
+                      I Have Transfer Sent
+                    </Button>
+                  ) : sellerTransferInitiated ? (
+                    <div className="text-xs text-orange-400 font-semibold">
+                      ✓ Transfer Initiated
+                    </div>
+                  ) : (
+                    <div className="text-xs text-white/60">
+                      Waiting for buyer payment confirmation...
                     </div>
                   )}
                 </div>
               </>
             )}
 
-            {order.status === "COMPLETED" && (
+            {buyerCryptoReceived && (
               <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
                 <div className="flex items-center gap-2 text-green-400">
                   <CheckCircle className="w-5 h-5" />

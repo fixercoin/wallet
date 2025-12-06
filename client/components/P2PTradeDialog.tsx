@@ -148,9 +148,15 @@ export const P2PTradeDialog: React.FC<P2PTradeDialogProps> = ({
               onChange={(e) => handlePKRChange(e.target.value)}
               className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]/50"
             />
+            {minAmount > 0 && maxAmount < Infinity && (
+              <div className="text-xs text-white/60 mt-1">
+                Min: {(minAmount * price).toFixed(6)} | Max:{" "}
+                {(maxAmount * price).toFixed(6)}
+              </div>
+            )}
           </div>
 
-          {/* Estimated Amount in USDC */}
+          {/* Estimated Amount in Token */}
           <div>
             <label className="block text-xs font-semibold text-white/80 uppercase mb-2">
               Estimated {defaultToken}
@@ -159,11 +165,6 @@ export const P2PTradeDialog: React.FC<P2PTradeDialogProps> = ({
               {amountTokens ? parseFloat(amountTokens).toFixed(6) : "0.000000"}{" "}
               {defaultToken}
             </div>
-            {minAmount > 0 && maxAmount < Infinity && (
-              <div className="text-xs text-white/60 mt-1">
-                Min: {minAmount.toFixed(6)} | Max: {maxAmount.toFixed(6)}
-              </div>
-            )}
           </div>
 
           {/* Calculation Preview */}

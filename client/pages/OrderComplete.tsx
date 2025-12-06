@@ -222,7 +222,10 @@ export default function OrderComplete() {
 
     try {
       setBuyerPaymentConfirmed(true);
-      updateOrderInStorage(order.id, { status: "PENDING" });
+      updateOrderInStorage(order.id, {
+        status: "PENDING",
+        buyerPaymentConfirmed: true,
+      });
 
       if (order.roomId) {
         await addTradeMessage({

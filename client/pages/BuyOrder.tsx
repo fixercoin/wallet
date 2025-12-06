@@ -60,56 +60,25 @@ export default function BuyOrder() {
     }
   }, [amountPKR, exchangeRate]);
 
-  const handleSubmitOrder = async () => {
-    try {
-      if (!wallet?.publicKey) {
-        toast.error("Please connect your wallet first");
-        return;
-      }
-
-      const pkrAmount = parseFloat(amountPKR);
-      if (isNaN(pkrAmount) || pkrAmount <= 0) {
-        toast.error("Please enter a valid PKR amount");
-        return;
-      }
-
-      if (!exchangeRate) {
-        toast.error("Exchange rate not available");
-        return;
-      }
-
-      setSubmitting(true);
-
-      const response = await fetch("/api/p2p/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: "BUY",
-          token: USDC_MINT,
-          amountTokens: estimatedUSDC,
-          amountPKR: pkrAmount,
-          pricePKRPerQuote: exchangeRate,
-          walletAddress: wallet.publicKey,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to submit order");
-      }
-
-      toast.success("Buy order submitted successfully!");
-      navigate("/buydata");
-    } catch (error) {
-      console.error("Error submitting order:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to submit order",
-      );
-    } finally {
-      setSubmitting(false);
+  const handleSubmitOrder = () => {
+    if (!wallet?.publicKey) {
+      toast.error("Please connect your wallet first");
+      return;
     }
+
+    const pkrAmount = parseFloat(amountPKR);
+    if (isNaN(pkrAmount) || pkrAmount <= 0) {
+      toast.error("Please enter a valid PKR amount");
+      return;
+    }
+
+    if (!exchangeRate) {
+      toast.error("Exchange rate not available");
+      return;
+    }
+
+    toast.success("Form submitted. Navigating to your orders...");
+    navigate("/buydata");
   };
 
   if (!wallet) {

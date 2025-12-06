@@ -112,6 +112,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "next-themes";
 import { initStorageMonitoring } from "@/lib/storage-monitor";
+import { usePushNotifications } from "@/lib/services/push-notifications";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
@@ -126,7 +127,6 @@ import VerifySell from "./pages/VerifySell";
 import OrdersList from "./pages/OrdersList";
 import OrderDetail from "./pages/OrderDetail";
 import Select from "./pages/select";
-import BuyNow from "./pages/buy-now";
 import SellNow from "./pages/sell-now";
 import AdminBroadcast from "./pages/AdminBroadcast";
 import SwapPage from "./pages/Swap";
@@ -143,8 +143,18 @@ import BurnTokenPage from "./pages/BurnTokenPage";
 import RunningMarketMaker from "./pages/RunningMarketMaker";
 import MarketMakerHistory from "./pages/MarketMakerHistory";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
-import { BottomNavigation } from "@/components/BottomNavigation";
+import { NotificationCenter } from "@/components/NotificationCenter";
 import DocumentationPage from "./pages/DocumentationPage";
+import BuyTrade from "./pages/BuyTrade";
+import OrderComplete from "./pages/OrderComplete";
+import TokenSearchPage from "./pages/TokenSearchPage";
+import P2PActiveOrders from "./pages/P2PActiveOrders";
+import BuyOrder from "./pages/BuyOrder";
+import SellOrder from "./pages/SellOrder";
+import BuyData from "./pages/BuyData";
+import SellData from "./pages/SellData";
+import AdminDisputes from "./pages/AdminDisputes";
+import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
@@ -154,9 +164,12 @@ function AppRoutes() {
       <Route path="/" element={<Index />} />
       <Route path="/swap" element={<SwapPage />} />
       <Route path="/select" element={<Select />} />
-      <Route path="/buy-now" element={<BuyNow />} />
       <Route path="/sell-now" element={<SellNow />} />
       <Route path="/buy-crypto" element={<BuyCrypto />} />
+      <Route path="/buy-order" element={<BuyOrder />} />
+      <Route path="/buydata" element={<BuyData />} />
+      <Route path="/sell-order" element={<SellOrder />} />
+      <Route path="/selldata" element={<SellData />} />
       <Route path="/buynote" element={<BuyNote />} />
       <Route path="/sellnote" element={<SellNote />} />
       <Route path="/verify-sell" element={<VerifySell />} />
@@ -187,16 +200,68 @@ function AppRoutes() {
         path="/documentation"
         element={<DocumentationPage onBack={() => window.history.back()} />}
       />
+      <Route path="/p2p/buy-active-orders" element={<P2PActiveOrders />} />
+      <Route path="/p2p/sell-active-orders" element={<P2PActiveOrders />} />
+      <Route path="/p2p/active-orders" element={<P2PActiveOrders />} />
+      <Route path="/p2p/admin-disputes" element={<AdminDisputes />} />
+      <Route path="/express/buy-trade" element={<BuyTrade />} />
+      <Route path="/order-complete" element={<OrderComplete />} />
+      <Route path="/search" element={<TokenSearchPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
 
+function AppContent() {
+  const location = useLocation();
+
+  // Check if current route is a P2P page
+  const isP2PPage = () => {
+    const path = location.pathname;
+    const p2pRoutes = [
+      "/p2p",
+      "/p2p/buy-active-orders",
+      "/p2p/sell-active-orders",
+      "/p2p/admin-disputes",
+      "/express/buy-trade",
+      "/sell-now",
+      "/buynote",
+      "/sellnote",
+      "/verify-sell",
+      "/order-complete",
+      "/orders/",
+      "/order/",
+      "/buy-order",
+      "/buydata",
+      "/sell-order",
+      "/selldata",
+    ];
+
+    return p2pRoutes.some((route) => path.startsWith(route));
+  };
+
+  return (
+    <div className="min-h-screen pb-4">
+      {isP2PPage() && (
+        <div className="fixed top-4 right-4 z-40">
+          <NotificationCenter />
+        </div>
+      )}
+      <AppRoutes />
+    </div>
+  );
+}
+
 function App() {
-  // Initialize storage monitoring on app start
+  const { initPushNotifications } = usePushNotifications();
+
+  // Initialize storage monitoring and push notifications on app start
   useEffect(() => {
     initStorageMonitoring();
-  }, []);
+    initPushNotifications().catch((error) => {
+      console.warn("Failed to initialize push notifications:", error);
+    });
+  }, [initPushNotifications]);
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
@@ -209,10 +274,7 @@ function App() {
               <LanguageProvider>
                 <CurrencyProvider>
                   <BrowserRouter>
-                    <div className="min-h-screen pb-24">
-                      <AppRoutes />
-                      <BottomNavigation />
-                    </div>
+                    <AppContent />
                   </BrowserRouter>
                 </CurrencyProvider>
               </LanguageProvider>

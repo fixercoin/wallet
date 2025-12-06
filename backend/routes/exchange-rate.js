@@ -264,7 +264,9 @@ async function fetchTokenPriceFromDexScreener(mint) {
 
 export async function handleExchangeRate(req, res) {
   try {
-    const token = req.query.token || "FIXERCOIN";
+    // Normalize token parameter by extracting the token symbol before any suffix (e.g., "USDC:1" -> "USDC")
+    let token = req.query.token || "FIXERCOIN";
+    token = String(token).split(":")[0].toUpperCase();
 
     let priceUsd = null;
 

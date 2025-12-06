@@ -454,10 +454,9 @@ export default function OrderComplete() {
         </div>
       </div>
 
-      {/* Two-Column Layout */}
-      <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* LEFT COLUMN - ORDER DETAILS & CONFIRMATION */}
-        <div className="space-y-4">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* ORDER DETAILS SECTION */}
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Order Details Card */}
           <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30">
             <CardContent className="space-y-0 p-0">

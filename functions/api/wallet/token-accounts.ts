@@ -281,11 +281,11 @@ async function handler(request: Request, env?: Env): Promise<Response> {
   }
 }
 
-export const onRequest = async ({ request }: { request: Request }) =>
-  handler(request);
+export const onRequest = async ({ request, env }: { request: Request; env: Env }) =>
+  handler(request, env);
 
-export const onRequestGet = async ({ request }: { request: Request }) =>
-  handler(request);
+export const onRequestGet = async ({ request, env }: { request: Request; env: Env }) =>
+  handler(request, env);
 
-export const onRequestPost = async ({ request }: { request: Request }) =>
-  handler(request);
+export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) =>
+  handler(request, env);

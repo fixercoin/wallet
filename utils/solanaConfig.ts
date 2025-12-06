@@ -2,6 +2,9 @@
 // Priority: env vars > default public RPC
 
 export const SOLANA_RPC_URL = (() => {
+  // PRIORITY 1: Use Helius RPC endpoint exclusively
+  const heliusEndpoint = "https://mainnet.helius-rpc.com/?api-key=48e91c19-c676-4c4a-a0dd-a9b4f258d151";
+
   // Prefer Vite/browser env in client builds
   try {
     // @ts-ignore - import.meta may not exist in SSR/Node
@@ -30,8 +33,8 @@ export const SOLANA_RPC_URL = (() => {
     return process.env.ALCHEMY_RPC_URL;
   }
 
-  // Default public Solana RPC (use publicnode for CORS support)
-  return "https://solana-rpc.publicnode.com/";
+  // Default: Use Helius endpoint
+  return heliusEndpoint;
 })();
 
 // Legacy export for backward compatibility

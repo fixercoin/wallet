@@ -702,6 +702,22 @@ export default function OrderComplete() {
 
               {/* Message Input */}
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 hover:bg-[#1a2540]/70 text-white disabled:opacity-50 transition-colors"
+                  title="Upload proof image"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  disabled={uploading}
+                />
                 <input
                   type="text"
                   className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40 text-sm"

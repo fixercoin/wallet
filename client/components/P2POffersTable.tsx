@@ -96,8 +96,8 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
 
   const getLimit = (order: P2POrder): { min: string; max: string } => {
     if (orderType === "BUY") {
-      const min = (order as any).minAmountPKR || order.amountPKR || order.pkr_amount || 0;
-      const max = (order as any).maxAmountPKR || order.amountPKR || order.pkr_amount || 0;
+      const min = order.minAmountPKR || order.amountPKR || order.pkr_amount || 0;
+      const max = order.maxAmountPKR || order.amountPKR || order.pkr_amount || 0;
       const minFormatted = typeof min === "number" ? min.toFixed(0) : min;
       const maxFormatted = typeof max === "number" ? max.toFixed(0) : max;
       return {
@@ -106,9 +106,9 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
       };
     } else {
       const min =
-        (order as any).minAmountTokens || order.amountTokens || parseFloat(order.token_amount || "0") || 0;
+        order.minAmountTokens || order.amountTokens || parseFloat(order.token_amount || "0") || 0;
       const max =
-        (order as any).maxAmountTokens || order.amountTokens || parseFloat(order.token_amount || "0") || 0;
+        order.maxAmountTokens || order.amountTokens || parseFloat(order.token_amount || "0") || 0;
       const minFormatted = typeof min === "number" ? min.toFixed(2) : min;
       const maxFormatted = typeof max === "number" ? max.toFixed(2) : max;
       return {

@@ -283,9 +283,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   </td>
                   <td className="px-4 py-3 text-white/80 uppercase">
                     <span className="text-[10px]">
-                      {orderType === "BUY"
-                        ? `MIN: ${limits.min} | MAX: ${limits.max}`
-                        : `${limits.min} - ${limits.max}`}
+                      {`${limits.min} - ${limits.max}`}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-white/80 uppercase">
@@ -376,9 +374,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                     LIMIT
                   </p>
                   <p className="text-[10px] font-semibold text-white/90 uppercase">
-                    {orderType === "BUY"
-                      ? `MIN: ${limits.min} | MAX: ${limits.max}`
-                      : `${limits.min} - ${limits.max}`}
+                    {`${limits.min} - ${limits.max}`}
                   </p>
                 </div>
 

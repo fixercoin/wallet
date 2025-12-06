@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShoppingCart, TrendingUp } from "lucide-react";
@@ -55,6 +55,8 @@ export default function BuyCrypto() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const editOrderId = searchParams.get("edit");
 
   const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
@@ -77,6 +79,7 @@ export default function BuyCrypto() {
     null,
   );
   const [fetchingPaymentMethod, setFetchingPaymentMethod] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<any>(null);
 
   const OFFER_PASSWORD = "######Pakistan";
 
@@ -91,10 +94,15 @@ export default function BuyCrypto() {
     navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
   };
 
-  const saveOrderToKV = async (order: any) => {
+  const saveOrderToKV = async (order: any, isUpdate: boolean = false) => {
     try {
-      const response = await fetch("/api/p2p/orders", {
-        method: "POST",
+      const method = isUpdate ? "PUT" : "POST";
+      const url = isUpdate
+        ? `/api/p2p/orders/${editingOrder.id}`
+        : "/api/p2p/orders";
+
+      const response = await fetch(url, {
+        method: method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           walletAddress: wallet.publicKey,
@@ -102,6 +110,8 @@ export default function BuyCrypto() {
           token: order.token,
           amountTokens: order.amountTokens,
           amountPKR: order.amountPKR,
+          minAmountPKR: order.minAmountPKR,
+          maxAmountPKR: order.maxAmountPKR,
           pricePKRPerQuote: order.pricePKRPerQuote,
           paymentMethodId: order.paymentMethod,
           status: "PENDING",
@@ -109,16 +119,47 @@ export default function BuyCrypto() {
       });
 
       if (!response.ok) {
-        console.error("Failed to save order to KV:", response.status);
+        console.error(
+          `Failed to ${isUpdate ? "update" : "save"} order:`,
+          response.status,
+        );
         return false;
       }
       const data = await response.json();
       return data.order || data.data;
     } catch (error) {
-      console.error("Error saving order to KV:", error);
+      console.error(`Error ${isUpdate ? "updating" : "saving"} order:`, error);
       return false;
     }
   };
+
+  // Load editing order if edit parameter exists
+  useEffect(() => {
+    const fetchEditingOrder = async () => {
+      if (!editOrderId || !wallet?.publicKey) return;
+
+      try {
+        const response = await fetch(`/api/p2p/orders/${editOrderId}`);
+        if (!response.ok) throw new Error("Failed to fetch order");
+
+        const data = await response.json();
+        const order = data.order || data;
+
+        setEditingOrder(order);
+        setMinAmountPKR(String(order.minAmountPKR || ""));
+        setMaxAmountPKR(String(order.maxAmountPKR || ""));
+      } catch (error) {
+        console.error("Error fetching order:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load order data",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchEditingOrder();
+  }, [editOrderId, wallet?.publicKey, toast]);
 
   // Load token logos/prices (best-effort)
   useEffect(() => {
@@ -258,21 +299,22 @@ export default function BuyCrypto() {
         paymentMethod: paymentMethod.id,
       };
 
-      const savedOrder = await saveOrderToKV(order);
+      const isUpdate = !!editingOrder;
+      const savedOrder = await saveOrderToKV(order, isUpdate);
       if (!savedOrder) {
-        throw new Error("Failed to save order to Cloudflare KV");
+        throw new Error(`Failed to ${isUpdate ? "update" : "save"} order`);
       }
 
       toast({
         title: "Success",
-        description: "Buy order created successfully",
+        description: `Buy order ${isUpdate ? "updated" : "created"} successfully`,
         duration: 2000,
       });
 
-      navigate("/buy-order");
+      navigate(isUpdate ? "/buy-data" : "/buy-order");
     } catch (error: any) {
       toast({
-        title: "Failed to create order",
+        title: `Failed to ${editingOrder ? "update" : "create"} order`,
         description: error?.message || String(error),
         variant: "destructive",
       });
@@ -389,6 +431,8 @@ export default function BuyCrypto() {
                 </>
               ) : !paymentMethod ? (
                 "ADD PAYMENT METHOD FIRST"
+              ) : editingOrder ? (
+                `UPDATE BUY OFFER`
               ) : (
                 `BUY CRYPTO`
               )}

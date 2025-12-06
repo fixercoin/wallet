@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, ShoppingCart, TrendingUp } from "lucide-react";
@@ -204,6 +204,8 @@ export default function SellNow() {
           token: order.token,
           amountTokens: order.amountTokens,
           amountPKR: order.amountPKR,
+          minAmountTokens: order.minAmountTokens,
+          maxAmountTokens: order.maxAmountTokens,
           pricePKRPerQuote: order.pricePKRPerQuote,
           paymentMethodId: order.paymentMethod,
           status: "PENDING",

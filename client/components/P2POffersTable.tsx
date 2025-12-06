@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Loader2, Edit2 } from "lucide-react";
 import { toast } from "sonner";
@@ -45,6 +46,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
   onEditOffer,
   exchangeRate = 280,
 }) => {
+  const navigate = useNavigate();
   const { wallet } = useWallet();
   const [orders, setOrders] = useState<P2POrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,9 +103,21 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
   const getLimit = (order: P2POrder): { min: string; max: string } => {
     if (orderType === "BUY") {
       const min =
-        order.minAmountPKR || order.amountPKR || order.pkr_amount || 0;
+        order.minAmountPKR !== undefined && order.minAmountPKR !== null
+          ? order.minAmountPKR
+          : order.amountPKR !== undefined && order.amountPKR !== null
+            ? order.amountPKR
+            : order.pkr_amount !== undefined && order.pkr_amount !== null
+              ? order.pkr_amount
+              : 0;
       const max =
-        order.maxAmountPKR || order.amountPKR || order.pkr_amount || 0;
+        order.maxAmountPKR !== undefined && order.maxAmountPKR !== null
+          ? order.maxAmountPKR
+          : order.amountPKR !== undefined && order.amountPKR !== null
+            ? order.amountPKR
+            : order.pkr_amount !== undefined && order.pkr_amount !== null
+              ? order.pkr_amount
+              : 0;
       const minFormatted = typeof min === "number" ? min.toFixed(0) : min;
       const maxFormatted = typeof max === "number" ? max.toFixed(0) : max;
       return {
@@ -112,15 +126,17 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
       };
     } else {
       const min =
-        order.minAmountTokens ||
-        order.amountTokens ||
-        parseFloat(order.token_amount || "0") ||
-        0;
+        order.minAmountTokens !== undefined && order.minAmountTokens !== null
+          ? order.minAmountTokens
+          : order.amountTokens !== undefined && order.amountTokens !== null
+            ? order.amountTokens
+            : parseFloat(order.token_amount || "0") || 0;
       const max =
-        order.maxAmountTokens ||
-        order.amountTokens ||
-        parseFloat(order.token_amount || "0") ||
-        0;
+        order.maxAmountTokens !== undefined && order.maxAmountTokens !== null
+          ? order.maxAmountTokens
+          : order.amountTokens !== undefined && order.amountTokens !== null
+            ? order.amountTokens
+            : parseFloat(order.token_amount || "0") || 0;
       const minFormatted = typeof min === "number" ? min.toFixed(2) : min;
       const maxFormatted = typeof max === "number" ? max.toFixed(2) : max;
       return {
@@ -148,7 +164,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
     if (onEditOffer) {
       onEditOffer(order);
     } else {
-      toast.info("Edit offer: " + getCreatorName(order));
+      navigate(`/buy-crypto?edit=${order.id}`);
     }
   };
 
@@ -230,15 +246,15 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   <td className="px-4 py-3 text-white/80 uppercase">
                     EASYPAISA
                   </td>
-                  <td className="px-4 py-3 text-right flex gap-2 justify-end">
+                  <td className="px-4 py-3 text-right flex gap-2 justify-end items-center">
                     {isAdvertiser(order) && (
                       <Button
                         onClick={() => handleEdit(order)}
                         size="sm"
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-3 rounded h-auto flex items-center gap-1"
+                        className="bg-transparent hover:bg-white/10 text-white text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
+                        title="Edit offer"
                       >
-                        <Edit2 className="w-3 h-3" />
-                        EDIT
+                        <Edit2 className="w-4 h-4" />
                       </Button>
                     )}
                     <Button
@@ -302,15 +318,15 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   </p>
                 </div>
 
-                <div className="flex flex-col items-end justify-end h-full gap-2">
+                <div className="flex flex-row items-center justify-end h-full gap-2">
                   {isAdvertiser(order) && (
                     <Button
                       onClick={() => handleEdit(order)}
                       size="sm"
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded h-auto flex items-center gap-1 uppercase font-semibold"
+                      className="bg-transparent hover:bg-white/10 text-white text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
+                      title="Edit offer"
                     >
-                      <Edit2 className="w-3 h-3" />
-                      EDIT
+                      <Edit2 className="w-4 h-4" />
                     </Button>
                   )}
                   <Button

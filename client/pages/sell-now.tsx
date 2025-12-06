@@ -113,8 +113,9 @@ export default function SellNow() {
       if (token) {
         setSelectedToken(token);
       }
-      // Set the amount
-      setSellAmountTokens(String(editingOrder.amountTokens || ""));
+      // Set the min/max amounts
+      setMinAmountUSDC(String(editingOrder.minAmountTokens || ""));
+      setMaxAmountUSDC(String(editingOrder.maxAmountTokens || ""));
     }
   }, [editingOrder, tokens]);
 

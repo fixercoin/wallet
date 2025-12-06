@@ -321,21 +321,23 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                 </div>
 
                 <div className="flex flex-col items-end justify-end h-full gap-2">
-                  {isAdvertiser(order) && (
-                    <Button
-                      onClick={() => handleEdit(order)}
-                      size="sm"
-                      className="bg-transparent hover:bg-white/10 text-white text-xs py-1 px-2 rounded h-auto flex items-center gap-1 transition-colors"
-                      title="Edit offer"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                  )}
                   <Button
                     onClick={() => handleProceed(order)}
                     size="sm"
-                    className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-3 rounded h-auto uppercase font-semibold"
+                    className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-3 rounded h-auto uppercase font-semibold flex items-center gap-2"
                   >
+                    {isAdvertiser(order) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(order);
+                        }}
+                        className="hover:opacity-80 transition-opacity flex items-center"
+                        title="Edit offer"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                    )}
                     {orderType === "BUY" ? "BUY" : "SELL"}
                   </Button>
                 </div>

@@ -969,7 +969,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     const isPositive = totalChange24h >= 0;
 
                     return (
-                      <div className="flex items-center justify-center gap-4 relative">
+                      <div className="flex items-center justify-between gap-4 w-full">
                         <div className="text-3xl text-gray-900 leading-tight">
                           {showBalance ? (
                             <>
@@ -990,7 +990,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             "****"
                           )}
                         </div>
-                        <div className="absolute right-0">
+                        <div>
                           <Button
                             onClick={onP2PTrade || onReceive}
                             className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-sm whitespace-nowrap h-auto"

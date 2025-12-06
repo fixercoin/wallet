@@ -64,8 +64,8 @@ export default function SellNow() {
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
     DEFAULT_TOKENS[0],
   );
-  const [minAmountUSDC, setMinAmountUSDC] = useState<string>("");
-  const [maxAmountUSDC, setMaxAmountUSDC] = useState<string>("");
+  const [minAmountPKR, setMinAmountPKR] = useState<string>("");
+  const [maxAmountPKR, setMaxAmountPKR] = useState<string>("");
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [fetchingRate, setFetchingRate] = useState(false);

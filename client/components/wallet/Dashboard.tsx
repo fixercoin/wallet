@@ -910,7 +910,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <div>
                             <Button
                               onClick={onP2PTrade || onReceive}
-                              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-sm whitespace-nowrap h-auto"
+                              className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-3 py-2.5 rounded-md whitespace-nowrap h-auto transition-colors"
                             >
                               P2P TRADE
                             </Button>
@@ -972,7 +972,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <div>
                           <Button
                             onClick={onP2PTrade || onReceive}
-                            className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-sm whitespace-nowrap h-auto"
+                            className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-3 py-2.5 rounded-md whitespace-nowrap h-auto transition-colors"
                           >
                             P2P TRADE
                           </Button>
@@ -1081,7 +1081,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             return (
               <div key={token.mint} className="w-full">
-                <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
+                <Card className="w-full bg-gray-900/20 rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
                     <div
                       className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-4"

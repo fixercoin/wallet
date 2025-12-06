@@ -91,7 +91,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
 
   const getCreatorName = (order: P2POrder): string => {
     const wallet = order.walletAddress || order.creator_wallet || "Unknown";
-    return wallet.slice(0, 8) + "..." + wallet.slice(-4);
+    return wallet.slice(0, 4);
   };
 
   const getPrice = (order: P2POrder): string => {
@@ -122,8 +122,8 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
       const minFormatted = typeof min === "number" ? min.toFixed(0) : min;
       const maxFormatted = typeof max === "number" ? max.toFixed(0) : max;
       return {
-        min: `${minFormatted} PKR`,
-        max: `${maxFormatted} PKR`,
+        min: minFormatted.toString(),
+        max: maxFormatted.toString(),
       };
     } else {
       const min =
@@ -149,8 +149,8 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
       const minFormatted = typeof min === "number" ? min.toFixed(3) : min;
       const maxFormatted = typeof max === "number" ? max.toFixed(3) : max;
       return {
-        min: `${minFormatted} USDC`,
-        max: `${maxFormatted} USDC`,
+        min: minFormatted.toString(),
+        max: maxFormatted.toString(),
       };
     }
   };
@@ -253,7 +253,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
           <thead>
             <tr className="bg-[#1a2847]/50 border-b border-gray-300/30">
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
-                ADVERTISER
+                POST
               </th>
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
                 PRICE
@@ -285,37 +285,48 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                     <span className="text-[10px]">
                       {orderType === "BUY"
                         ? `MIN: ${limits.min} | MAX: ${limits.max}`
-                        : `${limits.min.replace(" USDC", "")} - ${limits.max}`}
+                        : `${limits.min} - ${limits.max}`}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-white/80 uppercase">
                     EASYPAISA
                   </td>
-                  <td className="px-4 py-3 text-right flex gap-2 justify-end items-center">
+                  <td className="px-4 py-3 flex flex-col items-center justify-center gap-2">
                     {isAdvertiser(order) && (
-                      <>
-                        <Button
+                      <div className="flex gap-2">
+                        <div
                           onClick={() => handleEdit(order)}
-                          size="sm"
-                          className="bg-transparent hover:bg-white/10 text-white text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
+                          className="cursor-pointer text-white/70 hover:text-white transition-colors"
                           title="Edit offer"
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleEdit(order)
+                          }
                         >
                           <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button
+                        </div>
+                        <div
                           onClick={() => handleCancel(order)}
-                          disabled={cancelling === order.id}
-                          size="sm"
-                          className="bg-transparent hover:bg-red-500/20 text-red-400 hover:text-red-300 text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
+                          className={
+                            cancelling === order.id
+                              ? "cursor-pointer text-red-500 transition-colors"
+                              : "cursor-pointer text-red-400 hover:text-red-300 transition-colors"
+                          }
                           title="Cancel offer"
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleCancel(order)
+                          }
                         >
                           {cancelling === order.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <X className="w-4 h-4" />
                           )}
-                        </Button>
-                      </>
+                        </div>
+                      </div>
                     )}
                     <Button
                       onClick={() => handleProceed(order)}
@@ -344,7 +355,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
               <div className="grid grid-cols-5 gap-3 items-start">
                 <div className="flex flex-col">
                   <p className="text-[10px] text-white/60 font-semibold uppercase mb-2">
-                    ADVERTISER
+                    POST
                   </p>
                   <p className="text-[10px] font-semibold text-white/90 uppercase">
                     {getCreatorName(order)}
@@ -367,7 +378,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   <p className="text-[10px] font-semibold text-white/90 uppercase">
                     {orderType === "BUY"
                       ? `MIN: ${limits.min} | MAX: ${limits.max}`
-                      : `${limits.min.replace(" USDC", "")} - ${limits.max}`}
+                      : `${limits.min} - ${limits.max}`}
                   </p>
                 </div>
 
@@ -380,31 +391,42 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   </p>
                 </div>
 
-                <div className="flex flex-row items-center justify-end h-full gap-2">
+                <div className="flex flex-col items-center justify-center h-full gap-2">
                   {isAdvertiser(order) && (
-                    <>
-                      <Button
+                    <div className="flex gap-2">
+                      <div
                         onClick={() => handleEdit(order)}
-                        size="sm"
-                        className="bg-transparent hover:bg-white/10 text-white text-[10px] py-1 px-2 rounded h-auto flex items-center transition-colors"
+                        className="cursor-pointer text-white/70 hover:text-white transition-colors"
                         title="Edit offer"
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleEdit(order)
+                        }
                       >
                         <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button
+                      </div>
+                      <div
                         onClick={() => handleCancel(order)}
-                        disabled={cancelling === order.id}
-                        size="sm"
-                        className="bg-transparent hover:bg-red-500/20 text-red-400 hover:text-red-300 text-[10px] py-1 px-2 rounded h-auto flex items-center transition-colors"
+                        className={
+                          cancelling === order.id
+                            ? "cursor-pointer text-red-500 transition-colors"
+                            : "cursor-pointer text-red-400 hover:text-red-300 transition-colors"
+                        }
                         title="Cancel offer"
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && handleCancel(order)
+                        }
                       >
                         {cancelling === order.id ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
                           <X className="w-4 h-4" />
                         )}
-                      </Button>
-                    </>
+                      </div>
+                    </div>
                   )}
                   <Button
                     onClick={() => handleProceed(order)}

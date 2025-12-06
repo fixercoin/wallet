@@ -374,7 +374,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 flex-shrink-0">
+                <div className="flex flex-col items-center justify-end gap-2 flex-shrink-0">
                   {isAdvertiser(order) && (
                     <div className="flex gap-2">
                       <div

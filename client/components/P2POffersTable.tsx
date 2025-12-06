@@ -164,7 +164,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
     if (onEditOffer) {
       onEditOffer(order);
     } else {
-      toast.info("Edit offer: " + getCreatorName(order));
+      navigate(`/buy-crypto?edit=${order.id}`);
     }
   };
 

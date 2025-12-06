@@ -19,6 +19,7 @@ import {
   getOrderFromStorage,
   updateOrderInStorage,
 } from "@/lib/p2p-order-creation";
+import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import type { CreatedOrder } from "@/lib/p2p-order-creation";
 import type { TradeMessage } from "@/lib/p2p-api";
 

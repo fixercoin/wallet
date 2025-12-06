@@ -195,14 +195,6 @@ export default function BuyCrypto() {
     fetchPaymentMethod();
   }, [wallet?.publicKey]);
 
-  // Estimate tokens on amount/rate change
-  useEffect(() => {
-    if (amountPKR && exchangeRate > 0) {
-      setEstimatedTokens(Number(amountPKR) / exchangeRate);
-    } else {
-      setEstimatedTokens(0);
-    }
-  }, [amountPKR, exchangeRate]);
 
   const handleBuyClick = async () => {
     if (!wallet) {

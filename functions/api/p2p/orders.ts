@@ -179,43 +179,63 @@ export const onRequestPost = async ({
       token,
       amountTokens,
       amountPKR,
+      minAmountPKR,
+      maxAmountPKR,
+      minAmountTokens,
+      maxAmountTokens,
+      pricePKRPerQuote,
       paymentMethodId,
       status,
       orderId,
+      sellerWallet,
+      buyerWallet,
     } = body;
 
     if (!walletAddress) {
       return jsonResponse(400, { error: "Missing wallet address" });
     }
 
-    if (!type || !token || amountTokens === undefined || amountPKR === undefined) {
+    if (!type || !token) {
       return jsonResponse(400, {
-        error: "Missing required fields",
+        error: "Missing required fields: type and token",
       });
     }
 
-    if (!["BUY", "SELL"].includes(type)) {
+    if (!["BUY", "SELL"].includes(type.toUpperCase())) {
       return jsonResponse(400, { error: "Invalid order type" });
     }
 
     const kvStore = new KVStore(env.STAKING_KV);
 
+    // Support both amountTokens/amountPKR and min/max amounts
+    const amount = amountTokens ?? minAmountTokens ?? 0;
+    const pkrAmount = amountPKR ?? minAmountPKR ?? 0;
+
     const savedOrder = await kvStore.saveOrder(
       {
         walletAddress,
-        type,
+        type: type.toUpperCase() as "BUY" | "SELL",
         token,
-        amountTokens,
-        amountPKR,
+        amountTokens: amount,
+        amountPKR: pkrAmount,
         paymentMethodId: paymentMethodId || "",
         status: status || "PENDING",
-      },
+        // Store additional fields for market display
+        ...(minAmountPKR !== undefined && { minAmountPKR }),
+        ...(maxAmountPKR !== undefined && { maxAmountPKR }),
+        ...(minAmountTokens !== undefined && { minAmountTokens }),
+        ...(maxAmountTokens !== undefined && { maxAmountTokens }),
+        ...(pricePKRPerQuote !== undefined && { pricePKRPerQuote }),
+        ...(sellerWallet && { sellerWallet }),
+        ...(buyerWallet && { buyerWallet }),
+      } as any,
       orderId,
     );
 
-    return jsonResponse(200, {
+    return jsonResponse(201, {
       success: true,
       data: savedOrder,
+      order: savedOrder,
     });
   } catch (error) {
     console.error("Error in /api/p2p/orders POST:", error);

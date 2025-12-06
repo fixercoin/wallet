@@ -97,7 +97,9 @@ export default function BuyCrypto() {
   const saveOrderToKV = async (order: any, isUpdate: boolean = false) => {
     try {
       const method = isUpdate ? "PUT" : "POST";
-      const url = isUpdate ? `/api/p2p/orders/${editingOrder.id}` : "/api/p2p/orders";
+      const url = isUpdate
+        ? `/api/p2p/orders/${editingOrder.id}`
+        : "/api/p2p/orders";
 
       const response = await fetch(url, {
         method: method,
@@ -117,7 +119,10 @@ export default function BuyCrypto() {
       });
 
       if (!response.ok) {
-        console.error(`Failed to ${isUpdate ? "update" : "save"} order:`, response.status);
+        console.error(
+          `Failed to ${isUpdate ? "update" : "save"} order:`,
+          response.status,
+        );
         return false;
       }
       const data = await response.json();

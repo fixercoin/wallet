@@ -102,9 +102,21 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
   const getLimit = (order: P2POrder): { min: string; max: string } => {
     if (orderType === "BUY") {
       const min =
-        order.minAmountPKR || order.amountPKR || order.pkr_amount || 0;
+        order.minAmountPKR !== undefined && order.minAmountPKR !== null
+          ? order.minAmountPKR
+          : order.amountPKR !== undefined && order.amountPKR !== null
+            ? order.amountPKR
+            : order.pkr_amount !== undefined && order.pkr_amount !== null
+              ? order.pkr_amount
+              : 0;
       const max =
-        order.maxAmountPKR || order.amountPKR || order.pkr_amount || 0;
+        order.maxAmountPKR !== undefined && order.maxAmountPKR !== null
+          ? order.maxAmountPKR
+          : order.amountPKR !== undefined && order.amountPKR !== null
+            ? order.amountPKR
+            : order.pkr_amount !== undefined && order.pkr_amount !== null
+              ? order.pkr_amount
+              : 0;
       const minFormatted = typeof min === "number" ? min.toFixed(0) : min;
       const maxFormatted = typeof max === "number" ? max.toFixed(0) : max;
       return {
@@ -113,15 +125,17 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
       };
     } else {
       const min =
-        order.minAmountTokens ||
-        order.amountTokens ||
-        parseFloat(order.token_amount || "0") ||
-        0;
+        order.minAmountTokens !== undefined && order.minAmountTokens !== null
+          ? order.minAmountTokens
+          : order.amountTokens !== undefined && order.amountTokens !== null
+            ? order.amountTokens
+            : parseFloat(order.token_amount || "0") || 0;
       const max =
-        order.maxAmountTokens ||
-        order.amountTokens ||
-        parseFloat(order.token_amount || "0") ||
-        0;
+        order.maxAmountTokens !== undefined && order.maxAmountTokens !== null
+          ? order.maxAmountTokens
+          : order.amountTokens !== undefined && order.amountTokens !== null
+            ? order.amountTokens
+            : parseFloat(order.token_amount || "0") || 0;
       const minFormatted = typeof min === "number" ? min.toFixed(2) : min;
       const maxFormatted = typeof max === "number" ? max.toFixed(2) : max;
       return {

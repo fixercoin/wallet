@@ -30,6 +30,8 @@ export function NotificationCenter() {
         return "✅";
       case "received_confirmed":
         return "🎉";
+      case "order_cancelled":
+        return "❌";
       default:
         return "📢";
     }
@@ -43,6 +45,8 @@ export function NotificationCenter() {
         return "Payment Confirmed";
       case "received_confirmed":
         return "Order Received";
+      case "order_cancelled":
+        return "Order Cancelled";
       default:
         return "Notification";
     }

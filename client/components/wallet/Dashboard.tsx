@@ -904,7 +904,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
 
-            <div className="text-center space-y-2 mt-8">
+            <div className="space-y-3 mt-8">
+              <div className="text-left">
+                <div className="text-xs font-semibold text-gray-700 tracking-widest">
+                  MY PORTFOLIO
+                </div>
+              </div>
               {wallet
                 ? (() => {
                     const total = getTotalPortfolioValue();
@@ -917,18 +922,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
                       const usdZero = `0.000 $`;
                       return (
-                        <>
+                        <div className="flex items-center justify-center gap-4 relative">
                           <div className="text-3xl text-gray-900 leading-tight">
                             {showBalance ? `${usdZero}` : "****"}
                           </div>
-                          <div className="text-xs mt-1">
-                            <span
-                              style={{ color: "#FACC15", display: "block" }}
+                          <div className="absolute right-0">
+                            <Button
+                              onClick={onReceive}
+                              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-md whitespace-nowrap h-auto"
                             >
-                              {showBalance ? `▲ + 0.000 0.00 %` : "24h: ****"}
-                            </span>
+                              DEPOSIT
+                            </Button>
                           </div>
-                        </>
+                        </div>
                       );
                     }
 
@@ -961,7 +967,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     const isPositive = totalChange24h >= 0;
 
                     return (
-                      <>
+                      <div className="flex items-center justify-center gap-4 relative">
                         <div className="text-3xl text-gray-900 leading-tight">
                           {showBalance ? (
                             <>
@@ -982,34 +988,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             "****"
                           )}
                         </div>
-                        {showBalance ? (
-                          <div className="text-xs mt-1">
-                            <span
-                              style={{
-                                color: isPositive ? "#FACC15" : "#F87171",
-                                display: "block",
-                              }}
-                            >
-                              {isPositive ? "▲" : "▼"} {isPositive ? "+" : "-"}{" "}
-                              {Math.abs(totalChange24h).toLocaleString(
-                                undefined,
-                                {
-                                  minimumFractionDigits: 3,
-                                  maximumFractionDigits: 3,
-                                },
-                              )}{" "}
-                              {Math.abs(
-                                isFinite(change24hPercent)
-                                  ? change24hPercent
-                                  : 0,
-                              ).toFixed(2)}
-                              %
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="text-xs text-gray-400 mt-1">****</div>
-                        )}
-                      </>
+                        <div className="absolute right-0">
+                          <Button
+                            onClick={onReceive}
+                            className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-md whitespace-nowrap h-auto"
+                          >
+                            DEPOSIT
+                          </Button>
+                        </div>
+                      </div>
                     );
                   })()
                 : "Connect wallet to see balance"}
@@ -1022,7 +1009,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
                 <Send className="h-8 w-8 text-[#22c55e]" />
-                <span>SEND</span>
+                <span>WITHDRAW</span>
               </Button>
 
               <Button
@@ -1030,7 +1017,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
                 <Download className="h-8 w-8 text-[#22c55e]" />
-                <span>RECEIVE</span>
+                <span>DEPOSIT</span>
               </Button>
 
               <Button
@@ -1038,7 +1025,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
                 <ArrowRightLeft className="h-8 w-8 text-[#22c55e]" />
-                <span>SWAP</span>
+                <span>CONVERT</span>
               </Button>
             </div>
 

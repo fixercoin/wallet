@@ -1,6 +1,6 @@
-// Cloudflare Pages Functions handler for fetching token accounts
-// Supports GET requests with query params: ?publicKey=<address>
-// Also supports POST with JSON body: { walletAddress: <address> }
+export const config = {
+  runtime: "nodejs_esmsh",
+};
 
 const RPC_ENDPOINTS = [
   "https://solana.publicnode.com",
@@ -44,9 +44,7 @@ const KNOWN_TOKENS: Record<string, any> = {
 
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
-async function handler(request: Request, context: any): Promise<Response> {
-  const { env } = context;
-
+async function handler(request: Request): Promise<Response> {
   // Handle CORS preflight
   if (request.method === "OPTIONS") {
     return new Response(null, {
@@ -104,17 +102,6 @@ async function handler(request: Request, context: any): Promise<Response> {
       );
     }
 
-    // Build RPC endpoint list with env vars first
-    const rpcEndpoints = [
-      env?.HELIUS_API_KEY
-        ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`
-        : "",
-      env?.HELIUS_RPC_URL || "",
-      env?.MORALIS_RPC_URL || "",
-      env?.ALCHEMY_RPC_URL || "",
-      ...RPC_ENDPOINTS,
-    ].filter(Boolean);
-
     const rpcBody = {
       jsonrpc: "2.0",
       id: 1,
@@ -129,7 +116,7 @@ async function handler(request: Request, context: any): Promise<Response> {
     let lastError: string | null = null;
 
     // Try each RPC endpoint
-    for (const endpoint of rpcEndpoints) {
+    for (const endpoint of RPC_ENDPOINTS) {
       if (!endpoint) continue;
 
       try {
@@ -270,14 +257,11 @@ async function handler(request: Request, context: any): Promise<Response> {
   }
 }
 
-export async function onRequest(context: any): Promise<Response> {
-  return handler(context.request, context);
-}
+export const onRequest = async ({ request }: { request: Request }) =>
+  handler(request);
 
-export async function onRequestGet(context: any): Promise<Response> {
-  return handler(context.request, context);
-}
+export const onRequestGet = async ({ request }: { request: Request }) =>
+  handler(request);
 
-export async function onRequestPost(context: any): Promise<Response> {
-  return handler(context.request, context);
-}
+export const onRequestPost = async ({ request }: { request: Request }) =>
+  handler(request);

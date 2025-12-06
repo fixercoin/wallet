@@ -67,7 +67,7 @@ const KNOWN_TOKENS: Record<string, any> = {
 
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
-async function handler(request: Request): Promise<Response> {
+async function handler(request: Request, env?: Env): Promise<Response> {
   // Handle CORS preflight
   if (request.method === "OPTIONS") {
     return new Response(null, {
@@ -137,6 +137,7 @@ async function handler(request: Request): Promise<Response> {
     };
 
     let lastError: string | null = null;
+    const RPC_ENDPOINTS = buildRpcEndpoints(env || {});
 
     // Try each RPC endpoint
     for (const endpoint of RPC_ENDPOINTS) {

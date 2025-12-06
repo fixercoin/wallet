@@ -1,13 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase credentials not configured');
+  console.warn("Supabase credentials not configured");
 }
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
+export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "");
 
 // Type definitions for database tables
 export type Profile = {
@@ -23,7 +23,7 @@ export type Profile = {
   cancelled_trades: number;
   dispute_count: number;
   kyc_verified: boolean;
-  verification_level: 'unverified' | 'basic' | 'advanced';
+  verification_level: "unverified" | "basic" | "advanced";
   created_at: string;
   updated_at: string;
 };
@@ -54,7 +54,7 @@ export type P2POrder = {
   id: string;
   order_number: string;
   trader_id: string;
-  order_type: 'buy' | 'sell';
+  order_type: "buy" | "sell";
   token_mint: string;
   token_symbol?: string;
   token_amount: number;
@@ -62,7 +62,13 @@ export type P2POrder = {
   fiat_amount: number;
   fiat_price: number;
   payment_method_id?: string;
-  status: 'pending' | 'matched' | 'in_escrow' | 'completed' | 'cancelled' | 'disputed';
+  status:
+    | "pending"
+    | "matched"
+    | "in_escrow"
+    | "completed"
+    | "cancelled"
+    | "disputed";
   counterparty_id?: string;
   min_order_amount?: number;
   max_order_amount?: number;
@@ -89,7 +95,12 @@ export type P2PEscrow = {
   token_amount: number;
   fiat_amount: number;
   escrow_address?: string;
-  status: 'pending_deposit' | 'token_locked' | 'payment_verified' | 'released' | 'cancelled';
+  status:
+    | "pending_deposit"
+    | "token_locked"
+    | "payment_verified"
+    | "released"
+    | "cancelled";
   seller_released_at?: string;
   buyer_confirmed_at?: string;
   released_at?: string;
@@ -108,13 +119,13 @@ export type P2PDispute = {
   dispute_reason: string;
   description?: string;
   evidence?: Array<{ url: string; description?: string }>;
-  status: 'open' | 'in_review' | 'resolved' | 'closed';
-  resolution?: 'buyer_wins' | 'seller_wins' | 'split' | 'cancelled';
+  status: "open" | "in_review" | "resolved" | "closed";
+  resolution?: "buyer_wins" | "seller_wins" | "split" | "cancelled";
   resolution_note?: string;
   resolution_amount?: number;
   resolution_recipient?: string;
   assignee_id?: string;
-  priority: 'low' | 'normal' | 'high' | 'urgent';
+  priority: "low" | "normal" | "high" | "urgent";
   created_at: string;
   updated_at: string;
   resolved_at?: string;
@@ -139,33 +150,35 @@ export type P2PNotification = {
 // Helper functions
 export const getProfile = async (userId: string) => {
   const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
     .single();
-  
+
   if (error) throw error;
   return data as Profile;
 };
 
 export const getProfileByWalletAddress = async (walletAddress: string) => {
   const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('wallet_address', walletAddress)
+    .from("profiles")
+    .select("*")
+    .eq("wallet_address", walletAddress)
     .single();
-  
+
   if (error) throw error;
   return data as Profile;
 };
 
-export const createProfile = async (profile: Omit<Profile, 'created_at' | 'updated_at'>) => {
+export const createProfile = async (
+  profile: Omit<Profile, "created_at" | "updated_at">,
+) => {
   const { data, error } = await supabase
-    .from('profiles')
+    .from("profiles")
     .insert([profile])
     .select()
     .single();
-  
+
   if (error) throw error;
   return data as Profile;
 };
@@ -173,95 +186,106 @@ export const createProfile = async (profile: Omit<Profile, 'created_at' | 'updat
 export const getP2POrders = async (filters?: {
   trader_id?: string;
   status?: string;
-  order_type?: 'buy' | 'sell';
+  order_type?: "buy" | "sell";
   token_mint?: string;
 }) => {
-  let query = supabase.from('p2p_orders').select('*');
-  
-  if (filters?.trader_id) query = query.eq('trader_id', filters.trader_id);
-  if (filters?.status) query = query.eq('status', filters.status);
-  if (filters?.order_type) query = query.eq('order_type', filters.order_type);
-  if (filters?.token_mint) query = query.eq('token_mint', filters.token_mint);
-  
-  const { data, error } = await query.order('created_at', { ascending: false });
-  
+  let query = supabase.from("p2p_orders").select("*");
+
+  if (filters?.trader_id) query = query.eq("trader_id", filters.trader_id);
+  if (filters?.status) query = query.eq("status", filters.status);
+  if (filters?.order_type) query = query.eq("order_type", filters.order_type);
+  if (filters?.token_mint) query = query.eq("token_mint", filters.token_mint);
+
+  const { data, error } = await query.order("created_at", { ascending: false });
+
   if (error) throw error;
   return data as P2POrder[];
 };
 
-export const createP2POrder = async (order: Omit<P2POrder, 'id' | 'created_at' | 'updated_at'>) => {
+export const createP2POrder = async (
+  order: Omit<P2POrder, "id" | "created_at" | "updated_at">,
+) => {
   const { data, error } = await supabase
-    .from('p2p_orders')
+    .from("p2p_orders")
     .insert([order])
     .select()
     .single();
-  
+
   if (error) throw error;
   return data as P2POrder;
 };
 
-export const updateP2POrder = async (orderId: string, updates: Partial<P2POrder>) => {
+export const updateP2POrder = async (
+  orderId: string,
+  updates: Partial<P2POrder>,
+) => {
   const { data, error } = await supabase
-    .from('p2p_orders')
+    .from("p2p_orders")
     .update(updates)
-    .eq('id', orderId)
+    .eq("id", orderId)
     .select()
     .single();
-  
+
   if (error) throw error;
   return data as P2POrder;
 };
 
-export const createEscrow = async (escrow: Omit<P2PEscrow, 'id' | 'created_at' | 'updated_at'>) => {
+export const createEscrow = async (
+  escrow: Omit<P2PEscrow, "id" | "created_at" | "updated_at">,
+) => {
   const { data, error } = await supabase
-    .from('p2p_escrow')
+    .from("p2p_escrow")
     .insert([escrow])
     .select()
     .single();
-  
+
   if (error) throw error;
   return data as P2PEscrow;
 };
 
-export const createDispute = async (dispute: Omit<P2PDispute, 'id' | 'created_at' | 'updated_at'>) => {
+export const createDispute = async (
+  dispute: Omit<P2PDispute, "id" | "created_at" | "updated_at">,
+) => {
   const { data, error } = await supabase
-    .from('p2p_disputes')
+    .from("p2p_disputes")
     .insert([dispute])
     .select()
     .single();
-  
+
   if (error) throw error;
   return data as P2PDispute;
 };
 
-export const addNotification = async (notification: Omit<P2PNotification, 'id' | 'created_at'>) => {
+export const addNotification = async (
+  notification: Omit<P2PNotification, "id" | "created_at">,
+) => {
   const { data, error } = await supabase
-    .from('p2p_notifications')
+    .from("p2p_notifications")
     .insert([notification])
     .select()
     .single();
-  
+
   if (error) throw error;
   return data as P2PNotification;
 };
 
 export const subscribeToUserNotifications = (
   userId: string,
-  callback: (notification: P2PNotification) => void
+  callback: (notification: P2PNotification) => void,
 ) => {
   return supabase
     .channel(`notifications:${userId}`)
     .on(
-      'postgres_changes',
+      "postgres_changes",
       {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'p2p_notifications',
+        event: "INSERT",
+        schema: "public",
+        table: "p2p_notifications",
         filter: `user_id=eq.${userId}`,
       },
       (payload) => {
         callback(payload.new as P2PNotification);
-      }
+      },
     )
     .subscribe();
 };

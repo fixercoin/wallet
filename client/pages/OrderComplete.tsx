@@ -355,7 +355,6 @@ export default function OrderComplete() {
     );
   }
 
-  const isBuyer = wallet.publicKey === order.buyerWallet;
   const counterpartyWallet = isBuyer ? order.sellerWallet : order.buyerWallet;
 
   return (

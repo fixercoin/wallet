@@ -207,11 +207,11 @@ export default function OrderComplete() {
     }
   };
 
-  const handleBuyerConfirm = async () => {
+  const handleBuyerConfirmPayment = async () => {
     if (!order || !wallet?.publicKey) return;
 
     try {
-      setBuyerConfirmed(true);
+      setBuyerPaymentConfirmed(true);
       updateOrderInStorage(order.id, { status: "PENDING" });
 
       if (order.roomId) {
@@ -236,17 +236,11 @@ export default function OrderComplete() {
         },
       );
 
-      toast.success("Payment confirmed!");
-
-      // Check if both confirmed
-      if (sellerConfirmed) {
-        updateOrderInStorage(order.id, { status: "COMPLETED" });
-        toast.success("Order completed! Both parties confirmed.");
-      }
+      toast.success("Payment confirmed! Waiting for seller to transfer crypto...");
     } catch (error) {
       console.error("Error confirming payment:", error);
       toast.error("Failed to confirm");
-      setBuyerConfirmed(false);
+      setBuyerPaymentConfirmed(false);
     }
   };
 

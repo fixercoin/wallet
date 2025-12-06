@@ -150,7 +150,8 @@ export const P2PTradeDialog: React.FC<P2PTradeDialogProps> = ({
             />
             {minAmount > 0 && maxAmount < Infinity && (
               <div className="text-xs text-white/60 mt-1">
-                Min: {(minAmount * price).toFixed(6)} | Max: {(maxAmount * price).toFixed(6)}
+                Min: {(minAmount * price).toFixed(6)} | Max:{" "}
+                {(maxAmount * price).toFixed(6)}
               </div>
             )}
           </div>

@@ -236,7 +236,9 @@ export default function OrderComplete() {
         },
       );
 
-      toast.success("Payment confirmed! Waiting for seller to transfer crypto...");
+      toast.success(
+        "Payment confirmed! Waiting for seller to transfer crypto...",
+      );
     } catch (error) {
       console.error("Error confirming payment:", error);
       toast.error("Failed to confirm");
@@ -272,7 +274,9 @@ export default function OrderComplete() {
         },
       );
 
-      toast.success("Payment received confirmed! Now send the crypto transfer...");
+      toast.success(
+        "Payment received confirmed! Now send the crypto transfer...",
+      );
     } catch (error) {
       console.error("Error confirming payment received:", error);
       toast.error("Failed to confirm");

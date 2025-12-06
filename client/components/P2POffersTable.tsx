@@ -187,13 +187,8 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                     {getCreatorName(order)}
                   </td>
                   <td className="px-4 py-3 text-white/80">{getPrice(order)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col text-white/80">
-                      <span className="text-xs text-white/60">Min</span>
-                      <span>{limits.min}</span>
-                      <span className="text-xs text-white/60 mt-1">Max</span>
-                      <span>{limits.max}</span>
-                    </div>
+                  <td className="px-4 py-3 text-white/80">
+                    <span className="text-xs">Min: {limits.min} | Max: {limits.max}</span>
                   </td>
                   <td className="px-4 py-3 text-white/80">Easypaisa</td>
                   <td className="px-4 py-3 text-right">

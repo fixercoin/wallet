@@ -232,13 +232,9 @@ export default function BuyActiveOrders() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (wallet?.publicKey === ADMIN_WALLET) {
-                          navigate("/order-complete", {
-                            state: { order, openChat: true },
-                          });
-                        } else {
-                          navigate(`/order/${encodeURIComponent(order.id)}`);
-                        }
+                        navigate("/order-complete", {
+                          state: { order, openChat: true },
+                        });
                       }}
                       className="px-4 py-2 rounded-lg bg-gray-300/10 border border-gray-300/30 text-gray-300 text-xs hover:bg-gray-300/20 transition-colors uppercase font-semibold"
                     >

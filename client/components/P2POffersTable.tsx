@@ -122,11 +122,25 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
     }
   };
 
+  const isAdvertiser = (order: P2POrder): boolean => {
+    const creatorWallet = order.walletAddress || order.creator_wallet;
+    const userWallet = wallet?.publicKey;
+    return creatorWallet && userWallet && creatorWallet === userWallet;
+  };
+
   const handleProceed = (order: P2POrder) => {
     if (onSelectOffer) {
       onSelectOffer(order);
     } else {
       toast.info("Selected offer: " + getCreatorName(order));
+    }
+  };
+
+  const handleEdit = (order: P2POrder) => {
+    if (onEditOffer) {
+      onEditOffer(order);
+    } else {
+      toast.info("Edit offer: " + getCreatorName(order));
     }
   };
 

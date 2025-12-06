@@ -234,25 +234,12 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
 
                   <div className="flex flex-col">
                     <p className="text-xs text-white/60 uppercase">Limit</p>
-                    <div className="text-xs font-semibold text-white/90">
-                      <div className="flex gap-4">
-                        <div>
-                          <span className="text-white/60">Min: </span>
-                          <span>{limits.min}</span>
-                        </div>
-                        <div>
-                          <span className="text-white/60">Max: </span>
-                          <span>{limits.max}</span>
-                        </div>
-                      </div>
-                    </div>
+                    <p className="text-xs font-semibold text-white/90">Min: {limits.min} | Max: {limits.max}</p>
                   </div>
 
                   <div className="flex flex-col">
                     <p className="text-xs text-white/60 uppercase">Payment</p>
-                    <p className="text-xs font-semibold text-white/90">
-                      Easypaisa
-                    </p>
+                    <p className="text-xs font-semibold text-white/90">Easypaisa</p>
                   </div>
                 </div>
 

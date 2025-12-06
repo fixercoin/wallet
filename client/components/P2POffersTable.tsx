@@ -261,9 +261,6 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
                 LIMIT
               </th>
-              <th className="px-4 py-3 text-left text-white/70 font-semibold">
-                PAY
-              </th>
               <th className="px-4 py-3 text-center text-white/70 font-semibold"></th>
             </tr>
           </thead>
@@ -285,9 +282,6 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                     <span className="text-[10px]">
                       {`${limits.min} - ${limits.max}`}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 text-white/80 uppercase">
-                    <span className="text-[10px] font-semibold">EASYPAISA</span>
                   </td>
                   <td className="px-4 py-3 flex flex-col items-center justify-center gap-2">
                     {isAdvertiser(order) && (
@@ -375,15 +369,6 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   </p>
                   <p className="text-[10px] font-semibold text-white/90 uppercase">
                     {`${limits.min} - ${limits.max}`}
-                  </p>
-                </div>
-
-                <div className="flex flex-col">
-                  <p className="text-[10px] text-white/60 font-semibold uppercase mb-2">
-                    PAY
-                  </p>
-                  <p className="text-[10px] font-semibold text-white/90 uppercase">
-                    EASYPAISA
                   </p>
                 </div>
 

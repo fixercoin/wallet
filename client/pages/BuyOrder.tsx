@@ -17,7 +17,6 @@ export default function BuyOrder() {
   const [estimatedUSDC, setEstimatedUSDC] = useState<number>(0);
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [loadingRate, setLoadingRate] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined

@@ -16,7 +16,13 @@ export interface P2POrder {
   pricePKRPerQuote?: number;
   payment_method?: string;
   paymentMethodId?: string;
-  status: "PENDING" | "active" | "pending" | "completed" | "cancelled" | "disputed";
+  status:
+    | "PENDING"
+    | "active"
+    | "pending"
+    | "completed"
+    | "cancelled"
+    | "disputed";
   createdAt?: number;
   created_at?: number;
 }
@@ -51,9 +57,17 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
 
         const data = await response.json();
         const fetchedOrders = Array.isArray(data.orders) ? data.orders : data;
-        setOrders(fetchedOrders.filter((o: P2POrder) => o.status === "active" || o.status === "PENDING" || o.status === "pending"));
+        setOrders(
+          fetchedOrders.filter(
+            (o: P2POrder) =>
+              o.status === "active" ||
+              o.status === "PENDING" ||
+              o.status === "pending",
+          ),
+        );
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Failed to load offers";
+        const errorMsg =
+          err instanceof Error ? err.message : "Failed to load offers";
         setError(errorMsg);
         console.error("Error fetching P2P orders:", err);
       } finally {
@@ -82,7 +96,8 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
       const minFormatted = typeof min === "number" ? min.toFixed(0) : min;
       return `${minFormatted} PKR`;
     } else {
-      const min = order.amountTokens || parseFloat(order.token_amount || "0") || 0;
+      const min =
+        order.amountTokens || parseFloat(order.token_amount || "0") || 0;
       const minFormatted = typeof min === "number" ? min.toFixed(2) : min;
       return `${minFormatted} ${order.token || "USDC"}`;
     }
@@ -163,12 +178,8 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                 <td className="px-4 py-3 text-white/80">
                   {getCreatorName(order)}
                 </td>
-                <td className="px-4 py-3 text-white/80">
-                  {getPrice(order)}
-                </td>
-                <td className="px-4 py-3 text-white/80">
-                  {getLimit(order)}
-                </td>
+                <td className="px-4 py-3 text-white/80">{getPrice(order)}</td>
+                <td className="px-4 py-3 text-white/80">{getLimit(order)}</td>
                 <td className="px-4 py-3 text-white/80">
                   {order.payment_method || order.paymentMethodId || "—"}
                 </td>

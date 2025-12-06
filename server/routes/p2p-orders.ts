@@ -205,8 +205,8 @@ export const handleListP2POrders: RequestHandler = async (req, res) => {
         });
       } else {
         // For other statuses, do exact match (case-insensitive)
-        filtered = filtered.filter((o) =>
-          String(o.status).toLowerCase() === statusFilter
+        filtered = filtered.filter(
+          (o) => String(o.status).toLowerCase() === statusFilter,
         );
       }
     }

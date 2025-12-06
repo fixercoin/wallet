@@ -94,10 +94,12 @@ export async function createServer(): Promise<express.Application> {
   app.use(cors());
 
   // Custom JSON parser with error handling for iconv-lite issues
-  app.use(express.json({
-    strict: true,
-    type: "application/json",
-  }));
+  app.use(
+    express.json({
+      strict: true,
+      type: "application/json",
+    }),
+  );
 
   // DexScreener routes
   app.get("/api/dexscreener/tokens", async (req, res) => {

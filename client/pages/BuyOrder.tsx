@@ -180,7 +180,9 @@ export default function BuyOrder() {
         orderType="BUY"
         exchangeRate={exchangeRate || 280}
         onSelectOffer={(order) => {
-          toast.success(`Selected offer from ${order.walletAddress || order.creator_wallet}`);
+          toast.success(
+            `Selected offer from ${order.walletAddress || order.creator_wallet}`,
+          );
         }}
       />
 

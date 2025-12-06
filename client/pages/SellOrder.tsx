@@ -215,7 +215,9 @@ export default function SellOrder() {
         orderType="SELL"
         exchangeRate={exchangeRate || 280}
         onSelectOffer={(order) => {
-          toast.success(`Selected offer from ${order.walletAddress || order.creator_wallet}`);
+          toast.success(
+            `Selected offer from ${order.walletAddress || order.creator_wallet}`,
+          );
         }}
       />
 

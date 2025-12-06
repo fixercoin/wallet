@@ -101,21 +101,34 @@ export default function BuyCrypto() {
         ? `/api/p2p/orders/${editingOrder.id}`
         : "/api/p2p/orders";
 
+      const orderPayload: any = {
+        walletAddress: wallet.publicKey,
+        type: order.type,
+        token: order.token,
+        minAmountPKR: order.minAmountPKR,
+        maxAmountPKR: order.maxAmountPKR,
+        pricePKRPerQuote: order.pricePKRPerQuote,
+        paymentMethodId: order.paymentMethod,
+        status: "PENDING",
+      };
+
+      // Only include amountTokens and amountPKR if provided
+      if (order.amountTokens !== undefined) {
+        orderPayload.amountTokens = order.amountTokens;
+      }
+      if (order.amountPKR !== undefined) {
+        orderPayload.amountPKR = order.amountPKR;
+      }
+
+      // For edit operations
+      if (isUpdate && editingOrder?.id) {
+        orderPayload.orderId = editingOrder.id;
+      }
+
       const response = await fetch(url, {
         method: method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          walletAddress: wallet.publicKey,
-          type: order.type,
-          token: order.token,
-          amountTokens: order.amountTokens,
-          amountPKR: order.amountPKR,
-          minAmountPKR: order.minAmountPKR,
-          maxAmountPKR: order.maxAmountPKR,
-          pricePKRPerQuote: order.pricePKRPerQuote,
-          paymentMethodId: order.paymentMethod,
-          status: "PENDING",
-        }),
+        body: JSON.stringify(orderPayload),
       });
 
       if (!response.ok) {
@@ -126,7 +139,7 @@ export default function BuyCrypto() {
         return false;
       }
       const data = await response.json();
-      return data.order || data.data;
+      return data.order || data.data || data;
     } catch (error) {
       console.error(`Error ${isUpdate ? "updating" : "saving"} order:`, error);
       return false;

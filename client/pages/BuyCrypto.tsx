@@ -426,6 +426,8 @@ export default function BuyCrypto() {
                 </>
               ) : !paymentMethod ? (
                 "ADD PAYMENT METHOD FIRST"
+              ) : editingOrder ? (
+                `UPDATE BUY OFFER`
               ) : (
                 `BUY CRYPTO`
               )}

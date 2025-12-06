@@ -1,4 +1,4 @@
-name = "fixorium-pages-supabase"
+name = "fixorium-pages"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
@@ -10,22 +10,10 @@ cwd = "./"
 # Cloudflare Pages output directory
 pages_build_output_dir = "dist"
 
-# ============================================================================
-# ENVIRONMENT VARIABLES FOR SUPABASE
-# ============================================================================
-# These should be set in the Cloudflare dashboard under Settings > Environment variables
-# 
-# Production variables (set these in Cloudflare):
-# - VITE_SUPABASE_URL: https://pcuhmppymboyukkdxuba.supabase.co
-# - VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjdWhtcHB5bWJveXVra2R4dWJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyNTk3MTIsImV4cCI6MjA3NTgzNTcxMn0.9OhZ6BpUE5K0e1OfGlNN10Vs2lhXa4NXQtEAJBAfspM
-#
-
-# Build-time environment variables
+# Environment variables available at build time and to Functions (VITE_ prefix exposed to client)
 [vars]
 VITE_API_URL = ""
 VITE_API_BASE_URL = ""
-VITE_SUPABASE_URL = "https://pcuhmppymboyukkdxuba.supabase.co"
-VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjdWhtcHB5bWJveXVra2R4dWJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyNTk3MTIsImV4cCI6MjA3NTgzNTcxMn0.9OhZ6BpUE5K0e1OfGlNN10Vs2lhXa4NXQtEAJBAfspM"
 
 # RPC endpoint configuration (set in Cloudflare dashboard for your environment)
 # - SOLANA_RPC_URL: Primary Solana RPC endpoint
@@ -34,82 +22,37 @@ VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY
 # - ALCHEMY_RPC_URL: Alchemy RPC endpoint (optional)
 # - MORALIS_RPC_URL: Moralis RPC endpoint (optional)
 
-# ============================================================================
-# NO LONGER NEEDED - KV NAMESPACE BINDINGS REMOVED
-# ============================================================================
-# The following KV namespace bindings have been removed as we're using Supabase
-# instead of Cloudflare KV for P2P data storage:
-#
-# - STAKING_KV: No longer needed
-# - KV: No longer needed
-#
-# All data is now stored in Supabase database tables:
-# - p2p_orders
-# - payment_methods
-# - escrow
-# - disputes
-# - order_notifications
-# - trade_rooms
-# - trade_messages
-# - stakes
-# - rewards
-#
+# KV namespace bindings for Pages Functions
+# These bindings are available in functions/api/* routes
+[[kv_namespaces]]
+binding = "STAKING_KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
 
-# ============================================================================
-# DEVELOPMENT ENVIRONMENT
-# ============================================================================
-[env.development]
-# Development environment variables can be overridden here
-# Leave empty to use defaults from [vars] section
+# Alias for backwards compatibility
+[[kv_namespaces]]
+binding = "KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
 
-[env.development.vars]
-VITE_SUPABASE_URL = "https://pcuhmppymboyukkdxuba.supabase.co"
-VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjdWhtcHB5bWJveXVra2R4dWJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyNTk3MTIsImV4cCI6MjA3NTgzNTcxMn0.9OhZ6BpUE5K0e1OfGlNN10Vs2lhXa4NXQtEAJBAfspM"
+# Enable KV for Pages Functions (development environment)
+[env.development.kv_namespaces]
+binding = "STAKING_KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
 
-# ============================================================================
-# PRODUCTION ENVIRONMENT
-# ============================================================================
-[env.production]
-# Production environment variables should be set in Cloudflare Dashboard
-# Settings > Environment variables > Production
+[[env.development.kv_namespaces]]
+binding = "KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
 
-[env.production.vars]
-VITE_SUPABASE_URL = "https://pcuhmppymboyukkdxuba.supabase.co"
-VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjdWhtcHB5bWJveXVra2R4dWJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyNTk3MTIsImV4cCI6MjA3NTgzNTcxMn0.9OhZ6BpUE5K0e1OfGlNN10Vs2lhXa4NXQtEAJBAfspM"
+# Enable KV for Pages Functions (production environment)
+[env.production.kv_namespaces]
+binding = "STAKING_KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
 
-# ============================================================================
-# CLOUDFLARE PAGES DEPLOYMENT GUIDE
-# ============================================================================
-#
-# 1. Replace your current wrangler.toml with this file (or copy the settings)
-#
-# 2. In Cloudflare Dashboard:
-#    a. Go to Pages > Your Project > Settings
-#    b. Go to Environment variables section
-#    c. Set the following for Production:
-#       - VITE_SUPABASE_URL = https://pcuhmppymboyukkdxuba.supabase.co
-#       - VITE_SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-#
-# 3. Rebuild and redeploy your Pages project:
-#    a. Click "All builds" > "Create deployment"
-#    b. Or push to your git repository to trigger automatic deployment
-#
-# 4. The environment variables will be available to your frontend build
-#
-# 5. Update your frontend code to use Supabase client instead of API calls to KV endpoints
-#    - Import from lib/supabase/client.ts
-#    - Use functions from lib/supabase/p2p-*.ts instead of API calls
-#
-# ============================================================================
-# MIGRATION CHECKLIST
-# ============================================================================
-#
-# [ ] Create all tables in Supabase using the SQL schema from lib/supabase/niazi.tsx
-# [ ] Update wrangler.toml with this file (replace old one)
-# [ ] Set environment variables in Cloudflare dashboard
-# [ ] Update API routes to use Supabase instead of KV (or remove KV routes)
-# [ ] Test P2P functionality with Supabase backend
-# [ ] Deploy to Cloudflare Pages
-# [ ] Monitor logs for any errors
-# [ ] Update documentation with new Supabase setup
-#
+[[env.production.kv_namespaces]]
+binding = "KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"

@@ -100,24 +100,32 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
 
   const getLimit = (order: P2POrder): { min: string; max: string } => {
     if (orderType === "BUY") {
-      const min = order.minAmountPKR || order.amountPKR || order.pkr_amount || 0;
-      const max = order.maxAmountPKR || order.amountPKR || order.pkr_amount || 0;
+      const min =
+        order.minAmountPKR || order.amountPKR || order.pkr_amount || 0;
+      const max =
+        order.maxAmountPKR || order.amountPKR || order.pkr_amount || 0;
       const minFormatted = typeof min === "number" ? min.toFixed(0) : min;
       const maxFormatted = typeof max === "number" ? max.toFixed(0) : max;
       return {
         min: `${minFormatted} PKR`,
-        max: `${maxFormatted} PKR`
+        max: `${maxFormatted} PKR`,
       };
     } else {
       const min =
-        order.minAmountTokens || order.amountTokens || parseFloat(order.token_amount || "0") || 0;
+        order.minAmountTokens ||
+        order.amountTokens ||
+        parseFloat(order.token_amount || "0") ||
+        0;
       const max =
-        order.maxAmountTokens || order.amountTokens || parseFloat(order.token_amount || "0") || 0;
+        order.maxAmountTokens ||
+        order.amountTokens ||
+        parseFloat(order.token_amount || "0") ||
+        0;
       const minFormatted = typeof min === "number" ? min.toFixed(2) : min;
       const maxFormatted = typeof max === "number" ? max.toFixed(2) : max;
       return {
         min: minFormatted,
-        max: maxFormatted
+        max: maxFormatted,
       };
     }
   };
@@ -197,8 +205,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
                 PAYMENT
               </th>
-              <th className="px-4 py-3 text-center text-white/70 font-semibold">
-              </th>
+              <th className="px-4 py-3 text-center text-white/70 font-semibold"></th>
             </tr>
           </thead>
           <tbody>
@@ -212,11 +219,17 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   <td className="px-4 py-3 text-white/80 uppercase">
                     {getCreatorName(order)}
                   </td>
-                  <td className="px-4 py-3 text-white/80 uppercase">{getPrice(order)}</td>
                   <td className="px-4 py-3 text-white/80 uppercase">
-                    <span className="text-xs">MIN: {limits.min} | MAX: {limits.max}</span>
+                    {getPrice(order)}
                   </td>
-                  <td className="px-4 py-3 text-white/80 uppercase">EASYPAISA</td>
+                  <td className="px-4 py-3 text-white/80 uppercase">
+                    <span className="text-xs">
+                      MIN: {limits.min} | MAX: {limits.max}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-white/80 uppercase">
+                    EASYPAISA
+                  </td>
                   <td className="px-4 py-3 text-right flex gap-2 justify-end">
                     {isAdvertiser(order) && (
                       <Button
@@ -254,23 +267,39 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
             >
               <div className="grid grid-cols-5 gap-3 items-start">
                 <div className="flex flex-col">
-                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">ADVERTISER</p>
-                  <p className="text-xs font-semibold text-white/90 uppercase">{getCreatorName(order)}</p>
+                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">
+                    ADVERTISER
+                  </p>
+                  <p className="text-xs font-semibold text-white/90 uppercase">
+                    {getCreatorName(order)}
+                  </p>
                 </div>
 
                 <div className="flex flex-col">
-                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">PRICE</p>
-                  <p className="text-xs font-semibold text-white/90 uppercase">{getPrice(order)}</p>
+                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">
+                    PRICE
+                  </p>
+                  <p className="text-xs font-semibold text-white/90 uppercase">
+                    {getPrice(order)}
+                  </p>
                 </div>
 
                 <div className="flex flex-col">
-                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">LIMIT</p>
-                  <p className="text-xs font-semibold text-white/90 uppercase">MIN: {limits.min} | MAX: {limits.max}</p>
+                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">
+                    LIMIT
+                  </p>
+                  <p className="text-xs font-semibold text-white/90 uppercase">
+                    MIN: {limits.min} | MAX: {limits.max}
+                  </p>
                 </div>
 
                 <div className="flex flex-col">
-                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">PAYMENT</p>
-                  <p className="text-xs font-semibold text-white/90 uppercase">EASYPAISA</p>
+                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">
+                    PAYMENT
+                  </p>
+                  <p className="text-xs font-semibold text-white/90 uppercase">
+                    EASYPAISA
+                  </p>
                 </div>
 
                 <div className="flex flex-col items-end justify-end h-full gap-2">

@@ -73,63 +73,32 @@ export default function SellOrder() {
     }
   }, [amountUSDC, exchangeRate]);
 
-  const handleSubmitOrder = async () => {
-    try {
-      if (!wallet?.publicKey) {
-        toast.error("Please connect your wallet first");
-        return;
-      }
-
-      const usdcAmount = parseFloat(amountUSDC);
-      if (isNaN(usdcAmount) || usdcAmount <= 0) {
-        toast.error("Please enter a valid USDC amount");
-        return;
-      }
-
-      if (usdcAmount > usdcBalance) {
-        toast.error(
-          `Insufficient USDC balance. You have ${usdcBalance.toFixed(6)} USDC`,
-        );
-        return;
-      }
-
-      if (!exchangeRate) {
-        toast.error("Exchange rate not available");
-        return;
-      }
-
-      setSubmitting(true);
-
-      const response = await fetch("/api/p2p/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: "SELL",
-          token: USDC_MINT,
-          amountTokens: usdcAmount,
-          amountPKR: estimatedPKR,
-          pricePKRPerQuote: exchangeRate,
-          walletAddress: wallet.publicKey,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to submit order");
-      }
-
-      toast.success("Sell order submitted successfully!");
-      navigate("/selldata");
-    } catch (error) {
-      console.error("Error submitting order:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to submit order",
-      );
-    } finally {
-      setSubmitting(false);
+  const handleSubmitOrder = () => {
+    if (!wallet?.publicKey) {
+      toast.error("Please connect your wallet first");
+      return;
     }
+
+    const usdcAmount = parseFloat(amountUSDC);
+    if (isNaN(usdcAmount) || usdcAmount <= 0) {
+      toast.error("Please enter a valid USDC amount");
+      return;
+    }
+
+    if (usdcAmount > usdcBalance) {
+      toast.error(
+        `Insufficient USDC balance. You have ${usdcBalance.toFixed(6)} USDC`,
+      );
+      return;
+    }
+
+    if (!exchangeRate) {
+      toast.error("Exchange rate not available");
+      return;
+    }
+
+    toast.success("Form submitted. Navigating to your orders...");
+    navigate("/selldata");
   };
 
   if (!wallet) {

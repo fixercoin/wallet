@@ -150,7 +150,7 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
   return (
     <div className="w-full px-4 py-6">
       <h3 className="text-sm font-semibold text-white/90 mb-4 uppercase">
-        Available Offers
+        AVAILABLE OFFERS
       </h3>
 
       {/* Desktop Table */}
@@ -159,19 +159,19 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
           <thead>
             <tr className="bg-[#1a2847]/50 border-b border-gray-300/30">
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
-                Advertiser
+                ADVERTISER
               </th>
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
-                Price
+                PRICE
               </th>
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
-                Limit
+                LIMIT
               </th>
               <th className="px-4 py-3 text-left text-white/70 font-semibold">
-                Payment
+                PAYMENT
               </th>
               <th className="px-4 py-3 text-center text-white/70 font-semibold">
-                Action
+                ACTION
               </th>
             </tr>
           </thead>
@@ -183,21 +183,21 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
                   key={order.id}
                   className="border-b border-gray-300/20 hover:bg-[#1a2847]/30 transition-colors"
                 >
-                  <td className="px-4 py-3 text-white/80">
+                  <td className="px-4 py-3 text-white/80 uppercase">
                     {getCreatorName(order)}
                   </td>
-                  <td className="px-4 py-3 text-white/80">{getPrice(order)}</td>
-                  <td className="px-4 py-3 text-white/80">
-                    <span className="text-xs">Min: {limits.min} | Max: {limits.max}</span>
+                  <td className="px-4 py-3 text-white/80 uppercase">{getPrice(order)}</td>
+                  <td className="px-4 py-3 text-white/80 uppercase">
+                    <span className="text-xs">MIN: {limits.min} | MAX: {limits.max}</span>
                   </td>
-                  <td className="px-4 py-3 text-white/80">Easypaisa</td>
+                  <td className="px-4 py-3 text-white/80 uppercase">EASYPAISA</td>
                   <td className="px-4 py-3 text-right">
                     <Button
                       onClick={() => handleProceed(order)}
                       size="sm"
                       className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-3 rounded h-auto"
                     >
-                      {orderType === "BUY" ? "Buy" : "Sell"}
+                      {orderType === "BUY" ? "BUY" : "SELL"}
                     </Button>
                   </td>
                 </tr>
@@ -208,37 +208,45 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
       </div>
 
       {/* Mobile Cards */}
-      <div className="sm:hidden space-y-3 overflow-x-auto">
+      <div className="sm:hidden space-y-3">
         {orders.map((order) => {
           const limits = getLimit(order);
           return (
             <div
               key={order.id}
-              className="p-3 rounded-lg bg-[#1a2847]/50 border border-gray-300/30 inline-flex whitespace-nowrap min-w-full items-center justify-between gap-2"
+              className="p-4 rounded-lg bg-[#1a2847]/50 border border-gray-300/30"
             >
-              <span className="text-xs text-white/80">
-                <span className="text-white/60">Advertiser:</span> {getCreatorName(order)}
-              </span>
+              <div className="grid grid-cols-4 gap-3 items-start">
+                <div className="flex flex-col">
+                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">ADVERTISER</p>
+                  <p className="text-xs font-semibold text-white/90 uppercase">{getCreatorName(order)}</p>
+                </div>
 
-              <span className="text-xs text-white/80">
-                <span className="text-white/60">Price:</span> {getPrice(order)}
-              </span>
+                <div className="flex flex-col">
+                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">PRICE</p>
+                  <p className="text-xs font-semibold text-white/90 uppercase">{getPrice(order)}</p>
+                </div>
 
-              <span className="text-xs text-white/80">
-                <span className="text-white/60">Limit:</span> Min: {limits.min} | Max: {limits.max}
-              </span>
+                <div className="flex flex-col">
+                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">LIMIT</p>
+                  <p className="text-xs font-semibold text-white/90 uppercase">MIN: {limits.min} | MAX: {limits.max}</p>
+                </div>
 
-              <span className="text-xs text-white/80">
-                <span className="text-white/60">Payment:</span> Easypaisa
-              </span>
+                <div className="flex flex-col">
+                  <p className="text-xs text-white/60 font-semibold uppercase mb-2">PAYMENT</p>
+                  <p className="text-xs font-semibold text-white/90 uppercase">EASYPAISA</p>
+                </div>
+              </div>
 
-              <Button
-                onClick={() => handleProceed(order)}
-                size="sm"
-                className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-3 rounded h-auto flex-shrink-0"
-              >
-                {orderType === "BUY" ? "Buy" : "Sell"}
-              </Button>
+              <div className="mt-3 flex justify-end">
+                <Button
+                  onClick={() => handleProceed(order)}
+                  size="sm"
+                  className="bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white text-xs py-1 px-3 rounded h-auto uppercase font-semibold"
+                >
+                  {orderType === "BUY" ? "BUY" : "SELL"}
+                </Button>
+              </div>
             </div>
           );
         })}

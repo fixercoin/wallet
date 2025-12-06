@@ -649,15 +649,6 @@ export default function OrderComplete() {
                 </div>
               </div>
             )}
-
-            {order.status !== "COMPLETED" && (
-              <Button
-                onClick={handleCancelOrder}
-                className="w-full bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 text-red-400 uppercase text-xs font-semibold py-2"
-              >
-                Cancel Order
-              </Button>
-            )}
           </div>
         </div>
 

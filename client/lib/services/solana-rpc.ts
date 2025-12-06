@@ -69,6 +69,9 @@ const requestQueue = new Map<string, Promise<any>>();
 const PUBLIC_RPC_ENDPOINTS = [
   "https://solana-rpc.publicnode.com/",
   "https://solana.publicnode.com",
+  "https://api.mainnet-beta.solana.com",
+  "https://rpc.ankr.com/solana",
+  "https://solana-api.projectserum.com",
 ];
 
 /**

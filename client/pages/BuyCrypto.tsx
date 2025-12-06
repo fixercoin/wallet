@@ -294,21 +294,22 @@ export default function BuyCrypto() {
         paymentMethod: paymentMethod.id,
       };
 
-      const savedOrder = await saveOrderToKV(order);
+      const isUpdate = !!editingOrder;
+      const savedOrder = await saveOrderToKV(order, isUpdate);
       if (!savedOrder) {
-        throw new Error("Failed to save order to Cloudflare KV");
+        throw new Error(`Failed to ${isUpdate ? "update" : "save"} order`);
       }
 
       toast({
         title: "Success",
-        description: "Buy order created successfully",
+        description: `Buy order ${isUpdate ? "updated" : "created"} successfully`,
         duration: 2000,
       });
 
-      navigate("/buy-order");
+      navigate(isUpdate ? "/buy-data" : "/buy-order");
     } catch (error: any) {
       toast({
-        title: "Failed to create order",
+        title: `Failed to ${editingOrder ? "update" : "create"} order`,
         description: error?.message || String(error),
         variant: "destructive",
       });

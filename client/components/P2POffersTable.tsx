@@ -362,14 +362,29 @@ export const P2POffersTable: React.FC<P2POffersTableProps> = ({
 
                 <div className="flex flex-row items-center justify-end h-full gap-2">
                   {isAdvertiser(order) && (
-                    <Button
-                      onClick={() => handleEdit(order)}
-                      size="sm"
-                      className="bg-transparent hover:bg-white/10 text-white text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
-                      title="Edit offer"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
+                    <>
+                      <Button
+                        onClick={() => handleEdit(order)}
+                        size="sm"
+                        className="bg-transparent hover:bg-white/10 text-white text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
+                        title="Edit offer"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        onClick={() => handleCancel(order)}
+                        disabled={cancelling === order.id}
+                        size="sm"
+                        className="bg-transparent hover:bg-red-500/20 text-red-400 hover:text-red-300 text-xs py-1 px-2 rounded h-auto flex items-center transition-colors"
+                        title="Cancel offer"
+                      >
+                        {cancelling === order.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <X className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </>
                   )}
                   <Button
                     onClick={() => handleProceed(order)}

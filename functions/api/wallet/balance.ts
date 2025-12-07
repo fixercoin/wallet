@@ -195,22 +195,29 @@ async function handler(request: Request, env?: Env): Promise<Response> {
           continue;
         }
 
-        const lamports = data.result;
-        if (typeof lamports === "number" && isFinite(lamports)) {
+        const lamports = data.result ?? data.result?.value;
+        if (
+          typeof lamports === "number" &&
+          isFinite(lamports) &&
+          lamports >= 0
+        ) {
+          const balanceInSol = lamports / 1_000_000_000;
           console.log(
-            `[Balance API] ✅ Success from endpoint ${i + 1}: ${lamports} lamports`,
+            `[Balance API] ✅ Success from endpoint ${i + 1}: ${lamports} lamports (${balanceInSol} SOL)`,
           );
           return new Response(
             JSON.stringify({
               publicKey,
-              balance: lamports / 1_000_000_000,
+              balance: balanceInSol,
               balanceLamports: lamports,
+              source: endpoint.substring(0, 40),
             }),
             {
               status: 200,
               headers: {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
               },
             },
           );
@@ -236,12 +243,14 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         error: "Failed to fetch wallet balance",
         details: lastError || "All RPC endpoints failed",
         endpointsAttempted: rpcEndpoints.length,
+        primaryEndpoint: rpcEndpoints[0]?.substring(0, 60) || "none",
       }),
       {
         status: lastStatus,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
         },
       },
     );
@@ -270,5 +279,9 @@ export const onRequest = async ({
   env,
 }: {
   request: Request;
-  env?: Env;
-}) => handler(request, env);
+  env?: Env | Record<string, any>;
+}) => {
+  // Ensure env is passed to handler
+  const envToPass = env || (typeof process !== "undefined" ? process.env : {});
+  return handler(request, envToPass as Env);
+};

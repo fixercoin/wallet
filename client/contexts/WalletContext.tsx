@@ -765,11 +765,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     try {
       const newBalance = await getBalance(wallet.publicKey);
-      if (typeof newBalance === "number" && !isNaN(newBalance)) {
+      if (
+        typeof newBalance === "number" &&
+        !isNaN(newBalance) &&
+        isFinite(newBalance) &&
+        newBalance >= 0
+      ) {
         setBalance(newBalance);
         balanceRef.current = newBalance;
         saveBalanceToCache(wallet.publicKey, newBalance);
       } else {
+        console.warn("[WalletContext] Invalid balance value:", newBalance);
         setBalance(0);
         balanceRef.current = 0;
       }
@@ -778,7 +784,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
       // Try to use cached balance as fallback on network/RPC errors
       const cachedBalance = getCachedBalance(wallet.publicKey);
-      if (cachedBalance !== null && cachedBalance > 0) {
+      if (
+        cachedBalance !== null &&
+        typeof cachedBalance === "number" &&
+        isFinite(cachedBalance) &&
+        cachedBalance >= 0
+      ) {
         console.log(
           "[WalletContext] Using cached SOL balance as fallback:",
           cachedBalance,
@@ -788,7 +799,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         setIsUsingCache(true);
         setError(null);
       } else {
-        console.warn("[WalletContext] No cached balance available, showing 0");
+        console.warn(
+          "[WalletContext] No valid cached balance available, showing 0",
+        );
         setBalance(0);
         balanceRef.current = 0;
         setError("Unable to fetch SOL balance. Please check your connection.");
@@ -825,13 +838,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         (t) => t.symbol === "SOL",
       );
 
-      // Use SOL from tokenAccounts if available (for Cloudflare compatibility)
+      // Use SOL from tokenAccounts if available and valid (for Cloudflare compatibility)
       // Otherwise use the balance from the separate refreshBalance() call
       let solBalance = 0;
-      if (
+      const tokenAccountsHasValidBalance =
         solFromTokenAccounts?.balance !== undefined &&
-        solFromTokenAccounts.balance > 0
-      ) {
+        typeof solFromTokenAccounts.balance === "number" &&
+        isFinite(solFromTokenAccounts.balance) &&
+        solFromTokenAccounts.balance >= 0;
+
+      if (tokenAccountsHasValidBalance) {
         solBalance = solFromTokenAccounts.balance;
         setBalance(solFromTokenAccounts.balance);
         balanceRef.current = solFromTokenAccounts.balance;
@@ -841,7 +857,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       } else {
         // Fall back to balance from separate endpoint (which should have been fetched via refreshBalance)
         solBalance =
-          typeof balanceRef.current === "number"
+          typeof balanceRef.current === "number" &&
+          isFinite(balanceRef.current) &&
+          balanceRef.current >= 0
             ? balanceRef.current
             : balance || 0;
         console.log(

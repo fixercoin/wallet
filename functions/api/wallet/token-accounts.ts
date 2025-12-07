@@ -143,6 +143,10 @@ async function handler(request: Request, env?: Env): Promise<Response> {
     let lastError: string | null = null;
     const RPC_ENDPOINTS = buildRpcEndpoints(env || {});
 
+    console.log(
+      `[TokenAccounts] Using ${RPC_ENDPOINTS.length} RPC endpoints. Primary: ${RPC_ENDPOINTS[0]?.substring(0, 50)}...`,
+    );
+
     // Try each RPC endpoint
     for (const endpoint of RPC_ENDPOINTS) {
       if (!endpoint) continue;
@@ -237,10 +241,21 @@ async function handler(request: Request, env?: Env): Promise<Response> {
           clearTimeout(solTimeoutId);
 
           const solData = await solResp.json();
-          if (!solData.error && typeof solData.result === "number") {
-            solBalance = solData.result / 1_000_000_000; // Convert lamports to SOL
+          const lamports = solData.result ?? solData.result?.value;
+          if (
+            !solData.error &&
+            typeof lamports === "number" &&
+            isFinite(lamports) &&
+            lamports >= 0
+          ) {
+            solBalance = lamports / 1_000_000_000; // Convert lamports to SOL
             console.log(
-              `[TokenAccounts] Fetched SOL balance: ${solBalance} SOL`,
+              `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL (${lamports} lamports)`,
+            );
+          } else if (solData.error) {
+            console.warn(
+              `[TokenAccounts] RPC error fetching SOL balance:`,
+              solData.error,
             );
           }
         } catch (err) {
@@ -266,17 +281,23 @@ async function handler(request: Request, env?: Env): Promise<Response> {
           )}`,
         );
 
+        console.log(
+          `[TokenAccounts] ✅ Successfully fetched tokens for ${publicKey.slice(0, 8)}`,
+        );
+
         return new Response(
           JSON.stringify({
             publicKey,
             tokens: allTokens,
             count: allTokens.length,
+            source: endpoint.substring(0, 50),
           }),
           {
             status: 200,
             headers: {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
             },
           },
         );
@@ -295,12 +316,14 @@ async function handler(request: Request, env?: Env): Promise<Response> {
 
     // All endpoints failed
     console.error(
-      `[TokenAccounts] All RPC endpoints failed. Last error: ${lastError}`,
+      `[TokenAccounts] All ${RPC_ENDPOINTS.length} RPC endpoints failed. Last error: ${lastError}`,
     );
     return new Response(
       JSON.stringify({
         error: "Failed to fetch token accounts - all RPC endpoints failed",
         details: lastError || "No available Solana RPC providers",
+        endpointsAttempted: RPC_ENDPOINTS.length,
+        primaryEndpoint: RPC_ENDPOINTS[0]?.substring(0, 60) || "none",
         tokens: [],
       }),
       {
@@ -308,6 +331,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
         },
       },
     );
@@ -335,21 +359,31 @@ export const onRequest = async ({
   env,
 }: {
   request: Request;
-  env: Env;
-}) => handler(request, env);
+  env?: Env | Record<string, any>;
+}) => {
+  // Ensure env is passed to handler, fallback to process.env for Node.js
+  const envToPass = env || (typeof process !== "undefined" ? process.env : {});
+  return handler(request, envToPass as Env);
+};
 
 export const onRequestGet = async ({
   request,
   env,
 }: {
   request: Request;
-  env: Env;
-}) => handler(request, env);
+  env?: Env | Record<string, any>;
+}) => {
+  const envToPass = env || (typeof process !== "undefined" ? process.env : {});
+  return handler(request, envToPass as Env);
+};
 
 export const onRequestPost = async ({
   request,
   env,
 }: {
   request: Request;
-  env: Env;
-}) => handler(request, env);
+  env?: Env | Record<string, any>;
+}) => {
+  const envToPass = env || (typeof process !== "undefined" ? process.env : {});
+  return handler(request, envToPass as Env);
+};

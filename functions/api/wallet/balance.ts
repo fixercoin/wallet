@@ -273,5 +273,9 @@ export const onRequest = async ({
   env,
 }: {
   request: Request;
-  env?: Env;
-}) => handler(request, env);
+  env?: Env | Record<string, any>;
+}) => {
+  // Ensure env is passed to handler
+  const envToPass = env || (typeof process !== "undefined" ? process.env : {});
+  return handler(request, envToPass as Env);
+};

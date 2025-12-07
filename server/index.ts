@@ -87,6 +87,14 @@ import {
   handleMarkNotificationAsRead,
   handleDeleteNotification,
 } from "./routes/p2p-notifications";
+import {
+  handleGetMatches,
+  handleCreateMatch,
+  handleGetMatch,
+  handleUpdateMatch,
+  handleListMatches,
+  handleCancelMatch,
+} from "./routes/p2p-matching";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();

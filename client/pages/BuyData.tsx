@@ -67,7 +67,7 @@ export default function BuyData() {
     };
 
     fetchPaymentMethods();
-  }, [wallet?.publicKey, showPaymentDialog, refreshKey]);
+  }, [wallet?.publicKey, showPaymentDialog]);
 
 
   if (!wallet) {

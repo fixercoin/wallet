@@ -237,11 +237,14 @@ async function handler(request: Request, env?: Env): Promise<Response> {
           clearTimeout(solTimeoutId);
 
           const solData = await solResp.json();
-          if (!solData.error && typeof solData.result === "number") {
-            solBalance = solData.result / 1_000_000_000; // Convert lamports to SOL
+          const lamports = solData.result ?? solData.result?.value;
+          if (!solData.error && typeof lamports === "number" && isFinite(lamports) && lamports >= 0) {
+            solBalance = lamports / 1_000_000_000; // Convert lamports to SOL
             console.log(
-              `[TokenAccounts] Fetched SOL balance: ${solBalance} SOL`,
+              `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL (${lamports} lamports)`,
             );
+          } else if (solData.error) {
+            console.warn(`[TokenAccounts] RPC error fetching SOL balance:`, solData.error);
           }
         } catch (err) {
           console.warn(`[TokenAccounts] Failed to fetch SOL balance:`, err);

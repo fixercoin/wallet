@@ -1,24 +1,22 @@
 import { RequestHandler } from "express";
 import { PublicKey, Connection } from "@solana/web3.js";
 
-// Using multiple RPC providers to handle rate limiting
+// Using Helius RPC as primary, with fallbacks
 const RPC_ENDPOINTS = [
-  // Prefer environment-configured RPC first
+  // Prefer Helius RPC with embedded API key
+  "https://mainnet.helius-rpc.com/?api-key=48e91c19-c676-4c4a-a0dd-a9b4f258d151",
+  // Environment overrides as fallback
   process.env.SOLANA_RPC_URL || "",
-  // Provider-specific overrides
-  process.env.ALCHEMY_RPC_URL || "",
   process.env.HELIUS_RPC_URL || "",
-  process.env.MORALIS_RPC_URL || "",
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
     : "",
-  // Well-tested public endpoints
+  process.env.ALCHEMY_RPC_URL || "",
+  process.env.MORALIS_RPC_URL || "",
+  // Well-tested public endpoints as final fallback
   "https://api.mainnet-beta.solana.com",
-  // Community-supported endpoints
   "https://solana-api.projectserum.com",
   "https://rpc-mainnet.phantom.app",
-  // Geode Network
-  "https://solana.geode.network",
 ].filter(Boolean);
 
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";

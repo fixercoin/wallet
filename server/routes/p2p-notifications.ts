@@ -62,10 +62,20 @@ async function saveNotificationIdsForWallet(
 async function getNotificationById(
   notificationId: string,
 ): Promise<OrderNotification | null> {
-  const kv = getKVStorage();
-  const key = `notifications:${notificationId}`;
-  const json = await kv.get(key);
-  return json ? JSON.parse(json) : null;
+  try {
+    const kv = getKVStorage();
+    const key = `notifications:${notificationId}`;
+    const json = await kv.get(key);
+    if (!json) return null;
+    return JSON.parse(json);
+  } catch (error) {
+    console.error(
+      "[Notifications] Error getting notification by ID:",
+      notificationId,
+      error,
+    );
+    return null;
+  }
 }
 
 // Helper to save a notification

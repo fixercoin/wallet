@@ -907,15 +907,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <div className="text-3xl text-gray-900 leading-tight">
                             {showBalance ? `${usdZero}` : "****"}
                           </div>
-                          <div>
-                            <Button
-                              onClick={onP2PTrade || onReceive}
-                              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 transition-colors"
-                            >
-                              <MessageSquare className="h-6 w-6 text-gray-900" />
-                              <span>P2P TRADE</span>
-                            </Button>
-                          </div>
+                          <Button
+                            onClick={onP2PTrade || onReceive}
+                            className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-3 py-2.5 rounded-sm h-auto transition-colors flex-1"
+                          >
+                            P2P TRADE
+                          </Button>
                         </div>
                       );
                     }
@@ -970,15 +967,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             "****"
                           )}
                         </div>
-                        <div>
-                          <Button
-                            onClick={onP2PTrade || onReceive}
-                            className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 transition-colors"
-                          >
-                            <MessageSquare className="h-6 w-6 text-gray-900" />
-                            <span>P2P TRADE</span>
-                          </Button>
-                        </div>
+                        <Button
+                          onClick={onP2PTrade || onReceive}
+                          className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-3 py-2.5 rounded-sm h-auto transition-colors flex-1"
+                        >
+                          P2P TRADE
+                        </Button>
                       </div>
                     );
                   })()

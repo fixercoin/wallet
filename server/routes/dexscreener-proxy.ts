@@ -521,10 +521,12 @@ export const handleDexscreenerSearch: RequestHandler = async (req, res) => {
       });
     }
 
-    console.log(`[DexScreener] Search request for: ${q}`);
+    // Strip ":N" suffix if present (e.g., "FXM:1" -> "FXM")
+    const cleanQuery = q.split(":")[0];
+    console.log(`[DexScreener] Search request for: ${cleanQuery}${cleanQuery !== q ? " (cleaned from: " + q + ")" : ""}`);
 
     const data = await fetchDexscreenerData(
-      `/search/?q=${encodeURIComponent(q)}`,
+      `/search/?q=${encodeURIComponent(cleanQuery)}`,
     );
 
     // Filter for Solana pairs and limit results

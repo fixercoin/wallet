@@ -77,25 +77,29 @@ export default function SellData() {
         open={showTradeDialog}
         onOpenChange={setShowTradeDialog}
         orderType="SELL"
-        defaultToken={selectedOffer?.token || "USDC"}
-        defaultPrice={selectedOffer?.pricePKRPerQuote || exchangeRate}
-        minAmount={
-          selectedOffer?.minAmountTokens || selectedOffer?.minAmountPKR || 0
-        }
-        maxAmount={
-          selectedOffer?.maxAmountTokens ||
-          selectedOffer?.maxAmountPKR ||
-          Infinity
-        }
+        defaultToken="USDC"
+        defaultPrice={exchangeRate}
+        minAmount={0}
+        maxAmount={Infinity}
         onConfirm={async (details) => {
           try {
-            if (!wallet?.publicKey || !selectedOffer) {
-              toast.error("Missing information");
+            if (!wallet?.publicKey) {
+              toast.error("Missing wallet information");
               return;
             }
 
             const createdOrder = await createOrderFromOffer(
-              selectedOffer,
+              {
+                id: `order-${Date.now()}`,
+                type: "SELL",
+                buyerWallet: "",
+                token: details.token,
+                pricePKRPerQuote: details.price,
+                minAmountTokens: 0,
+                maxAmountTokens: Infinity,
+                minAmountPKR: 0,
+                maxAmountPKR: Infinity,
+              } as P2POrder,
               wallet.publicKey,
               "SELL",
               details,

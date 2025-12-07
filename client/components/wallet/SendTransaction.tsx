@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Send, AlertTriangle, Check } from "lucide-react";
+import { ArrowLeft, Send, AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { rpcCall } from "@/lib/rpc-utils";
@@ -40,13 +40,13 @@ const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
 );
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
-const FEE_AMOUNT_SOL = 0.002;
+const FEE_AMOUNT_SOL = 0.0007;
 
 const SuccessDialog: React.FC<{ onContinue: () => void }> = ({
   onContinue,
 }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1f1f1f]">
       <style>{`
         @keyframes slide-in {
           0% {
@@ -63,7 +63,7 @@ const SuccessDialog: React.FC<{ onContinue: () => void }> = ({
         }
       `}</style>
 
-      <div className="relative z-50 w-full max-w-sm bg-gray-100 border border-gray-300 rounded-lg shadow-2xl success-dialog">
+      <div className="relative z-50 w-full max-w-sm bg-[#2a2a2a] border border-gray-600 rounded-lg shadow-2xl success-dialog">
         <div className="p-8 flex flex-col items-center text-center space-y-6">
           <div className="relative w-20 h-20 flex items-center justify-center">
             <div className="absolute inset-0 bg-green-500/20 rounded-full blur-lg animate-pulse" />
@@ -219,6 +219,21 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
     return btoa(bin);
   };
 
+  const isNetworkError = (errorMsg: string): boolean => {
+    const lowerMsg = (errorMsg || "").toLowerCase();
+    return (
+      lowerMsg.includes("fetch") ||
+      lowerMsg.includes("network") ||
+      lowerMsg.includes("timeout") ||
+      lowerMsg.includes("abort") ||
+      lowerMsg.includes("connection") ||
+      lowerMsg.includes("econnrefused") ||
+      lowerMsg.includes("enotfound") ||
+      lowerMsg.includes("failed to fetch") ||
+      lowerMsg.includes("net::")
+    );
+  };
+
   const postTx = async (url: string, b64: string) => {
     // Use the new RPC utility instead of direct fetch
     try {
@@ -229,6 +244,12 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       return result as string;
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
+
+      // Detect network connection errors
+      if (isNetworkError(msg)) {
+        throw new Error(`Network connection issue: ${msg}`);
+      }
+
       throw new Error(`Failed to send transaction: ${msg}`);
     }
   };
@@ -251,7 +272,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   const confirmSignatureProxy = async (sig: string): Promise<void> => {
     // Use RPC call to check transaction confirmation
     const started = Date.now();
-    const timeoutMs = 20000;
+    const timeoutMs = 40000;
     while (Date.now() - started < timeoutMs) {
       try {
         const statusRes = await rpcCall("getSignatureStatuses", [
@@ -465,7 +486,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }
       }
 
-      await confirmSignatureProxy(signature);
+      try {
+        await confirmSignatureProxy(signature);
+      } catch (confirmError) {
+        console.warn(
+          "Confirmation check failed, but transaction was already sent:",
+          confirmError,
+        );
+        // Don't fail the transaction - it's already submitted to blockchain
+      }
 
       setTxSignature(signature);
       setStep("success");
@@ -484,7 +513,18 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       let message =
         error instanceof Error ? error.message : "Transaction failed";
       const m = (message || "").toLowerCase();
+
       if (
+        m.includes("network") ||
+        m.includes("connection") ||
+        m.includes("timeout") ||
+        m.includes("failed to fetch") ||
+        m.includes("econnrefused") ||
+        m.includes("enotfound")
+      ) {
+        message =
+          "Network connection issue. Please check your internet connection and try again. If the problem persists, the RPC service may be temporarily unavailable.";
+      } else if (
         m.includes("insufficient") ||
         m.includes("insufficient lamports") ||
         m.includes("insufficient sol") ||
@@ -594,9 +634,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         ]);
         const exists = !!ataInfo?.value;
         if (!exists) {
-          const rent = await rpcCall("getMinimumBalanceForRentExemption", [
-            165,
-          ]);
+          const rent = await rpcCall(
+            "getMinimumBalanceForRentExemption",
+            [165],
+          );
           rentLamports = typeof rent === "number" ? rent : rent?.value || 0;
         }
       } catch {}
@@ -677,7 +718,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }
       }
 
-      await confirmSignatureProxy(signature);
+      try {
+        await confirmSignatureProxy(signature);
+      } catch (confirmError) {
+        console.warn(
+          "Confirmation check failed, but transaction was already sent:",
+          confirmError,
+        );
+        // Don't fail the transaction - it's already submitted to blockchain
+      }
 
       setTxSignature(signature);
       setStep("success");
@@ -697,7 +746,18 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       let message =
         error instanceof Error ? error.message : "Transaction failed";
       const m = (message || "").toLowerCase();
+
       if (
+        m.includes("network") ||
+        m.includes("connection") ||
+        m.includes("timeout") ||
+        m.includes("failed to fetch") ||
+        m.includes("econnrefused") ||
+        m.includes("enotfound")
+      ) {
+        message =
+          "Network connection issue. Please check your internet connection and try again. If the problem persists, the RPC service may be temporarily unavailable.";
+      } else if (
         m.includes("insufficient") ||
         m.includes("rent") ||
         m.includes("no room for fees")
@@ -746,17 +806,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   const formatAmount = (value: string): string => {
     const num = parseFloat(value);
-    if (isNaN(num)) return "0.00";
-    if (selectedSymbol === "FIXERCOIN" || selectedSymbol === "LOCKER") {
-      return num.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-    }
-    const fractionDigits = 6;
+    if (isNaN(num)) return "0.000";
     return num.toLocaleString(undefined, {
-      minimumFractionDigits: Math.min(2, fractionDigits),
-      maximumFractionDigits: fractionDigits,
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
     });
   };
 
@@ -770,9 +823,39 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   if (step === "sending") {
     return (
-      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="animate-pulse text-lg">Processing transaction...</div>
+      <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4 relative z-0">
+        <div className="text-center space-y-6 max-w-sm">
+          <div className="flex justify-center">
+            <div className="relative">
+              <div className="absolute inset-0 bg-green-500/20 rounded-full blur-xl animate-pulse" />
+              <Loader2 className="w-16 h-16 text-green-600 animate-spin relative" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Processing Transaction
+            </h2>
+            <p className="text-gray-600">
+              Please wait while your transaction is being sent to the blockchain
+            </p>
+          </div>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
+              <span className="text-gray-700">Signing transaction...</span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-2 h-2 bg-gray-400 rounded-full" />
+              <span className="text-gray-500">Sending to network...</span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-2 h-2 bg-gray-400 rounded-full" />
+              <span className="text-gray-500">Confirming on blockchain...</span>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-6">
+            This may take up to 40 seconds with slow network connection
+          </p>
         </div>
       </div>
     );
@@ -780,11 +863,11 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col">
-      <div className="flex-1 flex items-center justify-center relative z-20">
-        <div className="w-full md:max-w-lg lg:max-w-lg px-4 py-6">
-          <div className="rounded-[2px] border-0 bg-transparent overflow-hidden">
-            <div className="space-y-6 p-6">
-              <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
+      <div className="flex flex-col relative z-20 pt-4">
+        <div className="w-full">
+          <div className="border-0 bg-transparent">
+            <div className="space-y-6 px-6 py-4">
+              <div className="flex items-center gap-3 pb-2">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -794,7 +877,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <div className="font-medium text-sm">SEND {selectedSymbol}</div>
+                <div className="font-medium text-sm">WITHDRAW YOUR ASSET</div>
               </div>
               {step === "form" ? (
                 <>
@@ -822,11 +905,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                             <div className="flex items-center justify-between w-full">
                               <span className="font-medium text-white">
                                 {t.symbol} ~{" "}
-                                {(t.symbol === "SOL"
-                                  ? balance
-                                  : t.balance || 0
+                                {(
+                                  Math.floor(
+                                    (t.symbol === "SOL"
+                                      ? balance
+                                      : t.balance || 0) * 1000,
+                                  ) / 1000
                                 ).toLocaleString(undefined, {
-                                  maximumFractionDigits: 8,
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3,
                                 })}
                               </span>
                             </div>
@@ -858,14 +945,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         htmlFor="amount"
                         className="text-[hsl(var(--foreground))] uppercase"
                       >
-                        Amount ({selectedSymbol})
+                        {selectedSymbol}
                       </Label>
                       <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                        Balance:{" "}
-                        {selectedBalance.toLocaleString(undefined, {
-                          maximumFractionDigits: 8,
-                        })}{" "}
-                        {selectedSymbol}
+                        {(
+                          Math.floor(selectedBalance * 1000) / 1000
+                        ).toLocaleString(undefined, {
+                          minimumFractionDigits: 3,
+                          maximumFractionDigits: 3,
+                        })}
                       </span>
                     </div>
                     <Input

@@ -24,12 +24,63 @@ const MINT_TO_PAIR_ADDRESS = {
     "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy",
   EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump:
     "7X7KkV94Y9jFhkXEMhgVcMHMRzALiGj5xKmM6TT3cUvK",
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump":
+    "BczJ8jo8Xghx2E6G3QKZiHQ6P5xYa5xP4oWc1F5HPXLX",
 };
 
 const MINT_TO_SEARCH_SYMBOL = {
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
   EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump": "FXM",
 };
+
+async function fetchPriceFromJupiter(mint) {
+  try {
+    console.log(`[Jupiter Fallback] Fetching price for ${mint} from Jupiter`);
+
+    const params = new URLSearchParams({ ids: mint });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    const response = await fetch(`https://price.jup.ag/v4/price?${params}`, {
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+      },
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.warn(
+        `[Jupiter Fallback] API returned ${response.status} for mint ${mint}`,
+      );
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.data && data.data[mint] && data.data[mint].price) {
+      const price = data.data[mint].price;
+      if (isFinite(price) && price > 0) {
+        console.log(
+          `[Jupiter Fallback] ✅ Got price for ${mint} from Jupiter: $${price}`,
+        );
+        return price;
+      }
+    }
+
+    console.warn(`[Jupiter Fallback] No valid price data for ${mint}`);
+    return null;
+  } catch (error) {
+    console.warn(
+      `[Jupiter Fallback] Failed to fetch price:`,
+      error instanceof Error ? error.message : String(error),
+    );
+    return null;
+  }
+}
 
 async function fetchTokenPriceFromDexScreener(mint) {
   const pairAddress = MINT_TO_PAIR_ADDRESS[mint];
@@ -179,20 +230,43 @@ async function fetchTokenPriceFromDexScreener(mint) {
       }
     }
 
-    console.warn(`[DexScreener] No pairs found in response for ${mint}`);
+    // If DexScreener completely failed, try Jupiter API
+    console.log(
+      `[DexScreener] No pairs found, trying Jupiter API for ${mint}...`,
+    );
+    const jupiterPrice = await fetchPriceFromJupiter(mint);
+    if (jupiterPrice !== null) {
+      return jupiterPrice;
+    }
+
+    console.warn(
+      `[DexScreener] No price found in DexScreener or Jupiter for ${mint}`,
+    );
     return null;
   } catch (error) {
     console.error(
       `[DexScreener] ❌ Failed to fetch ${mint}:`,
       error instanceof Error ? error.message : String(error),
     );
+
+    // Try Jupiter as last resort
+    console.log(
+      `[DexScreener] Error caught, trying Jupiter fallback for ${mint}...`,
+    );
+    const jupiterPrice = await fetchPriceFromJupiter(mint);
+    if (jupiterPrice !== null) {
+      return jupiterPrice;
+    }
+
     return null;
   }
 }
 
 export async function handleExchangeRate(req, res) {
   try {
-    const token = req.query.token || "FIXERCOIN";
+    // Normalize token parameter by extracting the token symbol before any suffix (e.g., "USDC:1" -> "USDC")
+    let token = req.query.token || "FIXERCOIN";
+    token = String(token).split(":")[0].toUpperCase();
 
     let priceUsd = null;
 

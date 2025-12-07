@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Send, AlertTriangle, Check } from "lucide-react";
+import { ArrowLeft, Send, AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { resolveApiUrl } from "@/lib/api-client";
 import {
@@ -40,7 +40,7 @@ const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
 );
 const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
-const FEE_AMOUNT_SOL = 0.002;
+const FEE_AMOUNT_SOL = 0.0007;
 
 export const SendTransaction: React.FC<SendTransactionProps> = ({
   onBack,
@@ -204,7 +204,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   const confirmSignatureProxy = async (sig: string): Promise<void> => {
     const started = Date.now();
-    const timeoutMs = 20000;
+    const timeoutMs = 40000;
     while (Date.now() - started < timeoutMs) {
       const statusRes = await rpcCall("getSignatureStatuses", [
         [sig],
@@ -414,7 +414,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }
       }
 
-      await confirmSignatureProxy(signature);
+      try {
+        await confirmSignatureProxy(signature);
+      } catch (confirmError) {
+        console.warn(
+          "Confirmation check failed, but transaction was already sent:",
+          confirmError,
+        );
+        // Don't fail the transaction - it's already submitted to blockchain
+      }
 
       setTxSignature(signature);
       setStep("success");
@@ -432,7 +440,18 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       let message =
         error instanceof Error ? error.message : "Transaction failed";
       const m = (message || "").toLowerCase();
+
       if (
+        m.includes("network") ||
+        m.includes("connection") ||
+        m.includes("timeout") ||
+        m.includes("failed to fetch") ||
+        m.includes("econnrefused") ||
+        m.includes("enotfound")
+      ) {
+        message =
+          "Network connection issue. Please check your internet connection and try again. If the problem persists, the RPC service may be temporarily unavailable.";
+      } else if (
         m.includes("insufficient") ||
         m.includes("insufficient lamports") ||
         m.includes("insufficient sol") ||
@@ -541,9 +560,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         ]);
         const exists = !!ataInfo?.value;
         if (!exists) {
-          const rent = await rpcCall("getMinimumBalanceForRentExemption", [
-            165,
-          ]);
+          const rent = await rpcCall(
+            "getMinimumBalanceForRentExemption",
+            [165],
+          );
           rentLamports = typeof rent === "number" ? rent : rent?.value || 0;
         }
       } catch {}
@@ -624,7 +644,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }
       }
 
-      await confirmSignatureProxy(signature);
+      try {
+        await confirmSignatureProxy(signature);
+      } catch (confirmError) {
+        console.warn(
+          "Confirmation check failed, but transaction was already sent:",
+          confirmError,
+        );
+        // Don't fail the transaction - it's already submitted to blockchain
+      }
 
       setTxSignature(signature);
       setStep("success");
@@ -643,7 +671,18 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       let message =
         error instanceof Error ? error.message : "Transaction failed";
       const m = (message || "").toLowerCase();
+
       if (
+        m.includes("network") ||
+        m.includes("connection") ||
+        m.includes("timeout") ||
+        m.includes("failed to fetch") ||
+        m.includes("econnrefused") ||
+        m.includes("enotfound")
+      ) {
+        message =
+          "Network connection issue. Please check your internet connection and try again. If the problem persists, the RPC service may be temporarily unavailable.";
+      } else if (
         m.includes("insufficient") ||
         m.includes("rent") ||
         m.includes("no room for fees")
@@ -706,8 +745,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   if (step === "success") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-        <div className="max-w-md mx-auto pt-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="w-full">
           <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl">
             <CardContent className="p-8 text-center">
               <div className="mb-6">
@@ -773,9 +812,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-      <div className="max-w-md mx-auto">
-        <div className="flex items-center gap-3 mb-6 pt-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="w-full">
+        <div className="flex items-center gap-3 mb-6 pt-2">
           <Button
             variant="ghost"
             size="sm"
@@ -791,8 +830,24 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
         <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl relative">
           {isLoading && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 rounded-lg">
-              <div className="text-white">Processing transaction...</div>
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 rounded-lg">
+              <div className="text-center space-y-4">
+                <div className="flex justify-center">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-xl animate-pulse" />
+                    <Loader2 className="w-12 h-12 text-purple-400 animate-spin relative" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-white font-medium">
+                    Processing transaction
+                  </p>
+                  <p className="text-gray-300 text-sm">Please wait...</p>
+                  <p className="text-gray-400 text-xs">
+                    May take up to 40 seconds
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 

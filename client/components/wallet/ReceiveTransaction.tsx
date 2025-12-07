@@ -41,9 +41,9 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
   };
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
-      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-4 py-6 relative z-20">
-        <div className="rounded-[2px] border-0 bg-transparent overflow-hidden">
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col items-center">
+      <div className="w-full relative z-20">
+        <div className="border-0 bg-transparent">
           <div className="p-6 space-y-6 text-gray-900">
             <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
               <Button
@@ -55,7 +55,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <div className="font-medium text-sm">RECEIVE</div>
+              <div className="font-medium text-sm">DEPOSIT YOUR ASSET</div>
             </div>
 
             {/* QR Code */}
@@ -69,7 +69,9 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
                   level="M"
                 />
               </div>
-              <p className="text-sm text-gray-600">Scan to send SOL</p>
+              <p className="text-sm text-gray-600">
+                SCAN TO GET DEPOSIT ADDRESS
+              </p>
             </div>
 
             {/* Address Section */}

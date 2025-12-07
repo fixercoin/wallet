@@ -511,7 +511,15 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
         signature = result?.result || result;
       }
 
-      await confirmSignatureProxy(signature);
+      try {
+        await confirmSignatureProxy(signature);
+      } catch (confirmError) {
+        console.warn(
+          "Confirmation check failed, but transaction was already sent:",
+          confirmError,
+        );
+        // Don't fail the transaction - it's already submitted to blockchain
+      }
       setTxSig(signature);
 
       // Show success toast only
@@ -572,8 +580,8 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden capitalize">
-      <div className="w-full md:max-w-lg mx-auto px-4 py-6 relative z-20">
-        <div className="rounded-2xl border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
+      <div className="w-full max-w-4xl mx-auto px-4 py-6 relative z-20">
+        <div className="border-0 bg-transparent">
           <div className="flex items-center gap-3 px-4 py-3">
             <Button
               variant="ghost"
@@ -609,19 +617,14 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
                   <SelectContent className="bg-gray-700 border border-black text-white">
                     {splTokens.map((token) => (
                       <SelectItem key={token.mint} value={token.mint}>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium">
-                            {token.symbol || token.mint.slice(0, 6)}
-                          </span>
-                          <span className="text-[10px] text-gray-600 uppercase">
-                            Balance:{" "}
-                            {formatNumber(
-                              token.balance,
-                              token.decimals ?? 0,
-                              token.symbol,
-                            )}
-                          </span>
-                        </div>
+                        <span className="text-sm font-medium">
+                          {token.symbol || token.mint.slice(0, 6)} :{" "}
+                          {formatNumber(
+                            token.balance,
+                            token.decimals ?? 0,
+                            token.symbol,
+                          )}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -636,34 +639,25 @@ export const BurnToken: React.FC<BurnTokenProps> = ({ onBack }) => {
 
               {selectedToken ? (
                 <Card className="rounded-lg border border-gray-300/30 bg-transparent px-4">
-                  <CardContent className="pt-4 px-0 space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-gray-300">
-                          Selected token
-                        </p>
-                        <p className="text-lg font-semibold text-white">
-                          {selectedToken.symbol ||
-                            selectedToken.mint.slice(0, 6)}{" "}
-                          ·{" "}
-                          {formatNumber(
-                            selectedToken.balance,
-                            selectedToken.decimals ?? 0,
-                            selectedToken.symbol,
-                          )}
-                        </p>
-                      </div>
-                      <div className="text-right text-[11px] text-gray-300">
-                        <p>Mint address</p>
-                        <a
-                          className="font-medium text-orange-500 underline-offset-4 hover:underline"
-                          href={`https://solscan.io/token/${selectedToken.mint}`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          {shortenAddress(selectedToken.mint, 6)}
-                        </a>
-                      </div>
+                  <CardContent className="pt-4 pb-4 px-0">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-[10px] font-semibold text-white">
+                        {selectedToken.symbol || selectedToken.mint.slice(0, 6)}{" "}
+                        ·{" "}
+                        {formatNumber(
+                          selectedToken.balance,
+                          selectedToken.decimals ?? 0,
+                          selectedToken.symbol,
+                        )}
+                      </p>
+                      <a
+                        className="font-medium text-orange-500 underline-offset-4 hover:underline text-[10px] flex-shrink-0"
+                        href={`https://solscan.io/token/${selectedToken.mint}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {shortenAddress(selectedToken.mint, 6)}
+                      </a>
                     </div>
                   </CardContent>
                 </Card>

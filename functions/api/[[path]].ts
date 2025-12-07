@@ -149,10 +149,13 @@ async function handleWalletBalance(url: URL): Promise<Response> {
         if (resp.ok) {
           const rpcJson = await resp.json().catch(() => ({}));
           const lamports = rpcJson?.result?.value ?? 0;
-          const sol = lamports / 1_000_000_000;
-          return new Response(JSON.stringify({ lamports, sol, publicKey }), {
-            headers: CORS_HEADERS,
-          });
+          const balance = lamports / 1_000_000_000;
+          return new Response(
+            JSON.stringify({ balance, lamports, publicKey }),
+            {
+              headers: CORS_HEADERS,
+            },
+          );
         }
 
         // Non-OK response
@@ -1019,6 +1022,10 @@ async function handleDexscreenerTokens(url: URL): Promise<Response> {
       );
     }
 
+    console.log(
+      `[DexScreener Tokens] Requesting data for mints: ${uniqueMints.join(", ")}`,
+    );
+
     const MAX_TOKENS_PER_BATCH = 20;
     const batches: string[][] = [];
     for (let i = 0; i < uniqueMints.length; i += MAX_TOKENS_PER_BATCH) {
@@ -1040,30 +1047,49 @@ async function handleDexscreenerTokens(url: URL): Promise<Response> {
             headers: browserHeaders(),
           });
           if (!resp.ok) {
+            console.warn(
+              `[DexScreener] Endpoint ${base} returned status ${resp.status}`,
+            );
             continue;
           }
           const data = await safeJson(resp);
           if (data?.schemaVersion) schemaVersion = data.schemaVersion;
           if (Array.isArray(data?.pairs)) {
+            console.log(
+              `[DexScreener] Got ${data.pairs.length} pairs from ${base}`,
+            );
             results.push(...data.pairs);
           }
           success = true;
           break;
-        } catch {
-          // try next endpoint
+        } catch (e) {
+          console.warn(
+            `[DexScreener] Error fetching from ${base}:`,
+            e instanceof Error ? e.message : String(e),
+          );
           continue;
         }
       }
-      // continue to next batch even if this one failed
       if (!success) {
-        continue;
+        console.warn(`[DexScreener] Failed to fetch batch: ${batch.join(",")}`);
       }
     }
 
     // Deduplicate and filter to Solana
     const seen = new Set<string>();
     const pairs = results
-      .filter((p: any) => (p?.chainId || "").toLowerCase() === "solana")
+      .filter((p: any) => {
+        // More flexible chain matching - handle various chainId formats
+        const chainId = (p?.chainId || "").toLowerCase().trim();
+        const isValidChain =
+          chainId === "solana" || chainId === "sol" || chainId === "";
+        if (!isValidChain) {
+          console.debug(
+            `[DexScreener] Filtering out pair with chainId: ${p?.chainId}`,
+          );
+        }
+        return isValidChain;
+      })
       .filter((p: any) => {
         const key = `${p?.baseToken?.address || ""}:${p?.quoteToken?.address || ""}`;
         if (seen.has(key)) return false;
@@ -1071,10 +1097,35 @@ async function handleDexscreenerTokens(url: URL): Promise<Response> {
         return true;
       });
 
+    console.log(
+      `[DexScreener Tokens] Processed ${results.length} results, returning ${pairs.length} Solana pairs. Requested: ${uniqueMints.join(", ")}`,
+    );
+
+    // Log what we got
+    if (pairs.length > 0) {
+      const gotMints = Array.from(
+        new Set(
+          pairs
+            .flatMap((p: any) => [
+              p?.baseToken?.address,
+              p?.quoteToken?.address,
+            ])
+            .filter(Boolean),
+        ),
+      );
+      const missingMints = uniqueMints.filter((m) => !gotMints.includes(m));
+      if (missingMints.length > 0) {
+        console.warn(
+          `[DexScreener] Missing mints (${missingMints.length}): ${missingMints.join(", ")}`,
+        );
+      }
+    }
+
     return new Response(JSON.stringify({ schemaVersion, pairs }), {
       headers: CORS_HEADERS,
     });
   } catch (err: any) {
+    console.error("[DexScreener] Tokens handler error:", err);
     return new Response(
       JSON.stringify({
         error: { message: err?.message || String(err) },
@@ -1253,59 +1304,175 @@ async function handleSolPrice(): Promise<Response> {
 }
 
 async function handleTokenPrice(url: URL): Promise<Response> {
-  const mint = url.searchParams.get("mint");
-  const tokenSymbol = url.searchParams.get("symbol") || "FIXERCOIN";
+  const TOKEN_MINTS: Record<string, string> = {
+    SOL: "So11111111111111111111111111111111111111112",
+    USDC: "EPjFWdd5Au7BXRSpJfDw3gEPrwwAau4vTNihtQ5go5Q",
+    USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+    FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+    LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+    FXM: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+  };
+
+  const FALLBACK_PRICES: Record<string, number> = {
+    USDC: 1.0,
+    USDT: 1.0,
+    FIXERCOIN: 0.00008139,
+    SOL: 149.38,
+    LOCKER: 0.00001112,
+    FXM: 0.000003567,
+  };
+
+  const PKR_CONVERSION = 291.9; // 1 USD = ~291.90 PKR
+
+  let mint = url.searchParams.get("mint");
+  let token = url.searchParams.get("token")?.toUpperCase();
+  let tokenSymbol = url.searchParams.get("symbol")?.toUpperCase() || token;
+
+  // Resolve token to mint
+  if (!mint && token && TOKEN_MINTS[token]) {
+    mint = TOKEN_MINTS[token];
+    tokenSymbol = token;
+  } else if (!mint && tokenSymbol && TOKEN_MINTS[tokenSymbol]) {
+    mint = TOKEN_MINTS[tokenSymbol];
+  }
 
   if (!mint && !tokenSymbol) {
     return new Response(
       JSON.stringify({
-        error: "mint or symbol parameter required",
+        error: "mint, token, or symbol parameter required",
       }),
       { status: 400, headers: CORS_HEADERS },
     );
   }
 
+  tokenSymbol = tokenSymbol || "UNKNOWN";
+
   try {
-    const fetchMint = mint || "So11111111111111111111111111111111111111112";
+    // For stablecoins, return hardcoded price immediately
+    if (tokenSymbol === "USDC" || tokenSymbol === "USDT") {
+      const priceUsd = 1.0;
+      const priceInPKR = priceUsd * PKR_CONVERSION;
+      return new Response(
+        JSON.stringify({
+          token: tokenSymbol,
+          mint,
+          rate: priceInPKR,
+          priceInPKR,
+          priceUsd,
+          source: "stablecoin",
+          timestamp: new Date().toISOString(),
+        }),
+        { headers: CORS_HEADERS },
+      );
+    }
+
+    const fetchMint = mint || TOKEN_MINTS.SOL;
     const response = await timeoutFetch(
       `${JUPITER_PRICE_BASE}/price?ids=${fetchMint}`,
       {
         method: "GET",
         headers: browserHeaders(),
       },
+      10000,
     );
 
     if (!response.ok) {
+      // Return fallback price if API fails
+      const fallbackPrice = FALLBACK_PRICES[tokenSymbol];
+      if (fallbackPrice !== undefined) {
+        const priceInPKR = fallbackPrice * PKR_CONVERSION;
+        return new Response(
+          JSON.stringify({
+            token: tokenSymbol,
+            mint: fetchMint,
+            rate: priceInPKR,
+            priceInPKR,
+            priceUsd: fallbackPrice,
+            source: "fallback",
+            timestamp: new Date().toISOString(),
+          }),
+          { headers: CORS_HEADERS },
+        );
+      }
+
       return new Response(
-        JSON.stringify({ error: "Failed to fetch token price" }),
-        { status: response.status, headers: CORS_HEADERS },
+        JSON.stringify({
+          error: "Failed to fetch token price",
+          token: tokenSymbol,
+        }),
+        { status: 502, headers: CORS_HEADERS },
       );
     }
 
     const data = await response.json();
     const price = data?.data?.[fetchMint]?.price ?? null;
 
-    if (price === null) {
+    if (price === null || price === undefined) {
+      // Return fallback price
+      const fallbackPrice = FALLBACK_PRICES[tokenSymbol];
+      if (fallbackPrice !== undefined) {
+        const priceInPKR = fallbackPrice * PKR_CONVERSION;
+        return new Response(
+          JSON.stringify({
+            token: tokenSymbol,
+            mint: fetchMint,
+            rate: priceInPKR,
+            priceInPKR,
+            priceUsd: fallbackPrice,
+            source: "fallback",
+            timestamp: new Date().toISOString(),
+          }),
+          { headers: CORS_HEADERS },
+        );
+      }
+
       return new Response(
-        JSON.stringify({ error: "Token price not available" }),
+        JSON.stringify({
+          error: "Token price not available",
+          token: tokenSymbol,
+        }),
         { status: 502, headers: CORS_HEADERS },
       );
     }
 
+    const priceInPKR = price * PKR_CONVERSION;
     return new Response(
       JSON.stringify({
         token: tokenSymbol,
         mint: fetchMint,
+        rate: priceInPKR,
+        priceInPKR,
         priceUsd: price,
+        source: "jupiter",
         timestamp: new Date().toISOString(),
       }),
       { headers: CORS_HEADERS },
     );
   } catch (e: any) {
+    // Return fallback on error
+    const fallbackPrice = FALLBACK_PRICES[tokenSymbol];
+    if (fallbackPrice !== undefined) {
+      const priceInPKR = fallbackPrice * PKR_CONVERSION;
+      return new Response(
+        JSON.stringify({
+          token: tokenSymbol,
+          mint: mint || TOKEN_MINTS[tokenSymbol],
+          rate: priceInPKR,
+          priceInPKR,
+          priceUsd: fallbackPrice,
+          source: "fallback",
+          error: "API failed, using fallback",
+          timestamp: new Date().toISOString(),
+        }),
+        { headers: CORS_HEADERS },
+      );
+    }
+
     return new Response(
       JSON.stringify({
         error: "Failed to fetch token price",
         details: String(e?.message || e),
+        token: tokenSymbol,
       }),
       { status: 502, headers: CORS_HEADERS },
     );

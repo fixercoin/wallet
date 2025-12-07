@@ -14,6 +14,7 @@ import {
   EyeOff,
   Twitter,
   Send,
+  Headphones,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
@@ -23,9 +24,14 @@ import bs58 from "bs58";
 interface SettingsProps {
   onBack: () => void;
   onOpenSetup?: () => void;
+  onDocumentation?: () => void;
 }
 
-export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
+export const Settings: React.FC<SettingsProps> = ({
+  onBack,
+  onOpenSetup,
+  onDocumentation,
+}) => {
   const { wallet, wallets, logout, selectWallet } = useWallet();
   const { toast } = useToast();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -162,10 +168,10 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
-      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 py-6 relative z-20">
+      <div className="w-full relative z-20">
         <div>
-          <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden mx-0">
-            <div className="flex items-center gap-3 -mt-4 -mx-6 sm:-mx-0 px-6 sm:px-0 pt-4 pb-2">
+          <div className="mt-6 mb-1 p-6 border-0 bg-transparent relative mx-0">
+            <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
               <Button
                 variant="ghost"
                 size="icon"
@@ -340,12 +346,13 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                 </CardContent>
               </Card>
 
+              {/* Documentation Card */}
               {/* Helpline Card */}
               <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-[hsl(var(--foreground))]">
-                      HELPLINE 24/7
+                      CONTACT
                     </span>
                     <div className="flex items-center gap-3">
                       <a
@@ -366,6 +373,15 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       >
                         <Send className="h-5 w-5" />
                       </a>
+                      {onDocumentation && (
+                        <button
+                          onClick={onDocumentation}
+                          className="p-2 hover:bg-white/10 rounded-md transition-colors text-gray-600 hover:text-gray-900"
+                          aria-label="Documentation"
+                        >
+                          <Headphones className="h-5 w-5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </CardContent>

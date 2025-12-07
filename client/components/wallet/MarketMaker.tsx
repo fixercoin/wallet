@@ -1,19 +1,9 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
-import { resolveApiUrl } from "@/lib/api-client";
-import { jupiterAPI } from "@/lib/services/jupiter";
-import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
-import { VersionedTransaction, Keypair } from "@solana/web3.js";
-import { rpcCall } from "@/lib/rpc-utils";
-import {
-  PublicKey,
-  SystemProgram,
-  Transaction as SolanaTransaction,
-} from "@solana/web3.js";
 import {
   Select,
   SelectContent,
@@ -21,1567 +11,845 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, AlertTriangle, Zap, X } from "lucide-react";
+import { ArrowLeft, Loader } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
+import { solPriceService } from "@/lib/services/sol-price";
+import { MarketMakerHistoryCard } from "./MarketMakerHistoryCard";
+import { PriceLoader } from "@/components/ui/price-loader";
+import {
+  botOrdersStorage,
+  BotSession,
+  BotOrder,
+} from "@/lib/bot-orders-storage";
+import {
+  executeLimitOrder,
+  checkAndExecutePendingOrders,
+} from "@/lib/market-maker-executor";
 
 interface MarketMakerProps {
   onBack: () => void;
 }
 
-interface MakerAccount {
-  id: string;
-  address: string;
-  initialSOLAmount: number;
-  buyTransactions: Transaction[];
-  sellTransactions: Transaction[];
-  currentTokenBalance: number;
-  profitUSD: number;
-  status: "active" | "completed" | "error";
-  errorMessage?: string;
+const TOKEN_CONFIGS: Record<
+  string,
+  { name: string; mint: string; decimals: number }
+> = {
+  FIXERCOIN: {
+    name: "FIXERCOIN",
+    mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+    decimals: 6,
+  },
+  USDC: {
+    name: "USDC",
+    mint: "EPjFWaLb3odccVLd7wfL9K3JWuWKq6PPczQkfCW2eKi",
+    decimals: 6,
+  },
+  SOL: {
+    name: "SOL",
+    mint: "So11111111111111111111111111111111111111112",
+    decimals: 9,
+  },
+};
+
+interface LimitOrder {
+  price: string;
+  amount: string;
+  total: string;
 }
-
-interface Transaction {
-  type: "buy" | "sell";
-  timestamp: number;
-  solAmount: number;
-  tokenAmount: number;
-  feeAmount: number;
-  signature?: string;
-  status: "pending" | "confirmed" | "failed";
-}
-
-interface MarketMakerSession {
-  id: string;
-  tokenAddress: string;
-  tokenSymbol: string;
-  numberOfMakers: number;
-  minOrderSOL: number;
-  maxOrderSOL: number;
-  minDelaySeconds: number;
-  maxDelaySeconds: number;
-  sellStrategy: "hold" | "auto-profit" | "manual-target" | "gradually";
-  profitTargetPercent?: number;
-  manualPriceTarget?: number;
-  gradualSellPercent?: number;
-  estimatedTotalFees: number;
-  makers: MakerAccount[];
-  createdAt: number;
-  status: "setup" | "running" | "completed";
-}
-
-const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
-const CREATION_FEE_SOL = 0.01; // Fixed 0.01 SOL fee
-const SWAP_FEE_SOL = 0.0007; // Fixed 0.0007 SOL fee per swap
-const SOL_MINT = "So11111111111111111111111111111111111111112";
-const TOKEN_ACCOUNT_RENT = 0.002;
-const STORAGE_KEY = "market_maker_sessions";
-const FIXED_TOKEN_ADDRESS = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
-const FIXED_DELAY_SECONDS = 0; // Instant execution - no delay
-const FIXED_PROFIT_PERCENT = 5;
-
-// Helper function to calculate entry price (SOL per token)
-const getEntryPrice = (solAmount: number, tokenAmount: number): number => {
-  if (tokenAmount === 0) return 0;
-  return solAmount / tokenAmount;
-};
-
-// Helper function to calculate exit price (SOL per token)
-const getExitPrice = (solAmount: number, tokenAmount: number): number => {
-  if (tokenAmount === 0) return 0;
-  return solAmount / tokenAmount;
-};
-
-// Helper function to get trade pairs (buy + corresponding sell)
-const getTradePairs = (
-  buyTransactions: Transaction[],
-  sellTransactions: Transaction[],
-): Array<{
-  buyTx: Transaction;
-  sellTx?: Transaction;
-  entryPrice: number;
-  exitPrice?: number;
-  profitSOL?: number;
-  profitPercent?: number;
-}> => {
-  return buyTransactions.map((buyTx, index) => {
-    const sellTx = sellTransactions[index];
-    const entryPrice = getEntryPrice(buyTx.solAmount, buyTx.tokenAmount);
-    const exitPrice = sellTx
-      ? getExitPrice(sellTx.solAmount, sellTx.tokenAmount)
-      : undefined;
-    const profitSOL = sellTx ? sellTx.solAmount - buyTx.solAmount : undefined;
-    const profitPercent =
-      exitPrice && entryPrice > 0
-        ? ((exitPrice - entryPrice) / entryPrice) * 100
-        : undefined;
-
-    return {
-      buyTx,
-      sellTx,
-      entryPrice,
-      exitPrice,
-      profitSOL,
-      profitPercent,
-    };
-  });
-};
-
-// Helper function to format error messages for display
-const formatErrorMessage = (error: string): string => {
-  if (!error) return "Unknown error occurred";
-
-  // Handle "already been processed" error
-  if (error.includes("already been processed")) {
-    return "Transaction already submitted. Please wait for it to confirm on-chain.";
-  }
-
-  // Handle RPC timeout
-  if (error.includes("timeout") || error.includes("abort")) {
-    return "Network timeout. The RPC endpoints are slow or unreachable.";
-  }
-
-  // Handle rate limiting
-  if (error.includes("429") || error.includes("rate limit")) {
-    return "Rate limited by RPC provider. Please wait before retrying.";
-  }
-
-  // Handle insufficient balance
-  if (error.includes("insufficient") || error.includes("not enough")) {
-    return "Insufficient balance to complete this transaction.";
-  }
-
-  // Handle invalid token
-  if (error.includes("No route found")) {
-    return "Token swap route not available. The token may not be tradeable.";
-  }
-
-  // Handle price impact
-  if (error.includes("Price impact")) {
-    return "Price impact too high. Token may be illiquid or price changed significantly.";
-  }
-
-  // Handle simulation failures
-  if (error.includes("Transaction simulation failed")) {
-    return "Transaction would fail on-chain. Check your balance and token availability.";
-  }
-
-  // Handle RPC call failed
-  if (error.includes("RPC call failed")) {
-    // Extract the underlying error message if available
-    const match = error.match(/:\s*(.+)$/);
-    if (match && match[1] && match[1].length > 5) {
-      return `Network error: ${match[1]}`;
-    }
-    return "Network error. Please check your connection and try again.";
-  }
-
-  // Truncate very long error messages
-  if (error.length > 150) {
-    return error.substring(0, 150) + "...";
-  }
-
-  return error;
-};
 
 export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
-  const { wallet, tokens } = useWallet();
+  const { tokens, wallet } = useWallet();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const [tokenAddress] = useState(FIXED_TOKEN_ADDRESS);
-  const [numberOfMakers, setNumberOfMakers] = useState("5");
-  const [orderAmount, setOrderAmount] = useState("0.02");
-  const [minDelaySeconds] = useState(String(FIXED_DELAY_SECONDS));
-  const [maxDelaySeconds] = useState(String(FIXED_DELAY_SECONDS));
-  const [sellStrategy] = useState<
-    "hold" | "auto-profit" | "manual-target" | "gradually"
-  >("auto-profit");
-  // Hardcoded 5% profit target - no user input allowed
-  const profitTargetPercent = String(FIXED_PROFIT_PERCENT);
-  const [manualPriceTarget, setManualPriceTarget] = useState("");
-  const [gradualSellPercent] = useState("20");
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentSession, setCurrentSession] =
-    useState<MarketMakerSession | null>(null);
-  const [sessions, setSessions] = useState<MarketMakerSession[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
+  const [selectedToken, setSelectedToken] = useState("FIXERCOIN");
+  const [orderMode, setOrderMode] = useState<"BUY" | "SELL">("BUY");
+  const [buyOrder, setBuyOrder] = useState<LimitOrder>({
+    price: "",
+    amount: "",
+    total: "0.01",
   });
+  const [sellOrder, setSellOrder] = useState<LimitOrder>({
+    price: "",
+    amount: "",
+    total: "0.02",
+  });
+  const [sellOutputToken, setSellOutputToken] = useState<"SOL" | "USDC">("SOL");
+  const [isLoading, setIsLoading] = useState(false);
+  const [livePrice, setLivePrice] = useState<number | null>(null);
+  const [solPrice, setSolPrice] = useState<number | null>(null);
+  const [isFetchingPrice, setIsFetchingPrice] = useState(false);
+  const [session, setSession] = useState<BotSession | null>(null);
+  const [executingOrders, setExecutingOrders] = useState<Set<string>>(
+    new Set(),
+  );
+
+  const tokenConfig = TOKEN_CONFIGS[selectedToken];
+
+  // Initialize or load session on component mount
+  useEffect(() => {
+    let currentSession = botOrdersStorage.getCurrentSession();
+    if (!currentSession) {
+      // Create a new session if one doesn't exist
+      currentSession = botOrdersStorage.createSession(
+        "FIXERCOIN",
+        tokenConfig.mint,
+        1,
+        0.01,
+        0.00002,
+      );
+      botOrdersStorage.saveSession(currentSession);
+    }
+    setSession(currentSession);
+  }, []);
+
+  // Fetch live price on component mount or token change, and set up polling
+  useEffect(() => {
+    const fetchPrices = async () => {
+      setIsFetchingPrice(true);
+      try {
+        let tokenPrice: number | null = null;
+        let solPriceUsd: number | null = null;
+
+        if (selectedToken === "FIXERCOIN") {
+          const priceData = await fixercoinPriceService.getFixercoinPrice();
+          if (priceData && priceData.price > 0) {
+            tokenPrice = priceData.price;
+          }
+        }
+
+        // Always fetch SOL price for calculation
+        try {
+          const solPriceData = await solPriceService.getSolPrice();
+          if (solPriceData && solPriceData.price > 0) {
+            solPriceUsd = solPriceData.price;
+          }
+        } catch (error) {
+          console.error("[MarketMaker] Error fetching SOL price:", error);
+        }
+
+        if (tokenPrice && tokenPrice > 0) {
+          setLivePrice(tokenPrice);
+          console.log(
+            `[MarketMaker] Fetched live price for ${selectedToken}: ${tokenPrice}`,
+          );
+        }
+
+        if (solPriceUsd && solPriceUsd > 0) {
+          setSolPrice(solPriceUsd);
+          console.log(`[MarketMaker] Fetched SOL price: ${solPriceUsd}`);
+        }
+      } catch (error) {
+        console.error("[MarketMaker] Error fetching prices:", error);
+      } finally {
+        setIsFetchingPrice(false);
+      }
+    };
+
+    fetchPrices();
+
+    // Set up polling to refresh prices every 20 seconds for live price updates
+    const priceRefreshInterval = setInterval(() => {
+      fetchPrices();
+    }, 20000);
+
+    return () => {
+      clearInterval(priceRefreshInterval);
+    };
+  }, [selectedToken]);
+
+  // Auto-execution effect: check and execute pending orders when price matches
+  useEffect(() => {
+    if (!session || !livePrice || !wallet) {
+      if (!wallet) {
+        console.warn("[MarketMaker] Wallet not available for auto-execution");
+      }
+      return;
+    }
+
+    if (!wallet.secretKey) {
+      console.warn(
+        "[MarketMaker] Wallet does not have private key available. Auto-execution will not proceed. Please use a wallet with private key access.",
+      );
+      return;
+    }
+
+    console.log("[MarketMaker] Auto-execution enabled. Wallet:", {
+      publicKey: wallet.publicKey,
+      hasSecretKey: !!wallet.secretKey,
+    });
+
+    const checkAndExecute = async () => {
+      try {
+        const currentSession = botOrdersStorage.getCurrentSession();
+        if (!currentSession) return;
+
+        const pendingBuyOrders = currentSession.buyOrders.filter(
+          (o) => o.status === "pending",
+        );
+        const pendingSellOrders = currentSession.sellOrders.filter(
+          (o) => o.status === "pending",
+        );
+
+        if (pendingBuyOrders.length === 0 && pendingSellOrders.length === 0) {
+          return;
+        }
+
+        console.log(
+          `[MarketMaker] Checking ${pendingBuyOrders.length + pendingSellOrders.length} pending orders at price ${livePrice}`,
+        );
+
+        // Check buy orders
+        for (const order of pendingBuyOrders) {
+          console.log(
+            `[MarketMaker] Checking BUY order: livePrice=${livePrice}, buyPrice=${order.buyPrice}, match=${livePrice <= order.buyPrice}`,
+          );
+
+          if (livePrice <= order.buyPrice && !executingOrders.has(order.id)) {
+            console.log(
+              `[MarketMaker] Price match for BUY order: ${livePrice} <= ${order.buyPrice}. Executing...`,
+            );
+            setExecutingOrders((prev) => new Set([...prev, order.id]));
+
+            const result = await executeLimitOrder(
+              currentSession,
+              order,
+              livePrice,
+              wallet,
+            );
+
+            setExecutingOrders((prev) => {
+              const next = new Set(prev);
+              next.delete(order.id);
+              return next;
+            });
+
+            if (result.success) {
+              toast({
+                title: "Buy Order Executed",
+                description: `Successfully bought ${result.order?.tokenAmount?.toFixed(6) || "tokens"}`,
+              });
+              // Reload session
+              const updatedSession = botOrdersStorage.getCurrentSession();
+              if (updatedSession) {
+                setSession(updatedSession);
+              }
+            } else {
+              console.error(
+                "[MarketMaker] Buy order execution failed:",
+                result.error,
+              );
+              // Show error toast for wallet-related errors
+              if (
+                result.error &&
+                (result.error.includes("secretKey") ||
+                  result.error.includes("private key"))
+              ) {
+                toast({
+                  title: "Execution Failed",
+                  description: result.error,
+                  variant: "destructive",
+                });
+              }
+            }
+          }
+        }
+
+        // Check sell orders
+        for (const order of pendingSellOrders) {
+          console.log(
+            `[MarketMaker] Checking SELL order: livePrice=${livePrice}, targetSellPrice=${order.targetSellPrice}, match=${livePrice >= order.targetSellPrice}`,
+          );
+
+          if (
+            livePrice >= order.targetSellPrice &&
+            !executingOrders.has(order.id)
+          ) {
+            console.log(
+              `[MarketMaker] Price match for SELL order: ${livePrice} >= ${order.targetSellPrice}. Executing...`,
+            );
+            setExecutingOrders((prev) => new Set([...prev, order.id]));
+
+            const result = await executeLimitOrder(
+              currentSession,
+              order,
+              livePrice,
+              wallet,
+            );
+
+            setExecutingOrders((prev) => {
+              const next = new Set(prev);
+              next.delete(order.id);
+              return next;
+            });
+
+            if (result.success) {
+              const outputToken = result.order?.outputToken || "SOL";
+              const outputAmount =
+                result.order?.outputToken === "USDC"
+                  ? result.order?.outputAmount?.toFixed(6)
+                  : result.order?.outputAmount?.toFixed(9);
+              toast({
+                title: "Sell Order Executed",
+                description: `Successfully sold ${result.order?.tokenAmount?.toFixed(6) || "tokens"} for ${outputAmount || "0"} ${outputToken}`,
+              });
+              // Reload session
+              const updatedSession = botOrdersStorage.getCurrentSession();
+              if (updatedSession) {
+                setSession(updatedSession);
+              }
+            } else {
+              console.error(
+                "[MarketMaker] Sell order execution failed:",
+                result.error,
+              );
+              // Show error toast for wallet-related errors
+              if (
+                result.error &&
+                (result.error.includes("secretKey") ||
+                  result.error.includes("private key"))
+              ) {
+                toast({
+                  title: "Execution Failed",
+                  description: result.error,
+                  variant: "destructive",
+                });
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("[MarketMaker] Error in auto-execution check:", error);
+      }
+    };
+
+    // Check for order execution every 10 seconds
+    const executionInterval = setInterval(checkAndExecute, 10000);
+
+    // Also check immediately on price change
+    checkAndExecute();
+
+    return () => {
+      clearInterval(executionInterval);
+    };
+  }, [session, livePrice, wallet, toast]);
 
   const solToken = useMemo(
     () => tokens.find((t) => t.symbol === "SOL"),
     [tokens],
   );
 
-  const solBalance = solToken?.balance || 0;
-
-  const validateInputs = useCallback((): string | null => {
-    const numMakers = parseInt(numberOfMakers);
-    if (isNaN(numMakers) || numMakers < 1 || numMakers > 1000)
-      return "Number of makers must be between 1 and 1000";
-
-    const amount = parseFloat(orderAmount);
-
-    if (isNaN(amount) || amount < 0.01)
-      return "Order amount must be at least 0.01 SOL";
-
-    return null;
-  }, [numberOfMakers, orderAmount]);
-
-  const calculateEstimatedCost = useCallback((): {
-    totalSOLNeeded: number;
-    totalFees: number;
-  } => {
-    const numMakers = parseInt(numberOfMakers);
-    const amount = parseFloat(orderAmount);
-
-    const totalBuySol = numMakers * amount;
-
-    const tokenAccountFees = numMakers * TOKEN_ACCOUNT_RENT;
-    const creationFee = CREATION_FEE_SOL;
-    const swapFees = numMakers * SWAP_FEE_SOL * 2; // Buy and sell fees
-    const totalFees = tokenAccountFees + creationFee + swapFees;
-
-    return {
-      totalSOLNeeded: totalBuySol + totalFees,
-      totalFees,
-    };
-  }, [numberOfMakers, orderAmount]);
-
-  const { totalSOLNeeded, totalFees } = calculateEstimatedCost();
-  const canAfford = solBalance >= totalSOLNeeded;
-
-  const handleRemoveSession = useCallback(
-    (sessionId: string, e: React.MouseEvent) => {
-      e.stopPropagation();
-      const updatedSessions = sessions.filter((s) => s.id !== sessionId);
-      setSessions(updatedSessions);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSessions));
-      toast({
-        title: "Session Removed",
-        description: "The session has been deleted",
-      });
-    },
-    [sessions, toast],
+  const usdcToken = useMemo(
+    () => tokens.find((t) => t.symbol === "USDC"),
+    [tokens],
   );
 
-  const handleStartMarketMaking = async () => {
-    const validationError = validateInputs();
-    if (validationError) {
-      toast({
-        title: "Validation Error",
-        description: validationError,
-        variant: "destructive",
-      });
-      return;
-    }
+  const selectedTokenBalance = useMemo(
+    () => tokens.find((t) => t.symbol === selectedToken),
+    [tokens, selectedToken],
+  );
 
-    if (!canAfford) {
-      toast({
-        title: "Insufficient SOL",
-        description: `You need ${totalSOLNeeded.toFixed(4)} SOL but only have ${solBalance.toFixed(4)} SOL`,
-        variant: "destructive",
-      });
-      return;
-    }
+  const solBalance = solToken?.balance || 0;
+  const usdcBalance = usdcToken?.balance || 0;
+  const tokenBalance = selectedTokenBalance?.balance || 0;
 
-    setIsLoading(true);
+  const calculateAmountFromTotal = useCallback(
+    (totalSol: string, price: string) => {
+      const total = parseFloat(totalSol) || 0;
+      const p = parseFloat(price) || 0;
+      if (p <= 0) return "0";
+      return (total / p).toFixed(8);
+    },
+    [],
+  );
 
-    try {
-      const numMakers = parseInt(numberOfMakers);
+  const calculateTotalFromAmountPrice = useCallback(
+    (price: string, amount: string) => {
+      const p = parseFloat(price) || 0;
+      const a = parseFloat(amount) || 0;
+      return (p * a).toFixed(8);
+    },
+    [],
+  );
 
-      const amount = parseFloat(orderAmount);
-      const newSession: MarketMakerSession = {
-        id: `mm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        tokenAddress: tokenAddress.trim(),
-        tokenSymbol: "",
-        numberOfMakers: numMakers,
-        minOrderSOL: amount,
-        maxOrderSOL: amount,
-        minDelaySeconds: parseInt(minDelaySeconds),
-        maxDelaySeconds: parseInt(maxDelaySeconds),
-        sellStrategy,
-        profitTargetPercent:
-          sellStrategy === "auto-profit"
-            ? parseFloat(profitTargetPercent)
-            : undefined,
-        manualPriceTarget:
-          sellStrategy === "manual-target"
-            ? parseFloat(manualPriceTarget)
-            : undefined,
-        gradualSellPercent:
-          sellStrategy === "gradually"
-            ? parseFloat(gradualSellPercent)
-            : undefined,
-        estimatedTotalFees: totalFees,
-        makers: Array.from({ length: numMakers }, (_, i) => ({
-          id: `maker_${i + 1}`,
-          address: "",
-          initialSOLAmount: amount,
-          buyTransactions: [],
-          sellTransactions: [],
-          currentTokenBalance: 0,
-          profitUSD: 0,
-          status: "active" as const,
-        })),
-        createdAt: Date.now(),
-        status: "setup",
-      };
-
-      setCurrentSession(newSession);
-      setSessions([newSession, ...sessions]);
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify([newSession, ...sessions]),
-      );
-
-      toast({
-        title: "Market Maker Session Created",
-        description: `${numMakers} maker accounts configured. Ready to start.`,
-      });
-    } catch (error) {
-      console.error("Error creating market maker session:", error);
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to create session",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleBuyTargetPriceChange = (value: string) => {
+    setBuyOrder({
+      ...buyOrder,
+      price: value,
+    });
   };
 
-  // Helper function to transfer fees to fee wallet
-  const transferFeeToWallet = async (
-    feeAmount: number,
-    makerId: string,
-  ): Promise<boolean> => {
-    try {
-      if (!wallet || !wallet.secretKey || feeAmount <= 0) {
-        console.warn(
-          `[MarketMaker] Invalid wallet or fee amount for ${makerId}`,
-        );
-        return false;
-      }
+  const handleBuyUsdcAmountChange = (value: string) => {
+    let estimatedAmount = "0";
 
-      const feeWalletPubkey = new PublicKey(FEE_WALLET);
-      const userPubkey = new PublicKey(wallet.publicKey);
-
-      // Create transfer instruction
-      const transferInstruction = SystemProgram.transfer({
-        fromPubkey: userPubkey,
-        toPubkey: feeWalletPubkey,
-        lamports: Math.floor(feeAmount * 1e9), // Convert SOL to lamports
-      });
-
-      // Create and sign transaction
-      const latestBlockhash = await rpcCall("getLatestBlockhash", []);
-      const blockHash =
-        (latestBlockhash as any)?.value?.blockhash ||
-        (latestBlockhash as any)?.blockhash;
-
-      if (!blockHash) {
-        throw new Error("Failed to get latest blockhash for fee transfer");
-      }
-
-      const transaction = new SolanaTransaction({
-        recentBlockhash: blockHash,
-        feePayer: userPubkey,
-      });
-
-      transaction.add(transferInstruction);
-
-      // Sign transaction
-      const getKeypair = (): Keypair | null => {
-        try {
-          const sk = wallet.secretKey as any as Uint8Array | number[] | string;
-          if (!sk) return null;
-          if (typeof sk === "string") {
-            const arr = bytesFromBase64(sk);
-            return Keypair.fromSecretKey(arr);
-          }
-          if (Array.isArray(sk))
-            return Keypair.fromSecretKey(Uint8Array.from(sk));
-          return Keypair.fromSecretKey(sk as Uint8Array);
-        } catch (e) {
-          console.error("[MarketMaker] Error creating keypair:", e);
-          return null;
-        }
-      };
-
-      const keypair = getKeypair();
-      if (!keypair) {
-        throw new Error("Failed to create keypair for fee transfer");
-      }
-
-      transaction.sign(keypair);
-
-      // Send transaction through backend proxy (avoids CORS issues)
-      const serialized = transaction.serialize();
-      const txBase64 = base64FromBytes(serialized);
-
-      console.log(
-        `[MarketMaker] Sending fee transfer for ${makerId}: ◎${feeAmount.toFixed(4)} to ${FEE_WALLET}`,
-      );
-
-      const response = await fetch("/api/solana-send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          signedBase64: txBase64,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMsg = errorData.error || `HTTP ${response.status}`;
-        throw new Error(errorMsg);
-      }
-
-      const data = await response.json();
-      const signature = data.signature || data.result;
-
-      console.log(
-        `✅ Fee transfer successful for ${makerId}: ◎${feeAmount.toFixed(4)} to ${FEE_WALLET} (Signature: ${signature})`,
-      );
-      return true;
-    } catch (error) {
-      console.error(
-        `❌ Fee transfer failed for ${makerId}:`,
-        error instanceof Error ? error.message : String(error),
-      );
-      return false;
+    if (livePrice && livePrice > 0 && solPrice && solPrice > 0) {
+      // Calculate: SOL Amount * SOL Price in USD / Token Price in USD
+      const solAmount = parseFloat(value) || 0;
+      const solValueUsd = solAmount * solPrice;
+      const tokenAmount = solValueUsd / livePrice;
+      estimatedAmount = tokenAmount.toFixed(8);
     }
+
+    setBuyOrder({
+      ...buyOrder,
+      total: value,
+      amount: estimatedAmount,
+    });
   };
 
-  const handleStartSession = async () => {
-    if (!currentSession) {
-      toast({
-        title: "Error",
-        description: "No active session found",
-        variant: "destructive",
-      });
-      return;
+  const handleSellPriceChange = (value: string) => {
+    setSellOrder({
+      ...sellOrder,
+      price: value,
+    });
+  };
+
+  const handleSellAmountChange = (value: string) => {
+    let estimatedTotal = "0";
+
+    if (livePrice && livePrice > 0 && solPrice && solPrice > 0) {
+      // Calculate: Token Amount * Token Price in USD / SOL Price in USD
+      const tokenAmount = parseFloat(value) || 0;
+      const tokenValueUsd = tokenAmount * livePrice;
+      const solAmount = tokenValueUsd / solPrice;
+      estimatedTotal = solAmount.toFixed(8);
     }
 
-    setIsLoading(true);
+    setSellOrder({
+      ...sellOrder,
+      amount: value,
+      total: estimatedTotal,
+    });
+  };
 
-    try {
-      // Client-side execution: perform repeated buys using Jupiter and sign/send locally
-      if (!wallet || !wallet.secretKey) {
-        throw new Error("Wallet secret key required for client-side execution");
-      }
-
-      const solDecimals = 9;
-      const numMakers = currentSession.numberOfMakers;
-      const makers = currentSession.makers.map((m) => ({
-        ...m,
-        status: "active" as const,
-        errorMessage: undefined,
+  // Recalculate estimated amounts when prices update
+  useEffect(() => {
+    if (orderMode === "BUY" && buyOrder.total && livePrice && solPrice) {
+      const solAmount = parseFloat(buyOrder.total) || 0;
+      const solValueUsd = solAmount * solPrice;
+      const tokenAmount = solValueUsd / livePrice;
+      setBuyOrder((prev) => ({
+        ...prev,
+        amount: tokenAmount.toFixed(8),
       }));
+    } else if (
+      orderMode === "SELL" &&
+      sellOrder.amount &&
+      livePrice &&
+      solPrice
+    ) {
+      const tokenAmount = parseFloat(sellOrder.amount) || 0;
+      const tokenValueUsd = tokenAmount * livePrice;
+      const solAmount = tokenValueUsd / solPrice;
+      setSellOrder((prev) => ({
+        ...prev,
+        total: solAmount.toFixed(8),
+      }));
+    }
+  }, [livePrice, solPrice, orderMode]);
 
-      const updatedSession = {
-        ...currentSession,
-        status: "running" as const,
-        makers,
-      };
-      setCurrentSession(updatedSession);
-      const updatedSessions = sessions.map((s) =>
-        s.id === updatedSession.id ? updatedSession : s,
-      );
-      setSessions(updatedSessions);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSessions));
+  const validateBuyOrder = (): string | null => {
+    const price = parseFloat(buyOrder.price);
+    const amount = parseFloat(buyOrder.amount);
+    const total = parseFloat(buyOrder.total);
 
-      // Transfer creation fee first
-      console.log(
-        `[MarketMaker] Transferring creation fee: ◎${CREATION_FEE_SOL} to ${FEE_WALLET}`,
-      );
-      const creationFeeTransferred = await transferFeeToWallet(
-        CREATION_FEE_SOL,
-        "creation",
-      );
+    if (isNaN(price) || price <= 0) return "Buy price must be greater than 0";
+    if (isNaN(amount) || amount <= 0)
+      return "Buy amount must be greater than 0";
+    if (isNaN(total) || total <= 0) return "Buy total is invalid";
+    if (solBalance < total)
+      return `Insufficient SOL. Need ${total.toFixed(8)}, have ${solBalance.toFixed(8)}`;
 
-      if (!creationFeeTransferred) {
-        console.warn(
-          "[MarketMaker] Creation fee transfer failed, continuing with market making...",
-        );
-      }
+    return null;
+  };
 
+  const validateSellOrder = (): string | null => {
+    const price = parseFloat(sellOrder.price);
+    const amount = parseFloat(sellOrder.amount);
+
+    if (isNaN(price) || price <= 0) return "Sell price must be greater than 0";
+    if (isNaN(amount) || amount <= 0)
+      return "Sell amount must be greater than 0";
+    if (tokenBalance < amount)
+      return `Insufficient ${selectedToken}. Need ${amount}, have ${tokenBalance.toFixed(8)}`;
+
+    return null;
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!session) {
       toast({
-        title: "Market Making Started",
-        description: `Executing ${numMakers} buys. This may take a few moments...`,
+        title: "Error",
+        description: "No active session. Please refresh the page.",
+        variant: "destructive",
       });
+      return;
+    }
 
-      // Helper to sign and send base64 versioned tx
-      const getKeypair = (): Keypair | null => {
-        try {
-          const sk = wallet.secretKey as any as Uint8Array | number[] | string;
-          if (!sk) return null;
-          if (typeof sk === "string") {
-            const arr = bytesFromBase64(sk);
-            return Keypair.fromSecretKey(arr);
-          }
-          if (Array.isArray(sk))
-            return Keypair.fromSecretKey(Uint8Array.from(sk));
-          return Keypair.fromSecretKey(sk as Uint8Array);
-        } catch (e) {
-          console.error("Error creating keypair:", e);
-          return null;
-        }
-      };
-
-      const sendSignedTxGeneric = async (txBase64: string): Promise<string> => {
-        const buf = bytesFromBase64(txBase64);
-        const vtx = VersionedTransaction.deserialize(buf);
-        const kp = getKeypair();
-        if (!kp) throw new Error("Missing keypair to sign transaction");
-        vtx.sign([kp]);
-        const signed = vtx.serialize();
-        const signedBase64 = base64FromBytes(signed);
-        const res = await rpcCall("sendTransaction", [
-          signedBase64,
-          { skipPreflight: false, preflightCommitment: "confirmed" },
-        ]);
-        return res as string;
-      };
-
-      // Track successful trades
-      let successCount = 0;
-      let errorCount = 0;
-
-      // Execute sequential buys with delays
-      for (let i = 0; i < numMakers; i++) {
-        const amountSol = parseFloat(currentSession.minOrderSOL);
-
-        try {
-          const rawAmount = jupiterAPI.formatSwapAmount(amountSol, solDecimals);
-          const quote = await jupiterAPI.getQuote(
-            SOL_MINT,
-            currentSession.tokenAddress,
-            Number(rawAmount),
-            120,
-          );
-
-          if (!quote) {
-            const m = updatedSession.makers[i];
-            if (m) {
-              const error = "No route found for token swap";
-              m.status = "error" as const;
-              m.errorMessage = error;
-              m.buyTransactions.push({
-                type: "buy",
-                timestamp: Date.now(),
-                solAmount: amountSol,
-                tokenAmount: 0,
-                feeAmount: 0,
-                status: "failed",
-              });
-              console.error(`Maker ${m.id}: ${error}`);
-            }
-            errorCount++;
-            continue;
-          }
-
-          const impact =
-            Math.abs(parseFloat(quote.priceImpactPct || "0")) * 100;
-          if (isFinite(impact) && impact > 20) {
-            const m = updatedSession.makers[i];
-            if (m) {
-              const error = `Price impact too high: ${impact.toFixed(2)}%`;
-              m.status = "error" as const;
-              m.errorMessage = error;
-              m.buyTransactions.push({
-                type: "buy",
-                timestamp: Date.now(),
-                solAmount: amountSol,
-                tokenAmount: 0,
-                feeAmount: 0,
-                status: "failed",
-              });
-              console.error(`Maker ${m.id}: ${error}`);
-            }
-            errorCount++;
-            continue;
-          }
-
-          const swap = await jupiterAPI.getSwapTransaction({
-            quoteResponse: quote,
-            userPublicKey: wallet.publicKey,
-            wrapAndUnwrapSol: true,
-          });
-
-          if (!swap || !swap.swapTransaction) {
-            const m = updatedSession.makers[i];
-            if (m) {
-              const error = "Failed to build swap transaction";
-              m.status = "error" as const;
-              m.errorMessage = error;
-              m.buyTransactions.push({
-                type: "buy",
-                timestamp: Date.now(),
-                solAmount: amountSol,
-                tokenAmount: 0,
-                feeAmount: 0,
-                status: "failed",
-              });
-              console.error(`Maker ${m.id}: ${error}`);
-            }
-            errorCount++;
-            continue;
-          }
-
-          try {
-            const sig = await sendSignedTxGeneric(swap.swapTransaction);
-            const m = updatedSession.makers[i];
-            if (m) {
-              const tokenAmount =
-                jupiterAPI.parseSwapAmount(quote.outAmount, 6) || 0;
-
-              // Transfer fixed fee for the buy
-              const buyFeeAmount = SWAP_FEE_SOL;
-
-              // Transfer fee to wallet
-              const feeTransferred = await transferFeeToWallet(
-                buyFeeAmount,
-                m.id,
-              );
-
-              m.buyTransactions.push({
-                type: "buy",
-                timestamp: Date.now(),
-                solAmount: amountSol,
-                tokenAmount: tokenAmount,
-                feeAmount: feeTransferred ? buyFeeAmount : 0,
-                signature: sig,
-                status: "confirmed",
-              });
-              m.currentTokenBalance = tokenAmount;
-              m.status = "completed" as const;
-
-              console.log(
-                `✅ Maker ${m.id}: Buy transaction confirmed (${sig}) | Tokens: ${tokenAmount} | Fee: ◎${buyFeeAmount.toFixed(4)}`,
-              );
-
-              successCount++;
-
-              // Trigger auto-sell if profit target is set
-              if (currentSession.sellStrategy === "auto-profit") {
-                const profitTarget = currentSession.profitTargetPercent || 5;
-                const buyPricePerToken = amountSol / tokenAmount;
-
-                console.log(
-                  `🔄 Maker ${m.id}: Starting auto-sell monitoring. Buy price: ◎${buyPricePerToken.toFixed(9)}/token, Profit target: ${profitTarget}%`,
-                );
-
-                // Start auto-sell monitoring in the background
-                (async () => {
-                  let shouldContinue = true;
-                  let checkCount = 0;
-                  const maxChecks = 100; // ~5 minutes at 3-second intervals
-
-                  while (shouldContinue && checkCount < maxChecks) {
-                    try {
-                      checkCount++;
-                      await new Promise((r) => setTimeout(r, 3000)); // Check every 3 seconds
-
-                      const priceQuote = await jupiterAPI.getQuote(
-                        currentSession.tokenAddress,
-                        SOL_MINT,
-                        jupiterAPI.formatSwapAmount(tokenAmount, 6),
-                        120,
-                      );
-
-                      if (!priceQuote) {
-                        console.warn(
-                          `⚠️ Maker ${m.id}: Failed to get price quote (check ${checkCount})`,
-                        );
-                        continue;
-                      }
-
-                      const soldSOL =
-                        jupiterAPI.parseSwapAmount(priceQuote.outAmount, 9) ||
-                        0;
-
-                      if (soldSOL <= 0) {
-                        console.warn(
-                          `⚠️ Maker ${m.id}: Invalid quote amount: ${soldSOL}`,
-                        );
-                        continue;
-                      }
-
-                      const sellPricePerToken = soldSOL / tokenAmount;
-                      const profitPercent =
-                        ((sellPricePerToken - buyPricePerToken) /
-                          buyPricePerToken) *
-                        100;
-
-                      console.log(
-                        `📊 Maker ${m.id}: Profit check #${checkCount}: ${profitPercent.toFixed(2)}% (Target: ${profitTarget}%, Current price: ◎${sellPricePerToken.toFixed(9)}/token)`,
-                      );
-
-                      // Execute sell if profit target reached
-                      if (profitPercent >= profitTarget) {
-                        console.log(
-                          `🚀 Maker ${m.id}: Profit target reached! Executing sell...`,
-                        );
-                        shouldContinue = false;
-
-                        const sellSwap = await jupiterAPI.getSwapTransaction({
-                          quoteResponse: priceQuote,
-                          userPublicKey: wallet.publicKey,
-                          wrapAndUnwrapSol: true,
-                        });
-
-                        if (!sellSwap || !sellSwap.swapTransaction) {
-                          throw new Error("Failed to build sell transaction");
-                        }
-
-                        const sellSig = await sendSignedTxGeneric(
-                          sellSwap.swapTransaction,
-                        );
-
-                        // Transfer fixed fee for the sell
-                        const sellFeeAmount = SWAP_FEE_SOL;
-
-                        // Transfer fee to wallet
-                        const sellFeeTransferred = await transferFeeToWallet(
-                          sellFeeAmount,
-                          m.id,
-                        );
-
-                        m.sellTransactions.push({
-                          type: "sell",
-                          timestamp: Date.now(),
-                          solAmount: soldSOL,
-                          tokenAmount: tokenAmount,
-                          feeAmount: sellFeeTransferred ? sellFeeAmount : 0,
-                          signature: sellSig,
-                          status: "confirmed",
-                        });
-
-                        const profit = soldSOL - amountSol;
-                        m.profitUSD = profit;
-
-                        console.log(
-                          `✅ Maker ${m.id}: Auto-sell EXECUTED! | Signature: ${sellSig} | Profit: ◎${profit.toFixed(4)} (${profitPercent.toFixed(2)}%) | Fee: ���${sellFeeAmount.toFixed(4)}`,
-                        );
-
-                        // Update session state with sell transaction
-                        setCurrentSession((prevSession) => {
-                          if (!prevSession) return prevSession;
-                          return {
-                            ...prevSession,
-                            makers: prevSession.makers.map((maker) =>
-                              maker.id === m.id
-                                ? {
-                                    ...maker,
-                                    sellTransactions: m.sellTransactions,
-                                    profitUSD: m.profitUSD,
-                                  }
-                                : maker,
-                            ),
-                          };
-                        });
-
-                        toast({
-                          title: "Auto-Sell Executed",
-                          description: `Maker ${m.id}: Sold at ${profitPercent.toFixed(2)}% profit (◎${profit.toFixed(4)})`,
-                        });
-                      }
-                    } catch (error) {
-                      const errorMsg =
-                        error instanceof Error ? error.message : String(error);
-                      console.error(
-                        `❌ Maker ${m.id}: Auto-sell error on check #${checkCount}:`,
-                        error,
-                      );
-
-                      // Continue trying even if there's an error
-                      if (
-                        errorMsg.includes("timeout") ||
-                        errorMsg.includes("failed")
-                      ) {
-                        console.log(
-                          `🔄 Maker ${m.id}: Retrying in 3 seconds...`,
-                        );
-                      }
-                    }
-                  }
-
-                  if (shouldContinue) {
-                    console.log(
-                      `⏱️ Maker ${m.id}: Auto-sell timeout (5 minutes). Stopping profit check.`,
-                    );
-                  }
-                })();
-              }
-            }
-
-            setCurrentSession({
-              ...updatedSession,
-              makers: updatedSession.makers,
-            });
-          } catch (txError) {
-            const errorMsg =
-              txError instanceof Error ? txError.message : String(txError);
-            console.error(`Error sending transaction for maker ${i}:`, txError);
-            const m = updatedSession.makers[i];
-            if (m) {
-              m.status = "error" as const;
-              m.errorMessage = errorMsg;
-              m.buyTransactions.push({
-                type: "buy",
-                timestamp: Date.now(),
-                solAmount: amountSol,
-                tokenAmount: 0,
-                feeAmount: 0,
-                status: "failed",
-              });
-            }
-            errorCount++;
-          }
-        } catch (e) {
-          const errorMsg = e instanceof Error ? e.message : String(e);
-          console.error(`Error processing maker ${i}:`, e);
-          const m = updatedSession.makers[i];
-          if (m) {
-            m.status = "error" as const;
-            m.errorMessage = errorMsg;
-            m.buyTransactions.push({
-              type: "buy",
-              timestamp: Date.now(),
-              solAmount: amountSol,
-              tokenAmount: 0,
-              feeAmount: 0,
-              status: "failed",
-            });
-          }
-          errorCount++;
-        }
-
-        // random delay between minDelay and maxDelay
-        const minD = parseInt(currentSession.minDelaySeconds) * 1000;
-        const maxD = parseInt(currentSession.maxDelaySeconds) * 1000;
-        const delay = minD + Math.random() * (maxD - minD);
-        await new Promise((r) => setTimeout(r, Math.max(0, delay)));
-      }
-
-      // finalize session
-      const final = { ...updatedSession, status: "completed" as const };
-      setCurrentSession(final);
-      const finalSessions = sessions.map((s) =>
-        s.id === final.id ? final : s,
-      );
-      setSessions(finalSessions);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(finalSessions));
-
-      if (successCount > 0) {
+    if (orderMode === "BUY") {
+      const validationError = validateBuyOrder();
+      if (validationError) {
         toast({
-          title: "Market Maker Completed",
-          description: `${successCount} buy(s) executed${errorCount > 0 ? ` | ${errorCount} failed` : ""}. View session details for more info.`,
-        });
-      } else {
-        toast({
-          title: "Market Maker Failed",
-          description: `All ${errorCount} attempts failed. Check error messages in session details.`,
+          title: "Validation Error",
+          description: validationError,
           variant: "destructive",
         });
+        return;
       }
-    } catch (error) {
-      console.error("Error starting market maker:", error);
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to start market maker",
-        variant: "destructive",
-      });
 
-      setCurrentSession(currentSession);
-    } finally {
-      setIsLoading(false);
+      setIsLoading(true);
+
+      try {
+        const buyPrice = parseFloat(buyOrder.price);
+        const solAmount = parseFloat(buyOrder.total);
+
+        const newOrder = botOrdersStorage.addBuyOrder(
+          session.id,
+          buyPrice,
+          solAmount,
+        );
+
+        if (!newOrder) {
+          throw new Error("Failed to create buy order");
+        }
+
+        // Update session
+        const updatedSession = botOrdersStorage.getCurrentSession();
+        if (updatedSession) {
+          setSession(updatedSession);
+        }
+
+        console.log("[MarketMaker] Buy order created:", newOrder);
+
+        toast({
+          title: "Buy Order Created",
+          description: `Waiting for price to drop to ${buyPrice.toFixed(8)}. Current: ${livePrice?.toFixed(8)}`,
+        });
+
+        setBuyOrder({
+          price: "",
+          amount: "",
+          total: "0.01",
+        });
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        toast({
+          title: "Error",
+          description: msg,
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      const validationError = validateSellOrder();
+      if (validationError) {
+        toast({
+          title: "Validation Error",
+          description: validationError,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const sellPrice = parseFloat(sellOrder.price);
+        const tokenAmount = parseFloat(sellOrder.amount);
+
+        const newOrder = botOrdersStorage.addSellOrder(
+          session.id,
+          "", // buyOrderId - we'll use empty since this is a direct limit sell
+          sellPrice,
+          tokenAmount,
+          undefined,
+          sellOutputToken,
+        );
+
+        if (!newOrder) {
+          throw new Error("Failed to create sell order");
+        }
+
+        // Update session
+        const updatedSession = botOrdersStorage.getCurrentSession();
+        if (updatedSession) {
+          setSession(updatedSession);
+        }
+
+        console.log("[MarketMaker] Sell order created:", newOrder);
+
+        toast({
+          title: "Sell Order Created",
+          description: `Waiting for price to rise to ${sellPrice.toFixed(8)}. Current: ${livePrice?.toFixed(8)}`,
+        });
+
+        setSellOrder({
+          price: "",
+          amount: "",
+          total: "0.02",
+        });
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        toast({
+          title: "Error",
+          description: msg,
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  if (!wallet) {
-    return (
-      <div className="w-full md:max-w-lg mx-auto px-4 py-8">
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
-          <AlertTriangle className="h-4 w-4 text-red-600" />
-          <div className="text-sm text-red-800">Wallet not connected</div>
-        </div>
-      </div>
-    );
-  }
+  const currentOrder = orderMode === "BUY" ? buyOrder : sellOrder;
+  const canAffordCurrent =
+    orderMode === "BUY"
+      ? parseFloat(currentOrder.total) <= usdcBalance
+      : parseFloat(currentOrder.amount) <= tokenBalance;
 
-  if (currentSession) {
-    return (
-      <div className="w-full md:max-w-lg mx-auto px-4 relative z-0 pt-8">
-        <div className="rounded-2xl border border-gray-700/50 bg-transparent backdrop-blur-sm">
-          <div className="space-y-6 p-6 relative">
-            <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
+  return (
+    <div className="w-full md:max-w-lg mx-auto px-0 md:px-4 relative z-0 pt-8">
+      {wallet && !wallet.secretKey && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-900 font-medium">
+            ⚠️ Auto-execution requires a wallet with private key access. Your
+            current wallet appears to be view-only. Please connect a wallet with
+            private keys to enable auto-execution.
+          </p>
+        </div>
+      )}
+      <div className="rounded-none border-0 bg-transparent w-full">
+        <div className="space-y-6 p-4 md:p-6 relative w-full">
+          <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2 justify-between">
+            <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setCurrentSession(null)}
-                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-700/30 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                onClick={onBack}
+                className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-green-100 text-green-600 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div className="font-semibold text-sm text-white uppercase">
-                Session Details
+                ADVANCE TRADE
               </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs text-gray-400 uppercase font-semibold">
-                    Number of Makers
-                  </Label>
-                  <p className="text-lg font-bold text-white mt-1">
-                    {currentSession.numberOfMakers}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-400 uppercase font-semibold">
-                    Sell Strategy
-                  </Label>
-                  <p className="text-sm text-white mt-1 capitalize">
-                    {currentSession.sellStrategy}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-400 uppercase font-semibold">
-                    Profit Target
-                  </Label>
-                  <p className="text-sm text-green-400 mt-1 font-bold">
-                    5% (Auto-Sell)
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-400 uppercase font-semibold">
-                    Order Range
-                  </Label>
-                  <p className="text-sm text-white mt-1">
-                    ◎ {currentSession.minOrderSOL.toFixed(4)}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-400 uppercase font-semibold">
-                    Status
-                  </Label>
-                  <p className="text-sm text-white mt-1 capitalize font-semibold">
-                    {currentSession.status}
-                  </p>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-700/50 pt-4">
-                <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
-                  Token Address
-                </Label>
-                <p className="text-xs font-mono break-all text-gray-300 bg-transparent p-3 rounded border border-gray-700/50">
-                  {currentSession.tokenAddress}
-                </p>
-              </div>
-
-              <div className="border-t border-gray-700/50 pt-4">
-                <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
-                  Session Summary
-                </Label>
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-gray-800/30 border border-gray-700/50 rounded p-3">
-                    <div className="text-[10px] text-gray-500 uppercase">
-                      Total Trades
-                    </div>
-                    <div className="text-lg font-bold text-white mt-1">
-                      {currentSession.makers.reduce(
-                        (sum, m) => sum + m.buyTransactions.length,
-                        0,
-                      )}
-                    </div>
-                  </div>
-                  <div className="bg-gray-800/30 border border-gray-700/50 rounded p-3">
-                    <div className="text-[10px] text-gray-500 uppercase">
-                      Completed Sells
-                    </div>
-                    <div className="text-lg font-bold text-white mt-1">
-                      {currentSession.makers.reduce(
-                        (sum, m) => sum + m.sellTransactions.length,
-                        0,
-                      )}
-                    </div>
-                  </div>
-                  <div className="bg-gray-800/30 border border-gray-700/50 rounded p-3">
-                    <div className="text-[10px] text-gray-500 uppercase">
-                      Total Profit
-                    </div>
-                    <div
-                      className={`text-lg font-bold mt-1 ${
-                        currentSession.makers.reduce(
-                          (sum, m) => sum + m.profitUSD,
-                          0,
-                        ) >= 0
-                          ? "text-green-400"
-                          : "text-red-400"
-                      }`}
-                    >
-                      {currentSession.makers.reduce(
-                        (sum, m) => sum + m.profitUSD,
-                        0,
-                      ) >= 0
-                        ? "+"
-                        : ""}
-                      {currentSession.makers
-                        .reduce((sum, m) => sum + m.profitUSD, 0)
-                        .toFixed(4)}{" "}
-                      ◎
-                    </div>
-                  </div>
-                  <div className="bg-gray-800/30 border border-gray-700/50 rounded p-3">
-                    <div className="text-[10px] text-gray-500 uppercase">
-                      Win Rate
-                    </div>
-                    <div className="text-lg font-bold text-white mt-1">
-                      {(() => {
-                        const completedTrades = currentSession.makers.reduce(
-                          (sum, m) => sum + m.sellTransactions.length,
-                          0,
-                        );
-                        const profitableTrades = currentSession.makers.reduce(
-                          (sum, m) =>
-                            sum +
-                            m.sellTransactions.filter(
-                              (_, idx) =>
-                                idx < m.buyTransactions.length &&
-                                m.buyTransactions[idx].solAmount <
-                                  m.buyTransactions[idx].solAmount,
-                            ).length,
-                          0,
-                        );
-                        return completedTrades > 0
-                          ? (
-                              (profitableTrades / completedTrades) *
-                              100
-                            ).toFixed(1)
-                          : "0";
-                      })()}
-                      %
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-700/50 pt-4">
-                <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
-                  Maker Accounts ({currentSession.makers.length})
-                </Label>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {currentSession.makers.map((maker) => (
-                    <div
-                      key={maker.id}
-                      className="text-xs p-3 bg-transparent rounded border border-gray-700/50"
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="font-mono text-white">{maker.id}</span>
-                        <span
-                          className={`text-xs font-semibold px-2 py-1 rounded ${
-                            maker.status === "active"
-                              ? "bg-green-500/20 text-green-400"
-                              : maker.status === "completed"
-                                ? "bg-blue-500/20 text-blue-400"
-                                : "bg-red-500/20 text-red-400"
-                          }`}
-                        >
-                          {maker.status}
-                        </span>
-                      </div>
-                      <div className="text-gray-400 mt-2 text-xs space-y-1">
-                        <div>
-                          Buys: {maker.buyTransactions.length} | Sells:{" "}
-                          {maker.sellTransactions.length}
-                        </div>
-                        {maker.buyTransactions.length > 0 && (
-                          <div className="text-green-400">
-                            Buy Fees: ◎{" "}
-                            {maker.buyTransactions
-                              .reduce((sum, tx) => sum + tx.feeAmount, 0)
-                              .toFixed(4)}
-                          </div>
-                        )}
-                        {maker.sellTransactions.length > 0 && (
-                          <div className="text-blue-400">
-                            Sell Fees: ◎{" "}
-                            {maker.sellTransactions
-                              .reduce((sum, tx) => sum + tx.feeAmount, 0)
-                              .toFixed(4)}{" "}
-                            | Profit: ◎ {maker.profitUSD.toFixed(4)}
-                          </div>
-                        )}
-                      </div>
-                      {maker.errorMessage && (
-                        <div className="text-red-400 mt-2 text-xs bg-red-500/10 p-3 rounded border border-red-500/30 space-y-1">
-                          <div className="font-semibold">Error:</div>
-                          <div className="text-red-300">
-                            {formatErrorMessage(maker.errorMessage)}
-                          </div>
-                          <div className="text-red-500/60 text-[10px] mt-1 font-mono break-all">
-                            {maker.errorMessage.substring(0, 80)}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border-t border-gray-700/50 pt-4">
-                <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
-                  Trade Execution Details
-                </Label>
-                <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                  {currentSession.makers.length === 0 ? (
-                    <p className="text-xs text-gray-500 text-center py-4">
-                      No trades yet
-                    </p>
-                  ) : (
-                    currentSession.makers
-                      .filter(
-                        (m) =>
-                          m.buyTransactions.length > 0 ||
-                          m.sellTransactions.length > 0,
-                      )
-                      .map((maker) => {
-                        const trades = getTradePairs(
-                          maker.buyTransactions,
-                          maker.sellTransactions,
-                        );
-                        return (
-                          <div key={maker.id} className="space-y-3">
-                            {trades.map((trade, idx) => {
-                              const profitPercent = trade.profitPercent ?? 0;
-                              const profitSOL = trade.profitSOL ?? 0;
-                              const targetProfit =
-                                currentSession.profitTargetPercent || 5;
-                              const currentProfitPercent = profitPercent;
-                              const progressPercent = Math.min(
-                                (currentProfitPercent / targetProfit) * 100,
-                                100,
-                              );
-                              const timeHeld = trade.sellTx
-                                ? Math.round(
-                                    (trade.sellTx.timestamp -
-                                      trade.buyTx.timestamp) /
-                                      1000,
-                                  )
-                                : Math.round(
-                                    (Date.now() - trade.buyTx.timestamp) / 1000,
-                                  );
-                              const formatTime = (seconds: number) => {
-                                if (seconds < 60) return `${seconds}s`;
-                                const mins = Math.floor(seconds / 60);
-                                const secs = seconds % 60;
-                                return `${mins}m ${secs}s`;
-                              };
-
-                              return (
-                                <div
-                                  key={`${maker.id}-trade-${idx}`}
-                                  className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 border border-gray-700/50 rounded-lg p-4 space-y-3"
-                                >
-                                  {/* Trade Header */}
-                                  <div className="flex justify-between items-start gap-2">
-                                    <div>
-                                      <div className="text-xs font-mono text-gray-400">
-                                        {maker.id}
-                                      </div>
-                                      <div className="text-sm font-bold text-white">
-                                        Trade #{idx + 1}
-                                      </div>
-                                    </div>
-                                    <span
-                                      className={`text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap ${
-                                        profitSOL >= 0
-                                          ? "bg-green-500/20 text-green-400"
-                                          : "bg-red-500/20 text-red-400"
-                                      }`}
-                                    >
-                                      {profitSOL >= 0 ? "+" : ""}
-                                      {profitSOL.toFixed(4)} ◎
-                                    </span>
-                                  </div>
-
-                                  {/* Buy Details Section */}
-                                  <div className="bg-gray-800/30 rounded border border-blue-500/20 p-3 space-y-2">
-                                    <div className="text-xs font-semibold text-blue-400 uppercase">
-                                      BUY Entry
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                      <div>
-                                        <div className="text-[10px] text-gray-500 uppercase">
-                                          Amount Spent
-                                        </div>
-                                        <div className="text-sm font-bold text-white">
-                                          ◎ {trade.buyTx.solAmount.toFixed(4)}
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <div className="text-[10px] text-gray-500 uppercase">
-                                          Tokens Bought
-                                        </div>
-                                        <div className="text-sm font-bold text-white">
-                                          {trade.buyTx.tokenAmount.toFixed(2)}
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <div className="text-[10px] text-gray-500 uppercase">
-                                          Time
-                                        </div>
-                                        <div className="text-sm font-bold text-gray-300">
-                                          {new Date(
-                                            trade.buyTx.timestamp,
-                                          ).toLocaleTimeString()}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Profit Progress Bar */}
-                                  <div className="space-y-2">
-                                    <div className="flex justify-between items-center">
-                                      <div className="text-xs font-semibold text-gray-400">
-                                        Profit Progress
-                                      </div>
-                                      <div className="text-xs font-bold text-white">
-                                        {currentProfitPercent.toFixed(2)}% /{" "}
-                                        {targetProfit}% target
-                                      </div>
-                                    </div>
-                                    <div className="w-full bg-gray-700/30 rounded-full h-2 border border-gray-700/50 overflow-hidden">
-                                      <div
-                                        className={`h-full transition-all duration-300 ${
-                                          currentProfitPercent >= targetProfit
-                                            ? "bg-gradient-to-r from-green-500 to-green-400"
-                                            : "bg-gradient-to-r from-blue-500 to-blue-400"
-                                        }`}
-                                        style={{
-                                          width: `${Math.max(progressPercent, 5)}%`,
-                                        }}
-                                      />
-                                    </div>
-                                  </div>
-
-                                  {/* Sell Details Section */}
-                                  {trade.sellTx ? (
-                                    <div className="bg-gray-800/30 rounded border border-green-500/20 p-3 space-y-2">
-                                      <div className="text-xs font-semibold text-green-400 uppercase">
-                                        SELL Exit (Executed)
-                                      </div>
-                                      <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                          <div className="text-[10px] text-gray-500 uppercase">
-                                            Amount Received
-                                          </div>
-                                          <div className="text-sm font-bold text-white">
-                                            ��{" "}
-                                            {trade.sellTx.solAmount.toFixed(4)}
-                                          </div>
-                                        </div>
-                                        <div>
-                                          <div className="text-[10px] text-gray-500 uppercase">
-                                            Tokens Sold
-                                          </div>
-                                          <div className="text-sm font-bold text-white">
-                                            {trade.sellTx.tokenAmount.toFixed(
-                                              2,
-                                            )}
-                                          </div>
-                                        </div>
-                                        <div>
-                                          <div className="text-[10px] text-gray-500 uppercase">
-                                            Time Held
-                                          </div>
-                                          <div className="text-sm font-bold text-gray-300">
-                                            {formatTime(timeHeld)}
-                                          </div>
-                                        </div>
-                                      </div>
-                                      <div className="text-[10px] text-gray-500 border-t border-gray-700/50 pt-2">
-                                        Executed at{" "}
-                                        {new Date(
-                                          trade.sellTx.timestamp,
-                                        ).toLocaleTimeString()}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="bg-yellow-900/20 rounded border border-yellow-600/30 p-3 space-y-2">
-                                      <div className="text-xs font-semibold text-yellow-400 uppercase">
-                                        HOLDING - Awaiting Sell Signal
-                                      </div>
-                                      <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                          <div className="text-[10px] text-gray-500 uppercase">
-                                            Current Profit
-                                          </div>
-                                          <div
-                                            className={`text-sm font-bold ${
-                                              currentProfitPercent >= 0
-                                                ? "text-green-400"
-                                                : "text-red-400"
-                                            }`}
-                                          >
-                                            {currentProfitPercent >= 0
-                                              ? "+"
-                                              : ""}
-                                            {currentProfitPercent.toFixed(2)}%
-                                          </div>
-                                        </div>
-                                        <div>
-                                          <div className="text-[10px] text-gray-500 uppercase">
-                                            Time Held
-                                          </div>
-                                          <div className="text-sm font-bold text-gray-300">
-                                            {formatTime(timeHeld)}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Profit Summary */}
-                                  {trade.profitSOL !== undefined && (
-                                    <div className="border-t border-gray-700/30 pt-2 flex justify-between items-center">
-                                      <span className="text-xs text-gray-500 uppercase font-semibold">
-                                        Total Profit
-                                      </span>
-                                      <span
-                                        className={`font-bold ${
-                                          profitSOL >= 0
-                                            ? "text-green-400"
-                                            : "text-red-400"
-                                        }`}
-                                      >
-                                        {profitSOL >= 0 ? "+" : ""}
-                                        {profitSOL.toFixed(4)} ◎ (
-                                        {profitPercent.toFixed(2)}%)
-                                      </span>
-                                    </div>
-                                  )}
-
-                                  {/* Error Status */}
-                                  {trade.buyTx.status === "failed" && (
-                                    <div className="bg-red-500/10 border border-red-500/30 rounded p-2 text-red-400 text-[10px] font-semibold">
-                                      ❌ Buy transaction failed
-                                    </div>
-                                  )}
-                                  {trade.sellTx &&
-                                    trade.sellTx.status === "failed" && (
-                                      <div className="bg-red-500/10 border border-red-500/30 rounded p-2 text-red-400 text-[10px] font-semibold">
-                                        ❌ Sell transaction failed
-                                      </div>
-                                    )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        );
-                      })
-                  )}
-                </div>
-              </div>
-
-              <div className="border-t border-gray-700/50 pt-4 flex gap-2">
-                {currentSession.status === "setup" && (
-                  <Button
-                    onClick={handleStartSession}
-                    disabled={isLoading}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white uppercase rounded-[2px]"
-                  >
-                    {isLoading ? "Starting..." : "Start Bot"}
-                  </Button>
-                )}
-                {currentSession.status === "running" && (
-                  <div className="flex-1 py-3 px-4 bg-green-500/20 border border-green-500/50 rounded text-xs text-green-400 font-bold flex items-center justify-center gap-2">
-                    <Zap className="w-4 h-4" />
-                    Running
-                  </div>
-                )}
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentSession(null)}
-                  className="border border-gray-700 text-white hover:bg-gray-700/30 uppercase rounded-[2px]"
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full md:max-w-lg mx-auto px-4 relative z-0 pt-8">
-      <div className="rounded-none border-0 bg-transparent">
-        <div className="space-y-6 p-6 relative">
-          <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onBack}
-              className="h-8 w-8 p-0 rounded-[2px] bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div className="font-semibold text-sm text-white uppercase">
-              Fixorium Market Maker
             </div>
           </div>
 
           <div className="space-y-2">
             <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Token Address
+              TOKEN
             </Label>
-            <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-400 font-mono text-xs">
-              {tokenAddress.length > 10
-                ? `${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}`
-                : tokenAddress}
+            <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-semibold">
+              FIXERCOIN
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Number of Makers
-            </Label>
-            <Input
-              type="number"
-              min="1"
-              max="1000"
-              value={numberOfMakers}
-              onChange={(e) => setNumberOfMakers(e.target.value)}
-              className="bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Order Amount (SOL)
-            </Label>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                step="0.001"
-                min="0.01"
-                value={orderAmount}
-                onChange={(e) => setOrderAmount(e.target.value)}
-                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
-                placeholder="Minimum 0.01 SOL"
-              />
-              <span className="text-sm text-gray-600">◎</span>
+          <div className="bg-transparent border border-gray-700 rounded-lg p-3 md:p-4 w-full">
+            <div className="flex gap-2 mb-6 w-full">
+              <Button
+                onClick={() => setOrderMode("BUY")}
+                className={`flex-1 font-bold uppercase py-2 rounded-lg transition-colors ${
+                  orderMode === "BUY"
+                    ? "bg-green-600 hover:bg-green-700 text-white"
+                    : "bg-transparent border border-gray-700 text-gray-400 hover:text-white"
+                }`}
+              >
+                BUY
+              </Button>
+              <Button
+                onClick={() => setOrderMode("SELL")}
+                className={`flex-1 font-bold uppercase py-2 rounded-lg transition-colors ${
+                  orderMode === "SELL"
+                    ? "bg-green-600 hover:bg-green-700 text-white"
+                    : "bg-transparent border border-gray-700 text-gray-400 hover:text-white"
+                }`}
+              >
+                SELL
+              </Button>
             </div>
-            <p
-              className="text-xs text-gray-500 mt-1"
-              style={{ display: "none" }}
-            >
-              Minimum: 0.01 SOL �� Unlimited maximum
-            </p>
-          </div>
 
-          <div className="space-y-2">
-            <Label className="text-gray-700 uppercase text-xs font-semibold">
-              Auto-Sell Profit Target
-            </Label>
-            <div className="bg-transparent border border-green-500/50 rounded-lg px-4 py-3 flex items-center justify-center">
-              <span className="text-2xl font-bold text-green-400">5%</span>
-            </div>
-          </div>
-
-          <div className="p-4 bg-transparent border border-gray-700 rounded-lg">
-            <div
-              className="text-gray-300"
-              style={{
-                fontSize: "10px",
-                fontWeight: "600",
-                letterSpacing: "0.5px",
-              }}
-            >
-              AVAILABLE SOL :{" "}
-              <span className={canAfford ? "text-green-400" : "text-red-400"}>
-                {solBalance.toFixed(4)}
-              </span>{" "}
-              REQUIRED :{" "}
-              <span className="text-white">{totalSOLNeeded.toFixed(4)}</span>{" "}
-              NEED :{" "}
-              <span className="text-red-400">
-                {(totalSOLNeeded - solBalance).toFixed(4)}
-              </span>
-            </div>
-          </div>
-
-          <Button
-            onClick={handleStartMarketMaking}
-            disabled={isLoading || !canAfford}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold uppercase py-3 rounded-lg"
-          >
-            {isLoading ? "Creating..." : "Create Market Maker Bot"}
-          </Button>
-
-          {sessions.length > 0 && (
-            <div className="border-t border-gray-700/50 pt-4">
-              <Label className="text-xs text-gray-400 uppercase font-semibold mb-3 block">
-                Previous Sessions
-              </Label>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {sessions.map((session) => (
-                  <div
-                    key={session.id}
-                    className="p-3 border border-gray-700/50 rounded-lg bg-transparent cursor-pointer hover:bg-gray-700/20 transition-colors"
-                    onClick={() => setCurrentSession(session)}
-                  >
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex-1">
-                        <p className="text-xs font-mono text-white">
-                          {session.id}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {session.numberOfMakers} makers •{" "}
-                          {session.sellStrategy}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-xs font-bold px-2 py-1 rounded whitespace-nowrap ${
-                            session.status === "running"
-                              ? "bg-green-500/20 text-green-400"
-                              : session.status === "completed"
-                                ? "bg-blue-500/20 text-blue-400"
-                                : "bg-gray-500/20 text-gray-300"
-                          }`}
-                        >
-                          {session.status}
-                        </span>
-                        <button
-                          onClick={(e) => handleRemoveSession(session.id, e)}
-                          className="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
-                          title="Remove session"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+            <div className="space-y-3">
+              {orderMode === "BUY" ? (
+                <>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-600 text-xs font-semibold">
+                        TARGET LIMIT (FIXERCOIN)
+                      </Label>
+                      <div className="flex items-center gap-1 text-xs text-gray-400">
+                        {isFetchingPrice ? (
+                          <PriceLoader />
+                        ) : livePrice ? (
+                          <>
+                            LIVE:{" "}
+                            <span className="text-green-400 font-semibold">
+                              {livePrice.toFixed(8)}
+                            </span>
+                          </>
+                        ) : null}
                       </div>
                     </div>
+                    <Input
+                      type="number"
+                      step="0.00000001"
+                      value={buyOrder.price}
+                      onChange={(e) =>
+                        handleBuyTargetPriceChange(e.target.value)
+                      }
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-green-400`}
+                      placeholder="ENTER TARGET PRICE"
+                    />
                   </div>
-                ))}
-              </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-gray-600 text-xs font-semibold">
+                      SOL AMOUNT
+                    </Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={buyOrder.total}
+                      onChange={(e) =>
+                        handleBuyUsdcAmountChange(e.target.value)
+                      }
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-green-400`}
+                      placeholder="ENTER SOL AMOUNT"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-600 text-xs font-semibold">
+                        ESTIMATED FIXERCOIN
+                      </Label>
+                    </div>
+                    <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-medium">
+                      {buyOrder.amount || "0"}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-gray-600 text-xs font-semibold">
+                      AVAILABLE SOL
+                    </Label>
+                    <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-medium">
+                      <span
+                        className={
+                          canAffordCurrent ? "text-green-400" : "text-red-400"
+                        }
+                      >
+                        {solBalance.toFixed(8)}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-600 text-xs font-semibold">
+                        TARGET LIMIT (FIXERCOIN)
+                      </Label>
+                      <div className="flex items-center gap-1 text-xs text-gray-400">
+                        {isFetchingPrice ? (
+                          <>
+                            <Loader className="w-3 h-3 animate-spin" />
+                            FETCHING...
+                          </>
+                        ) : livePrice ? (
+                          <>
+                            LIVE:{" "}
+                            <span className="text-green-400 font-semibold">
+                              {livePrice.toFixed(8)}
+                            </span>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+                    <Input
+                      type="number"
+                      step="0.00000001"
+                      value={sellOrder.price}
+                      onChange={(e) => handleSellPriceChange(e.target.value)}
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-green-400`}
+                      placeholder="ENTER TARGET PRICE"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-gray-600 text-xs font-semibold">
+                      FIXERCOIN AMOUNT
+                    </Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={sellOrder.amount}
+                      onChange={(e) => handleSellAmountChange(e.target.value)}
+                      className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-green-400`}
+                      placeholder="ENTER FIXERCOIN AMOUNT"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-600 text-xs font-semibold">
+                        ESTIMATED SOL
+                      </Label>
+                    </div>
+                    <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-medium">
+                      {sellOrder.total || "0"}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-gray-600 text-xs font-semibold">
+                      AVAILABLE FIXERCOIN
+                    </Label>
+                    <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-medium">
+                      <span
+                        className={
+                          canAffordCurrent ? "text-green-400" : "text-red-400"
+                        }
+                      >
+                        {tokenBalance.toFixed(8)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-gray-600 text-xs font-semibold">
+                      RECEIVE IN
+                    </Label>
+                    <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-semibold">
+                      SOL
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <Button
+                onClick={handlePlaceOrder}
+                disabled={
+                  isLoading ||
+                  !canAffordCurrent ||
+                  !currentOrder.price ||
+                  !currentOrder.amount
+                }
+                className={`w-full font-bold uppercase py-3 rounded-lg transition-colors text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400`}
+              >
+                {isLoading
+                  ? "PLACING..."
+                  : `PLACE ${orderMode === "BUY" ? "BUY" : "SELL"} ORDER`}
+              </Button>
             </div>
-          )}
+          </div>
+
+          <div className="mt-8">
+            <MarketMakerHistoryCard selectedToken={selectedToken} />
+          </div>
         </div>
       </div>
     </div>

@@ -9,17 +9,17 @@ export const SOLANA_RPC_URL = (() => {
     if (viteUrl && String(viteUrl).trim()) return String(viteUrl).trim();
   } catch {}
 
-  // Generic SOLANA_RPC_URL override
+  // PRIORITY 1: Generic SOLANA_RPC_URL override
   if (typeof process !== "undefined" && (process.env as any)?.SOLANA_RPC_URL) {
     return (process.env as any).SOLANA_RPC_URL as string;
   }
 
-  // Helius API key
+  // PRIORITY 2: Helius API key configuration
   if (typeof process !== "undefined" && process.env?.HELIUS_API_KEY) {
     return `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`;
   }
 
-  // Provider-specific URLs
+  // PRIORITY 3: Provider-specific URLs
   if (typeof process !== "undefined" && process.env?.HELIUS_RPC_URL) {
     return process.env.HELIUS_RPC_URL;
   }
@@ -30,8 +30,8 @@ export const SOLANA_RPC_URL = (() => {
     return process.env.ALCHEMY_RPC_URL;
   }
 
-  // Default public Solana RPC (use publicnode for CORS support)
-  return "https://solana-rpc.publicnode.com/";
+  // FALLBACK: Use public Solana RPC
+  return "https://solana.publicnode.com";
 })();
 
 // Legacy export for backward compatibility

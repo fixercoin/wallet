@@ -1,4 +1,60 @@
-import React, { useState, useMemo, useEffect, useRef } from "react"; import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; import { Button } from "@/components/ui/button"; import { Badge } from "@/components/ui/badge"; import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; import { Separator } from "@/components/ui/separator"; import { Wallet, Send, Download, RefreshCw, RotateCw, Copy, ArrowUpRight, ArrowDownLeft, ArrowRightLeft, TrendingUp, Settings, Bot, Plus, Menu, Gift, Unlock, Bell, X, Clock, Coins, Search as SearchIcon, MessageSquare, } from "lucide-react"; import { ADMIN_WALLET, API_BASE } from "@/lib/p2p"; import { getPaymentReceivedNotifications, saveNotification, } from "@/lib/p2p-chat"; import { useWallet } from "@/contexts/WalletContext"; import { useCurrency } from "@/contexts/CurrencyContext"; import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet"; import { formatAmountCompact } from "@/lib/utils"; import { useToast } from "@/hooks/use-toast"; import { useStakingTokens } from "@/hooks/use-staking-tokens"; import { AddTokenDialog } from "./AddTokenDialog"; import { TokenBadge } from "./TokenBadge"; import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, } from "@/components/ui/dropdown-menu"; import { useNavigate } from "react-router-dom"; import { FlyingPrizeBox } from "./FlyingPrizeBox"; import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client"; import bs58 from "bs58"; import nacl from "tweetnacl"; import { getUnreadNotifications } from "@/lib/p2p-chat"; import { Zap } from "lucide-react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import {
+  Wallet,
+  Send,
+  Download,
+  RefreshCw,
+  RotateCw,
+  Copy,
+  ArrowUpRight,
+  ArrowDownLeft,
+  ArrowRightLeft,
+  TrendingUp,
+  Settings,
+  Bot,
+  Plus,
+  Menu,
+  Gift,
+  Unlock,
+  Bell,
+  X,
+  Clock,
+  Coins,
+  Search as SearchIcon,
+  MessageSquare,
+} from "lucide-react";
+import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
+import {
+  getPaymentReceivedNotifications,
+  saveNotification,
+} from "@/lib/p2p-chat";
+import { useWallet } from "@/contexts/WalletContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
+import { formatAmountCompact } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { useStakingTokens } from "@/hooks/use-staking-tokens";
+import { AddTokenDialog } from "./AddTokenDialog";
+import { TokenBadge } from "./TokenBadge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
+import { FlyingPrizeBox } from "./FlyingPrizeBox";
+import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
+import bs58 from "bs58";
+import nacl from "tweetnacl";
+import { getUnreadNotifications } from "@/lib/p2p-chat";
+import { Zap } from "lucide-react";
 
 interface DashboardProps {
   onSend: () => void;
@@ -17,11 +73,31 @@ interface DashboardProps {
 }
 
 const QUEST_TASKS = [
-  { id: "follow_x", label: "Follow fixercoin on Twitter/X", type: "link", href: "https://twitter.com/fixorium", },
-  { id: "join_community", label: "Join Telegram", type: "link", href: "https://t.me/fixorium", },
+  {
+    id: "follow_x",
+    label: "Follow fixercoin on Twitter/X",
+    type: "link",
+    href: "https://twitter.com/fixorium",
+  },
+  {
+    id: "join_community",
+    label: "Join Telegram",
+    type: "link",
+    href: "https://t.me/fixorium",
+  },
   { id: "share_updates", label: "Share fixercoin updates on X", type: "share" },
-  { id: "visit_links", label: "Visit official website", type: "link", href: "https://fixorium.com.pk", },
-  { id: "watch_videos", label: "Watch promo videos", type: "link", href: "https://www.youtube.com/channel/UCoFLDQasgIdX5tj3UbT9fyQ", },
+  {
+    id: "visit_links",
+    label: "Visit official website",
+    type: "link",
+    href: "https://fixorium.com.pk",
+  },
+  {
+    id: "watch_videos",
+    label: "Watch promo videos",
+    type: "link",
+    href: "https://www.youtube.com/channel/UCoFLDQasgIdX5tj3UbT9fyQ",
+  },
 ] as const;
 
 const REWARD_PER_TASK = 50; // FIXERCOIN per completed task
@@ -184,7 +260,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       toast({
         title: "Claim failed",
         description: m,
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -516,11 +592,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const getTotalInSol = (): number => {
     const usdTotal = getTotalPortfolioValue();
     const solPrice = getSolPrice();
-    if (
-      typeof solPrice !== "number" ||
-      !isFinite(solPrice) ||
-      solPrice <= 0
-    ) {
+    if (typeof solPrice !== "number" || !isFinite(solPrice) || solPrice <= 0) {
       return 0;
     }
     return usdTotal / solPrice;
@@ -619,9 +691,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               {/* About */}
               <p className="text-xs text-gray-300 leading-relaxed">
-                A community challenge inside the Fixorium Wallet. Complete simple
-                tasks, earn rewards, and join random prize draws 🎁🎉 all directly
-                from your wallet.
+                A community challenge inside the Fixorium Wallet. Complete
+                simple tasks, earn rewards, and join random prize draws 🎁🎉 all
+                directly from your wallet.
               </p>
 
               {/* How it works */}
@@ -843,9 +915,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     const total = getTotalPortfolioValue();
                     const hasAnyBalance =
                       tokens.some(
-                        (t) =>
-                          typeof t.balance === "number" && t.balance > 0,
-                      ) || (typeof balance === "number" && balance > 0);
+                        (t) => typeof t.balance === "number" && t.balance > 0,
+                      ) ||
+                      (typeof balance === "number" && balance > 0);
 
                     if (!hasAnyBalance) {
                       // If prices are still loading, show loading indicator
@@ -1036,10 +1108,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Avatar className="h-10 w-10 flex-shrink-0">
-                          <AvatarImage
-                            src={token.logoURI}
-                            alt={token.symbol}
-                          />
+                          <AvatarImage src={token.logoURI} alt={token.symbol} />
                           <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-xs">
                             {token.symbol.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
@@ -1076,9 +1145,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             <span style={{ color: "#ffffff" }}>
                               ${" "}
                               {token.price.toFixed(
-                                ["SOL", "USDC"].includes(token.symbol)
-                                  ? 2
-                                  : 8,
+                                ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
                               )}
                             </span>
                           ) : null}

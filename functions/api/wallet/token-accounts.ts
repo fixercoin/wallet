@@ -306,12 +306,14 @@ async function handler(request: Request, env?: Env): Promise<Response> {
 
     // All endpoints failed
     console.error(
-      `[TokenAccounts] All RPC endpoints failed. Last error: ${lastError}`,
+      `[TokenAccounts] All ${RPC_ENDPOINTS.length} RPC endpoints failed. Last error: ${lastError}`,
     );
     return new Response(
       JSON.stringify({
         error: "Failed to fetch token accounts - all RPC endpoints failed",
         details: lastError || "No available Solana RPC providers",
+        endpointsAttempted: RPC_ENDPOINTS.length,
+        primaryEndpoint: RPC_ENDPOINTS[0]?.substring(0, 60) || "none",
         tokens: [],
       }),
       {
@@ -319,6 +321,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
         },
       },
     );

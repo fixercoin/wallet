@@ -1,6 +1,7 @@
 # RPC Providers Update Summary
 
 ## Problem Resolved
+
 The balance endpoint (HTTP 530) was returning "Origin Unreachable" errors when using the rate-limited public Solana RPC endpoint (`api.mainnet-beta.solana.com`). This happened because:
 
 1. **Missing Helius API Key** in Cloudflare Pages environment
@@ -12,6 +13,7 @@ The balance endpoint (HTTP 530) was returning "Origin Unreachable" errors when u
 The system now tries multiple **high-quality free RPC endpoints** in this order:
 
 ### Primary Order of RPC Endpoints
+
 1. **https://solana.publicnode.com** ✅ Most reliable free public RPC
 2. **https://api.solflare.com** ✅ Solflare's stable free endpoint
 3. **https://rpc.ankr.com/solana** ✅ Ankr's free tier (excellent uptime)
@@ -19,6 +21,7 @@ The system now tries multiple **high-quality free RPC endpoints** in this order:
 5. **https://api.mainnet-beta.solana.com** ⚠️ Official but rate-limited
 
 Plus environment-configured options (if set):
+
 - `HELIUS_API_KEY` → constructs `https://mainnet.helius-rpc.com/?api-key=YOUR_KEY`
 - `HELIUS_RPC_URL` → custom Helius RPC URL
 - `SOLANA_RPC_URL` → custom Solana RPC URL
@@ -28,6 +31,7 @@ Plus environment-configured options (if set):
 ## Files Updated
 
 ### Cloudflare Pages Functions (15 files)
+
 - ✅ `functions/api/wallet/balance.ts` - Primary balance endpoint
 - ✅ `functions/api/wallet/token-accounts.ts` - Token accounts fetching
 - ✅ `functions/api/wallet-transactions.ts` - Transaction history
@@ -42,19 +46,23 @@ Plus environment-configured options (if set):
 - ✅ `functions/lib/spl-transfer.ts` - SPL token transfers
 
 ### Server Routes (4 files)
+
 - ✅ `server/routes/solana-transaction.ts`
 - ✅ `server/routes/token-accounts.ts`
 - ✅ `server/routes/token-balance.ts`
 - ✅ `server/routes/wallet-balance.ts`
 
 ### Client-Side (1 file)
+
 - ✅ `client/lib/spl-token-transfer.ts` - Client RPC operations
 
 ### Backend (2 files)
+
 - ✅ `backend/routes/solana-proxy.js`
 - ✅ `backend/routes/wallet-balance.js`
 
 ### Configuration (3 files)
+
 - ✅ `utils/solanaConfig.ts` - Default fallback now uses `solana.publicnode.com`
 - ✅ `wrangler.toml` - Updated dev and production environment variable docs
 
@@ -63,18 +71,23 @@ Plus environment-configured options (if set):
 You have three ways to improve performance:
 
 ### Option 1: RECOMMENDED - Use Helius (Best Performance)
+
 ```
 HELIUS_API_KEY=your-helius-api-key
 ```
+
 Get a free API key from https://www.helius.dev/
 
 ### Option 2: Use Alternative RPC Provider
+
 ```
 SOLANA_RPC_URL=https://your-rpc-endpoint.com
 ```
 
 ### Option 3: Free Public Endpoints (Default Fallback)
+
 The system will automatically use free public endpoints in this order:
+
 - solana.publicnode.com
 - api.solflare.com
 - rpc.ankr.com/solana
@@ -86,11 +99,13 @@ The system will automatically use free public endpoints in this order:
 To verify the fix is working:
 
 1. Check environment variables are loaded:
+
    ```
    https://wallet.fixorium.com.pk/api/debug/env
    ```
 
 2. Test balance endpoint:
+
    ```
    https://wallet.fixorium.com.pk/api/wallet/balance?publicKey=YOUR_WALLET_ADDRESS
    ```

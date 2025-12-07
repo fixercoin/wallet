@@ -1,15 +1,19 @@
 # P2P Order Notification System Fix
 
 ## Problem Summary
+
 When seller clicked "Release USDC to Buyer" (or "I have transfer" button), the buyer would see "Waiting for seller to transfer crypto..." instead of receiving proper notification that the transfer was initiated.
 
 ### Root Cause
+
 The notification API only accepted 3 types:
+
 - `order_created`
 - `payment_confirmed`
 - `received_confirmed`
 
 But OrderComplete.tsx was trying to send:
+
 - `transfer_initiated` ❌
 - `seller_payment_received` ❌
 - `crypto_received` ❌
@@ -21,20 +25,22 @@ These invalid types were silently rejected, so buyer never got notified.
 ### 1. API Changes (`functions/api/p2p/notifications.ts`)
 
 ✅ **Added missing notification types to validation:**
+
 ```typescript
 const validTypes = [
   "order_created",
   "payment_confirmed",
-  "seller_payment_received",  // ✅ NEW
-  "transfer_initiated",        // ✅ NEW
-  "crypto_received",           // ✅ NEW
-  "order_cancelled",           // ✅ NEW
+  "seller_payment_received", // ✅ NEW
+  "transfer_initiated", // ✅ NEW
+  "crypto_received", // ✅ NEW
+  "order_cancelled", // ✅ NEW
 ];
 ```
 
 ### 2. Hook Updates (`client/hooks/use-order-notifications.ts`)
 
 ✅ **Updated OrderNotification interface:**
+
 ```typescript
 type:
   | "order_created"
@@ -46,31 +52,35 @@ type:
 ```
 
 ✅ **Added proper toast notification titles:**
+
 ```typescript
 const titles: Record<string, string> = {
   order_created: "New Order",
   payment_confirmed: "Payment Confirmed",
-  seller_payment_received: "Payment Received",     // ✅ NEW
-  transfer_initiated: "Crypto Transfer Started",   // ✅ NEW
-  crypto_received: "Crypto Received",              // ✅ NEW
-  order_cancelled: "Order Cancelled",              // ✅ NEW
+  seller_payment_received: "Payment Received", // ✅ NEW
+  transfer_initiated: "Crypto Transfer Started", // ✅ NEW
+  crypto_received: "Crypto Received", // ✅ NEW
+  order_cancelled: "Order Cancelled", // ✅ NEW
 };
 ```
 
 ### 3. UI Updates (`client/pages/OrderComplete.tsx`)
 
 ✅ **Updated buyer status messages to show correct flow:**
+
 - When payment confirmed: Shows "✓ You confirmed payment sent - waiting for seller to confirm receipt"
 - When seller confirms receipt: Shows "✓ Seller confirmed payment received - waiting for crypto transfer..."
 - When seller initiates transfer: Shows "✓ Seller initiated transfer - check your wallet and confirm receipt below"
 
 ✅ **Added auto-scroll to chat:**
+
 - When buyer clicks notification, automatically scrolls to chat section
 - Passes `openChat: true` through location state
 
 ### 4. Notification UI Updates (`client/components/NotificationCenter.tsx`)
 
 ✅ **Updated notification icons and titles:**
+
 ```typescript
 case "seller_payment_received":
   icon: "✅"
@@ -90,6 +100,7 @@ case "crypto_received":
 ## Complete Order Flow - SELL ORDER
 
 ### Seller Side:
+
 1. **Create Sell Offer** → Waits for buyer to interact
 2. **Buyer creates order** → Seller receives notification "New Order"
 3. **Buyer confirms payment sent**
@@ -103,6 +114,7 @@ case "crypto_received":
    - Seller sees: "✓ Transfer Initiated"
 
 ### Buyer Side:
+
 1. **See seller's offer** → Creates order
 2. **Wait for seller confirmation** → Polling updates
 3. **Confirm payment sent**
@@ -120,6 +132,7 @@ case "crypto_received":
 ## Complete Order Flow - BUY ORDER
 
 ### Buyer Side:
+
 1. **Create Buy Offer** → Waits for seller
 2. **Seller creates order** → Buyer receives notification "New Order"
 3. **Seller confirms payment received**
@@ -132,6 +145,7 @@ case "crypto_received":
    - Buyer sends notification: `crypto_received`
 
 ### Seller Side:
+
 1. **See buyer's offer** → Creates order
 2. **Wait for buyer payment confirmation** → Polling updates
 3. **Receive notification: "Payment Confirmed"**
@@ -147,13 +161,13 @@ case "crypto_received":
 
 ## Key Improvements
 
-| Issue | Before | After |
-|-------|--------|-------|
-| Seller transfer notification | ❌ Silently failed | ✅ Sent and displayed |
-| Buyer sees transfer status | "Waiting for seller..." | "✓ Seller initiated transfer - check wallet" |
-| Chat auto-open | ❌ Manual scroll required | ✅ Auto-scrolls when clicking notification |
-| Notification titles | Limited options | ✅ All 6 types with proper titles |
-| Push notifications | Only 3 types | ✅ All 6 types supported |
+| Issue                        | Before                    | After                                        |
+| ---------------------------- | ------------------------- | -------------------------------------------- |
+| Seller transfer notification | ❌ Silently failed        | ✅ Sent and displayed                        |
+| Buyer sees transfer status   | "Waiting for seller..."   | "✓ Seller initiated transfer - check wallet" |
+| Chat auto-open               | ❌ Manual scroll required | ✅ Auto-scrolls when clicking notification   |
+| Notification titles          | Limited options           | ✅ All 6 types with proper titles            |
+| Push notifications           | Only 3 types              | ✅ All 6 types supported                     |
 
 ## Files Modified
 
@@ -166,6 +180,7 @@ case "crypto_received":
 ## Testing Checklist
 
 For SELL Orders:
+
 - [ ] Create sell offer with min/max limits
 - [ ] Buyer creates order
 - [ ] Buyer confirms payment sent → Seller sees notification
@@ -176,6 +191,7 @@ For SELL Orders:
 - [ ] Order completes
 
 For BUY Orders:
+
 - [ ] Create buy offer with min/max limits
 - [ ] Seller creates order
 - [ ] Seller confirms payment received → Buyer sees notification
@@ -186,18 +202,19 @@ For BUY Orders:
 
 ## Notification Types Reference
 
-| Type | Sender | Recipient | When |
-|------|--------|-----------|------|
-| `order_created` | Buyer/Seller | Seller/Buyer | When order is created |
-| `payment_confirmed` | Buyer | Seller | When buyer confirms payment sent |
-| `seller_payment_received` | Seller | Buyer | When seller confirms payment received |
-| `transfer_initiated` | Seller | Buyer | When seller initiates crypto transfer |
-| `crypto_received` | Buyer | Seller | When buyer confirms crypto received |
-| `order_cancelled` | Either | Either | When order is cancelled |
+| Type                      | Sender       | Recipient    | When                                  |
+| ------------------------- | ------------ | ------------ | ------------------------------------- |
+| `order_created`           | Buyer/Seller | Seller/Buyer | When order is created                 |
+| `payment_confirmed`       | Buyer        | Seller       | When buyer confirms payment sent      |
+| `seller_payment_received` | Seller       | Buyer        | When seller confirms payment received |
+| `transfer_initiated`      | Seller       | Buyer        | When seller initiates crypto transfer |
+| `crypto_received`         | Buyer        | Seller       | When buyer confirms crypto received   |
+| `order_cancelled`         | Either       | Either       | When order is cancelled               |
 
 ## Technical Details
 
 ### Notification Flow Architecture
+
 ```
 Client (OrderComplete.tsx)
     ↓ (calls createNotification)
@@ -213,6 +230,7 @@ Client (NotificationCenter.tsx)
 ```
 
 ### State Management
+
 - Order status stored in localStorage + Cloudflare KV
 - Notifications stored in Cloudflare KV
 - Chat messages stored in Cloudflare KV
@@ -221,6 +239,7 @@ Client (NotificationCenter.tsx)
 ## Deployment Notes
 
 No database migrations required. All changes are code-level:
+
 - API adds new validation types
 - Client adds new UI states and messages
 - No schema changes to notifications or orders
@@ -228,6 +247,7 @@ No database migrations required. All changes are code-level:
 ## Backward Compatibility
 
 ✅ **Fully backward compatible** - Old notifications still work
+
 - Existing orders continue to work
 - Old notification types still accepted
 - New types extend functionality without breaking existing flows

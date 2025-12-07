@@ -961,6 +961,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       ? (totalChange24h / (total - totalChange24h)) * 100
                       : 0;
                     const isPositive = totalChange24h >= 0;
+                    const isLoadingPrices = areTokenPricesLoading();
 
                     return (
                       <div className="flex items-center justify-between gap-4 w-full">

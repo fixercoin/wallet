@@ -139,19 +139,41 @@ async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
   const endpoints: string[] = [];
 
   // Add environment-configured endpoints first (highest priority)
-  if (env?.SOLANA_RPC_URL && typeof env.SOLANA_RPC_URL === "string" && env.SOLANA_RPC_URL.length > 0) {
+  if (
+    env?.SOLANA_RPC_URL &&
+    typeof env.SOLANA_RPC_URL === "string" &&
+    env.SOLANA_RPC_URL.length > 0
+  ) {
     endpoints.push(env.SOLANA_RPC_URL);
   }
-  if (env?.HELIUS_RPC_URL && typeof env.HELIUS_RPC_URL === "string" && env.HELIUS_RPC_URL.length > 0) {
+  if (
+    env?.HELIUS_RPC_URL &&
+    typeof env.HELIUS_RPC_URL === "string" &&
+    env.HELIUS_RPC_URL.length > 0
+  ) {
     endpoints.push(env.HELIUS_RPC_URL);
   }
-  if (env?.HELIUS_API_KEY && typeof env.HELIUS_API_KEY === "string" && env.HELIUS_API_KEY.length > 0) {
-    endpoints.push(`https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`);
+  if (
+    env?.HELIUS_API_KEY &&
+    typeof env.HELIUS_API_KEY === "string" &&
+    env.HELIUS_API_KEY.length > 0
+  ) {
+    endpoints.push(
+      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
+    );
   }
-  if (env?.ALCHEMY_RPC_URL && typeof env.ALCHEMY_RPC_URL === "string" && env.ALCHEMY_RPC_URL.length > 0) {
+  if (
+    env?.ALCHEMY_RPC_URL &&
+    typeof env.ALCHEMY_RPC_URL === "string" &&
+    env.ALCHEMY_RPC_URL.length > 0
+  ) {
     endpoints.push(env.ALCHEMY_RPC_URL);
   }
-  if (env?.MORALIS_RPC_URL && typeof env.MORALIS_RPC_URL === "string" && env.MORALIS_RPC_URL.length > 0) {
+  if (
+    env?.MORALIS_RPC_URL &&
+    typeof env.MORALIS_RPC_URL === "string" &&
+    env.MORALIS_RPC_URL.length > 0
+  ) {
     endpoints.push(env.MORALIS_RPC_URL);
   }
 
@@ -168,18 +190,23 @@ async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
     const endpoint = uniqueEndpoints[i];
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        const resp = await timeoutFetch(endpoint, {
-          method: "POST",
-          headers: browserHeaders(),
-          body: JSON.stringify(payload),
-        }, 15000);
+        const resp = await timeoutFetch(
+          endpoint,
+          {
+            method: "POST",
+            headers: browserHeaders(),
+            body: JSON.stringify(payload),
+          },
+          15000,
+        );
 
         lastStatus = resp.status;
 
         if (resp.ok) {
           const rpcJson = await resp.json().catch(() => ({}));
           const lamports = rpcJson?.result?.value ?? rpcJson?.result ?? 0;
-          const balance = typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
+          const balance =
+            typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
           return new Response(
             JSON.stringify({ balance, lamports, publicKey }),
             {

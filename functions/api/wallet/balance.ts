@@ -21,24 +21,44 @@ function buildRpcEndpoints(env?: Env): string[] {
   const moralisRpcUrl = env?.MORALIS_RPC_URL;
 
   // Add environment-configured endpoints first (highest priority)
-  if (solanaRpcUrl && typeof solanaRpcUrl === "string" && solanaRpcUrl.length > 0) {
+  if (
+    solanaRpcUrl &&
+    typeof solanaRpcUrl === "string" &&
+    solanaRpcUrl.length > 0
+  ) {
     console.log("[RPC Config] Using SOLANA_RPC_URL from env");
     endpoints.push(solanaRpcUrl);
   }
-  if (heliusRpcUrl && typeof heliusRpcUrl === "string" && heliusRpcUrl.length > 0) {
+  if (
+    heliusRpcUrl &&
+    typeof heliusRpcUrl === "string" &&
+    heliusRpcUrl.length > 0
+  ) {
     console.log("[RPC Config] Using HELIUS_RPC_URL from env");
     endpoints.push(heliusRpcUrl);
   }
-  if (heliusApiKey && typeof heliusApiKey === "string" && heliusApiKey.length > 0) {
+  if (
+    heliusApiKey &&
+    typeof heliusApiKey === "string" &&
+    heliusApiKey.length > 0
+  ) {
     console.log("[RPC Config] Using HELIUS_API_KEY from env");
     const heliusEndpoint = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
     endpoints.push(heliusEndpoint);
   }
-  if (alchemyRpcUrl && typeof alchemyRpcUrl === "string" && alchemyRpcUrl.length > 0) {
+  if (
+    alchemyRpcUrl &&
+    typeof alchemyRpcUrl === "string" &&
+    alchemyRpcUrl.length > 0
+  ) {
     console.log("[RPC Config] Using ALCHEMY_RPC_URL from env");
     endpoints.push(alchemyRpcUrl);
   }
-  if (moralisRpcUrl && typeof moralisRpcUrl === "string" && moralisRpcUrl.length > 0) {
+  if (
+    moralisRpcUrl &&
+    typeof moralisRpcUrl === "string" &&
+    moralisRpcUrl.length > 0
+  ) {
     console.log("[RPC Config] Using MORALIS_RPC_URL from env");
     endpoints.push(moralisRpcUrl);
   }
@@ -137,7 +157,9 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         if (!response.ok) {
           const errorText = await response.text();
           lastError = `HTTP ${response.status}: ${errorText}`;
-          console.warn(`[Balance API] Endpoint ${i + 1} non-OK response: ${lastError}`);
+          console.warn(
+            `[Balance API] Endpoint ${i + 1} non-OK response: ${lastError}`,
+          );
           continue;
         }
 
@@ -202,7 +224,9 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       },
     );
   } catch (error: any) {
-    console.error(`[Balance API] Exception: ${error?.message || String(error)}`);
+    console.error(
+      `[Balance API] Exception: ${error?.message || String(error)}`,
+    );
     return new Response(
       JSON.stringify({
         error: "Wallet balance error",

@@ -29,8 +29,8 @@ function buildRpcEndpoints(env: Env): string[] {
   endpoints.push("https://solana.publicnode.com");
   endpoints.push("https://api.solflare.com");
   endpoints.push("https://rpc.ankr.com/solana");
-  endpoints.push("https://rpc.ironforge.network/mainnet");
   endpoints.push("https://api.mainnet-beta.solana.com");
+  endpoints.push("https://api.marinade.finance/rpc");
 
   return [...new Set(endpoints)]; // Remove duplicates
 }
@@ -361,9 +361,17 @@ export const onRequest = async ({
   request: Request;
   env?: Env | Record<string, any>;
 }) => {
-  // Ensure env is passed to handler, fallback to process.env for Node.js
-  const envToPass = env || (typeof process !== "undefined" ? process.env : {});
-  return handler(request, envToPass as Env);
+  // Cloudflare Pages Functions pass env directly
+  // Ensure environment variables are properly available
+  const envToPass = {
+    ...env,
+    SOLANA_RPC_URL: env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL,
+    HELIUS_RPC_URL: env?.HELIUS_RPC_URL || process.env.HELIUS_RPC_URL,
+    HELIUS_API_KEY: env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY,
+    ALCHEMY_RPC_URL: env?.ALCHEMY_RPC_URL || process.env.ALCHEMY_RPC_URL,
+    MORALIS_RPC_URL: env?.MORALIS_RPC_URL || process.env.MORALIS_RPC_URL,
+  } as Env;
+  return handler(request, envToPass);
 };
 
 export const onRequestGet = async ({
@@ -373,8 +381,15 @@ export const onRequestGet = async ({
   request: Request;
   env?: Env | Record<string, any>;
 }) => {
-  const envToPass = env || (typeof process !== "undefined" ? process.env : {});
-  return handler(request, envToPass as Env);
+  const envToPass = {
+    ...env,
+    SOLANA_RPC_URL: env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL,
+    HELIUS_RPC_URL: env?.HELIUS_RPC_URL || process.env.HELIUS_RPC_URL,
+    HELIUS_API_KEY: env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY,
+    ALCHEMY_RPC_URL: env?.ALCHEMY_RPC_URL || process.env.ALCHEMY_RPC_URL,
+    MORALIS_RPC_URL: env?.MORALIS_RPC_URL || process.env.MORALIS_RPC_URL,
+  } as Env;
+  return handler(request, envToPass);
 };
 
 export const onRequestPost = async ({
@@ -384,6 +399,13 @@ export const onRequestPost = async ({
   request: Request;
   env?: Env | Record<string, any>;
 }) => {
-  const envToPass = env || (typeof process !== "undefined" ? process.env : {});
-  return handler(request, envToPass as Env);
+  const envToPass = {
+    ...env,
+    SOLANA_RPC_URL: env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL,
+    HELIUS_RPC_URL: env?.HELIUS_RPC_URL || process.env.HELIUS_RPC_URL,
+    HELIUS_API_KEY: env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY,
+    ALCHEMY_RPC_URL: env?.ALCHEMY_RPC_URL || process.env.ALCHEMY_RPC_URL,
+    MORALIS_RPC_URL: env?.MORALIS_RPC_URL || process.env.MORALIS_RPC_URL,
+  } as Env;
+  return handler(request, envToPass);
 };

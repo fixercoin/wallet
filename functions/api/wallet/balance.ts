@@ -90,8 +90,8 @@ function buildRpcEndpoints(env?: Env): string[] {
     "https://solana.publicnode.com", // Most reliable free public RPC
     "https://api.solflare.com", // Solflare's stable endpoint
     "https://rpc.ankr.com/solana", // Ankr's free tier (good uptime)
-    "https://rpc.ironforge.network/mainnet", // IronForge (reliable)
-    "https://api.mainnet-beta.solana.com", // Official (rate-limited but functional)
+    "https://api.mainnet-beta.solana.com", // Official Solana (rate-limited but functional)
+    "https://api.marinade.finance/rpc", // Marinade's endpoint
   ];
 
   // Add public endpoints that aren't already in the list
@@ -281,7 +281,16 @@ export const onRequest = async ({
   request: Request;
   env?: Env | Record<string, any>;
 }) => {
-  // Ensure env is passed to handler
-  const envToPass = env || (typeof process !== "undefined" ? process.env : {});
-  return handler(request, envToPass as Env);
+  // Cloudflare Pages Functions pass env directly
+  // Ensure environment variables are properly available
+  const envToPass = {
+    ...env,
+    // Fallback to process.env for Node.js compatibility
+    SOLANA_RPC_URL: env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL,
+    HELIUS_RPC_URL: env?.HELIUS_RPC_URL || process.env.HELIUS_RPC_URL,
+    HELIUS_API_KEY: env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY,
+    ALCHEMY_RPC_URL: env?.ALCHEMY_RPC_URL || process.env.ALCHEMY_RPC_URL,
+    MORALIS_RPC_URL: env?.MORALIS_RPC_URL || process.env.MORALIS_RPC_URL,
+  } as Env;
+  return handler(request, envToPass);
 };

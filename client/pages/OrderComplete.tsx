@@ -54,6 +54,16 @@ export default function OrderComplete() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatSectionRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to chat if openChat is true in location state
+  useEffect(() => {
+    if (location.state?.openChat && chatSectionRef.current) {
+      setTimeout(() => {
+        chatSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 500);
+    }
+  }, [location.state?.openChat, loading]);
 
   // Load order from state or storage (with KV fallback)
   useEffect(() => {

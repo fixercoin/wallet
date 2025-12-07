@@ -598,3 +598,72 @@ export const handleAddTradeMessage: RequestHandler = async (req, res) => {
     res.status(500).json({ error: "Failed to add message" });
   }
 };
+
+export const handleConfirmPayment: RequestHandler = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const { walletAddress } = req.body;
+
+    if (!roomId || !walletAddress) {
+      return res.status(400).json({
+        error: "Missing required fields: roomId, walletAddress",
+      });
+    }
+
+    const room = rooms.get(roomId);
+    if (!room) {
+      return res.status(404).json({ error: "Trade room not found" });
+    }
+
+    // Determine if this is the buyer or seller
+    const isBuyer = room.buyer_wallet === walletAddress;
+    const isSeller = room.seller_wallet === walletAddress;
+
+    if (!isBuyer && !isSeller) {
+      return res.status(403).json({
+        error: "Wallet is not part of this trade",
+      });
+    }
+
+    // Mark payment as confirmed for this party
+    const updated: any = {
+      ...room,
+      updatedAt: Date.now(),
+      updated_at: Date.now(),
+    };
+
+    if (isBuyer) {
+      updated.buyerPaymentConfirmed = true;
+      updated.buyerConfirmedAt = Date.now();
+    } else {
+      updated.sellerPaymentConfirmed = true;
+      updated.sellerConfirmedAt = Date.now();
+    }
+
+    // If both parties have confirmed, auto-release escrow and mark order as payment_confirmed
+    if (updated.buyerPaymentConfirmed && updated.sellerPaymentConfirmed) {
+      updated.status = "payment_confirmed";
+
+      // Also update the order status to reflect payment confirmation
+      const order = await getOrderById(room.order_id);
+      if (order) {
+        order.status = "payment_confirmed" as P2POrder["status"];
+        order.updatedAt = Date.now();
+        order.updated_at = Date.now();
+        await saveOrder(order);
+      }
+    }
+
+    rooms.set(roomId, updated);
+    res.json({
+      room: updated,
+      autoReleased: updated.buyerPaymentConfirmed && updated.sellerPaymentConfirmed,
+      message: updated.buyerPaymentConfirmed && updated.sellerPaymentConfirmed
+        ? "Both parties confirmed payment. Escrow will be released."
+        : `${isBuyer ? "Buyer" : "Seller"} confirmed payment. Waiting for ${isBuyer ? "seller" : "buyer"} confirmation.`,
+    });
+  } catch (error) {
+    console.error("Confirm payment error:", error);
+    res.status(500).json({ error: "Failed to confirm payment" });
+  }
+};

@@ -535,10 +535,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     setupRefreshInterval();
 
-    // No longer adjust polling based on visibility - use fixed 2-minute interval
+    // No longer adjust polling based on visibility - use fixed 30-second interval
     const handleVisibilityChange = () => {
       // Visibility changes no longer trigger interval reconfiguration
-      // Dashboard will refresh every 2 minutes consistently
+      // Dashboard will refresh every 30 seconds consistently
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);

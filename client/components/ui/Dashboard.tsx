@@ -414,13 +414,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                     <div className="text-right">
                       <p className="text-sm font-semibold text-white">
-                        {formatBalance(
-                          token.symbol === "SOL" ? balance : token.balance || 0,
-                        )}
+                        {formatBalance(token.balance || 0)}
                       </p>
                       <p className="text-xs text-gray-400">
                         {typeof token.price === "number" && token.price > 0 ? (
-                          `$${formatBalance((token.symbol === "SOL" ? balance : token.balance || 0) * token.price)}`
+                          `$${formatBalance((token.balance || 0) * token.price)}`
                         ) : (
                           <PriceLoader />
                         )}

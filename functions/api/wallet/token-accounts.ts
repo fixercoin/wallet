@@ -271,17 +271,23 @@ async function handler(request: Request, env?: Env): Promise<Response> {
           )}`,
         );
 
+        console.log(
+          `[TokenAccounts] ✅ Successfully fetched tokens for ${publicKey.slice(0, 8)}`,
+        );
+
         return new Response(
           JSON.stringify({
             publicKey,
             tokens: allTokens,
             count: allTokens.length,
+            source: endpoint.substring(0, 50),
           }),
           {
             status: 200,
             headers: {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
             },
           },
         );

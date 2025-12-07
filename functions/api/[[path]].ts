@@ -1673,7 +1673,7 @@ async function handleSolanaRpc(request: Request): Promise<Response> {
   }
 }
 
-async function handler(request: Request): Promise<Response> {
+async function handler(request: Request, env?: Env): Promise<Response> {
   try {
     if (request.method === "OPTIONS") {
       return new Response(null, {

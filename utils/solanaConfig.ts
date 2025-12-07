@@ -1,5 +1,5 @@
-// Helius-only RPC configuration
-// All RPC calls (SOL, tokens, transactions) use Helius exclusively
+// Solana RPC configuration with fallbacks
+// Priority order: Custom RPC URL → Helius API Key → Public RPC
 
 export const SOLANA_RPC_URL = (() => {
   // PRIORITY 1: Vite env variable (VITE_SOLANA_RPC_URL for browser builds)
@@ -24,10 +24,11 @@ export const SOLANA_RPC_URL = (() => {
     return process.env.HELIUS_RPC_URL;
   }
 
-  // REQUIRED: HELIUS_API_KEY must be set - no fallbacks to other providers
-  throw new Error(
-    "HELIUS_API_KEY environment variable is required. Please set it to use Helius RPC endpoints.",
+  // FALLBACK: Use public Solana RPC endpoint (rate-limited, for development/testing only)
+  console.warn(
+    "HELIUS_API_KEY not configured. Using public RPC endpoint with rate limiting. Set HELIUS_API_KEY for production use.",
   );
+  return "https://api.mainnet-beta.solana.com";
 })();
 
 // Legacy export for backward compatibility

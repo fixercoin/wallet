@@ -855,9 +855,15 @@ export default function OrderComplete() {
                     </div>
                   )}
 
-                  {isBuyer && sellerPaymentReceived && (
+                  {isBuyer && sellerPaymentReceived && !sellerTransferInitiated && (
                     <div className="p-3 bg-orange-600/20 border border-orange-500/30 rounded-lg text-xs text-orange-300">
-                      Waiting for seller to transfer crypto...
+                      ✓ Seller confirmed payment received - waiting for crypto transfer...
+                    </div>
+                  )}
+
+                  {isBuyer && sellerTransferInitiated && !buyerCryptoReceived && (
+                    <div className="p-3 bg-green-600/20 border border-green-500/30 rounded-lg text-xs text-green-300">
+                      ✓ Seller initiated transfer - check your wallet and confirm receipt below
                     </div>
                   )}
 

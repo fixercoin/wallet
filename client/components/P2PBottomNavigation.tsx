@@ -1,38 +1,17 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ShoppingCart, TrendingUp } from "lucide-react";
 
 interface P2PBottomNavigationProps {
   onPaymentClick?: () => void;
   onCreateOfferClick?: () => void;
 }
 
-const SERVERS = [
-  { id: 1, name: "Server 1", password: "123" },
-  { id: 2, name: "Server 2", password: "123" },
-  { id: 3, name: "Server 3", password: "123" },
-  { id: 4, name: "Server 4", password: "123" },
-  { id: 5, name: "Server 5", password: "123" },
-];
-
 export const P2PBottomNavigation: React.FC<P2PBottomNavigationProps> = ({
   onPaymentClick,
   onCreateOfferClick,
 }) => {
   const navigate = useNavigate();
-  const [showPostDialog, setShowPostDialog] = useState(false);
-  const [selectedServer, setSelectedServer] = useState<number | null>(null);
-  const [serverPassword, setServerPassword] = useState<string>("");
-  const [passwordVerified, setPasswordVerified] = useState<boolean>(false);
-  const [passwordError, setPasswordError] = useState<string>("");
 
   const handleServerSelect = (serverId: number) => {
     setSelectedServer(serverId);

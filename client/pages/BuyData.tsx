@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { P2POrder } from "@/lib/p2p-api";
 
 interface PaymentMethod {
@@ -27,6 +33,8 @@ export default function BuyData() {
   const [amountPKR, setAmountPKR] = useState("");
   const [amountTokens, setAmountTokens] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showConnectingLoader, setShowConnectingLoader] = useState(false);
+  const [connectionCountdown, setConnectionCountdown] = useState(10);
 
   // Fetch exchange rate on mount
   useEffect(() => {

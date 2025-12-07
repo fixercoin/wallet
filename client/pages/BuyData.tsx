@@ -69,14 +69,6 @@ export default function BuyData() {
     fetchPaymentMethods();
   }, [wallet?.publicKey, showPaymentDialog, refreshKey]);
 
-  // Auto-refresh data every 10 seconds
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setRefreshKey((prev) => prev + 1);
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   if (!wallet) {
     return (

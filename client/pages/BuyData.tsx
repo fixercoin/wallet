@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+import { PaymentMethodInfoCard } from "@/components/wallet/PaymentMethodInfoCard";
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
 import {
   Dialog,

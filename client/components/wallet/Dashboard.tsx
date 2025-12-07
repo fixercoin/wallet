@@ -558,7 +558,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       (token) =>
         typeof token.balance === "number" &&
         token.balance > 0 &&
-        token.price === undefined
+        token.price === undefined,
     );
   };
 

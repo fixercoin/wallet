@@ -81,7 +81,9 @@ async function handler(request: Request): Promise<Response> {
           }
         }
       }
-      console.log("[SOL Price] CoinGecko returned invalid data, trying Birdeye...");
+      console.log(
+        "[SOL Price] CoinGecko returned invalid data, trying Birdeye...",
+      );
     } catch (e: any) {
       console.warn("[SOL Price] CoinGecko failed:", e?.message || String(e));
     }
@@ -107,7 +109,11 @@ async function handler(request: Request): Promise<Response> {
 
       if (birdeyeResponse.ok) {
         const data = await birdeyeResponse.json();
-        if (data.data && typeof data.data.value === "number" && data.data.value > 0) {
+        if (
+          data.data &&
+          typeof data.data.value === "number" &&
+          data.data.value > 0
+        ) {
           const priceData: SolPriceResponse = {
             price: data.data.value,
             price_change_24h: 0,
@@ -138,7 +144,9 @@ async function handler(request: Request): Promise<Response> {
     }
 
     // If all else fails, return 503 Service Unavailable so client will retry
-    console.error("[SOL Price] Both CoinGecko and Birdeye APIs failed or returned invalid data");
+    console.error(
+      "[SOL Price] Both CoinGecko and Birdeye APIs failed or returned invalid data",
+    );
     if (timeoutId) clearTimeout(timeoutId);
 
     return new Response(

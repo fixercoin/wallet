@@ -1,6 +1,8 @@
 import React from "react";
 
-export const PriceLoader: React.FC<{ size?: "sm" | "md" | "lg" }> = ({ size = "sm" }) => {
+export const PriceLoader: React.FC<{ size?: "sm" | "md" | "lg" }> = ({
+  size = "sm",
+}) => {
   const sizeMap = {
     sm: "4px",
     md: "6px",

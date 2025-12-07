@@ -15,6 +15,12 @@ interface PaymentMethod {
   accountNumber: string;
 }
 
+interface PaymentMethod {
+  id: string;
+  accountName: string;
+  accountNumber: string;
+}
+
 export default function SellData() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
@@ -26,6 +32,7 @@ export default function SellData() {
   const [amountTokens, setAmountTokens] = useState("");
   const [amountPKR, setAmountPKR] = useState("");
   const [loading, setLoading] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
   // Fetch exchange rate on mount
   useEffect(() => {

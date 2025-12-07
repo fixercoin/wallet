@@ -200,9 +200,7 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
                     <div className="text-xs text-gray-300">
                       ${Number(r.priceUsd).toFixed(6)}
                     </div>
-                  ) : (
-                    <PriceLoader />
-                  )}
+                  ) : null}
                 </div>
               </button>
             );

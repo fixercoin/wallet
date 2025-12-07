@@ -190,7 +190,7 @@ async function handleWalletBalance(url: URL, env: Env): Promise<Response> {
   }
 }
 
-// Wallet tokens - SPL accounts
+// Wallet tokens - SPL accounts (Helius only)
 async function handleWalletTokens(url: URL, env: Env): Promise<Response> {
   const publicKey = url.searchParams.get("publicKey");
   if (!publicKey) {
@@ -200,80 +200,56 @@ async function handleWalletTokens(url: URL, env: Env): Promise<Response> {
     });
   }
 
-  // Build RPC endpoints with environment variable support
-  const rpcEndpoints: string[] = [];
+  try {
+    // Use Helius RPC ONLY
+    const endpoint = getHeliusRpcEndpoint(env);
 
-  // Add Helius if API key is provided
-  if (env.HELIUS_API_KEY) {
-    rpcEndpoints.push(
-      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
+    const payload = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getTokenAccountsByOwner",
+      params: [
+        publicKey,
+        { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
+        { encoding: "jsonParsed" },
+      ],
+    };
+
+    const rpcRes = await timeoutFetch(endpoint, {
+      method: "POST",
+      headers: browserHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const rpcJson = await rpcRes.json();
+
+    if (rpcJson.error) {
+      throw new Error(rpcJson.error.message || "Helius RPC error");
+    }
+
+    const arr = rpcJson?.result?.value ?? [];
+    const tokens = arr.map((t: any) => {
+      const acc = t.account?.data?.parsed?.info;
+      const mint = acc?.mint;
+      const amountRaw = acc?.tokenAmount?.amount ?? "0";
+      const decimals = acc?.tokenAmount?.decimals ?? 0;
+      const uiAmount = Number(amountRaw) / Math.pow(10, decimals);
+      return { mint, amountRaw, uiAmount, decimals, owner: t.pubkey };
+    });
+    return new Response(JSON.stringify({ tokens }), {
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
+    const errorMsg = String(e?.message || e);
+    console.error("[Helius] Token accounts fetch error:", errorMsg);
+
+    return new Response(
+      JSON.stringify({
+        error: "Failed to fetch wallet tokens from Helius RPC",
+        details: errorMsg,
+      }),
+      { status: 502, headers: CORS_HEADERS }
     );
   }
-
-  // Add custom SOLANA_RPC if provided
-  if (env.SOLANA_RPC) {
-    rpcEndpoints.push(env.SOLANA_RPC);
-  }
-
-  // Add fallback endpoints
-  rpcEndpoints.push(...FALLBACK_RPC_ENDPOINTS);
-
-  // Remove duplicates
-  const uniqueEndpoints = [...new Set(rpcEndpoints)];
-
-  const payload = {
-    jsonrpc: "2.0",
-    id: 1,
-    method: "getTokenAccountsByOwner",
-    params: [
-      publicKey,
-      { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
-      { encoding: "jsonParsed" },
-    ],
-  };
-
-  let lastError = "";
-  for (let i = 0; i < uniqueEndpoints.length; i++) {
-    const endpoint = uniqueEndpoints[i];
-    try {
-      const rpcRes = await timeoutFetch(endpoint, {
-        method: "POST",
-        headers: browserHeaders(),
-        body: JSON.stringify(payload),
-      });
-      const rpcJson = await rpcRes.json();
-
-      if (rpcJson.error) {
-        lastError = rpcJson.error.message || "RPC error";
-        continue;
-      }
-
-      const arr = rpcJson?.result?.value ?? [];
-      const tokens = arr.map((t: any) => {
-        const acc = t.account?.data?.parsed?.info;
-        const mint = acc?.mint;
-        const amountRaw = acc?.tokenAmount?.amount ?? "0";
-        const decimals = acc?.tokenAmount?.decimals ?? 0;
-        const uiAmount = Number(amountRaw) / Math.pow(10, decimals);
-        return { mint, amountRaw, uiAmount, decimals, owner: t.pubkey };
-      });
-      return new Response(JSON.stringify({ tokens }), {
-        headers: CORS_HEADERS,
-      });
-    } catch (e: any) {
-      lastError = String(e?.message || e);
-      continue;
-    }
-  }
-
-  return new Response(
-    JSON.stringify({
-      error: "Failed to fetch wallet tokens",
-      details: lastError || "All RPC endpoints failed",
-      endpointsAttempted: uniqueEndpoints.length,
-    }),
-    { status: 502, headers: CORS_HEADERS },
-  );
 }
 
 // Generic price endpoint using DexScreener

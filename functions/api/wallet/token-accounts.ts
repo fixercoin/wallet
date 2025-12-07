@@ -338,21 +338,31 @@ export const onRequest = async ({
   env,
 }: {
   request: Request;
-  env: Env;
-}) => handler(request, env);
+  env?: Env | Record<string, any>;
+}) => {
+  // Ensure env is passed to handler, fallback to process.env for Node.js
+  const envToPass = env || (typeof process !== "undefined" ? process.env : {});
+  return handler(request, envToPass as Env);
+};
 
 export const onRequestGet = async ({
   request,
   env,
 }: {
   request: Request;
-  env: Env;
-}) => handler(request, env);
+  env?: Env | Record<string, any>;
+}) => {
+  const envToPass = env || (typeof process !== "undefined" ? process.env : {});
+  return handler(request, envToPass as Env);
+};
 
 export const onRequestPost = async ({
   request,
   env,
 }: {
   request: Request;
-  env: Env;
-}) => handler(request, env);
+  env?: Env | Record<string, any>;
+}) => {
+  const envToPass = env || (typeof process !== "undefined" ? process.env : {});
+  return handler(request, envToPass as Env);
+};

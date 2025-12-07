@@ -25,13 +25,7 @@ export const PriceLoader: React.FC = () => {
         .bounce-dot:nth-child(1) { animation-delay: 0s; }
         .bounce-dot:nth-child(2) { animation-delay: 0.2s; }
         .bounce-dot:nth-child(3) { animation-delay: 0.4s; }
-        .bounce-dot:nth-child(4) { animation-delay: 0.6s; }
-        .bounce-dot:nth-child(5) { animation-delay: 0.8s; }
-        .bounce-dot:nth-child(6) { animation-delay: 1s; }
       `}</style>
-      <div className="bounce-dot"></div>
-      <div className="bounce-dot"></div>
-      <div className="bounce-dot"></div>
       <div className="bounce-dot"></div>
       <div className="bounce-dot"></div>
       <div className="bounce-dot"></div>

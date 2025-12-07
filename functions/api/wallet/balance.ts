@@ -10,90 +10,98 @@ interface Env {
   MORALIS_RPC_URL?: string;
 }
 
+// Helper to safely check if a string has value
+function hasValue(val: string | undefined): val is string {
+  return typeof val === "string" && val.trim().length > 0;
+}
+
 function buildRpcEndpoints(env?: Env): string[] {
   const endpoints: string[] = [];
 
-  // Try env parameter first
-  const solanaRpcUrl = env?.SOLANA_RPC_URL;
-  const heliusRpcUrl = env?.HELIUS_RPC_URL;
-  const heliusApiKey = env?.HELIUS_API_KEY;
-  const alchemyRpcUrl = env?.ALCHEMY_RPC_URL;
-  const moralisRpcUrl = env?.MORALIS_RPC_URL;
+  // Try env parameter first, then fall back to process.env for Node.js compat
+  const solanaRpcUrl = hasValue(env?.SOLANA_RPC_URL)
+    ? env.SOLANA_RPC_URL
+    : (process.env.SOLANA_RPC_URL as string | undefined);
 
-  // Log environment configuration
+  const heliusRpcUrl = hasValue(env?.HELIUS_RPC_URL)
+    ? env.HELIUS_RPC_URL
+    : (process.env.HELIUS_RPC_URL as string | undefined);
+
+  const heliusApiKey = hasValue(env?.HELIUS_API_KEY)
+    ? env.HELIUS_API_KEY
+    : (process.env.HELIUS_API_KEY as string | undefined);
+
+  const alchemyRpcUrl = hasValue(env?.ALCHEMY_RPC_URL)
+    ? env.ALCHEMY_RPC_URL
+    : (process.env.ALCHEMY_RPC_URL as string | undefined);
+
+  const moralisRpcUrl = hasValue(env?.MORALIS_RPC_URL)
+    ? env.MORALIS_RPC_URL
+    : (process.env.MORALIS_RPC_URL as string | undefined);
+
+  // Log environment configuration for debugging
   console.log("[RPC Config] Environment check:", {
     hasSolanaRpcUrl: !!solanaRpcUrl,
     hasHeliusRpcUrl: !!heliusRpcUrl,
     hasHeliusApiKey: !!heliusApiKey,
     hasAlchemyRpcUrl: !!alchemyRpcUrl,
     hasMoralisRpcUrl: !!moralisRpcUrl,
+    configSource: env
+      ? "Cloudflare Pages (env parameter)"
+      : "Node.js (process.env)",
   });
 
   // Add HELIUS endpoints first (if configured) - highest priority
-  if (
-    heliusRpcUrl &&
-    typeof heliusRpcUrl === "string" &&
-    heliusRpcUrl.length > 0
-  ) {
+  if (hasValue(heliusRpcUrl)) {
     console.log("[RPC Config] Adding HELIUS_RPC_URL (full URL) from env");
     endpoints.push(heliusRpcUrl);
   }
 
-  if (
-    heliusApiKey &&
-    typeof heliusApiKey === "string" &&
-    heliusApiKey.length > 0
-  ) {
+  if (hasValue(heliusApiKey)) {
     console.log("[RPC Config] Adding Helius constructed endpoint from API key");
     const heliusEndpoint = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
     endpoints.push(heliusEndpoint);
   }
 
   // Add other environment-configured endpoints
-  if (
-    solanaRpcUrl &&
-    typeof solanaRpcUrl === "string" &&
-    solanaRpcUrl.length > 0
-  ) {
+  if (hasValue(solanaRpcUrl)) {
     console.log("[RPC Config] Using SOLANA_RPC_URL from env");
     endpoints.push(solanaRpcUrl);
   }
 
-  if (
-    alchemyRpcUrl &&
-    typeof alchemyRpcUrl === "string" &&
-    alchemyRpcUrl.length > 0
-  ) {
+  if (hasValue(alchemyRpcUrl)) {
     console.log("[RPC Config] Using ALCHEMY_RPC_URL from env");
     endpoints.push(alchemyRpcUrl);
   }
 
-  if (
-    moralisRpcUrl &&
-    typeof moralisRpcUrl === "string" &&
-    moralisRpcUrl.length > 0
-  ) {
+  if (hasValue(moralisRpcUrl)) {
     console.log("[RPC Config] Using MORALIS_RPC_URL from env");
     endpoints.push(moralisRpcUrl);
   }
 
   if (endpoints.length === 0) {
     console.log(
-      "[RPC Config] No configured endpoints found, using Shyft + public fallbacks",
+      "[RPC Config] No configured endpoints found, using public endpoints as fallback",
     );
   }
 
-  // Add Shyft endpoint first (Cloudflare-compatible and proven to work)
-  endpoints.push("https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7");
+  // Add quality public endpoints in priority order (Cloudflare-compatible)
+  const publicEndpoints = [
+    "https://solana.publicnode.com",
+    "https://rpc.ankr.com/solana",
+    "https://rpc.ironforge.network/mainnet",
+    "https://api.mainnet-beta.solana.com",
+    "https://rpc.genesysgo.net",
+  ];
 
-  // Add other Cloudflare-compatible public endpoints as fallback
-  endpoints.push("https://rpc.ironforge.network/mainnet");
-  endpoints.push("https://solana.publicnode.com");
-  endpoints.push("https://rpc.ankr.com/solana");
-  endpoints.push("https://api.mainnet-beta.solana.com");
-  endpoints.push("https://rpc.genesysgo.net");
+  // Add public endpoints that aren't already in the list
+  publicEndpoints.forEach((endpoint) => {
+    if (!endpoints.includes(endpoint)) {
+      endpoints.push(endpoint);
+    }
+  });
 
-  return [...new Set(endpoints)]; // Remove duplicates
+  return endpoints; // No duplicates since we check before adding
 }
 
 async function handler(request: Request, env?: Env): Promise<Response> {

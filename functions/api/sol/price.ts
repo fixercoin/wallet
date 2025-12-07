@@ -64,7 +64,13 @@ async function handler(request: Request): Promise<Response> {
             };
 
             console.log(`[SOL Price] ✅ CoinGecko success: $${price}`);
-            return new Response(JSON.stringify(priceData), {
+            const responseBody = {
+              ...priceData,
+              token: "SOL",
+              mint: "So11111111111111111111111111111111111111112",
+              source: "coingecko",
+            };
+            return new Response(JSON.stringify(responseBody), {
               status: 200,
               headers: {
                 "Content-Type": "application/json",

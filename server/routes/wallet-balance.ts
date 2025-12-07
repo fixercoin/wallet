@@ -4,12 +4,19 @@ import { RequestHandler } from "express";
 function getRpcEndpoints(): string[] {
   const endpoints: string[] = [];
 
+  // Helper to safely check env vars (trim empty strings)
+  const getEnvVar = (value: string | undefined): string | null => {
+    if (!value || typeof value !== "string") return null;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  };
+
   // Log environment variable availability for debugging
-  const solanaRpcUrl = process.env.SOLANA_RPC_URL;
-  const heliusRpcUrl = process.env.HELIUS_RPC_URL;
-  const heliusApiKey = process.env.HELIUS_API_KEY;
-  const alchemyRpcUrl = process.env.ALCHEMY_RPC_URL;
-  const moralisRpcUrl = process.env.MORALIS_RPC_URL;
+  const solanaRpcUrl = getEnvVar(process.env.SOLANA_RPC_URL);
+  const heliusRpcUrl = getEnvVar(process.env.HELIUS_RPC_URL);
+  const heliusApiKey = getEnvVar(process.env.HELIUS_API_KEY);
+  const alchemyRpcUrl = getEnvVar(process.env.ALCHEMY_RPC_URL);
+  const moralisRpcUrl = getEnvVar(process.env.MORALIS_RPC_URL);
 
   console.log("[WalletBalance] Environment variable check:", {
     hasSolanaRpcUrl: !!solanaRpcUrl,

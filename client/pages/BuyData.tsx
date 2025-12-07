@@ -57,7 +57,7 @@ export default function BuyData() {
       if (!wallet?.publicKey) return;
       try {
         const response = await fetch(
-          `/api/p2p/payment-methods?walletAddress=${wallet.publicKey}`
+          `/api/p2p/payment-methods?walletAddress=${wallet.publicKey}`,
         );
         if (response.ok) {
           const data = await response.json();
@@ -152,7 +152,9 @@ export default function BuyData() {
 
             // Check if buyer has added payment details
             if (paymentMethods.length === 0) {
-              toast.error("Please add your payment details before creating an order");
+              toast.error(
+                "Please add your payment details before creating an order",
+              );
               setShowTradeDialog(false);
               setEditingPaymentMethodId(undefined);
               setShowPaymentDialog(true);

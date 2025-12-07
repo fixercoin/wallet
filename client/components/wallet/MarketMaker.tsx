@@ -16,7 +16,6 @@ import { useNavigate } from "react-router-dom";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { solPriceService } from "@/lib/services/sol-price";
 import { MarketMakerHistoryCard } from "./MarketMakerHistoryCard";
-import { PriceLoader } from "@/components/ui/price-loader";
 import {
   botOrdersStorage,
   BotSession,

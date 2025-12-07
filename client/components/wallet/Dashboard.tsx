@@ -54,7 +54,6 @@ import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
 import { getUnreadNotifications } from "@/lib/p2p-chat";
-import { PriceLoader } from "@/components/ui/price-loader";
 import { Zap } from "lucide-react";
 
 interface DashboardProps {

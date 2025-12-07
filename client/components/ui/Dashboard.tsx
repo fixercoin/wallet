@@ -25,7 +25,6 @@ import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
-import { PriceLoader } from "@/components/ui/price-loader";
 
 interface DashboardProps {
   onSend: () => void;

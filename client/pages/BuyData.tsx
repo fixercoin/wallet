@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { P2POrder } from "@/lib/p2p-api";
 
 interface PaymentMethod {
@@ -27,6 +33,8 @@ export default function BuyData() {
   const [amountPKR, setAmountPKR] = useState("");
   const [amountTokens, setAmountTokens] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showConnectingLoader, setShowConnectingLoader] = useState(false);
+  const [connectionCountdown, setConnectionCountdown] = useState(10);
 
   // Fetch exchange rate on mount
   useEffect(() => {
@@ -66,37 +74,9 @@ export default function BuyData() {
     fetchPaymentMethods();
   }, [wallet?.publicKey, showPaymentDialog]);
 
-  const handlePKRChange = (value: string) => {
-    setAmountPKR(value);
-    if (value) {
-      const num = parseFloat(value);
-      if (!isNaN(num)) {
-        setAmountTokens((num / exchangeRate).toFixed(6));
-      }
-    } else {
-      setAmountTokens("");
-    }
-  };
-
-  const isValid = useMemo(() => {
-    const tokens = parseFloat(amountTokens) || 0;
-    const pkr = parseFloat(amountPKR) || 0;
-    return tokens > 0 && pkr > 0;
-  }, [amountTokens, amountPKR]);
-
-  const handleSubmit = async () => {
-    if (!isValid) return;
-
+  const proceedWithOrderCreation = useCallback(async () => {
     if (!wallet?.publicKey) {
       toast.error("Missing wallet information");
-      return;
-    }
-
-    // Check if user has added payment details
-    if (paymentMethods.length === 0) {
-      toast.error("Please add your payment details before creating an order");
-      setEditingPaymentMethodId(undefined);
-      setShowPaymentDialog(true);
       return;
     }
 
@@ -132,6 +112,68 @@ export default function BuyData() {
     } finally {
       setLoading(false);
     }
+  }, [wallet?.publicKey, exchangeRate, amountTokens, amountPKR, navigate]);
+
+  // Handle connection countdown timer
+  useEffect(() => {
+    if (!showConnectingLoader) return;
+
+    if (connectionCountdown <= 0) {
+      setShowConnectingLoader(false);
+      setConnectionCountdown(10);
+
+      // Check if user has added payment method
+      if (paymentMethods.length === 0) {
+        setEditingPaymentMethodId(undefined);
+        setShowPaymentDialog(true);
+      } else {
+        // Proceed with order creation
+        proceedWithOrderCreation();
+      }
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setConnectionCountdown(connectionCountdown - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [
+    showConnectingLoader,
+    connectionCountdown,
+    paymentMethods,
+    proceedWithOrderCreation,
+  ]);
+
+  const handlePKRChange = (value: string) => {
+    setAmountPKR(value);
+    if (value) {
+      const num = parseFloat(value);
+      if (!isNaN(num)) {
+        setAmountTokens((num / exchangeRate).toFixed(6));
+      }
+    } else {
+      setAmountTokens("");
+    }
+  };
+
+  const isValid = useMemo(() => {
+    const tokens = parseFloat(amountTokens) || 0;
+    const pkr = parseFloat(amountPKR) || 0;
+    return tokens > 0 && pkr > 0;
+  }, [amountTokens, amountPKR]);
+
+  const handleSubmit = async () => {
+    if (!isValid) return;
+
+    if (!wallet?.publicKey) {
+      toast.error("Missing wallet information");
+      return;
+    }
+
+    // Show connecting loader for 10 seconds
+    setConnectionCountdown(10);
+    setShowConnectingLoader(true);
   };
 
   if (!wallet) {
@@ -257,6 +299,26 @@ export default function BuyData() {
           </div>
         </div>
       </div>
+
+      {/* Connecting Loader Dialog */}
+      <Dialog
+        open={showConnectingLoader}
+        onOpenChange={setShowConnectingLoader}
+      >
+        <DialogContent className="bg-[#1a2847] border border-gray-300/30 flex flex-col items-center justify-center gap-4">
+          <div className="text-center space-y-4">
+            <Loader2 className="w-12 h-12 animate-spin text-[#FF7A5C] mx-auto" />
+            <div>
+              <DialogTitle className="text-white text-lg mb-2">
+                Wait Connecting to Seller
+              </DialogTitle>
+              <p className="text-white/70 text-sm">
+                Connecting... {connectionCountdown} seconds
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Payment Method Dialog */}
       <PaymentMethodDialog

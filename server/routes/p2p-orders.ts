@@ -313,8 +313,20 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
       });
     }
 
+    // For SELL orders, verify seller has payment method
+    if (finalType === "SELL") {
+      const hasPaymentMethod = await sellerHasVerifiedPaymentMethod(finalWallet);
+      if (!hasPaymentMethod) {
+        return res.status(400).json({
+          error: "Seller must have at least one verified payment method to create a SELL order",
+          code: "SELLER_NO_PAYMENT_METHOD",
+        });
+      }
+    }
+
     const id = orderId || generateId("order");
     const now = Date.now();
+    const ORDER_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 
     const order: any = {
       id,
@@ -336,6 +348,9 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
       buyerWallet,
       sellerWallet,
       adminWallet,
+      expiresAt: now + ORDER_TIMEOUT_MS,
+      sellerVerified: finalType === "SELL",
+      sellerPaymentMethodVerified: finalType === "SELL",
       // Marketplace fields for min/max amounts
       ...(minAmountPKR !== undefined && { minAmountPKR }),
       ...(maxAmountPKR !== undefined && { maxAmountPKR }),

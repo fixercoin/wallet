@@ -257,14 +257,27 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
     console.error("[WalletBalance] All RPC endpoints failed:", {
       publicKey: publicKey.substring(0, 8),
       lastError: lastError?.message,
-      configuredEndpoints: RPC_ENDPOINTS.length,
+      totalEndpoints: RPC_ENDPOINTS.length,
+      envVarsSet: {
+        SOLANA_RPC_URL: !!process.env.SOLANA_RPC_URL,
+        HELIUS_RPC_URL: !!process.env.HELIUS_RPC_URL,
+        HELIUS_API_KEY: !!process.env.HELIUS_API_KEY,
+        ALCHEMY_RPC_URL: !!process.env.ALCHEMY_RPC_URL,
+        MORALIS_RPC_URL: !!process.env.MORALIS_RPC_URL,
+      },
     });
 
     return res.status(502).json({
       error:
         lastError?.message ||
         "Failed to fetch balance - all RPC endpoints failed",
-      hint: "Please check server RPC configuration. Set HELIUS_API_KEY or SOLANA_RPC_URL environment variable.",
+      details: {
+        message:
+          "No RPC endpoint was able to fetch the wallet balance. This could indicate a network issue or misconfiguration.",
+        endpointsAttempted: RPC_ENDPOINTS.length,
+        lastError: lastError?.message,
+        hint: "For Cloudflare deployment: Set HELIUS_API_KEY or SOLANA_RPC_URL environment variable. For local dev: Ensure RPC endpoints are accessible.",
+      },
     });
   } catch (error) {
     console.error("[WalletBalance] Handler error:", error);

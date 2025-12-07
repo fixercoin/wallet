@@ -788,14 +788,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         setIsUsingCache(true);
         setError(null);
       } else {
-        console.warn(
-          "[WalletContext] No cached balance available, showing 0",
-        );
+        console.warn("[WalletContext] No cached balance available, showing 0");
         setBalance(0);
         balanceRef.current = 0;
-        setError(
-          "Unable to fetch SOL balance. Please check your connection.",
-        );
+        setError("Unable to fetch SOL balance. Please check your connection.");
       }
     } finally {
       setIsLoading(false);
@@ -834,7 +830,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       // Use SOL from tokenAccounts if available (for Cloudflare compatibility)
       // Otherwise use the balance from the separate refreshBalance() call
       let solBalance = 0;
-      if (solFromTokenAccounts?.balance !== undefined && solFromTokenAccounts.balance > 0) {
+      if (
+        solFromTokenAccounts?.balance !== undefined &&
+        solFromTokenAccounts.balance > 0
+      ) {
         solBalance = solFromTokenAccounts.balance;
         setBalance(solFromTokenAccounts.balance);
         balanceRef.current = solFromTokenAccounts.balance;
@@ -843,7 +842,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         );
       } else {
         // Fall back to balance from separate endpoint (which should have been fetched via refreshBalance)
-        solBalance = typeof balanceRef.current === "number" ? balanceRef.current : balance || 0;
+        solBalance =
+          typeof balanceRef.current === "number"
+            ? balanceRef.current
+            : balance || 0;
         console.log(
           `[WalletContext] Using SOL balance from balance endpoint: ${solBalance}`,
         );

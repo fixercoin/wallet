@@ -30,10 +30,10 @@ function getRpcEndpoint(): string {
     return solanaRpcUrl;
   }
 
-  // Fallback to public Solana RPC endpoint for dev environments
-  const publicEndpoint = "https://api.mainnet-beta.solana.com";
+  // Fallback to reliable public RPC endpoint for dev environments
+  const publicEndpoint = "https://solana.publicnode.com";
   console.log(
-    "[WalletBalance] Using public Solana RPC endpoint (rate-limited). For production, set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
+    "[WalletBalance] Using public Solana RPC endpoint. For production, set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
   );
   return publicEndpoint;
 }

@@ -3,19 +3,20 @@ import { RequestHandler } from "express";
 const RPC_ENDPOINTS = [
   // Environment-configured RPC as primary
   process.env.SOLANA_RPC_URL || "",
-  // Provider-specific overrides
+  // Helius as primary fallback (most reliable)
   process.env.HELIUS_RPC_URL || "",
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
     : "",
   process.env.ALCHEMY_RPC_URL || "",
   process.env.MORALIS_RPC_URL || "",
-  // Shyft RPC as reliable fallback
-  "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7",
-  // Fallback public endpoints
+  // Additional public endpoints (quality tier 1)
   "https://solana.publicnode.com",
   "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
+  // Backup endpoints (quality tier 2 - use if above fail)
+  "https://rpc.genesysgo.net",
+  "https://ssc-dao.genesysgo.net:8899",
 ].filter(Boolean);
 
 // Helius API for specialized token balance lookups (more efficient than RPC)
@@ -61,9 +62,9 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
           `[WalletBalance] Trying endpoint: ${endpoint.substring(0, 40)}...`,
         );
 
-        // Use AbortController for timeout
+        // Use AbortController for timeout (increased for stability)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         let response: Response;
         try {

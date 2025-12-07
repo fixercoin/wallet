@@ -81,7 +81,7 @@ export async function retryWithExponentialBackoff<T>(
  * Shorter initial delays for faster feedback in development
  */
 export const AGGRESSIVE_RETRY_OPTIONS: RetryOptions = {
-  maxRetries: 8,
+  maxRetries: 50,
   initialDelayMs: 50,
   maxDelayMs: 2000,
   backoffMultiplier: 1.3,

@@ -49,6 +49,8 @@ export default function OrderComplete() {
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(280);
   const [uploading, setUploading] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
+  const [orderTimestamp, setOrderTimestamp] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -76,6 +78,13 @@ export default function OrderComplete() {
           loadedOrder.sellerTransferInitiated ?? false,
         );
         setBuyerCryptoReceived(loadedOrder.buyerCryptoReceived ?? false);
+        // Set timestamp for timer (use createdAt if available, otherwise use current time)
+        const timestamp =
+          loadedOrder.createdAt &&
+          !isNaN(new Date(loadedOrder.createdAt).getTime())
+            ? new Date(loadedOrder.createdAt).getTime()
+            : Date.now();
+        setOrderTimestamp(timestamp);
       }
 
       setLoading(false);
@@ -83,6 +92,72 @@ export default function OrderComplete() {
 
     loadOrder();
   }, [location.state]);
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (!orderTimestamp) return;
+
+    const timerInterval = setInterval(() => {
+      const now = Date.now();
+      const elapsedSeconds = Math.floor((now - orderTimestamp) / 1000);
+      const remaining = Math.max(0, 600 - elapsedSeconds); // 600 seconds = 10 minutes
+
+      setTimeRemaining(remaining);
+    }, 1000);
+
+    return () => clearInterval(timerInterval);
+  }, [orderTimestamp]);
+
+  // Auto-cancel order when timer reaches 0
+  useEffect(() => {
+    if (
+      timeRemaining === 0 &&
+      order &&
+      order.status !== "COMPLETED" &&
+      order.status !== "CANCELLED"
+    ) {
+      const autoCancel = async () => {
+        try {
+          await updateOrderInBothStorages(order.id, {
+            status: "CANCELLED",
+            buyerPaymentConfirmed: false,
+            sellerPaymentReceived: false,
+            sellerTransferInitiated: false,
+            buyerCryptoReceived: false,
+          });
+
+          if (order.roomId) {
+            await addTradeMessage({
+              room_id: order.roomId,
+              sender_wallet: wallet?.publicKey || "",
+              message: "⏰ Order auto-cancelled due to timeout",
+            });
+          }
+
+          const otherParty = isBuyer ? order.sellerWallet : order.buyerWallet;
+          await createNotification(
+            otherParty,
+            "order_cancelled",
+            order.type,
+            order.id,
+            "Order auto-cancelled due to 10-minute timeout",
+            {
+              token: order.token,
+              amountTokens: order.amountTokens,
+              amountPKR: order.amountPKR,
+            },
+          );
+
+          toast.success("Order auto-cancelled due to timeout");
+          setTimeout(() => navigate(-1), 2000);
+        } catch (error) {
+          console.error("Error auto-cancelling order:", error);
+        }
+      };
+
+      autoCancel();
+    }
+  }, [timeRemaining, order]);
 
   // Fetch exchange rate from API (same as BuyData and SellData)
   useEffect(() => {
@@ -165,6 +240,12 @@ export default function OrderComplete() {
   const shortenAddress = (addr: string, chars = 6): string => {
     if (!addr) return "";
     return `${addr.slice(0, chars)}...${addr.slice(-chars)}`;
+  };
+
+  const formatTimeRemaining = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -510,14 +591,17 @@ export default function OrderComplete() {
             {isBuyer ? "BUY ORDER" : "SELL ORDER"}
           </h1>
           {order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
-            <button
-              onClick={handleCancelOrder}
-              className="relative p-2 rounded-lg hover:bg-red-600/20 transition-colors text-red-400"
-              aria-label="Cancel Order"
-              title="Cancel order"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-3">
+              <div
+                className={`text-sm font-bold px-3 py-1 rounded-lg ${
+                  timeRemaining <= 60
+                    ? "bg-red-600/40 text-red-400"
+                    : "bg-[#FF7A5C]/20 text-[#FF7A5C]"
+                }`}
+              >
+                {formatTimeRemaining(timeRemaining)}
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -859,7 +943,7 @@ export default function OrderComplete() {
             </div>
 
             {/* Message Input */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-4">
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
@@ -896,6 +980,17 @@ export default function OrderComplete() {
                 <Send className="h-4 w-4" />
               </Button>
             </div>
+
+            {/* Cancel Order Button */}
+            {order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
+              <Button
+                onClick={handleCancelOrder}
+                className="w-full px-4 py-2 bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 text-red-400 uppercase text-xs font-semibold transition-colors"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Cancel Trade
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>

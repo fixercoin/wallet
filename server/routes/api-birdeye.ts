@@ -134,7 +134,7 @@ export async function handleBirdeyePrice(
   res: Response,
 ): Promise<void> {
   try {
-    const address = (req.query.address as string) || "";
+    let address = (req.query.address as string) || "";
 
     if (!address) {
       res.status(400).json({
@@ -143,6 +143,9 @@ export async function handleBirdeyePrice(
       });
       return;
     }
+
+    // Strip ":N" suffix if present (e.g., "mint:1" -> "mint")
+    address = address.split(":")[0];
 
     const birdeyeUrl = `${BIRDEYE_API_URL}/public/price?address=${encodeURIComponent(address)}`;
     console.log(`[Birdeye] Fetching price for ${address} from ${birdeyeUrl}`);

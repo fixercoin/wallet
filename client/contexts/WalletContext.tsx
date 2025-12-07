@@ -519,10 +519,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     // Setup periodic refresh every 5 seconds (adaptive based on visibility)
     const setupRefreshInterval = () => {
-      // Use 5s interval when tab is visible for more responsive updates
-      // Longer interval (30s) when tab is hidden to conserve battery on mobile
-      const interval =
-        document.hidden || document.visibilityState === "hidden" ? 30000 : 5000;
+      // Auto-refresh dashboard every 2 minutes (120 seconds) for live price updates
+      const interval = 120000;
 
       refreshIntervalRef.current = setInterval(async () => {
         try {
@@ -537,12 +535,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     setupRefreshInterval();
 
-    // Handle visibility changes to adjust polling frequency
+    // No longer adjust polling based on visibility - use fixed 2-minute interval
     const handleVisibilityChange = () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-      setupRefreshInterval();
+      // Visibility changes no longer trigger interval reconfiguration
+      // Dashboard will refresh every 2 minutes consistently
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);

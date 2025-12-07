@@ -13,28 +13,35 @@ interface Env {
 function buildRpcEndpoints(env?: Env): string[] {
   const endpoints: string[] = [];
 
+  // Try env parameter first, then fall back to process.env (for Cloudflare Pages)
+  const solanaRpcUrl = env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL;
+  const heliusRpcUrl = env?.HELIUS_RPC_URL || process.env.HELIUS_RPC_URL;
+  const heliusApiKey = env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY;
+  const alchemyRpcUrl = env?.ALCHEMY_RPC_URL || process.env.ALCHEMY_RPC_URL;
+  const moralisRpcUrl = env?.MORALIS_RPC_URL || process.env.MORALIS_RPC_URL;
+
   // Add environment-configured endpoints first (highest priority)
-  if (env?.SOLANA_RPC_URL) {
+  if (solanaRpcUrl) {
     console.log("[RPC Config] Using SOLANA_RPC_URL from env");
-    endpoints.push(env.SOLANA_RPC_URL);
+    endpoints.push(solanaRpcUrl);
   }
-  if (env?.HELIUS_RPC_URL) {
+  if (heliusRpcUrl) {
     console.log("[RPC Config] Using HELIUS_RPC_URL from env");
-    endpoints.push(env.HELIUS_RPC_URL);
+    endpoints.push(heliusRpcUrl);
   }
-  if (env?.HELIUS_API_KEY) {
+  if (heliusApiKey) {
     console.log("[RPC Config] Using HELIUS_API_KEY from env");
     endpoints.push(
-      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
+      `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`,
     );
   }
-  if (env?.ALCHEMY_RPC_URL) {
+  if (alchemyRpcUrl) {
     console.log("[RPC Config] Using ALCHEMY_RPC_URL from env");
-    endpoints.push(env.ALCHEMY_RPC_URL);
+    endpoints.push(alchemyRpcUrl);
   }
-  if (env?.MORALIS_RPC_URL) {
+  if (moralisRpcUrl) {
     console.log("[RPC Config] Using MORALIS_RPC_URL from env");
-    endpoints.push(env.MORALIS_RPC_URL);
+    endpoints.push(moralisRpcUrl);
   }
 
   if (endpoints.length === 0) {

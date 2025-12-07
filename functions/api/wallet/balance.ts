@@ -20,6 +20,15 @@ function buildRpcEndpoints(env?: Env): string[] {
   const alchemyRpcUrl = env?.ALCHEMY_RPC_URL;
   const moralisRpcUrl = env?.MORALIS_RPC_URL;
 
+  // Log environment configuration
+  console.log("[RPC Config] Environment check:", {
+    hasSolanaRpcUrl: !!solanaRpcUrl,
+    hasHeliusRpcUrl: !!heliusRpcUrl,
+    hasHeliusApiKey: !!heliusApiKey,
+    hasAlchemyRpcUrl: !!alchemyRpcUrl,
+    hasMoralisRpcUrl: !!moralisRpcUrl,
+  });
+
   // Add environment-configured endpoints first (highest priority)
   if (
     solanaRpcUrl &&
@@ -69,11 +78,13 @@ function buildRpcEndpoints(env?: Env): string[] {
     );
   }
 
-  // Add public fallback endpoints (tier 1 - higher quality)
+  // Add Cloudflare-compatible public endpoints first (higher quality & faster)
+  endpoints.push("https://rpc.ironforge.network/mainnet");
   endpoints.push("https://solana.publicnode.com");
+
+  // Add additional fallback endpoints
   endpoints.push("https://rpc.ankr.com/solana");
   endpoints.push("https://api.mainnet-beta.solana.com");
-  endpoints.push("https://rpc.ironforge.network/mainnet");
 
   // Add backup endpoints (tier 2 - fallback if above fail)
   endpoints.push("https://rpc.genesysgo.net");

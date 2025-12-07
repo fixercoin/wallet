@@ -222,12 +222,17 @@ async function handler(request: Request, env?: Env): Promise<Response> {
             params: [publicKey],
           };
 
+          const solController = new AbortController();
+          const solTimeoutId = setTimeout(() => solController.abort(), 10000);
+
           const solResp = await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(solRpcBody),
-            signal: new AbortController().signal,
+            signal: solController.signal,
           });
+
+          clearTimeout(solTimeoutId);
 
           const solData = await solResp.json();
           if (!solData.error && typeof solData.result === "number") {

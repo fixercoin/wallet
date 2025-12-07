@@ -80,7 +80,8 @@ export default function OrderComplete() {
         setBuyerCryptoReceived(loadedOrder.buyerCryptoReceived ?? false);
         // Set timestamp for timer (use createdAt if available, otherwise use current time)
         const timestamp =
-          loadedOrder.createdAt && !isNaN(new Date(loadedOrder.createdAt).getTime())
+          loadedOrder.createdAt &&
+          !isNaN(new Date(loadedOrder.createdAt).getTime())
             ? new Date(loadedOrder.createdAt).getTime()
             : Date.now();
         setOrderTimestamp(timestamp);
@@ -109,7 +110,12 @@ export default function OrderComplete() {
 
   // Auto-cancel order when timer reaches 0
   useEffect(() => {
-    if (timeRemaining === 0 && order && order.status !== "COMPLETED" && order.status !== "CANCELLED") {
+    if (
+      timeRemaining === 0 &&
+      order &&
+      order.status !== "COMPLETED" &&
+      order.status !== "CANCELLED"
+    ) {
       const autoCancel = async () => {
         try {
           await updateOrderInBothStorages(order.id, {
@@ -586,9 +592,13 @@ export default function OrderComplete() {
           </h1>
           {order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
             <div className="flex items-center gap-3">
-              <div className={`text-sm font-bold px-3 py-1 rounded-lg ${
-                timeRemaining <= 60 ? "bg-red-600/40 text-red-400" : "bg-[#FF7A5C]/20 text-[#FF7A5C]"
-              }`}>
+              <div
+                className={`text-sm font-bold px-3 py-1 rounded-lg ${
+                  timeRemaining <= 60
+                    ? "bg-red-600/40 text-red-400"
+                    : "bg-[#FF7A5C]/20 text-[#FF7A5C]"
+                }`}
+              >
                 {formatTimeRemaining(timeRemaining)}
               </div>
             </div>

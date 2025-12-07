@@ -523,7 +523,9 @@ export const handleDexscreenerSearch: RequestHandler = async (req, res) => {
 
     // Strip ":N" suffix if present (e.g., "FXM:1" -> "FXM")
     const cleanQuery = q.split(":")[0];
-    console.log(`[DexScreener] Search request for: ${cleanQuery}${cleanQuery !== q ? " (cleaned from: " + q + ")" : ""}`);
+    console.log(
+      `[DexScreener] Search request for: ${cleanQuery}${cleanQuery !== q ? " (cleaned from: " + q + ")" : ""}`,
+    );
 
     const data = await fetchDexscreenerData(
       `/search/?q=${encodeURIComponent(cleanQuery)}`,

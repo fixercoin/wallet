@@ -1,11 +1,12 @@
 import { RequestHandler } from "express";
 
-// Get Helius RPC endpoint ONLY
-function getHeliusRpcEndpoint(): string {
+// Get RPC endpoint with public fallback
+function getRpcEndpoint(): string {
   const heliusApiKey = process.env.HELIUS_API_KEY?.trim();
   const heliusRpcUrl = process.env.HELIUS_RPC_URL?.trim();
   const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
 
+  // Priority: Helius API key > HELIUS_RPC_URL > SOLANA_RPC_URL > Public endpoint
   if (heliusApiKey) {
     return `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
   }
@@ -16,9 +17,11 @@ function getHeliusRpcEndpoint(): string {
     return solanaRpcUrl;
   }
 
-  throw new Error(
-    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
+  // Fallback to public Solana RPC endpoint for dev environments
+  console.log(
+    "[TokenBalance] Using public Solana RPC endpoint (rate-limited). For production, set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
   );
+  return "https://api.mainnet-beta.solana.com";
 }
 
 export const handleGetTokenBalance: RequestHandler = async (req, res) => {
@@ -52,7 +55,7 @@ export const handleGetTokenBalance: RequestHandler = async (req, res) => {
       console.log(`[TokenBalance] Fetching balance for ${mint} from Helius`);
 
       // Get RPC endpoint on-demand instead of at module load time
-      const RPC_ENDPOINT = getHeliusRpcEndpoint();
+      const RPC_ENDPOINT = getRpcEndpoint();
       const response = await fetch(RPC_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

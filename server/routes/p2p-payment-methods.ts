@@ -1,4 +1,5 @@
 import { RequestHandler } from "express";
+import { getKVStorage } from "../lib/kv-storage";
 
 export interface PaymentMethod {
   id: string;
@@ -18,7 +19,34 @@ function generateId(): string {
   return `pm_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 }
 
-export const handleGetPaymentMethods: RequestHandler = (req, res) => {
+// Helper to get all payment methods for a wallet from KV storage
+async function getWalletPaymentMethods(
+  walletAddress: string,
+): Promise<PaymentMethod[]> {
+  const kv = getKVStorage();
+  const key = `payment_methods:${walletAddress}`;
+  const json = await kv.get(key);
+  if (!json) return [];
+
+  try {
+    const methods = JSON.parse(json);
+    return Array.isArray(methods) ? methods : [];
+  } catch {
+    return [];
+  }
+}
+
+// Helper to save payment methods to KV storage
+async function saveWalletPaymentMethods(
+  walletAddress: string,
+  methods: PaymentMethod[],
+): Promise<void> {
+  const kv = getKVStorage();
+  const key = `payment_methods:${walletAddress}`;
+  await kv.put(key, JSON.stringify(methods));
+}
+
+export const handleGetPaymentMethods: RequestHandler = async (req, res) => {
   try {
     const id = req.query.id as string | undefined;
     const walletAddress = req.query.wallet as string | undefined;
@@ -32,9 +60,8 @@ export const handleGetPaymentMethods: RequestHandler = (req, res) => {
     }
 
     if (walletAddress) {
-      const methods = Array.from(paymentMethods.values()).filter(
-        (m) => m.walletAddress === walletAddress,
-      );
+      // Fetch from KV storage (persistent)
+      const methods = await getWalletPaymentMethods(walletAddress);
       return res.json({ data: methods });
     }
 
@@ -50,7 +77,7 @@ export const handleGetPaymentMethods: RequestHandler = (req, res) => {
   }
 };
 
-export const handleSavePaymentMethod: RequestHandler = (req, res) => {
+export const handleSavePaymentMethod: RequestHandler = async (req, res) => {
   try {
     const {
       walletAddress,
@@ -100,7 +127,18 @@ export const handleSavePaymentMethod: RequestHandler = (req, res) => {
       updatedAt: now,
     };
 
+    // Save to in-memory map for backward compatibility
     paymentMethods.set(id, method);
+
+    // Save to KV storage (persistent) for order creation checks
+    const existingMethods = await getWalletPaymentMethods(walletAddress);
+    const methodIndex = existingMethods.findIndex((m) => m.id === id);
+    if (methodIndex >= 0) {
+      existingMethods[methodIndex] = method;
+    } else {
+      existingMethods.push(method);
+    }
+    await saveWalletPaymentMethods(walletAddress, existingMethods);
 
     return res.json({
       data: method,
@@ -115,7 +153,7 @@ export const handleSavePaymentMethod: RequestHandler = (req, res) => {
   }
 };
 
-export const handleDeletePaymentMethod: RequestHandler = (req, res) => {
+export const handleDeletePaymentMethod: RequestHandler = async (req, res) => {
   try {
     const id = req.query.id as string | undefined;
     const walletAddress = req.query.wallet as string | undefined;
@@ -137,7 +175,13 @@ export const handleDeletePaymentMethod: RequestHandler = (req, res) => {
       });
     }
 
+    // Delete from in-memory map
     paymentMethods.delete(id);
+
+    // Delete from KV storage
+    const existingMethods = await getWalletPaymentMethods(walletAddress);
+    const filtered = existingMethods.filter((m) => m.id !== id);
+    await saveWalletPaymentMethods(walletAddress, filtered);
 
     return res.json({
       message: "Payment method deleted successfully",

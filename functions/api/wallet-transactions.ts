@@ -4,9 +4,11 @@
 
 const RPC_ENDPOINTS = [
   "",
-  "https://api.mainnet-beta.solana.com",
-  "https://rpc.ankr.com/solana",
   "https://solana.publicnode.com",
+  "https://api.solflare.com",
+  "https://rpc.ankr.com/solana",
+  "https://rpc.ironforge.network/mainnet",
+  "https://api.mainnet-beta.solana.com",
 ];
 
 export async function onRequestPost(context: any) {

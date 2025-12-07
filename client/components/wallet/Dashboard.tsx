@@ -20,7 +20,7 @@ import {
   Plus,
   Menu,
   Gift,
-  Lock,
+  Unlock,
   Bell,
   X,
   Clock,
@@ -54,7 +54,6 @@ import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
 import { getUnreadNotifications } from "@/lib/p2p-chat";
-import { PriceLoader } from "@/components/ui/price-loader";
 import { Zap } from "lucide-react";
 
 interface DashboardProps {
@@ -70,6 +69,7 @@ interface DashboardProps {
   onLock: () => void;
   onBurn: () => void;
   onStakeTokens?: () => void;
+  onP2PTrade?: () => void;
 }
 
 const QUEST_TASKS = [
@@ -115,6 +115,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onLock,
   onBurn,
   onStakeTokens,
+  onP2PTrade,
 }) => {
   const {
     wallet,
@@ -264,12 +265,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
       if (running) return;
       running = true;
       try {
-        await refreshBalance();
-        await new Promise((r) => setTimeout(r, 300));
-        await refreshTokens();
+        if (!cancelled) await refreshBalance();
+        if (!cancelled) await new Promise((r) => setTimeout(r, 300));
+        if (!cancelled) await refreshTokens();
       } catch (err) {
+        // Silently ignore AbortError and other errors during refresh
+        // They're already logged by the service layer
+        if (!(err instanceof Error && err.name === "AbortError")) {
+          console.debug("[Dashboard] Refresh error:", err);
+        }
       } finally {
-        running = false;
+        if (!cancelled) {
+          running = false;
+        }
       }
     };
 
@@ -541,6 +549,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const getSolPrice = (): number | undefined => {
     const solToken = getSolToken();
     return solToken?.price;
+  };
+
+  // Check if any tokens with balance are still loading prices
+  const areTokenPricesLoading = (): boolean => {
+    return tokens.some(
+      (token) =>
+        typeof token.balance === "number" &&
+        token.balance > 0 &&
+        token.price === undefined,
+    );
   };
 
   // Calculate total portfolio value including all tokens (USD)
@@ -827,27 +845,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onSelect={() => navigate("/autobot")}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <ArrowRightLeft className="h-4 w-4" />
-                    <span>TRADE</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => navigate("/burn")}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Zap className="h-4 w-4" />
-                    <span>TOKEN</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => onLock()}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Lock className="h-4 w-4" />
-                    <span>LOCK</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
                     onSelect={onAirdrop}
                     className="flex items-center gap-2 text-xs"
                   >
@@ -919,21 +916,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       ) ||
                       (typeof balance === "number" && balance > 0);
                     if (!hasAnyBalance) {
-                      // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
-                      const usdZero = `0.000 $`;
+                      // If prices are still loading, show loading indicator
+                      // Otherwise show 0.000 USD
+                      const displayValue = `0.000 $`;
+
                       return (
-                        <div className="flex items-center justify-center gap-4 relative">
+                        <div className="flex items-center justify-between gap-4 w-full">
                           <div className="text-3xl text-gray-900 leading-tight">
-                            {showBalance ? `${usdZero}` : "****"}
+                            {showBalance ? displayValue : "****"}
                           </div>
-                          <div className="absolute right-0">
-                            <Button
-                              onClick={onReceive}
-                              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-md whitespace-nowrap h-auto"
-                            >
-                              DEPOSIT
-                            </Button>
-                          </div>
+                          <Button
+                            onClick={onP2PTrade || onReceive}
+                            className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-5 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
+                          >
+                            P2P TRADE
+                          </Button>
                         </div>
                       );
                     }
@@ -965,9 +962,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       ? (totalChange24h / (total - totalChange24h)) * 100
                       : 0;
                     const isPositive = totalChange24h >= 0;
+                    const isLoadingPrices = areTokenPricesLoading();
 
                     return (
-                      <div className="flex items-center justify-center gap-4 relative">
+                      <div className="flex items-center justify-between gap-4 w-full">
                         <div className="text-3xl text-gray-900 leading-tight">
                           {showBalance ? (
                             <>
@@ -988,14 +986,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             "****"
                           )}
                         </div>
-                        <div className="absolute right-0">
-                          <Button
-                            onClick={onReceive}
-                            className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold text-sm px-4 py-2 rounded-md whitespace-nowrap h-auto"
-                          >
-                            DEPOSIT
-                          </Button>
-                        </div>
+                        <Button
+                          onClick={onP2PTrade || onReceive}
+                          className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-5 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
+                        >
+                          P2P TRADE
+                        </Button>
                       </div>
                     );
                   })()
@@ -1029,26 +1025,30 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </Button>
             </div>
 
-            {/* P2P EXPRESS SERVICE Button with Notification Badge */}
-            <div className="flex items-center justify-center gap-2 sm:gap-3 mt-4 w-full px-0">
+            {/* Additional Action Buttons: TRADE, BURN, LOCK */}
+            <div className="flex items-center justify-around gap-2 sm:gap-3 mt-3 w-full px-0">
               <Button
-                onClick={() => navigate("/buy-order")}
-                className="relative flex-1 flex items-center bg-transparent border border-[#22c55e]/40 rounded-md px-4 py-3 hover:bg-[#22c55e]/10 transition-colors text-white text-xs h-auto py-3"
+                onClick={onAutoBot}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
-                <Bell className="h-4 w-4 text-[#22c55e] flex-shrink-0" />
-                <span
-                  className="flex-1 text-center"
-                  style={{ wordSpacing: "0.3em" }}
-                >
-                  P2P TRADE SERVICE
-                </span>
-                {unreadCount > 0 && (
-                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#FF7A5C] rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  </div>
-                )}
+                <ArrowRightLeft className="h-8 w-8 text-[#22c55e]" />
+                <span>LIMIT ORDER</span>
+              </Button>
+
+              <Button
+                onClick={onBurn}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <Zap className="h-8 w-8 text-[#22c55e]" />
+                <span>BURNING</span>
+              </Button>
+
+              <Button
+                onClick={onLock}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <Unlock className="h-8 w-8 text-[#22c55e]" />
+                <span>LOCK UP</span>
               </Button>
             </div>
           </div>
@@ -1096,7 +1096,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             return (
               <div key={token.mint} className="w-full">
-                <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
+                <Card className="w-full bg-gray-900/20 rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
                     <div
                       className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-4"
@@ -1157,32 +1157,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
                               )}
                             </span>
-                          ) : [
-                              "SOL",
-                              "USDC",
-                              "FIXERCOIN",
-                              "LOCKER",
-                              "FXM",
-                            ].includes(token.symbol) ? (
-                            <PriceLoader />
-                          ) : (
-                            <span style={{ color: "#999999" }}>
-                              $0.00000000
-                            </span>
-                          )}
+                          ) : null}
                         </div>
 
-                        <p
+                        <div
                           className={`text-xs text-white whitespace-nowrap ${
                             tokenBalance > 0 ? "font-semibold" : ""
                           }`}
                         >
-                          $
-                          {tokenBalance.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p>
+                          {typeof token.price === "number" &&
+                          isFinite(token.price) ? (
+                            <>
+                              $
+                              {tokenBalance.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
                   </CardContent>

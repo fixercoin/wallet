@@ -15,6 +15,47 @@ pages_build_output_dir = "dist"
 VITE_API_URL = ""
 VITE_API_BASE_URL = ""
 
+# RPC endpoint configuration
+# These can be set via Cloudflare dashboard or here for development
+# Configure these variables in Cloudflare Pages project settings for production:
+# - SOLANA_RPC_URL: Primary Solana RPC endpoint (optional - uses fallback if not set)
+# - HELIUS_RPC_URL: Helius RPC endpoint URL (optional)
+# - HELIUS_API_KEY: Helius API key (optional - uses fallback public endpoints if not set)
+# - ALCHEMY_RPC_URL: Alchemy RPC endpoint (optional)
+# - MORALIS_RPC_URL: Moralis RPC endpoint (optional)
+
+# Local development environment variables (for wrangler pages dev)
+[env.development.vars]
+# Default Solana RPC endpoint for development
+SOLANA_RPC_URL = "https://solana.publicnode.com"
+# Alternative free RPC endpoints (uncomment one if primary is rate-limited):
+# SOLANA_RPC_URL = "https://api.solflare.com"
+# SOLANA_RPC_URL = "https://rpc.ankr.com/solana"
+# For production, set HELIUS_API_KEY for best performance:
+# HELIUS_API_KEY = "your-helius-api-key"
+# HELIUS_RPC_URL = "https://mainnet.helius-rpc.com"
+
+# Production environment variables
+# NOTE: These MUST be configured in Cloudflare Pages UI for proper SOL balance fetching
+# Set HELIUS_API_KEY for best performance, or use alternative free RPC endpoints below
+# Path: Project Settings > Environment variables > Production (or Preview)
+[env.production.vars]
+# OPTION 1 (RECOMMENDED): Use Helius API Key for reliable production performance
+# HELIUS_API_KEY = "your-helius-api-key"
+
+# OPTION 2: Use a custom RPC endpoint URL
+# SOLANA_RPC_URL = "https://your-rpc-endpoint.com"
+
+# OPTION 3: Free public RPC endpoints (if no auth available)
+# SOLANA_RPC_URL = "https://solana.publicnode.com"      # Most reliable free option
+# SOLANA_RPC_URL = "https://api.solflare.com"           # Alternative free option
+# SOLANA_RPC_URL = "https://rpc.ankr.com/solana"        # Ankr free tier
+
+# Fallback endpoints (system will try these if primary fails)
+HELIUS_RPC_URL = ""
+ALCHEMY_RPC_URL = ""
+MORALIS_RPC_URL = ""
+
 # KV namespace bindings for Pages Functions
 # These bindings are available in functions/api/* routes
 [[kv_namespaces]]

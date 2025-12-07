@@ -1,23 +1,29 @@
 import { RequestHandler } from "express";
 import { PublicKey, Connection } from "@solana/web3.js";
 
-// Using multiple RPC providers to handle rate limiting
-const RPC_ENDPOINTS = [
-  // Prefer environment-configured RPC first
-  process.env.SOLANA_RPC_URL || "",
-  // Provider-specific overrides
-  process.env.ALCHEMY_RPC_URL || "",
-  process.env.HELIUS_RPC_URL || "",
-  process.env.MORALIS_RPC_URL || "",
-  process.env.HELIUS_API_KEY
-    ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
-    : "",
-  // Shyft RPC with embedded API key (reliable fallback)
-  "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7",
-  // Fallback public endpoints
-  "https://solana.publicnode.com",
-  "https://rpc.ankr.com/solana",
-].filter(Boolean);
+// Get RPC endpoint with public fallback
+function getRpcEndpoint(): string {
+  const heliusApiKey = process.env.HELIUS_API_KEY?.trim();
+  const heliusRpcUrl = process.env.HELIUS_RPC_URL?.trim();
+  const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
+
+  // Priority: Helius API key > HELIUS_RPC_URL > SOLANA_RPC_URL > Public endpoint
+  if (heliusApiKey) {
+    return `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
+  }
+  if (heliusRpcUrl) {
+    return heliusRpcUrl;
+  }
+  if (solanaRpcUrl) {
+    return solanaRpcUrl;
+  }
+
+  // Fallback to reliable public RPC endpoint for dev environments
+  console.log(
+    "[TokenAccounts] Using public Solana RPC endpoint. For production, set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
+  );
+  return "https://solana.publicnode.com";
+}
 
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
@@ -91,26 +97,41 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
       ],
     };
 
+    // Get RPC endpoint on-demand instead of at module load time
+    const endpoint = getRpcEndpoint();
     let lastError: Error | null = null;
 
-    for (const endpoint of RPC_ENDPOINTS) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(
+        () => controller.abort("RPC request timeout after 12 seconds"),
+        12000,
+      );
+
       try {
+        console.log(
+          `[TokenAccounts] Fetching token accounts from Helius for ${publicKey}`,
+        );
+
         const response = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
-          timeout: 10000,
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(
+            `Helius RPC returned HTTP ${response.status} ${response.statusText}`,
+          );
+        }
 
         const data = await response.json();
 
         if (data.error) {
-          console.warn(
-            `[TokenAccounts] RPC ${endpoint.slice(0, 40)} returned error:`,
-            data.error,
-          );
-          lastError = new Error(data.error.message || "RPC error");
-          continue;
+          throw new Error(data.error.message || "Helius RPC error");
         }
 
         const accounts = data.result?.value || [];
@@ -142,40 +163,98 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
           };
         });
 
+        // Also fetch SOL balance using the same Helius endpoint
+        let solBalance: number | null = null;
+        let solFetchSucceeded = false;
+        try {
+          const solBalanceBody = {
+            jsonrpc: "2.0",
+            id: 2,
+            method: "getBalance",
+            params: [publicKey],
+          };
+
+          const solResponse = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(solBalanceBody),
+            signal: controller.signal,
+          });
+
+          if (solResponse.ok) {
+            const solData = await solResponse.json();
+            if (solData.result !== undefined && !solData.error) {
+              solBalance = solData.result / 1_000_000_000; // Convert lamports to SOL
+              solFetchSucceeded = true;
+              console.log(
+                `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
+              );
+            }
+          }
+        } catch (solError) {
+          console.warn(
+            `[TokenAccounts] Warning: Could not fetch SOL balance from Helius`,
+            solError instanceof Error ? solError.message : String(solError),
+          );
+        }
+
+        // Only add SOL to tokens array if fetch was successful
+        const hasSOL = tokens.some(
+          (t) => t.mint === "So11111111111111111111111111111111111111112",
+        );
+        if (!hasSOL && solFetchSucceeded && solBalance !== null) {
+          tokens.unshift({
+            ...KNOWN_TOKENS["So11111111111111111111111111111111111111112"],
+            balance: solBalance,
+          });
+        }
+
         console.log(
-          `[TokenAccounts] Found ${tokens.length} token accounts for ${publicKey.slice(0, 8)}`,
+          `[TokenAccounts] ✅ Found ${tokens.length} tokens for ${publicKey.slice(0, 8)} via Helius${solFetchSucceeded ? ` (SOL: ${solBalance} SOL)` : " (SOL will be fetched separately)"}`,
         );
         return res.json({
           publicKey,
           tokens,
           count: tokens.length,
+          ...(solFetchSucceeded && { solBalance }),
         });
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-        console.warn(
-          `[TokenAccounts] RPC endpoint ${endpoint.slice(0, 40)} failed:`,
-          lastError.message,
-        );
-        continue;
+      } finally {
+        clearTimeout(timeoutId);
       }
-    }
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      const errorMsg = lastError.message || "Unknown error";
+      console.error(`[TokenAccounts] Helius RPC error: ${errorMsg}`);
 
-    console.error(
-      "[TokenAccounts] All RPC endpoints failed",
-      lastError?.message,
-    );
-    return res.status(500).json({
-      error:
-        lastError?.message ||
-        "Failed to fetch token accounts - all RPC endpoints failed",
-      publicKey,
-      tokens: [],
-    });
+      // Return default tokens as fallback
+      // This ensures the UI still shows known tokens with 0 balance
+      const defaultTokens = Object.values(KNOWN_TOKENS).map((token) => ({
+        ...token,
+        balance: 0,
+      }));
+
+      return res.status(200).json({
+        publicKey,
+        tokens: defaultTokens,
+        count: defaultTokens.length,
+        warning:
+          "Token accounts unavailable - returning default tokens with zero balance",
+      });
+    }
   } catch (error) {
-    console.error("[TokenAccounts] Error:", error);
-    res.status(500).json({
-      error: error instanceof Error ? error.message : "Internal server error",
-      tokens: [],
+    console.error("[TokenAccounts] Unexpected error:", error);
+
+    // Return default tokens even on unexpected errors
+    const defaultTokens = Object.values(KNOWN_TOKENS).map((token) => ({
+      ...token,
+      balance: 0,
+    }));
+
+    return res.status(200).json({
+      publicKey: (req.query.publicKey as string) || "unknown",
+      tokens: defaultTokens,
+      count: defaultTokens.length,
+      warning: "Token accounts unavailable due to server error",
     });
   }
 };

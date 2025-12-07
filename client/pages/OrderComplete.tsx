@@ -8,6 +8,8 @@ import {
   Clock,
   Copy,
   Check,
+  X,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +21,13 @@ import {
   getOrderFromStorage,
   updateOrderInStorage,
 } from "@/lib/p2p-order-creation";
+import {
+  syncOrderFromStorage,
+  updateOrderInBothStorages,
+  deleteOrderFromAPI,
+  getOrderFromAPI,
+} from "@/lib/p2p-order-api";
+import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import type { CreatedOrder } from "@/lib/p2p-order-creation";
 import type { TradeMessage } from "@/lib/p2p-api";
 
@@ -26,31 +35,184 @@ export default function OrderComplete() {
   const navigate = useNavigate();
   const location = useLocation() as any;
   const { wallet } = useWallet();
+  const { createNotification } = useOrderNotifications();
 
   const [order, setOrder] = useState<CreatedOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<TradeMessage[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [buyerConfirmed, setBuyerConfirmed] = useState(false);
-  const [sellerConfirmed, setSellerConfirmed] = useState(false);
+  const [buyerPaymentConfirmed, setBuyerPaymentConfirmed] = useState(false);
+  const [sellerPaymentReceived, setSellerPaymentReceived] = useState(false);
+  const [sellerTransferInitiated, setSellerTransferInitiated] = useState(false);
+  const [buyerCryptoReceived, setBuyerCryptoReceived] = useState(false);
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
+  const [exchangeRate, setExchangeRate] = useState<number>(280);
+  const [uploading, setUploading] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
+  const [orderTimestamp, setOrderTimestamp] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatSectionRef = useRef<HTMLDivElement>(null);
 
-  // Load order from state or storage
+  // Scroll to chat if openChat is true in location state
   useEffect(() => {
-    const stateOrder = location.state?.order as CreatedOrder | undefined;
-
-    if (stateOrder) {
-      setOrder(stateOrder);
-    } else if (location.state?.orderId) {
-      const storedOrder = getOrderFromStorage(location.state.orderId);
-      setOrder(storedOrder);
+    if (location.state?.openChat && chatSectionRef.current) {
+      setTimeout(() => {
+        chatSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 500);
     }
+  }, [location.state?.openChat, loading]);
 
-    setLoading(false);
+  // Load order from state or storage (with KV fallback)
+  useEffect(() => {
+    const loadOrder = async () => {
+      const stateOrder = location.state?.order as CreatedOrder | undefined;
+
+      let loadedOrder: CreatedOrder | null = null;
+
+      if (stateOrder) {
+        loadedOrder = stateOrder;
+      } else if (location.state?.orderId) {
+        // Try to load from KV first, then fall back to localStorage
+        loadedOrder = await syncOrderFromStorage(location.state.orderId);
+      }
+
+      if (loadedOrder) {
+        setOrder(loadedOrder);
+        // Restore confirmation states from stored order
+        setBuyerPaymentConfirmed(loadedOrder.buyerPaymentConfirmed ?? false);
+        setSellerPaymentReceived(loadedOrder.sellerPaymentReceived ?? false);
+        setSellerTransferInitiated(
+          loadedOrder.sellerTransferInitiated ?? false,
+        );
+        setBuyerCryptoReceived(loadedOrder.buyerCryptoReceived ?? false);
+        // Set timestamp for timer (use createdAt if available, otherwise use current time)
+        const timestamp =
+          loadedOrder.createdAt &&
+          !isNaN(new Date(loadedOrder.createdAt).getTime())
+            ? new Date(loadedOrder.createdAt).getTime()
+            : Date.now();
+        setOrderTimestamp(timestamp);
+      }
+
+      setLoading(false);
+    };
+
+    loadOrder();
   }, [location.state]);
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (!orderTimestamp) return;
+
+    const timerInterval = setInterval(() => {
+      const now = Date.now();
+      const elapsedSeconds = Math.floor((now - orderTimestamp) / 1000);
+      const remaining = Math.max(0, 600 - elapsedSeconds); // 600 seconds = 10 minutes
+
+      setTimeRemaining(remaining);
+    }, 1000);
+
+    return () => clearInterval(timerInterval);
+  }, [orderTimestamp]);
+
+  // Auto-cancel order when timer reaches 0
+  useEffect(() => {
+    if (
+      timeRemaining === 0 &&
+      order &&
+      order.status !== "COMPLETED" &&
+      order.status !== "CANCELLED"
+    ) {
+      const autoCancel = async () => {
+        try {
+          await updateOrderInBothStorages(order.id, {
+            status: "CANCELLED",
+            buyerPaymentConfirmed: false,
+            sellerPaymentReceived: false,
+            sellerTransferInitiated: false,
+            buyerCryptoReceived: false,
+          });
+
+          if (order.roomId) {
+            await addTradeMessage({
+              room_id: order.roomId,
+              sender_wallet: wallet?.publicKey || "",
+              message: "⏰ Order auto-cancelled due to timeout",
+            });
+          }
+
+          const otherParty = isBuyer ? order.sellerWallet : order.buyerWallet;
+          await createNotification(
+            otherParty,
+            "order_cancelled",
+            order.type,
+            order.id,
+            "Order auto-cancelled due to 10-minute timeout",
+            {
+              token: order.token,
+              amountTokens: order.amountTokens,
+              amountPKR: order.amountPKR,
+            },
+          );
+
+          toast.success("Order auto-cancelled due to timeout");
+          setTimeout(() => navigate(-1), 2000);
+        } catch (error) {
+          console.error("Error auto-cancelling order:", error);
+        }
+      };
+
+      autoCancel();
+    }
+  }, [timeRemaining, order]);
+
+  // Fetch exchange rate from API (same as BuyData and SellData)
+  useEffect(() => {
+    const fetchRate = async () => {
+      try {
+        const response = await fetch("/api/token/price?token=USDC");
+        if (!response.ok) throw new Error("Failed to fetch rate");
+        const data = await response.json();
+        const rate = data.rate || data.priceInPKR || 280;
+        setExchangeRate(typeof rate === "number" && rate > 0 ? rate : 280);
+      } catch (error) {
+        console.error("Exchange rate error:", error);
+        setExchangeRate(280);
+      }
+    };
+
+    fetchRate();
+  }, []);
+
+  // Poll for order status updates to keep state in sync with other party
+  useEffect(() => {
+    if (!order?.id) return;
+
+    const pollOrderStatus = async () => {
+      try {
+        const updatedOrder = await getOrderFromAPI(order.id);
+        if (updatedOrder) {
+          // Update local states with the latest values from KV
+          setBuyerPaymentConfirmed(updatedOrder.buyerPaymentConfirmed ?? false);
+          setSellerPaymentReceived(updatedOrder.sellerPaymentReceived ?? false);
+          setSellerTransferInitiated(
+            updatedOrder.sellerTransferInitiated ?? false,
+          );
+          setBuyerCryptoReceived(updatedOrder.buyerCryptoReceived ?? false);
+          setOrder(updatedOrder);
+        }
+      } catch (error) {
+        console.error("Failed to poll order status:", error);
+      }
+    };
+
+    // Poll every 1 second for real-time updates
+    const interval = setInterval(pollOrderStatus, 1000);
+    return () => clearInterval(interval);
+  }, [order?.id]);
 
   // Load chat messages
   useEffect(() => {
@@ -83,9 +245,77 @@ export default function OrderComplete() {
     previousMessageCountRef.current = messages.length;
   }, [messages]);
 
+  const isBuyer = wallet?.publicKey === order?.buyerWallet;
+
   const shortenAddress = (addr: string, chars = 6): string => {
     if (!addr) return "";
     return `${addr.slice(0, chars)}...${addr.slice(-chars)}`;
+  };
+
+  const formatTimeRemaining = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !order?.roomId || !wallet?.publicKey) return;
+
+    // Validate file type (images only)
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only image files are allowed");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB");
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // Convert image to base64 for storage
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64Data = event.target?.result as string;
+
+        try {
+          await addTradeMessage({
+            room_id: order.roomId,
+            sender_wallet: wallet.publicKey,
+            message: `[Proof Image: ${file.name}]`,
+            attachment_url: base64Data,
+          });
+
+          toast.success("Proof image uploaded!");
+
+          // Reset file input
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+        } catch (error) {
+          console.error("Failed to upload image:", error);
+          toast.error("Failed to upload image");
+        } finally {
+          setUploading(false);
+        }
+      };
+
+      reader.onerror = () => {
+        console.error("Failed to read file");
+        toast.error("Failed to read file");
+        setUploading(false);
+      };
+
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Failed to upload image");
+      setUploading(false);
+    }
   };
 
   const handleCopy = (value: string, label: string) => {
@@ -118,12 +348,15 @@ export default function OrderComplete() {
     }
   };
 
-  const handleBuyerConfirm = async () => {
+  const handleBuyerConfirmPayment = async () => {
     if (!order || !wallet?.publicKey) return;
 
     try {
-      setBuyerConfirmed(true);
-      updateOrderInStorage(order.id, { status: "PAYMENT_CONFIRMED" });
+      setBuyerPaymentConfirmed(true);
+      await updateOrderInBothStorages(order.id, {
+        status: "PENDING",
+        buyerPaymentConfirmed: true,
+      });
 
       if (order.roomId) {
         await addTradeMessage({
@@ -133,62 +366,191 @@ export default function OrderComplete() {
         });
       }
 
-      toast.success("Payment confirmed!");
+      // Send notification to seller
+      await createNotification(
+        order.sellerWallet,
+        "payment_confirmed",
+        order.type,
+        order.id,
+        `Buyer confirmed payment for ${order.amountTokens.toFixed(6)} ${order.token}`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
 
-      // Check if both confirmed
-      if (sellerConfirmed) {
-        updateOrderInStorage(order.id, { status: "COMPLETED" });
-        toast.success("Order completed! Both parties confirmed.");
-      }
+      toast.success(
+        "Payment confirmed! Waiting for seller to transfer crypto...",
+      );
     } catch (error) {
       console.error("Error confirming payment:", error);
       toast.error("Failed to confirm");
-      setBuyerConfirmed(false);
+      setBuyerPaymentConfirmed(false);
     }
   };
 
-  const handleSellerConfirm = async () => {
+  const handleSellerPaymentReceived = async () => {
     if (!order || !wallet?.publicKey) return;
 
     try {
-      setSellerConfirmed(true);
-      updateOrderInStorage(order.id, { status: "PAYMENT_CONFIRMED" });
+      setSellerPaymentReceived(true);
+      await updateOrderInBothStorages(order.id, {
+        sellerPaymentReceived: true,
+      });
 
       if (order.roomId) {
         await addTradeMessage({
           room_id: order.roomId,
           sender_wallet: wallet.publicKey,
-          message: "✅ I have confirmed crypto transfer received",
+          message: "✅ I have received payment",
         });
       }
 
-      toast.success("Transfer confirmed!");
+      // Send notification to buyer
+      await createNotification(
+        order.buyerWallet,
+        "seller_payment_received",
+        order.type,
+        order.id,
+        `Seller confirmed they received the payment`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
 
-      // Check if both confirmed
-      if (buyerConfirmed) {
-        updateOrderInStorage(order.id, { status: "COMPLETED" });
-        toast.success("Order completed! Both parties confirmed.");
+      toast.success(
+        "Payment received confirmed! Now send the crypto transfer...",
+      );
+    } catch (error) {
+      console.error("Error confirming payment received:", error);
+      toast.error("Failed to confirm");
+      setSellerPaymentReceived(false);
+    }
+  };
+
+  const handleSellerTransfer = async () => {
+    if (!order || !wallet?.publicKey) return;
+
+    try {
+      setSellerTransferInitiated(true);
+      await updateOrderInBothStorages(order.id, {
+        sellerTransferInitiated: true,
+      });
+
+      if (order.roomId) {
+        await addTradeMessage({
+          room_id: order.roomId,
+          sender_wallet: wallet.publicKey,
+          message: "✅ I have initiated the crypto transfer",
+        });
       }
+
+      // Send notification to buyer
+      await createNotification(
+        order.buyerWallet,
+        "transfer_initiated",
+        order.type,
+        order.id,
+        `Seller initiated crypto transfer of ${order.amountTokens.toFixed(6)} ${order.token}`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+
+      toast.success("Transfer initiated! Buyer can now confirm receipt...");
     } catch (error) {
       console.error("Error confirming transfer:", error);
-      toast.error("Failed to confirm");
-      setSellerConfirmed(false);
+      toast.error("Failed to confirm transfer");
+      setSellerTransferInitiated(false);
+    }
+  };
+
+  const handleBuyerCryptoReceived = async () => {
+    if (!order || !wallet?.publicKey) return;
+
+    try {
+      setBuyerCryptoReceived(true);
+      await updateOrderInBothStorages(order.id, {
+        status: "COMPLETED",
+        buyerCryptoReceived: true,
+      });
+
+      if (order.roomId) {
+        await addTradeMessage({
+          room_id: order.roomId,
+          sender_wallet: wallet.publicKey,
+          message: "✅ I have received the crypto transfer",
+        });
+      }
+
+      // Send notification to seller
+      await createNotification(
+        order.sellerWallet,
+        "crypto_received",
+        order.type,
+        order.id,
+        `Buyer confirmed receipt of ${order.amountTokens.toFixed(6)} ${order.token}`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+
+      toast.success("Order completed successfully!");
+
+      // Navigate away after 2 seconds
+      setTimeout(() => navigate(-1), 2000);
+    } catch (error) {
+      console.error("Error confirming crypto receipt:", error);
+      toast.error("Failed to confirm receipt");
+      setBuyerCryptoReceived(false);
     }
   };
 
   const handleCancelOrder = async () => {
-    if (!order) return;
-
-    const confirmed = window.confirm(
-      "Are you sure you want to cancel this order? This action cannot be undone.",
-    );
-
-    if (!confirmed) return;
+    if (!order || !wallet?.publicKey) return;
 
     try {
-      updateOrderInStorage(order.id, { status: "CANCELLED" });
-      toast.success("Order cancelled");
-      navigate(-1);
+      await updateOrderInBothStorages(order.id, {
+        status: "CANCELLED",
+        buyerPaymentConfirmed: false,
+        sellerPaymentReceived: false,
+        sellerTransferInitiated: false,
+        buyerCryptoReceived: false,
+      });
+
+      // Send cancellation message to chat
+      if (order.roomId) {
+        await addTradeMessage({
+          room_id: order.roomId,
+          sender_wallet: wallet.publicKey,
+          message: "❌ Order cancelled",
+        });
+      }
+
+      // Notify the other party
+      const otherParty = isBuyer ? order.sellerWallet : order.buyerWallet;
+      await createNotification(
+        otherParty,
+        "order_cancelled",
+        order.type,
+        order.id,
+        `${isBuyer ? "Buyer" : "Seller"} cancelled the order`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+
+      toast.success("Order cancelled and other party notified");
+      setTimeout(() => navigate(-1), 1000);
     } catch (error) {
       console.error("Error cancelling order:", error);
       toast.error("Failed to cancel order");
@@ -221,365 +583,487 @@ export default function OrderComplete() {
     );
   }
 
-  const isBuyer = wallet.publicKey === order.buyerWallet;
   const counterpartyWallet = isBuyer ? order.sellerWallet : order.buyerWallet;
 
   return (
     <div className="w-full min-h-screen pb-32 bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95 text-white">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4 border-b border-gray-300/20">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-gray-300 hover:text-gray-100 transition-colors"
-          aria-label="Back"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-        <h1 className="text-white font-bold text-lg mt-2 uppercase">
-          {isBuyer ? "BUY ORDER" : "SELL ORDER"}
-        </h1>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-gray-300 hover:text-gray-100 transition-colors"
+            aria-label="Back"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-white font-bold text-lg uppercase flex-1 ml-4">
+            {isBuyer ? "BUY ORDER" : "SELL ORDER"}
+          </h1>
+          {order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
+            <div className="flex items-center gap-3">
+              <div
+                className={`text-sm font-bold px-3 py-1 rounded-lg ${
+                  timeRemaining <= 60
+                    ? "bg-red-600/40 text-red-400"
+                    : "bg-[#FF7A5C]/20 text-[#FF7A5C]"
+                }`}
+              >
+                {formatTimeRemaining(timeRemaining)}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Two-Column Layout */}
-      <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* LEFT COLUMN - ORDER DETAILS & CONFIRMATION */}
-        <div className="space-y-4">
-          {/* Order Details Card */}
-          <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30">
-            <CardContent className="space-y-0 p-0">
-              <div className="p-4 border-b border-gray-300/20">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* ORDER DETAILS CARD - TOP */}
+        <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30 mb-6">
+          <CardContent className="p-4">
+            <h2 className="text-lg font-bold text-white mb-4 uppercase">
+              Order Details
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div>
                 <div className="text-xs text-white/70 font-semibold uppercase mb-1">
                   Order ID
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="font-mono text-sm text-white/90">
-                    {shortenAddress(order.id, 12)}
+                  <div className="font-mono text-xs text-white/90">
+                    {shortenAddress(order.id, 8)}
                   </div>
                   <button
                     onClick={() => handleCopy(order.id, "Order ID")}
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     {copiedValue === order.id ? (
-                      <Check className="w-4 h-4" />
+                      <Check className="w-3 h-3" />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3 h-3" />
                     )}
                   </button>
                 </div>
               </div>
 
-              <div className="p-4 border-b border-gray-300/20">
-                <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                  {isBuyer ? "Seller Wallet" : "Buyer Wallet"}
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="font-mono text-sm text-white/90">
-                    {shortenAddress(counterpartyWallet, 12)}
-                  </div>
-                  <button
-                    onClick={() =>
-                      handleCopy(counterpartyWallet, "Wallet Address")
-                    }
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    {copiedValue === counterpartyWallet ? (
-                      <Check className="w-4 h-4" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div className="p-4 border-b border-gray-300/20">
+              <div>
                 <div className="text-xs text-white/70 font-semibold uppercase mb-1">
                   Token
                 </div>
                 <div className="text-sm text-white/90">{order.token}</div>
               </div>
 
-              <div className="p-4 border-b border-gray-300/20">
+              <div>
                 <div className="text-xs text-white/70 font-semibold uppercase mb-1">
                   Amount
                 </div>
-                <div className="text-sm text-white/90">
-                  {order.amountTokens.toFixed(6)} {order.token} ={" "}
-                  {order.amountPKR.toFixed(0)} PKR
+                <div className="text-xs text-white/90">
+                  {order.amountTokens.toFixed(6)} {order.token}
                 </div>
               </div>
 
-              <div className="p-4 border-b border-gray-300/20">
+              <div>
                 <div className="text-xs text-white/70 font-semibold uppercase mb-1">
                   Price
                 </div>
-                <div className="text-sm text-white/90">
-                  1 {order.token} = {order.pricePKRPerQuote.toFixed(2)} PKR
+                <div className="text-xs text-white/90">
+                  1 {order.token} = {exchangeRate.toFixed(2)} PKR
                 </div>
               </div>
 
-              <div className="p-4 border-b border-gray-300/20">
+              <div>
                 <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                  Status
+                  Total PKR
                 </div>
-                <div
-                  className={`text-sm font-semibold ${
-                    order.status === "COMPLETED"
-                      ? "text-green-400"
-                      : order.status === "CANCELLED"
-                        ? "text-red-400"
-                        : "text-yellow-400"
-                  }`}
-                >
-                  {order.status}
+                <div className="text-xs text-white/90 font-semibold">
+                  {(order.amountTokens * exchangeRate).toFixed(2)} PKR
                 </div>
               </div>
+            </div>
 
-              {isBuyer && order.sellerPaymentMethod && (
-                <div className="p-4 border-b border-gray-300/20">
-                  <div className="text-xs text-white/70 font-semibold uppercase mb-3">
-                    Seller Payment Method
-                  </div>
-                  <div className="space-y-2">
-                    <div>
-                      <div className="text-xs text-white/60 uppercase mb-1">
-                        Account Name
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm text-white/90 font-mono">
-                          {order.sellerPaymentMethod.accountName}
-                        </div>
-                        <button
-                          onClick={() =>
-                            handleCopy(
-                              order.sellerPaymentMethod!.accountName,
-                              "Account Name",
-                            )
-                          }
-                          className="text-gray-400 hover:text-white transition-colors"
-                        >
-                          {copiedValue ===
-                          order.sellerPaymentMethod.accountName ? (
-                            <Check className="w-4 h-4" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
+            <div className="mt-4 pt-4 border-t border-gray-300/20">
+              <div className="text-xs text-white/70 font-semibold uppercase mb-3">
+                Buyer Wallet Address
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="font-mono text-xs text-white/90 break-all">
+                  {order.buyerWallet}
+                </div>
+                <button
+                  onClick={() =>
+                    handleCopy(order.buyerWallet, "Buyer Wallet Address")
+                  }
+                  className="text-gray-400 hover:text-white transition-colors flex-shrink-0"
+                >
+                  {copiedValue === order.buyerWallet ? (
+                    <Check className="w-3 h-3" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {!isBuyer && order.sellerPaymentMethod && (
+              <div className="mt-4 pt-4 border-t border-gray-300/20">
+                <div className="text-xs text-white/70 font-semibold uppercase mb-3">
+                  Seller Payment Method
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-xs text-white/60 uppercase mb-1">
+                      Account Name
                     </div>
-                    <div>
-                      <div className="text-xs text-white/60 uppercase mb-1">
-                        Account Number
+                    <div className="flex items-center gap-2">
+                      <div className="text-xs text-white/90 font-mono">
+                        {order.sellerPaymentMethod.accountName}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm text-white/90 font-mono">
-                          {order.sellerPaymentMethod.accountNumber}
-                        </div>
-                        <button
-                          onClick={() =>
-                            handleCopy(
-                              order.sellerPaymentMethod!.accountNumber,
-                              "Account Number",
-                            )
-                          }
-                          className="text-gray-400 hover:text-white transition-colors"
-                        >
-                          {copiedValue ===
-                          order.sellerPaymentMethod.accountNumber ? (
-                            <Check className="w-4 h-4" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
+                      <button
+                        onClick={() =>
+                          handleCopy(
+                            order.sellerPaymentMethod!.accountName,
+                            "Account Name",
+                          )
+                        }
+                        className="text-gray-400 hover:text-white transition-colors"
+                      >
+                        {copiedValue ===
+                        order.sellerPaymentMethod.accountName ? (
+                          <Check className="w-3 h-3" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                      </button>
                     </div>
                   </div>
+                  <div>
+                    <div className="text-xs text-white/60 uppercase mb-1">
+                      Account Number
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-xs text-white/90 font-mono">
+                        {order.sellerPaymentMethod.accountNumber}
+                      </div>
+                      <button
+                        onClick={() =>
+                          handleCopy(
+                            order.sellerPaymentMethod!.accountNumber,
+                            "Account Number",
+                          )
+                        }
+                        className="text-gray-400 hover:text-white transition-colors"
+                      >
+                        {copiedValue ===
+                        order.sellerPaymentMethod.accountNumber ? (
+                          <Check className="w-3 h-3" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* TWO-COLUMN LAYOUT - BUYER & SELLER CONFIRMATIONS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* LEFT COLUMN - BUYER CONFIRMATION */}
+          <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30">
+            <CardContent className="p-4 space-y-3">
+              <h2 className="text-lg font-bold text-white uppercase mb-4">
+                Buyer Confirmation
+              </h2>
+
+              {!isBuyer && (
+                <div className="text-xs text-white/60 bg-[#1a2540]/50 p-3 rounded-lg mb-4">
+                  Waiting for buyer to confirm payment...
+                </div>
+              )}
+
+              <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-blue-500/20">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold uppercase text-white">
+                    {isBuyer ? "Your Payment" : "Buyer's Payment"}
+                  </span>
+                  {buyerPaymentConfirmed ? (
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <Clock className="w-5 h-5 text-yellow-500" />
+                  )}
+                </div>
+                {isBuyer && !buyerPaymentConfirmed ? (
+                  <Button
+                    onClick={handleBuyerConfirmPayment}
+                    className="w-full bg-green-600/30 border border-green-500/50 hover:bg-green-600/40 text-green-400 uppercase text-xs font-semibold py-2"
+                  >
+                    I Have Sent PKR Payment
+                  </Button>
+                ) : (
+                  <div className="text-xs text-green-400 font-semibold">
+                    ✓ Payment Confirmed
+                  </div>
+                )}
+              </div>
+
+              {!buyerCryptoReceived && (
+                <div className="p-3 bg-blue-600/20 border border-blue-500/30 rounded-lg text-xs text-blue-300">
+                  <strong>Step 1:</strong> Buyer confirms payment was sent to
+                  seller's account
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Confirmation Status */}
-          <div className="space-y-3">
-            {isBuyer ? (
-              <>
-                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-blue-500/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold uppercase text-white">
-                      Payment Status
-                    </span>
-                    {buyerConfirmed ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-yellow-500" />
-                    )}
-                  </div>
-                  {!buyerConfirmed && (
-                    <Button
-                      onClick={handleBuyerConfirm}
-                      className="w-full bg-green-600/30 border border-green-500/50 hover:bg-green-600/40 text-green-400 uppercase text-xs font-semibold py-2"
-                    >
-                      Confirm Payment Sent
-                    </Button>
-                  )}
-                  {buyerConfirmed && (
-                    <div className="text-xs text-green-400 font-semibold">
-                      ✓ Payment Confirmed
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-purple-500/20">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold uppercase text-white">
-                      Seller Status
-                    </span>
-                    {sellerConfirmed ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-yellow-500" />
-                    )}
-                  </div>
-                  <div className="text-xs text-white/60 mt-1">
-                    {sellerConfirmed
-                      ? "✓ Seller confirmed transfer"
-                      : "Waiting for seller to confirm"}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-blue-500/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold uppercase text-white">
-                      Buyer Status
-                    </span>
-                    {buyerConfirmed ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-yellow-500" />
-                    )}
-                  </div>
-                  <div className="text-xs text-white/60">
-                    {buyerConfirmed
-                      ? "✓ Buyer confirmed payment"
-                      : "Waiting for buyer to confirm"}
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-purple-500/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold uppercase text-white">
-                      Transfer Status
-                    </span>
-                    {sellerConfirmed ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-yellow-500" />
-                    )}
-                  </div>
-                  {!sellerConfirmed && (
-                    <Button
-                      onClick={handleSellerConfirm}
-                      className="w-full bg-purple-600/30 border border-purple-500/50 hover:bg-purple-600/40 text-purple-400 uppercase text-xs font-semibold py-2"
-                    >
-                      Confirm Transfer Sent
-                    </Button>
-                  )}
-                  {sellerConfirmed && (
-                    <div className="text-xs text-purple-400 font-semibold">
-                      ✓ Transfer Confirmed
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-
-            {order.status === "COMPLETED" && (
-              <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
-                <div className="flex items-center gap-2 text-green-400">
-                  <CheckCircle className="w-5 h-5" />
-                  <span className="text-sm font-semibold uppercase">
-                    Order Completed
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {order.status !== "COMPLETED" && (
-              <Button
-                onClick={handleCancelOrder}
-                className="w-full bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 text-red-400 uppercase text-xs font-semibold py-2"
-              >
-                Cancel Order
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN - CHAT */}
-        <div className="space-y-4">
-          <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30 flex flex-col h-full min-h-[600px]">
-            <CardContent className="p-4 flex flex-col h-full">
-              <h2 className="text-lg font-bold text-white mb-4 uppercase">
-                Chat
+          {/* RIGHT COLUMN - SELLER CONFIRMATION */}
+          <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30">
+            <CardContent className="p-4 space-y-3">
+              <h2 className="text-lg font-bold text-white uppercase mb-4">
+                Seller Confirmation
               </h2>
 
-              {/* Messages Container */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-4 p-3 bg-[#1a2540]/30 rounded-lg border border-white/5">
-                {messages.length === 0 ? (
-                  <div className="text-center text-white/60 text-xs py-8">
-                    No messages yet. Start chatting!
-                  </div>
-                ) : (
-                  messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`text-xs p-3 rounded-lg ${
-                        msg.sender_wallet === wallet.publicKey
-                          ? "bg-[#FF7A5C]/20 text-white/90 ml-4"
-                          : "bg-[#1a2540]/50 text-white/70 mr-4"
-                      }`}
-                    >
-                      <div className="font-semibold text-white/80 uppercase text-xs mb-1">
-                        {msg.sender_wallet === order.buyerWallet
-                          ? "BUYER"
-                          : "SELLER"}
+              {!buyerPaymentConfirmed && (
+                <div className="text-xs text-white/60 bg-[#1a2540]/50 p-3 rounded-lg mb-4">
+                  Waiting for buyer to confirm payment...
+                </div>
+              )}
+
+              {buyerPaymentConfirmed && !isBuyer && (
+                <div className="text-xs text-green-400 bg-green-500/10 border border-green-500/30 p-3 rounded-lg mb-4">
+                  ✓ Buyer confirmed payment sent - waiting for you to confirm
+                  receipt
+                </div>
+              )}
+
+              {buyerPaymentConfirmed && isBuyer && !sellerPaymentReceived && (
+                <div className="text-xs text-green-400 bg-green-500/10 border border-green-500/30 p-3 rounded-lg mb-4">
+                  ✓ You confirmed payment sent - waiting for seller to confirm
+                  receipt
+                </div>
+              )}
+
+              {buyerPaymentConfirmed && (
+                <>
+                  <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-purple-500/20">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-semibold uppercase text-white">
+                        {isBuyer
+                          ? "Seller Received Payment"
+                          : "You Received Payment"}
+                      </span>
+                      {sellerPaymentReceived ? (
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <Clock className="w-5 h-5 text-yellow-500" />
+                      )}
+                    </div>
+                    {!isBuyer && !sellerPaymentReceived ? (
+                      <Button
+                        onClick={handleSellerPaymentReceived}
+                        className="w-full bg-purple-600/30 border border-purple-500/50 hover:bg-purple-600/40 text-purple-400 uppercase text-xs font-semibold py-2"
+                      >
+                        I Have Received Payment
+                      </Button>
+                    ) : (
+                      <div className="text-xs text-purple-400 font-semibold">
+                        ✓ Payment Received
                       </div>
-                      <div className="break-words">{msg.message}</div>
-                      <div className="text-xs text-white/50 mt-2">
-                        {new Date(msg.created_at).toLocaleTimeString()}
+                    )}
+                  </div>
+
+                  {sellerPaymentReceived && (
+                    <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-orange-500/20">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-semibold uppercase text-white">
+                          Crypto Transfer
+                        </span>
+                        {sellerTransferInitiated ? (
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                        ) : (
+                          <Clock className="w-5 h-5 text-yellow-500" />
+                        )}
+                      </div>
+                      {!isBuyer && !sellerTransferInitiated ? (
+                        <Button
+                          onClick={handleSellerTransfer}
+                          className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
+                        >
+                          Release USDC to Buyer
+                        </Button>
+                      ) : (
+                        <div className="text-xs text-orange-400 font-semibold">
+                          ✓ Transfer Initiated
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {isBuyer &&
+                    sellerPaymentReceived &&
+                    !sellerTransferInitiated && (
+                      <div className="p-3 bg-orange-600/20 border border-orange-500/30 rounded-lg text-xs text-orange-300">
+                        ✓ Seller confirmed payment received - waiting for crypto
+                        transfer...
+                      </div>
+                    )}
+
+                  {isBuyer &&
+                    sellerTransferInitiated &&
+                    !buyerCryptoReceived && (
+                      <div className="p-3 bg-green-600/20 border border-green-500/30 rounded-lg text-xs text-green-300">
+                        ✓ Seller initiated transfer - check your wallet and
+                        confirm receipt below
+                      </div>
+                    )}
+
+                  {isBuyer &&
+                    sellerTransferInitiated &&
+                    !buyerCryptoReceived && (
+                      <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-orange-500/20">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-semibold uppercase text-white">
+                            You Received Crypto
+                          </span>
+                          {buyerCryptoReceived ? (
+                            <CheckCircle className="w-5 h-5 text-green-500" />
+                          ) : (
+                            <Clock className="w-5 h-5 text-yellow-500" />
+                          )}
+                        </div>
+                        <Button
+                          onClick={handleBuyerCryptoReceived}
+                          className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
+                        >
+                          I Received USDC
+                        </Button>
+                      </div>
+                    )}
+
+                  {buyerCryptoReceived && (
+                    <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
+                      <div className="flex items-center gap-2 text-green-400">
+                        <CheckCircle className="w-5 h-5" />
+                        <span className="text-sm font-semibold uppercase">
+                          Order Completed
+                        </span>
                       </div>
                     </div>
-                  ))
-                )}
-                <div ref={messagesEndRef} />
-              </div>
+                  )}
 
-              {/* Message Input */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40 text-sm"
-                  placeholder="Type a message..."
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter" && !sending) {
-                      handleSendMessage();
-                    }
-                  }}
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!messageInput.trim() || sending}
-                  className="px-3 py-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white disabled:opacity-50"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
+                  {!isBuyer && (
+                    <div className="p-3 bg-orange-600/20 border border-orange-500/30 rounded-lg text-xs text-orange-300">
+                      <strong>Step 2:</strong> Confirm payment received, then
+                      release crypto to buyer
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
+
+        {/* FULL-WIDTH CHAT SECTION BELOW */}
+        <Card
+          className="bg-[#0f1520]/50 border border-[#FF7A5C]/30"
+          ref={chatSectionRef}
+        >
+          <CardContent className="p-4 flex flex-col h-full min-h-[400px]">
+            <h2 className="text-lg font-bold text-white mb-4 uppercase">
+              Chat
+            </h2>
+
+            {/* Messages Container */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-4 p-3 bg-[#1a2540]/30 rounded-lg border border-white/5">
+              {messages.length === 0 ? (
+                <div className="text-center text-white/60 text-xs py-8">
+                  No messages yet. Start chatting!
+                </div>
+              ) : (
+                messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`text-xs p-3 rounded-lg ${
+                      msg.sender_wallet === wallet.publicKey
+                        ? "bg-[#FF7A5C]/20 text-white/90 ml-4"
+                        : "bg-[#1a2540]/50 text-white/70 mr-4"
+                    }`}
+                  >
+                    <div className="font-semibold text-white/80 uppercase text-xs mb-1">
+                      {msg.sender_wallet === order.buyerWallet
+                        ? "BUYER"
+                        : "SELLER"}
+                    </div>
+                    {msg.attachment_url && (
+                      <div className="mb-2">
+                        <img
+                          src={msg.attachment_url}
+                          alt="Proof"
+                          className="max-w-[200px] rounded-lg"
+                        />
+                      </div>
+                    )}
+                    <div className="break-words">{msg.message}</div>
+                    <div className="text-xs text-white/50 mt-2">
+                      {new Date(msg.created_at).toLocaleTimeString()}
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Message Input */}
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 hover:bg-[#1a2540]/70 text-white disabled:opacity-50 transition-colors"
+                title="Upload proof image"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                disabled={uploading}
+              />
+              <input
+                type="text"
+                className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40 text-sm"
+                placeholder="Type a message..."
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter" && !sending) {
+                    handleSendMessage();
+                  }
+                }}
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!messageInput.trim() || sending}
+                className="px-3 py-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white disabled:opacity-50"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Cancel Order Button */}
+            {order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
+              <Button
+                onClick={handleCancelOrder}
+                className="w-full px-4 py-2 bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 text-red-400 uppercase text-xs font-semibold transition-colors"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Cancel Trade
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Bottom Navigation */}

@@ -129,25 +129,22 @@ async function handler(request: Request): Promise<Response> {
       }
     }
 
-    // Fallback to static prices if DexScreener fails
-    if (FALLBACK_PRICES[token]) {
-      return new Response(
-        JSON.stringify({
-          token,
-          priceUsd: FALLBACK_PRICES[token],
-          source: "fallback",
-          timestamp: Date.now(),
-        }),
-        {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "Cache-Control": "public, max-age=60",
-          },
+    // Return error when DexScreener fails (no fallback prices)
+    return new Response(
+      JSON.stringify({
+        token,
+        error: "Price service temporarily unavailable",
+        timestamp: Date.now(),
+      }),
+      {
+        status: 503,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "no-cache",
         },
-      );
-    }
+      },
+    );
 
     // If mint provided, try to resolve it
     if (mint && mint.length > 40) {
@@ -182,26 +179,23 @@ async function handler(request: Request): Promise<Response> {
           }
         }
 
-        // Fallback to static price
-        if (FALLBACK_PRICES[tokenSymbol]) {
-          return new Response(
-            JSON.stringify({
-              token: tokenSymbol,
-              mint,
-              priceUsd: FALLBACK_PRICES[tokenSymbol],
-              source: "fallback",
-              timestamp: Date.now(),
-            }),
-            {
-              status: 200,
-              headers: {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-                "Cache-Control": "public, max-age=60",
-              },
+        // Return error when price not available (no fallback prices)
+        return new Response(
+          JSON.stringify({
+            token: tokenSymbol,
+            mint,
+            error: "Price service temporarily unavailable",
+            timestamp: Date.now(),
+          }),
+          {
+            status: 503,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+              "Cache-Control": "no-cache",
             },
-          );
-        }
+          },
+        );
       }
     }
 
@@ -224,22 +218,20 @@ async function handler(request: Request): Promise<Response> {
       },
     );
   } catch (error: any) {
-    // Always return valid JSON with fallback price on error
     console.error("[Token Price] Error:", error?.message || String(error));
 
     return new Response(
       JSON.stringify({
-        token: "FIXERCOIN",
-        priceUsd: FALLBACK_PRICES.FIXERCOIN,
-        source: "fallback",
+        error: "Price service temporarily unavailable",
+        details: error?.message || String(error),
         timestamp: Date.now(),
       }),
       {
-        status: 200,
+        status: 500,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
-          "Cache-Control": "public, max-age=60",
+          "Cache-Control": "no-cache",
         },
       },
     );

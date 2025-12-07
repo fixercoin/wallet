@@ -16,7 +16,7 @@ import {
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { solPriceService } from "@/lib/services/sol-price";
-import { birdeyeAPI } from "@/lib/services/birdeye";
+import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { lockerPriceService } from "@/lib/services/locker-price";
 import { fxmPriceService } from "@/lib/services/fxm-price";
@@ -519,10 +519,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     // Setup periodic refresh every 5 seconds (adaptive based on visibility)
     const setupRefreshInterval = () => {
-      // Use 5s interval when tab is visible for more responsive updates
-      // Longer interval (30s) when tab is hidden to conserve battery on mobile
-      const interval =
-        document.hidden || document.visibilityState === "hidden" ? 30000 : 5000;
+      // Auto-refresh dashboard every 30 seconds for live price updates
+      const interval = 30000;
 
       refreshIntervalRef.current = setInterval(async () => {
         try {
@@ -537,12 +535,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     setupRefreshInterval();
 
-    // Handle visibility changes to adjust polling frequency
+    // No longer adjust polling based on visibility - use fixed 30-second interval
     const handleVisibilityChange = () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-      setupRefreshInterval();
+      // Visibility changes no longer trigger interval reconfiguration
+      // Dashboard will refresh every 30 seconds consistently
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -763,7 +759,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const refreshBalance = async () => {
     if (!wallet) return;
 
-    setIsLoading(true);
+    // No loading state for balance - use fallback/cache silently
     setError(null);
     setIsUsingCache(false);
 
@@ -779,21 +775,24 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       }
     } catch (error) {
       console.error("Error refreshing balance:", error);
-      setError("Failed to refresh balance");
 
-      // Try to use cached balance as fallback
+      // Try to use cached balance as fallback on network/RPC errors
       const cachedBalance = getCachedBalance(wallet.publicKey);
-      if (cachedBalance !== null) {
-        console.log("[WalletContext] Using cached balance:", cachedBalance);
+      if (cachedBalance !== null && cachedBalance > 0) {
+        console.log(
+          "[WalletContext] Using cached SOL balance as fallback:",
+          cachedBalance,
+        );
         setBalance(cachedBalance);
         balanceRef.current = cachedBalance;
         setIsUsingCache(true);
+        setError(null);
       } else {
+        console.warn("[WalletContext] No cached balance available, showing 0");
         setBalance(0);
         balanceRef.current = 0;
+        setError("Unable to fetch SOL balance. Please check your connection.");
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -808,19 +807,47 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     lockerPriceService.clearCache();
     fxmPriceService.clearCache();
     solPriceService.clearCache();
-    birdeyeAPI.clearCache();
 
     console.log(
       `[WalletContext] Refreshing tokens for wallet: ${wallet.publicKey}`,
     );
     setError(null);
-    setIsLoading(true);
 
     try {
+      // Fetch token accounts (balances) silently - no loading state
       const tokenAccounts = await getTokenAccounts(wallet.publicKey);
       const customTokens = JSON.parse(
         localStorage.getItem("custom_tokens") || "[]",
       ) as TokenInfo[];
+
+      // Check if SOL is already in tokenAccounts (new endpoint returns it with balance)
+      const solFromTokenAccounts = tokenAccounts.find(
+        (t) => t.symbol === "SOL",
+      );
+
+      // Use SOL from tokenAccounts if available (for Cloudflare compatibility)
+      // Otherwise use the balance from the separate refreshBalance() call
+      let solBalance = 0;
+      if (
+        solFromTokenAccounts?.balance !== undefined &&
+        solFromTokenAccounts.balance > 0
+      ) {
+        solBalance = solFromTokenAccounts.balance;
+        setBalance(solFromTokenAccounts.balance);
+        balanceRef.current = solFromTokenAccounts.balance;
+        console.log(
+          `[WalletContext] Updated SOL balance from tokenAccounts: ${solFromTokenAccounts.balance}`,
+        );
+      } else {
+        // Fall back to balance from separate endpoint (which should have been fetched via refreshBalance)
+        solBalance =
+          typeof balanceRef.current === "number"
+            ? balanceRef.current
+            : balance || 0;
+        console.log(
+          `[WalletContext] Using SOL balance from balance endpoint: ${solBalance}`,
+        );
+      }
 
       const allTokens: TokenInfo[] = [
         {
@@ -830,7 +857,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           decimals: 9,
           logoURI:
             "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-          balance: balanceRef.current || balance || 0,
+          balance: solBalance,
         },
       ];
 
@@ -927,7 +954,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         });
       }
 
-      // Price fetching logic
+      // Price fetching logic - show loader only during price fetch
+      setIsLoading(true);
       let prices: Record<string, number> = {};
       let priceSource = "fallback";
       let changeMap: Record<string, number> = {};
@@ -936,26 +964,27 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       try {
         const tokenMints = allTokens.map((token) => token.mint);
 
-        // Fetch prices from Birdeye API (via proxy)
+        // Fetch prices from DexScreener API
         try {
           const allMintsToFetch = Array.from(
             new Set(tokenMints.filter(Boolean)),
           );
 
           if (allMintsToFetch.length > 0) {
-            const birdeyeTokens =
-              await birdeyeAPI.getTokensByMints(allMintsToFetch);
-            const birdeyePrices = birdeyeAPI.getTokenPrices(birdeyeTokens);
-            prices = { ...prices, ...birdeyePrices };
+            const dexTokens =
+              await dexscreenerAPI.getTokensByMints(allMintsToFetch);
+            const dexPrices = dexscreenerAPI.getTokenPrices(dexTokens);
+            prices = { ...prices, ...dexPrices };
 
-            birdeyeTokens.forEach((token) => {
-              if (token.address && token.priceChange?.h24) {
-                changeMap[token.address] = token.priceChange.h24;
+            dexTokens.forEach((token) => {
+              const baseMint = token.baseToken?.address;
+              if (baseMint && token.priceChange?.h24) {
+                changeMap[baseMint] = token.priceChange.h24;
               }
             });
           }
         } catch (e) {
-          console.warn("Birdeye fetch failed:", e);
+          console.warn("DexScreener fetch failed:", e);
         }
 
         // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing
@@ -1255,7 +1284,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             decimals: 9,
             logoURI:
               "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-            balance: balance || 0,
+            balance:
+              typeof balanceRef.current === "number"
+                ? balanceRef.current
+                : balance || 0,
           },
         ];
 

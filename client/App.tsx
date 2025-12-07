@@ -148,8 +148,7 @@ import DocumentationPage from "./pages/DocumentationPage";
 import BuyTrade from "./pages/BuyTrade";
 import OrderComplete from "./pages/OrderComplete";
 import TokenSearchPage from "./pages/TokenSearchPage";
-import BuyActiveOrders from "./pages/BuyActiveOrders";
-import SellActiveOrders from "./pages/SellActiveOrders";
+import P2PActiveOrders from "./pages/P2PActiveOrders";
 import BuyOrder from "./pages/BuyOrder";
 import SellOrder from "./pages/SellOrder";
 import BuyData from "./pages/BuyData";
@@ -201,8 +200,9 @@ function AppRoutes() {
         path="/documentation"
         element={<DocumentationPage onBack={() => window.history.back()} />}
       />
-      <Route path="/p2p/buy-active-orders" element={<BuyActiveOrders />} />
-      <Route path="/p2p/sell-active-orders" element={<SellActiveOrders />} />
+      <Route path="/p2p/buy-active-orders" element={<P2PActiveOrders />} />
+      <Route path="/p2p/sell-active-orders" element={<P2PActiveOrders />} />
+      <Route path="/p2p/active-orders" element={<P2PActiveOrders />} />
       <Route path="/p2p/admin-disputes" element={<AdminDisputes />} />
       <Route path="/express/buy-trade" element={<BuyTrade />} />
       <Route path="/order-complete" element={<OrderComplete />} />

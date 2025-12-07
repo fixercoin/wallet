@@ -5,6 +5,9 @@ const RPC_ENDPOINTS = [
   process.env.SOLANA_RPC_URL || "",
   process.env.HELIUS_RPC_URL || "",
   "https://solana.publicnode.com",
+  "https://api.solflare.com",
+  "https://rpc.ankr.com/solana",
+  "https://rpc.ironforge.network/mainnet",
   "https://api.mainnet-beta.solana.com",
 ].filter(Boolean);
 

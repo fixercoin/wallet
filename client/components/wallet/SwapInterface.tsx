@@ -916,7 +916,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div className="font-semibold text-sm text-white uppercase">
-                FIXORIUM TRADE
+                CONVERT YOUR TOKENS
               </div>
             </div>
 

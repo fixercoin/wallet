@@ -35,6 +35,7 @@ import {
   handleUpdateTradeRoom,
   handleListTradeMessages,
   handleAddTradeMessage,
+  handleConfirmPayment,
   handleListP2POrders,
   handleCreateP2POrder,
   handleGetP2POrder,
@@ -48,7 +49,6 @@ import {
   handleUpdateOrder,
   handleDeleteOrder,
 } from "./routes/orders";
-import { handleBirdeyePrice } from "./routes/api-birdeye";
 import {
   handleSwapProxy,
   handleQuoteProxy,
@@ -88,6 +88,14 @@ import {
   handleMarkNotificationAsRead,
   handleDeleteNotification,
 } from "./routes/p2p-notifications";
+import {
+  handleGetMatches,
+  handleCreateMatch,
+  handleGetMatch,
+  handleUpdateMatch,
+  handleListMatches,
+  handleCancelMatch,
+} from "./routes/p2p-matching";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
@@ -157,13 +165,8 @@ export async function createServer(): Promise<express.Application> {
       console.error("[SOL Price] Unhandled error:", e);
       return res.status(500).json({
         token: "SOL",
-        price: 149.38,
-        priceUsd: 149.38,
-        priceChange24h: 0,
-        volume24h: 0,
-        marketCap: 0,
-        source: "fallback",
         error: "Price service temporarily unavailable",
+        details: e?.message || String(e),
       });
     }
   });
@@ -174,10 +177,8 @@ export async function createServer(): Promise<express.Application> {
       console.error("[Token Price] Unhandled error:", e);
       return res.status(500).json({
         token: (req.query.token as string) || "FIXERCOIN",
-        price: 0.00008139,
-        priceUsd: "0.00008139",
-        source: "fallback",
         error: "Price service temporarily unavailable",
+        details: e?.message || String(e),
       });
     }
   });
@@ -194,9 +195,6 @@ export async function createServer(): Promise<express.Application> {
   app.get("/api/jupiter/quote", handleJupiterQuote);
   app.post("/api/jupiter/swap", handleJupiterSwap);
   app.get("/api/jupiter/tokens", handleJupiterTokens);
-
-  // Birdeye routes
-  app.get("/api/birdeye/price", handleBirdeyePrice);
 
   // Solana RPC proxy - with proper error handling
   app.post("/api/solana-rpc", (req, res) => {
@@ -246,7 +244,7 @@ export async function createServer(): Promise<express.Application> {
 
       // Create a modified request object
       const modifiedReq = { ...req, query: { publicKey } };
-      handleWalletBalance(modifiedReq as any, res);
+      await handleWalletBalance(modifiedReq as any, res);
     } catch (e: any) {
       return res.status(500).json({
         error: "Failed to fetch wallet balance",
@@ -274,6 +272,44 @@ export async function createServer(): Promise<express.Application> {
     } catch (e: any) {
       return res.status(500).json({
         error: "Failed to fetch token accounts",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  // Unified wallet endpoint - returns balance (alias for /api/wallet/balance)
+  app.get("/api/wallet", async (req, res) => {
+    try {
+      // Support multiple parameter names for publicKey
+      const publicKey =
+        (req.query.publicKey as string) ||
+        (req.query.wallet as string) ||
+        (req.query.address as string) ||
+        (req.query.walletAddress as string);
+
+      if (!publicKey || typeof publicKey !== "string") {
+        return res.status(400).json({
+          error: "Missing or invalid wallet address parameter",
+          examples: [
+            "GET /api/wallet?publicKey=...",
+            "GET /api/wallet?wallet=...",
+            "GET /api/wallet?address=...",
+            "GET /api/wallet?walletAddress=...",
+          ],
+          availableEndpoints: [
+            "/api/wallet/balance - Get SOL balance",
+            "/api/wallet/token-accounts - Get token accounts",
+            "/api/wallet/token-balance - Get specific token balance",
+          ],
+        });
+      }
+
+      // Delegate to wallet balance handler
+      const modifiedReq = { ...req, query: { publicKey } };
+      await handleWalletBalance(modifiedReq as any, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch wallet information",
         details: e?.message || String(e),
       });
     }
@@ -696,6 +732,14 @@ export async function createServer(): Promise<express.Application> {
   app.put("/api/p2p/orders/:orderId", handleUpdateP2POrder);
   app.delete("/api/p2p/orders/:orderId", handleDeleteP2POrder);
 
+  // P2P Order Matching routes (Smart matching engine)
+  app.get("/api/p2p/matches", handleGetMatches); // Get matches for an order
+  app.post("/api/p2p/matches", handleCreateMatch); // Create a matched pair
+  app.get("/api/p2p/matches/:matchId", handleGetMatch); // Get match details
+  app.put("/api/p2p/matches/:matchId", handleUpdateMatch); // Update match status
+  app.get("/api/p2p/matches/list/all", handleListMatches); // List matches for wallet
+  app.delete("/api/p2p/matches/:matchId", handleCancelMatch); // Cancel a match
+
   // P2P Payment Methods routes
   app.get("/api/p2p/payment-methods", handleGetPaymentMethods);
   app.post("/api/p2p/payment-methods", handleSavePaymentMethod);
@@ -710,6 +754,9 @@ export async function createServer(): Promise<express.Application> {
   // Trade Messages routes
   app.get("/api/p2p/rooms/:roomId/messages", handleListTradeMessages);
   app.post("/api/p2p/rooms/:roomId/messages", handleAddTradeMessage);
+
+  // Payment Confirmation route
+  app.post("/api/p2p/rooms/:roomId/confirm-payment", handleConfirmPayment);
 
   // P2P Notifications routes
   app.get("/api/p2p/notifications", handleListNotifications);
@@ -807,7 +854,7 @@ export async function createServer(): Promise<express.Application> {
       }
 
       const modifiedReq = { ...req, query: { publicKey } };
-      handleWalletBalance(modifiedReq as any, res);
+      await handleWalletBalance(modifiedReq as any, res);
     } catch (e: any) {
       return res.status(500).json({
         error: "Failed to fetch wallet balance",

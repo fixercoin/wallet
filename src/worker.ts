@@ -1,14 +1,14 @@
 export interface Env {
   SOLANA_RPC?: string;
+  HELIUS_API_KEY?: string;
+  HELIUS_RPC_URL?: string;
 }
 
-// RPC endpoints
-// Prefer reliable public providers by default
-const DEFAULT_SOLANA_RPC = "https://solana.publicnode.com";
-const FALLBACK_RPC_ENDPOINTS = [
-  "https://solana.publicnode.com",
-  "https://rpc.ankr.com/solana",
-  "https://api.mainnet-beta.solana.com",
+// RPC endpoints - HELIUS ONLY
+// All RPC calls use Helius exclusively, no fallbacks to public providers
+const DEFAULT_SOLANA_RPC = "https://mainnet.helius-rpc.com"; // Placeholder
+const FALLBACK_RPC_ENDPOINTS: string[] = [
+  // HELIUS ONLY - No fallbacks to other providers
 ];
 
 // External API endpoints
@@ -80,6 +80,24 @@ async function safeJson(resp: Response): Promise<any> {
   }
 }
 
+// Utility: Get Helius RPC endpoint ONLY
+function getHeliusRpcEndpoint(env: Env): string {
+  // PRIORITY: Helius API key > HELIUS_RPC_URL > SOLANA_RPC
+  if (env.HELIUS_API_KEY) {
+    return `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`;
+  }
+  if (env.HELIUS_RPC_URL) {
+    return env.HELIUS_RPC_URL;
+  }
+  if (env.SOLANA_RPC) {
+    return env.SOLANA_RPC;
+  }
+
+  throw new Error(
+    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
+  );
+}
+
 // ============ ROUTE HANDLERS ============
 
 // Health check
@@ -121,7 +139,7 @@ async function handleHealth(): Promise<Response> {
   );
 }
 
-// Wallet balance - SOL
+// Wallet balance - SOL (Helius only)
 async function handleWalletBalance(url: URL, env: Env): Promise<Response> {
   const publicKey = url.searchParams.get("publicKey");
   if (!publicKey) {
@@ -131,38 +149,48 @@ async function handleWalletBalance(url: URL, env: Env): Promise<Response> {
     });
   }
 
-  const SOLANA_RPC = env.SOLANA_RPC ?? DEFAULT_SOLANA_RPC;
-  const payload = {
-    jsonrpc: "2.0",
-    id: 1,
-    method: "getBalance",
-    params: [publicKey],
-  };
-
   try {
-    const rpcRes = await timeoutFetch(SOLANA_RPC, {
+    // Use Helius RPC ONLY
+    const endpoint = getHeliusRpcEndpoint(env);
+
+    const payload = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getBalance",
+      params: [publicKey],
+    };
+
+    const rpcRes = await timeoutFetch(endpoint, {
       method: "POST",
       headers: browserHeaders(),
       body: JSON.stringify(payload),
     });
     const rpcJson = await rpcRes.json();
+
+    if (rpcJson.error) {
+      throw new Error(rpcJson.error.message || "Helius RPC error");
+    }
+
     const lamports = rpcJson?.result?.value ?? 0;
-    const sol = lamports / 1_000_000_000;
-    return new Response(JSON.stringify({ lamports, sol, publicKey }), {
+    const balance = lamports / 1_000_000_000;
+    return new Response(JSON.stringify({ balance, lamports, publicKey }), {
       headers: CORS_HEADERS,
     });
   } catch (e: any) {
+    const errorMsg = String(e?.message || e).slice(0, 100);
+    console.error("[Helius] Balance fetch error:", errorMsg);
+
     return new Response(
       JSON.stringify({
-        error: "rpc_error",
-        details: String(e?.message || e).slice(0, 200),
+        error: "Failed to fetch wallet balance from Helius RPC",
+        details: errorMsg,
       }),
       { status: 502, headers: CORS_HEADERS },
     );
   }
 }
 
-// Wallet tokens - SPL accounts
+// Wallet tokens - SPL accounts (Helius only)
 async function handleWalletTokens(url: URL, env: Env): Promise<Response> {
   const publicKey = url.searchParams.get("publicKey");
   if (!publicKey) {
@@ -172,25 +200,32 @@ async function handleWalletTokens(url: URL, env: Env): Promise<Response> {
     });
   }
 
-  const SOLANA_RPC = env.SOLANA_RPC ?? DEFAULT_SOLANA_RPC;
-  const payload = {
-    jsonrpc: "2.0",
-    id: 1,
-    method: "getTokenAccountsByOwner",
-    params: [
-      publicKey,
-      { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
-      { encoding: "jsonParsed" },
-    ],
-  };
-
   try {
-    const rpcRes = await timeoutFetch(SOLANA_RPC, {
+    // Use Helius RPC ONLY
+    const endpoint = getHeliusRpcEndpoint(env);
+
+    const payload = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getTokenAccountsByOwner",
+      params: [
+        publicKey,
+        { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
+        { encoding: "jsonParsed" },
+      ],
+    };
+
+    const rpcRes = await timeoutFetch(endpoint, {
       method: "POST",
       headers: browserHeaders(),
       body: JSON.stringify(payload),
     });
     const rpcJson = await rpcRes.json();
+
+    if (rpcJson.error) {
+      throw new Error(rpcJson.error.message || "Helius RPC error");
+    }
+
     const arr = rpcJson?.result?.value ?? [];
     const tokens = arr.map((t: any) => {
       const acc = t.account?.data?.parsed?.info;
@@ -200,10 +235,18 @@ async function handleWalletTokens(url: URL, env: Env): Promise<Response> {
       const uiAmount = Number(amountRaw) / Math.pow(10, decimals);
       return { mint, amountRaw, uiAmount, decimals, owner: t.pubkey };
     });
-    return new Response(JSON.stringify({ tokens }), { headers: CORS_HEADERS });
+    return new Response(JSON.stringify({ tokens }), {
+      headers: CORS_HEADERS,
+    });
   } catch (e: any) {
+    const errorMsg = String(e?.message || e);
+    console.error("[Helius] Token accounts fetch error:", errorMsg);
+
     return new Response(
-      JSON.stringify({ error: "rpc_error", details: String(e?.message || e) }),
+      JSON.stringify({
+        error: "Failed to fetch wallet tokens from Helius RPC",
+        details: errorMsg,
+      }),
       { status: 502, headers: CORS_HEADERS },
     );
   }

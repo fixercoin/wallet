@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Copy, ArrowLeft } from "lucide-react";
+import { BouncingDotsLoader } from "@/components/ui/bouncing-dots-loader";
 import {
   generateWallet,
   recoverWallet,
@@ -260,7 +261,10 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           <div className="relative w-full bg-transparent overflow-hidden px-4 sm:px-6">
             {isLoading && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
-                <div className="text-white">Importing wallet...</div>
+                <BouncingDotsLoader
+                  text="Importing wallet"
+                  dotColor="#22c55e"
+                />
               </div>
             )}
 

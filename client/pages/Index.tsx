@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
+import { useNavigate } from "react-router-dom";
 import { WalletSetup } from "@/components/wallet/WalletSetup";
 import { Dashboard } from "@/components/wallet/Dashboard";
 import { SendTransaction } from "@/components/wallet/SendTransaction";
@@ -41,6 +42,7 @@ interface ScreenState {
 }
 
 export default function Index() {
+  const navigate = useNavigate();
   const { wallet, tokens, isInitialized, requiresPassword } = useWallet();
   const [currentScreen, setCurrentScreen] = useState<ScreenState>({
     screen: "dashboard",
@@ -86,11 +88,6 @@ export default function Index() {
   console.log("[Index] ✅ Wallet loaded successfully:", wallet.publicKey);
 
   const navigateToScreen = (screen: Screen, tokenMint?: string) => {
-    // Prevent accessing setup if wallet exists
-    if (screen === "setup" && wallet) {
-      setCurrentScreen({ screen: "dashboard" });
-      return;
-    }
     setCurrentScreen({ screen, tokenMint });
   };
 
@@ -237,6 +234,7 @@ export default function Index() {
           onLock={() => navigateToScreen("lock")}
           onBurn={() => navigateToScreen("burn")}
           onStakeTokens={() => navigateToScreen("stake-tokens")}
+          onP2PTrade={() => navigate("/buydata")}
         />
       );
   }

@@ -153,7 +153,7 @@ export const handleSavePaymentMethod: RequestHandler = async (req, res) => {
   }
 };
 
-export const handleDeletePaymentMethod: RequestHandler = (req, res) => {
+export const handleDeletePaymentMethod: RequestHandler = async (req, res) => {
   try {
     const id = req.query.id as string | undefined;
     const walletAddress = req.query.wallet as string | undefined;
@@ -175,7 +175,13 @@ export const handleDeletePaymentMethod: RequestHandler = (req, res) => {
       });
     }
 
+    // Delete from in-memory map
     paymentMethods.delete(id);
+
+    // Delete from KV storage
+    const existingMethods = await getWalletPaymentMethods(walletAddress);
+    const filtered = existingMethods.filter((m) => m.id !== id);
+    await saveWalletPaymentMethods(walletAddress, filtered);
 
     return res.json({
       message: "Payment method deleted successfully",

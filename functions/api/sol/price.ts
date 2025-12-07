@@ -116,7 +116,13 @@ async function handler(request: Request): Promise<Response> {
           };
 
           console.log(`[SOL Price] ✅ Birdeye success: $${data.data.value}`);
-          return new Response(JSON.stringify(priceData), {
+          const responseBody = {
+            ...priceData,
+            token: "SOL",
+            mint: "So11111111111111111111111111111111111111112",
+            source: "birdeye",
+          };
+          return new Response(JSON.stringify(responseBody), {
             status: 200,
             headers: {
               "Content-Type": "application/json",

@@ -1,9 +1,7 @@
 import { RequestHandler } from "express";
 
-// Function to get RPC endpoints dynamically to handle Cloudflare env vars
-function getRpcEndpoints(): string[] {
-  const endpoints: string[] = [];
-
+// Function to get HELIUS RPC endpoint ONLY
+function getHeliusRpcEndpoint(): string {
   // Helper to safely check env vars (trim empty strings)
   const getEnvVar = (value: string | undefined): string | null => {
     if (!value || typeof value !== "string") return null;
@@ -11,70 +9,37 @@ function getRpcEndpoints(): string[] {
     return trimmed.length > 0 ? trimmed : null;
   };
 
-  // Log environment variable availability for debugging
-  const solanaRpcUrl = getEnvVar(process.env.SOLANA_RPC_URL);
-  const heliusRpcUrl = getEnvVar(process.env.HELIUS_RPC_URL);
   const heliusApiKey = getEnvVar(process.env.HELIUS_API_KEY);
-  const alchemyRpcUrl = getEnvVar(process.env.ALCHEMY_RPC_URL);
-  const moralisRpcUrl = getEnvVar(process.env.MORALIS_RPC_URL);
+  const heliusRpcUrl = getEnvVar(process.env.HELIUS_RPC_URL);
+  const solanaRpcUrl = getEnvVar(process.env.SOLANA_RPC_URL);
 
-  console.log("[WalletBalance] Environment variable check:", {
-    hasSolanaRpcUrl: !!solanaRpcUrl,
-    hasHeliusRpcUrl: !!heliusRpcUrl,
+  console.log("[WalletBalance] Helius-only configuration:", {
     hasHeliusApiKey: !!heliusApiKey,
-    hasAlchemyRpcUrl: !!alchemyRpcUrl,
-    hasMoralisRpcUrl: !!moralisRpcUrl,
+    hasHeliusRpcUrl: !!heliusRpcUrl,
+    hasSolanaRpcUrl: !!solanaRpcUrl,
   });
 
-  // Environment-configured RPC as primary
-  if (solanaRpcUrl) {
-    endpoints.push(solanaRpcUrl);
-    console.log("[WalletBalance] Added SOLANA_RPC_URL as primary");
-  }
-
-  // Helius RPC URL
-  if (heliusRpcUrl) {
-    endpoints.push(heliusRpcUrl);
-    console.log("[WalletBalance] Added HELIUS_RPC_URL");
-  }
-
-  // Helius with API key
+  // HELIUS ONLY - Priority: API key > HELIUS_RPC_URL > SOLANA_RPC_URL
   if (heliusApiKey) {
-    endpoints.push(`https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`);
-    console.log("[WalletBalance] Added Helius with API key");
+    const endpoint = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
+    console.log("[WalletBalance] Using Helius with API key");
+    return endpoint;
   }
 
-  // Alchemy RPC
-  if (alchemyRpcUrl) {
-    endpoints.push(alchemyRpcUrl);
-    console.log("[WalletBalance] Added ALCHEMY_RPC_URL");
+  if (heliusRpcUrl) {
+    console.log("[WalletBalance] Using HELIUS_RPC_URL");
+    return heliusRpcUrl;
   }
 
-  // Moralis RPC
-  if (moralisRpcUrl) {
-    endpoints.push(moralisRpcUrl);
-    console.log("[WalletBalance] Added MORALIS_RPC_URL");
+  if (solanaRpcUrl) {
+    console.log("[WalletBalance] Using SOLANA_RPC_URL (Helius)");
+    return solanaRpcUrl;
   }
 
-  // Always add public endpoints as fallback (even if env vars exist)
-  // These are tier 1 quality public endpoints
-  const publicEndpoints = [
-    "https://solana.publicnode.com",
-    "https://rpc.ankr.com/solana",
-    "https://api.mainnet-beta.solana.com",
-    "https://rpc.genesysgo.net",
-  ];
-
-  publicEndpoints.forEach((endpoint) => {
-    if (!endpoints.includes(endpoint)) {
-      endpoints.push(endpoint);
-    }
-  });
-
-  console.log(
-    `[WalletBalance] Total RPC endpoints available: ${endpoints.length}`,
+  // No Helius endpoint found - this is a configuration error
+  throw new Error(
+    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable."
   );
-  return endpoints;
 }
 
 // Helius API for specialized token balance lookups (more efficient than RPC)

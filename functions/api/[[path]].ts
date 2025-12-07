@@ -1728,7 +1728,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       pathname.startsWith("/api/wallet/balance") ||
       pathname === "/wallet/balance"
     ) {
-      return await handleWalletBalance(url);
+      return await handleWalletBalance(url, env);
     }
 
     if (

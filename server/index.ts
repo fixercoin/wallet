@@ -796,7 +796,7 @@ export async function createServer(): Promise<express.Application> {
       }
 
       const modifiedReq = { ...req, query: { publicKey } };
-      handleWalletBalance(modifiedReq as any, res);
+      await handleWalletBalance(modifiedReq as any, res);
     } catch (e: any) {
       return res.status(500).json({
         error: "Failed to fetch wallet balance",

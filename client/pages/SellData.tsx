@@ -17,7 +17,6 @@ export default function SellData() {
     string | undefined
   >();
   const [showTradeDialog, setShowTradeDialog] = useState(true);
-  const [selectedOffer, setSelectedOffer] = useState<P2POrder | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(280);
   const [fetchingRate, setFetchingRate] = useState(false);
 

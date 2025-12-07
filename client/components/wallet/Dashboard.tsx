@@ -1142,18 +1142,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
                               )}
                             </span>
-                          ) : [
-                              "SOL",
-                              "USDC",
-                              "FIXERCOIN",
-                              "LOCKER",
-                              "FXM",
-                            ].includes(token.symbol) ? (
-                            <PriceLoader />
                           ) : (
-                            <span style={{ color: "#999999" }}>
-                              $0.00000000
-                            </span>
+                            <PriceLoader />
                           )}
                         </div>
 

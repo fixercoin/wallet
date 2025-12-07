@@ -14,15 +14,32 @@ function buildRpcEndpoints(env?: Env): string[] {
   const endpoints: string[] = [];
 
   // Add environment-configured endpoints first (highest priority)
-  if (env?.SOLANA_RPC_URL) endpoints.push(env.SOLANA_RPC_URL);
-  if (env?.HELIUS_RPC_URL) endpoints.push(env.HELIUS_RPC_URL);
+  if (env?.SOLANA_RPC_URL) {
+    console.log("[RPC Config] Using SOLANA_RPC_URL from env");
+    endpoints.push(env.SOLANA_RPC_URL);
+  }
+  if (env?.HELIUS_RPC_URL) {
+    console.log("[RPC Config] Using HELIUS_RPC_URL from env");
+    endpoints.push(env.HELIUS_RPC_URL);
+  }
   if (env?.HELIUS_API_KEY) {
+    console.log("[RPC Config] Using HELIUS_API_KEY from env");
     endpoints.push(
       `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
     );
   }
-  if (env?.ALCHEMY_RPC_URL) endpoints.push(env.ALCHEMY_RPC_URL);
-  if (env?.MORALIS_RPC_URL) endpoints.push(env.MORALIS_RPC_URL);
+  if (env?.ALCHEMY_RPC_URL) {
+    console.log("[RPC Config] Using ALCHEMY_RPC_URL from env");
+    endpoints.push(env.ALCHEMY_RPC_URL);
+  }
+  if (env?.MORALIS_RPC_URL) {
+    console.log("[RPC Config] Using MORALIS_RPC_URL from env");
+    endpoints.push(env.MORALIS_RPC_URL);
+  }
+
+  if (endpoints.length === 0) {
+    console.log("[RPC Config] No configured endpoints found, using public fallbacks");
+  }
 
   // Add public fallback endpoints (tier 1 - higher quality)
   endpoints.push("https://solana.publicnode.com");

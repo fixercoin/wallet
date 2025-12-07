@@ -70,6 +70,21 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
 
     // Use Helius RPC ONLY
     const heliusEndpoint = getHeliusRpcEndpoint();
+
+    // Return graceful fallback if Helius is not configured
+    if (!heliusEndpoint) {
+      console.warn(
+        "[WalletBalance] Helius not configured - returning fallback balance of 0",
+      );
+      return res.status(200).json({
+        publicKey,
+        balance: 0,
+        balanceLamports: 0,
+        endpoint: "unconfigured",
+        warning:
+          "Balance endpoint not configured. Set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
+      });
+    }
     const endpointLabel = heliusEndpoint.substring(0, 50);
 
     const body = {

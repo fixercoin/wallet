@@ -9,7 +9,7 @@ This guide shows how to integrate the Cloudflare Worker APIs into your React fro
 In your `.env.local` or environment variables, set:
 
 ```
-VITE_API_BASE_URL=https://fixorium-proxy.khanbabusargodha.workers.dev
+VITE_API_BASE_URL=https://proxy.fixorium.com.pk
 ```
 
 Or for development:

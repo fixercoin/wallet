@@ -11,7 +11,7 @@ export interface TokenMetadata {
 }
 
 // Basic known token list (minimal, can be expanded)
-const KNOWN_TOKENS: Record<string, TokenMetadata> = {
+export const KNOWN_TOKENS: Record<string, TokenMetadata> = {
   So11111111111111111111111111111111111111112: {
     mint: "So11111111111111111111111111111111111111112",
     symbol: "SOL",
@@ -50,13 +50,26 @@ const KNOWN_TOKENS: Record<string, TokenMetadata> = {
     decimals: 6,
     logoURI: "https://via.placeholder.com/64x64/8b5cf6/ffffff?text=LO",
   },
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump": {
+    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+    symbol: "FXM",
+    name: "Fixorium",
+    decimals: 6,
+    logoURI:
+      "https://cdn.builder.io/api/v1/image/assets%2Feff28b05195a4f5f8e8aaeec5f72bbfe%2Fc78ec8b33eec40be819bca514ed06f2a?format=webp&width=800",
+  },
 };
 
 // Request queue to prevent duplicate requests
 const requestQueue = new Map<string, Promise<any>>();
 
+// Use Helius RPC exclusively for all SOL and token operations
+// All RPC calls are routed through Helius with no fallbacks
+const HELIUS_RPC_ENDPOINT = SOLANA_RPC_URL;
+
 /**
- * Make a Solana JSON RPC call through our proxy
+ * Make a Solana JSON RPC call directly to public endpoints
+ * No backend proxy needed - calls public RPC endpoints directly
  */
 export const makeRpcCall = async (
   method: string,
@@ -71,175 +84,111 @@ export const makeRpcCall = async (
   }
 
   const requestPromise = (async () => {
+    console.log(
+      `[RPC] Using endpoint: ${HELIUS_RPC_ENDPOINT.substring(0, 50)}...`,
+    );
     let lastError: Error | null = null;
     let lastErrorStatus: number | null = null;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        let response: Response;
-        try {
-          response = await fetch("/api/solana-rpc", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              method,
-              params,
-              id: Date.now(),
-            }),
-          });
-        } catch (fetchErr) {
-          // Network/connection error (e.g. Dev server not running, middleware not mounted)
-          const fetchError =
-            fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+        const controller = new AbortController();
+        const timeoutMs = 12000; // 12s timeout
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-          // Try calling known public RPC endpoints directly as a fallback
-          const directEndpoints = [
-            SOLANA_RPC_URL,
-            "https://rpc.ankr.com/solana",
-            "https://api.mainnet-beta.solana.com",
-            "https://solana.publicnode.com",
-          ].filter(Boolean);
+        console.log(
+          `[RPC] Calling ${method} on Helius (attempt ${attempt + 1}/${retries + 1})`,
+        );
 
-          for (const endpoint of directEndpoints) {
-            try {
-              const controller2 = new AbortController();
-              const timeout2 = setTimeout(() => controller2.abort(), 10000);
-              const resp2 = await fetch(endpoint, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  jsonrpc: "2.0",
-                  id: Date.now(),
-                  method,
-                  params,
-                }),
-                signal: controller2.signal,
-              });
-              clearTimeout(timeout2);
+        const response = await fetch(HELIUS_RPC_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: Date.now(),
+            method,
+            params,
+          }),
+          signal: controller.signal,
+        });
 
-              if (!resp2.ok) {
-                const t = await resp2.text().catch(() => "");
-                console.warn(
-                  `Direct RPC ${endpoint} returned ${resp2.status}: ${t}`,
-                );
-                continue;
-              }
-
-              const txt2 = await resp2.text().catch(() => "");
-              try {
-                const parsed = txt2 ? JSON.parse(txt2) : null;
-                if (parsed && parsed.error) {
-                  throw new Error(parsed.error.message || "RPC error");
-                }
-                return parsed?.result ?? parsed ?? txt2;
-              } catch (e) {
-                return txt2;
-              }
-            } catch (e) {
-              console.warn(
-                `Direct RPC endpoint ${endpoint} failed:`,
-                e instanceof Error ? e.message : String(e),
-              );
-              continue;
-            }
-          }
-
-          // Health check to provide better guidance
-          try {
-            const health = await fetch("/api/health")
-              .then((r) => r.text())
-              .catch(() => "");
-            throw new Error(
-              `Network fetch failed: ${fetchError}. API health check: ${health || "no response"}`,
-            );
-          } catch (hcErr) {
-            throw new Error(
-              `Network fetch failed: ${fetchError}. API health check failed: ${hcErr instanceof Error ? hcErr.message : String(hcErr)}`,
-            );
-          }
-        }
+        clearTimeout(timeout);
 
         if (!response.ok) {
-          // Try to read body as text, then try to parse JSON for structured error info
           const responseText = await response.text().catch(() => "");
-          let parsedErr: any = null;
+          const errorMsg = `HTTP ${response.status} ${response.statusText}: ${responseText}`;
+          console.warn(`[RPC] ${method} on Helius returned ${response.status}`);
+
+          if (response.status === 429 || response.status === 503) {
+            lastErrorStatus = response.status;
+          }
+
+          lastError = new Error(errorMsg);
+        } else {
+          const text = await response.text().catch(() => "");
+          let data: any = null;
+
           try {
-            parsedErr = responseText ? JSON.parse(responseText) : null;
-          } catch {}
-
-          const details =
-            parsedErr?.error?.message ||
-            parsedErr?.message ||
-            responseText ||
-            response.statusText ||
-            "(no response body)";
-
-          // If server-provided diagnostics endpoint exists, attempt to fetch and append
-          let serverDiag = "";
-          if (response.status === 500) {
-            try {
-              serverDiag = await fetch("/api/debug/rpc")
-                .then((d) => d.text())
-                .catch(() => "");
-            } catch {}
+            data = text ? JSON.parse(text) : null;
+          } catch (e) {
+            console.warn(`[RPC] Failed to parse response from Helius`);
+            lastError = new Error(`Failed to parse response: ${String(e)}`);
+            throw lastError;
           }
 
-          const diagSuffix = serverDiag
-            ? ` Server diagnostics: ${serverDiag}`
-            : "";
-
-          // Special handling for rate limiting - use longer backoff
-          if (response.status === 429) {
-            lastErrorStatus = 429;
-            throw new Error(
-              `RPC call failed: ${response.status} ${response.statusText}. ${details}${diagSuffix}`,
+          if (data && data.error) {
+            const errorMsg = data.error.message || JSON.stringify(data.error);
+            console.warn(
+              `[RPC] ${method} on Helius returned error:`,
+              data.error,
             );
+            lastError = new Error(errorMsg);
+            throw lastError;
           }
 
-          throw new Error(
-            `RPC call failed: ${response.status} ${response.statusText}. ${details}${diagSuffix}`,
-          );
+          // Success!
+          return data?.result ?? data ?? text;
         }
-
-        // Try to parse response as JSON, if not available return raw text
-        const text = await response.text().catch(() => "");
-        let data: any = null;
-        try {
-          data = text ? JSON.parse(text) : null;
-        } catch (e) {
-          data = text;
-        }
-
-        if (data && data.error) {
-          throw new Error(
-            `RPC error: ${data.error.message} (code: ${data.error.code || "unknown"})`,
-          );
-        }
-
-        return data?.result ?? data ?? text;
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        const isTimeout =
+          errorMsg.includes("abort") || errorMsg.includes("timeout");
+        const isCors =
+          errorMsg.includes("Failed to fetch") ||
+          errorMsg.includes("CORS") ||
+          errorMsg.includes("cors");
 
-        if (attempt < retries) {
-          // Use exponential backoff, with extra delay for rate limiting
-          const isRateLimited = lastErrorStatus === 429;
-          const baseDelay = isRateLimited ? 3000 : 1000; // 3s base for 429, 1s for others
-          const delayMs = baseDelay * Math.pow(2, attempt); // Exponential: 3s, 6s, 12s for 429
-
-          console.warn(
-            `[RPC Call] ${method} failed (attempt ${attempt + 1}/${retries + 1}), retrying in ${delayMs}ms:`,
-            lastError.message,
-          );
-
-          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        if (isTimeout) {
+          console.warn(`[RPC] ${method} on Helius timed out after 12s`);
+        } else if (isCors) {
+          console.warn(`[RPC] ${method} on Helius blocked by CORS policy`);
+        } else {
+          console.warn(`[RPC] ${method} on Helius failed:`, errorMsg);
         }
+
+        lastError = error instanceof Error ? error : new Error(errorMsg);
+      }
+
+      // Retry if we have attempts left
+      if (attempt < retries) {
+        const isRateLimited =
+          lastErrorStatus === 429 || lastErrorStatus === 503;
+        const baseDelay = isRateLimited ? 3000 : 800;
+        const delayMs = baseDelay * Math.pow(2, attempt);
+        const cappedDelayMs = Math.min(delayMs, 30000); // Cap at 30 seconds
+
+        console.warn(
+          `[RPC] ${method} failed (attempt ${attempt + 1}/${retries + 1}), retrying in ${cappedDelayMs}ms`,
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, cappedDelayMs));
       }
     }
 
     throw new Error(
-      `RPC call failed after ${retries + 1} attempts: ${lastError?.message || "Unknown error"}`,
+      `RPC call failed after ${retries + 1} attempts on Helius: ${lastError?.message || "Unknown error"}`,
     );
   })();
 
@@ -254,12 +203,11 @@ export const makeRpcCall = async (
 };
 
 /**
- * Get SOL balance for a wallet
+ * Get SOL balance for a wallet using Helius
  */
 export const getWalletBalance = async (publicKey: string): Promise<number> => {
-  // First try via our API proxy (with retries/failover)
   try {
-    const res = await makeRpcCall("getBalance", [publicKey]);
+    const res = await makeRpcCall("getBalance", [publicKey], 3);
     const lamports =
       typeof res === "number"
         ? res
@@ -267,109 +215,86 @@ export const getWalletBalance = async (publicKey: string): Promise<number> => {
           ? (res as any).value
           : 0;
     const sol = lamports / 1_000_000_000;
-    if (Number.isFinite(sol)) return sol;
-  } catch (error) {
-    console.warn(
-      "Proxy RPC getBalance failed, attempting direct web3 fallback:",
-      error,
-    );
-  }
-
-  // Fallback: call Solana directly via web3.js (avoids proxy issues/rate limits)
-  try {
-    const conn = new Connection(SOLANA_RPC_URL, { commitment: "confirmed" });
-    const lamports = await conn.getBalance(new PublicKey(publicKey));
-    const sol = lamports / 1_000_000_000;
     return Number.isFinite(sol) ? sol : 0;
   } catch (error) {
-    console.error("Direct web3 getBalance failed:", error);
+    console.error("[Balance] Failed to fetch balance from Helius:", error);
     return 0;
   }
 };
 
 /**
- * Get all token accounts for a wallet
- * Includes multiple fallback RPC endpoints for reliability
+ * Get all token accounts for a wallet using Helius
  */
 export const getTokenAccounts = async (publicKey: string) => {
   const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
-  // Try via API proxy first
+  console.log(
+    `[Token Accounts] Fetching token accounts for ${publicKey} using Helius...`,
+  );
+
   try {
-    const response = await makeRpcCall("getTokenAccountsByOwner", [
-      publicKey,
-      { programId: TOKEN_PROGRAM_ID },
-      { encoding: "jsonParsed", commitment: "confirmed" },
-    ]);
+    const response = await makeRpcCall(
+      "getTokenAccountsByOwner",
+      [
+        publicKey,
+        { programId: TOKEN_PROGRAM_ID },
+        { encoding: "jsonParsed", commitment: "confirmed" },
+      ],
+      3, // Retry up to 3 times via Helius
+    );
+
+    console.log(`[Token Accounts] Helius response received:`, response);
 
     const value = (response as any)?.value || [];
-    if (Array.isArray(value) && value.length >= 0) {
+    if (Array.isArray(value)) {
       console.log(
-        `[Token Accounts] Got ${value.length} token accounts from proxy RPC`,
+        `[Token Accounts] Got ${value.length} token accounts from Helius`,
       );
-      return value.map((account: any) => {
-        const parsedInfo = account.account.data.parsed.info;
-        const mint = parsedInfo.mint;
-        const balance = parsedInfo.tokenAmount.uiAmount || 0;
-        const decimals = parsedInfo.tokenAmount.decimals;
+      return value
+        .map((account: any) => {
+          try {
+            const parsedInfo = account.account.data.parsed.info;
+            const mint = parsedInfo.mint;
+            const decimals = parsedInfo.tokenAmount.decimals;
 
-        const metadata = KNOWN_TOKENS[mint] || {
-          mint,
-          symbol: "UNKNOWN",
-          name: "Unknown Token",
-          decimals,
-        };
+            // Extract balance - prefer uiAmount, fall back to calculating from raw amount
+            let balance = 0;
+            if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
+              balance = parsedInfo.tokenAmount.uiAmount;
+            } else if (parsedInfo.tokenAmount.amount) {
+              // Convert raw amount to UI amount using decimals
+              const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+              balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+            }
 
-        return {
-          ...metadata,
-          balance,
-          decimals: decimals || metadata.decimals,
-        };
-      });
+            const metadata = KNOWN_TOKENS[mint] || {
+              mint,
+              symbol: "UNKNOWN",
+              name: "Unknown Token",
+              decimals,
+            };
+
+            return {
+              ...metadata,
+              balance,
+              decimals: decimals || metadata.decimals,
+            };
+          } catch (parseError) {
+            console.error(
+              "[Token Accounts] Error parsing account:",
+              account,
+              parseError,
+            );
+            return null;
+          }
+        })
+        .filter((token) => token !== null);
     }
+    return [];
   } catch (error) {
-    console.warn(
-      "[Token Accounts] Proxy RPC getTokenAccountsByOwner failed, attempting direct web3.js fallback:",
-      error,
-    );
-  }
-
-  // Fallback: Try direct web3.js Connection via SOLANA_RPC_URL
-  try {
-    console.log("[Token Accounts] Attempting direct web3.js fallback...");
-    const conn = new Connection(SOLANA_RPC_URL, { commitment: "confirmed" });
-    const accounts = await conn.getParsedTokenAccountsByOwner(
-      new PublicKey(publicKey),
-      { programId: new PublicKey(TOKEN_PROGRAM_ID) },
-    );
-
-    console.log(
-      `[Token Accounts] Got ${accounts.value.length} token accounts from web3.js fallback`,
-    );
-
-    return accounts.value.map((account: any) => {
-      const parsedInfo = account.account.data.parsed.info;
-      const mint = parsedInfo.mint;
-      const balance = parsedInfo.tokenAmount.uiAmount || 0;
-      const decimals = parsedInfo.tokenAmount.decimals;
-
-      const metadata = KNOWN_TOKENS[mint] || {
-        mint,
-        symbol: "UNKNOWN",
-        name: "Unknown Token",
-        decimals,
-      };
-
-      return {
-        ...metadata,
-        balance,
-        decimals: decimals || metadata.decimals,
-      };
-    });
-  } catch (webError) {
     console.error(
-      "[Token Accounts] Direct web3.js fallback also failed:",
-      webError,
+      "[Token Accounts] Failed to fetch token accounts from Helius:",
+      error,
     );
     return [];
   }
@@ -450,4 +375,52 @@ export const addKnownToken = (metadata: TokenMetadata) => {
  */
 export const getKnownTokens = (): Record<string, TokenMetadata> => {
   return { ...KNOWN_TOKENS };
+};
+
+/**
+ * Fetch balance for a specific token mint using Helius
+ * This is useful for custom tokens that might not be in the general token list
+ */
+export const getTokenBalanceForMint = async (
+  walletAddress: string,
+  tokenMint: string,
+): Promise<number | null> => {
+  try {
+    const response = await makeRpcCall(
+      "getTokenAccountsByOwner",
+      [
+        walletAddress,
+        { mint: tokenMint },
+        { encoding: "jsonParsed", commitment: "confirmed" },
+      ],
+      2,
+    );
+
+    const value = (response as any)?.value || [];
+    if (Array.isArray(value) && value.length > 0) {
+      const account = value[0];
+      const parsedInfo = account.account.data.parsed.info;
+      const decimals = parsedInfo.tokenAmount.decimals;
+
+      let balance = 0;
+      if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
+        balance = parsedInfo.tokenAmount.uiAmount;
+      } else if (parsedInfo.tokenAmount.amount) {
+        const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+        balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+      }
+
+      console.log(
+        `[Token Balance] Fetched ${tokenMint}: ${balance} via Helius`,
+      );
+      return balance;
+    }
+    return null;
+  } catch (error) {
+    console.error(
+      `[Token Balance] Failed to fetch balance for ${tokenMint} from Helius:`,
+      error,
+    );
+    return null;
+  }
 };

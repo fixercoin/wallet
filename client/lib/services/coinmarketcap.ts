@@ -193,7 +193,7 @@ class CoinMarketCapAPI {
     symbols: string[],
   ): Promise<CoinMarketCapResponse["data"] | null> {
     try {
-      // Always try proxy first (server-side with API key configured on Cloudflare)
+      // Always try proxy first (server-side with API key configured)
       try {
         return await this.fetchViaProxy(symbols);
       } catch (proxyError) {

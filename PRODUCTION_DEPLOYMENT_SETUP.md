@@ -2,39 +2,39 @@
 
 This guide covers both deployment options for your full-stack app (frontend + backend API).
 
-## Option 1: Netlify (Recommended - Easiest)
+## Option 1: Cloudflare Pages (Recommended - Easiest)
 
-Netlify automatically handles both frontend and serverless functions with zero extra configuration.
+Cloudflare Pages automatically handles both frontend and serverless functions with zero extra configuration.
 
 ### Prerequisites
 
-- Connect Netlify MCP integration
+- Connect Cloudflare Pages MCP integration
 
 ### Deployment Steps
 
-1. **Connect to Netlify MCP**
-   - Click [Connect to Netlify](#open-mcp-popover)
-   - Authorize your Netlify account
+1. **Connect to Cloudflare Pages MCP**
+   - Click [Connect to Cloudflare Pages](#open-mcp-popover)
+   - Authorize your Cloudflare Pages account
 
 2. **Deploy**
    - The system will automatically:
      - Build frontend with `pnpm build`
-     - Deploy to Netlify
+     - Deploy to Cloudflare Pages
      - Deploy serverless functions from `netlify/functions/`
-     - Configure API proxy via `netlify.toml`
+     - Configure API proxy via `wrangler.toml`
 
 3. **Environment Variables** (if needed)
-   - Add to Netlify dashboard:
+   - Add to Cloudflare Pages dashboard:
    ```
    SOLANA_RPC=https://...           # Optional, defaults to Shyft
    ```
 
 ### How It Works
 
-- Frontend: Deployed to Netlify CDN
+- Frontend: Deployed to Cloudflare Pages CDN
 - Backend: Serverless functions at `/.netlify/functions/api/*`
-- API Proxy: `netlify.toml` redirects `/api/*` → `/.netlify/functions/api/:splat`
-- API Client: Automatically detects Netlify and uses local `/api` paths
+- API Proxy: `wrangler.toml` redirects `/api/*` → `/.netlify/functions/api/:splat`
+- API Client: Automatically detects Cloudflare Pages and uses local `/api` paths
 
 ### Testing After Deployment
 
@@ -64,7 +64,7 @@ cd cloudflare
 wrangler deploy --config ./wrangler.toml --env production
 ```
 
-This deploys to: `https://fixorium-proxy.khanbabusargodha.workers.dev`
+This deploys to: `https://proxy.fixorium.com.pk`
 
 ### Step 2: Update Frontend Build Environment
 
@@ -96,7 +96,7 @@ wrangler secret put SOLANA_RPC --config ./cloudflare/wrangler.toml
 
 ```bash
 # Test Worker health
-curl https://fixorium-proxy.khanbabusargodha.workers.dev/api/health
+curl https://proxy.fixorium.com.pk/api/health
 
 # Test from frontend
 # Navigate to your Cloudflare Pages URL and check browser console
@@ -106,7 +106,7 @@ curl https://fixorium-proxy.khanbabusargodha.workers.dev/api/health
 
 ## Option 3: Vercel (Also Supports Full-Stack)
 
-Vercel supports both frontend and serverless functions similar to Netlify.
+Vercel supports both frontend and serverless functions similar to Cloudflare Pages.
 
 1. Connect your repo to Vercel
 2. Update API client if needed (Vercel domains are `*.vercel.app`)
@@ -130,9 +130,9 @@ API Client behavior:
 - Detects `localhost`
 - Uses local Express server at `/api/*`
 
-### Production (Netlify)
+### Production (Cloudflare Pages)
 
-File: `netlify.toml` (already configured)
+File: `wrangler.toml` (already configured)
 
 ```toml
 [[redirects]]
@@ -197,14 +197,14 @@ All endpoints are available through both deployment methods:
 
 ### API returns 404
 
-- ✅ Netlify: Check `netlify.toml` is deployed correctly
+- ✅ Cloudflare Pages: Check `wrangler.toml` is deployed correctly
 - ✅ Cloudflare Pages: Verify Worker is deployed separately
 - ✅ Local: Check Express server is running (`npm run dev`)
 
 ### API returns 500 or timeout
 
 - Check Solana RPC endpoint is working
-- Check Cloudflare/Netlify logs
+- Check Cloudflare/Cloudflare Pages logs
 
 ### CORS errors
 
@@ -236,8 +236,8 @@ All endpoints are available through both deployment methods:
 
 For best reliability and ease of maintenance:
 
-1. **Use Netlify** - Handles both frontend and backend automatically
+1. **Use Cloudflare Pages** - Handles both frontend and backend automatically
 2. **Set SOLANA_RPC** to a paid provider (Helius/Alchemy) for better rate limits
-3. **Monitor Netlify logs** for API errors
+3. **Monitor Cloudflare Pages logs** for API errors
 
 This ensures your app remains stable even under high traffic.

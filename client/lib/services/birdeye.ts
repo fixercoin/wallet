@@ -46,41 +46,59 @@ class BirdeyeAPI {
       const url = `${this.baseUrl}/price?address=${encodeURIComponent(mint)}`;
       console.log(`[Birdeye] Fetching price for ${mint}: ${url}`);
 
-      const response = await fetch(url);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-      if (!response.ok) {
-        console.warn(
-          `[Birdeye] Price request failed with status ${response.status}`,
+      try {
+        const response = await fetch(url, {
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          console.debug(
+            `[Birdeye] Price request failed with status ${response.status} for ${mint} (will use fallback)`,
+          );
+          return null;
+        }
+
+        const data: BirdeyePriceResponse = await response.json();
+
+        if (!data.success || !data.data) {
+          console.debug(
+            `[Birdeye] Price API returned no data for ${mint} (will use fallback)`,
+          );
+          return null;
+        }
+
+        const token: BirdeyeToken = {
+          address: mint,
+          symbol: mint.slice(0, 6).toUpperCase(),
+          name: mint.slice(0, 10),
+          decimals: 6,
+          priceUsd: data.data.value,
+          priceChange: {
+            h24: data.data.priceChange24h || 0,
+          },
+        };
+
+        console.log(
+          `[Birdeye] ✅ Got price for ${mint}: $${data.data.value || "N/A"}`,
+        );
+        return token;
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        const errorMsg =
+          fetchError instanceof Error ? fetchError.message : String(fetchError);
+        console.debug(
+          `[Birdeye] Network error fetching price for ${mint}: ${errorMsg} (will use fallback)`,
         );
         return null;
       }
-
-      const data: BirdeyePriceResponse = await response.json();
-
-      if (!data.success || !data.data) {
-        console.warn(`[Birdeye] Price API returned no data for ${mint}`);
-        return null;
-      }
-
-      const token: BirdeyeToken = {
-        address: mint,
-        symbol: mint.slice(0, 6).toUpperCase(),
-        name: mint.slice(0, 10),
-        decimals: 6,
-        priceUsd: data.data.value,
-        priceChange: {
-          h24: data.data.priceChange24h || 0,
-        },
-      };
-
-      console.log(
-        `[Birdeye] ✅ Got price for ${mint}: $${data.data.value || "N/A"}`,
-      );
-      return token;
     } catch (error) {
-      console.warn(
-        `[Birdeye] Error fetching price for ${mint}:`,
-        error instanceof Error ? error.message : String(error),
+      console.debug(
+        `[Birdeye] Unexpected error for ${mint}: ${error instanceof Error ? error.message : String(error)} (will use fallback)`,
       );
       return null;
     }
@@ -114,7 +132,12 @@ class BirdeyeAPI {
 
     if (toFetch.length > 0) {
       try {
-        const promises = toFetch.map((mint) => this.getTokenPrice(mint));
+        const promises = toFetch.map((mint) =>
+          this.getTokenPrice(mint).catch((error) => {
+            console.warn(`[Birdeye] Failed to fetch price for ${mint}:`, error);
+            return null;
+          }),
+        );
         const results = await Promise.all(promises);
         fetchedTokens = results.filter((t): t is BirdeyeToken => t !== null);
 
@@ -153,6 +176,11 @@ class BirdeyeAPI {
     });
 
     return prices;
+  }
+
+  clearCache(): void {
+    BirdeyeAPI.tokenCache.clear();
+    console.log("[Birdeye] Cache cleared");
   }
 }
 

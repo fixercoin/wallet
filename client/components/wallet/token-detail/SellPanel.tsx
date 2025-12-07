@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DollarSign } from "lucide-react";
 import { TokenInfo } from "@/lib/wallet";
+import { useState } from "react";
 
 interface SellPanelProps {
   token: TokenInfo;
@@ -37,7 +38,7 @@ export const SellPanel: React.FC<SellPanelProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => setSellAmount(maxBalance.toString())}
-              className="text-xs h-auto p-0"
+              className="text-xs h-auto p-0 rounded-[2px]"
             >
               Max: {maxBalance.toLocaleString()} {token.symbol}
             </Button>
@@ -67,7 +68,7 @@ export const SellPanel: React.FC<SellPanelProps> = ({
         <div className="space-y-2 text-sm">
           <div className="flex justify-between text-gray-400">
             <span>Price per {token.symbol}</span>
-            <span>${token.price?.toFixed(6) || "0.000000"}</span>
+            {token.price ? <span>${token.price.toFixed(6)}</span> : null}
           </div>
           <div className="flex justify-between text-gray-400">
             <span>Network Fee</span>
@@ -83,7 +84,7 @@ export const SellPanel: React.FC<SellPanelProps> = ({
             parseFloat(sellAmount) <= 0 ||
             parseFloat(sellAmount) > maxBalance
           }
-          className="w-full disabled:opacity-50"
+          className="w-full disabled:opacity-50 rounded-[2px]"
         >
           {isLoading ? "Processing..." : `Sell ${token.symbol}`}
         </Button>

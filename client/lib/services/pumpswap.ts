@@ -5,6 +5,8 @@
 // function below is a placeholder that returns null and instructs the caller to perform server-side
 // transaction construction with PumpSwap program details.
 
+import { resolveApiUrl } from "@/lib/api-client";
+
 export interface PumpPoolInfo {
   address: string;
   baseMint: string; // token A mint (e.g. SOL or token)
@@ -18,7 +20,6 @@ export interface PumpPoolInfo {
 }
 
 // Use proxy endpoint instead of direct Shyft API
-// The Cloudflare Worker handles pool discovery and trading through the proxy
 const PUMP_SWAP_PROXY_BASE = "/api/pumpfun";
 
 async function pumpFunProxyFetch(path: string, method = "GET", body?: any) {
@@ -27,7 +28,8 @@ async function pumpFunProxyFetch(path: string, method = "GET", body?: any) {
     "Content-Type": "application/json",
   };
 
-  const res = await fetch(`${PUMP_SWAP_PROXY_BASE}${path}`, {
+  const url = resolveApiUrl(`${PUMP_SWAP_PROXY_BASE}${path}`);
+  const res = await fetch(url, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
@@ -53,7 +55,6 @@ export async function getPoolForPair(
 ): Promise<PumpPoolInfo | null> {
   try {
     // Call proxy endpoint to get pool info
-    // The Cloudflare Worker internally handles pool discovery through Shyft
     const path = `/pool?base=${encodeURIComponent(inputMint)}&quote=${encodeURIComponent(outputMint)}`;
     const j = await pumpFunProxyFetch(path, "GET");
     if (!j) return null;

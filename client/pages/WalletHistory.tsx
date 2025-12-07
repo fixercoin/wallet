@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { heliusAPI } from "@/lib/services/helius";
+import { jupiterAPI } from "@/lib/services/jupiter";
 
 const BASE_SOLSCAN_TX = (sig: string) => `https://solscan.io/tx/${sig}`;
 
@@ -95,6 +96,9 @@ export default function WalletHistory() {
     [],
   );
   const [loading, setLoading] = useState(false);
+  const [tokenMap, setTokenMap] = useState<
+    Record<string, { symbol: string; decimals: number }>
+  >({});
 
   useEffect(() => {
     if (!wallet?.publicKey) return;
@@ -121,11 +125,86 @@ export default function WalletHistory() {
       setPendingOrders([]);
     }
 
-    // Fetch blockchain transactions
-    fetchBlockchainTransactions();
+    // Load persisted transactions (if any)
+    try {
+      const rawTx =
+        localStorage.getItem(`wallet_transactions_${wallet.publicKey}`) || "[]";
+      const parsedTx = JSON.parse(rawTx);
+      if (Array.isArray(parsedTx))
+        setBlockchainTxs(parsedTx as BlockchainTransaction[]);
+    } catch (e) {
+      // ignore
+    }
+
+    // Init token map (Jupiter + known) and then fetch transactions
+    let isMounted = true;
+    (async () => {
+      try {
+        const known: Record<string, { symbol: string; decimals: number }> = {
+          ...KNOWN_TOKENS,
+        };
+        try {
+          const jupTokens = await jupiterAPI.getStrictTokenList();
+          if (Array.isArray(jupTokens) && jupTokens.length > 0) {
+            for (const t of jupTokens) {
+              if (!t?.address) continue;
+              known[t.address] = {
+                symbol: t.symbol || t.address.slice(0, 6),
+                decimals: t.decimals ?? 6,
+              };
+            }
+          }
+        } catch (jupError) {
+          console.warn("Failed to fetch Jupiter token list:", jupError);
+        }
+
+        if (isMounted) {
+          // Set token map state first
+          setTokenMap(known);
+          // Then fetch blockchain transactions
+          await fetchBlockchainTransactions(known);
+        }
+      } catch (e) {
+        console.error("Error initializing token map:", e);
+        if (isMounted) {
+          setTokenMap({ ...KNOWN_TOKENS });
+          await fetchBlockchainTransactions({ ...KNOWN_TOKENS });
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
   }, [wallet?.publicKey]);
 
-  const fetchBlockchainTransactions = async () => {
+  const handleRefresh = async () => {
+    await fetchBlockchainTransactions(tokenMap);
+  };
+
+  const handleClearHistory = () => {
+    if (!wallet?.publicKey) return;
+    try {
+      localStorage.removeItem(`wallet_transactions_${wallet.publicKey}`);
+      setBlockchainTxs([]);
+      // Also clear any orders/locks persisted if desired
+      toast({
+        title: "History cleared",
+        description: "Transaction history was removed from local storage.",
+      });
+    } catch (e) {
+      console.error("Failed to clear history", e);
+      toast({
+        title: "Clear failed",
+        description: String(e),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchBlockchainTransactions = async (
+    resolvedTokenMap?: Record<string, { symbol: string; decimals: number }>,
+  ) => {
     if (!wallet?.publicKey) return;
 
     setLoading(true);
@@ -146,7 +225,10 @@ export default function WalletHistory() {
 
       console.log(`Found ${signatures.length} signatures, fetching details...`);
 
-      const txs: BlockchainTransaction[] = [];
+      const txMap = new Map<
+        string,
+        BlockchainTransaction & { transfers: any[] }
+      >();
 
       // Fetch and parse each transaction
       for (const sig of signatures) {
@@ -162,24 +244,45 @@ export default function WalletHistory() {
             wallet.publicKey,
           );
 
-          for (const transfer of transfers) {
-            txs.push({
-              type: transfer.type,
-              signature: transfer.signature,
-              blockTime: transfer.blockTime,
-              token: transfer.mint || transfer.token,
-              amount: transfer.amount,
-              decimals: transfer.decimals,
-              __source: "blockchain",
-            });
+          // Group all transfers by signature (one entry per transaction, not per transfer)
+          if (transfers.length > 0) {
+            const txKey = sig.signature;
+            if (!txMap.has(txKey)) {
+              // Use the first transfer to initialize, but store all transfers
+              txMap.set(txKey, {
+                type: transfers[0].type,
+                signature: sig.signature,
+                blockTime: sig.blockTime,
+                token: transfers[0].mint || transfers[0].token,
+                amount: transfers[0].amount,
+                decimals: transfers[0].decimals,
+                __source: "blockchain",
+                transfers: transfers,
+              });
+            }
           }
         } catch (e) {
           console.warn(`Error parsing transaction ${sig.signature}:`, e);
         }
       }
 
+      const txs: BlockchainTransaction[] = Array.from(txMap.values()).map(
+        (tx) => {
+          const { transfers, ...rest } = tx;
+          return rest;
+        },
+      );
+
       console.log(`Extracted ${txs.length} token transfers`);
       setBlockchainTxs(txs);
+      try {
+        localStorage.setItem(
+          `wallet_transactions_${wallet.publicKey}`,
+          JSON.stringify(txs),
+        );
+      } catch (e) {
+        console.warn("Failed to persist transactions to localStorage", e);
+      }
     } catch (error) {
       console.error("Error fetching blockchain transactions:", error);
       setBlockchainTxs([]);
@@ -189,128 +292,89 @@ export default function WalletHistory() {
   };
 
   return (
-    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 blur-3xl bg-[#FF7A5C] pointer-events-none" />
+    <div className="express-p2p-page light-theme min-h-screen bg-gray-900 text-gray-900 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-0 blur-3xl bg-gradient-to-br from-[#FF7A5C] to-[#FF5A8C] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-0 blur-3xl bg-[#FF7A5C] pointer-events-none" />
 
-      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        <div className="mt-6 mb-1 rounded-lg p-6 border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
+      <div className="w-full md:max-w-lg mx-auto px-4 py-6 relative z-20">
+        <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden text-gray-900">
           <div className="flex items-center gap-3 mb-6">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate(-1)}
-              aria-label="Back"
+              aria-label="BACK"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-xl font-semibold">History</h1>
+            <h1 className="text-xl font-semibold uppercase">HISTORY</h1>
           </div>
 
           <section className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-medium">Transactions</h2>
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              <h2 className="text-lg font-medium uppercase">TRANSACTIONS</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRefresh}
+                  disabled={loading}
+                  className="p-1 hover:bg-gray-200 rounded-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="REFRESH TRANSACTIONS"
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                </button>
+                <button
+                  onClick={handleClearHistory}
+                  className="p-1 px-2 bg-red-50 text-red-600 rounded-none text-xs hover:bg-red-100"
+                >
+                  CLEAR
+                </button>
+              </div>
             </div>
 
-            {/* Combine blockchain txs + completed + pending orders */}
+            {/* Show only confirmed on-chain transactions */}
             {(() => {
-              const appOrders = [
-                ...(completedOrders || []).map((o: any) => ({
-                  ...o,
-                  __status: "completed",
-                  __source: "app",
-                })),
-                ...(pendingOrders || []).map((o: any) => ({
-                  ...o,
-                  __status: "pending",
-                  __source: "app",
-                })),
-              ];
-
-              const allTxs = [
-                ...blockchainTxs.map((t) => ({
+              // Filter to only confirmed on-chain blockchain transactions
+              const confirmedOnChainTxs = blockchainTxs
+                .map((t) => ({
                   ...t,
                   __status: "confirmed",
                   __source: "blockchain",
-                })),
-                ...appOrders,
-              ];
-
-              // Filter and sort by date (newest first)
-              const filteredTxs = allTxs
-                .filter((item: any) => {
-                  const s = JSON.stringify(item).toLowerCase();
-                  return (
-                    /\b(buy|sell|send|receive|received|sent)\b/.test(s) ||
-                    item.__source === "blockchain"
-                  );
-                })
+                }))
                 .sort((a: any, b: any) => {
-                  const timeA =
-                    a.blockTime ||
-                    new Date(a.createdAt || a.timestamp || 0).getTime() / 1000;
-                  const timeB =
-                    b.blockTime ||
-                    new Date(b.createdAt || b.timestamp || 0).getTime() / 1000;
+                  const timeA = a.blockTime || 0;
+                  const timeB = b.blockTime || 0;
                   return timeB - timeA;
                 });
 
-              if (filteredTxs.length === 0) {
+              if (confirmedOnChainTxs.length === 0) {
                 return (
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600 uppercase">
                     {loading
-                      ? "Loading transactions..."
-                      : "No transactions found."}
+                      ? "LOADING TRANSACTIONS..."
+                      : "NO TRANSACTIONS FOUND."}
                   </div>
                 );
               }
 
               return (
                 <ul className="space-y-3">
-                  {filteredTxs.map((t: any, idx: number) => {
+                  {confirmedOnChainTxs.map((t: any, idx: number) => {
                     const sigs = findSignaturesInObject(t);
-                    // infer type
-                    let kind = "TX";
-                    if (t.__source === "blockchain") {
-                      kind =
-                        t.type === "send"
-                          ? "SEND"
-                          : t.type === "receive"
-                            ? "RECEIVE"
-                            : "TX";
-                    } else {
-                      const text = (
-                        t.type ||
-                        t.description ||
-                        JSON.stringify(t) ||
-                        ""
-                      )
-                        .toString()
-                        .toLowerCase();
-                      if (/buy/.test(text)) kind = "BUY";
-                      else if (/sell/.test(text)) kind = "SELL";
-                      else if (/receive|received/.test(text)) kind = "RECEIVE";
-                      else if (/send|sent/.test(text)) kind = "SEND";
-                    }
+                    // Determine transaction type
+                    const kind =
+                      t.type === "send"
+                        ? "SEND"
+                        : t.type === "receive"
+                          ? "RECEIVE"
+                          : "TX";
 
-                    const when =
-                      t.createdAt ||
-                      t.timestamp ||
-                      t.time ||
-                      t.date ||
-                      t.txTime ||
-                      (t.blockTime ? t.blockTime * 1000 : null);
+                    // Format date
+                    const when = t.blockTime ? t.blockTime * 1000 : null;
                     const whenStr = when ? new Date(when).toLocaleString() : "";
-
-                    // Get amount and token for blockchain transactions
-                    let description = t.description || "";
-                    if (t.__source === "blockchain" && !description) {
-                      const tokenSymbol =
-                        KNOWN_TOKENS[t.token]?.symbol || t.token.slice(0, 6);
-                      const amount = t.amount / Math.pow(10, t.decimals || 6);
-                      description = `${kind} ${amount.toFixed(6)} ${tokenSymbol}`;
-                    }
 
                     const allSigs = [
                       ...(t.signature ? [t.signature] : []),
@@ -321,28 +385,20 @@ export default function WalletHistory() {
                     return (
                       <li
                         key={t.id || t.txid || t.signature || idx}
-                        className="p-3 rounded-md border border-[#e6f6ec]/20 bg-white/80"
+                        className="p-3 rounded-lg border border-gray-300/30"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
+                          <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-gray-900 uppercase">
                                 {kind}
                               </span>
-                              <span className="text-xs text-gray-500">
-                                {t.__status}
+                              <span className="text-xs bg-transparent text-blue-700 px-2 py-0.5 rounded uppercase">
+                                ON-CHAIN
                               </span>
-                              {t.__source === "blockchain" && (
-                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                                  On-chain
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-1 text-sm text-gray-700">
-                              {description || JSON.stringify(t).slice(0, 100)}
                             </div>
                             {whenStr ? (
-                              <div className="text-xs text-gray-500 mt-1">
+                              <div className="text-xs text-gray-500">
                                 {whenStr}
                               </div>
                             ) : null}
@@ -358,7 +414,7 @@ export default function WalletHistory() {
                               >
                                 <ExternalLink className="h-4 w-4" />
                                 <span className="sr-only">
-                                  Open transaction
+                                  OPEN TRANSACTION
                                 </span>
                               </a>
                             ))}

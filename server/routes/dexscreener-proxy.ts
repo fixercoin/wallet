@@ -108,7 +108,37 @@ const tryDexscreenerEndpoints = async (
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = (await response.json()) as DexscreenerResponse;
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const text = await response.text();
+        if (text.startsWith("<!doctype") || text.startsWith("<html")) {
+          console.warn(
+            `Got HTML response from ${endpoint} instead of JSON. Status: ${response.status}`,
+          );
+          throw new Error(
+            `Invalid response from ${endpoint}: Got HTML instead of JSON (Status ${response.status})`,
+          );
+        }
+        throw new Error(
+          `Invalid content-type from ${endpoint}: ${contentType}`,
+        );
+      }
+
+      let data: DexscreenerResponse;
+      try {
+        data = (await response.json()) as DexscreenerResponse;
+      } catch (parseError) {
+        const text = await response.text();
+        console.error(`Failed to parse JSON from ${endpoint}:`, parseError);
+        if (text.startsWith("<!doctype") || text.startsWith("<html")) {
+          throw new Error(
+            `DexScreener returned HTML instead of JSON (likely a 5xx error). Status: ${response.status}`,
+          );
+        }
+        throw new Error(
+          `Failed to parse JSON response from DexScreener: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
+        );
+      }
 
       // Success - update current endpoint
       currentEndpointIndex = endpointIndex;
@@ -116,7 +146,7 @@ const tryDexscreenerEndpoints = async (
       return data;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.warn(`DexScreener endpoint ${endpoint} failed:`, errorMsg);
+      console.warn(`DexScreener endpoint ${endpoint} failed: ${errorMsg}`);
       lastError = error instanceof Error ? error : new Error(String(error));
 
       // Small delay before trying next endpoint
@@ -184,13 +214,25 @@ export const MINT_TO_PAIR_ADDRESS: Record<string, string> = {
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump:
     "5CgLEWq9VJUEQ8my8UaxEovuSWArGoXCvaftpbX4RQMy", // FIXERCOIN
   EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump:
-    "7X7KkV94Y9jFhkXEMhgVcMHMRzALiGj5xKmM6TT3cUvK", // LOCKER (if available)
+    "7X7KkV94Y9jFhkXEMhgVcMHMRzALiGj5xKmM6TT3cUvK", // LOCKER
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump":
+    "BczJ8jo8Xghx2E6G3QKZiHQ6P5xYa5xP4oWc1F5HPXLX", // FXM
 };
 
 // Mint to search symbol mapping for tokens not found via mint lookup
 const MINT_TO_SEARCH_SYMBOL: Record<string, string> = {
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: "FIXERCOIN",
   EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: "LOCKER",
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump": "FXM",
+};
+
+// Fallback prices for tokens when DexScreener returns nothing
+const FALLBACK_USD: Record<string, number> = {
+  FIXERCOIN: 0.005,
+  LOCKER: 0.00001112,
+  FXM: 0.000003567,
+  USDC: 1.0,
+  USDT: 1.0,
 };
 
 export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
@@ -388,7 +430,7 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
 
                 if (matchingPair) {
                   console.log(
-                    `[DexScreener] ✅ Found ${searchSymbol} (${mint}) via search, chainId: ${matchingPair.chainId}, priceUsd: ${matchingPair.priceUsd || "N/A"}`,
+                    `[DexScreener] �� Found ${searchSymbol} (${mint}) via search, chainId: ${matchingPair.chainId}, priceUsd: ${matchingPair.priceUsd || "N/A"}`,
                   );
                   results.push(matchingPair);
                   foundMintsSet.add(mint);
@@ -408,6 +450,14 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
             }
           }
         }
+
+        // Do NOT create synthetic fallback - let the client retry
+        // Synthetic prices prevent proper retry logic and show stale prices
+        if (!found) {
+          console.warn(
+            `[DexScreener] ⚠️ Failed to find live price for ${mint} - will NOT create fallback. Returning error so client retries.`,
+          );
+        }
       }
     }
 
@@ -422,6 +472,19 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
         const bVolume = b.volume?.h24 || 0;
         return bVolume - aVolume;
       });
+
+    // If we couldn't find live prices for the requested tokens, return error so client retries
+    if (solanaPairs.length === 0 && uniqueMints.length > 0) {
+      console.error(
+        `[DexScreener] ❌ No live prices found for any of ${uniqueMints.length} requested tokens. Returning 503 so client retries.`,
+      );
+      return res.status(503).json({
+        error: "No live price data available from DexScreener",
+        details: `Could not find prices for: ${uniqueMints.join(", ")}`,
+        schemaVersion,
+        pairs: [],
+      });
+    }
 
     console.log(
       `[DexScreener] ✅ Response: ${solanaPairs.length} Solana pairs found across ${batches.length} batch(es)` +
@@ -458,10 +521,14 @@ export const handleDexscreenerSearch: RequestHandler = async (req, res) => {
       });
     }
 
-    console.log(`[DexScreener] Search request for: ${q}`);
+    // Strip ":N" suffix if present (e.g., "FXM:1" -> "FXM")
+    const cleanQuery = q.split(":")[0];
+    console.log(
+      `[DexScreener] Search request for: ${cleanQuery}${cleanQuery !== q ? " (cleaned from: " + q + ")" : ""}`,
+    );
 
     const data = await fetchDexscreenerData(
-      `/search/?q=${encodeURIComponent(q)}`,
+      `/search/?q=${encodeURIComponent(cleanQuery)}`,
     );
 
     // Filter for Solana pairs and limit results

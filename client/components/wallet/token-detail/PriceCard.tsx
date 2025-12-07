@@ -1,7 +1,6 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, Eye, EyeOff } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { TokenInfo } from "@/lib/wallet";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
@@ -42,7 +41,7 @@ export const PriceCard: React.FC<PriceCardProps> = ({
             <img
               src={token.logoURI}
               alt={token.symbol}
-              className={`h-8 w-8 rounded-full border ${variant === "light" ? "border-[#e6f6ec]/20" : "border-gray-700"}`}
+              className={`h-8 w-8 rounded-full border ${variant === "light" ? "border-gray-200" : "border-gray-700"}`}
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).style.display = "none";
               }}
@@ -97,18 +96,6 @@ export const PriceCard: React.FC<PriceCardProps> = ({
             </div>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onToggleBalance}
-          className={`${variant === "light" ? "text-gray-500/60 hover:text-gray-900 hover:bg-white/50" : "text-gray-500/60 hover:text-white hover:bg-gray-700"}`}
-        >
-          {showBalance ? (
-            <Eye className="h-4 w-4" />
-          ) : (
-            <EyeOff className="h-4 w-4" />
-          )}
-        </Button>
       </div>
 
       {showBalance && (

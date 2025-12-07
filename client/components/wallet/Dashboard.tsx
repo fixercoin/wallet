@@ -1186,9 +1186,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 maximumFractionDigits: 2,
                               })}
                             </>
-                          ) : (
-                            <PriceLoader size="sm" />
-                          )}
+                          ) : null}
                         </div>
                       </div>
                     </div>

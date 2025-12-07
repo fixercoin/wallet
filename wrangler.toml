@@ -32,13 +32,17 @@ VITE_API_BASE_URL = ""
 # HELIUS_RPC_URL = "https://mainnet.helius-rpc.com"
 
 # Production environment variables
-# NOTE: These should be configured in Cloudflare Pages UI for security
-# Do not commit sensitive keys to this file
+# NOTE: These MUST be configured in Cloudflare Pages UI for proper SOL balance fetching
+# Set HELIUS_API_KEY or SOLANA_RPC_URL in your Cloudflare Pages project settings
+# Path: Project Settings > Environment variables > Production (or Preview)
 [env.production.vars]
-# Configured via Cloudflare Pages dashboard
-# SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com"
-# HELIUS_API_KEY = "your-helius-api-key"
-# HELIUS_RPC_URL = "https://mainnet.helius-rpc.com"
+# These are defaults - OVERRIDE in Cloudflare Pages dashboard
+# Leave empty and set in dashboard for sensitive credentials
+SOLANA_RPC_URL = ""
+HELIUS_API_KEY = ""
+HELIUS_RPC_URL = ""
+ALCHEMY_RPC_URL = ""
+MORALIS_RPC_URL = ""
 
 # KV namespace bindings for Pages Functions
 # These bindings are available in functions/api/* routes

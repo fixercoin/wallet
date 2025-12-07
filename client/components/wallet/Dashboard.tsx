@@ -907,12 +907,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <div className="text-3xl text-gray-900 leading-tight">
                             {showBalance ? `${usdZero}` : "****"}
                           </div>
-                          <div className="flex-1">
+                          <div>
                             <Button
                               onClick={onP2PTrade || onReceive}
-                              className="w-full bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs py-2.5 px-2 rounded-sm h-auto transition-colors"
+                              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 transition-colors"
                             >
-                              P2P TRADE
+                              <MessageSquare className="h-6 w-6 text-gray-900" />
+                              <span>P2P TRADE</span>
                             </Button>
                           </div>
                         </div>
@@ -969,12 +970,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             "****"
                           )}
                         </div>
-                        <div className="flex-1">
+                        <div>
                           <Button
                             onClick={onP2PTrade || onReceive}
-                            className="w-full bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs py-2.5 px-2 rounded-sm h-auto transition-colors"
+                            className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 transition-colors"
                           >
-                            P2P TRADE
+                            <MessageSquare className="h-6 w-6 text-gray-900" />
+                            <span>P2P TRADE</span>
                           </Button>
                         </div>
                       </div>

@@ -77,7 +77,7 @@ export const handleGetPaymentMethods: RequestHandler = async (req, res) => {
   }
 };
 
-export const handleSavePaymentMethod: RequestHandler = (req, res) => {
+export const handleSavePaymentMethod: RequestHandler = async (req, res) => {
   try {
     const {
       walletAddress,
@@ -127,7 +127,18 @@ export const handleSavePaymentMethod: RequestHandler = (req, res) => {
       updatedAt: now,
     };
 
+    // Save to in-memory map for backward compatibility
     paymentMethods.set(id, method);
+
+    // Save to KV storage (persistent) for order creation checks
+    const existingMethods = await getWalletPaymentMethods(walletAddress);
+    const methodIndex = existingMethods.findIndex((m) => m.id === id);
+    if (methodIndex >= 0) {
+      existingMethods[methodIndex] = method;
+    } else {
+      existingMethods.push(method);
+    }
+    await saveWalletPaymentMethods(walletAddress, existingMethods);
 
     return res.json({
       data: method,

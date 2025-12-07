@@ -7,10 +7,6 @@ import { wordlist } from "@scure/bip39/wordlists/english.js";
 import * as nacl from "tweetnacl";
 import { assertValidMnemonic, normalizeMnemonicInput } from "@/lib/mnemonic";
 import { deriveEd25519Path } from "@/lib/solana-derivation";
-import {
-  getWalletBalance as getSolanaBalance,
-  getTokenAccounts as getSolanaTokenAccounts,
-} from "@/lib/services/solana-rpc";
 
 export interface WalletData {
   publicKey: string;

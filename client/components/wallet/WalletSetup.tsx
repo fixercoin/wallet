@@ -261,7 +261,10 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           <div className="relative w-full bg-transparent overflow-hidden px-4 sm:px-6">
             {isLoading && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
-                <BouncingDotsLoader text="Importing wallet" dotColor="#22c55e" />
+                <BouncingDotsLoader
+                  text="Importing wallet"
+                  dotColor="#22c55e"
+                />
               </div>
             )}
 

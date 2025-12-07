@@ -54,6 +54,16 @@ export default function OrderComplete() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatSectionRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to chat if openChat is true in location state
+  useEffect(() => {
+    if (location.state?.openChat && chatSectionRef.current) {
+      setTimeout(() => {
+        chatSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 500);
+    }
+  }, [location.state?.openChat, loading]);
 
   // Load order from state or storage (with KV fallback)
   useEffect(() => {
@@ -787,9 +797,17 @@ export default function OrderComplete() {
                 </div>
               )}
 
-              {buyerPaymentConfirmed && !isSeller && (
+              {buyerPaymentConfirmed && !isBuyer && (
                 <div className="text-xs text-green-400 bg-green-500/10 border border-green-500/30 p-3 rounded-lg mb-4">
-                  ✓ Buyer has sent payment - waiting for seller confirmation
+                  ✓ Buyer confirmed payment sent - waiting for you to confirm
+                  receipt
+                </div>
+              )}
+
+              {buyerPaymentConfirmed && isBuyer && !sellerPaymentReceived && (
+                <div className="text-xs text-green-400 bg-green-500/10 border border-green-500/30 p-3 rounded-lg mb-4">
+                  ✓ You confirmed payment sent - waiting for seller to confirm
+                  receipt
                 </div>
               )}
 
@@ -849,11 +867,23 @@ export default function OrderComplete() {
                     </div>
                   )}
 
-                  {isBuyer && sellerPaymentReceived && (
-                    <div className="p-3 bg-orange-600/20 border border-orange-500/30 rounded-lg text-xs text-orange-300">
-                      Waiting for seller to transfer crypto...
-                    </div>
-                  )}
+                  {isBuyer &&
+                    sellerPaymentReceived &&
+                    !sellerTransferInitiated && (
+                      <div className="p-3 bg-orange-600/20 border border-orange-500/30 rounded-lg text-xs text-orange-300">
+                        ✓ Seller confirmed payment received - waiting for crypto
+                        transfer...
+                      </div>
+                    )}
+
+                  {isBuyer &&
+                    sellerTransferInitiated &&
+                    !buyerCryptoReceived && (
+                      <div className="p-3 bg-green-600/20 border border-green-500/30 rounded-lg text-xs text-green-300">
+                        ✓ Seller initiated transfer - check your wallet and
+                        confirm receipt below
+                      </div>
+                    )}
 
                   {isBuyer &&
                     sellerTransferInitiated &&
@@ -902,7 +932,10 @@ export default function OrderComplete() {
         </div>
 
         {/* FULL-WIDTH CHAT SECTION BELOW */}
-        <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30">
+        <Card
+          className="bg-[#0f1520]/50 border border-[#FF7A5C]/30"
+          ref={chatSectionRef}
+        >
           <CardContent className="p-4 flex flex-col h-full min-h-[400px]">
             <h2 className="text-lg font-bold text-white mb-4 uppercase">
               Chat

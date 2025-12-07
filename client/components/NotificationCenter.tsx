@@ -27,8 +27,12 @@ export function NotificationCenter() {
       case "order_created":
         return "📦";
       case "payment_confirmed":
+        return "💰";
+      case "seller_payment_received":
         return "✅";
-      case "received_confirmed":
+      case "transfer_initiated":
+        return "🚀";
+      case "crypto_received":
         return "🎉";
       case "order_cancelled":
         return "❌";
@@ -43,8 +47,12 @@ export function NotificationCenter() {
         return "New Order";
       case "payment_confirmed":
         return "Payment Confirmed";
-      case "received_confirmed":
-        return "Order Received";
+      case "seller_payment_received":
+        return "Payment Received";
+      case "transfer_initiated":
+        return "Crypto Transfer Started";
+      case "crypto_received":
+        return "Crypto Received";
       case "order_cancelled":
         return "Order Cancelled";
       default:

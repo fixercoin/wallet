@@ -90,8 +90,8 @@ function buildRpcEndpoints(env?: Env): string[] {
     "https://solana.publicnode.com", // Most reliable free public RPC
     "https://api.solflare.com", // Solflare's stable endpoint
     "https://rpc.ankr.com/solana", // Ankr's free tier (good uptime)
-    "https://rpc.ironforge.network/mainnet", // IronForge (reliable)
-    "https://api.mainnet-beta.solana.com", // Official (rate-limited but functional)
+    "https://api.mainnet-beta.solana.com", // Official Solana (rate-limited but functional)
+    "https://api.marinade.finance/rpc", // Marinade's endpoint
   ];
 
   // Add public endpoints that aren't already in the list

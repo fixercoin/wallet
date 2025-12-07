@@ -29,8 +29,8 @@ function buildRpcEndpoints(env: Env): string[] {
   endpoints.push("https://solana.publicnode.com");
   endpoints.push("https://api.solflare.com");
   endpoints.push("https://rpc.ankr.com/solana");
-  endpoints.push("https://rpc.ironforge.network/mainnet");
   endpoints.push("https://api.mainnet-beta.solana.com");
+  endpoints.push("https://api.marinade.finance/rpc");
 
   return [...new Set(endpoints)]; // Remove duplicates
 }

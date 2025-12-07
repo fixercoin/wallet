@@ -122,7 +122,7 @@ export const getBalance = async (publicKey: string): Promise<number> => {
     // Use server endpoint for balance fetching
     // This avoids CORS issues and ensures reliability
     const response = await fetch(
-      `/api/wallet/balance?publicKey=${encodeURIComponent(publicKey)}`
+      `/api/wallet/balance?publicKey=${encodeURIComponent(publicKey)}`,
     );
 
     if (!response.ok) {

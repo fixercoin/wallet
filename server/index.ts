@@ -187,7 +187,6 @@ export async function createServer(): Promise<express.Application> {
   app.post("/api/jupiter/swap", handleJupiterSwap);
   app.get("/api/jupiter/tokens", handleJupiterTokens);
 
-
   // Solana RPC proxy - with proper error handling
   app.post("/api/solana-rpc", (req, res) => {
     // Ensure body is parsed JSON

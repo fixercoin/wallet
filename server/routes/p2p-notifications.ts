@@ -31,10 +31,16 @@ function generateId(prefix: string): string {
 async function getNotificationIdsForWallet(
   walletAddress: string,
 ): Promise<string[]> {
-  const kv = getKVStorage();
-  const key = `notifications:wallet:${walletAddress}`;
-  const json = await kv.get(key);
-  return json ? JSON.parse(json) : [];
+  try {
+    const kv = getKVStorage();
+    const key = `notifications:wallet:${walletAddress}`;
+    const json = await kv.get(key);
+    if (!json) return [];
+    return JSON.parse(json) || [];
+  } catch (error) {
+    console.error("[Notifications] Error getting notification IDs:", error);
+    return [];
+  }
 }
 
 // Helper to save notification IDs for a wallet

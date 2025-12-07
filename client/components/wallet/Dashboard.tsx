@@ -552,6 +552,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return solToken?.price;
   };
 
+  // Check if any tokens with balance are still loading prices
+  const areTokenPricesLoading = (): boolean => {
+    return tokens.some(
+      (token) =>
+        typeof token.balance === "number" &&
+        token.balance > 0 &&
+        token.price === undefined,
+    );
+  };
+
   // Calculate total portfolio value including all tokens (USD)
   const getTotalPortfolioValue = (): number => {
     let total = 0;
@@ -907,12 +917,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       ) ||
                       (typeof balance === "number" && balance > 0);
                     if (!hasAnyBalance) {
-                      // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
-                      const usdZero = `0.000 $`;
+                      // If prices are still loading, show loading indicator
+                      // Otherwise show 0.000 USD
+                      const isLoadingPrices = areTokenPricesLoading();
+                      const displayValue = isLoadingPrices ? (
+                        <PriceLoader size="lg" />
+                      ) : (
+                        `0.000 $`
+                      );
+
                       return (
                         <div className="flex items-center justify-between gap-4 w-full">
                           <div className="text-3xl text-gray-900 leading-tight">
-                            {showBalance ? `${usdZero}` : "****"}
+                            {showBalance ? displayValue : "****"}
                           </div>
                           <Button
                             onClick={onP2PTrade || onReceive}
@@ -951,25 +968,30 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       ? (totalChange24h / (total - totalChange24h)) * 100
                       : 0;
                     const isPositive = totalChange24h >= 0;
+                    const isLoadingPrices = areTokenPricesLoading();
 
                     return (
                       <div className="flex items-center justify-between gap-4 w-full">
                         <div className="text-3xl text-gray-900 leading-tight">
                           {showBalance ? (
-                            <>
-                              <span
-                                style={{
-                                  fontVariantNumeric: "tabular-nums",
-                                  fontFamily: "Arial",
-                                }}
-                              >
-                                {total.toLocaleString(undefined, {
-                                  minimumFractionDigits: 3,
-                                  maximumFractionDigits: 3,
-                                })}
-                              </span>
-                              {" $"}
-                            </>
+                            areTokenPricesLoading() ? (
+                              <PriceLoader size="lg" />
+                            ) : (
+                              <>
+                                <span
+                                  style={{
+                                    fontVariantNumeric: "tabular-nums",
+                                    fontFamily: "Arial",
+                                  }}
+                                >
+                                  {total.toLocaleString(undefined, {
+                                    minimumFractionDigits: 3,
+                                    maximumFractionDigits: 3,
+                                  })}
+                                </span>
+                                {" $"}
+                              </>
+                            )
                           ) : (
                             "****"
                           )}
@@ -1150,17 +1172,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           )}
                         </div>
 
-                        <p
+                        <div
                           className={`text-xs text-white whitespace-nowrap ${
                             tokenBalance > 0 ? "font-semibold" : ""
                           }`}
                         >
-                          $
-                          {tokenBalance.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p>
+                          {typeof token.price === "number" &&
+                          isFinite(token.price) ? (
+                            <>
+                              $
+                              {tokenBalance.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </>
+                          ) : (
+                            <PriceLoader size="sm" />
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>

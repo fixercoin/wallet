@@ -1769,10 +1769,6 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       return await handlePrice(url);
     }
 
-    if (pathname === "/api/sol/price") {
-      return await handleSolPrice();
-    }
-
     if (pathname === "/api/token/price") {
       return await handleTokenPrice(url);
     }

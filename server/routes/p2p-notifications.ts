@@ -48,9 +48,14 @@ async function saveNotificationIdsForWallet(
   walletAddress: string,
   notificationIds: string[],
 ): Promise<void> {
-  const kv = getKVStorage();
-  const key = `notifications:wallet:${walletAddress}`;
-  await kv.put(key, JSON.stringify(notificationIds));
+  try {
+    const kv = getKVStorage();
+    const key = `notifications:wallet:${walletAddress}`;
+    await kv.put(key, JSON.stringify(notificationIds));
+  } catch (error) {
+    console.error("[Notifications] Error saving notification IDs:", error);
+    // Don't throw - allow graceful degradation
+  }
 }
 
 // Helper to get a notification by ID

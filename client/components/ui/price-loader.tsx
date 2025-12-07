@@ -19,7 +19,7 @@ export const PriceLoader: React.FC = () => {
           width: 6px;
           height: 6px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #FF7A5C 0%, #FF5A8C 100%);
+          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
           animation: bounce-dots 1.4s ease-in-out infinite;
         }
         .bounce-dot:nth-child(1) { animation-delay: 0s; }

@@ -276,9 +276,10 @@ export async function createServer(): Promise<express.Application> {
     }
   });
 
-  // Unified wallet endpoint - returns balance and token accounts info
+  // Unified wallet endpoint - returns balance (alias for /api/wallet/balance)
   app.get("/api/wallet", async (req, res) => {
     try {
+      // Support multiple parameter names for publicKey
       const publicKey =
         (req.query.publicKey as string) ||
         (req.query.wallet as string) ||
@@ -289,54 +290,22 @@ export async function createServer(): Promise<express.Application> {
         return res.status(400).json({
           error: "Missing or invalid wallet address parameter",
           examples: [
-            "?publicKey=...",
-            "?wallet=...",
-            "?address=...",
-            "?walletAddress=...",
+            "GET /api/wallet?publicKey=...",
+            "GET /api/wallet?wallet=...",
+            "GET /api/wallet?address=...",
+            "GET /api/wallet?walletAddress=...",
+          ],
+          availableEndpoints: [
+            "/api/wallet/balance - Get SOL balance",
+            "/api/wallet/token-accounts - Get token accounts",
+            "/api/wallet/token-balance - Get specific token balance",
           ],
         });
       }
 
-      // Call balance and token accounts endpoints to get complete wallet info
-      const modifiedReq = { ...req, query: { publicKey } } as any;
-
-      let balanceData: any = null;
-      let tokenAccountsData: any = null;
-
-      // Create response proxies to capture data
-      const balanceRes = {
-        status: (code: number) => ({
-          json: (data: any) => {
-            balanceData = data;
-          },
-        }),
-        json: (data: any) => {
-          balanceData = data;
-        },
-      };
-
-      const tokenRes = {
-        status: (code: number) => ({
-          json: (data: any) => {
-            tokenAccountsData = data;
-          },
-        }),
-        json: (data: any) => {
-          tokenAccountsData = data;
-        },
-      };
-
-      // Execute both handlers
-      await Promise.all([
-        handleWalletBalance(modifiedReq, balanceRes as any),
-        handleGetTokenAccounts(modifiedReq, tokenRes as any),
-      ]);
-
-      return res.json({
-        publicKey,
-        balance: balanceData,
-        tokenAccounts: tokenAccountsData,
-      });
+      // Delegate to wallet balance handler
+      const modifiedReq = { ...req, query: { publicKey } };
+      await handleWalletBalance(modifiedReq as any, res);
     } catch (e: any) {
       return res.status(500).json({
         error: "Failed to fetch wallet information",

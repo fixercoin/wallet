@@ -82,20 +82,25 @@ async function getNotificationById(
 async function saveNotification(
   notification: OrderNotification,
 ): Promise<void> {
-  const kv = getKVStorage();
-  const key = `notifications:${notification.id}`;
-  await kv.put(key, JSON.stringify(notification));
+  try {
+    const kv = getKVStorage();
+    const key = `notifications:${notification.id}`;
+    await kv.put(key, JSON.stringify(notification));
 
-  // Update recipient's notification list
-  const notificationIds = await getNotificationIdsForWallet(
-    notification.recipientWallet,
-  );
-  if (!notificationIds.includes(notification.id)) {
-    notificationIds.push(notification.id);
-    await saveNotificationIdsForWallet(
+    // Update recipient's notification list
+    const notificationIds = await getNotificationIdsForWallet(
       notification.recipientWallet,
-      notificationIds,
     );
+    if (!notificationIds.includes(notification.id)) {
+      notificationIds.push(notification.id);
+      await saveNotificationIdsForWallet(
+        notification.recipientWallet,
+        notificationIds,
+      );
+    }
+  } catch (error) {
+    console.error("[Notifications] Error saving notification:", error);
+    // Don't throw - allow graceful degradation
   }
 }
 

@@ -48,7 +48,6 @@ import {
   handleUpdateOrder,
   handleDeleteOrder,
 } from "./routes/orders";
-import { handleBirdeyePrice } from "./routes/api-birdeye";
 import {
   handleSwapProxy,
   handleQuoteProxy,

@@ -931,26 +931,27 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       try {
         const tokenMints = allTokens.map((token) => token.mint);
 
-        // Fetch prices from Birdeye API (via proxy)
+        // Fetch prices from DexScreener API
         try {
           const allMintsToFetch = Array.from(
             new Set(tokenMints.filter(Boolean)),
           );
 
           if (allMintsToFetch.length > 0) {
-            const birdeyeTokens =
-              await birdeyeAPI.getTokensByMints(allMintsToFetch);
-            const birdeyePrices = birdeyeAPI.getTokenPrices(birdeyeTokens);
-            prices = { ...prices, ...birdeyePrices };
+            const dexTokens =
+              await dexscreenerAPI.getTokensByMints(allMintsToFetch);
+            const dexPrices = dexscreenerAPI.getTokenPrices(dexTokens);
+            prices = { ...prices, ...dexPrices };
 
-            birdeyeTokens.forEach((token) => {
-              if (token.address && token.priceChange?.h24) {
-                changeMap[token.address] = token.priceChange.h24;
+            dexTokens.forEach((token) => {
+              const baseMint = token.baseToken?.address;
+              if (baseMint && token.priceChange?.h24) {
+                changeMap[baseMint] = token.priceChange.h24;
               }
             });
           }
         } catch (e) {
-          console.warn("Birdeye fetch failed:", e);
+          console.warn("DexScreener fetch failed:", e);
         }
 
         // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing

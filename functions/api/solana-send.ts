@@ -1,6 +1,8 @@
 const RPC_ENDPOINTS = [
   // Prefer environment-configured Helius RPC
-  process.env.HELIUS_API_KEY ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}` : null,
+  process.env.HELIUS_API_KEY
+    ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
+    : null,
   process.env.SOLANA_RPC_URL,
   process.env.HELIUS_RPC_URL,
   // Public fallbacks

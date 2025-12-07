@@ -5,6 +5,7 @@ import { dexscreenerAPI, DexscreenerToken } from "@/lib/services/dexscreener";
 import { KNOWN_TOKENS } from "@/lib/services/solana-rpc";
 import { useNavigate } from "react-router-dom";
 import { Search as SearchIcon, Loader2 } from "lucide-react";
+import { PriceLoader } from "@/components/ui/price-loader";
 
 interface TokenSearchProps {
   className?: string;

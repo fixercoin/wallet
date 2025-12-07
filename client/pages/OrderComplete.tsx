@@ -787,9 +787,15 @@ export default function OrderComplete() {
                 </div>
               )}
 
-              {buyerPaymentConfirmed && !isSeller && (
+              {buyerPaymentConfirmed && !isBuyer && (
                 <div className="text-xs text-green-400 bg-green-500/10 border border-green-500/30 p-3 rounded-lg mb-4">
-                  ✓ Buyer has sent payment - waiting for seller confirmation
+                  ✓ Buyer confirmed payment sent - waiting for you to confirm receipt
+                </div>
+              )}
+
+              {buyerPaymentConfirmed && isBuyer && !sellerPaymentReceived && (
+                <div className="text-xs text-green-400 bg-green-500/10 border border-green-500/30 p-3 rounded-lg mb-4">
+                  ✓ You confirmed payment sent - waiting for seller to confirm receipt
                 </div>
               )}
 

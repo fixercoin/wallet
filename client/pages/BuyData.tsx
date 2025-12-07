@@ -24,7 +24,6 @@ export default function BuyData() {
   >();
   const [showTradeDialog, setShowTradeDialog] = useState(true);
   const [exchangeRate, setExchangeRate] = useState<number>(280);
-  const [fetchingRate, setFetchingRate] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
   // Fetch exchange rate on mount

@@ -255,12 +255,24 @@ export const handleListP2POrders: RequestHandler = async (req, res) => {
       filtered = filtered.filter((o) => o.token === token);
     }
 
-    filtered.sort(
+    // Check for expired orders and update their status
+    for (let i = 0; i < filtered.length; i++) {
+      const order = filtered[i];
+      if (isOrderExpired(order) && order.status !== "EXPIRED" && (order.status === "PENDING" || order.status === "active" || order.status === "pending")) {
+        order.status = "EXPIRED";
+        await saveOrder(order);
+      }
+    }
+
+    // Filter out expired orders from results
+    const activeOrders = filtered.filter((o) => o.status !== "EXPIRED");
+
+    activeOrders.sort(
       (a, b) =>
         (b.createdAt || b.created_at || 0) - (a.createdAt || a.created_at || 0),
     );
 
-    res.json({ orders: filtered });
+    res.json({ orders: activeOrders });
   } catch (error) {
     console.error("List P2P orders error:", error);
     res.status(500).json({ error: "Failed to list orders" });

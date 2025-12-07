@@ -1772,6 +1772,43 @@ async function handler(request: Request, env?: Env): Promise<Response> {
     }
 
     if (
+      pathname === "/api/wallet" ||
+      pathname === "/api/wallet/" ||
+      pathname === "/wallet"
+    ) {
+      // Support multiple parameter names for publicKey
+      const publicKey =
+        url.searchParams.get("publicKey") ||
+        url.searchParams.get("wallet") ||
+        url.searchParams.get("address") ||
+        url.searchParams.get("walletAddress");
+
+      if (!publicKey) {
+        return new Response(
+          JSON.stringify({
+            error: "Missing or invalid wallet address parameter",
+            examples: [
+              "GET /api/wallet?publicKey=...",
+              "GET /api/wallet?wallet=...",
+              "GET /api/wallet?address=...",
+              "GET /api/wallet?walletAddress=...",
+            ],
+            availableEndpoints: [
+              "/api/wallet/balance - Get SOL balance",
+              "/api/wallet/tokens - Get token accounts",
+            ],
+          }),
+          { status: 400, headers: CORS_HEADERS },
+        );
+      }
+
+      // Delegate to wallet balance handler
+      const balanceUrl = new URL(url);
+      balanceUrl.searchParams.set("publicKey", publicKey);
+      return await handleWalletBalance(balanceUrl, env);
+    }
+
+    if (
       pathname.startsWith("/api/wallet/balance") ||
       pathname === "/wallet/balance"
     ) {

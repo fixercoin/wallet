@@ -34,7 +34,7 @@ export const onRequest = async ({
     "SOLANA_RPC_URL (from process.env)": !!process.env.SOLANA_RPC_URL,
     "HELIUS_RPC_URL (from process.env)": !!process.env.HELIUS_RPC_URL,
     "HELIUS_API_KEY (from process.env)": !!process.env.HELIUS_API_KEY,
-    "NODE_ENV": process.env.NODE_ENV,
+    NODE_ENV: process.env.NODE_ENV,
   };
 
   console.log("[Debug/Env] Environment status:", envStatus);

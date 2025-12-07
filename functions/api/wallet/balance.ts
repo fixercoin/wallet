@@ -31,9 +31,7 @@ function buildRpcEndpoints(env?: Env): string[] {
   }
   if (heliusApiKey) {
     console.log("[RPC Config] Using HELIUS_API_KEY from env");
-    endpoints.push(
-      `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`,
-    );
+    endpoints.push(`https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`);
   }
   if (alchemyRpcUrl) {
     console.log("[RPC Config] Using ALCHEMY_RPC_URL from env");
@@ -45,7 +43,9 @@ function buildRpcEndpoints(env?: Env): string[] {
   }
 
   if (endpoints.length === 0) {
-    console.log("[RPC Config] No configured endpoints found, using public fallbacks");
+    console.log(
+      "[RPC Config] No configured endpoints found, using public fallbacks",
+    );
   }
 
   // Add public fallback endpoints (tier 1 - higher quality)
@@ -101,7 +101,9 @@ async function handler(request: Request, env?: Env): Promise<Response> {
     };
 
     const rpcEndpoints = buildRpcEndpoints(env);
-    console.log(`[Balance API] Using ${rpcEndpoints.length} RPC endpoints. First endpoint: ${rpcEndpoints[0]?.substring(0, 50)}...`);
+    console.log(
+      `[Balance API] Using ${rpcEndpoints.length} RPC endpoints. First endpoint: ${rpcEndpoints[0]?.substring(0, 50)}...`,
+    );
     let lastError = "";
 
     // Try each RPC endpoint
@@ -111,7 +113,9 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-        console.log(`[Balance API] Trying endpoint ${i + 1}/${rpcEndpoints.length}: ${endpoint.substring(0, 60)}...`);
+        console.log(
+          `[Balance API] Trying endpoint ${i + 1}/${rpcEndpoints.length}: ${endpoint.substring(0, 60)}...`,
+        );
 
         const response = await fetch(endpoint, {
           method: "POST",
@@ -122,19 +126,25 @@ async function handler(request: Request, env?: Env): Promise<Response> {
 
         clearTimeout(timeoutId);
 
-        console.log(`[Balance API] Endpoint ${i + 1} response status: ${response.status}`);
+        console.log(
+          `[Balance API] Endpoint ${i + 1} response status: ${response.status}`,
+        );
 
         const data = await response.json();
 
         if (data.error) {
           lastError = data.error.message || "RPC error";
-          console.log(`[Balance API] Endpoint ${i + 1} returned RPC error: ${lastError}`);
+          console.log(
+            `[Balance API] Endpoint ${i + 1} returned RPC error: ${lastError}`,
+          );
           continue;
         }
 
         const lamports = data.result;
         if (typeof lamports === "number" && isFinite(lamports)) {
-          console.log(`[Balance API] ✅ Success from endpoint ${i + 1}: ${lamports} lamports`);
+          console.log(
+            `[Balance API] ✅ Success from endpoint ${i + 1}: ${lamports} lamports`,
+          );
           return new Response(
             JSON.stringify({
               publicKey,
@@ -160,7 +170,9 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       }
     }
 
-    console.log(`[Balance API] ❌ All ${rpcEndpoints.length} endpoints failed. Last error: ${lastError}`);
+    console.log(
+      `[Balance API] ❌ All ${rpcEndpoints.length} endpoints failed. Last error: ${lastError}`,
+    );
     return new Response(
       JSON.stringify({
         error: "Failed to fetch wallet balance",

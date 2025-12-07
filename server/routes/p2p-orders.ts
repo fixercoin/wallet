@@ -24,7 +24,8 @@ export interface P2POrder {
     | "pending"
     | "completed"
     | "cancelled"
-    | "disputed";
+    | "disputed"
+    | "EXPIRED";
   online?: boolean;
   created_at?: number;
   createdAt?: number;
@@ -39,6 +40,9 @@ export interface P2POrder {
   sellerWallet?: string;
   adminWallet?: string;
   orderId?: string;
+  sellerVerified?: boolean;
+  sellerPaymentMethodVerified?: boolean;
+  expiresAt?: number;
 }
 
 export interface TradeRoom {

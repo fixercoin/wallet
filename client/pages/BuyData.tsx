@@ -94,9 +94,7 @@ export default function BuyData() {
 
     // Check if user has added payment details
     if (paymentMethods.length === 0) {
-      toast.error(
-        "Please add your payment details before creating an order",
-      );
+      toast.error("Please add your payment details before creating an order");
       setEditingPaymentMethodId(undefined);
       setShowPaymentDialog(true);
       return;
@@ -224,7 +222,9 @@ export default function BuyData() {
           {/* Calculation Preview */}
           {amountTokens && amountPKR && (
             <div className="p-3 rounded-lg bg-[#1a2540]/30 border border-[#FF7A5C]/20">
-              <div className="text-xs text-white/70 uppercase mb-2">Summary</div>
+              <div className="text-xs text-white/70 uppercase mb-2">
+                Summary
+              </div>
               <div className="text-sm text-white/90">
                 {amountTokens} USDC = {parseFloat(amountPKR).toFixed(2)} PKR
               </div>

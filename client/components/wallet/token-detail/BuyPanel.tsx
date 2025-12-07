@@ -59,7 +59,11 @@ export const BuyPanel: React.FC<BuyPanelProps> = ({
         <div className="space-y-2 text-sm">
           <div className="flex justify-between text-gray-400">
             <span>Price per {token.symbol}</span>
-            <span>${token.price?.toFixed(6) || "0.000000"}</span>
+            {token.price ? (
+              <span>${token.price.toFixed(6)}</span>
+            ) : (
+              <PriceLoader />
+            )}
           </div>
           <div className="flex justify-between text-gray-400">
             <span>Network Fee</span>

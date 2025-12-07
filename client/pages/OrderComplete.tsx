@@ -924,7 +924,7 @@ export default function OrderComplete() {
         </div>
 
         {/* FULL-WIDTH CHAT SECTION BELOW */}
-        <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30">
+        <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30" ref={chatSectionRef}>
           <CardContent className="p-4 flex flex-col h-full min-h-[400px]">
             <h2 className="text-lg font-bold text-white mb-4 uppercase">
               Chat

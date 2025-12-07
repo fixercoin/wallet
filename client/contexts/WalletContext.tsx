@@ -775,18 +775,27 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       }
     } catch (error) {
       console.error("Error refreshing balance:", error);
-      setError("Failed to refresh balance");
 
-      // Try to use cached balance as fallback
+      // Try to use cached balance as fallback on network/RPC errors
       const cachedBalance = getCachedBalance(wallet.publicKey);
-      if (cachedBalance !== null) {
-        console.log("[WalletContext] Using cached balance:", cachedBalance);
+      if (cachedBalance !== null && cachedBalance > 0) {
+        console.log(
+          "[WalletContext] Using cached SOL balance as fallback:",
+          cachedBalance,
+        );
         setBalance(cachedBalance);
         balanceRef.current = cachedBalance;
         setIsUsingCache(true);
+        setError(null);
       } else {
+        console.warn(
+          "[WalletContext] No cached balance available, showing 0",
+        );
         setBalance(0);
         balanceRef.current = 0;
+        setError(
+          "Unable to fetch SOL balance. Please check your connection.",
+        );
       }
     } finally {
       setIsLoading(false);

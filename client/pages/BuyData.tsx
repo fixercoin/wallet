@@ -5,7 +5,6 @@ import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
-import { P2POffersTable } from "@/components/P2POffersTable";
 import { P2PTradeDialog, type TradeDetails } from "@/components/P2PTradeDialog";
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
 import type { P2POrder } from "@/components/P2POffersTable";

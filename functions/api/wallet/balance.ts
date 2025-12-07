@@ -105,10 +105,13 @@ async function handler(request: Request, env?: Env): Promise<Response> {
     let lastError = "";
 
     // Try each RPC endpoint
-    for (const endpoint of rpcEndpoints) {
+    for (let i = 0; i < rpcEndpoints.length; i++) {
+      const endpoint = rpcEndpoints[i];
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+        console.log(`[Balance API] Trying endpoint ${i + 1}/${rpcEndpoints.length}: ${endpoint.substring(0, 60)}...`);
 
         const response = await fetch(endpoint, {
           method: "POST",
@@ -119,17 +122,19 @@ async function handler(request: Request, env?: Env): Promise<Response> {
 
         clearTimeout(timeoutId);
 
-        console.log(`[Balance API] Endpoint response status: ${response.status}`);
+        console.log(`[Balance API] Endpoint ${i + 1} response status: ${response.status}`);
 
         const data = await response.json();
 
         if (data.error) {
           lastError = data.error.message || "RPC error";
+          console.log(`[Balance API] Endpoint ${i + 1} returned RPC error: ${lastError}`);
           continue;
         }
 
         const lamports = data.result;
         if (typeof lamports === "number" && isFinite(lamports)) {
+          console.log(`[Balance API] ✅ Success from endpoint ${i + 1}: ${lamports} lamports`);
           return new Response(
             JSON.stringify({
               publicKey,
@@ -146,10 +151,12 @@ async function handler(request: Request, env?: Env): Promise<Response> {
           );
         }
       } catch (error: any) {
-        lastError =
+        const errorMsg =
           error?.name === "AbortError"
             ? "timeout"
             : error?.message || String(error);
+        lastError = errorMsg;
+        console.log(`[Balance API] Endpoint ${i + 1} failed: ${errorMsg}`);
       }
     }
 

@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 
 // Function to get HELIUS RPC endpoint ONLY
-function getHeliusRpcEndpoint(): string {
+function getHeliusRpcEndpoint(): string | null {
   // Helper to safely check env vars (trim empty strings)
   const getEnvVar = (value: string | undefined): string | null => {
     if (!value || typeof value !== "string") return null;
@@ -13,7 +13,7 @@ function getHeliusRpcEndpoint(): string {
   const heliusRpcUrl = getEnvVar(process.env.HELIUS_RPC_URL);
   const solanaRpcUrl = getEnvVar(process.env.SOLANA_RPC_URL);
 
-  console.log("[WalletBalance] Helius-only configuration:", {
+  console.log("[WalletBalance] Helius configuration:", {
     hasHeliusApiKey: !!heliusApiKey,
     hasHeliusRpcUrl: !!heliusRpcUrl,
     hasSolanaRpcUrl: !!solanaRpcUrl,
@@ -36,10 +36,11 @@ function getHeliusRpcEndpoint(): string {
     return solanaRpcUrl;
   }
 
-  // No Helius endpoint found - this is a configuration error
-  throw new Error(
-    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
+  // No Helius endpoint found - return null for graceful fallback
+  console.warn(
+    "[WalletBalance] No Helius RPC endpoint configured. Set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
   );
+  return null;
 }
 
 export const handleWalletBalance: RequestHandler = async (req, res) => {

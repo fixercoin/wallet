@@ -212,8 +212,48 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         // Filter out null entries
         const validTokens = tokens.filter(Boolean);
 
+        // Fetch and include native SOL balance
+        let solBalance = 0;
+        try {
+          const solRpcBody = {
+            jsonrpc: "2.0",
+            id: 1,
+            method: "getBalance",
+            params: [publicKey],
+          };
+
+          const solResp = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(solRpcBody),
+            signal: new AbortController().signal,
+          });
+
+          const solData = await solResp.json();
+          if (!solData.error && typeof solData.result === "number") {
+            solBalance = solData.result / 1_000_000_000; // Convert lamports to SOL
+            console.log(
+              `[TokenAccounts] Fetched SOL balance: ${solBalance} SOL`,
+            );
+          }
+        } catch (err) {
+          console.warn(`[TokenAccounts] Failed to fetch SOL balance:`, err);
+        }
+
+        // Add SOL to the beginning of tokens list
+        const allTokens = [
+          {
+            mint: "So11111111111111111111111111111111111111112",
+            symbol: "SOL",
+            name: "Solana",
+            decimals: 9,
+            balance: solBalance,
+          },
+          ...validTokens,
+        ];
+
         console.log(
-          `[TokenAccounts] Found ${validTokens.length} token accounts for ${publicKey.slice(
+          `[TokenAccounts] Found ${validTokens.length} token accounts (plus SOL) for ${publicKey.slice(
             0,
             8,
           )}`,
@@ -222,8 +262,8 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         return new Response(
           JSON.stringify({
             publicKey,
-            tokens: validTokens,
-            count: validTokens.length,
+            tokens: allTokens,
+            count: allTokens.length,
           }),
           {
             status: 200,

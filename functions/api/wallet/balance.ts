@@ -239,12 +239,14 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         error: "Failed to fetch wallet balance",
         details: lastError || "All RPC endpoints failed",
         endpointsAttempted: rpcEndpoints.length,
+        primaryEndpoint: rpcEndpoints[0]?.substring(0, 60) || "none",
       }),
       {
         status: lastStatus,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
         },
       },
     );

@@ -121,7 +121,11 @@ export async function onRequestPost(context: any) {
         }
 
         const lamports = data.result ?? data.result?.value;
-        if (typeof lamports === "number" && isFinite(lamports) && lamports >= 0) {
+        if (
+          typeof lamports === "number" &&
+          isFinite(lamports) &&
+          lamports >= 0
+        ) {
           console.log(
             `[BalanceAPI] ✅ Success from endpoint ${i + 1}: ${lamports} lamports`,
           );

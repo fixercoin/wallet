@@ -204,19 +204,24 @@ async function handleWalletBalance(url: URL, env: Env): Promise<Response> {
 
         if (rpcJson.error) {
           lastError = rpcJson.error.message || "RPC error";
-          console.warn(
-            `[Balance] Endpoint ${i + 1} RPC error: ${lastError}`,
-          );
+          console.warn(`[Balance] Endpoint ${i + 1} RPC error: ${lastError}`);
           continue;
         }
 
         const lamports = rpcJson?.result?.value ?? rpcJson?.result ?? 0;
-        if (typeof lamports === "number" && isFinite(lamports) && lamports >= 0) {
+        if (
+          typeof lamports === "number" &&
+          isFinite(lamports) &&
+          lamports >= 0
+        ) {
           const balance = lamports / 1_000_000_000;
           console.log(`[Balance] ✅ Success from endpoint ${i + 1}`);
-          return new Response(JSON.stringify({ balance, lamports, publicKey }), {
-            headers: CORS_HEADERS,
-          });
+          return new Response(
+            JSON.stringify({ balance, lamports, publicKey }),
+            {
+              headers: CORS_HEADERS,
+            },
+          );
         }
 
         lastError = "Invalid balance response";
@@ -226,9 +231,7 @@ async function handleWalletBalance(url: URL, env: Env): Promise<Response> {
       }
     }
 
-    throw new Error(
-      `All RPC endpoints failed. Last error: ${lastError}`,
-    );
+    throw new Error(`All RPC endpoints failed. Last error: ${lastError}`);
   } catch (e: any) {
     const errorMsg = String(e?.message || e).slice(0, 100);
     console.error("[Balance] Error:", errorMsg);
@@ -303,7 +306,9 @@ async function handleWalletTokens(url: URL, env: Env): Promise<Response> {
           return { mint, amountRaw, uiAmount, decimals, owner: t.pubkey };
         });
 
-        console.log(`[Tokens] ✅ Success from endpoint ${i + 1}: ${tokens.length} tokens`);
+        console.log(
+          `[Tokens] ✅ Success from endpoint ${i + 1}: ${tokens.length} tokens`,
+        );
         return new Response(JSON.stringify({ tokens }), {
           headers: CORS_HEADERS,
         });
@@ -313,9 +318,7 @@ async function handleWalletTokens(url: URL, env: Env): Promise<Response> {
       }
     }
 
-    throw new Error(
-      `All RPC endpoints failed. Last error: ${lastError}`,
-    );
+    throw new Error(`All RPC endpoints failed. Last error: ${lastError}`);
   } catch (e: any) {
     const errorMsg = String(e?.message || e);
     console.error("[Tokens] Error:", errorMsg);

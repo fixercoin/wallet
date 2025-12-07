@@ -831,19 +831,21 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         (t) => t.symbol === "SOL",
       );
 
-      // Use SOL from tokenAccounts if available, otherwise fall back to balanceRef/balance
-      const solBalance =
-        solFromTokenAccounts?.balance ??
-        (typeof balanceRef.current === "number"
-          ? balanceRef.current
-          : balance || 0);
-
-      // If we got SOL balance from tokenAccounts, also update the balance state
-      if (solFromTokenAccounts?.balance !== undefined) {
+      // Use SOL from tokenAccounts if available (for Cloudflare compatibility)
+      // Otherwise use the balance from the separate refreshBalance() call
+      let solBalance = 0;
+      if (solFromTokenAccounts?.balance !== undefined && solFromTokenAccounts.balance > 0) {
+        solBalance = solFromTokenAccounts.balance;
         setBalance(solFromTokenAccounts.balance);
         balanceRef.current = solFromTokenAccounts.balance;
         console.log(
           `[WalletContext] Updated SOL balance from tokenAccounts: ${solFromTokenAccounts.balance}`,
+        );
+      } else {
+        // Fall back to balance from separate endpoint (which should have been fetched via refreshBalance)
+        solBalance = typeof balanceRef.current === "number" ? balanceRef.current : balance || 0;
+        console.log(
+          `[WalletContext] Using SOL balance from balance endpoint: ${solBalance}`,
         );
       }
 

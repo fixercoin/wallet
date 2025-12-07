@@ -1121,12 +1121,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             )}
                           </div>
                           <p className="text-xs font-semibold text-white truncate">
-                            {
-                              formatAmountCompact(
-                                token.balance,
-                                token.symbol,
-                              ).split(/\s+/)[0]
-                            }
+                            {formatBalance(token.balance, token.symbol)}
                           </p>
                         </div>
                       </div>

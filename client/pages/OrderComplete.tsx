@@ -893,7 +893,7 @@ export default function OrderComplete() {
             </div>
 
             {/* Message Input */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-4">
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
@@ -930,6 +930,17 @@ export default function OrderComplete() {
                 <Send className="h-4 w-4" />
               </Button>
             </div>
+
+            {/* Cancel Order Button */}
+            {order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
+              <Button
+                onClick={handleCancelOrder}
+                className="w-full px-4 py-2 bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 text-red-400 uppercase text-xs font-semibold transition-colors"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Cancel Trade
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>

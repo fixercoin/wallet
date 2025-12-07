@@ -83,7 +83,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
     for (const endpoint of rpcEndpoints) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
 
         const response = await fetch(endpoint, {
           method: "POST",

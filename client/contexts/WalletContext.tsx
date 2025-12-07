@@ -1072,7 +1072,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           priceSource = "birdeye";
         } else {
           // No prices available - will try fallback below
-          console.warn("[WalletContext] No prices available from primary sources");
+          console.warn(
+            "[WalletContext] No prices available from primary sources",
+          );
         }
       } catch (dexError) {
         console.warn(
@@ -1258,19 +1260,20 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         );
 
         // Create fallback tokens from allTokens (which contains balance data)
-        const fallbackTokens: TokenInfo[] = allTokens.length > 0
-          ? allTokens
-          : [
-              {
-                mint: "So11111111111111111111111111111111111111112",
-                symbol: "SOL",
-                name: "Solana",
-                decimals: 9,
-                logoURI:
-                  "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-                balance: balance || 0,
-              },
-            ];
+        const fallbackTokens: TokenInfo[] =
+          allTokens.length > 0
+            ? allTokens
+            : [
+                {
+                  mint: "So11111111111111111111111111111111111111112",
+                  symbol: "SOL",
+                  name: "Solana",
+                  decimals: 9,
+                  logoURI:
+                    "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+                  balance: balance || 0,
+                },
+              ];
 
         setTokens(fallbackTokens);
         setIsUsingCache(false);

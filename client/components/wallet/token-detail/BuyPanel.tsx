@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ShoppingCart } from "lucide-react";
 import { TokenInfo } from "@/lib/wallet";
+import { PriceLoader } from "@/components/ui/price-loader";
+import { useState } from "react";
 
 interface BuyPanelProps {
   token: TokenInfo;

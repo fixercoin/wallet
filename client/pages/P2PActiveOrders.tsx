@@ -20,7 +20,7 @@ import { getPaymentMethodsByWallet } from "@/lib/p2p-payment-methods";
 import { useP2PPolling } from "@/hooks/use-p2p-polling";
 import { ADMIN_WALLET } from "@/lib/p2p";
 
-export default function SellActiveOrders() {
+export default function P2PActiveOrders() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const [orders, setOrders] = useState<P2POrder[]>([]);
@@ -84,8 +84,7 @@ export default function SellActiveOrders() {
   // Use polling for real-time order updates
   useP2PPolling(
     (fetchedOrders) => {
-      const sellOrders = fetchedOrders.filter((order) => order.type === "SELL");
-      setOrders(sellOrders);
+      setOrders(fetchedOrders);
       setLoadingOrders(false);
     },
     {
@@ -107,15 +106,12 @@ export default function SellActiveOrders() {
       try {
         setLoadingOrders(true);
 
-        // Fetch orders
+        // Fetch all orders (both BUY and SELL)
         const fetchedOrders = await getOrdersByWallet(
           wallet.publicKey,
           "PENDING",
         );
-        const sellOrders = fetchedOrders.filter(
-          (order) => order.type === "SELL",
-        );
-        setOrders(sellOrders);
+        setOrders(fetchedOrders);
 
         // Fetch payment methods from Cloudflare KV
         const paymentMethods = await getPaymentMethodsByWallet(
@@ -164,6 +160,9 @@ export default function SellActiveOrders() {
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
+        <h1 className="text-white font-bold text-lg mt-2 uppercase">
+          Active Orders
+        </h1>
       </div>
 
       {/* Main Content */}
@@ -176,7 +175,7 @@ export default function SellActiveOrders() {
           )}
           {!loadingOrders && orders.length === 0 && (
             <div className="text-center text-white/70 py-8">
-              No active sell orders yet
+              No active orders yet
             </div>
           )}
           {orders.map((order) => (
@@ -192,7 +191,18 @@ export default function SellActiveOrders() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs opacity-80">Order Number</div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs opacity-80">Order Number</span>
+                      <span
+                        className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                          order.type === "BUY"
+                            ? "bg-blue-500/20 text-blue-400"
+                            : "bg-green-500/20 text-green-400"
+                        }`}
+                      >
+                        {order.type}
+                      </span>
+                    </div>
                     <div className="font-semibold text-white truncate">
                       {order.id}
                     </div>
@@ -244,7 +254,7 @@ export default function SellActiveOrders() {
                       }}
                       className="px-4 py-2 rounded-lg bg-gray-300/10 border border-gray-300/30 text-gray-300 text-xs hover:bg-gray-300/20 transition-colors uppercase font-semibold"
                     >
-                      View
+                      Chat
                     </button>
                   </div>
                 </div>

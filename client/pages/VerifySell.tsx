@@ -10,6 +10,7 @@ import {
   Clock,
   Copy,
   Send,
+  Plus,
   ShoppingCart,
   TrendingUp,
 } from "lucide-react";
@@ -310,6 +311,70 @@ export default function VerifySell() {
     }
   };
 
+  async function resizeImageToDataUrl(
+    file: File,
+    maxDim = 1024,
+    quality = 0.8,
+  ): Promise<string> {
+    const img = document.createElement("img");
+    const fileUrl = URL.createObjectURL(file);
+    try {
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = reject;
+        img.src = fileUrl;
+      });
+      const canvas = document.createElement("canvas");
+      let { width, height } = img;
+      if (width > height) {
+        if (width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        }
+      } else {
+        if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas unsupported");
+      ctx.drawImage(img, 0, 0, width, height);
+      return canvas.toDataURL("image/jpeg", quality);
+    } finally {
+      URL.revokeObjectURL(fileUrl);
+    }
+  }
+
+  async function handleImageAttachment(file: File) {
+    if (!file || !selectedOrder || !wallet) return;
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      const message: ChatMessage = {
+        id: `msg-${Date.now()}`,
+        roomId: selectedOrder.roomId,
+        senderWallet: wallet.publicKey,
+        senderRole: "seller",
+        type: "attachment",
+        text: "Sent a proof image",
+        metadata: { attachmentDataUrl: dataUrl, filename: file.name },
+        timestamp: Date.now(),
+      };
+      saveChatMessage(message);
+      setChatLog((prev) => [...prev, message]);
+      lastMessageCountRef.current += 1;
+    } catch (e) {
+      console.error("Attachment failed", e);
+      toast({
+        title: "Upload failed",
+        description: "Could not attach image",
+        variant: "destructive",
+      });
+    }
+  }
+
   // Select Phase
   if (phase === "select" || orders.length === 0) {
     return (
@@ -457,6 +522,87 @@ export default function VerifySell() {
                     ).toFixed(2)}{" "}
                     PKR/{selectedOrder.token}
                   </span>
+                </div>
+              </div>
+
+              <Separator className="bg-[#FF7A5C]/20" />
+
+              <div className="space-y-3">
+                <div className="text-xs font-semibold text-white/70">Chat with Buyer</div>
+                <div className="max-h-48 overflow-y-auto custom-scrollbar space-y-2 p-3 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
+                  {chatLog.length === 0 ? (
+                    <div className="text-xs text-white/60 text-center py-4">
+                      Chat will appear here
+                    </div>
+                  ) : (
+                    chatLog.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`text-xs p-2 rounded ${
+                          msg.senderWallet === wallet?.publicKey
+                            ? "bg-[#FF7A5C]/20 text-white/90"
+                            : "bg-[#1a2540]/50 text-white/70"
+                        }`}
+                      >
+                        <div className="font-semibold text-white/80">
+                          {msg.senderRole === "buyer" ? "🛒 Buyer" : "🏪 Seller"}
+                        </div>
+                        <div>{msg.text}</div>
+                        {msg.metadata?.attachmentDataUrl && (
+                          <div className="mt-2">
+                            <img
+                              src={msg.metadata.attachmentDataUrl}
+                              alt="attachment"
+                              className="rounded-lg max-h-48 border border-white/5"
+                            />
+                          </div>
+                        )}
+                        <div className="text-xs text-white/50 mt-1">
+                          {new Date(msg.timestamp).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40 text-xs focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]"
+                    placeholder="Type message..."
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && handleSendMessage()
+                    }
+                  />
+                  <input
+                    id="attach-input-verify"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.currentTarget.files?.[0];
+                      if (f) handleImageAttachment(f);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      document.getElementById("attach-input-verify")?.click()
+                    }
+                    className="px-3 py-2 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white disabled:opacity-50 hover:opacity-90"
+                    size="sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={!messageInput.trim()}
+                    className="px-3 py-2 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white disabled:opacity-50 hover:opacity-90"
+                    size="sm"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
 

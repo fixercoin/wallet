@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
+import { PriceLoader } from "@/components/ui/price-loader";
 
 interface DashboardProps {
   onSend: () => void;
@@ -376,17 +377,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span
-                            className={`text-xs text-gray-400 ${
-                              ["SOL", "FIXERCOIN", "LOCKER", "FXM"].includes(
-                                (token.symbol || "").toUpperCase(),
-                              )
-                                ? "animate-price-pulse"
-                                : ""
-                            }`}
-                          >
-                            ${formatTokenPriceDisplay(token.price)}
-                          </span>
+                          {typeof token.price === "number" &&
+                          isFinite(token.price) ? (
+                            <span
+                              className={`text-xs text-gray-400 ${
+                                ["SOL", "FIXERCOIN", "LOCKER", "FXM"].includes(
+                                  (token.symbol || "").toUpperCase(),
+                                )
+                                  ? "animate-price-pulse"
+                                  : ""
+                              }`}
+                            >
+                              ${formatTokenPriceDisplay(token.price)}
+                            </span>
+                          ) : (
+                            <PriceLoader />
+                          )}
                           {percentChange !== null ? (
                             <span className="flex items-center gap-1">
                               <span
@@ -413,9 +419,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         )}
                       </p>
                       <p className="text-xs text-gray-400">
-                        {typeof token.price === "number" && token.price > 0
-                          ? `$${formatBalance((token.symbol === "SOL" ? balance : token.balance || 0) * token.price)}`
-                          : "$0.00"}
+                        {typeof token.price === "number" && token.price > 0 ? (
+                          `$${formatBalance((token.symbol === "SOL" ? balance : token.balance || 0) * token.price)}`
+                        ) : (
+                          <PriceLoader />
+                        )}
                       </p>
                     </div>
                   </div>

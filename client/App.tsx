@@ -148,10 +148,11 @@ import DocumentationPage from "./pages/DocumentationPage";
 import BuyTrade from "./pages/BuyTrade";
 import OrderComplete from "./pages/OrderComplete";
 import TokenSearchPage from "./pages/TokenSearchPage";
-import BuyActiveOrders from "./pages/BuyActiveOrders";
-import SellActiveOrders from "./pages/SellActiveOrders";
+import P2PActiveOrders from "./pages/P2PActiveOrders";
 import BuyOrder from "./pages/BuyOrder";
 import SellOrder from "./pages/SellOrder";
+import BuyData from "./pages/BuyData";
+import SellData from "./pages/SellData";
 import AdminDisputes from "./pages/AdminDisputes";
 import { useLocation } from "react-router-dom";
 
@@ -166,7 +167,9 @@ function AppRoutes() {
       <Route path="/sell-now" element={<SellNow />} />
       <Route path="/buy-crypto" element={<BuyCrypto />} />
       <Route path="/buy-order" element={<BuyOrder />} />
+      <Route path="/buydata" element={<BuyData />} />
       <Route path="/sell-order" element={<SellOrder />} />
+      <Route path="/selldata" element={<SellData />} />
       <Route path="/buynote" element={<BuyNote />} />
       <Route path="/sellnote" element={<SellNote />} />
       <Route path="/verify-sell" element={<VerifySell />} />
@@ -197,8 +200,9 @@ function AppRoutes() {
         path="/documentation"
         element={<DocumentationPage onBack={() => window.history.back()} />}
       />
-      <Route path="/p2p/buy-active-orders" element={<BuyActiveOrders />} />
-      <Route path="/p2p/sell-active-orders" element={<SellActiveOrders />} />
+      <Route path="/p2p/buy-active-orders" element={<P2PActiveOrders />} />
+      <Route path="/p2p/sell-active-orders" element={<P2PActiveOrders />} />
+      <Route path="/p2p/active-orders" element={<P2PActiveOrders />} />
       <Route path="/p2p/admin-disputes" element={<AdminDisputes />} />
       <Route path="/express/buy-trade" element={<BuyTrade />} />
       <Route path="/order-complete" element={<OrderComplete />} />
@@ -228,7 +232,9 @@ function AppContent() {
       "/orders/",
       "/order/",
       "/buy-order",
+      "/buydata",
       "/sell-order",
+      "/selldata",
     ];
 
     return p2pRoutes.some((route) => path.startsWith(route));

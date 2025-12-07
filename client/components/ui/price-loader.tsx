@@ -2,27 +2,31 @@ import React from "react";
 
 export const PriceLoader: React.FC = () => {
   return (
-    <div className="inline-flex items-center">
+    <div className="inline-flex items-center gap-1">
       <style>{`
-        @keyframes pulse-breath {
+        @keyframes blink {
           0%, 100% {
-            opacity: 0.4;
+            opacity: 0.3;
           }
           50% {
             opacity: 1;
           }
         }
-        .price-pulse {
+        .bounce-dot {
           display: inline-block;
-          background: linear-gradient(90deg, #4a5568 0%, #6b7280 50%, #4a5568 100%);
-          background-size: 200% 100%;
-          animation: pulse-breath 2s ease-in-out infinite;
-          height: 1em;
-          width: 2.5em;
-          border-radius: 3px;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+          animation: blink 1.2s ease-in-out infinite;
         }
+        .bounce-dot:nth-child(1) { animation-delay: 0s; }
+        .bounce-dot:nth-child(2) { animation-delay: 0.2s; }
+        .bounce-dot:nth-child(3) { animation-delay: 0.4s; }
       `}</style>
-      <div className="price-pulse"></div>
+      <div className="bounce-dot"></div>
+      <div className="bounce-dot"></div>
+      <div className="bounce-dot"></div>
     </div>
   );
 };

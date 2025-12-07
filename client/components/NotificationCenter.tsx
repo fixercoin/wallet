@@ -1,16 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Bell, X, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "@/contexts/WalletContext";
+import { playNotificationSound } from "@/lib/services/notification-sound";
 
 export function NotificationCenter() {
   const { notifications, unreadCount, markAsRead } = useOrderNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const { wallet } = useWallet();
+  const previousUnreadCountRef = useRef(0);
+
+  // Play bell sound when new notifications arrive
+  useEffect(() => {
+    if (unreadCount > previousUnreadCountRef.current && unreadCount > 0) {
+      playNotificationSound();
+    }
+    previousUnreadCountRef.current = unreadCount;
+  }, [unreadCount]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -20,6 +30,8 @@ export function NotificationCenter() {
         return "✅";
       case "received_confirmed":
         return "🎉";
+      case "order_cancelled":
+        return "❌";
       default:
         return "📢";
     }
@@ -33,6 +45,8 @@ export function NotificationCenter() {
         return "Payment Confirmed";
       case "received_confirmed":
         return "Order Received";
+      case "order_cancelled":
+        return "Order Cancelled";
       default:
         return "Notification";
     }
@@ -124,9 +138,13 @@ export function NotificationCenter() {
                               amountPKR: notification.orderData.amountPKR,
                               buyerWallet,
                               sellerWallet,
-                              paymentMethod: "easypaisa",
+                              payment_method: "easypaisa",
+                              roomId: notification.orderId,
+                              offerId: "",
+                              pricePKRPerQuote: 280,
+                              status: "PENDING",
+                              createdAt: notification.createdAt,
                             },
-                            roomId: notification.orderId,
                             openChat: true,
                           },
                         });

@@ -11,6 +11,10 @@ export interface P2POrder {
   token_amount?: string;
   amountPKR?: number;
   pkr_amount?: number;
+  minAmountPKR?: number;
+  maxAmountPKR?: number;
+  minAmountTokens?: number;
+  maxAmountTokens?: number;
   pricePKRPerQuote?: number;
   payment_method?: string;
   paymentMethodId?: string;
@@ -73,6 +77,10 @@ function normalizeOrder(order: any): P2POrder {
     token: order.token,
     amountTokens: order.amountTokens ?? parseFloat(order.token_amount || 0),
     amountPKR: order.amountPKR ?? order.pkr_amount,
+    minAmountPKR: order.minAmountPKR,
+    maxAmountPKR: order.maxAmountPKR,
+    minAmountTokens: order.minAmountTokens,
+    maxAmountTokens: order.maxAmountTokens,
     pricePKRPerQuote: order.pricePKRPerQuote,
     payment_method: order.paymentMethod || order.payment_method,
     status: (order.status || "PENDING") as P2POrder["status"],
@@ -156,23 +164,14 @@ export const handleListP2POrders: RequestHandler = async (req, res) => {
 
     let filtered: P2POrder[] = [];
 
-    if (wallet) {
-      // Get orders for specific wallet
-      const orderIds = await getOrderIdsForWallet(wallet as string);
-      for (const orderId of orderIds) {
-        const order = await getOrderById(orderId);
-        if (order) {
-          filtered.push(order);
-        }
-      }
-    } else if (id) {
+    if (id) {
       // Get single order by ID
       const order = await getOrderById(id as string);
       if (order) {
         filtered.push(order);
       }
     } else {
-      // Get all orders (from all wallets)
+      // Get all orders from KV
       const kv = getKVStorage();
       const listResult = await kv.list();
       const keys = listResult.keys || [];
@@ -188,11 +187,36 @@ export const handleListP2POrders: RequestHandler = async (req, res) => {
     }
 
     // Apply filters
+    if (wallet) {
+      // Normalize wallet address for comparison (handle both formats)
+      const queryWallet = String(wallet).toLowerCase().trim();
+      filtered = filtered.filter((o) => {
+        const orderWallet = (o.walletAddress || o.creator_wallet || "")
+          .toLowerCase()
+          .trim();
+        return orderWallet === queryWallet;
+      });
+    }
     if (type) {
       filtered = filtered.filter((o) => o.type === String(type).toUpperCase());
     }
     if (status) {
-      filtered = filtered.filter((o) => o.status === status);
+      // Case-insensitive status comparison and treat "active", "PENDING", "pending" as equivalent for active orders
+      const statusFilter = String(status).toLowerCase();
+      const activeStatuses = ["active", "pending"];
+
+      if (activeStatuses.includes(statusFilter)) {
+        // If looking for active/pending, include all active-like statuses
+        filtered = filtered.filter((o) => {
+          const orderStatus = String(o.status).toLowerCase();
+          return activeStatuses.includes(orderStatus);
+        });
+      } else {
+        // For other statuses, do exact match (case-insensitive)
+        filtered = filtered.filter(
+          (o) => String(o.status).toLowerCase() === statusFilter,
+        );
+      }
     }
     if (token) {
       filtered = filtered.filter((o) => o.token === token);
@@ -221,6 +245,10 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
       token_amount,
       amountPKR,
       pkr_amount,
+      minAmountPKR,
+      maxAmountPKR,
+      minAmountTokens,
+      maxAmountTokens,
       pricePKRPerQuote,
       payment_method,
       paymentMethodId,
@@ -255,7 +283,7 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
     const id = orderId || generateId("order");
     const now = Date.now();
 
-    const order: P2POrder = {
+    const order: any = {
       id,
       type: finalType as "BUY" | "SELL",
       walletAddress: finalWallet,
@@ -275,6 +303,11 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
       buyerWallet,
       sellerWallet,
       adminWallet,
+      // Marketplace fields for min/max amounts
+      ...(minAmountPKR !== undefined && { minAmountPKR }),
+      ...(maxAmountPKR !== undefined && { maxAmountPKR }),
+      ...(minAmountTokens !== undefined && { minAmountTokens }),
+      ...(maxAmountTokens !== undefined && { maxAmountTokens }),
     };
 
     await saveOrder(order);
@@ -311,7 +344,7 @@ export const handleUpdateP2POrder: RequestHandler = async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    const updated: P2POrder = {
+    const updated: any = {
       ...order,
       ...req.body,
       id: order.id,
@@ -319,6 +352,22 @@ export const handleUpdateP2POrder: RequestHandler = async (req, res) => {
       created_at: order.created_at,
       updatedAt: Date.now(),
       updated_at: Date.now(),
+      // Preserve marketplace fields if not in update body
+      ...(req.body.minAmountPKR !== undefined && {
+        minAmountPKR: req.body.minAmountPKR,
+      }),
+      ...(req.body.maxAmountPKR !== undefined && {
+        maxAmountPKR: req.body.maxAmountPKR,
+      }),
+      ...(req.body.minAmountTokens !== undefined && {
+        minAmountTokens: req.body.minAmountTokens,
+      }),
+      ...(req.body.maxAmountTokens !== undefined && {
+        maxAmountTokens: req.body.maxAmountTokens,
+      }),
+      ...(req.body.pricePKRPerQuote !== undefined && {
+        pricePKRPerQuote: req.body.pricePKRPerQuote,
+      }),
     };
 
     await saveOrder(updated);

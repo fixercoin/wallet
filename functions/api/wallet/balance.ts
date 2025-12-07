@@ -13,31 +13,32 @@ interface Env {
 function buildRpcEndpoints(env?: Env): string[] {
   const endpoints: string[] = [];
 
-  // Try env parameter first, then fall back to process.env (for Cloudflare Pages)
-  const solanaRpcUrl = env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL;
-  const heliusRpcUrl = env?.HELIUS_RPC_URL || process.env.HELIUS_RPC_URL;
-  const heliusApiKey = env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY;
-  const alchemyRpcUrl = env?.ALCHEMY_RPC_URL || process.env.ALCHEMY_RPC_URL;
-  const moralisRpcUrl = env?.MORALIS_RPC_URL || process.env.MORALIS_RPC_URL;
+  // Try env parameter first
+  const solanaRpcUrl = env?.SOLANA_RPC_URL;
+  const heliusRpcUrl = env?.HELIUS_RPC_URL;
+  const heliusApiKey = env?.HELIUS_API_KEY;
+  const alchemyRpcUrl = env?.ALCHEMY_RPC_URL;
+  const moralisRpcUrl = env?.MORALIS_RPC_URL;
 
   // Add environment-configured endpoints first (highest priority)
-  if (solanaRpcUrl) {
+  if (solanaRpcUrl && typeof solanaRpcUrl === "string" && solanaRpcUrl.length > 0) {
     console.log("[RPC Config] Using SOLANA_RPC_URL from env");
     endpoints.push(solanaRpcUrl);
   }
-  if (heliusRpcUrl) {
+  if (heliusRpcUrl && typeof heliusRpcUrl === "string" && heliusRpcUrl.length > 0) {
     console.log("[RPC Config] Using HELIUS_RPC_URL from env");
     endpoints.push(heliusRpcUrl);
   }
-  if (heliusApiKey) {
+  if (heliusApiKey && typeof heliusApiKey === "string" && heliusApiKey.length > 0) {
     console.log("[RPC Config] Using HELIUS_API_KEY from env");
-    endpoints.push(`https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`);
+    const heliusEndpoint = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
+    endpoints.push(heliusEndpoint);
   }
-  if (alchemyRpcUrl) {
+  if (alchemyRpcUrl && typeof alchemyRpcUrl === "string" && alchemyRpcUrl.length > 0) {
     console.log("[RPC Config] Using ALCHEMY_RPC_URL from env");
     endpoints.push(alchemyRpcUrl);
   }
-  if (moralisRpcUrl) {
+  if (moralisRpcUrl && typeof moralisRpcUrl === "string" && moralisRpcUrl.length > 0) {
     console.log("[RPC Config] Using MORALIS_RPC_URL from env");
     endpoints.push(moralisRpcUrl);
   }
@@ -52,6 +53,7 @@ function buildRpcEndpoints(env?: Env): string[] {
   endpoints.push("https://solana.publicnode.com");
   endpoints.push("https://rpc.ankr.com/solana");
   endpoints.push("https://api.mainnet-beta.solana.com");
+  endpoints.push("https://rpc.ironforge.network/mainnet");
 
   // Add backup endpoints (tier 2 - fallback if above fail)
   endpoints.push("https://rpc.genesysgo.net");
@@ -102,19 +104,20 @@ async function handler(request: Request, env?: Env): Promise<Response> {
 
     const rpcEndpoints = buildRpcEndpoints(env);
     console.log(
-      `[Balance API] Using ${rpcEndpoints.length} RPC endpoints. First endpoint: ${rpcEndpoints[0]?.substring(0, 50)}...`,
+      `[Balance API] Using ${rpcEndpoints.length} RPC endpoints. Primary: ${rpcEndpoints[0]?.substring(0, 50)}...`,
     );
     let lastError = "";
+    let lastStatus = 502;
 
-    // Try each RPC endpoint
+    // Try each RPC endpoint with individual timeout
     for (let i = 0; i < rpcEndpoints.length; i++) {
       const endpoint = rpcEndpoints[i];
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout per endpoint
 
         console.log(
-          `[Balance API] Trying endpoint ${i + 1}/${rpcEndpoints.length}: ${endpoint.substring(0, 60)}...`,
+          `[Balance API] Attempt ${i + 1}/${rpcEndpoints.length}: ${endpoint.substring(0, 60)}...`,
         );
 
         const response = await fetch(endpoint, {
@@ -125,17 +128,25 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         });
 
         clearTimeout(timeoutId);
+        lastStatus = response.status;
 
         console.log(
-          `[Balance API] Endpoint ${i + 1} response status: ${response.status}`,
+          `[Balance API] Endpoint ${i + 1} returned status: ${response.status}`,
         );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          lastError = `HTTP ${response.status}: ${errorText}`;
+          console.warn(`[Balance API] Endpoint ${i + 1} non-OK response: ${lastError}`);
+          continue;
+        }
 
         const data = await response.json();
 
         if (data.error) {
           lastError = data.error.message || "RPC error";
-          console.log(
-            `[Balance API] Endpoint ${i + 1} returned RPC error: ${lastError}`,
+          console.warn(
+            `[Balance API] Endpoint ${i + 1} RPC error: ${lastError}`,
           );
           continue;
         }
@@ -160,13 +171,16 @@ async function handler(request: Request, env?: Env): Promise<Response> {
             },
           );
         }
+
+        lastError = "Invalid balance response from RPC";
       } catch (error: any) {
-        const errorMsg =
-          error?.name === "AbortError"
-            ? "timeout"
-            : error?.message || String(error);
-        lastError = errorMsg;
-        console.log(`[Balance API] Endpoint ${i + 1} failed: ${errorMsg}`);
+        if (error?.name === "AbortError") {
+          lastError = "Request timeout";
+          console.warn(`[Balance API] Endpoint ${i + 1} timeout`);
+        } else {
+          lastError = error?.message || String(error);
+          console.warn(`[Balance API] Endpoint ${i + 1} error: ${lastError}`);
+        }
       }
     }
 
@@ -180,7 +194,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         endpointsAttempted: rpcEndpoints.length,
       }),
       {
-        status: 502,
+        status: lastStatus,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
@@ -188,7 +202,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       },
     );
   } catch (error: any) {
-    console.log(`[Balance API] Exception: ${error?.message || String(error)}`);
+    console.error(`[Balance API] Exception: ${error?.message || String(error)}`);
     return new Response(
       JSON.stringify({
         error: "Wallet balance error",

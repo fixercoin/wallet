@@ -1,22 +1,28 @@
 import { RequestHandler } from "express";
 import { PublicKey, Connection } from "@solana/web3.js";
 
-// Using Helius RPC as primary, with fallbacks
-const RPC_ENDPOINTS = [
-  // Prefer environment-configured RPC
-  process.env.SOLANA_RPC_URL || "",
-  // Provider-specific overrides (only add if configured)
-  process.env.HELIUS_RPC_URL || "",
-  process.env.HELIUS_API_KEY
-    ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
-    : "",
-  process.env.ALCHEMY_RPC_URL || "",
-  process.env.MORALIS_RPC_URL || "",
-  // Well-tested public endpoints as final fallback
-  "https://solana.publicnode.com",
-  "https://rpc.ankr.com/solana",
-  "https://api.mainnet-beta.solana.com",
-].filter(Boolean);
+// Get Helius RPC endpoint ONLY
+function getHeliusRpcEndpoint(): string {
+  const heliusApiKey = process.env.HELIUS_API_KEY?.trim();
+  const heliusRpcUrl = process.env.HELIUS_RPC_URL?.trim();
+  const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
+
+  if (heliusApiKey) {
+    return `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
+  }
+  if (heliusRpcUrl) {
+    return heliusRpcUrl;
+  }
+  if (solanaRpcUrl) {
+    return solanaRpcUrl;
+  }
+
+  throw new Error(
+    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable."
+  );
+}
+
+const RPC_ENDPOINT = getHeliusRpcEndpoint();
 
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 

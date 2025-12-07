@@ -33,10 +33,7 @@ function buildRpcEndpoints(env?: Env): string[] {
   return [...new Set(endpoints)]; // Remove duplicates
 }
 
-async function handler(
-  request: Request,
-  env?: Env,
-): Promise<Response> {
+async function handler(request: Request, env?: Env): Promise<Response> {
   // Handle CORS preflight
   if (request.method === "OPTIONS") {
     return new Response(null, {

@@ -18,19 +18,19 @@ export const P2PBottomNavigation: React.FC<P2PBottomNavigationProps> = ({
       <div className="max-w-7xl mx-auto flex justify-center items-center gap-4">
         <Button
           onClick={() => navigate("/buy-order")}
-          className="h-16 w-16 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-full text-xs uppercase flex items-center justify-center"
+          className="px-6 py-3 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-xs uppercase"
         >
           BUY
         </Button>
         <Button
           onClick={() => navigate("/sell-order")}
-          className="h-16 w-16 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-full text-xs uppercase flex items-center justify-center"
+          className="px-6 py-3 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-xs uppercase"
         >
           SELL
         </Button>
         <Button
           onClick={onPaymentClick}
-          className="h-16 px-4 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-full text-xs uppercase flex items-center justify-center"
+          className="px-6 py-3 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-xs uppercase"
         >
           PAYMENT METHOD
         </Button>

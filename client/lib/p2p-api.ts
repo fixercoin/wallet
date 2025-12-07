@@ -181,6 +181,31 @@ export async function updateTradeRoomStatus(
   return data.room;
 }
 
+export async function confirmPayment(
+  roomId: string,
+  walletAddress: string,
+): Promise<{
+  room: TradeRoom;
+  autoReleased: boolean;
+  message: string;
+}> {
+  const res = await fetch(
+    `${API_BASE}/api/p2p/rooms/${encodeURIComponent(roomId)}/confirm-payment`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ walletAddress }),
+    },
+  );
+  if (!res.ok) throw new Error(`Failed to confirm payment: ${res.status}`);
+  const data = await res.json();
+  return {
+    room: data.room,
+    autoReleased: data.autoReleased,
+    message: data.message,
+  };
+}
+
 // ===== TRADE MESSAGES =====
 
 export async function listTradeMessages(

@@ -1,18 +1,51 @@
 // Cloudflare Pages Functions handler for fetching token accounts
 // Supports GET requests with query params: ?publicKey=<address>
 // Also supports POST with JSON body: { walletAddress: <address> }
+// Uses free RPC providers with automatic fallback
 
-// Helius-only RPC configuration
-function getHeliusRpcEndpoint(env: any): string {
-  if (env?.HELIUS_API_KEY) {
-    return `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`;
+// Build list of RPC endpoints from environment and free public providers
+function buildRpcEndpoints(env: any): string[] {
+  const endpoints: string[] = [];
+
+  // Add environment-configured endpoints first (highest priority)
+  if (env?.SOLANA_RPC_URL && typeof env.SOLANA_RPC_URL === "string") {
+    const trimmed = env.SOLANA_RPC_URL.trim();
+    if (trimmed.length > 0) {
+      endpoints.push(trimmed);
+    }
   }
-  if (env?.HELIUS_RPC_URL) {
-    return env.HELIUS_RPC_URL;
+
+  if (env?.ALCHEMY_RPC_URL && typeof env.ALCHEMY_RPC_URL === "string") {
+    const trimmed = env.ALCHEMY_RPC_URL.trim();
+    if (trimmed.length > 0) {
+      endpoints.push(trimmed);
+    }
   }
-  throw new Error(
-    "Helius RPC endpoint required. Set HELIUS_API_KEY or HELIUS_RPC_URL.",
-  );
+
+  if (env?.MORALIS_RPC_URL && typeof env.MORALIS_RPC_URL === "string") {
+    const trimmed = env.MORALIS_RPC_URL.trim();
+    if (trimmed.length > 0) {
+      endpoints.push(trimmed);
+    }
+  }
+
+  // Add free public RPC endpoints (tested, reliable)
+  const publicEndpoints = [
+    "https://solana.publicnode.com",
+    "https://api.solflare.com",
+    "https://rpc.ankr.com/solana",
+    "https://rpc.ironforge.network/mainnet",
+    "https://api.mainnet-beta.solana.com",
+  ];
+
+  // Add public endpoints that aren't already in the list
+  publicEndpoints.forEach((endpoint) => {
+    if (!endpoints.includes(endpoint)) {
+      endpoints.push(endpoint);
+    }
+  });
+
+  return endpoints;
 }
 
 // Known token metadata for common tokens
@@ -111,26 +144,6 @@ async function handler(request: Request, context: any): Promise<Response> {
       );
     }
 
-    // Get Helius RPC endpoint only
-    let rpcEndpoint: string;
-    try {
-      rpcEndpoint = getHeliusRpcEndpoint(env);
-    } catch (e) {
-      return new Response(
-        JSON.stringify({
-          error: (e as Error).message,
-          tokens: [],
-        }),
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        },
-      );
-    }
-
     const rpcBody = {
       jsonrpc: "2.0",
       id: 1,
@@ -142,123 +155,201 @@ async function handler(request: Request, context: any): Promise<Response> {
       ],
     };
 
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+    let lastError: string | null = null;
+    const rpcEndpoints = buildRpcEndpoints(env);
 
-      const resp = await fetch(rpcEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(rpcBody),
-        signal: controller.signal,
-      });
+    console.log(
+      `[TokenAccounts] Using ${rpcEndpoints.length} RPC endpoints. Primary: ${rpcEndpoints[0]?.substring(0, 50)}...`,
+    );
 
-      clearTimeout(timeoutId);
+    // Try each RPC endpoint
+    for (let i = 0; i < rpcEndpoints.length; i++) {
+      const endpoint = rpcEndpoints[i];
+      if (!endpoint) continue;
 
-      const data = await resp.json();
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      // Check if RPC returned an error
-      if (data.error) {
+        console.log(
+          `[TokenAccounts] Attempt ${i + 1}/${rpcEndpoints.length}: ${endpoint.substring(0, 60)}...`,
+        );
+
+        const resp = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(rpcBody),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          const errorText = await resp.text();
+          lastError = `HTTP ${resp.status}: ${errorText}`;
+          console.warn(
+            `[TokenAccounts] Endpoint ${i + 1} non-OK response: ${lastError}`,
+          );
+          continue;
+        }
+
+        const data = await resp.json();
+
+        // Check if RPC returned an error
+        if (data.error) {
+          lastError = data.error.message || "RPC error";
+          console.warn(
+            `[TokenAccounts] Endpoint ${i + 1} RPC error: ${lastError}`,
+          );
+          continue;
+        }
+
+        // Parse token accounts from RPC response
+        const accounts = data.result?.value || [];
+        const tokens = accounts.map((account: any) => {
+          try {
+            const parsedInfo = account.account?.data?.parsed?.info;
+            if (!parsedInfo) return null;
+
+            const mint = parsedInfo.mint;
+            const decimals = parsedInfo.tokenAmount?.decimals || 0;
+            const tokenAmount = parsedInfo.tokenAmount;
+
+            // Extract balance
+            let balance = 0;
+            if (typeof tokenAmount?.uiAmount === "number") {
+              balance = tokenAmount.uiAmount;
+            } else if (tokenAmount?.amount) {
+              const rawAmount = BigInt(tokenAmount.amount);
+              balance = Number(rawAmount) / Math.pow(10, decimals);
+            }
+
+            // Get metadata for this token
+            const metadata = KNOWN_TOKENS[mint] || {
+              mint,
+              symbol: "UNKNOWN",
+              name: "Unknown Token",
+              decimals,
+            };
+
+            return {
+              ...metadata,
+              balance,
+              decimals: decimals || metadata.decimals,
+            };
+          } catch (e) {
+            console.warn(`[TokenAccounts] Failed to parse account:`, e);
+            return null;
+          }
+        });
+
+        // Filter out null entries
+        const validTokens = tokens.filter(Boolean);
+
+        // Fetch and include native SOL balance
+        let solBalance = 0;
+        try {
+          const solRpcBody = {
+            jsonrpc: "2.0",
+            id: 1,
+            method: "getBalance",
+            params: [publicKey],
+          };
+
+          const solController = new AbortController();
+          const solTimeoutId = setTimeout(() => solController.abort(), 10000);
+
+          const solResp = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(solRpcBody),
+            signal: solController.signal,
+          });
+
+          clearTimeout(solTimeoutId);
+
+          const solData = await solResp.json();
+          const lamports = solData.result ?? solData.result?.value;
+          if (
+            !solData.error &&
+            typeof lamports === "number" &&
+            isFinite(lamports) &&
+            lamports >= 0
+          ) {
+            solBalance = lamports / 1_000_000_000;
+            console.log(
+              `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
+            );
+          }
+        } catch (err) {
+          console.warn(`[TokenAccounts] Failed to fetch SOL balance:`, err);
+        }
+
+        // Add SOL to the beginning of tokens list
+        const allTokens = [
+          {
+            mint: "So11111111111111111111111111111111111111112",
+            symbol: "SOL",
+            name: "Solana",
+            decimals: 9,
+            balance: solBalance,
+          },
+          ...validTokens,
+        ];
+
+        console.log(
+          `[TokenAccounts] ✅ Found ${validTokens.length} token accounts (plus SOL) for ${publicKey.slice(
+            0,
+            8,
+          )}`,
+        );
+
         return new Response(
           JSON.stringify({
-            error: data.error.message || "Helius RPC error",
-            tokens: [],
+            publicKey,
+            tokens: allTokens,
+            count: allTokens.length,
+            source: endpoint.substring(0, 50),
           }),
           {
-            status: 400,
+            status: 200,
             headers: {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*",
             },
           },
         );
-      }
-
-      // Parse token accounts from RPC response
-      const accounts = data.result?.value || [];
-      const tokens = accounts.map((account: any) => {
-        try {
-          const parsedInfo = account.account?.data?.parsed?.info;
-          if (!parsedInfo) return null;
-
-          const mint = parsedInfo.mint;
-          const decimals = parsedInfo.tokenAmount?.decimals || 0;
-          const tokenAmount = parsedInfo.tokenAmount;
-
-          // Extract balance
-          let balance = 0;
-          if (typeof tokenAmount?.uiAmount === "number") {
-            balance = tokenAmount.uiAmount;
-          } else if (tokenAmount?.amount) {
-            const rawAmount = BigInt(tokenAmount.amount);
-            balance = Number(rawAmount) / Math.pow(10, decimals);
-          }
-
-          // Get metadata for this token
-          const metadata = KNOWN_TOKENS[mint] || {
-            mint,
-            symbol: "UNKNOWN",
-            name: "Unknown Token",
-            decimals,
-          };
-
-          return {
-            ...metadata,
-            balance,
-            decimals: decimals || metadata.decimals,
-          };
-        } catch (e) {
-          console.warn(`[TokenAccounts] Failed to parse account:`, e);
-          return null;
+      } catch (error: any) {
+        if (error?.name === "AbortError") {
+          lastError = "Request timeout";
+          console.warn(`[TokenAccounts] Endpoint ${i + 1} timeout`);
+        } else {
+          lastError = error?.message || String(error);
+          console.warn(`[TokenAccounts] Endpoint ${i + 1} error: ${lastError}`);
         }
-      });
-
-      // Filter out null entries
-      const validTokens = tokens.filter(Boolean);
-
-      console.log(
-        `[TokenAccounts] Found ${validTokens.length} token accounts for ${publicKey.slice(
-          0,
-          8,
-        )} from Helius`,
-      );
-
-      return new Response(
-        JSON.stringify({
-          publicKey,
-          tokens: validTokens,
-          count: validTokens.length,
-        }),
-        {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        },
-      );
-    } catch (error: any) {
-      const errorMsg =
-        error?.name === "AbortError"
-          ? "timeout"
-          : error?.message || String(error);
-      console.error(`[TokenAccounts] Helius RPC error: ${errorMsg}`);
-
-      return new Response(
-        JSON.stringify({
-          error: "Failed to fetch token accounts from Helius RPC",
-          details: errorMsg,
-          tokens: [],
-        }),
-        {
-          status: 502,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        },
-      );
+      }
     }
+
+    // All endpoints failed
+    console.error(
+      `[TokenAccounts] All ${rpcEndpoints.length} RPC endpoints failed. Last error: ${lastError}`,
+    );
+    return new Response(
+      JSON.stringify({
+        error: "Failed to fetch token accounts - all RPC endpoints failed",
+        details: lastError || "No available Solana RPC providers",
+        endpointsAttempted: rpcEndpoints.length,
+        primaryEndpoint: rpcEndpoints[0]?.substring(0, 60) || "none",
+        tokens: [],
+      }),
+      {
+        status: 502,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      },
+    );
   } catch (err: any) {
     console.error(`[TokenAccounts] Handler error:`, err);
     return new Response(

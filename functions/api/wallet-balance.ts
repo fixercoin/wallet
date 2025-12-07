@@ -1,42 +1,54 @@
 // functions/api/wallet-balance.ts
 // Accepts POST JSON: { "walletAddress": "<Pubkey>" }
-// Returns the getBalance RPC result proxied via RPC providers
+// Returns the getBalance RPC result using free RPC providers with fallback
 
-// NOTE: Helius, Moralis, and Alchemy are RPC providers for Solana blockchain calls
-// They fetch wallet balance and transaction data - NOT for token price fetching
-// Token prices should come from dedicated price APIs like Jupiter, DexScreener, or DexTools
+// Build list of RPC endpoints from environment and free public providers
+function buildRpcEndpoints(env: any): string[] {
+  const endpoints: string[] = [];
 
-// Helius-only RPC configuration - no fallbacks
-function getHeliusRpcEndpoint(env: any): string {
-  if (env?.HELIUS_API_KEY) {
-    return `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`;
+  // Add environment-configured endpoints first (highest priority)
+  if (env?.SOLANA_RPC_URL && typeof env.SOLANA_RPC_URL === "string") {
+    const trimmed = env.SOLANA_RPC_URL.trim();
+    if (trimmed.length > 0) {
+      endpoints.push(trimmed);
+    }
   }
-  if (env?.HELIUS_RPC_URL) {
-    return env.HELIUS_RPC_URL;
+
+  if (env?.ALCHEMY_RPC_URL && typeof env.ALCHEMY_RPC_URL === "string") {
+    const trimmed = env.ALCHEMY_RPC_URL.trim();
+    if (trimmed.length > 0) {
+      endpoints.push(trimmed);
+    }
   }
-  throw new Error(
-    "Helius RPC endpoint required. Set HELIUS_API_KEY or HELIUS_RPC_URL.",
-  );
+
+  if (env?.MORALIS_RPC_URL && typeof env.MORALIS_RPC_URL === "string") {
+    const trimmed = env.MORALIS_RPC_URL.trim();
+    if (trimmed.length > 0) {
+      endpoints.push(trimmed);
+    }
+  }
+
+  // Add free public RPC endpoints (tested, reliable)
+  const publicEndpoints = [
+    "https://solana.publicnode.com",
+    "https://api.solflare.com",
+    "https://rpc.ankr.com/solana",
+    "https://rpc.ironforge.network/mainnet",
+    "https://api.mainnet-beta.solana.com",
+  ];
+
+  // Add public endpoints that aren't already in the list
+  publicEndpoints.forEach((endpoint) => {
+    if (!endpoints.includes(endpoint)) {
+      endpoints.push(endpoint);
+    }
+  });
+
+  return endpoints;
 }
 
 export async function onRequestPost(context: any) {
   const { request, env } = context;
-
-  // Use Helius RPC ONLY
-  let rpcEndpoint: string;
-  try {
-    rpcEndpoint = getHeliusRpcEndpoint(env);
-  } catch (e) {
-    return new Response(
-      JSON.stringify({
-        error: (e as Error).message,
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
-  }
 
   try {
     const body = await request.json();
@@ -59,51 +71,98 @@ export async function onRequestPost(context: any) {
       params: [walletAddress],
     };
 
-    // Use Helius RPC only
-    try {
-      const resp = await fetch(rpcEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(rpcBody),
-      });
+    const rpcEndpoints = buildRpcEndpoints(env);
+    console.log(
+      `[BalanceAPI] Using ${rpcEndpoints.length} RPC endpoints. Primary: ${rpcEndpoints[0]?.substring(0, 50)}...`,
+    );
 
-      const data = await resp.json();
+    let lastError = "";
+    let lastStatus = 502;
 
-      // Check if RPC returned an error
-      if (data.error) {
-        return new Response(
-          JSON.stringify({
-            error: data.error.message || "Helius RPC error",
-            code: data.error.code,
-          }),
-          {
-            status: 400,
-            headers: { "Content-Type": "application/json" },
-          },
+    // Try each RPC endpoint
+    for (let i = 0; i < rpcEndpoints.length; i++) {
+      const endpoint = rpcEndpoints[i];
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        console.log(
+          `[BalanceAPI] Attempt ${i + 1}/${rpcEndpoints.length}: ${endpoint.substring(0, 60)}...`,
         );
-      }
 
-      return new Response(JSON.stringify(data), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    } catch (err: any) {
-      return new Response(
-        JSON.stringify({
-          error: "Failed to fetch balance from Helius RPC",
-          details: err?.message,
-        }),
-        {
-          status: 502,
+        const resp = await fetch(endpoint, {
+          method: "POST",
           headers: { "Content-Type": "application/json" },
-        },
-      );
+          body: JSON.stringify(rpcBody),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        lastStatus = resp.status;
+
+        if (!resp.ok) {
+          const errorText = await resp.text();
+          lastError = `HTTP ${resp.status}: ${errorText}`;
+          console.warn(
+            `[BalanceAPI] Endpoint ${i + 1} non-OK response: ${lastError}`,
+          );
+          continue;
+        }
+
+        const data = await resp.json();
+
+        // Check if RPC returned an error
+        if (data.error) {
+          lastError = data.error.message || "RPC error";
+          console.warn(
+            `[BalanceAPI] Endpoint ${i + 1} RPC error: ${lastError}`,
+          );
+          continue;
+        }
+
+        const lamports = data.result ?? data.result?.value;
+        if (typeof lamports === "number" && isFinite(lamports) && lamports >= 0) {
+          console.log(
+            `[BalanceAPI] ✅ Success from endpoint ${i + 1}: ${lamports} lamports`,
+          );
+          return new Response(JSON.stringify(data), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        lastError = "Invalid balance response from RPC";
+      } catch (error: any) {
+        if (error?.name === "AbortError") {
+          lastError = "Request timeout";
+          console.warn(`[BalanceAPI] Endpoint ${i + 1} timeout`);
+        } else {
+          lastError = error?.message || String(error);
+          console.warn(`[BalanceAPI] Endpoint ${i + 1} error: ${lastError}`);
+        }
+      }
     }
-  } catch (err: any) {
+
+    // All endpoints failed
+    console.error(
+      `[BalanceAPI] All ${rpcEndpoints.length} endpoints failed. Last error: ${lastError}`,
+    );
     return new Response(
       JSON.stringify({
         error: "Failed to fetch balance",
-        details: err?.message,
+        details: lastError || "All RPC endpoints failed",
+      }),
+      {
+        status: lastStatus,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  } catch (err: any) {
+    console.error(`[BalanceAPI] Handler error:`, err);
+    return new Response(
+      JSON.stringify({
+        error: "Failed to fetch balance",
+        details: err?.message || String(err),
       }),
       {
         status: 500,

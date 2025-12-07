@@ -1867,6 +1867,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
 }
 
 export async function onRequest(context: any): Promise<Response> {
-  // Cloudflare Pages Functions pass a context object; extract the Request
-  return handler(context.request as Request);
+  // Cloudflare Pages Functions pass a context object; extract the Request and env
+  const { request, env } = context;
+  return handler(request as Request, env as Env);
 }

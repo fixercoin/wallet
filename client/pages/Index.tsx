@@ -88,11 +88,6 @@ export default function Index() {
   console.log("[Index] ✅ Wallet loaded successfully:", wallet.publicKey);
 
   const navigateToScreen = (screen: Screen, tokenMint?: string) => {
-    // Prevent accessing setup if wallet exists
-    if (screen === "setup" && wallet) {
-      setCurrentScreen({ screen: "dashboard" });
-      return;
-    }
     setCurrentScreen({ screen, tokenMint });
   };
 

@@ -157,13 +157,8 @@ export async function createServer(): Promise<express.Application> {
       console.error("[SOL Price] Unhandled error:", e);
       return res.status(500).json({
         token: "SOL",
-        price: 149.38,
-        priceUsd: 149.38,
-        priceChange24h: 0,
-        volume24h: 0,
-        marketCap: 0,
-        source: "fallback",
         error: "Price service temporarily unavailable",
+        details: e?.message || String(e),
       });
     }
   });
@@ -174,10 +169,8 @@ export async function createServer(): Promise<express.Application> {
       console.error("[Token Price] Unhandled error:", e);
       return res.status(500).json({
         token: (req.query.token as string) || "FIXERCOIN",
-        price: 0.00008139,
-        priceUsd: "0.00008139",
-        source: "fallback",
         error: "Price service temporarily unavailable",
+        details: e?.message || String(e),
       });
     }
   });

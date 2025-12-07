@@ -907,14 +907,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <div className="text-3xl text-gray-900 leading-tight">
                             {showBalance ? `${usdZero}` : "****"}
                           </div>
-                          <div>
-                            <Button
-                              onClick={onP2PTrade || onReceive}
-                              className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-3 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
-                            >
-                              P2P TRADE
-                            </Button>
-                          </div>
+                          <Button
+                            onClick={onP2PTrade || onReceive}
+                            className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-3 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
+                          >
+                            P2P TRADE
+                          </Button>
                         </div>
                       );
                     }
@@ -969,14 +967,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             "****"
                           )}
                         </div>
-                        <div>
-                          <Button
-                            onClick={onP2PTrade || onReceive}
-                            className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-3 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
-                          >
-                            P2P TRADE
-                          </Button>
-                        </div>
+                        <Button
+                          onClick={onP2PTrade || onReceive}
+                          className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-3 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
+                        >
+                          P2P TRADE
+                        </Button>
                       </div>
                     );
                   })()
@@ -1142,18 +1138,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
                               )}
                             </span>
-                          ) : [
-                              "SOL",
-                              "USDC",
-                              "FIXERCOIN",
-                              "LOCKER",
-                              "FXM",
-                            ].includes(token.symbol) ? (
-                            <PriceLoader />
                           ) : (
-                            <span style={{ color: "#999999" }}>
-                              $0.00000000
-                            </span>
+                            <PriceLoader />
                           )}
                         </div>
 

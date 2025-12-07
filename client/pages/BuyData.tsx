@@ -158,46 +158,6 @@ export default function BuyData() {
     return tokens > 0 && pkr > 0;
   }, [amountTokens, amountPKR]);
 
-  const proceedWithOrderCreation = async () => {
-    if (!wallet?.publicKey) {
-      toast.error("Missing wallet information");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const createdOrder = await createOrderFromOffer(
-        {
-          id: `order-${Date.now()}`,
-          type: "BUY",
-          sellerWallet: "",
-          token: "USDC",
-          pricePKRPerQuote: exchangeRate,
-          minAmountTokens: 0,
-          maxAmountTokens: Infinity,
-          minAmountPKR: 0,
-          maxAmountPKR: Infinity,
-        } as P2POrder,
-        wallet.publicKey,
-        "BUY",
-        {
-          token: "USDC",
-          amountTokens: parseFloat(amountTokens),
-          amountPKR: parseFloat(amountPKR),
-          price: exchangeRate,
-        },
-      );
-
-      toast.success("Order created successfully!");
-      navigate("/order-complete", { state: { order: createdOrder } });
-    } catch (error) {
-      console.error("Error creating order:", error);
-      toast.error("Failed to create order");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSubmit = async () => {
     if (!isValid) return;
 

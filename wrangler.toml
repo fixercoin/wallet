@@ -41,7 +41,7 @@ SOLANA_RPC_URL = "https://solana.publicnode.com"
 # Path: Project Settings > Environment variables > Production (or Preview)
 [env.production.vars]
 # OPTION 1 (RECOMMENDED): Use Helius API Key for reliable production performance
-# HELIUS_API_KEY = "your-helius-api-key"
+HELIUS_API_KEY = "ff9e8f9e-ec7f-463e-9d7f-46ab0bffbfb3"
 
 # OPTION 2: Use a custom RPC endpoint URL
 # SOLANA_RPC_URL = "https://your-rpc-endpoint.com"

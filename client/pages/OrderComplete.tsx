@@ -545,14 +545,13 @@ export default function OrderComplete() {
             {isBuyer ? "BUY ORDER" : "SELL ORDER"}
           </h1>
           {order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
-            <button
-              onClick={handleCancelOrder}
-              className="relative p-2 rounded-lg hover:bg-red-600/20 transition-colors text-red-400"
-              aria-label="Cancel Order"
-              title="Cancel order"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-3">
+              <div className={`text-sm font-bold px-3 py-1 rounded-lg ${
+                timeRemaining <= 60 ? "bg-red-600/40 text-red-400" : "bg-[#FF7A5C]/20 text-[#FF7A5C]"
+              }`}>
+                {formatTimeRemaining(timeRemaining)}
+              </div>
+            </div>
           )}
         </div>
       </div>

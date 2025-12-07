@@ -96,7 +96,7 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
     for (const endpoint of RPC_ENDPOINTS) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort("RPC request timeout after 10 seconds"), 10000);
 
         try {
           const response = await fetch(endpoint, {

@@ -78,6 +78,12 @@ export default function OrderComplete() {
           loadedOrder.sellerTransferInitiated ?? false,
         );
         setBuyerCryptoReceived(loadedOrder.buyerCryptoReceived ?? false);
+        // Set timestamp for timer (use createdAt if available, otherwise use current time)
+        const timestamp =
+          loadedOrder.createdAt && !isNaN(new Date(loadedOrder.createdAt).getTime())
+            ? new Date(loadedOrder.createdAt).getTime()
+            : Date.now();
+        setOrderTimestamp(timestamp);
       }
 
       setLoading(false);
@@ -85,6 +91,27 @@ export default function OrderComplete() {
 
     loadOrder();
   }, [location.state]);
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (!orderTimestamp) return;
+
+    const timerInterval = setInterval(() => {
+      const now = Date.now();
+      const elapsedSeconds = Math.floor((now - orderTimestamp) / 1000);
+      const remaining = Math.max(0, 600 - elapsedSeconds); // 600 seconds = 10 minutes
+
+      setTimeRemaining(remaining);
+
+      // Auto-cancel order if timer reaches 0
+      if (remaining === 0) {
+        clearInterval(timerInterval);
+        handleCancelOrder();
+      }
+    }, 1000);
+
+    return () => clearInterval(timerInterval);
+  }, [orderTimestamp]);
 
   // Fetch exchange rate from API (same as BuyData and SellData)
   useEffect(() => {

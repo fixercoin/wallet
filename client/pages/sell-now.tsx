@@ -272,17 +272,26 @@ export default function SellNow() {
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = "Failed to save order";
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || errorMessage;
+        } catch {
+          // If not JSON, use the text as-is
+          errorMessage = errorText || errorMessage;
+        }
         console.error(
           "Failed to save order to API:",
           response.status,
-          await response.text(),
+          errorMessage,
         );
-        return false;
+        throw new Error(errorMessage);
       }
       return true;
     } catch (error) {
       console.error("Error saving order to API:", error);
-      return false;
+      throw error;
     }
   };
 

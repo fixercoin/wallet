@@ -163,9 +163,10 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
           };
         });
 
-        // Also fetch SOL balance using the same Helius endpoint
+        // Fetch SOL balance using a separate request with its own timeout
         let solBalance: number | null = null;
         let solFetchSucceeded = false;
+
         try {
           const solBalanceBody = {
             jsonrpc: "2.0",
@@ -174,39 +175,76 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
             params: [publicKey],
           };
 
-          const solResponse = await fetch(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(solBalanceBody),
-            signal: controller.signal,
-          });
+          // Create a NEW controller for SOL fetch to avoid timeout conflicts
+          const solController = new AbortController();
+          const solTimeoutId = setTimeout(() => {
+            solController.abort();
+          }, 8000); // 8 second timeout for SOL fetch
 
-          if (solResponse.ok) {
-            const solData = await solResponse.json();
-            if (solData.result !== undefined && !solData.error) {
-              solBalance = solData.result / 1_000_000_000; // Convert lamports to SOL
-              solFetchSucceeded = true;
-              console.log(
-                `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
-              );
+          try {
+            const solResponse = await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(solBalanceBody),
+              signal: solController.signal,
+            });
+
+            clearTimeout(solTimeoutId);
+
+            if (solResponse.ok) {
+              const solData = await solResponse.json();
+              if (solData.result !== undefined && !solData.error) {
+                const lamports = solData.result;
+                solBalance =
+                  typeof lamports === "number"
+                    ? lamports / 1_000_000_000
+                    : typeof lamports?.value === "number"
+                      ? lamports.value / 1_000_000_000
+                      : 0;
+
+                if (solBalance >= 0) {
+                  solFetchSucceeded = true;
+                  console.log(
+                    `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
+                  );
+                }
+              }
             }
+          } catch (err) {
+            clearTimeout(solTimeoutId);
+            throw err;
           }
         } catch (solError) {
           console.warn(
-            `[TokenAccounts] Warning: Could not fetch SOL balance from Helius`,
+            `[TokenAccounts] Warning: Could not fetch SOL balance`,
             solError instanceof Error ? solError.message : String(solError),
           );
+          // Set solBalance to 0 but still mark as fetched so we don't try again
+          solBalance = 0;
+          solFetchSucceeded = true;
         }
 
-        // Only add SOL to tokens array if fetch was successful
+        // Always ensure SOL is in the tokens array with the fetched balance
         const hasSOL = tokens.some(
           (t) => t.mint === "So11111111111111111111111111111111111111112",
         );
-        if (!hasSOL && solFetchSucceeded && solBalance !== null) {
+
+        if (!hasSOL && solFetchSucceeded) {
           tokens.unshift({
             ...KNOWN_TOKENS["So11111111111111111111111111111111111111112"],
-            balance: solBalance,
+            balance: solBalance ?? 0,
           });
+        } else if (hasSOL && solFetchSucceeded && solBalance !== null) {
+          // Update existing SOL entry with fetched balance
+          const solIndex = tokens.findIndex(
+            (t) => t.mint === "So11111111111111111111111111111111111111112",
+          );
+          if (solIndex >= 0) {
+            tokens[solIndex] = {
+              ...tokens[solIndex],
+              balance: solBalance,
+            };
+          }
         }
 
         console.log(

@@ -150,6 +150,15 @@ export default function BuyData() {
               return;
             }
 
+            // Check if buyer has added payment details
+            if (paymentMethods.length === 0) {
+              toast.error("Please add your payment details before creating an order");
+              setShowTradeDialog(false);
+              setEditingPaymentMethodId(undefined);
+              setShowPaymentDialog(true);
+              return;
+            }
+
             const createdOrder = await createOrderFromOffer(
               selectedOffer,
               wallet.publicKey,

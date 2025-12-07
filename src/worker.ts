@@ -139,7 +139,7 @@ async function handleHealth(): Promise<Response> {
   );
 }
 
-// Wallet balance - SOL
+// Wallet balance - SOL (Helius only)
 async function handleWalletBalance(url: URL, env: Env): Promise<Response> {
   const publicKey = url.searchParams.get("publicKey");
   if (!publicKey) {
@@ -149,69 +149,45 @@ async function handleWalletBalance(url: URL, env: Env): Promise<Response> {
     });
   }
 
-  // Build RPC endpoints with environment variable support
-  const rpcEndpoints: string[] = [];
+  try {
+    // Use Helius RPC ONLY
+    const endpoint = getHeliusRpcEndpoint(env);
 
-  // Add Helius if API key is provided
-  if (env.HELIUS_API_KEY) {
-    rpcEndpoints.push(
-      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
+    const payload = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getBalance",
+      params: [publicKey],
+    };
+
+    const rpcRes = await timeoutFetch(endpoint, {
+      method: "POST",
+      headers: browserHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const rpcJson = await rpcRes.json();
+
+    if (rpcJson.error) {
+      throw new Error(rpcJson.error.message || "Helius RPC error");
+    }
+
+    const lamports = rpcJson?.result?.value ?? 0;
+    const balance = lamports / 1_000_000_000;
+    return new Response(JSON.stringify({ balance, lamports, publicKey }), {
+      headers: CORS_HEADERS,
+    });
+  } catch (e: any) {
+    const errorMsg = String(e?.message || e).slice(0, 100);
+    console.error("[Helius] Balance fetch error:", errorMsg);
+
+    return new Response(
+      JSON.stringify({
+        error: "Failed to fetch wallet balance from Helius RPC",
+        details: errorMsg,
+      }),
+      { status: 502, headers: CORS_HEADERS }
     );
   }
-
-  // Add custom SOLANA_RPC if provided
-  if (env.SOLANA_RPC) {
-    rpcEndpoints.push(env.SOLANA_RPC);
-  }
-
-  // Add fallback endpoints
-  rpcEndpoints.push(...FALLBACK_RPC_ENDPOINTS);
-
-  // Remove duplicates
-  const uniqueEndpoints = [...new Set(rpcEndpoints)];
-
-  const payload = {
-    jsonrpc: "2.0",
-    id: 1,
-    method: "getBalance",
-    params: [publicKey],
-  };
-
-  let lastError = "";
-  for (let i = 0; i < uniqueEndpoints.length; i++) {
-    const endpoint = uniqueEndpoints[i];
-    try {
-      const rpcRes = await timeoutFetch(endpoint, {
-        method: "POST",
-        headers: browserHeaders(),
-        body: JSON.stringify(payload),
-      });
-      const rpcJson = await rpcRes.json();
-
-      if (rpcJson.error) {
-        lastError = rpcJson.error.message || "RPC error";
-        continue;
-      }
-
-      const lamports = rpcJson?.result?.value ?? 0;
-      const balance = lamports / 1_000_000_000;
-      return new Response(JSON.stringify({ balance, lamports, publicKey }), {
-        headers: CORS_HEADERS,
-      });
-    } catch (e: any) {
-      lastError = String(e?.message || e).slice(0, 100);
-      continue;
-    }
-  }
-
-  return new Response(
-    JSON.stringify({
-      error: "Failed to fetch wallet balance",
-      details: lastError || "All RPC endpoints failed",
-      endpointsAttempted: uniqueEndpoints.length,
-    }),
-    { status: 502, headers: CORS_HEADERS },
-  );
 }
 
 // Wallet tokens - SPL accounts

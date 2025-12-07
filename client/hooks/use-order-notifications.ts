@@ -70,7 +70,9 @@ export function useOrderNotifications() {
       type:
         | "order_created"
         | "payment_confirmed"
-        | "received_confirmed"
+        | "seller_payment_received"
+        | "transfer_initiated"
+        | "crypto_received"
         | "order_cancelled",
       orderType: "BUY" | "SELL",
       orderId: string,

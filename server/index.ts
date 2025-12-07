@@ -276,6 +276,80 @@ export async function createServer(): Promise<express.Application> {
     }
   });
 
+  // Unified wallet endpoint - returns balance and token accounts
+  app.get("/api/wallet", async (req, res) => {
+    try {
+      const publicKey =
+        (req.query.publicKey as string) ||
+        (req.query.wallet as string) ||
+        (req.query.address as string) ||
+        (req.query.walletAddress as string);
+
+      if (!publicKey || typeof publicKey !== "string") {
+        return res.status(400).json({
+          error: "Missing or invalid wallet address parameter",
+          examples: [
+            "?publicKey=...",
+            "?wallet=...",
+            "?address=...",
+            "?walletAddress=...",
+          ],
+        });
+      }
+
+      // Fetch wallet info in parallel
+      const [balanceRes, tokenAccountsRes] = await Promise.allSettled([
+        // Fetch balance
+        (async () => {
+          const modifiedReq = { ...req, query: { publicKey } };
+          return new Promise<any>((resolve, reject) => {
+            const resProxy = {
+              status: (code: number) => ({
+                json: (data: any) => resolve({ statusCode: code, data }),
+              }),
+              json: (data: any) => resolve({ statusCode: 200, data }),
+            };
+            handleWalletBalance(modifiedReq as any, resProxy as any).catch(reject);
+          });
+        })(),
+        // Fetch token accounts
+        (async () => {
+          const modifiedReq = { ...req, query: { publicKey } };
+          return new Promise<any>((resolve, reject) => {
+            const resProxy = {
+              status: (code: number) => ({
+                json: (data: any) => resolve({ statusCode: code, data }),
+              }),
+              json: (data: any) => resolve({ statusCode: 200, data }),
+            };
+            handleGetTokenAccounts(modifiedReq as any, resProxy as any).catch(reject);
+          });
+        })(),
+      ]);
+
+      const result: any = {
+        publicKey,
+        balance: null,
+        tokenAccounts: null,
+      };
+
+      if (balanceRes.status === "fulfilled" && balanceRes.value) {
+        result.balance = balanceRes.value.data;
+      }
+
+      if (tokenAccountsRes.status === "fulfilled" && tokenAccountsRes.value) {
+        result.tokenAccounts = tokenAccountsRes.value.data;
+      }
+
+      return res.json(result);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch wallet information",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
   // Unified swap & quote proxies (forward to Fixorium worker or configured API)
   // Local handler: attempt Meteora swap locally first to avoid dependency on remote worker
 

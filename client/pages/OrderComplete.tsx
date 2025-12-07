@@ -196,6 +196,12 @@ export default function OrderComplete() {
     return `${addr.slice(0, chars)}...${addr.slice(-chars)}`;
   };
 
+  const formatTimeRemaining = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !order?.roomId || !wallet?.publicKey) return;

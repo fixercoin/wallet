@@ -21,8 +21,6 @@ function getHeliusRpcEndpoint(): string {
   );
 }
 
-const RPC_ENDPOINT = getHeliusRpcEndpoint();
-
 export const handleGetTokenBalance: RequestHandler = async (req, res) => {
   try {
     const wallet =
@@ -53,6 +51,8 @@ export const handleGetTokenBalance: RequestHandler = async (req, res) => {
     try {
       console.log(`[TokenBalance] Fetching balance for ${mint} from Helius`);
 
+      // Get RPC endpoint on-demand instead of at module load time
+      const RPC_ENDPOINT = getHeliusRpcEndpoint();
       const response = await fetch(RPC_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -108,8 +108,14 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
     };
 
     let lastError: Error | null = null;
+    const RPC_ENDPOINTS = getRpcEndpoints();
 
-    for (const endpoint of RPC_ENDPOINTS) {
+    console.log(
+      `[WalletBalance] Trying ${RPC_ENDPOINTS.length} RPC endpoints for balance fetch`,
+    );
+
+    for (let i = 0; i < RPC_ENDPOINTS.length; i++) {
+      const endpoint = RPC_ENDPOINTS[i];
       try {
         console.log(
           `[WalletBalance] Trying endpoint: ${endpoint.substring(0, 40)}...`,

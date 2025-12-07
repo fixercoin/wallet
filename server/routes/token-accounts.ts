@@ -158,13 +158,58 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
             };
           });
 
+          // Also fetch SOL balance using the same endpoint/connection
+          let solBalance = 0;
+          try {
+            const solBalanceBody = {
+              jsonrpc: "2.0",
+              id: 2,
+              method: "getBalance",
+              params: [publicKey],
+            };
+
+            const solResponse = await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(solBalanceBody),
+              signal: controller.signal,
+            });
+
+            if (solResponse.ok) {
+              const solData = await solResponse.json();
+              if (solData.result !== undefined) {
+                solBalance = solData.result / 1_000_000_000; // Convert lamports to SOL
+                console.log(
+                  `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
+                );
+              }
+            }
+          } catch (solError) {
+            console.warn(
+              `[TokenAccounts] Warning: Could not fetch SOL balance, will return 0`,
+              solError instanceof Error ? solError.message : String(solError),
+            );
+          }
+
+          // Add SOL to the tokens array if not already present
+          const hasSOL = tokens.some(
+            (t) => t.mint === "So11111111111111111111111111111111111111112",
+          );
+          if (!hasSOL) {
+            tokens.unshift({
+              ...KNOWN_TOKENS["So11111111111111111111111111111111111111112"],
+              balance: solBalance,
+            });
+          }
+
           console.log(
-            `[TokenAccounts] ✅ Found ${tokens.length} token accounts for ${publicKey.slice(0, 8)} via ${endpoint.slice(0, 40)}`,
+            `[TokenAccounts] ✅ Found ${tokens.length} tokens (including SOL) for ${publicKey.slice(0, 8)} via ${endpoint.slice(0, 40)}`,
           );
           return res.json({
             publicKey,
             tokens,
             count: tokens.length,
+            solBalance,
           });
         } finally {
           clearTimeout(timeoutId);

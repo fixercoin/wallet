@@ -35,6 +35,7 @@ import {
   handleUpdateTradeRoom,
   handleListTradeMessages,
   handleAddTradeMessage,
+  handleConfirmPayment,
   handleListP2POrders,
   handleCreateP2POrder,
   handleGetP2POrder,

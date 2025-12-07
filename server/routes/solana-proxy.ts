@@ -21,10 +21,10 @@ function getHeliusRpcEndpoint(): string {
   );
 }
 
-const RPC_ENDPOINT = getHeliusRpcEndpoint();
-
 export const handleSolanaRpc: RequestHandler = async (req, res) => {
   try {
+    // Get RPC endpoint on-demand instead of at module load time
+    const RPC_ENDPOINT = getHeliusRpcEndpoint();
     const body = req.body;
 
     if (!body) {

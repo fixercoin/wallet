@@ -1,15 +1,14 @@
 export interface Env {
   SOLANA_RPC?: string;
+  HELIUS_API_KEY?: string;
+  HELIUS_RPC_URL?: string;
 }
 
-// RPC endpoints
-// Prefer reliable public providers by default
-const DEFAULT_SOLANA_RPC = "https://rpc.ironforge.network/mainnet";
-const FALLBACK_RPC_ENDPOINTS = [
-  "https://rpc.ironforge.network/mainnet",
-  "https://solana.publicnode.com",
-  "https://rpc.ankr.com/solana",
-  "https://api.mainnet-beta.solana.com",
+// RPC endpoints - HELIUS ONLY
+// All RPC calls use Helius exclusively, no fallbacks to public providers
+const DEFAULT_SOLANA_RPC = "https://mainnet.helius-rpc.com"; // Placeholder
+const FALLBACK_RPC_ENDPOINTS: string[] = [
+  // HELIUS ONLY - No fallbacks to other providers
 ];
 
 // External API endpoints

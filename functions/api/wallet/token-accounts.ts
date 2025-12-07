@@ -143,6 +143,8 @@ async function handler(request: Request, env?: Env): Promise<Response> {
     let lastError: string | null = null;
     const RPC_ENDPOINTS = buildRpcEndpoints(env || {});
 
+    console.log(`[TokenAccounts] Using ${RPC_ENDPOINTS.length} RPC endpoints. Primary: ${RPC_ENDPOINTS[0]?.substring(0, 50)}...`);
+
     // Try each RPC endpoint
     for (const endpoint of RPC_ENDPOINTS) {
       if (!endpoint) continue;

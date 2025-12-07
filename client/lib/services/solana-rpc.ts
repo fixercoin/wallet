@@ -63,8 +63,8 @@ export const KNOWN_TOKENS: Record<string, TokenMetadata> = {
 // Request queue to prevent duplicate requests
 const requestQueue = new Map<string, Promise<any>>();
 
-// Use Helius RPC exclusively for reliability
-// Helius is the primary RPC endpoint with rate limit protection and CORS support
+// Use Helius RPC exclusively for all SOL and token operations
+// All RPC calls are routed through Helius with no fallbacks
 const HELIUS_RPC_ENDPOINT = SOLANA_RPC_URL;
 
 /**

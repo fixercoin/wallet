@@ -82,17 +82,6 @@ export default function SellData() {
         </button>
       </div>
 
-      {/* Available Offers */}
-      <P2POffersTable
-        key={refreshKey}
-        orderType="SELL"
-        exchangeRate={exchangeRate}
-        onSelectOffer={(offer) => {
-          setSelectedOffer(offer);
-          setShowTradeDialog(true);
-        }}
-      />
-
       {/* Trade Dialog */}
       <P2PTradeDialog
         open={showTradeDialog}

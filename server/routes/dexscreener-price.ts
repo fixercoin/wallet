@@ -288,7 +288,9 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
     console.log(`[SOL Price] Attempting Jupiter API...`);
     const jupiterPrice = await fetchPriceFromJupiter(SOL_MINT);
     if (jupiterPrice !== null && jupiterPrice > 0) {
-      console.log(`[SOL Price] ✅ Jupiter success: $${jupiterPrice.toFixed(2)}`);
+      console.log(
+        `[SOL Price] ✅ Jupiter success: $${jupiterPrice.toFixed(2)}`,
+      );
       return res.json({
         token: "SOL",
         price: jupiterPrice,

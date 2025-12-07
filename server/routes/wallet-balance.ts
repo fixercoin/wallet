@@ -33,9 +33,7 @@ function getRpcEndpoints(): string[] {
 
   // Helius with API key
   if (heliusApiKey) {
-    endpoints.push(
-      `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`,
-    );
+    endpoints.push(`https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`);
     console.log("[WalletBalance] Added Helius with API key");
   }
 
@@ -238,13 +236,14 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
           endpoint: endpointLabel,
         });
       } catch (error) {
-        const errorMsg =
-          error instanceof Error ? error.message : String(error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
         lastError = error instanceof Error ? error : new Error(errorMsg);
 
         // Check if it's a timeout/abort error
         if (errorMsg.includes("abort") || errorMsg.includes("timeout")) {
-          console.warn(`[WalletBalance] Endpoint ${i + 1}/${RPC_ENDPOINTS.length} timed out`);
+          console.warn(
+            `[WalletBalance] Endpoint ${i + 1}/${RPC_ENDPOINTS.length} timed out`,
+          );
         } else {
           console.warn(
             `[WalletBalance] Endpoint ${i + 1}/${RPC_ENDPOINTS.length} error: ${errorMsg}`,

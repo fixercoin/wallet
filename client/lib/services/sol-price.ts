@@ -92,19 +92,16 @@ class SolPriceService {
           const price = typeof data.price === "number" ? data.price : 0;
           priceData = {
             price: price,
-            price_change_24h:
-              data.price_change_24h ?? data.priceChange24h ?? 0,
+            price_change_24h: data.price_change_24h ?? data.priceChange24h ?? 0,
             market_cap: data.market_cap ?? data.marketCap ?? 0,
             volume_24h: data.volume_24h ?? data.volume24h ?? 0,
           };
         } else if (data.priceUsd !== undefined) {
           // Alternative response format (used by fallbacks)
-          const price =
-            typeof data.priceUsd === "number" ? data.priceUsd : 0;
+          const price = typeof data.priceUsd === "number" ? data.priceUsd : 0;
           priceData = {
             price: price,
-            price_change_24h:
-              data.price_change_24h ?? data.priceChange24h ?? 0,
+            price_change_24h: data.price_change_24h ?? data.priceChange24h ?? 0,
             market_cap: data.market_cap ?? data.marketCap ?? 0,
             volume_24h: data.volume_24h ?? data.volume24h ?? 0,
           };
@@ -132,10 +129,7 @@ class SolPriceService {
 
         // Validate price is a valid number
         if (!isFinite(priceData.price) || priceData.price <= 0) {
-          console.warn(
-            "[SOL Price] Invalid price value:",
-            priceData.price,
-          );
+          console.warn("[SOL Price] Invalid price value:", priceData.price);
           // Return fallback instead of throwing
           priceData = {
             price: 149.38,

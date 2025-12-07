@@ -137,7 +137,9 @@ async function handleWalletBalance(url: URL, env: Env): Promise<Response> {
 
   // Add Helius if API key is provided
   if (env.HELIUS_API_KEY) {
-    rpcEndpoints.push(`https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`);
+    rpcEndpoints.push(
+      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
+    );
   }
 
   // Add custom SOLANA_RPC if provided
@@ -210,7 +212,9 @@ async function handleWalletTokens(url: URL, env: Env): Promise<Response> {
 
   // Add Helius if API key is provided
   if (env.HELIUS_API_KEY) {
-    rpcEndpoints.push(`https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`);
+    rpcEndpoints.push(
+      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
+    );
   }
 
   // Add custom SOLANA_RPC if provided
@@ -260,7 +264,9 @@ async function handleWalletTokens(url: URL, env: Env): Promise<Response> {
         const uiAmount = Number(amountRaw) / Math.pow(10, decimals);
         return { mint, amountRaw, uiAmount, decimals, owner: t.pubkey };
       });
-      return new Response(JSON.stringify({ tokens }), { headers: CORS_HEADERS });
+      return new Response(JSON.stringify({ tokens }), {
+        headers: CORS_HEADERS,
+      });
     } catch (e: any) {
       lastError = String(e?.message || e);
       continue;

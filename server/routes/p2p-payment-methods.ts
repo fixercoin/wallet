@@ -1,4 +1,5 @@
 import { RequestHandler } from "express";
+import { getKVStorage } from "../lib/kv-storage";
 
 export interface PaymentMethod {
   id: string;
@@ -16,6 +17,33 @@ const paymentMethods: Map<string, PaymentMethod> = new Map();
 
 function generateId(): string {
   return `pm_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
+
+// Helper to get all payment methods for a wallet from KV storage
+async function getWalletPaymentMethods(
+  walletAddress: string,
+): Promise<PaymentMethod[]> {
+  const kv = getKVStorage();
+  const key = `payment_methods:${walletAddress}`;
+  const json = await kv.get(key);
+  if (!json) return [];
+
+  try {
+    const methods = JSON.parse(json);
+    return Array.isArray(methods) ? methods : [];
+  } catch {
+    return [];
+  }
+}
+
+// Helper to save payment methods to KV storage
+async function saveWalletPaymentMethods(
+  walletAddress: string,
+  methods: PaymentMethod[],
+): Promise<void> {
+  const kv = getKVStorage();
+  const key = `payment_methods:${walletAddress}`;
+  await kv.put(key, JSON.stringify(methods));
 }
 
 export const handleGetPaymentMethods: RequestHandler = (req, res) => {

@@ -825,7 +825,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           decimals: 9,
           logoURI:
             "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-          balance: balanceRef.current || balance || 0,
+          balance: typeof balanceRef.current === "number" ? balanceRef.current : balance || 0,
         },
       ];
 
@@ -1251,7 +1251,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             decimals: 9,
             logoURI:
               "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-            balance: balance || 0,
+            balance: typeof balanceRef.current === "number" ? balanceRef.current : balance || 0,
           },
         ];
 

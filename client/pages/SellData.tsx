@@ -93,14 +93,6 @@ export default function SellData() {
       return;
     }
 
-    // Check if user has added payment details
-    if (paymentMethods.length === 0) {
-      toast.error("Please add your payment details before creating an order");
-      setEditingPaymentMethodId(undefined);
-      setShowPaymentDialog(true);
-      return;
-    }
-
     try {
       setLoading(true);
       const createdOrder = await createOrderFromOffer(

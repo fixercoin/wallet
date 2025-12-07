@@ -877,7 +877,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <div className="font-medium text-sm">SEND {selectedSymbol}</div>
+                <div className="font-medium text-sm">WITHDRAW YOUR ASSET</div>
               </div>
               {step === "form" ? (
                 <>

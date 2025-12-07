@@ -128,7 +128,7 @@ export const getBalance = async (publicKey: string): Promise<number> => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`Balance endpoint returned ${response.status}:`, errorText);
-      throw new Error(`Server returned ${response.status}`);
+      throw new Error(`Server returned ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
@@ -136,18 +136,23 @@ export const getBalance = async (publicKey: string): Promise<number> => {
 
     // Check for API error in response
     if (data.error) {
-      console.error(`Balance API error:`, data.error);
-      throw new Error(`API error: ${data.error}`);
+      console.error(`Balance API error:`, data.error, data.details);
+      throw new Error(`API error: ${data.error}${data.details ? ` - ${data.details}` : ""}`);
     }
 
-    const balance = data.balance !== undefined ? data.balance : 0;
+    const balance = data.balance !== undefined ? data.balance : (data.balanceLamports !== undefined ? data.balanceLamports / 1_000_000_000 : 0);
 
-    if (typeof balance !== "number" || isNaN(balance)) {
+    if (typeof balance !== "number" || !isFinite(balance)) {
       console.error(`Invalid balance value: ${balance}`, data);
       throw new Error(`Invalid balance type: ${typeof balance}`);
     }
 
-    console.log(`✅ Balance fetched: ${balance} SOL`);
+    if (balance < 0) {
+      console.error(`Negative balance value: ${balance}`, data);
+      throw new Error(`Negative balance: ${balance}`);
+    }
+
+    console.log(`✅ Balance fetched: ${balance} SOL (source: ${data.source || "unknown"})`);
     return balance;
   } catch (error) {
     console.error("Failed to fetch balance:", error);

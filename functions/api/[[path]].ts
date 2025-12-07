@@ -2,11 +2,20 @@ export const config = {
   runtime: "nodejs_esmsh",
 };
 
+interface Env {
+  SOLANA_RPC_URL?: string;
+  HELIUS_RPC_URL?: string;
+  HELIUS_API_KEY?: string;
+  ALCHEMY_RPC_URL?: string;
+  MORALIS_RPC_URL?: string;
+}
+
 const DEFAULT_SOLANA_RPC = "https://solana.publicnode.com";
 const FALLBACK_RPC_ENDPOINTS = [
   "https://solana.publicnode.com",
   "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
+  "https://rpc.ironforge.network/mainnet",
 ];
 
 const PUMPFUN_API_BASE = "https://pump.fun/api";
@@ -110,7 +119,7 @@ async function handleHealth(): Promise<Response> {
   );
 }
 
-async function handleWalletBalance(url: URL): Promise<Response> {
+async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
   const publicKey = url.searchParams.get("publicKey");
   if (!publicKey) {
     return new Response(JSON.stringify({ error: "publicKey required" }), {
@@ -126,30 +135,78 @@ async function handleWalletBalance(url: URL): Promise<Response> {
     params: [publicKey],
   };
 
-  // Build ordered list of endpoints to try (unique)
-  const endpoints = Array.from(
-    new Set([DEFAULT_SOLANA_RPC, ...(FALLBACK_RPC_ENDPOINTS || [])]),
-  );
+  // Build RPC endpoints with env variables first
+  const endpoints: string[] = [];
+
+  // Add environment-configured endpoints first (highest priority)
+  if (
+    env?.SOLANA_RPC_URL &&
+    typeof env.SOLANA_RPC_URL === "string" &&
+    env.SOLANA_RPC_URL.length > 0
+  ) {
+    endpoints.push(env.SOLANA_RPC_URL);
+  }
+  if (
+    env?.HELIUS_RPC_URL &&
+    typeof env.HELIUS_RPC_URL === "string" &&
+    env.HELIUS_RPC_URL.length > 0
+  ) {
+    endpoints.push(env.HELIUS_RPC_URL);
+  }
+  if (
+    env?.HELIUS_API_KEY &&
+    typeof env.HELIUS_API_KEY === "string" &&
+    env.HELIUS_API_KEY.length > 0
+  ) {
+    endpoints.push(
+      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
+    );
+  }
+  if (
+    env?.ALCHEMY_RPC_URL &&
+    typeof env.ALCHEMY_RPC_URL === "string" &&
+    env.ALCHEMY_RPC_URL.length > 0
+  ) {
+    endpoints.push(env.ALCHEMY_RPC_URL);
+  }
+  if (
+    env?.MORALIS_RPC_URL &&
+    typeof env.MORALIS_RPC_URL === "string" &&
+    env.MORALIS_RPC_URL.length > 0
+  ) {
+    endpoints.push(env.MORALIS_RPC_URL);
+  }
+
+  // Add fallback endpoints
+  endpoints.push(...FALLBACK_RPC_ENDPOINTS);
+
+  // Remove duplicates
+  const uniqueEndpoints = Array.from(new Set(endpoints));
 
   let lastError = "";
   let lastStatus = 502;
 
-  for (let i = 0; i < endpoints.length; i++) {
-    const endpoint = endpoints[i];
+  for (let i = 0; i < uniqueEndpoints.length; i++) {
+    const endpoint = uniqueEndpoints[i];
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        const resp = await timeoutFetch(endpoint, {
-          method: "POST",
-          headers: browserHeaders(),
-          body: JSON.stringify(payload),
-        });
+        const resp = await timeoutFetch(
+          endpoint,
+          {
+            method: "POST",
+            headers: browserHeaders(),
+            body: JSON.stringify(payload),
+          },
+          15000,
+        );
 
         lastStatus = resp.status;
 
         if (resp.ok) {
           const rpcJson = await resp.json().catch(() => ({}));
-          const lamports = rpcJson?.result?.value ?? 0;
-          const balance = lamports / 1_000_000_000;
+          const lamports = rpcJson?.result?.value ?? rpcJson?.result ?? 0;
+          const balance =
+            typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
           return new Response(
             JSON.stringify({ balance, lamports, publicKey }),
             {
@@ -173,7 +230,9 @@ async function handleWalletBalance(url: URL): Promise<Response> {
         // Not retryable, break to next endpoint
         break;
       } catch (e: any) {
-        lastError = String(e?.message || e);
+        lastError = e?.message?.includes?.("abort")
+          ? "timeout"
+          : String(e?.message || e);
         if (attempt < 2) {
           await new Promise((r) => setTimeout(r, 300 * attempt));
           continue;
@@ -188,6 +247,7 @@ async function handleWalletBalance(url: URL): Promise<Response> {
       error: "rpc_error",
       details: lastError,
       status: lastStatus,
+      endpointsAttempted: uniqueEndpoints.length,
     }),
     { status: 502, headers: CORS_HEADERS },
   );
@@ -1640,7 +1700,7 @@ async function handleSolanaRpc(request: Request): Promise<Response> {
   }
 }
 
-async function handler(request: Request): Promise<Response> {
+async function handler(request: Request, env?: Env): Promise<Response> {
   try {
     if (request.method === "OPTIONS") {
       return new Response(null, {
@@ -1695,7 +1755,7 @@ async function handler(request: Request): Promise<Response> {
       pathname.startsWith("/api/wallet/balance") ||
       pathname === "/wallet/balance"
     ) {
-      return await handleWalletBalance(url);
+      return await handleWalletBalance(url, env);
     }
 
     if (
@@ -1834,6 +1894,7 @@ async function handler(request: Request): Promise<Response> {
 }
 
 export async function onRequest(context: any): Promise<Response> {
-  // Cloudflare Pages Functions pass a context object; extract the Request
-  return handler(context.request as Request);
+  // Cloudflare Pages Functions pass a context object; extract the Request and env
+  const { request, env } = context;
+  return handler(request as Request, env as Env);
 }

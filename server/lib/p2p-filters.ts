@@ -95,8 +95,9 @@ export function filterOrders(
   // Payment method filter
   if (options.paymentMethod) {
     filtered = filtered.filter(
-      (o) => o.payment_method === options.paymentMethod ||
-             o.paymentMethod === options.paymentMethod,
+      (o) =>
+        o.payment_method === options.paymentMethod ||
+        o.paymentMethod === options.paymentMethod,
     );
   }
 
@@ -139,30 +140,25 @@ export function filterOrders(
   const offset = options.offset || 0;
   const limit = options.limit || 50;
 
-  return sorted
-    .slice(offset, offset + limit)
-    .map((o) => ({
-      id: o.id,
-      type: o.type,
-      token: o.token,
-      walletAddress: o.walletAddress || o.creator_wallet,
-      pricePKRPerQuote: o.pricePKRPerQuote,
-      minAmountPKR: o.minAmountPKR || 0,
-      maxAmountPKR: o.maxAmountPKR || o.amountPKR || 0,
-      paymentMethod: o.payment_method || o.paymentMethod,
-      status: o.status,
-      createdAt: o.createdAt,
-      merchantStats: o.merchantStats,
-    }));
+  return sorted.slice(offset, offset + limit).map((o) => ({
+    id: o.id,
+    type: o.type,
+    token: o.token,
+    walletAddress: o.walletAddress || o.creator_wallet,
+    pricePKRPerQuote: o.pricePKRPerQuote,
+    minAmountPKR: o.minAmountPKR || 0,
+    maxAmountPKR: o.maxAmountPKR || o.amountPKR || 0,
+    paymentMethod: o.payment_method || o.paymentMethod,
+    status: o.status,
+    createdAt: o.createdAt,
+    merchantStats: o.merchantStats,
+  }));
 }
 
 /**
  * Sort orders by criteria
  */
-function sortOrders(
-  orders: any[],
-  sortBy?: string,
-): any[] {
+function sortOrders(orders: any[], sortBy?: string): any[] {
   const sorted = [...orders];
 
   switch (sortBy) {
@@ -182,8 +178,7 @@ function sortOrders(
     case "RATING":
       return sorted.sort(
         (a, b) =>
-          (b.merchantStats?.rating || 0) -
-          (a.merchantStats?.rating || 0),
+          (b.merchantStats?.rating || 0) - (a.merchantStats?.rating || 0),
       );
 
     default:
@@ -264,11 +259,7 @@ export function getPriceStats(
  * Get available tokens from orders
  */
 export function getAvailableTokens(orders: any[]): string[] {
-  const tokens = new Set(
-    orders
-      .map((o) => o.token)
-      .filter((t) => t),
-  );
+  const tokens = new Set(orders.map((o) => o.token).filter((t) => t));
   return Array.from(tokens).sort();
 }
 
@@ -277,9 +268,7 @@ export function getAvailableTokens(orders: any[]): string[] {
  */
 export function getAvailablePaymentMethods(orders: any[]): string[] {
   const methods = new Set(
-    orders
-      .map((o) => o.payment_method || o.paymentMethod)
-      .filter((m) => m),
+    orders.map((o) => o.payment_method || o.paymentMethod).filter((m) => m),
   );
   return Array.from(methods).sort();
 }
@@ -294,7 +283,10 @@ export function calculateMatchScore(
   let score = 0;
 
   // Price match (max 30 points)
-  if (userPreferences.minPrice !== undefined && userPreferences.maxPrice !== undefined) {
+  if (
+    userPreferences.minPrice !== undefined &&
+    userPreferences.maxPrice !== undefined
+  ) {
     const priceRange = userPreferences.maxPrice - userPreferences.minPrice;
     const orderPrice = order.pricePKRPerQuote || 0;
     const distFromMin = orderPrice - userPreferences.minPrice;
@@ -321,8 +313,12 @@ export function calculateMatchScore(
   }
 
   // Amount match (max 15 points)
-  if (userPreferences.minAmountPKR !== undefined && userPreferences.maxAmountPKR !== undefined) {
-    const userRange = userPreferences.maxAmountPKR - userPreferences.minAmountPKR;
+  if (
+    userPreferences.minAmountPKR !== undefined &&
+    userPreferences.maxAmountPKR !== undefined
+  ) {
+    const userRange =
+      userPreferences.maxAmountPKR - userPreferences.minAmountPKR;
     const orderMin = order.minAmountPKR || 0;
     const orderMax = order.maxAmountPKR || order.amountPKR || 0;
 

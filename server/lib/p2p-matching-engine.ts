@@ -19,7 +19,12 @@ export interface MatchedPair {
   pricePKRPerToken: number;
   totalPKR: number;
   paymentMethod: string;
-  status: "PENDING" | "PAYMENT_CONFIRMED" | "ASSETS_TRANSFERRED" | "COMPLETED" | "CANCELLED";
+  status:
+    | "PENDING"
+    | "PAYMENT_CONFIRMED"
+    | "ASSETS_TRANSFERRED"
+    | "COMPLETED"
+    | "CANCELLED";
   createdAt: number;
   updatedAt: number;
   escrowId?: string;
@@ -39,7 +44,8 @@ function isPriceCompatible(
   sellerMinPrice: number,
   maxDeviation: number = 2,
 ): boolean {
-  const deviationPercent = ((sellerMinPrice - buyerMaxPrice) / buyerMaxPrice) * 100;
+  const deviationPercent =
+    ((sellerMinPrice - buyerMaxPrice) / buyerMaxPrice) * 100;
   return deviationPercent <= maxDeviation;
 }
 
@@ -122,13 +128,7 @@ export function findMatches(
     const buyerPrice = buyOrder.pricePKRPerQuote;
     const sellerPrice = sellOrder.pricePKRPerQuote;
 
-    if (
-      isPriceCompatible(
-        buyerPrice,
-        sellerPrice,
-        maxPriceDeviation,
-      )
-    ) {
+    if (isPriceCompatible(buyerPrice, sellerPrice, maxPriceDeviation)) {
       // Prefer closer prices
       const priceDiff = Math.abs(buyerPrice - sellerPrice);
       score += (maxPriceDeviation - (priceDiff / sellerPrice) * 100) * 10;
@@ -159,7 +159,8 @@ export function findMatches(
       );
 
       // Use average price for matched pair
-      const matchPrice = (buyOrder.pricePKRPerQuote + sellOrder.pricePKRPerQuote) / 2;
+      const matchPrice =
+        (buyOrder.pricePKRPerQuote + sellOrder.pricePKRPerQuote) / 2;
 
       matches.push({
         id: `match-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,

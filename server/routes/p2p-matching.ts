@@ -159,8 +159,7 @@ export const handleCreateMatch: RequestHandler = async (req, res) => {
         buy.maxAmountPKR || buy.amountPKR,
         sell.maxAmountPKR || sell.amountPKR,
       ),
-      pricePKRPerToken:
-        (buy.pricePKRPerQuote + sell.pricePKRPerQuote) / 2,
+      pricePKRPerToken: (buy.pricePKRPerQuote + sell.pricePKRPerQuote) / 2,
       totalPKR: Math.min(
         buy.maxAmountPKR || buy.amountPKR,
         sell.maxAmountPKR || sell.amountPKR,
@@ -369,10 +368,7 @@ export const handleCancelMatch: RequestHandler = async (req, res) => {
       const sell = JSON.parse(sellOrder);
       sell.status = "PENDING";
       delete sell.matchedWith;
-      await kv.put(
-        `orders:${matchedPair.sellOrderId}`,
-        JSON.stringify(sell),
-      );
+      await kv.put(`orders:${matchedPair.sellOrderId}`, JSON.stringify(sell));
     }
 
     // Delete matched pair

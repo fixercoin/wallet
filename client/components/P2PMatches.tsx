@@ -87,11 +87,11 @@ export const P2PMatches: React.FC<P2PMatchesProps> = ({
   const handleAcceptMatch = async (match: MatchedOrder) => {
     try {
       setAcceptingMatch(match.id);
-      
+
       // In a real implementation, this would create a trade room
       // For now, just update the match status
       await createMatchedPair(match.buyOrderId, match.sellOrderId);
-      
+
       toast.success("Match accepted! Trade room created.");
       await loadMatches();
     } catch (err) {
@@ -175,7 +175,9 @@ export const P2PMatches: React.FC<P2PMatchesProps> = ({
     <div className="space-y-3">
       {matches.map((match) => {
         const isBuyer = match.buyerWallet === wallet.publicKey;
-        const otherPartyWallet = isBuyer ? match.sellerWallet : match.buyerWallet;
+        const otherPartyWallet = isBuyer
+          ? match.sellerWallet
+          : match.buyerWallet;
         const otherPartyStats = isBuyer ? match.sellerStats : match.buyerStats;
 
         return (
@@ -190,7 +192,8 @@ export const P2PMatches: React.FC<P2PMatchesProps> = ({
                   <div className="flex items-center gap-3">
                     <div>
                       <h3 className="font-semibold text-white">
-                        {isBuyer ? "Seller" : "Buyer"}: {otherPartyWallet.slice(0, 8)}...
+                        {isBuyer ? "Seller" : "Buyer"}:{" "}
+                        {otherPartyWallet.slice(0, 8)}...
                       </h3>
                       <p className="text-xs text-gray-400">
                         {match.token} Trade
@@ -210,7 +213,9 @@ export const P2PMatches: React.FC<P2PMatchesProps> = ({
                   <div className="grid grid-cols-3 gap-2 bg-gray-900 rounded p-3">
                     <div>
                       <p className="text-xs text-gray-400">Rating</p>
-                      <p className={`font-semibold flex items-center gap-1 ${getRatingColor(otherPartyStats.rating)}`}>
+                      <p
+                        className={`font-semibold flex items-center gap-1 ${getRatingColor(otherPartyStats.rating)}`}
+                      >
                         <Star className="w-4 h-4 fill-current" />
                         {otherPartyStats.rating.toFixed(1)}
                       </p>

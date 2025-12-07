@@ -43,7 +43,9 @@ const TRADES_KEY_PREFIX = "p2p_merchant_trades_";
 /**
  * Get merchant statistics
  */
-export async function getMerchantStats(walletAddress: string): Promise<MerchantStats | null> {
+export async function getMerchantStats(
+  walletAddress: string,
+): Promise<MerchantStats | null> {
   try {
     const kv = getKVStorage();
     const key = `${STATS_KEY_PREFIX}${walletAddress}`;
@@ -79,9 +81,7 @@ export async function getMerchantStats(walletAddress: string): Promise<MerchantS
 /**
  * Record a completed trade
  */
-export async function recordTrade(
-  trade: TradeRecord,
-): Promise<void> {
+export async function recordTrade(trade: TradeRecord): Promise<void> {
   try {
     const kv = getKVStorage();
 
@@ -226,9 +226,7 @@ export async function getTopMerchants(
       }
     }
 
-    return merchants
-      .sort((a, b) => b.rating - a.rating)
-      .slice(0, limit);
+    return merchants.sort((a, b) => b.rating - a.rating).slice(0, limit);
   } catch (error) {
     console.error("[P2P Reputation] Error getting top merchants:", error);
     return [];

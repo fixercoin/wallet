@@ -54,10 +54,7 @@ export function useP2PMatching(options: UseP2PMatchingOptions = {}) {
         setError(null);
 
         // Notify on new matches
-        if (
-          newMatches.length > lastMatchCountRef.current &&
-          onMatchesUpdate
-        ) {
+        if (newMatches.length > lastMatchCountRef.current && onMatchesUpdate) {
           onMatchesUpdate(newMatches);
         }
 
@@ -147,12 +144,20 @@ export function useP2PMatching(options: UseP2PMatchingOptions = {}) {
 /**
  * Hook for watching all matched pairs for a wallet
  */
-export function useWalletMatches(options: Omit<UseP2PMatchingOptions, "orderId"> = {}) {
+export function useWalletMatches(
+  options: Omit<UseP2PMatchingOptions, "orderId"> = {},
+) {
   const [matches, setMatches] = useState<MatchedOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const { walletAddress, pollInterval = 5000, enabled = true, onMatchesUpdate, onError } = options;
+  const {
+    walletAddress,
+    pollInterval = 5000,
+    enabled = true,
+    onMatchesUpdate,
+    onError,
+  } = options;
 
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);

@@ -14,7 +14,12 @@ export interface MatchedOrder {
   pricePKRPerToken: number;
   totalPKR: number;
   paymentMethod: string;
-  status: "PENDING" | "PAYMENT_CONFIRMED" | "ASSETS_TRANSFERRED" | "COMPLETED" | "CANCELLED";
+  status:
+    | "PENDING"
+    | "PAYMENT_CONFIRMED"
+    | "ASSETS_TRANSFERRED"
+    | "COMPLETED"
+    | "CANCELLED";
   createdAt: number;
   updatedAt: number;
   sellerStats?: {
@@ -58,9 +63,7 @@ export async function getMatchesForOrder(
       params.append("criteria", JSON.stringify(criteria));
     }
 
-    const response = await fetch(
-      `${API_BASE}/matches?${params.toString()}`,
-    );
+    const response = await fetch(`${API_BASE}/matches?${params.toString()}`);
 
     if (!response.ok) {
       const error = await response.json();
@@ -112,9 +115,7 @@ export async function createMatchedPair(
 /**
  * Get matched pair details
  */
-export async function getMatchedPair(
-  matchId: string,
-): Promise<MatchedOrder> {
+export async function getMatchedPair(matchId: string): Promise<MatchedOrder> {
   try {
     const response = await fetch(`${API_BASE}/matches/${matchId}`);
 
@@ -211,7 +212,10 @@ export async function cancelMatchedPair(matchId: string): Promise<void> {
 /**
  * Format match for display
  */
-export function formatMatchedPair(match: MatchedOrder, userWallet?: string): {
+export function formatMatchedPair(
+  match: MatchedOrder,
+  userWallet?: string,
+): {
   isBuyer: boolean;
   otherPartyWallet: string;
   otherPartyStats: any;

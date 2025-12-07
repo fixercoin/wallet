@@ -164,16 +164,16 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
             }
 
             let balanceLamports = data.result;
-            if (typeof balanceLamports === "object" && balanceLamports !== null) {
+            if (
+              typeof balanceLamports === "object" &&
+              balanceLamports !== null
+            ) {
               if (typeof balanceLamports.value === "number") {
                 balanceLamports = balanceLamports.value;
               }
             }
 
-            if (
-              typeof balanceLamports !== "number" ||
-              isNaN(balanceLamports)
-            ) {
+            if (typeof balanceLamports !== "number" || isNaN(balanceLamports)) {
               throw new Error(
                 `Invalid balance type: ${typeof balanceLamports}`,
               );
@@ -200,8 +200,9 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
       // Check if any priority endpoint succeeded
       for (const result of results) {
         if (result.status === "fulfilled" && result.value.success) {
-          const endpointLabel =
-            priorityEndpoints[results.indexOf(result)].substring(0, 50);
+          const endpointLabel = priorityEndpoints[
+            results.indexOf(result)
+          ].substring(0, 50);
           return res.json({
             publicKey,
             balance: result.value.balance,
@@ -319,9 +320,7 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
         lastError = error instanceof Error ? error : new Error(errorMsg);
 
         if (errorMsg.includes("abort") || errorMsg.includes("timeout")) {
-          console.warn(
-            `[WalletBalance] Fallback endpoint ${i + 1} timed out`,
-          );
+          console.warn(`[WalletBalance] Fallback endpoint ${i + 1} timed out`);
         } else {
           console.warn(
             `[WalletBalance] Fallback endpoint ${i + 1} error: ${errorMsg}`,

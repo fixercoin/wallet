@@ -46,15 +46,14 @@ export const handleP2PSearch: RequestHandler = async (req, res) => {
 
     const orders: any[] = [];
     for (const key of keys) {
-      if (
-        key.name.startsWith("orders:") &&
-        !key.name.includes("wallet:")
-      ) {
+      if (key.name.startsWith("orders:") && !key.name.includes("wallet:")) {
         const data = await kv.get(key.name);
         if (data) {
           const order = JSON.parse(data);
           // Enrich with merchant stats
-          const stats = await getMerchantStats(order.walletAddress || order.creator_wallet);
+          const stats = await getMerchantStats(
+            order.walletAddress || order.creator_wallet,
+          );
           if (stats) {
             order.merchantStats = {
               rating: stats.rating,
@@ -80,8 +79,10 @@ export const handleP2PSearch: RequestHandler = async (req, res) => {
       paymentMethod: paymentMethod ? String(paymentMethod) : undefined,
       minMerchantRating: minRating ? parseFloat(String(minRating)) : undefined,
       minTraderLevel: minLevel ? (String(minLevel) as any) : undefined,
-      minCompletionRate: minCompletion ? parseFloat(String(minCompletion)) : undefined,
-      sortBy: sortBy ? String(sortBy) as any : "NEWEST",
+      minCompletionRate: minCompletion
+        ? parseFloat(String(minCompletion))
+        : undefined,
+      sortBy: sortBy ? (String(sortBy) as any) : "NEWEST",
       limit: limit ? parseInt(String(limit)) : 50,
       offset: offset ? parseInt(String(offset)) : 0,
     };
@@ -127,10 +128,7 @@ export const handleGetPriceStats: RequestHandler = async (req, res) => {
 
     const orders: any[] = [];
     for (const key of keys) {
-      if (
-        key.name.startsWith("orders:") &&
-        !key.name.includes("wallet:")
-      ) {
+      if (key.name.startsWith("orders:") && !key.name.includes("wallet:")) {
         const data = await kv.get(key.name);
         if (data) {
           orders.push(JSON.parse(data));
@@ -168,10 +166,7 @@ export const handleGetAvailableFilters: RequestHandler = async (req, res) => {
 
     const orders: any[] = [];
     for (const key of keys) {
-      if (
-        key.name.startsWith("orders:") &&
-        !key.name.includes("wallet:")
-      ) {
+      if (key.name.startsWith("orders:") && !key.name.includes("wallet:")) {
         const data = await kv.get(key.name);
         if (data) {
           orders.push(JSON.parse(data));
@@ -194,12 +189,7 @@ export const handleGetAvailableFilters: RequestHandler = async (req, res) => {
         sell: sellStats,
       },
       levels: ["NOVICE", "INTERMEDIATE", "ADVANCED", "PRO"],
-      sortOptions: [
-        "PRICE_ASC",
-        "PRICE_DESC",
-        "NEWEST",
-        "RATING",
-      ],
+      sortOptions: ["PRICE_ASC", "PRICE_DESC", "NEWEST", "RATING"],
     });
   } catch (error) {
     console.error("[P2P Filters] Error getting available filters:", error);
@@ -222,15 +212,14 @@ export const handleGetTrendingOrders: RequestHandler = async (req, res) => {
 
     const orders: any[] = [];
     for (const key of keys) {
-      if (
-        key.name.startsWith("orders:") &&
-        !key.name.includes("wallet:")
-      ) {
+      if (key.name.startsWith("orders:") && !key.name.includes("wallet:")) {
         const data = await kv.get(key.name);
         if (data) {
           const order = JSON.parse(data);
           // Enrich with merchant stats
-          const stats = await getMerchantStats(order.walletAddress || order.creator_wallet);
+          const stats = await getMerchantStats(
+            order.walletAddress || order.creator_wallet,
+          );
           if (stats) {
             order.merchantStats = {
               rating: stats.rating,
@@ -255,8 +244,7 @@ export const handleGetTrendingOrders: RequestHandler = async (req, res) => {
       .sort((a, b) => {
         // Primary: sort by merchant rating
         const ratingDiff =
-          (b.merchantStats?.rating || 0) -
-          (a.merchantStats?.rating || 0);
+          (b.merchantStats?.rating || 0) - (a.merchantStats?.rating || 0);
         if (ratingDiff !== 0) return ratingDiff;
 
         // Secondary: sort by recency
@@ -291,15 +279,14 @@ export const handleGetMerchantOrders: RequestHandler = async (req, res) => {
 
     const orders: any[] = [];
     for (const key of keys) {
-      if (
-        key.name.startsWith("orders:") &&
-        !key.name.includes("wallet:")
-      ) {
+      if (key.name.startsWith("orders:") && !key.name.includes("wallet:")) {
         const data = await kv.get(key.name);
         if (data) {
           const order = JSON.parse(data);
           // Enrich with merchant stats
-          const stats = await getMerchantStats(order.walletAddress || order.creator_wallet);
+          const stats = await getMerchantStats(
+            order.walletAddress || order.creator_wallet,
+          );
           if (stats) {
             order.merchantStats = {
               rating: stats.rating,
@@ -323,13 +310,12 @@ export const handleGetMerchantOrders: RequestHandler = async (req, res) => {
         ADVANCED: 2,
         PRO: 3,
       };
-      const minRankValue = levelRank[String(minLevel) as keyof typeof levelRank];
+      const minRankValue =
+        levelRank[String(minLevel) as keyof typeof levelRank];
 
       filtered = filtered.filter((o) => {
         const level = o.merchantStats?.level || "NOVICE";
-        return (
-          levelRank[level as keyof typeof levelRank] >= minRankValue
-        );
+        return levelRank[level as keyof typeof levelRank] >= minRankValue;
       });
     }
 
@@ -350,9 +336,7 @@ export const handleGetMerchantOrders: RequestHandler = async (req, res) => {
 
     // Sort by rating
     filtered.sort(
-      (a, b) =>
-        (b.merchantStats?.rating || 0) -
-        (a.merchantStats?.rating || 0),
+      (a, b) => (b.merchantStats?.rating || 0) - (a.merchantStats?.rating || 0),
     );
 
     const result = filtered.slice(0, parseInt(String(limit)));

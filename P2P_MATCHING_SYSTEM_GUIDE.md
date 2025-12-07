@@ -19,6 +19,7 @@ Smart algorithm that matches BUY and SELL orders based on:
 - **Wallet Validation**: No self-matching (different wallets)
 
 **Matching Score** considers:
+
 1. Amount overlap size (larger overlap = higher score)
 2. Price proximity (closer prices = higher score)
 3. Response time (newer orders get slight boost)
@@ -37,6 +38,7 @@ Tracks merchant statistics:
 - **Level**: NOVICE → INTERMEDIATE → ADVANCED → PRO
 
 **Level Progression**:
+
 - NOVICE: < 10 trades or < 95% completion
 - INTERMEDIATE: 10-49 trades, < 98% completion
 - ADVANCED: 50-199 trades, < 99% completion
@@ -64,7 +66,10 @@ JavaScript interface for frontend:
 const { matches, order } = await getMatchesForOrder(orderId);
 
 // Create a matched pair (initiate trade)
-const { matchedPair, tradeRoomId } = await createMatchedPair(buyOrderId, sellOrderId);
+const { matchedPair, tradeRoomId } = await createMatchedPair(
+  buyOrderId,
+  sellOrderId,
+);
 
 // Get match details with stats
 const match = await getMatchedPair(matchId);
@@ -76,7 +81,7 @@ const matches = await getMatchesForWallet(walletAddress);
 await updateMatchedPairStatus(matchId, "PAYMENT_CONFIRMED");
 ```
 
-#### 5. **UI Components** 
+#### 5. **UI Components**
 
 - `client/components/P2PMatches.tsx`: Display matched orders with trader stats
 - `client/hooks/use-p2p-matching.ts`: React hook for real-time matching polling
@@ -132,14 +137,14 @@ Customize matching behavior via `MatchingCriteria`:
 
 ```typescript
 interface MatchingCriteria {
-  maxPriceDeviation?: number;  // Max % price difference (default: 2%)
-  minAmount?: number;          // Minimum trade amount in PKR (default: 100)
-  maxAmount?: number;          // Maximum trade amount in PKR (default: 1,000,000)
+  maxPriceDeviation?: number; // Max % price difference (default: 2%)
+  minAmount?: number; // Minimum trade amount in PKR (default: 100)
+  maxAmount?: number; // Maximum trade amount in PKR (default: 1,000,000)
 }
 
 // Usage
 const matches = await getMatchesForOrder(orderId, {
-  maxPriceDeviation: 5,  // Allow up to 5% price difference
+  maxPriceDeviation: 5, // Allow up to 5% price difference
   minAmount: 500,
   maxAmount: 500000,
 });
@@ -171,7 +176,7 @@ function determineLevel(stats: MerchantStats): MerchantStats["level"] {
 // Automatic polling with hook
 const { matches, loading } = useP2PMatching({
   orderId: "order-123",
-  pollInterval: 5000,  // Check every 5 seconds
+  pollInterval: 5000, // Check every 5 seconds
   enabled: true,
 });
 
@@ -190,7 +195,7 @@ const order = await createOrder(
   "SELL",
   "SOL",
   0.5,
-  42000,  // PKR amount
+  42000, // PKR amount
   "EASYPAISA",
 );
 
@@ -199,13 +204,13 @@ const { matches } = await getMatchesForOrder(order.id);
 
 // Display: "Found 3 buy orders matching your offer"
 // - Order A: Rate ⭐4.8, Pro trader, 1,250+ trades
-// - Order B: Rate ⭐4.2, Advanced, 82 trades  
+// - Order B: Rate ⭐4.2, Advanced, 82 trades
 // - Order C: Rate ⭐3.9, Intermediate, 15 trades
 
 // User clicks "Accept Match with Order A"
 const { matchedPair, tradeRoomId } = await createMatchedPair(
-  order.id,  // Sell order
-  "buyorder-123"  // Buy order from matching
+  order.id, // Sell order
+  "buyorder-123", // Buy order from matching
 );
 
 // Trade room created, users can now communicate
@@ -233,17 +238,18 @@ const { matches, loading } = useP2PMatching({
 const stats = await getMerchantStats(walletAddress);
 
 console.log({
-  rating: stats.rating,           // 4.8/5.0
-  level: stats.level,             // "PRO"
-  completionRate: stats.completionRate,  // 99.2%
+  rating: stats.rating, // 4.8/5.0
+  level: stats.level, // "PRO"
+  completionRate: stats.completionRate, // 99.2%
   totalTrades: stats.totalTrades, // 1,250
-  totalVolumePKR: stats.totalVolumePKR,  // 85,000,000 PKR
+  totalVolumePKR: stats.totalVolumePKR, // 85,000,000 PKR
 });
 ```
 
 ## Current Limitations & Future Improvements
 
 ### Current (Cloudflare Pages)
+
 - ✅ Deterministic matching algorithm
 - ✅ Merchant reputation tracking
 - ✅ KV storage for persistence
@@ -251,6 +257,7 @@ console.log({
 - ⚠️ No WebSocket (not supported on Pages)
 
 ### Future Enhancements
+
 - [ ] WebSocket integration (requires traditional backend)
 - [ ] Machine learning for improved matching
 - [ ] Automated dispute resolution
@@ -303,6 +310,7 @@ try {
 ## Support & Documentation
 
 For issues or questions:
+
 - Check `server/routes/p2p-matching.ts` for detailed endpoint docs
 - Review `client/lib/p2p-matching-api.ts` for client API signatures
 - See `server/lib/p2p-matching-engine.ts` for algorithm details

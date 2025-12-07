@@ -22,8 +22,6 @@ function getHeliusRpcEndpoint(): string {
   );
 }
 
-const RPC_ENDPOINT = getHeliusRpcEndpoint();
-
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
 // Known token metadata
@@ -96,7 +94,8 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
       ],
     };
 
-    const endpoint = RPC_ENDPOINT;
+    // Get RPC endpoint on-demand instead of at module load time
+    const endpoint = getHeliusRpcEndpoint();
     let lastError: Error | null = null;
 
     try {

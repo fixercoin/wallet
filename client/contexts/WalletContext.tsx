@@ -811,13 +811,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     setError(null);
     setIsLoading(true);
 
+    // Declare allTokens outside try block so it's accessible in catch handler
+    let allTokens: TokenInfo[] = [];
+
     try {
       const tokenAccounts = await getTokenAccounts(wallet.publicKey);
       const customTokens = JSON.parse(
         localStorage.getItem("custom_tokens") || "[]",
       ) as TokenInfo[];
 
-      const allTokens: TokenInfo[] = [
+      // Build token list starting with SOL
+      allTokens = [
         {
           mint: "So11111111111111111111111111111111111111112",
           symbol: "SOL",

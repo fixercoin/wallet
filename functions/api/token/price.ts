@@ -179,26 +179,23 @@ async function handler(request: Request): Promise<Response> {
           }
         }
 
-        // Fallback to static price
-        if (FALLBACK_PRICES[tokenSymbol]) {
-          return new Response(
-            JSON.stringify({
-              token: tokenSymbol,
-              mint,
-              priceUsd: FALLBACK_PRICES[tokenSymbol],
-              source: "fallback",
-              timestamp: Date.now(),
-            }),
-            {
-              status: 200,
-              headers: {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-                "Cache-Control": "public, max-age=60",
-              },
+        // Return error when price not available (no fallback prices)
+        return new Response(
+          JSON.stringify({
+            token: tokenSymbol,
+            mint,
+            error: "Price service temporarily unavailable",
+            timestamp: Date.now(),
+          }),
+          {
+            status: 503,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+              "Cache-Control": "no-cache",
             },
-          );
-        }
+          },
+        );
       }
     }
 

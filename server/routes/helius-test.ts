@@ -12,9 +12,18 @@ export const handleHeliusTest: RequestHandler = async (req, res) => {
 
     console.log(`Testing Helius API with wallet: ${publicKey}`);
 
-    const HELIUS_API_KEY =
-      process.env.HELIUS_API_KEY || "4e94fa63-8229-4242-8398-b97c512b660a";
-    const heliusUrl = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+    const HELIUS_API_KEY = process.env.HELIUS_API_KEY || "";
+    const heliusUrl = HELIUS_API_KEY
+      ? `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`
+      : "";
+
+    if (!HELIUS_API_KEY) {
+      return res.status(400).json({
+        error:
+          "HELIUS_API_KEY is not configured. Please set it in environment variables.",
+        tested: false,
+      });
+    }
 
     // Test balance fetch
     const balanceResponse = await fetch(heliusUrl, {

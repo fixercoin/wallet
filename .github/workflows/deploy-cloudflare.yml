@@ -1,0 +1,45 @@
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install root dependencies
+        run: |
+          npm ci
+
+      - name: Build frontend
+        env:
+          VITE_API_BASE_URL: "https://wallet.fixorium.com.pk"
+        run: |
+          npm run build
+
+      - name: Publish Cloudflare Worker
+        uses: cloudflare/wrangler-action@2.1.0
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          workingDirectory: ./cloudflare
+          args: "publish --env production --verbose"
+        env:
+          # Optional: set account id via secret or wrangler.toml
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          # Pass through important API keys as secrets (the worker reads these via ENV)
+          HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
+          COINMARKETCAP_API_KEY: ${{ secrets.COINMARKETCAP_API_KEY }}
+          VITE_API_BASE_URL: "https://wallet.fixorium.com.pk"
+# Notes:
+# - Create repository secrets: CF_API_TOKEN, CF_ACCOUNT_ID, HELIUS_API_KEY, COINMARKETCAP_API_KEY
+# - CF_API_TOKEN must have Worker Scripts write permissions
+# - The workflow builds the frontend and then publishes the Cloudflare Worker in ./cloudflare

@@ -158,7 +158,7 @@ export const handleJupiterTokens: RequestHandler = async (req, res) => {
       for (let attempt = 1; attempt <= 3; attempt++) {
         for (const endpoint of endpoints) {
           try {
-            const response = await fetchWithTimeout(endpoint, 15000);
+            const response = await fetchWithTimeout(endpoint, 25000);
             if (!response.ok) {
               lastError = `${endpoint} -> ${response.status} ${response.statusText}`;
               // retry on rate limiting / server errors
@@ -231,9 +231,12 @@ export const handleJupiterQuote: RequestHandler = async (req, res) => {
         typeof asLegacyTransaction === "string" ? asLegacyTransaction : "false",
     });
 
-    const url = `${JUPITER_SWAP_BASE}/quote?${params.toString()}`;
+    const urls = [
+      `${JUPITER_SWAP_BASE}/quote?${params.toString()}`,
+      `https://quote-api.jup.ag/v6/quote?${params.toString()}`,
+    ];
 
-    const fetchWithTimeout = (timeoutMs: number) => {
+    const fetchWithTimeout = (url: string, timeoutMs: number) => {
       const timeoutPromise = new Promise<Response>((resolve) => {
         setTimeout(
           () =>
@@ -254,46 +257,56 @@ export const handleJupiterQuote: RequestHandler = async (req, res) => {
       return Promise.race([fetchPromise, timeoutPromise]) as Promise<Response>;
     };
 
-    // Try up to 3 attempts with small backoff on 5xx/429
-    let lastStatus = 0;
-    let lastText = "";
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      const response = await fetchWithTimeout(15000);
-      lastStatus = response.status;
-      if (response.ok) {
-        const data = await response.json();
-        return res.json(data);
-      }
-      lastText = await response.text().catch(() => "");
+    // Try both endpoints with retries
+    for (const url of urls) {
+      let lastStatus = 0;
+      let lastText = "";
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const response = await fetchWithTimeout(url, 25000);
+          lastStatus = response.status;
+          if (response.ok) {
+            const data = await response.json();
+            return res.json(data);
+          }
+          lastText = await response.text().catch(() => "");
 
-      // If 404 or 400, likely means no route exists for this pair
-      if (response.status === 404 || response.status === 400) {
-        console.warn(
-          `Jupiter quote returned ${response.status} - likely no route for this pair`,
-          { inputMint: req.query.inputMint, outputMint: req.query.outputMint },
-        );
-        return res.status(response.status).json({
-          error: `No swap route found for this pair`,
-          details: lastText,
-          code: response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
-        });
-      }
+          // If 404 or 400, likely means no route exists for this pair
+          if (response.status === 404 || response.status === 400) {
+            console.warn(
+              `Jupiter quote returned ${response.status} - likely no route for this pair`,
+              {
+                inputMint: req.query.inputMint,
+                outputMint: req.query.outputMint,
+              },
+            );
+            return res.status(response.status).json({
+              error: `No swap route found for this pair`,
+              details: lastText,
+              code:
+                response.status === 404 ? "NO_ROUTE_FOUND" : "INVALID_PARAMS",
+            });
+          }
 
-      // Retry on rate limit or server errors
-      if (response.status === 429 || response.status >= 500) {
-        console.warn(
-          `Jupiter API returned ${response.status}, retrying... (attempt ${attempt}/3)`,
-        );
-        await new Promise((r) => setTimeout(r, attempt * 500));
-        continue;
+          // Retry on rate limit or server errors
+          if (response.status === 429 || response.status >= 500) {
+            console.warn(
+              `Jupiter API returned ${response.status}, retrying... (attempt ${attempt}/2)`,
+            );
+            await new Promise((r) => setTimeout(r, attempt * 500));
+            continue;
+          }
+          break;
+        } catch (e) {
+          console.warn(`Jupiter quote fetch error on ${url}: ${e}`);
+        }
       }
-      break;
     }
 
-    return res.status(lastStatus || 500).json({
+    return res.status(500).json({
       error: `Quote API error`,
-      details: lastText,
-      code: lastStatus === 504 ? "TIMEOUT" : "API_ERROR",
+      details: "All Jupiter quote endpoints failed",
+      code: "API_ERROR",
     });
   } catch (error) {
     console.error("Jupiter quote proxy error:", {
@@ -314,6 +327,15 @@ export const handleJupiterSwap: RequestHandler = async (req, res) => {
       "handleJupiterSwap received body keys:",
       Object.keys(body || {}),
     );
+    console.log(
+      "handleJupiterSwap quote info:",
+      body.quoteResponse && {
+        inputMint: body.quoteResponse.inputMint,
+        outputMint: body.quoteResponse.outputMint,
+        inAmount: body.quoteResponse.inAmount,
+        outAmount: body.quoteResponse.outAmount,
+      },
+    );
 
     if (!body || !body.quoteResponse || !body.userPublicKey) {
       console.warn(
@@ -326,39 +348,142 @@ export const handleJupiterSwap: RequestHandler = async (req, res) => {
       });
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    // Ensure we have all required fields in the request
+    const swapRequest = {
+      quoteResponse: body.quoteResponse,
+      userPublicKey: body.userPublicKey,
+      wrapAndUnwrapSol:
+        body.wrapAndUnwrapSol !== undefined ? body.wrapAndUnwrapSol : true,
+      useSharedAccounts:
+        body.useSharedAccounts !== undefined ? body.useSharedAccounts : true,
+      computeUnitPriceMicroLamports: body.computeUnitPriceMicroLamports,
+      prioritizationFeeLamports: body.prioritizationFeeLamports,
+      asLegacyTransaction: body.asLegacyTransaction || false,
+      ...body, // Include any other fields user provided
+    };
 
-    const response = await fetch(`${JUPITER_SWAP_BASE}/swap`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
+    // Retry logic for transient failures
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 45000);
 
-    clearTimeout(timeoutId);
+        console.log(
+          `Jupiter swap attempt ${attempt}/2 for ${body.quoteResponse.inputMint} -> ${body.quoteResponse.outputMint}`,
+        );
 
-    if (!response.ok) {
-      const text = await response.text().catch(() => "");
-      return res
-        .status(response.status)
-        .json({ error: `Swap failed: ${response.statusText}`, details: text });
+        const response = await fetch(`${JUPITER_SWAP_BASE}/swap`, {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (compatible; SolanaWallet/1.0)",
+          },
+          body: JSON.stringify(swapRequest),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const text = await response.text().catch(() => "");
+          let errorData: any = {};
+          try {
+            errorData = JSON.parse(text);
+          } catch {}
+
+          // Log detailed error info
+          console.error(
+            `Jupiter swap API error (attempt ${attempt}): ${response.status}`,
+            { text: text.substring(0, 200), errorCode: errorData?.code },
+          );
+
+          // Check for error 1016 (stale quote / swap simulation failed)
+          if (
+            errorData?.code === 1016 ||
+            text.includes("1016") ||
+            text.includes("Swap simulation failed") ||
+            text.includes("simulation") ||
+            text.includes("stale")
+          ) {
+            console.warn(
+              `Jupiter error 1016 detected (stale quote) on attempt ${attempt}`,
+            );
+            return res.status(530).json({
+              error: "STALE_QUOTE",
+              message: `Swap simulation failed - quote may be stale`,
+              details:
+                "The quote has expired or market conditions have changed significantly. Please refresh the quote and try again.",
+              code: 1016,
+            });
+          }
+
+          // If it's a client error or specific errors, don't retry
+          if (
+            response.status === 400 ||
+            response.status === 401 ||
+            response.status === 403
+          ) {
+            return res.status(response.status).json({
+              error: `Swap request failed: ${response.statusText}`,
+              details: text,
+              code: "SWAP_REQUEST_ERROR",
+            });
+          }
+
+          // For rate limits or server errors on first attempt, retry
+          if (
+            (response.status === 429 || response.status >= 500) &&
+            attempt < 2
+          ) {
+            console.log(`Retrying due to ${response.status} error...`);
+            await new Promise((r) => setTimeout(r, attempt * 1000));
+            continue;
+          }
+
+          return res.status(response.status).json({
+            error: `Swap failed: ${response.statusText}`,
+            details: text,
+            attempt: attempt,
+          });
+        }
+
+        const data = await response.json();
+        console.log("Jupiter swap success:", {
+          swapTransaction: data.swapTransaction ? "present" : "missing",
+        });
+        return res.json(data);
+      } catch (error: any) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.warn(
+          `Jupiter swap fetch error (attempt ${attempt}): ${errorMsg}`,
+        );
+
+        if (errorMsg.includes("abort") || errorMsg.includes("timeout")) {
+          console.log("Timeout or abort, retrying...");
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, attempt * 1000));
+            continue;
+          }
+        }
+
+        if (attempt === 2) {
+          throw error;
+        }
+      }
     }
 
-    const data = await response.json();
-    res.json(data);
+    throw new Error("Failed after all retries");
   } catch (error) {
     console.error("Jupiter swap proxy error:", {
-      body: req.body,
+      inputMint: req.body?.quoteResponse?.inputMint,
+      outputMint: req.body?.quoteResponse?.outputMint,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
     res.status(500).json({
       error: error instanceof Error ? error.message : "Internal error",
+      code: "SWAP_PROXY_ERROR",
     });
   }
 };

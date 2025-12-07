@@ -1,14 +1,9 @@
 import React, { useMemo, useState } from "react";
-import { useDurableRoom } from "../hooks/useDurableRoom";
 import { API_BASE, createOrder } from "../api";
 import { OrderCard } from "../components/OrderCard";
 
 export default function P2PRoom() {
   const roomId = "global";
-  const { events } = useDurableRoom(
-    roomId,
-    API_BASE.replace(/^https?/, (m) => (m === "https" ? "wss" : "ws")),
-  );
 
   const [spend, setSpend] = useState(25000);
   const rate = 313.99; // PKR per USDT
@@ -89,7 +84,7 @@ export default function P2PRoom() {
         <div className="bg-white rounded-xl shadow border p-4">
           <h3 className="font-semibold mb-2">Live feed</h3>
           <pre className="text-xs max-h-40 overflow-auto bg-gray-50 p-2 rounded">
-            {JSON.stringify(events.slice(-6), null, 2)}
+            {JSON.stringify([], null, 2)}
           </pre>
           <button
             onClick={onSubmit}

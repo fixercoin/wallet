@@ -1,0 +1,757 @@
+import React, { useState, useEffect } from "react";
+import { useWallet } from "@/contexts/WalletContext";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, ArrowLeft, Check } from "lucide-react";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
+import { jupiterAPI } from "@/lib/services/jupiter";
+import { resolveApiUrl } from "@/lib/api-client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  SystemProgram,
+  PublicKey,
+  TransactionInstruction,
+  VersionedTransaction,
+  Keypair,
+  Transaction,
+} from "@solana/web3.js";
+import {
+  createTransferCheckedInstruction,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
+import { bytesFromBase64, base64FromBytes } from "@/lib/bytes";
+
+const FIXER_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TV";
+const SOL_MINT = "So11111111111111111111111111111111111111112";
+const FEE_WALLET = "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM";
+const FEE_PERCENTAGE = 0.01;
+
+const BloomExplosion: React.FC<{ show: boolean }> = ({ show }) => {
+  if (!show) return null;
+
+  const particles = Array.from({ length: 24 }).map((_, i) => {
+    const angle = (i / 24) * Math.PI * 2;
+    const distance = 180;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance;
+    return {
+      tx,
+      ty,
+      id: i,
+      color: ["#22c55e", "#16a34a", "#4ade80", "#86efac", "#10b981", "#34d399"][
+        i % 6
+      ],
+    };
+  });
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50">
+      <style>{`
+        @keyframes burst {
+          0% {
+            opacity: 1;
+            transform: translate(0, 0) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(var(--tx), var(--ty)) scale(0);
+          }
+        }
+        @keyframes success-pop {
+          0% {
+            transform: scale(0);
+            opacity: 0;
+          }
+          60% {
+            transform: scale(1.15);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
+
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          style={
+            {
+              position: "fixed",
+              left: "50%",
+              top: "50%",
+              width: "12px",
+              height: "12px",
+              backgroundColor: p.color,
+              borderRadius: "50%",
+              marginLeft: "-6px",
+              marginTop: "-6px",
+              "--tx": `${p.tx}px`,
+              "--ty": `${p.ty}px`,
+              animation: `burst 1.2s ease-out forwards`,
+            } as any
+          }
+        />
+      ))}
+
+      <div
+        style={{
+          position: "fixed",
+          left: "50%",
+          top: "50%",
+          marginLeft: "-40px",
+          marginTop: "-40px",
+          animation: "success-pop 0.7s ease-out forwards",
+        }}
+      >
+        <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-2xl box-border border-4 border-white">
+          <Check className="w-10 h-10 text-white" strokeWidth={3} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+function addFeeTransferInstruction(
+  tx: VersionedTransaction,
+  fromMint: string,
+  fromAmount: string,
+  decimals: number,
+  userPublicKey: string,
+): VersionedTransaction {
+  const feeAmount = BigInt(
+    Math.floor(parseFloat(fromAmount) * 10 ** decimals * FEE_PERCENTAGE),
+  );
+
+  if (feeAmount === 0n) {
+    return tx;
+  }
+
+  try {
+    const feeWalletPubkey = new PublicKey(FEE_WALLET);
+    const userPubkey = new PublicKey(userPublicKey);
+    const fromMintPubkey = new PublicKey(fromMint);
+
+    let feeInstruction: TransactionInstruction;
+
+    if (fromMint === SOL_MINT) {
+      feeInstruction = SystemProgram.transfer({
+        fromPubkey: userPubkey,
+        toPubkey: feeWalletPubkey,
+        lamports: Number(feeAmount),
+      });
+    } else {
+      const userTokenAccount = getAssociatedTokenAddress(
+        fromMintPubkey,
+        userPubkey,
+        false,
+      );
+      const feeTokenAccount = getAssociatedTokenAddress(
+        fromMintPubkey,
+        feeWalletPubkey,
+        false,
+      );
+
+      feeInstruction = createTransferCheckedInstruction(
+        userTokenAccount,
+        fromMintPubkey,
+        feeTokenAccount,
+        userPubkey,
+        Number(feeAmount),
+        decimals,
+      );
+    }
+
+    tx.message.instructions.push(feeInstruction);
+    return tx;
+  } catch (error) {
+    console.error("Error adding fee transfer instruction:", error);
+    return tx;
+  }
+}
+
+function coerceSecretKey(val: unknown): Uint8Array | null {
+  try {
+    if (!val) return null;
+    if (val instanceof Uint8Array) return val;
+    if (Array.isArray(val)) return Uint8Array.from(val as number[]);
+    if (typeof val === "string") {
+      try {
+        const bin = atob(val);
+        const out = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+        if (out.length > 0) return out;
+      } catch {}
+      try {
+        const arr = JSON.parse(val);
+        if (Array.isArray(arr)) return Uint8Array.from(arr as number[]);
+      } catch {}
+    }
+    if (typeof val === "object") {
+      const values = Object.values(val as Record<string, unknown>).filter(
+        (x) => typeof x === "number",
+      ) as number[];
+      if (values.length > 0) return Uint8Array.from(values);
+    }
+  } catch {}
+  return null;
+}
+
+function getKeypair(walletData: any): Keypair | null {
+  try {
+    const sk = coerceSecretKey(walletData?.secretKey);
+    if (!sk || sk.length === 0) return null;
+    return Keypair.fromSecretKey(sk);
+  } catch {
+    return null;
+  }
+}
+
+async function sendSignedTx(
+  txBase64: string,
+  keypair: Keypair,
+): Promise<string> {
+  const buf = bytesFromBase64(txBase64);
+  const vtx = VersionedTransaction.deserialize(buf);
+  vtx.sign([keypair]);
+  const signed = vtx.serialize();
+  const signedBase64 = base64FromBytes(signed);
+
+  const body = {
+    method: "sendRawTransaction",
+    params: [
+      signedBase64,
+      { skipPreflight: false, preflightCommitment: "confirmed" },
+    ],
+    id: Date.now(),
+  };
+
+  const r = await fetch(resolveApiUrl("/api/solana-rpc"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!r.ok) {
+    const t = await r.text().catch(() => "");
+    throw new Error(`RPC ${r.status}: ${t || r.statusText}`);
+  }
+
+  const j = await r.json();
+  if (j.error) throw new Error(j.error.message || "RPC error");
+
+  return j.result as string;
+}
+
+export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const { wallet, tokens: userTokens } = useWallet();
+  const { toast } = useToast();
+
+  const [tokenList, setTokenList] = useState([]);
+  const [fromMint, setFromMint] = useState(SOL_MINT);
+  const [toMint, setToMint] = useState(FIXER_MINT);
+  const [amount, setAmount] = useState("");
+  const [quote, setQuote] = useState(null);
+  const [status, setStatus] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fromToken = tokenList.find((t) => t.address === fromMint);
+  const toToken = tokenList.find((t) => t.address === toMint);
+  const fromTokenBalance =
+    userTokens?.find((t) => t.mint === fromMint)?.balance || 0;
+  const toTokenBalance =
+    userTokens?.find((t) => t.mint === toMint)?.balance || 0;
+
+  const initTokenList = async () => {
+    if (initialized) return;
+
+    setStatus("Loading tokens...");
+
+    try {
+      const jupiterTokens = await jupiterAPI.getStrictTokenList();
+
+      const setupTokenMints = Object.values(TOKEN_MINTS);
+      const setupTokens = jupiterTokens.filter((t) =>
+        setupTokenMints.includes(t.address),
+      );
+
+      const userTokenMints = (userTokens || []).map((t) => t.mint);
+      const userSetupTokens = jupiterTokens.filter((t) =>
+        userTokenMints.includes(t.address),
+      );
+
+      const combinedTokens = Array.from(
+        new Map([
+          ...setupTokens.map((t) => [t.address, t]),
+          ...userSetupTokens.map((t) => [t.address, t]),
+          ...jupiterTokens.map((t) => [t.address, t]),
+        ]).values(),
+      );
+
+        );
+        const fallbackTokens = (userTokens || []).map((ut) => ({
+          address: ut.mint,
+          symbol: ut.symbol,
+          decimals: ut.decimals,
+          name: ut.name,
+        }));
+        setTokenList(fallbackTokens);
+      } else {
+        combinedTokens.sort((a, b) => {
+          if (a.address === SOL_MINT) return -1;
+          if (b.address === SOL_MINT) return 1;
+          if (a.address === FIXER_MINT) return -1;
+          if (b.address === FIXER_MINT) return 1;
+          return a.symbol.localeCompare(b.symbol);
+        });
+        setTokenList(combinedTokens);
+      }
+
+      setInitialized(true);
+      setStatus("");
+    } catch (err) {
+      console.error("[SwapInterface] Error loading tokens:", err);
+      setStatus("Using available tokens...");
+
+      const fallbackTokens = (userTokens || []).map((ut) => ({
+        address: ut.mint,
+        symbol: ut.symbol,
+        decimals: ut.decimals,
+        name: ut.name,
+      }));
+
+      if (fallbackTokens.length === 0) {
+        const defaultTokens = [
+          { address: SOL_MINT, symbol: "SOL", decimals: 9, name: "Solana" },
+          {
+            address: FIXER_MINT,
+            symbol: "FIXERCOIN",
+            decimals: 6,
+            name: "FIXERCOIN",
+          },
+        ];
+        setTokenList(defaultTokens);
+      } else {
+        setTokenList(fallbackTokens);
+      }
+
+      setInitialized(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!wallet) return;
+
+    setInitialized(false);
+
+    if (userTokens && userTokens.length > 0 && tokenList.length === 0) {
+      const fallbackTokens = userTokens.map((ut) => ({
+        address: ut.mint,
+        symbol: ut.symbol,
+        decimals: ut.decimals,
+        name: ut.name,
+      }));
+      setTokenList(fallbackTokens);
+    }
+
+    initTokenList().catch((e) => {
+      console.warn("Token list init warning:", e);
+    });
+  }, [wallet, userTokens]);
+
+  const humanToRaw = (amountStr, decimals) => {
+    const amt = Number(amountStr);
+    if (isNaN(amt) || amt <= 0) throw new Error("Invalid amount");
+    return BigInt(Math.round(amt * Math.pow(10, decimals)));
+  };
+
+  const getQuote = async () => {
+    try {
+      setStatus("Computing routes…");
+      setIsLoading(true);
+
+      if (!wallet) {
+        setStatus("No wallet detected.");
+        setIsLoading(false);
+        return null;
+      }
+
+      if (!fromMint || !toMint) {
+        throw new Error("Select tokens");
+      }
+
+      const fromToken = tokenList.find((t) => t.address === fromMint);
+      const toToken = tokenList.find((t) => t.address === toMint);
+      if (!fromToken || !toToken) {
+        throw new Error("Token metadata not found");
+      }
+
+      const decimalsIn = fromToken.decimals ?? 6;
+      const amountRaw = humanToRaw(amount || "0", decimalsIn);
+      const amountStr = jupiterAPI.formatSwapAmount(
+        Number(amountRaw) / Math.pow(10, decimalsIn),
+        decimalsIn,
+      );
+
+      const quoteResponse = await jupiterAPI.getQuote(
+        fromMint,
+        toMint,
+        parseInt(amountStr),
+        5000,
+      );
+
+      if (!quoteResponse) {
+        setQuote(null);
+        setStatus("No route found for this pair/amount.");
+        setIsLoading(false);
+        return null;
+      }
+
+      const outAmount = BigInt(quoteResponse.outAmount);
+      const outHuman = Number(outAmount) / Math.pow(10, toToken.decimals ?? 6);
+
+      setQuote({
+        quoteResponse,
+        outHuman,
+        outToken: toToken.symbol,
+        hops: quoteResponse.routePlan?.length ?? 0,
+      });
+      setStatus("");
+      setIsLoading(false);
+      return { quoteResponse };
+    } catch (err) {
+      setStatus("Error: " + (err.message || err));
+      setIsLoading(false);
+      console.error(err);
+    }
+  };
+
+  const confirmSwap = async () => {
+    try {
+      setStatus("Preparing swap…");
+      setIsLoading(true);
+
+      if (!wallet) {
+        setStatus("No wallet detected.");
+        setIsLoading(false);
+        return null;
+      }
+
+      if (!quote) {
+        setStatus("Get a quote first");
+        setIsLoading(false);
+        return null;
+      }
+
+      const fromToken = tokenList.find((t) => t.address === fromMint);
+      const toToken = tokenList.find((t) => t.address === toMint);
+
+      if (!fromToken || !toToken) {
+        setStatus("Token metadata not found");
+        setIsLoading(false);
+        return null;
+      }
+
+      setStatus("Refreshing quote…");
+
+      let freshQuote = quote.quoteResponse;
+      try {
+        const amountValue = String(
+          Math.floor(parseFloat(amount) * 10 ** fromToken.decimals),
+        );
+        const refreshedQuote = await jupiterAPI.getQuote(
+          fromMint,
+          toMint,
+          parseInt(amountValue),
+          5000,
+        );
+        if (refreshedQuote) {
+          freshQuote = refreshedQuote;
+          console.log(
+            "[SwapInterface] Quote refreshed successfully before swap",
+          );
+        } else {
+          throw new Error(
+            "Failed to refresh quote. Please go back and request a new quote.",
+          );
+        }
+      } catch (refreshErr) {
+        console.warn("[SwapInterface] Quote refresh error:", refreshErr);
+        throw refreshErr;
+      }
+
+      setStatus("Preparing transaction…");
+
+      const swapRequest = {
+        quoteResponse: freshQuote,
+        userPublicKey: wallet.publicKey,
+        wrapAndUnwrapSol: true,
+      };
+
+        toast({
+          title: "Quote Expired",
+          description:
+            "The quote has expired. Please request a new quote and try again.",
+          variant: "default",
+        });
+        return null;
+      }
+
+
+      toast({
+        title: "Swap Failed",
+        description: errorMsg || "Unknown error occurred",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const executeSwap = async () => {
+    if (!quote || !wallet) {
+      toast({
+        title: "Error",
+        description: "Quote or wallet missing",
+        variant: "destructive",
+      });
+      return;
+    }
+    await confirmSwap();
+  };
+
+  if (!wallet) {
+    return (
+      <div className="w-full max-w-md mx-auto px-4">
+        <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] overflow-hidden">
+          <div className="space-y-6 p-6">
+            <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onBack}
+                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                aria-label="Back"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <h3 className="text-lg font-semibold text-gray-900 uppercase">
+                FIXORIUM TRADE
+              </h3>
+            </div>
+            <p className="text-gray-600 text-center">
+              No wallet detected. Please set up or import a wallet to use the
+              swap feature.
+            </p>
+            <Button
+              onClick={onBack}
+              variant="outline"
+              className="w-full border border-gray-700 text-gray-900 hover:bg-gray-50 uppercase"
+            >
+              Back
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-md mx-auto px-4 relative z-0 pt-8">
+      <div className="rounded-2xl border border-[#e6f6ec]/20 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0]">
+        {isLoading && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/10 rounded-2xl">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
+          </div>
+        )}
+
+        <div className="space-y-6 p-6 relative">
+          <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onBack}
+              className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+              aria-label="Back"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="font-semibold text-sm text-gray-900 uppercase">
+              FIXORIUM TRADE
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label
+              htmlFor="from-token"
+              className="text-gray-700 uppercase text-xs font-semibold"
+            >
+              From
+            </Label>
+            <div className="flex gap-3">
+              <Select value={fromMint} onValueChange={setFromMint}>
+                <SelectTrigger className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
+                  <SelectValue>
+                    {fromToken ? (
+                      <span className="text-gray-900 font-medium">
+                        {fromToken.symbol}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">Select token</span>
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border border-gray-700 z-50">
+                  {tokenList.length > 0 ? (
+                    tokenList.map((t) => {
+                      const tokenBalance =
+                        userTokens?.find((ut) => ut.mint === t.address)
+                          ?.balance || 0;
+                      return (
+                        <SelectItem key={t.address} value={t.address}>
+                          <div className="flex items-center gap-2">
+                            <span className="text-white font-medium">
+                              {t.symbol}
+                            </span>
+                            <span className="text-gray-400 text-sm">
+                              ({(tokenBalance || 0).toFixed(6)})
+                            </span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })
+                  ) : (
+                    <div className="p-2 text-center text-sm text-gray-400">
+                      Loading tokens...
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="flex-1 bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none focus:border-[#a7f3d0] transition-colors placeholder:text-gray-400 caret-gray-900"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label
+              htmlFor="to-token"
+              className="text-gray-700 uppercase text-xs font-semibold"
+            >
+              To
+            </Label>
+            <Select value={toMint} onValueChange={setToMint}>
+              <SelectTrigger className="w-full bg-transparent border border-gray-700 text-gray-900 rounded-lg focus:outline-none focus:border-[#a7f3d0] focus:ring-0 transition-colors">
+                <SelectValue>
+                  {toToken ? (
+                    <span className="text-gray-900 font-medium">
+                      {toToken.symbol}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">Select token</span>
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border border-gray-700 z-50">
+                {tokenList.length > 0 ? (
+                  tokenList.map((t) => {
+                    const tokenBalance =
+                      userTokens?.find((ut) => ut.mint === t.address)
+                        ?.balance || 0;
+                    return (
+                      <SelectItem key={t.address} value={t.address}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-white font-medium">
+                            {t.symbol}
+                          </span>
+                          <span className="text-gray-400 text-sm">
+                            ({(tokenBalance || 0).toFixed(6)})
+                          </span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })
+                ) : (
+                  <div className="p-2 text-center text-sm text-gray-400">
+                    Loading tokens...
+                  </div>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {quote && (
+            <div className="p-4 bg-[#f0fff4]/60 border border-[#a7f3d0]/30 rounded-lg">
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">
+                    Estimated receive:
+                  </span>
+                  <span className="font-semibold text-gray-900">
+                    {quote.outHuman.toFixed(6)} {quote.outToken}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-xs text-gray-500">Route hops:</span>
+                  <span className="text-xs text-gray-600">{quote.hops}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {status && (
+            <div className="text-sm text-gray-700 font-medium bg-[#f0fff4]/60 border-l-4 border-[#a7f3d0] p-3 rounded">
+              {status}
+            </div>
+          )}
+
+          <Button
+            onClick={getQuote}
+            disabled={!amount || isLoading}
+            className="w-full bg-gradient-to-r from-[#5a9f6f] to-[#3d7a52] hover:from-[#4a8f5f] hover:to-[#2d6a42] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50"
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Get Quote"
+            )}
+          </Button>
+
+          <Button
+            onClick={executeSwap}
+            disabled={!amount || !quote || isLoading}
+            className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Convert (Swap)"
+            )}
+          </Button>
+        </div>
+
+        <BloomExplosion show={showSuccess} />
+        {showSuccess && (
+          <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-40">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-green-400 mt-32">
+                {successMsg}
+              </h2>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

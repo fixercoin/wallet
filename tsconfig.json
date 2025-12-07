@@ -10,7 +10,19 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "jsx": "react-jsx",
-    "lib": ["ES2020", "DOM"]
+    "lib": ["ES2020", "DOM"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["client/*"],
+      "@shared/*": ["shared/*"]
+    }
   },
-  "include": ["functions/**/*.ts", "src", "utils"]
+  "include": [
+    "functions/**/*.ts",
+    "src",
+    "utils",
+    "server/**/*.ts",
+    "client/**/*.ts",
+    "shared/**/*.ts"
+  ]
 }

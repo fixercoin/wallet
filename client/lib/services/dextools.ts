@@ -65,36 +65,10 @@ class DexToolsAPI {
         );
       }
 
-      // Fallback to direct API call
-      const directUrl = `${this.baseUrl}/token/${chainId}/${tokenMint}`;
-      console.log(`[DexTools] Fetching directly: ${directUrl}`);
-
-      const response = await fetch(directUrl, {
-        headers: {
-          Accept: "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        console.warn(
-          `[DexTools] API returned ${response.status} for ${tokenMint}`,
-        );
-        return null;
-      }
-
-      const result: DexToolsResponse = await response.json();
-
-      if (result.data?.priceUsd) {
-        const price = result.data.priceUsd;
-        this.priceCache.set(tokenMint, {
-          price,
-          timestamp: Date.now(),
-        });
-        console.log(`[DexTools] Direct API price: ${tokenMint} = $${price}`);
-        return price;
-      }
-
-      console.warn(`[DexTools] No price data in response for ${tokenMint}`);
+      console.warn(
+        "[DexTools] Proxy request failed and no fallback available. Use /api/dextools endpoint.",
+        tokenMint,
+      );
       return null;
     } catch (error) {
       console.error(`[DexTools] Error fetching price for ${tokenMint}:`, error);

@@ -3,6 +3,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { TokenInfo } from "@/lib/wallet";
@@ -33,6 +34,9 @@ export const TokenSelectionDialog: React.FC<TokenSelectionDialogProps> = ({
       <DialogContent className="sm:max-w-sm bg-[#1a2540] border-[#3a4550]">
         <DialogHeader>
           <DialogTitle className="text-white">Manage Token</DialogTitle>
+          <DialogDescription className="sr-only">
+            Manage your token - view details or remove it from your wallet
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col items-center gap-4 py-4">

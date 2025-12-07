@@ -1,11 +1,16 @@
-import { resolveApiUrl } from "@/client/lib/api-client";
+import { makeRpcCall } from "@/lib/services/solana-rpc";
 
 export async function callSolanaRpc(payload: any) {
-  const res = await fetch(resolveApiUrl("/api/solana-rpc"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error(`Error calling Solana RPC: ${res.status}`);
-  return res.json();
+  // Use direct RPC call instead of proxy endpoint
+  // payload should have: { method, params, jsonrpc?, id? }
+  if (!payload.method) {
+    throw new Error("RPC payload must include 'method'");
+  }
+
+  const result = await makeRpcCall(payload.method, payload.params || []);
+  return {
+    jsonrpc: "2.0",
+    id: payload.id || Date.now(),
+    result,
+  };
 }

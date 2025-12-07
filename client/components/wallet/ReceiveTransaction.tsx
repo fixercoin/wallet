@@ -41,25 +41,21 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
   };
 
   return (
-    <div className="express-p2p-page min-h-screen bg-gradient-to-br from-[#2d1b47] via-[#1f0f3d] to-[#0f1820] text-white relative overflow-hidden">
-      {/* Decorative curved accent background elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
-
-      <div className="w-full max-w-md mx-auto px-4 py-6 relative z-20">
-        <div className="rounded-2xl border border-[#555555]/30 bg-gradient-to-br from-[#2d1b47]/60 to-[#1f0f3d]/60 overflow-hidden">
-          <div className="p-6 space-y-6 text-white">
+    <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col items-center">
+      <div className="w-full relative z-20">
+        <div className="border-0 bg-transparent">
+          <div className="p-6 space-y-6 text-gray-900">
             <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onBack}
-                className="h-8 w-8 p-0 rounded-full bg-transparent hover:bg-[#a855f7]/10 text-white focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
+                className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <div className="font-medium text-sm">RECEIVE</div>
+              <div className="font-medium text-sm">DEPOSIT YOUR ASSET</div>
             </div>
 
             {/* QR Code */}
@@ -73,23 +69,27 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
                   level="M"
                 />
               </div>
-              <p className="text-sm text-gray-300">Scan to send SOL</p>
+              <p className="text-sm text-gray-600">
+                SCAN TO GET DEPOSIT ADDRESS
+              </p>
             </div>
 
             {/* Address Section */}
             <div className="space-y-2">
-              <h3 className="text-sm font-medium text-white">Your Address</h3>
+              <h3 className="text-sm font-medium text-gray-900">
+                Your Address
+              </h3>
               <div className="flex gap-2">
                 <Input
                   value={wallet.publicKey}
                   readOnly
-                  className="font-mono text-sm bg-[#2d1b47]/50 text-white placeholder:text-gray-300"
+                  className="font-mono text-sm bg-transparent text-gray-900 placeholder:text-gray-400 border border-gray-300/30 rounded-lg"
                 />
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleCopyAddress}
-                  className="shrink-0 bg-[#2d1b47]/50 text-white hover:bg-[#a855f7]/10"
+                  className="shrink-0 bg-transparent text-gray-900 hover:bg-transparent border-0 rounded-md"
                 >
                   {copied ? (
                     <Check className="h-4 w-4" />

@@ -1,13 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Flame,
   Menu,
   Wallet,
@@ -55,61 +48,13 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           <Gift className="h-4 w-4 text-white/80" />
         </button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="sm"
-              className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-[#a855f7]/10 text-white ring-0 focus-visible:ring-0 border border-[#a855f7]/20"
-            >
-              <Menu className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onSelect={() => onAccounts?.()}
-              className="flex items-center gap-2 text-xs"
-            >
-              <Wallet className="h-4 w-4" />
-              <span>MY-WALLET</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={onAirdrop}
-              className="flex items-center gap-2 text-xs"
-            >
-              <Gift className="h-4 w-4" />
-              <span>C-BUILDER</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={onBurn}
-              className="flex items-center gap-2 text-xs"
-            >
-              <BurnIcon className="h-4 w-4" />
-              <span>SPL-BURN</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={onLock}
-              className="flex items-center gap-2 text-xs"
-            >
-              <Lock className="h-4 w-4" />
-              <span>LOCK-SPL</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() => navigate("/fixorium/token-listing")}
-              className="flex items-center gap-2 text-xs"
-            >
-              <Coins className="h-4 w-4" />
-              <span>LISTING</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onSelect={onSettings}
-              className="flex items-center gap-2 text-xs"
-            >
-              <Settings className="h-4 w-4" />
-              <span>SETTINGS</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+          size="sm"
+          className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-transparent"
+          aria-hidden
+        >
+          <Menu className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, Eye, EyeOff } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { TokenInfo } from "@/lib/wallet";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
@@ -12,6 +11,7 @@ interface PriceCardProps {
   onToggleBalance: () => void;
   isLoading?: boolean;
   withinCard?: boolean;
+  variant?: "light" | "dark";
 }
 
 export const PriceCard: React.FC<PriceCardProps> = ({
@@ -21,6 +21,7 @@ export const PriceCard: React.FC<PriceCardProps> = ({
   onToggleBalance,
   isLoading = false,
   withinCard = false,
+  variant = "dark",
 }) => {
   const currentPrice = token.price || 0;
   const priceChangePercent =
@@ -40,18 +41,22 @@ export const PriceCard: React.FC<PriceCardProps> = ({
             <img
               src={token.logoURI}
               alt={token.symbol}
-              className="h-8 w-8 rounded-full border border-gray-700"
+              className={`h-8 w-8 rounded-full border ${variant === "light" ? "border-gray-200" : "border-gray-700"}`}
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).style.display = "none";
               }}
             />
           ) : (
-            <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-white text-xs">
+            <div
+              className={`h-8 w-8 rounded-full ${variant === "light" ? "bg-white/80 text-gray-900" : "bg-gray-700 text-white"} flex items-center justify-center text-xs`}
+            >
               {token.symbol?.slice(0, 1) || "?"}
             </div>
           )}
           <div>
-            <h2 className="text-2xl font-bold text-white">
+            <h2
+              className={`text-2xl font-bold ${variant === "light" ? "text-gray-900" : "text-white"}`}
+            >
               {formatCurrency(currentPrice, {
                 from: "USD",
                 minimumFractionDigits: 8,
@@ -75,26 +80,22 @@ export const PriceCard: React.FC<PriceCardProps> = ({
                     {priceChangePercent >= 0 ? "+" : ""}
                     {priceChangePercent.toFixed(2)}%
                   </span>
-                  <span className="text-gray-400 text-sm">24h</span>
+                  <span
+                    className={`${variant === "light" ? "text-gray-500" : "text-gray-400"} text-sm`}
+                  >
+                    24h
+                  </span>
                 </>
               ) : (
-                <span className="text-sm font-medium text-gray-400">—</span>
+                <span
+                  className={`text-sm font-medium ${variant === "light" ? "text-gray-500" : "text-gray-400"}`}
+                >
+                  —
+                </span>
               )}
             </div>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onToggleBalance}
-          className="text-gray-400 hover:text-white hover:bg-gray-700"
-        >
-          {showBalance ? (
-            <Eye className="h-4 w-4" />
-          ) : (
-            <EyeOff className="h-4 w-4" />
-          )}
-        </Button>
       </div>
 
       {showBalance && (

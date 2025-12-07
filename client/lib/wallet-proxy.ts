@@ -7,38 +7,6 @@ import { wordlist } from "@scure/bip39/wordlists/english.js";
 import * as nacl from "tweetnacl";
 import { assertValidMnemonic, normalizeMnemonicInput } from "@/lib/mnemonic";
 import { deriveEd25519Path } from "@/lib/solana-derivation";
-import {
-  getWalletBalance as getSolanaBalance,
-  getTokenAccounts as getSolanaTokenAccounts,
-} from "@/lib/services/solana-rpc";
-
-const fetchJsonWithTimeout = async (url: string, ms = 10000) => {
-  let id: any;
-  const timeoutResult = { ok: false, json: {}, error: "timeout" } as any;
-
-  const timeoutPromise = new Promise<{ ok: boolean; json: any }>((resolve) => {
-    id = setTimeout(() => resolve(timeoutResult), ms);
-  });
-
-  const fetchPromise = (async () => {
-    try {
-      const resp = await fetch(url);
-      const json = await resp.json().catch(() => ({}));
-      return { ok: resp.ok, json } as { ok: boolean; json: any };
-    } catch (err) {
-      console.warn(`fetchJsonWithTimeout failed for ${url}:`, err);
-      return {
-        ok: false,
-        json: {},
-        error: err instanceof Error ? err.message : String(err),
-      } as any;
-    }
-  })();
-
-  const result = await Promise.race([fetchPromise, timeoutPromise]);
-  clearTimeout(id);
-  return result as { ok: boolean; json: any };
-};
 
 export interface WalletData {
   publicKey: string;
@@ -68,6 +36,7 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     symbol: "SOL",
     name: "Solana",
     decimals: 9,
+    balance: 0,
     logoURI:
       "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
   },
@@ -77,6 +46,7 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     symbol: "USDC",
     name: "USD Coin",
     decimals: 6,
+    balance: 0,
     logoURI:
       "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
   },
@@ -86,6 +56,7 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     symbol: "USDT",
     name: "Tether USD",
     decimals: 6,
+    balance: 0,
     logoURI:
       "https://cdn.builder.io/api/v1/image/assets%2F559a5e19be114c9d8427d6683b845144%2Fc2ea69828dbc4a90b2deed99c2291802?format=webp&width=800",
   },
@@ -94,6 +65,7 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     symbol: "FIXERCOIN",
     name: "FIXERCOIN",
     decimals: 6,
+    balance: 0,
     logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
   },
   {
@@ -101,6 +73,7 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     symbol: "LOCKER",
     name: "LOCKER",
     decimals: 6,
+    balance: 0,
     logoURI:
       "https://i.postimg.cc/J7p1FPbm/IMG-20250425-004450-removebg-preview-modified-2-6.png",
   },
@@ -143,76 +116,57 @@ export const recoverWallet = (mnemonicInput: string): WalletData => {
 };
 
 export const getBalance = async (publicKey: string): Promise<number> => {
-  // Try our REST endpoint(s) first — support different deployed backends (publicKey or wallet param)
-  const endpoints = [
-    `/api/wallet/balance?publicKey=${encodeURIComponent(publicKey)}`,
-    `/api/wallet/balance?wallet=${encodeURIComponent(publicKey)}`,
-    `/api/wallet/balance?address=${encodeURIComponent(publicKey)}`,
-  ];
-
-  for (const url of endpoints) {
-    try {
-      const { ok, json } = await fetchJsonWithTimeout(url, 10000);
-      if (!ok || !json) continue;
-
-      // Compatible shapes:
-      // 1) { balance: number }
-      if (typeof json.balance === "number") {
-        console.log(
-          `✅ Wallet balance endpoint successful (${url}): ${json.balance} SOL`,
-        );
-        return json.balance;
-      }
-
-      // 2) Cloudflare worker shape: { walletAddress, balances: { SOL: number, ... } }
-      if (json.balances && typeof json.balances === "object") {
-        const sol =
-          json.balances.SOL ?? json.balances.sol ?? json.balances.SOLANA;
-        if (typeof sol === "number") {
-          console.log(
-            `✅ Wallet balance endpoint (balances) successful (${url}): ${sol} SOL`,
-          );
-          return sol;
-        }
-      }
-
-      // 3) Older proxy RPC response shape: { result: { value: <lamports> } } or { result: <number> }
-      if (json.result !== undefined) {
-        // result may be an object with value or a number (lamports)
-        if (typeof json.result === "number") {
-          // assume lamports
-          const lamports = json.result as number;
-          const sol = lamports / 1_000_000_000;
-          console.log(`✅ Wallet proxy returned lamports (${url}): ${sol} SOL`);
-          return sol;
-        }
-        if (
-          json.result?.value !== undefined &&
-          typeof json.result.value === "number"
-        ) {
-          const lamports = json.result.value as number;
-          const sol = lamports / 1_000_000_000;
-          console.log(
-            `✅ Wallet proxy returned result.value (${url}): ${sol} SOL`,
-          );
-          return sol;
-        }
-      }
-    } catch (err) {
-      // Silently continue to next endpoint
-      continue;
-    }
-  }
-
-  // Final fallback to direct Solana RPC
   try {
-    console.log(`Fetching balance via Solana RPC for: ${publicKey}`);
-    const balance = await getSolanaBalance(publicKey);
-    console.log(`✅ Solana RPC successful: ${balance} SOL`);
+    console.log(`Fetching balance for: ${publicKey}`);
+
+    // Use server endpoint for balance fetching
+    // This avoids CORS issues and ensures reliability
+    const response = await fetch(
+      `/api/wallet/balance?publicKey=${encodeURIComponent(publicKey)}`,
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Balance endpoint returned ${response.status}:`, errorText);
+      throw new Error(`Server returned ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log(`Raw balance response:`, data);
+
+    // Check for API error in response
+    if (data.error) {
+      console.error(`Balance API error:`, data.error, data.details);
+      throw new Error(
+        `API error: ${data.error}${data.details ? ` - ${data.details}` : ""}`,
+      );
+    }
+
+    const balance =
+      data.balance !== undefined
+        ? data.balance
+        : data.balanceLamports !== undefined
+          ? data.balanceLamports / 1_000_000_000
+          : 0;
+
+    if (typeof balance !== "number" || !isFinite(balance)) {
+      console.error(`Invalid balance value: ${balance}`, data);
+      throw new Error(`Invalid balance type: ${typeof balance}`);
+    }
+
+    if (balance < 0) {
+      console.error(`Negative balance value: ${balance}`, data);
+      throw new Error(`Negative balance: ${balance}`);
+    }
+
+    console.log(
+      `✅ Balance fetched: ${balance} SOL (source: ${data.source || "unknown"})`,
+    );
     return balance;
   } catch (error) {
-    console.error("Solana RPC failed for balance:", error);
-    return 0;
+    console.error("Failed to fetch balance:", error);
+    // Re-throw error so WalletContext can use cached balance fallback
+    throw error;
   }
 };
 
@@ -220,15 +174,34 @@ export const getTokenAccounts = async (
   publicKey: string,
 ): Promise<TokenInfo[]> => {
   try {
-    console.log(`Fetching token accounts via Solana RPC for: ${publicKey}`);
+    console.log(`Fetching token accounts via server API for: ${publicKey}`);
 
-    const tokenAccounts = await getSolanaTokenAccounts(publicKey);
+    // Call server endpoint instead of RPC directly
+    const response = await fetch(
+      `/api/wallet/token-accounts?publicKey=${encodeURIComponent(publicKey)}`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`Server returned ${response.status}`);
+    }
+
+    const data = await response.json();
+    const tokenAccounts = data.tokens || [];
+    const isUsingFallback =
+      data.warning && data.warning.includes("unavailable");
+
+    if (isUsingFallback) {
+      console.warn(
+        `[TokenAccounts] Server returned fallback data:`,
+        data.warning,
+      );
+    }
 
     // Merge with default tokens to ensure all known tokens are included
     const allTokens = [...DEFAULT_TOKENS];
 
     // Update balances for tokens we found on-chain
-    tokenAccounts.forEach((tokenAccount) => {
+    tokenAccounts.forEach((tokenAccount: TokenInfo) => {
       const existingTokenIndex = allTokens.findIndex(
         (t) => t.mint === tokenAccount.mint,
       );
@@ -242,10 +215,10 @@ export const getTokenAccounts = async (
       }
     });
 
-    console.log(`✅ Solana RPC successful: ${allTokens.length} tokens`);
+    console.log(`✅ Token accounts loaded: ${allTokens.length} tokens`);
     return allTokens;
   } catch (error) {
-    console.error("Solana RPC failed for token accounts:", error);
+    console.error("Failed to fetch token accounts:", error);
     return DEFAULT_TOKENS.map((token) => ({ ...token, balance: 0 }));
   }
 };

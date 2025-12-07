@@ -110,12 +110,31 @@ class DexscreenerAPI {
   getTokenPrices(tokens: DexscreenerToken[]): Record<string, number> {
     const prices: Record<string, number> = {};
 
-    tokens.forEach((token) => {
-      const mint = token.baseToken?.address;
-      const price = token.priceUsd ? parseFloat(token.priceUsd) : null;
+    tokens.forEach((t) => {
+      const baseMint = t.baseToken?.address;
+      const quoteMint = t.quoteToken?.address;
+      const baseUsd = t.priceUsd ? parseFloat(t.priceUsd) : NaN;
+      const priceNative = t.priceNative ? parseFloat(t.priceNative) : NaN;
 
-      if (mint && price && price > 0) {
-        prices[mint] = price;
+      // Base token USD price (as reported by DexScreener)
+      if (baseMint && isFinite(baseUsd) && baseUsd > 0) {
+        prices[baseMint] = baseUsd;
+      }
+
+      // If possible, derive quote token USD price from baseUsd and priceNative
+      // priceNative is typically the base price in quote units. Therefore:
+      // quoteUsd = baseUsd / priceNative
+      if (
+        quoteMint &&
+        isFinite(baseUsd) &&
+        baseUsd > 0 &&
+        isFinite(priceNative) &&
+        priceNative > 0
+      ) {
+        const quoteUsd = baseUsd / priceNative;
+        if (quoteUsd > 0 && !prices[quoteMint]) {
+          prices[quoteMint] = quoteUsd;
+        }
       }
     });
 
@@ -154,7 +173,12 @@ class DexscreenerAPI {
     if (toFetch.length > 0) {
       const mintString = toFetch.join(",");
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => {
+        console.warn(
+          `[DexScreener] Request timeout after 15s for ${toFetch.length} mints`,
+        );
+        controller.abort("Request timeout after 15 seconds");
+      }, 15000);
       try {
         const url = `${this.baseUrl}/tokens?mints=${mintString}`;
         console.log(
@@ -162,8 +186,19 @@ class DexscreenerAPI {
         );
         const response = await fetch(url, { signal: controller.signal });
 
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
         if (response.ok) {
           try {
+            const contentType = response.headers.get("content-type") || "";
+            if (!contentType.includes("application/json")) {
+              throw new Error(
+                `Invalid content-type: ${contentType}. Expected application/json`,
+              );
+            }
+
             const data: DexscreenerResponse = await response.json();
             fetchedTokens = data.pairs || [];
             console.log(
@@ -172,9 +207,16 @@ class DexscreenerAPI {
 
             // Log which tokens we got
             if (fetchedTokens.length > 0) {
-              const gotMints = fetchedTokens
-                .map((t) => t.baseToken?.address)
-                .filter(Boolean);
+              const gotMints = Array.from(
+                new Set(
+                  fetchedTokens
+                    .flatMap((t) => [
+                      t.baseToken?.address,
+                      t.quoteToken?.address,
+                    ])
+                    .filter(Boolean) as string[],
+                ),
+              );
               const missingMints = toFetch.filter((m) => !gotMints.includes(m));
               console.log(
                 `[DexScreener] Got ${fetchedTokens.length} tokens, missing ${missingMints.length}:`,
@@ -224,12 +266,20 @@ class DexscreenerAPI {
           fetchFailed = true;
         }
       } catch (err) {
-        lastError = err instanceof Error ? err.message : String(err);
+        // Handle AbortError specially - it's often a timeout
+        if (err instanceof Error && err.name === "AbortError") {
+          lastError = "Request timeout (15s) - network might be slow";
+          console.warn(
+            `[DexScreener] ⏱️ Request timeout fetching ${toFetch.length} mints`,
+          );
+        } else {
+          lastError = err instanceof Error ? err.message : String(err);
+          console.warn(
+            `[DexScreener] ❌ Network error fetching tokens (${toFetch.length} mints):`,
+            lastError,
+          );
+        }
         fetchFailed = true;
-        console.warn(
-          `[DexScreener] ❌ Network error fetching tokens (${toFetch.length} mints):`,
-          lastError,
-        );
       } finally {
         clearTimeout(timeoutId);
       }
@@ -249,6 +299,19 @@ class DexscreenerAPI {
           fetchedTokens.push(stale.token);
         }
       });
+
+      // If we still don't have results for what was requested, throw error so client retries
+      const gotMints = new Set(
+        fetchedTokens
+          .flatMap((t) => [t.baseToken?.address, t.quoteToken?.address])
+          .filter(Boolean) as string[],
+      );
+      const stillMissing = toFetch.filter((m) => !gotMints.has(m));
+      if (stillMissing.length > 0) {
+        throw new Error(
+          `DexScreener API failed and no cache available for ${stillMissing.join(", ")}: ${lastError}`,
+        );
+      }
     }
 
     // Update cache with fetched results (only if we got meaningful data)
@@ -282,7 +345,10 @@ class DexscreenerAPI {
       .filter((t): t is DexscreenerToken => Boolean(t));
 
     const missing = normalizedMints.filter(
-      (m) => !result.find((t) => t.baseToken?.address === m),
+      (m) =>
+        !result.find(
+          (t) => t.baseToken?.address === m || t.quoteToken?.address === m,
+        ),
     );
     console.log(
       `[DexScreener] Returned ${result.length}/${normalizedMints.length} tokens (${result.length === normalizedMints.length ? "✅ complete" : "⚠️ partial"}). Missing: ${missing.join(", ")}`,
@@ -293,6 +359,32 @@ class DexscreenerAPI {
 
   async getTokenByMint(mint: string): Promise<DexscreenerToken | null> {
     const tokens = await this.getTokensByMints([mint]);
+
+    // If not found and it's FXM, try searching by symbol as fallback
+    if (
+      tokens.length === 0 &&
+      mint === "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump"
+    ) {
+      console.log(
+        `[DexScreener] FXM mint not found in batch, trying symbol search...`,
+      );
+      const searchResults = await this.searchTokens("FXM");
+      if (searchResults.length > 0) {
+        // Filter for Solana FXM tokens
+        const solanaFXM = searchResults.find(
+          (t) =>
+            (t.baseToken?.symbol === "FXM" || t.quoteToken?.symbol === "FXM") &&
+            t.chainId === "solana",
+        );
+        if (solanaFXM) {
+          console.log(
+            `[DexScreener] ✅ Found FXM via symbol search: ${solanaFXM.baseToken?.address}`,
+          );
+          return solanaFXM;
+        }
+      }
+    }
+
     return tokens.length > 0 ? tokens[0] : null;
   }
 

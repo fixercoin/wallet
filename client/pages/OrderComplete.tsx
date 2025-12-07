@@ -49,6 +49,8 @@ export default function OrderComplete() {
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(280);
   const [uploading, setUploading] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
+  const [orderTimestamp, setOrderTimestamp] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);

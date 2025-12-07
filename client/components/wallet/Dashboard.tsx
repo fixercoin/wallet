@@ -1,4 +1,4 @@
- import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -188,7 +188,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const shareOnX = () => {
-    const text = encodeURIComponent("Fixercoin updates ��� #Fixercoin");
+    const text = encodeURIComponent("Fixercoin updates 🚀 #Fixercoin");
     const shareUrl = encodeURIComponent("https://fixorium.com.pk");
     const intent = `https://twitter.com/intent/tweet?text=${text}&url=${shareUrl}`;
     try {
@@ -412,9 +412,317 @@ export const Dashboard: React.FC<DashboardProps> = ({
   if (!wallet) return null;
 
   return (
-    <div className="express-p2p-page min-h-screen text-gray-900 relative overflow-y-auto">
-      {/* The rest of JSX like Balance Card, Quest Modal, Tokens List, Buttons, etc. */}
-      {/* Your existing JSX can remain as-is */}
+    <div className="express-p2p-page min-h-screen text-foreground relative overflow-y-auto">
+      {/* Header */}
+      <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm border-b border-border">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 font-bold text-lg">
+            FIXORIUM
+            {isUsingCache && <Badge variant="outline" className="text-xs">Cache</Badge>}
+            {isServiceDown && <Badge variant="destructive" className="text-xs">Offline</Badge>}
+          </div>
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("/p2p-messages")}
+                  className="h-8 w-8 p-0"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                    {unreadCount}
+                  </Badge>
+                </Button>
+              </div>
+            )}
+            {pendingOrdersCount > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {pendingOrdersCount} Orders
+              </Badge>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAddTokenDialog(true)}
+              className="h-8 w-8 p-0"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading || isRefreshing}
+              className="h-8 w-8 p-0"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onAutoBot}
+              className="h-8 w-8 p-0"
+            >
+              <Bot className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onSettings}
+              className="h-8 w-8 p-0"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* Balance Card */}
+        <Card className="mb-6 bg-gradient-to-br from-card to-card/50 border-border">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">Total Balance</div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowBalance(!showBalance)}
+                  className="h-6 w-6 p-0"
+                >
+                  {showBalance ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                </Button>
+              </div>
+              <div className="text-4xl font-bold">
+                {showBalance
+                  ? `$${getTotalPortfolioValue().toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}`
+                  : "••••••"}
+              </div>
+              <div className="flex items-center gap-2 pt-2 border-t border-border">
+                <Avatar className="h-6 w-6">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">W</AvatarFallback>
+                </Avatar>
+                <code className="text-xs text-muted-foreground flex-1">
+                  {shortenAddress(wallet.publicKey)}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopyAddress}
+                  className="h-6 w-6 p-0"
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-4 gap-2 mb-6">
+          <Button
+            onClick={onSend}
+            variant="outline"
+            className="h-16 flex flex-col items-center justify-center gap-1"
+          >
+            <Send className="h-4 w-4" />
+            <span className="text-xs">Send</span>
+          </Button>
+          <Button
+            onClick={onReceive}
+            variant="outline"
+            className="h-16 flex flex-col items-center justify-center gap-1"
+          >
+            <Download className="h-4 w-4" />
+            <span className="text-xs">Receive</span>
+          </Button>
+          <Button
+            onClick={onSwap}
+            variant="outline"
+            className="h-16 flex flex-col items-center justify-center gap-1"
+          >
+            <ArrowRightLeft className="h-4 w-4" />
+            <span className="text-xs">Swap</span>
+          </Button>
+          <Button
+            onClick={onAirdrop}
+            variant="outline"
+            className="h-16 flex flex-col items-center justify-center gap-1"
+          >
+            <Gift className="h-4 w-4" />
+            <span className="text-xs">Airdrop</span>
+          </Button>
+        </div>
+
+        {/* Quest Banner */}
+        {completedTasks.size < QUEST_TASKS.length && (
+          <Card className="mb-6 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-sm font-semibold mb-1">Complete Quests</div>
+                  <div className="text-xs text-muted-foreground">
+                    Earn FIXERCOIN by completing tasks
+                  </div>
+                  <div className="mt-2 w-full bg-secondary rounded-full h-2">
+                    <div
+                      className="bg-primary h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${(completedTasks.size / QUEST_TASKS.length) * 100}%` }}
+                    />
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => setShowQuestModal(true)}
+                  className="whitespace-nowrap"
+                >
+                  {completedTasks.size}/{QUEST_TASKS.length}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Tokens Section */}
+        <div className="space-y-3">
+          <div className="text-sm font-semibold px-1">Assets</div>
+          {isLoading && !tokens.length ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <div className="animate-pulse">Loading assets...</div>
+            </div>
+          ) : sortedTokens.length > 0 ? (
+            sortedTokens.map((token) => (
+              <Card
+                key={token.mint}
+                className="bg-card/50 hover:bg-card/70 cursor-pointer transition-colors border-border"
+                onClick={() => onTokenClick(token.mint)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Avatar className="h-10 w-10 flex-shrink-0">
+                        <AvatarImage src={token.logoURI} alt={token.symbol} />
+                        <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-sm">
+                          {token.symbol.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-sm">{token.symbol}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {token.price !== undefined && token.price > 0
+                            ? `$${token.price.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 6,
+                              })}`
+                            : "Price unavailable"}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-sm">
+                        {formatBalance(token.balance, token.symbol)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {token.price !== undefined && token.price > 0
+                          ? `$${((token.balance || 0) * token.price).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}`
+                          : "-"}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Coins className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No assets yet</p>
+            </div>
+          )}
+        </div>
+
+        {/* Add Token Dialog */}
+        <AddTokenDialog
+          open={showAddTokenDialog}
+          onOpenChange={setShowAddTokenDialog}
+          onTokenAdd={addCustomToken}
+        />
+
+        {/* Quest Modal */}
+        {showQuestModal && (
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+            <Card className="w-full max-w-md">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <CardTitle>Quest & Rewards</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowQuestModal(false)}
+                  className="h-6 w-6 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {QUEST_TASKS.map((task) => (
+                  <div
+                    key={task.id}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={completedTasks.has(task.id)}
+                      onChange={() => toggleTask(task.id)}
+                      className="h-4 w-4 rounded cursor-pointer"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium">{task.label}</div>
+                      <div className="text-xs text-muted-foreground">+{REWARD_PER_TASK} FIXERCOIN</div>
+                    </div>
+                    {task.type === "link" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openAndComplete(task.id, task.href || "")}
+                        className="text-xs"
+                      >
+                        Open
+                      </Button>
+                    )}
+                    {task.type === "share" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={shareOnX}
+                        className="text-xs"
+                      >
+                        Share
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Separator className="my-4" />
+                <Button
+                  onClick={handleClaimReward}
+                  disabled={completedTasks.size !== QUEST_TASKS.length}
+                  className="w-full"
+                >
+                  {completedTasks.size === QUEST_TASKS.length
+                    ? `Claim ${REWARD_PER_TASK * QUEST_TASKS.length} FIXERCOIN`
+                    : `Complete all tasks (${completedTasks.size}/${QUEST_TASKS.length})`}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

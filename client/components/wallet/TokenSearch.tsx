@@ -195,11 +195,15 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
                     </div>
                   )}
                 </div>
-                {r.priceUsd ? (
-                  <div className="ml-auto text-xs text-gray-300">
-                    ${Number(r.priceUsd).toFixed(6)}
-                  </div>
-                ) : null}
+                <div className="ml-auto">
+                  {r.priceUsd ? (
+                    <div className="text-xs text-gray-300">
+                      ${Number(r.priceUsd).toFixed(6)}
+                    </div>
+                  ) : (
+                    <PriceLoader />
+                  )}
+                </div>
               </button>
             );
           })}

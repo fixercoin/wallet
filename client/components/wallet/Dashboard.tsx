@@ -917,12 +917,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       ) ||
                       (typeof balance === "number" && balance > 0);
                     if (!hasAnyBalance) {
-                      // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
-                      const usdZero = `0.000 $`;
+                      // If prices are still loading, show loading indicator
+                      // Otherwise show 0.000 USD
+                      const isLoadingPrices = areTokenPricesLoading();
+                      const displayValue = isLoadingPrices ? (
+                        <PriceLoader size="lg" />
+                      ) : (
+                        `0.000 $`
+                      );
+
                       return (
                         <div className="flex items-center justify-between gap-4 w-full">
                           <div className="text-3xl text-gray-900 leading-tight">
-                            {showBalance ? `${usdZero}` : "****"}
+                            {showBalance ? displayValue : "****"}
                           </div>
                           <Button
                             onClick={onP2PTrade || onReceive}

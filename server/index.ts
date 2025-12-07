@@ -693,6 +693,14 @@ export async function createServer(): Promise<express.Application> {
   app.put("/api/p2p/orders/:orderId", handleUpdateP2POrder);
   app.delete("/api/p2p/orders/:orderId", handleDeleteP2POrder);
 
+  // P2P Order Matching routes (Smart matching engine)
+  app.get("/api/p2p/matches", handleGetMatches); // Get matches for an order
+  app.post("/api/p2p/matches", handleCreateMatch); // Create a matched pair
+  app.get("/api/p2p/matches/:matchId", handleGetMatch); // Get match details
+  app.put("/api/p2p/matches/:matchId", handleUpdateMatch); // Update match status
+  app.get("/api/p2p/matches/list/all", handleListMatches); // List matches for wallet
+  app.delete("/api/p2p/matches/:matchId", handleCancelMatch); // Cancel a match
+
   // P2P Payment Methods routes
   app.get("/api/p2p/payment-methods", handleGetPaymentMethods);
   app.post("/api/p2p/payment-methods", handleSavePaymentMethod);

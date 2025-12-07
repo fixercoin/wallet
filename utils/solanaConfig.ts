@@ -1,37 +1,34 @@
-// Shared config for RPC URL. Supports Alchemy, Helius, and Moralis
-// Priority: env vars > default public RPC
+// Solana RPC configuration with fallbacks
+// Priority order: Custom RPC URL → Helius API Key → Public RPC
 
 export const SOLANA_RPC_URL = (() => {
-  // Prefer Vite/browser env in client builds
+  // PRIORITY 1: Vite env variable (VITE_SOLANA_RPC_URL for browser builds)
   try {
     // @ts-ignore - import.meta may not exist in SSR/Node
     const viteUrl = (import.meta as any)?.env?.VITE_SOLANA_RPC_URL;
     if (viteUrl && String(viteUrl).trim()) return String(viteUrl).trim();
   } catch {}
 
-  // Generic SOLANA_RPC_URL override
+  // PRIORITY 2: Generic SOLANA_RPC_URL override
   if (typeof process !== "undefined" && (process.env as any)?.SOLANA_RPC_URL) {
     return (process.env as any).SOLANA_RPC_URL as string;
   }
 
-  // Helius API key
+  // PRIORITY 3: Helius API key configuration
   if (typeof process !== "undefined" && process.env?.HELIUS_API_KEY) {
     return `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`;
   }
 
-  // Provider-specific URLs
+  // PRIORITY 4: Helius RPC URL (if provided without API key)
   if (typeof process !== "undefined" && process.env?.HELIUS_RPC_URL) {
     return process.env.HELIUS_RPC_URL;
   }
-  if (typeof process !== "undefined" && process.env?.MORALIS_RPC_URL) {
-    return process.env.MORALIS_RPC_URL;
-  }
-  if (typeof process !== "undefined" && process.env?.ALCHEMY_RPC_URL) {
-    return process.env.ALCHEMY_RPC_URL;
-  }
 
-  // Default public Solana RPC (use publicnode for CORS support)
-  return "https://solana-rpc.publicnode.com/";
+  // FALLBACK: Use reliable public RPC endpoint (no auth required)
+  console.warn(
+    "HELIUS_API_KEY not configured. Using public RPC endpoint. Set HELIUS_API_KEY for production for better reliability.",
+  );
+  return "https://solana.publicnode.com";
 })();
 
 // Legacy export for backward compatibility

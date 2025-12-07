@@ -2,6 +2,8 @@ import cors from "cors";
 import express from "express";
 import { handleSolanaRpc } from "./routes/solana-proxy";
 import { handleWalletBalance } from "./routes/wallet-balance";
+import { handleGetTokenBalance } from "./routes/token-balance";
+import { handleGetTokenAccounts } from "./routes/token-accounts";
 import { handleExchangeRate } from "./routes/exchange-rate";
 import {
   handleDexscreenerTokens,
@@ -33,6 +35,12 @@ import {
   handleUpdateTradeRoom,
   handleListTradeMessages,
   handleAddTradeMessage,
+  handleConfirmPayment,
+  handleListP2POrders,
+  handleCreateP2POrder,
+  handleGetP2POrder,
+  handleUpdateP2POrder,
+  handleDeleteP2POrder,
 } from "./routes/p2p-orders";
 import {
   handleListOrders,
@@ -41,7 +49,6 @@ import {
   handleUpdateOrder,
   handleDeleteOrder,
 } from "./routes/orders";
-import { handleBirdeyePrice } from "./routes/api-birdeye";
 import {
   handleSwapProxy,
   handleQuoteProxy,
@@ -63,13 +70,46 @@ import {
   validateSolanaSend,
   validateSwapSubmit,
 } from "./middleware/validate";
+import {
+  handleCreateStake,
+  handleListStakes,
+  handleWithdrawStake,
+  handleRewardStatus,
+  handleStakingConfig,
+} from "./routes/staking";
+import {
+  handleGetPaymentMethods,
+  handleSavePaymentMethod,
+  handleDeletePaymentMethod,
+} from "./routes/p2p-payment-methods";
+import {
+  handleListNotifications,
+  handleCreateNotification,
+  handleMarkNotificationAsRead,
+  handleDeleteNotification,
+} from "./routes/p2p-notifications";
+import {
+  handleGetMatches,
+  handleCreateMatch,
+  handleGetMatch,
+  handleUpdateMatch,
+  handleListMatches,
+  handleCancelMatch,
+} from "./routes/p2p-matching";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
 
   // Middleware
   app.use(cors());
-  app.use(express.json());
+
+  // Custom JSON parser with error handling for iconv-lite issues
+  app.use(
+    express.json({
+      strict: true,
+      type: "application/json",
+    }),
+  );
 
   // DexScreener routes
   app.get("/api/dexscreener/tokens", async (req, res) => {
@@ -106,11 +146,42 @@ export async function createServer(): Promise<express.Application> {
     }
   });
 
-  app.get("/api/dexscreener/price", handleDexscreenerPrice);
+  app.get("/api/dexscreener/price", async (req, res) => {
+    try {
+      return await handleDexscreenerPrice(req, res);
+    } catch (e: any) {
+      return res.status(502).json({
+        error: "DexScreener price failed",
+        details: e?.message || String(e),
+      });
+    }
+  });
 
   // Price routes
-  app.get("/api/sol/price", handleSolPrice);
-  app.get("/api/token/price", handleTokenPrice);
+  app.get("/api/sol/price", async (req, res) => {
+    try {
+      return await handleSolPrice(req, res);
+    } catch (e: any) {
+      console.error("[SOL Price] Unhandled error:", e);
+      return res.status(500).json({
+        token: "SOL",
+        error: "Price service temporarily unavailable",
+        details: e?.message || String(e),
+      });
+    }
+  });
+  app.get("/api/token/price", async (req, res) => {
+    try {
+      return await handleTokenPrice(req, res);
+    } catch (e: any) {
+      console.error("[Token Price] Unhandled error:", e);
+      return res.status(500).json({
+        token: (req.query.token as string) || "FIXERCOIN",
+        error: "Price service temporarily unavailable",
+        details: e?.message || String(e),
+      });
+    }
+  });
 
   // CoinMarketCap routes
   app.get("/api/coinmarketcap/quotes", handleCoinMarketCapQuotes);
@@ -124,9 +195,6 @@ export async function createServer(): Promise<express.Application> {
   app.get("/api/jupiter/quote", handleJupiterQuote);
   app.post("/api/jupiter/swap", handleJupiterSwap);
   app.get("/api/jupiter/tokens", handleJupiterTokens);
-
-  // Birdeye routes
-  app.get("/api/birdeye/price", handleBirdeyePrice);
 
   // Solana RPC proxy - with proper error handling
   app.post("/api/solana-rpc", (req, res) => {
@@ -176,10 +244,72 @@ export async function createServer(): Promise<express.Application> {
 
       // Create a modified request object
       const modifiedReq = { ...req, query: { publicKey } };
-      handleWalletBalance(modifiedReq as any, res);
+      await handleWalletBalance(modifiedReq as any, res);
     } catch (e: any) {
       return res.status(500).json({
         error: "Failed to fetch wallet balance",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  // Token balance endpoint
+  app.get("/api/wallet/token-balance", async (req, res) => {
+    try {
+      await handleGetTokenBalance(req, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch token balance",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  // Token accounts endpoint
+  app.get("/api/wallet/token-accounts", async (req, res) => {
+    try {
+      await handleGetTokenAccounts(req, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch token accounts",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  // Unified wallet endpoint - returns balance (alias for /api/wallet/balance)
+  app.get("/api/wallet", async (req, res) => {
+    try {
+      // Support multiple parameter names for publicKey
+      const publicKey =
+        (req.query.publicKey as string) ||
+        (req.query.wallet as string) ||
+        (req.query.address as string) ||
+        (req.query.walletAddress as string);
+
+      if (!publicKey || typeof publicKey !== "string") {
+        return res.status(400).json({
+          error: "Missing or invalid wallet address parameter",
+          examples: [
+            "GET /api/wallet?publicKey=...",
+            "GET /api/wallet?wallet=...",
+            "GET /api/wallet?address=...",
+            "GET /api/wallet?walletAddress=...",
+          ],
+          availableEndpoints: [
+            "/api/wallet/balance - Get SOL balance",
+            "/api/wallet/token-accounts - Get token accounts",
+            "/api/wallet/token-balance - Get specific token balance",
+          ],
+        });
+      }
+
+      // Delegate to wallet balance handler
+      const modifiedReq = { ...req, query: { publicKey } };
+      await handleWalletBalance(modifiedReq as any, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch wallet information",
         details: e?.message || String(e),
       });
     }
@@ -514,9 +644,11 @@ export async function createServer(): Promise<express.Application> {
   // Token price endpoint (simple, robust fallback + stablecoins)
   app.get("/api/token/price", async (req, res) => {
     try {
-      const tokenParam = String(
+      // Normalize token parameter by extracting the token symbol before any suffix (e.g., "USDC:1" -> "USDC")
+      let tokenParam = String(
         req.query.token || req.query.symbol || "FIXERCOIN",
       ).toUpperCase();
+      tokenParam = tokenParam.split(":")[0];
       const mintParam = String(req.query.mint || "");
 
       const FALLBACK_USD: Record<string, number> = {
@@ -586,34 +718,32 @@ export async function createServer(): Promise<express.Application> {
   app.put("/api/orders/:orderId", handleUpdateOrder);
   app.delete("/api/orders/:orderId", handleDeleteOrder);
 
-  // P2P Orders routes (legacy API) - DISABLED
-  // These legacy endpoints are intentionally disabled to stop P2P order handling from this setup.
-  // Keeping explicit disabled handlers so callers receive a clear 410 Gone response.
-  app.get("/api/p2p/orders", (req, res) =>
-    res
-      .status(410)
-      .json({ error: "P2P orders API is disabled on this server" }),
-  );
-  app.post("/api/p2p/orders", (req, res) =>
-    res
-      .status(410)
-      .json({ error: "P2P orders API is disabled on this server" }),
-  );
-  app.get("/api/p2p/orders/:orderId", (req, res) =>
-    res
-      .status(410)
-      .json({ error: "P2P orders API is disabled on this server" }),
-  );
-  app.put("/api/p2p/orders/:orderId", (req, res) =>
-    res
-      .status(410)
-      .json({ error: "P2P orders API is disabled on this server" }),
-  );
-  app.delete("/api/p2p/orders/:orderId", (req, res) =>
-    res
-      .status(410)
-      .json({ error: "P2P orders API is disabled on this server" }),
-  );
+  // Staking routes
+  app.get("/api/staking/config", handleStakingConfig);
+  app.post("/api/staking/create", handleCreateStake);
+  app.get("/api/staking/list", handleListStakes);
+  app.post("/api/staking/withdraw", handleWithdrawStake);
+  app.get("/api/staking/rewards-status", handleRewardStatus);
+
+  // P2P Orders routes - ENABLED (stores orders in memory, can be replaced with Cloudflare KV)
+  app.get("/api/p2p/orders", handleListP2POrders);
+  app.post("/api/p2p/orders", handleCreateP2POrder);
+  app.get("/api/p2p/orders/:orderId", handleGetP2POrder);
+  app.put("/api/p2p/orders/:orderId", handleUpdateP2POrder);
+  app.delete("/api/p2p/orders/:orderId", handleDeleteP2POrder);
+
+  // P2P Order Matching routes (Smart matching engine)
+  app.get("/api/p2p/matches", handleGetMatches); // Get matches for an order
+  app.post("/api/p2p/matches", handleCreateMatch); // Create a matched pair
+  app.get("/api/p2p/matches/:matchId", handleGetMatch); // Get match details
+  app.put("/api/p2p/matches/:matchId", handleUpdateMatch); // Update match status
+  app.get("/api/p2p/matches/list/all", handleListMatches); // List matches for wallet
+  app.delete("/api/p2p/matches/:matchId", handleCancelMatch); // Cancel a match
+
+  // P2P Payment Methods routes
+  app.get("/api/p2p/payment-methods", handleGetPaymentMethods);
+  app.post("/api/p2p/payment-methods", handleSavePaymentMethod);
+  app.delete("/api/p2p/payment-methods", handleDeletePaymentMethod);
 
   // Trade Rooms routes
   app.get("/api/p2p/rooms", handleListTradeRooms);
@@ -624,6 +754,15 @@ export async function createServer(): Promise<express.Application> {
   // Trade Messages routes
   app.get("/api/p2p/rooms/:roomId/messages", handleListTradeMessages);
   app.post("/api/p2p/rooms/:roomId/messages", handleAddTradeMessage);
+
+  // Payment Confirmation route
+  app.post("/api/p2p/rooms/:roomId/confirm-payment", handleConfirmPayment);
+
+  // P2P Notifications routes
+  app.get("/api/p2p/notifications", handleListNotifications);
+  app.post("/api/p2p/notifications", handleCreateNotification);
+  app.put("/api/p2p/notifications", handleMarkNotificationAsRead);
+  app.delete("/api/p2p/notifications", handleDeleteNotification);
 
   // Health check
   app.get("/health", (req, res) => {
@@ -649,6 +788,28 @@ export async function createServer(): Promise<express.Application> {
     res.json({
       status: "pong",
       timestamp: new Date().toISOString(),
+    });
+  });
+
+  // Root endpoint
+  app.get("/", (req, res) => {
+    res.json({
+      status: "ok",
+      message: "Fixorium Wallet API",
+      version: "1.0.0",
+      timestamp: new Date().toISOString(),
+      info: "Frontend is served from Vite dev server at http://localhost:5173 in development mode",
+      endpoints: {
+        health: "/health",
+        api: "/api",
+        api_health: "/api/health",
+        ping: "/api/ping",
+        wallet: "/api/wallet/balance",
+        balance: "/api/balance",
+        quote: "/api/quote",
+        swap: "/api/swap/execute",
+        orders: "/api/orders",
+      },
     });
   });
 
@@ -693,13 +854,28 @@ export async function createServer(): Promise<express.Application> {
       }
 
       const modifiedReq = { ...req, query: { publicKey } };
-      handleWalletBalance(modifiedReq as any, res);
+      await handleWalletBalance(modifiedReq as any, res);
     } catch (e: any) {
       return res.status(500).json({
         error: "Failed to fetch wallet balance",
         details: e?.message || String(e),
       });
     }
+  });
+
+  // Global error handler for async errors
+  app.use((err: any, req: any, res: any, next: any) => {
+    console.error("[Server] Unhandled error:", {
+      message: err?.message || String(err),
+      stack: err?.stack,
+      path: req.path,
+    });
+
+    // Always return JSON to prevent text/plain responses
+    res.status(500).json({
+      error: "Internal server error",
+      details: err?.message || "Unknown error",
+    });
   });
 
   // 404 handler

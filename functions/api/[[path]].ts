@@ -2,10 +2,20 @@ export const config = {
   runtime: "nodejs_esmsh",
 };
 
+interface Env {
+  SOLANA_RPC_URL?: string;
+  HELIUS_RPC_URL?: string;
+  HELIUS_API_KEY?: string;
+  ALCHEMY_RPC_URL?: string;
+  MORALIS_RPC_URL?: string;
+}
+
 const DEFAULT_SOLANA_RPC = "https://solana.publicnode.com";
 const FALLBACK_RPC_ENDPOINTS = [
   "https://solana.publicnode.com",
+  "https://api.solflare.com",
   "https://rpc.ankr.com/solana",
+  "https://rpc.ironforge.network/mainnet",
   "https://api.mainnet-beta.solana.com",
 ];
 
@@ -110,7 +120,7 @@ async function handleHealth(): Promise<Response> {
   );
 }
 
-async function handleWalletBalance(url: URL): Promise<Response> {
+async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
   const publicKey = url.searchParams.get("publicKey");
   if (!publicKey) {
     return new Response(JSON.stringify({ error: "publicKey required" }), {
@@ -126,56 +136,129 @@ async function handleWalletBalance(url: URL): Promise<Response> {
     params: [publicKey],
   };
 
-  // Build ordered list of endpoints to try (unique)
-  const endpoints = Array.from(
-    new Set([DEFAULT_SOLANA_RPC, ...(FALLBACK_RPC_ENDPOINTS || [])]),
-  );
+  // Build RPC endpoints with env variables first
+  const endpoints: string[] = [];
+  const priorityEndpoints: string[] = [];
 
-  let lastError = "";
-  let lastStatus = 502;
+  // Add environment-configured endpoints first (highest priority)
+  if (
+    env?.SOLANA_RPC_URL &&
+    typeof env.SOLANA_RPC_URL === "string" &&
+    env.SOLANA_RPC_URL.length > 0
+  ) {
+    priorityEndpoints.push(env.SOLANA_RPC_URL);
+  }
+  if (
+    env?.HELIUS_RPC_URL &&
+    typeof env.HELIUS_RPC_URL === "string" &&
+    env.HELIUS_RPC_URL.length > 0
+  ) {
+    priorityEndpoints.push(env.HELIUS_RPC_URL);
+  }
+  if (
+    env?.HELIUS_API_KEY &&
+    typeof env.HELIUS_API_KEY === "string" &&
+    env.HELIUS_API_KEY.length > 0
+  ) {
+    priorityEndpoints.push(
+      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
+    );
+  }
+  if (
+    env?.ALCHEMY_RPC_URL &&
+    typeof env.ALCHEMY_RPC_URL === "string" &&
+    env.ALCHEMY_RPC_URL.length > 0
+  ) {
+    priorityEndpoints.push(env.ALCHEMY_RPC_URL);
+  }
+  if (
+    env?.MORALIS_RPC_URL &&
+    typeof env.MORALIS_RPC_URL === "string" &&
+    env.MORALIS_RPC_URL.length > 0
+  ) {
+    priorityEndpoints.push(env.MORALIS_RPC_URL);
+  }
 
-  for (let i = 0; i < endpoints.length; i++) {
-    const endpoint = endpoints[i];
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        const resp = await timeoutFetch(endpoint, {
-          method: "POST",
-          headers: browserHeaders(),
-          body: JSON.stringify(payload),
-        });
+  // Add fallback endpoints
+  const allEndpoints = [
+    ...Array.from(new Set(priorityEndpoints)),
+    ...FALLBACK_RPC_ENDPOINTS,
+  ];
+  const uniqueEndpoints = Array.from(new Set(allEndpoints));
 
-        lastStatus = resp.status;
+  // Try priority endpoints in parallel with shorter timeout
+  if (priorityEndpoints.length > 0) {
+    const priorityResults = await Promise.allSettled(
+      priorityEndpoints.map((endpoint) =>
+        timeoutFetch(
+          endpoint,
+          {
+            method: "POST",
+            headers: browserHeaders(),
+            body: JSON.stringify(payload),
+          },
+          8000,
+        ),
+      ),
+    );
 
+    for (const result of priorityResults) {
+      if (result.status === "fulfilled") {
+        const resp = result.value;
         if (resp.ok) {
-          const rpcJson = await resp.json().catch(() => ({}));
-          const lamports = rpcJson?.result?.value ?? 0;
-          const sol = lamports / 1_000_000_000;
-          return new Response(JSON.stringify({ lamports, sol, publicKey }), {
-            headers: CORS_HEADERS,
-          });
-        }
-
-        // Non-OK response
-        const text = await resp.text().catch(() => "");
-        lastError = `HTTP ${resp.status}: ${text}`;
-
-        // Retry on server errors
-        if (resp.status >= 500) {
-          if (attempt < 2) {
-            await new Promise((r) => setTimeout(r, 500 * attempt));
+          try {
+            const rpcJson = await resp.json();
+            const lamports = rpcJson?.result?.value ?? rpcJson?.result ?? 0;
+            const balance =
+              typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
+            return new Response(
+              JSON.stringify({ balance, lamports, publicKey }),
+              {
+                headers: CORS_HEADERS,
+              },
+            );
+          } catch (e) {
             continue;
           }
         }
-
-        // Not retryable, break to next endpoint
-        break;
-      } catch (e: any) {
-        lastError = String(e?.message || e);
-        if (attempt < 2) {
-          await new Promise((r) => setTimeout(r, 300 * attempt));
-          continue;
-        }
       }
+    }
+  }
+
+  // Fallback endpoints with sequential retry
+  let lastError = "";
+  let lastStatus = 502;
+
+  for (const endpoint of FALLBACK_RPC_ENDPOINTS) {
+    try {
+      const resp = await timeoutFetch(
+        endpoint,
+        {
+          method: "POST",
+          headers: browserHeaders(),
+          body: JSON.stringify(payload),
+        },
+        8000,
+      );
+
+      lastStatus = resp.status;
+
+      if (resp.ok) {
+        const rpcJson = await resp.json().catch(() => ({}));
+        const lamports = rpcJson?.result?.value ?? rpcJson?.result ?? 0;
+        const balance =
+          typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
+        return new Response(JSON.stringify({ balance, lamports, publicKey }), {
+          headers: CORS_HEADERS,
+        });
+      }
+
+      const text = await resp.text().catch(() => "");
+      lastError = `HTTP ${resp.status}: ${text.slice(0, 100)}`;
+    } catch (e: any) {
+      lastError = e?.message?.includes?.("abort")
+        ? "timeout"
+        : String(e?.message || e).slice(0, 100);
     }
   }
 
@@ -185,6 +268,7 @@ async function handleWalletBalance(url: URL): Promise<Response> {
       error: "rpc_error",
       details: lastError,
       status: lastStatus,
+      endpointsAttempted: uniqueEndpoints.length,
     }),
     { status: 502, headers: CORS_HEADERS },
   );
@@ -393,9 +477,23 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
       );
     }
 
+    // Build swap request with proper defaults (matching server implementation)
+    const swapRequest = {
+      quoteResponse: body.quoteResponse,
+      userPublicKey: body.userPublicKey,
+      wrapAndUnwrapSol:
+        body.wrapAndUnwrapSol !== undefined ? body.wrapAndUnwrapSol : true,
+      useSharedAccounts:
+        body.useSharedAccounts !== undefined ? body.useSharedAccounts : true,
+      computeUnitPriceMicroLamports: body.computeUnitPriceMicroLamports,
+      prioritizationFeeLamports: body.prioritizationFeeLamports,
+      asLegacyTransaction: body.asLegacyTransaction || false,
+      ...body,
+    };
+
     const endpoints = [
-      `${JUPITER_V6_SWAP_BASE}/swap`,
       `${JUPITER_SWAP_BASE}/swap`,
+      `${JUPITER_V6_SWAP_BASE}/swap`,
     ];
 
     let lastError = "";
@@ -406,22 +504,16 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
       for (let attempt = 1; attempt <= 2; attempt++) {
         try {
           console.log(
-            `[Jupiter Swap] Attempt ${attempt}/2, Endpoint ${idx + 1}/${endpoints.length}`,
+            `[Jupiter Swap] Attempt ${attempt}/2, Endpoint ${idx + 1}/${endpoints.length}: ${endpoint}`,
           );
 
           const response = await timeoutFetch(endpoint, {
             method: "POST",
             headers: browserHeaders({ Accept: "application/json" }),
-            body: JSON.stringify({
-              ...body,
-              wrapAndUnwrapSol: body.wrapAndUnwrapSol !== false,
-              useSharedAccounts: body.useSharedAccounts !== false,
-              asLegacyTransaction: body.asLegacyTransaction === true,
-            }),
+            body: JSON.stringify(swapRequest),
           });
 
           lastStatus = response.status;
-
           const text = await response.text().catch(() => "");
 
           if (response.ok) {
@@ -437,16 +529,25 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
             }
           }
 
+          // Parse error response
+          let errorData: any = {};
+          try {
+            errorData = JSON.parse(text);
+          } catch {}
+
           const lower = (text || "").toLowerCase();
           const isStaleQuote =
             lower.includes("1016") ||
             lower.includes("stale") ||
             lower.includes("simulation") ||
             lower.includes("swap simulation failed") ||
-            lower.includes("quote expired");
+            lower.includes("quote expired") ||
+            errorData?.code === 1016;
 
           if (isStaleQuote) {
-            console.warn(`[Jupiter Swap] Detected stale quote (1016)`);
+            console.warn(
+              `[Jupiter Swap] Detected stale quote (1016) from ${endpoint}`,
+            );
             return new Response(
               JSON.stringify({
                 error: "STALE_QUOTE",
@@ -455,6 +556,25 @@ async function handleJupiterSwap(request: Request): Promise<Response> {
                 code: 1016,
               }),
               { status: 530, headers: CORS_HEADERS },
+            );
+          }
+
+          // Check for other client errors that shouldn't be retried
+          if (
+            response.status === 400 ||
+            response.status === 401 ||
+            response.status === 403
+          ) {
+            console.warn(
+              `[Jupiter Swap] Client error (${response.status}), not retrying`,
+            );
+            return new Response(
+              JSON.stringify({
+                error: `Swap request failed: ${response.statusText}`,
+                details: text,
+                code: "SWAP_REQUEST_ERROR",
+              }),
+              { status: response.status, headers: CORS_HEADERS },
             );
           }
 
@@ -954,6 +1074,267 @@ async function handleDexscreenerPrice(url: URL): Promise<Response> {
   }
 }
 
+async function handleDexscreenerTokens(url: URL): Promise<Response> {
+  try {
+    const mintsParam = url.searchParams.get("mints");
+    if (!mintsParam || typeof mintsParam !== "string") {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Missing or invalid 'mints' parameter. Expected comma-separated token mints.",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const rawMints = mintsParam
+      .split(",")
+      .map((m) => m.trim())
+      .filter(Boolean);
+    const uniqueMints = Array.from(new Set(rawMints));
+
+    if (uniqueMints.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "No valid mints provided" }),
+        {
+          status: 400,
+          headers: CORS_HEADERS,
+        },
+      );
+    }
+
+    console.log(
+      `[DexScreener Tokens] Requesting data for mints: ${uniqueMints.join(", ")}`,
+    );
+
+    const MAX_TOKENS_PER_BATCH = 20;
+    const batches: string[][] = [];
+    for (let i = 0; i < uniqueMints.length; i += MAX_TOKENS_PER_BATCH) {
+      batches.push(uniqueMints.slice(i, i + MAX_TOKENS_PER_BATCH));
+    }
+
+    const endpoints = [DEXSCREENER_BASE, DEXSCREENER_IO];
+    const results: any[] = [];
+    let schemaVersion = "1.0.0";
+
+    for (const batch of batches) {
+      let success = false;
+      const path = `/tokens/${encodeURIComponent(batch.join(","))}`;
+
+      for (const base of endpoints) {
+        try {
+          const resp = await timeoutFetch(`${base}${path}`, {
+            method: "GET",
+            headers: browserHeaders(),
+          });
+          if (!resp.ok) {
+            console.warn(
+              `[DexScreener] Endpoint ${base} returned status ${resp.status}`,
+            );
+            continue;
+          }
+          const data = await safeJson(resp);
+          if (data?.schemaVersion) schemaVersion = data.schemaVersion;
+          if (Array.isArray(data?.pairs)) {
+            console.log(
+              `[DexScreener] Got ${data.pairs.length} pairs from ${base}`,
+            );
+            results.push(...data.pairs);
+          }
+          success = true;
+          break;
+        } catch (e) {
+          console.warn(
+            `[DexScreener] Error fetching from ${base}:`,
+            e instanceof Error ? e.message : String(e),
+          );
+          continue;
+        }
+      }
+      if (!success) {
+        console.warn(`[DexScreener] Failed to fetch batch: ${batch.join(",")}`);
+      }
+    }
+
+    // Deduplicate and filter to Solana
+    const seen = new Set<string>();
+    const pairs = results
+      .filter((p: any) => {
+        // More flexible chain matching - handle various chainId formats
+        const chainId = (p?.chainId || "").toLowerCase().trim();
+        const isValidChain =
+          chainId === "solana" || chainId === "sol" || chainId === "";
+        if (!isValidChain) {
+          console.debug(
+            `[DexScreener] Filtering out pair with chainId: ${p?.chainId}`,
+          );
+        }
+        return isValidChain;
+      })
+      .filter((p: any) => {
+        const key = `${p?.baseToken?.address || ""}:${p?.quoteToken?.address || ""}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+    console.log(
+      `[DexScreener Tokens] Processed ${results.length} results, returning ${pairs.length} Solana pairs. Requested: ${uniqueMints.join(", ")}`,
+    );
+
+    // Log what we got
+    if (pairs.length > 0) {
+      const gotMints = Array.from(
+        new Set(
+          pairs
+            .flatMap((p: any) => [
+              p?.baseToken?.address,
+              p?.quoteToken?.address,
+            ])
+            .filter(Boolean),
+        ),
+      );
+      const missingMints = uniqueMints.filter((m) => !gotMints.includes(m));
+      if (missingMints.length > 0) {
+        console.warn(
+          `[DexScreener] Missing mints (${missingMints.length}): ${missingMints.join(", ")}`,
+        );
+      }
+    }
+
+    return new Response(JSON.stringify({ schemaVersion, pairs }), {
+      headers: CORS_HEADERS,
+    });
+  } catch (err: any) {
+    console.error("[DexScreener] Tokens handler error:", err);
+    return new Response(
+      JSON.stringify({
+        error: { message: err?.message || String(err) },
+        schemaVersion: "1.0.0",
+        pairs: [],
+      }),
+      { status: 200, headers: CORS_HEADERS },
+    );
+  }
+}
+
+async function handleDexscreenerSearch(url: URL): Promise<Response> {
+  try {
+    const q = url.searchParams.get("q");
+    if (!q || typeof q !== "string") {
+      return new Response(
+        JSON.stringify({
+          error: "Missing or invalid 'q' parameter for search query.",
+        }),
+        { status: 400, headers: CORS_HEADERS },
+      );
+    }
+
+    const endpoints = [DEXSCREENER_BASE, DEXSCREENER_IO];
+    let lastError: string | null = null;
+
+    for (const base of endpoints) {
+      try {
+        const resp = await timeoutFetch(
+          `${base}/search/?q=${encodeURIComponent(q)}`,
+          { method: "GET", headers: browserHeaders() },
+          25000,
+        );
+
+        if (!resp.ok) {
+          const data = await safeJson(resp);
+          lastError = `HTTP ${resp.status}: ${JSON.stringify(data)}`;
+          console.warn(`[DexScreener] ${base} search returned ${resp.status}`);
+          continue;
+        }
+
+        const data = await safeJson(resp);
+        const solanaPairs = (data?.pairs || [])
+          .filter(
+            (pair: any) => (pair.chainId || "").toLowerCase() === "solana",
+          )
+          .slice(0, 20);
+
+        return new Response(
+          JSON.stringify({
+            schemaVersion: data?.schemaVersion || "1.0.0",
+            pairs: solanaPairs,
+          }),
+          { headers: CORS_HEADERS },
+        );
+      } catch (e: any) {
+        lastError = String(e?.message || e);
+        console.warn(`[DexScreener] ${base} search error:`, lastError);
+        continue;
+      }
+    }
+
+    // All endpoints failed
+    return new Response(
+      JSON.stringify({
+        error: "DexScreener search failed",
+        details: lastError || "All endpoints failed",
+        schemaVersion: "1.0.0",
+        pairs: [],
+      }),
+      { status: 502, headers: CORS_HEADERS },
+    );
+  } catch (err: any) {
+    console.error("[DexScreener] Search proxy error:", err);
+    return new Response(
+      JSON.stringify({
+        error: { message: err?.message || String(err), details: String(err) },
+        schemaVersion: "1.0.0",
+        pairs: [],
+      }),
+      { status: 500, headers: CORS_HEADERS },
+    );
+  }
+}
+
+async function handleDexscreenerTrending(url: URL): Promise<Response> {
+  try {
+    const resp = await timeoutFetch(`${DEXSCREENER_BASE}/pairs/solana`, {
+      method: "GET",
+      headers: browserHeaders(),
+    });
+    const data = await safeJson(resp);
+
+    const trendingPairs = (data?.pairs || [])
+      .filter(
+        (pair: any) =>
+          pair.volume?.h24 > 1000 &&
+          pair.liquidity?.usd &&
+          pair.liquidity.usd > 10000,
+      )
+      .sort((a: any, b: any) => (b.volume?.h24 || 0) - (a.volume?.h24 || 0))
+      .slice(0, 50);
+
+    return new Response(
+      JSON.stringify({
+        schemaVersion: data?.schemaVersion || "1.0.0",
+        pairs: trendingPairs,
+      }),
+      {
+        headers: CORS_HEADERS,
+      },
+    );
+  } catch (err: any) {
+    console.error("[DexScreener] Trending proxy error:", err);
+    return new Response(
+      JSON.stringify({
+        error: { message: err?.message || String(err) },
+        schemaVersion: "1.0.0",
+        pairs: [],
+      }),
+      {
+        status: 500,
+        headers: CORS_HEADERS,
+      },
+    );
+  }
+}
+
 async function handleSolPrice(): Promise<Response> {
   const SOL_MINT = "So11111111111111111111111111111111111111112";
 
@@ -1004,59 +1385,175 @@ async function handleSolPrice(): Promise<Response> {
 }
 
 async function handleTokenPrice(url: URL): Promise<Response> {
-  const mint = url.searchParams.get("mint");
-  const tokenSymbol = url.searchParams.get("symbol") || "FIXERCOIN";
+  const TOKEN_MINTS: Record<string, string> = {
+    SOL: "So11111111111111111111111111111111111111112",
+    USDC: "EPjFWdd5Au7BXRSpJfDw3gEPrwwAau4vTNihtQ5go5Q",
+    USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+    FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+    LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+    FXM: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+  };
+
+  const FALLBACK_PRICES: Record<string, number> = {
+    USDC: 1.0,
+    USDT: 1.0,
+    FIXERCOIN: 0.00008139,
+    SOL: 149.38,
+    LOCKER: 0.00001112,
+    FXM: 0.000003567,
+  };
+
+  const PKR_CONVERSION = 291.9; // 1 USD = ~291.90 PKR
+
+  let mint = url.searchParams.get("mint");
+  let token = url.searchParams.get("token")?.toUpperCase();
+  let tokenSymbol = url.searchParams.get("symbol")?.toUpperCase() || token;
+
+  // Resolve token to mint
+  if (!mint && token && TOKEN_MINTS[token]) {
+    mint = TOKEN_MINTS[token];
+    tokenSymbol = token;
+  } else if (!mint && tokenSymbol && TOKEN_MINTS[tokenSymbol]) {
+    mint = TOKEN_MINTS[tokenSymbol];
+  }
 
   if (!mint && !tokenSymbol) {
     return new Response(
       JSON.stringify({
-        error: "mint or symbol parameter required",
+        error: "mint, token, or symbol parameter required",
       }),
       { status: 400, headers: CORS_HEADERS },
     );
   }
 
+  tokenSymbol = tokenSymbol || "UNKNOWN";
+
   try {
-    const fetchMint = mint || "So11111111111111111111111111111111111111112";
+    // For stablecoins, return hardcoded price immediately
+    if (tokenSymbol === "USDC" || tokenSymbol === "USDT") {
+      const priceUsd = 1.0;
+      const priceInPKR = priceUsd * PKR_CONVERSION;
+      return new Response(
+        JSON.stringify({
+          token: tokenSymbol,
+          mint,
+          rate: priceInPKR,
+          priceInPKR,
+          priceUsd,
+          source: "stablecoin",
+          timestamp: new Date().toISOString(),
+        }),
+        { headers: CORS_HEADERS },
+      );
+    }
+
+    const fetchMint = mint || TOKEN_MINTS.SOL;
     const response = await timeoutFetch(
       `${JUPITER_PRICE_BASE}/price?ids=${fetchMint}`,
       {
         method: "GET",
         headers: browserHeaders(),
       },
+      10000,
     );
 
     if (!response.ok) {
+      // Return fallback price if API fails
+      const fallbackPrice = FALLBACK_PRICES[tokenSymbol];
+      if (fallbackPrice !== undefined) {
+        const priceInPKR = fallbackPrice * PKR_CONVERSION;
+        return new Response(
+          JSON.stringify({
+            token: tokenSymbol,
+            mint: fetchMint,
+            rate: priceInPKR,
+            priceInPKR,
+            priceUsd: fallbackPrice,
+            source: "fallback",
+            timestamp: new Date().toISOString(),
+          }),
+          { headers: CORS_HEADERS },
+        );
+      }
+
       return new Response(
-        JSON.stringify({ error: "Failed to fetch token price" }),
-        { status: response.status, headers: CORS_HEADERS },
+        JSON.stringify({
+          error: "Failed to fetch token price",
+          token: tokenSymbol,
+        }),
+        { status: 502, headers: CORS_HEADERS },
       );
     }
 
     const data = await response.json();
     const price = data?.data?.[fetchMint]?.price ?? null;
 
-    if (price === null) {
+    if (price === null || price === undefined) {
+      // Return fallback price
+      const fallbackPrice = FALLBACK_PRICES[tokenSymbol];
+      if (fallbackPrice !== undefined) {
+        const priceInPKR = fallbackPrice * PKR_CONVERSION;
+        return new Response(
+          JSON.stringify({
+            token: tokenSymbol,
+            mint: fetchMint,
+            rate: priceInPKR,
+            priceInPKR,
+            priceUsd: fallbackPrice,
+            source: "fallback",
+            timestamp: new Date().toISOString(),
+          }),
+          { headers: CORS_HEADERS },
+        );
+      }
+
       return new Response(
-        JSON.stringify({ error: "Token price not available" }),
+        JSON.stringify({
+          error: "Token price not available",
+          token: tokenSymbol,
+        }),
         { status: 502, headers: CORS_HEADERS },
       );
     }
 
+    const priceInPKR = price * PKR_CONVERSION;
     return new Response(
       JSON.stringify({
         token: tokenSymbol,
         mint: fetchMint,
+        rate: priceInPKR,
+        priceInPKR,
         priceUsd: price,
+        source: "jupiter",
         timestamp: new Date().toISOString(),
       }),
       { headers: CORS_HEADERS },
     );
   } catch (e: any) {
+    // Return fallback on error
+    const fallbackPrice = FALLBACK_PRICES[tokenSymbol];
+    if (fallbackPrice !== undefined) {
+      const priceInPKR = fallbackPrice * PKR_CONVERSION;
+      return new Response(
+        JSON.stringify({
+          token: tokenSymbol,
+          mint: mint || TOKEN_MINTS[tokenSymbol],
+          rate: priceInPKR,
+          priceInPKR,
+          priceUsd: fallbackPrice,
+          source: "fallback",
+          error: "API failed, using fallback",
+          timestamp: new Date().toISOString(),
+        }),
+        { headers: CORS_HEADERS },
+      );
+    }
+
     return new Response(
       JSON.stringify({
         error: "Failed to fetch token price",
         details: String(e?.message || e),
+        token: tokenSymbol,
       }),
       { status: 502, headers: CORS_HEADERS },
     );
@@ -1224,7 +1721,7 @@ async function handleSolanaRpc(request: Request): Promise<Response> {
   }
 }
 
-async function handler(request: Request): Promise<Response> {
+async function handler(request: Request, env?: Env): Promise<Response> {
   try {
     if (request.method === "OPTIONS") {
       return new Response(null, {
@@ -1276,10 +1773,47 @@ async function handler(request: Request): Promise<Response> {
     }
 
     if (
+      pathname === "/api/wallet" ||
+      pathname === "/api/wallet/" ||
+      pathname === "/wallet"
+    ) {
+      // Support multiple parameter names for publicKey
+      const publicKey =
+        url.searchParams.get("publicKey") ||
+        url.searchParams.get("wallet") ||
+        url.searchParams.get("address") ||
+        url.searchParams.get("walletAddress");
+
+      if (!publicKey) {
+        return new Response(
+          JSON.stringify({
+            error: "Missing or invalid wallet address parameter",
+            examples: [
+              "GET /api/wallet?publicKey=...",
+              "GET /api/wallet?wallet=...",
+              "GET /api/wallet?address=...",
+              "GET /api/wallet?walletAddress=...",
+            ],
+            availableEndpoints: [
+              "/api/wallet/balance - Get SOL balance",
+              "/api/wallet/tokens - Get token accounts",
+            ],
+          }),
+          { status: 400, headers: CORS_HEADERS },
+        );
+      }
+
+      // Delegate to wallet balance handler
+      const balanceUrl = new URL(url);
+      balanceUrl.searchParams.set("publicKey", publicKey);
+      return await handleWalletBalance(balanceUrl, env);
+    }
+
+    if (
       pathname.startsWith("/api/wallet/balance") ||
       pathname === "/wallet/balance"
     ) {
-      return await handleWalletBalance(url);
+      return await handleWalletBalance(url, env);
     }
 
     if (
@@ -1293,10 +1827,6 @@ async function handler(request: Request): Promise<Response> {
       return await handlePrice(url);
     }
 
-    if (pathname === "/api/sol/price") {
-      return await handleSolPrice();
-    }
-
     if (pathname === "/api/token/price") {
       return await handleTokenPrice(url);
     }
@@ -1306,10 +1836,26 @@ async function handler(request: Request): Promise<Response> {
         JSON.stringify({
           status: "ok",
           message: "DexScreener API Proxy",
-          endpoints: ["/api/dexscreener/price?tokenAddress=<mint>"],
+          endpoints: [
+            "/api/dexscreener/price?tokenAddress=<mint>",
+            "/api/dexscreener/search?q=<query>",
+            "/api/dexscreener/trending",
+          ],
         }),
         { headers: CORS_HEADERS },
       );
+    }
+
+    if (pathname.startsWith("/api/dexscreener/tokens")) {
+      return await handleDexscreenerTokens(url);
+    }
+
+    if (pathname.startsWith("/api/dexscreener/search")) {
+      return await handleDexscreenerSearch(url);
+    }
+
+    if (pathname.startsWith("/api/dexscreener/trending")) {
+      return await handleDexscreenerTrending(url);
     }
 
     if (pathname.startsWith("/api/dexscreener/price")) {
@@ -1401,4 +1947,8 @@ async function handler(request: Request): Promise<Response> {
   }
 }
 
-export const onRequest = handler;
+export async function onRequest(context: any): Promise<Response> {
+  // Cloudflare Pages Functions pass a context object; extract the Request and env
+  const { request, env } = context;
+  return handler(request as Request, env as Env);
+}

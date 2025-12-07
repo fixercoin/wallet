@@ -1,3 +1,5 @@
+import { fetchWithRetry } from "../../utils/fetch-with-retry";
+
 export const onRequest: PagesFunction = async ({ request }) => {
   try {
     const url = new URL(request.url);
@@ -20,17 +22,15 @@ export const onRequest: PagesFunction = async ({ request }) => {
       );
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-
     const pumpFunUrl = `https://pump.fun/api/curve/${encodeURIComponent(mint)}`;
-    const res = await fetch(pumpFunUrl, {
+    const res = await fetchWithRetry(pumpFunUrl, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      signal: controller.signal,
+      timeoutMs: 55000,
+      maxRetries: 2,
+      retryDelayMs: 1000,
     });
 
-    clearTimeout(timeoutId);
     const text = await res.text();
 
     return new Response(text, {
@@ -44,15 +44,16 @@ export const onRequest: PagesFunction = async ({ request }) => {
     });
   } catch (error: any) {
     const message = error?.message || "Unknown error";
+    const isTimeout = message.includes("timeout") || message.includes("abort");
     console.error("Pump.fun curve endpoint error:", error);
 
     return new Response(
       JSON.stringify({
-        error: "Failed to check curve state",
+        error: isTimeout ? "Request timeout" : "Failed to check curve state",
         details: message,
       }),
       {
-        status: 502,
+        status: isTimeout ? 504 : 502,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",

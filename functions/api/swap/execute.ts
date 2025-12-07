@@ -29,7 +29,7 @@ export const onRequest: PagesFunction = async ({ request, env }) => {
     });
   }
 
-  // Prioritized Solana RPC endpoints: env first, then public
+  // Prioritized Solana RPC endpoints: env first, then public (in order of reliability)
   const endpoints = [
     env.HELIUS_API_KEY
       ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`
@@ -39,7 +39,9 @@ export const onRequest: PagesFunction = async ({ request, env }) => {
     env.MORALIS_RPC_URL || "",
     env.ALCHEMY_RPC_URL || "",
     "https://solana.publicnode.com",
+    "https://api.solflare.com",
     "https://rpc.ankr.com/solana",
+    "https://rpc.ironforge.network/mainnet",
     "https://api.mainnet-beta.solana.com",
   ].filter(Boolean) as string[];
 

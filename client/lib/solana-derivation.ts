@@ -1,5 +1,5 @@
-import { hmac } from "@noble/hashes/hmac";
-import { sha512 } from "@noble/hashes/sha512";
+import { hmac } from "@noble/hashes/hmac.js";
+import { sha512 } from "@noble/hashes/sha2.js";
 
 const HARDENED_OFFSET = 0x80000000;
 const MASTER_SECRET = new TextEncoder().encode("ed25519 seed");

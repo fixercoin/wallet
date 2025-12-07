@@ -95,12 +95,13 @@ class HeliusAPI {
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
-    // Use public RPC endpoints directly - no backend proxy needed
-    this.endpoints = [
-      SOLANA_RPC_URL,
-      "https://solana-rpc.publicnode.com/",
-      "https://solana.publicnode.com",
-    ].filter(Boolean);
+    // Use ONLY Helius RPC endpoint - no fallbacks to other providers
+    this.endpoints = [SOLANA_RPC_URL].filter(Boolean);
+    if (this.endpoints.length === 0) {
+      throw new Error(
+        "SOLANA_RPC_URL (Helius) is required. Please set HELIUS_API_KEY environment variable.",
+      );
+    }
   }
 
   /**
@@ -200,8 +201,11 @@ class HeliusAPI {
               }
             }
 
+            lastError = new Error(
+              `${response.status} ${response.statusText}: ${errorText}`,
+            );
             console.warn(
-              `RPC call failed on ${endpoint}: ${response.status} ${response.statusText}`,
+              `RPC call failed on ${endpoint}: ${lastError.message}`,
             );
             continue;
           }
@@ -209,7 +213,9 @@ class HeliusAPI {
           const data = await response.json();
 
           if (data.error) {
-            console.warn(`RPC error on ${endpoint}: ${data.error.message}`);
+            const errorMsg = data.error.message || JSON.stringify(data.error);
+            console.warn(`RPC error on ${endpoint}: ${errorMsg}`);
+            lastError = new Error(errorMsg);
             continue;
           }
 

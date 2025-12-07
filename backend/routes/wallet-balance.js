@@ -7,7 +7,9 @@ const RPC_ENDPOINTS = [
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
     : "",
   "https://solana.publicnode.com",
+  "https://api.solflare.com",
   "https://rpc.ankr.com/solana",
+  "https://rpc.ironforge.network/mainnet",
   "https://api.mainnet-beta.solana.com",
 ].filter(Boolean);
 

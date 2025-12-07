@@ -111,16 +111,25 @@ async function handler(request: Request, context: any): Promise<Response> {
       );
     }
 
-    // Build RPC endpoint list with env vars first
-    const rpcEndpoints = [
-      env?.HELIUS_API_KEY
-        ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`
-        : "",
-      env?.HELIUS_RPC_URL || "",
-      env?.MORALIS_RPC_URL || "",
-      env?.ALCHEMY_RPC_URL || "",
-      ...RPC_ENDPOINTS,
-    ].filter(Boolean);
+    // Get Helius RPC endpoint only
+    let rpcEndpoint: string;
+    try {
+      rpcEndpoint = getHeliusRpcEndpoint(env);
+    } catch (e) {
+      return new Response(
+        JSON.stringify({
+          error: (e as Error).message,
+          tokens: [],
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
+      );
+    }
 
     const rpcBody = {
       jsonrpc: "2.0",

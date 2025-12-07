@@ -77,6 +77,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
     };
 
     const rpcEndpoints = buildRpcEndpoints(env);
+    console.log(`[Balance API] Using ${rpcEndpoints.length} RPC endpoints. First endpoint: ${rpcEndpoints[0]?.substring(0, 50)}...`);
     let lastError = "";
 
     // Try each RPC endpoint
@@ -93,6 +94,8 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         });
 
         clearTimeout(timeoutId);
+
+        console.log(`[Balance API] Endpoint response status: ${response.status}`);
 
         const data = await response.json();
 

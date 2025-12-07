@@ -35,6 +35,7 @@ import {
   handleUpdateTradeRoom,
   handleListTradeMessages,
   handleAddTradeMessage,
+  handleConfirmPayment,
   handleListP2POrders,
   handleCreateP2POrder,
   handleGetP2POrder,
@@ -271,6 +272,44 @@ export async function createServer(): Promise<express.Application> {
     } catch (e: any) {
       return res.status(500).json({
         error: "Failed to fetch token accounts",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  // Unified wallet endpoint - returns balance (alias for /api/wallet/balance)
+  app.get("/api/wallet", async (req, res) => {
+    try {
+      // Support multiple parameter names for publicKey
+      const publicKey =
+        (req.query.publicKey as string) ||
+        (req.query.wallet as string) ||
+        (req.query.address as string) ||
+        (req.query.walletAddress as string);
+
+      if (!publicKey || typeof publicKey !== "string") {
+        return res.status(400).json({
+          error: "Missing or invalid wallet address parameter",
+          examples: [
+            "GET /api/wallet?publicKey=...",
+            "GET /api/wallet?wallet=...",
+            "GET /api/wallet?address=...",
+            "GET /api/wallet?walletAddress=...",
+          ],
+          availableEndpoints: [
+            "/api/wallet/balance - Get SOL balance",
+            "/api/wallet/token-accounts - Get token accounts",
+            "/api/wallet/token-balance - Get specific token balance",
+          ],
+        });
+      }
+
+      // Delegate to wallet balance handler
+      const modifiedReq = { ...req, query: { publicKey } };
+      await handleWalletBalance(modifiedReq as any, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch wallet information",
         details: e?.message || String(e),
       });
     }
@@ -715,6 +754,9 @@ export async function createServer(): Promise<express.Application> {
   // Trade Messages routes
   app.get("/api/p2p/rooms/:roomId/messages", handleListTradeMessages);
   app.post("/api/p2p/rooms/:roomId/messages", handleAddTradeMessage);
+
+  // Payment Confirmation route
+  app.post("/api/p2p/rooms/:roomId/confirm-payment", handleConfirmPayment);
 
   // P2P Notifications routes
   app.get("/api/p2p/notifications", handleListNotifications);

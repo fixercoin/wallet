@@ -10,6 +10,12 @@ import { P2PTradeDialog, type TradeDetails } from "@/components/P2PTradeDialog";
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
 import type { P2POrder } from "@/components/P2POffersTable";
 
+interface PaymentMethod {
+  id: string;
+  accountName: string;
+  accountNumber: string;
+}
+
 export default function BuyData() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
@@ -22,6 +28,7 @@ export default function BuyData() {
   const [selectedOffer, setSelectedOffer] = useState<P2POrder | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(280);
   const [fetchingRate, setFetchingRate] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
   // Fetch exchange rate on mount
   useEffect(() => {

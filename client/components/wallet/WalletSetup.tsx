@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Copy, ArrowLeft } from "lucide-react";
+import { BouncingDotsLoader } from "@/components/ui/bouncing-dots-loader";
 import {
   generateWallet,
   recoverWallet,
@@ -84,7 +85,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       setIsLoading(true);
       setError(null);
 
-      // Set the wallet
+      // Set the wallet - this updates context and triggers localStorage save
       setWallet(wallet);
 
       // Prefetch address data via RPC providers
@@ -181,7 +182,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
         </svg>
 
         <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10">
-          <div className="w-full bg-transparent overflow-hidden">
+          <div className="w-full bg-transparent overflow-hidden px-4 sm:px-6">
             <div className="space-y-6">
               <div className="flex items-center justify-center pb-2">
                 <img
@@ -189,6 +190,12 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   alt="Wallet"
                   className="block mx-auto w-[250px] h-[250px] object-contain max-w-full"
                 />
+              </div>
+
+              <div className="text-center px-4">
+                <p className="text-sm font-semibold text-gray-100 leading-relaxed">
+                  YOUR SECURE SOLANA WALLET. CREATE OR IMPORT TO START.
+                </p>
               </div>
 
               <div className="space-y-4">
@@ -251,10 +258,13 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
         </svg>
 
         <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10">
-          <div className="relative w-full bg-transparent overflow-hidden">
+          <div className="relative w-full bg-transparent overflow-hidden px-4 sm:px-6">
             {isLoading && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
-                <div className="text-white">Importing wallet...</div>
+                <BouncingDotsLoader
+                  text="Importing wallet"
+                  dotColor="#22c55e"
+                />
               </div>
             )}
 
@@ -301,13 +311,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       className="w-full h-32 p-4 bg-[#1a1a1a] rounded-none border border-[#333] text-white placeholder:text-gray-500 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30"
                     />
                     <p className="text-xs text-gray-400">
-                      Derivation Path (Solana default) →
-                      <span className="ml-2 font-mono text-[11px] text-gray-300">
-                        m/44&apos;/501&apos;/0&apos;/0&apos;
-                      </span>
-                      <span className="ml-1 text-gray-400">
-                        (compatible with Phantom and other Solana wallets)
-                      </span>
+                      IMPORT ANY SOLANA BASE WALLET
                     </p>
                   </div>
                 ) : (
@@ -399,7 +403,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
         </svg>
 
         <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10">
-          <div className="relative w-full bg-transparent overflow-hidden">
+          <div className="relative w-full bg-transparent overflow-hidden px-4 sm:px-6">
             {isLoading && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
                 <div className="text-white">Creating wallet...</div>

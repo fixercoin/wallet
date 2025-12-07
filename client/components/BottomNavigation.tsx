@@ -1,74 +1,100 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Home, Rocket, Flame, Users } from "lucide-react";
+import { MessageSquare } from "lucide-react";
+import { useWallet } from "@/contexts/WalletContext";
+import { getUnreadNotifications } from "@/lib/p2p-chat";
 
 export const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [noFixed, setNoFixed] = useState<boolean>(() => {
-    try {
-      return document.body.classList.contains("no-fixed-bottom");
-    } catch {
-      return false;
-    }
-  });
+  const { wallet } = useWallet();
+  const [classHidden, setClassHidden] = useState(() =>
+    document.body.classList.contains("no-fixed-bottom"),
+  );
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Hide navigation on:
+  // 1. Pages with no-fixed-bottom class (WalletSetup, recovery)
+  // 2. Home page when no wallet exists
+  const shouldHideNav = classHidden || (location.pathname === "/" && !wallet);
 
   useEffect(() => {
     const obs = new MutationObserver(() => {
-      try {
-        setNoFixed(document.body.classList.contains("no-fixed-bottom"));
-      } catch {}
+      setClassHidden(document.body.classList.contains("no-fixed-bottom"));
     });
-    try {
-      obs.observe(document.body, {
-        attributes: true,
-        attributeFilter: ["class"],
-      });
-    } catch {}
+    obs.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
     return () => obs.disconnect();
   }, []);
 
-  const navItems = [
-    { path: "/", label: "HOME", icon: Home },
-    { path: "/autobot", label: "ADVANCE TRADE", icon: Rocket },
-    { path: "/burn", label: "BURN", icon: Flame },
-    { path: "/airdrop", label: "ARIDROP", icon: Users },
-  ];
+  // Monitor unread notifications
+  useEffect(() => {
+    if (!wallet) return;
 
-  const isActive = (path: string) => {
-    return (
-      location.pathname === path || location.pathname.startsWith(path + "/")
-    );
-  };
+    const updateUnreadCount = () => {
+      const unread = getUnreadNotifications(wallet.publicKey);
+      setUnreadCount(unread.length);
+    };
 
-  if (noFixed) return null;
+    updateUnreadCount();
+
+    // Check for updates every 2 seconds
+    const interval = setInterval(updateUnreadCount, 2000);
+
+    // Also listen for storage changes
+    const handleStorageChange = () => {
+      updateUnreadCount();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [wallet]);
+
+  if (shouldHideNav) return null;
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#333]"
+      className="fixed bottom-4 left-0 right-0 z-40"
       style={{ backgroundColor: "#1f1f1f" }}
     >
-      <div className="flex items-center justify-between h-16 xs:h-20 sm:h-20 md:h-24 lg:h-28 px-0 sm:px-1.5 md:px-4 lg:px-6 gap-0 xs:gap-0.5 sm:gap-1 md:gap-1.5 w-full">
-        {navItems.map((item, index) => {
-          const active = isActive(item.path);
-          const Icon = item.icon;
+      <div className="flex items-center justify-between h-16 xs:h-20 sm:h-20 md:h-24 lg:h-28 px-2 xs:px-3 sm:px-3 md:px-6 lg:px-8 gap-2 xs:gap-3 sm:gap-4 md:gap-6 lg:gap-8 w-full">
+        {/* P2P TRADE SERVICE Text with Card Style */}
+        <div
+          onClick={() => navigate("/p2p")}
+          className="cursor-pointer flex-1 bg-[#2a2a2a] border border-[#22c55e]/30 rounded-md px-4 py-3 text-center hover:bg-[#2a2a2a]/80 transition-colors"
+          title="P2P Trade Service"
+        >
+          <span className="text-white font-bold text-sm xs:text-base whitespace-nowrap">
+            P2P TRADE SERVICE
+          </span>
+        </div>
 
-          return (
-            <button
-              key={item.label}
-              onClick={() => navigate(item.path)}
-              className="flex-1 px-0.5 xs:px-1 sm:px-2 md:px-4 lg:px-6 py-1 xs:py-1.5 sm:py-2 md:py-2.5 lg:py-3 transition-colors font-medium rounded-none leading-tight min-w-0 text-center flex flex-col items-center justify-center gap-0.5 xs:gap-1 text-white"
-              aria-label={item.label}
-              title={item.label}
-            >
-              <Icon className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 flex-shrink-0 text-white opacity-50" />
-              <span className="block truncate text-[9px] xs:text-[10px] sm:text-[11px] md:text-sm lg:text-base">
-                {item.label}
-              </span>
-            </button>
-          );
-        })}
+        {/* Notification Icon with Card Style */}
+        <div className="relative flex items-center bg-[#2a2a2a] border border-[#FF7A5C]/30 rounded-md p-3 hover:bg-[#2a2a2a]/80 transition-colors">
+          <button
+            onClick={() => navigate("/p2p")}
+            className="relative flex items-center justify-center"
+            aria-label="P2P Chat Notifications"
+            title="View chat notifications"
+          >
+            <MessageSquare className="w-6 h-6 text-[#FF7A5C]" />
+
+            {unreadCount > 0 && (
+              <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#FF7A5C] rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-bold">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              </div>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

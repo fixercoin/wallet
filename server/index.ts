@@ -2,6 +2,8 @@ import cors from "cors";
 import express from "express";
 import { handleSolanaRpc } from "./routes/solana-proxy";
 import { handleWalletBalance } from "./routes/wallet-balance";
+import { handleGetTokenBalance } from "./routes/token-balance";
+import { handleGetTokenAccounts } from "./routes/token-accounts";
 import { handleExchangeRate } from "./routes/exchange-rate";
 import {
   handleDexscreenerTokens,
@@ -33,6 +35,11 @@ import {
   handleUpdateTradeRoom,
   handleListTradeMessages,
   handleAddTradeMessage,
+  handleListP2POrders,
+  handleCreateP2POrder,
+  handleGetP2POrder,
+  handleUpdateP2POrder,
+  handleDeleteP2POrder,
 } from "./routes/p2p-orders";
 import {
   handleListOrders,
@@ -41,7 +48,6 @@ import {
   handleUpdateOrder,
   handleDeleteOrder,
 } from "./routes/orders";
-import { handleBirdeyePrice } from "./routes/api-birdeye";
 import {
   handleSwapProxy,
   handleQuoteProxy,
@@ -63,13 +69,38 @@ import {
   validateSolanaSend,
   validateSwapSubmit,
 } from "./middleware/validate";
+import {
+  handleCreateStake,
+  handleListStakes,
+  handleWithdrawStake,
+  handleRewardStatus,
+  handleStakingConfig,
+} from "./routes/staking";
+import {
+  handleGetPaymentMethods,
+  handleSavePaymentMethod,
+  handleDeletePaymentMethod,
+} from "./routes/p2p-payment-methods";
+import {
+  handleListNotifications,
+  handleCreateNotification,
+  handleMarkNotificationAsRead,
+  handleDeleteNotification,
+} from "./routes/p2p-notifications";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
 
   // Middleware
   app.use(cors());
-  app.use(express.json());
+
+  // Custom JSON parser with error handling for iconv-lite issues
+  app.use(
+    express.json({
+      strict: true,
+      type: "application/json",
+    }),
+  );
 
   // DexScreener routes
   app.get("/api/dexscreener/tokens", async (req, res) => {
@@ -125,13 +156,8 @@ export async function createServer(): Promise<express.Application> {
       console.error("[SOL Price] Unhandled error:", e);
       return res.status(500).json({
         token: "SOL",
-        price: 149.38,
-        priceUsd: 149.38,
-        priceChange24h: 0,
-        volume24h: 0,
-        marketCap: 0,
-        source: "fallback",
         error: "Price service temporarily unavailable",
+        details: e?.message || String(e),
       });
     }
   });
@@ -142,10 +168,8 @@ export async function createServer(): Promise<express.Application> {
       console.error("[Token Price] Unhandled error:", e);
       return res.status(500).json({
         token: (req.query.token as string) || "FIXERCOIN",
-        price: 0.00008139,
-        priceUsd: "0.00008139",
-        source: "fallback",
         error: "Price service temporarily unavailable",
+        details: e?.message || String(e),
       });
     }
   });
@@ -162,9 +186,6 @@ export async function createServer(): Promise<express.Application> {
   app.get("/api/jupiter/quote", handleJupiterQuote);
   app.post("/api/jupiter/swap", handleJupiterSwap);
   app.get("/api/jupiter/tokens", handleJupiterTokens);
-
-  // Birdeye routes
-  app.get("/api/birdeye/price", handleBirdeyePrice);
 
   // Solana RPC proxy - with proper error handling
   app.post("/api/solana-rpc", (req, res) => {
@@ -214,10 +235,34 @@ export async function createServer(): Promise<express.Application> {
 
       // Create a modified request object
       const modifiedReq = { ...req, query: { publicKey } };
-      handleWalletBalance(modifiedReq as any, res);
+      await handleWalletBalance(modifiedReq as any, res);
     } catch (e: any) {
       return res.status(500).json({
         error: "Failed to fetch wallet balance",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  // Token balance endpoint
+  app.get("/api/wallet/token-balance", async (req, res) => {
+    try {
+      await handleGetTokenBalance(req, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch token balance",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  // Token accounts endpoint
+  app.get("/api/wallet/token-accounts", async (req, res) => {
+    try {
+      await handleGetTokenAccounts(req, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch token accounts",
         details: e?.message || String(e),
       });
     }
@@ -552,9 +597,11 @@ export async function createServer(): Promise<express.Application> {
   // Token price endpoint (simple, robust fallback + stablecoins)
   app.get("/api/token/price", async (req, res) => {
     try {
-      const tokenParam = String(
+      // Normalize token parameter by extracting the token symbol before any suffix (e.g., "USDC:1" -> "USDC")
+      let tokenParam = String(
         req.query.token || req.query.symbol || "FIXERCOIN",
       ).toUpperCase();
+      tokenParam = tokenParam.split(":")[0];
       const mintParam = String(req.query.mint || "");
 
       const FALLBACK_USD: Record<string, number> = {
@@ -624,34 +671,24 @@ export async function createServer(): Promise<express.Application> {
   app.put("/api/orders/:orderId", handleUpdateOrder);
   app.delete("/api/orders/:orderId", handleDeleteOrder);
 
-  // P2P Orders routes (legacy API) - DISABLED
-  // These legacy endpoints are intentionally disabled to stop P2P order handling from this setup.
-  // Keeping explicit disabled handlers so callers receive a clear 410 Gone response.
-  app.get("/api/p2p/orders", (req, res) =>
-    res
-      .status(410)
-      .json({ error: "P2P orders API is disabled on this server" }),
-  );
-  app.post("/api/p2p/orders", (req, res) =>
-    res
-      .status(410)
-      .json({ error: "P2P orders API is disabled on this server" }),
-  );
-  app.get("/api/p2p/orders/:orderId", (req, res) =>
-    res
-      .status(410)
-      .json({ error: "P2P orders API is disabled on this server" }),
-  );
-  app.put("/api/p2p/orders/:orderId", (req, res) =>
-    res
-      .status(410)
-      .json({ error: "P2P orders API is disabled on this server" }),
-  );
-  app.delete("/api/p2p/orders/:orderId", (req, res) =>
-    res
-      .status(410)
-      .json({ error: "P2P orders API is disabled on this server" }),
-  );
+  // Staking routes
+  app.get("/api/staking/config", handleStakingConfig);
+  app.post("/api/staking/create", handleCreateStake);
+  app.get("/api/staking/list", handleListStakes);
+  app.post("/api/staking/withdraw", handleWithdrawStake);
+  app.get("/api/staking/rewards-status", handleRewardStatus);
+
+  // P2P Orders routes - ENABLED (stores orders in memory, can be replaced with Cloudflare KV)
+  app.get("/api/p2p/orders", handleListP2POrders);
+  app.post("/api/p2p/orders", handleCreateP2POrder);
+  app.get("/api/p2p/orders/:orderId", handleGetP2POrder);
+  app.put("/api/p2p/orders/:orderId", handleUpdateP2POrder);
+  app.delete("/api/p2p/orders/:orderId", handleDeleteP2POrder);
+
+  // P2P Payment Methods routes
+  app.get("/api/p2p/payment-methods", handleGetPaymentMethods);
+  app.post("/api/p2p/payment-methods", handleSavePaymentMethod);
+  app.delete("/api/p2p/payment-methods", handleDeletePaymentMethod);
 
   // Trade Rooms routes
   app.get("/api/p2p/rooms", handleListTradeRooms);
@@ -662,6 +699,12 @@ export async function createServer(): Promise<express.Application> {
   // Trade Messages routes
   app.get("/api/p2p/rooms/:roomId/messages", handleListTradeMessages);
   app.post("/api/p2p/rooms/:roomId/messages", handleAddTradeMessage);
+
+  // P2P Notifications routes
+  app.get("/api/p2p/notifications", handleListNotifications);
+  app.post("/api/p2p/notifications", handleCreateNotification);
+  app.put("/api/p2p/notifications", handleMarkNotificationAsRead);
+  app.delete("/api/p2p/notifications", handleDeleteNotification);
 
   // Health check
   app.get("/health", (req, res) => {
@@ -753,7 +796,7 @@ export async function createServer(): Promise<express.Application> {
       }
 
       const modifiedReq = { ...req, query: { publicKey } };
-      handleWalletBalance(modifiedReq as any, res);
+      await handleWalletBalance(modifiedReq as any, res);
     } catch (e: any) {
       return res.status(500).json({
         error: "Failed to fetch wallet balance",

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
+import { useNavigate } from "react-router-dom";
 import { WalletSetup } from "@/components/wallet/WalletSetup";
 import { Dashboard } from "@/components/wallet/Dashboard";
 import { SendTransaction } from "@/components/wallet/SendTransaction";
@@ -15,6 +16,7 @@ import { BurnToken } from "@/components/wallet/BurnToken";
 import { TokenManage } from "@/components/wallet/TokenManage";
 import { StakeTokens } from "@/components/wallet/StakeTokens";
 import { TokenStakingDetail } from "@/components/wallet/TokenStakingDetail";
+import DocumentationPage from "./DocumentationPage";
 
 type Screen =
   | "dashboard"
@@ -24,6 +26,7 @@ type Screen =
   | "token-detail"
   | "token-manage"
   | "settings"
+  | "documentation"
   | "autobot"
   | "setup"
   | "accounts"
@@ -39,20 +42,50 @@ interface ScreenState {
 }
 
 export default function Index() {
-  const { wallet, tokens } = useWallet();
+  const navigate = useNavigate();
+  const { wallet, tokens, isInitialized, requiresPassword } = useWallet();
   const [currentScreen, setCurrentScreen] = useState<ScreenState>({
     screen: "dashboard",
   });
   const [isAutoBotActive, setIsAutoBotActive] = useState(false);
 
-  // If no wallet is set up, show the wallet setup screen
+  // Wait for wallet context to be initialized from localStorage
+  if (!isInitialized) {
+    console.log("[Index] Wallet context initializing...");
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-gray-300">Loading wallet...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If password is required, don't show setup - let PasswordPromptDialog handle it
+  if (requiresPassword && !wallet) {
+    console.log("[Index] Wallet is password protected, awaiting unlock...");
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-center">
+          <p className="text-gray-300">Waiting for password unlock...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no wallet exists (new user), show the wallet setup screen
   if (!wallet) {
+    console.log("[Index] No wallet found, showing wallet setup screen");
     return (
       <WalletSetup
         onComplete={() => setCurrentScreen({ screen: "dashboard" })}
       />
     );
   }
+
+  // Wallet exists - show dashboard
+  console.log("[Index] ✅ Wallet loaded successfully:", wallet.publicKey);
 
   const navigateToScreen = (screen: Screen, tokenMint?: string) => {
     setCurrentScreen({ screen, tokenMint });
@@ -126,8 +159,12 @@ export default function Index() {
         <Settings
           onBack={navigateToDashboard}
           onOpenSetup={() => navigateToScreen("setup")}
+          onDocumentation={() => navigateToScreen("documentation")}
         />
       );
+
+    case "documentation":
+      return <DocumentationPage onBack={navigateToDashboard} />;
 
     case "accounts":
       return (
@@ -197,6 +234,7 @@ export default function Index() {
           onLock={() => navigateToScreen("lock")}
           onBurn={() => navigateToScreen("burn")}
           onStakeTokens={() => navigateToScreen("stake-tokens")}
+          onP2PTrade={() => navigate("/buydata")}
         />
       );
   }

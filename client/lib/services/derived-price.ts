@@ -28,8 +28,8 @@ const DECIMALS: Record<SupportedToken | "SOL", number> = {
 
 const FALLBACK_USD: Record<SupportedToken | "SOL", number> = {
   SOL: 149.38, // Real-time market price
-  FIXERCOIN: 0.00008139, // Real-time market price
-  LOCKER: 0.00001112, // Real-time market price
+  FIXERCOIN: 0.000042, // Fallback price for pump.fun token
+  LOCKER: 0.000008, // Fallback price for pump.fun token
 };
 
 const genericTokenCache = new Map<string, GenericTokenPrice>();

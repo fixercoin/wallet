@@ -2,11 +2,20 @@ export const config = {
   runtime: "nodejs_esmsh",
 };
 
+interface Env {
+  SOLANA_RPC_URL?: string;
+  HELIUS_RPC_URL?: string;
+  HELIUS_API_KEY?: string;
+  ALCHEMY_RPC_URL?: string;
+  MORALIS_RPC_URL?: string;
+}
+
 const DEFAULT_SOLANA_RPC = "https://solana.publicnode.com";
 const FALLBACK_RPC_ENDPOINTS = [
   "https://solana.publicnode.com",
   "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
+  "https://rpc.ironforge.network/mainnet",
 ];
 
 const PUMPFUN_API_BASE = "https://pump.fun/api";
@@ -110,7 +119,7 @@ async function handleHealth(): Promise<Response> {
   );
 }
 
-async function handleWalletBalance(url: URL): Promise<Response> {
+async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
   const publicKey = url.searchParams.get("publicKey");
   if (!publicKey) {
     return new Response(JSON.stringify({ error: "publicKey required" }), {
@@ -126,33 +135,84 @@ async function handleWalletBalance(url: URL): Promise<Response> {
     params: [publicKey],
   };
 
-  // Build ordered list of endpoints to try (unique)
-  const endpoints = Array.from(
-    new Set([DEFAULT_SOLANA_RPC, ...(FALLBACK_RPC_ENDPOINTS || [])]),
-  );
+  // Build RPC endpoints with env variables first
+  const endpoints: string[] = [];
+
+  // Add environment-configured endpoints first (highest priority)
+  if (
+    env?.SOLANA_RPC_URL &&
+    typeof env.SOLANA_RPC_URL === "string" &&
+    env.SOLANA_RPC_URL.length > 0
+  ) {
+    endpoints.push(env.SOLANA_RPC_URL);
+  }
+  if (
+    env?.HELIUS_RPC_URL &&
+    typeof env.HELIUS_RPC_URL === "string" &&
+    env.HELIUS_RPC_URL.length > 0
+  ) {
+    endpoints.push(env.HELIUS_RPC_URL);
+  }
+  if (
+    env?.HELIUS_API_KEY &&
+    typeof env.HELIUS_API_KEY === "string" &&
+    env.HELIUS_API_KEY.length > 0
+  ) {
+    endpoints.push(
+      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
+    );
+  }
+  if (
+    env?.ALCHEMY_RPC_URL &&
+    typeof env.ALCHEMY_RPC_URL === "string" &&
+    env.ALCHEMY_RPC_URL.length > 0
+  ) {
+    endpoints.push(env.ALCHEMY_RPC_URL);
+  }
+  if (
+    env?.MORALIS_RPC_URL &&
+    typeof env.MORALIS_RPC_URL === "string" &&
+    env.MORALIS_RPC_URL.length > 0
+  ) {
+    endpoints.push(env.MORALIS_RPC_URL);
+  }
+
+  // Add fallback endpoints
+  endpoints.push(...FALLBACK_RPC_ENDPOINTS);
+
+  // Remove duplicates
+  const uniqueEndpoints = Array.from(new Set(endpoints));
 
   let lastError = "";
   let lastStatus = 502;
 
-  for (let i = 0; i < endpoints.length; i++) {
-    const endpoint = endpoints[i];
+  for (let i = 0; i < uniqueEndpoints.length; i++) {
+    const endpoint = uniqueEndpoints[i];
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        const resp = await timeoutFetch(endpoint, {
-          method: "POST",
-          headers: browserHeaders(),
-          body: JSON.stringify(payload),
-        });
+        const resp = await timeoutFetch(
+          endpoint,
+          {
+            method: "POST",
+            headers: browserHeaders(),
+            body: JSON.stringify(payload),
+          },
+          15000,
+        );
 
         lastStatus = resp.status;
 
         if (resp.ok) {
           const rpcJson = await resp.json().catch(() => ({}));
-          const lamports = rpcJson?.result?.value ?? 0;
-          const sol = lamports / 1_000_000_000;
-          return new Response(JSON.stringify({ lamports, sol, publicKey }), {
-            headers: CORS_HEADERS,
-          });
+          const lamports = rpcJson?.result?.value ?? rpcJson?.result ?? 0;
+          const balance =
+            typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
+          return new Response(
+            JSON.stringify({ balance, lamports, publicKey }),
+            {
+              headers: CORS_HEADERS,
+            },
+          );
         }
 
         // Non-OK response
@@ -170,7 +230,9 @@ async function handleWalletBalance(url: URL): Promise<Response> {
         // Not retryable, break to next endpoint
         break;
       } catch (e: any) {
-        lastError = String(e?.message || e);
+        lastError = e?.message?.includes?.("abort")
+          ? "timeout"
+          : String(e?.message || e);
         if (attempt < 2) {
           await new Promise((r) => setTimeout(r, 300 * attempt));
           continue;
@@ -185,6 +247,7 @@ async function handleWalletBalance(url: URL): Promise<Response> {
       error: "rpc_error",
       details: lastError,
       status: lastStatus,
+      endpointsAttempted: uniqueEndpoints.length,
     }),
     { status: 502, headers: CORS_HEADERS },
   );
@@ -1301,59 +1364,175 @@ async function handleSolPrice(): Promise<Response> {
 }
 
 async function handleTokenPrice(url: URL): Promise<Response> {
-  const mint = url.searchParams.get("mint");
-  const tokenSymbol = url.searchParams.get("symbol") || "FIXERCOIN";
+  const TOKEN_MINTS: Record<string, string> = {
+    SOL: "So11111111111111111111111111111111111111112",
+    USDC: "EPjFWdd5Au7BXRSpJfDw3gEPrwwAau4vTNihtQ5go5Q",
+    USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+    FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+    LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+    FXM: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+  };
+
+  const FALLBACK_PRICES: Record<string, number> = {
+    USDC: 1.0,
+    USDT: 1.0,
+    FIXERCOIN: 0.00008139,
+    SOL: 149.38,
+    LOCKER: 0.00001112,
+    FXM: 0.000003567,
+  };
+
+  const PKR_CONVERSION = 291.9; // 1 USD = ~291.90 PKR
+
+  let mint = url.searchParams.get("mint");
+  let token = url.searchParams.get("token")?.toUpperCase();
+  let tokenSymbol = url.searchParams.get("symbol")?.toUpperCase() || token;
+
+  // Resolve token to mint
+  if (!mint && token && TOKEN_MINTS[token]) {
+    mint = TOKEN_MINTS[token];
+    tokenSymbol = token;
+  } else if (!mint && tokenSymbol && TOKEN_MINTS[tokenSymbol]) {
+    mint = TOKEN_MINTS[tokenSymbol];
+  }
 
   if (!mint && !tokenSymbol) {
     return new Response(
       JSON.stringify({
-        error: "mint or symbol parameter required",
+        error: "mint, token, or symbol parameter required",
       }),
       { status: 400, headers: CORS_HEADERS },
     );
   }
 
+  tokenSymbol = tokenSymbol || "UNKNOWN";
+
   try {
-    const fetchMint = mint || "So11111111111111111111111111111111111111112";
+    // For stablecoins, return hardcoded price immediately
+    if (tokenSymbol === "USDC" || tokenSymbol === "USDT") {
+      const priceUsd = 1.0;
+      const priceInPKR = priceUsd * PKR_CONVERSION;
+      return new Response(
+        JSON.stringify({
+          token: tokenSymbol,
+          mint,
+          rate: priceInPKR,
+          priceInPKR,
+          priceUsd,
+          source: "stablecoin",
+          timestamp: new Date().toISOString(),
+        }),
+        { headers: CORS_HEADERS },
+      );
+    }
+
+    const fetchMint = mint || TOKEN_MINTS.SOL;
     const response = await timeoutFetch(
       `${JUPITER_PRICE_BASE}/price?ids=${fetchMint}`,
       {
         method: "GET",
         headers: browserHeaders(),
       },
+      10000,
     );
 
     if (!response.ok) {
+      // Return fallback price if API fails
+      const fallbackPrice = FALLBACK_PRICES[tokenSymbol];
+      if (fallbackPrice !== undefined) {
+        const priceInPKR = fallbackPrice * PKR_CONVERSION;
+        return new Response(
+          JSON.stringify({
+            token: tokenSymbol,
+            mint: fetchMint,
+            rate: priceInPKR,
+            priceInPKR,
+            priceUsd: fallbackPrice,
+            source: "fallback",
+            timestamp: new Date().toISOString(),
+          }),
+          { headers: CORS_HEADERS },
+        );
+      }
+
       return new Response(
-        JSON.stringify({ error: "Failed to fetch token price" }),
-        { status: response.status, headers: CORS_HEADERS },
+        JSON.stringify({
+          error: "Failed to fetch token price",
+          token: tokenSymbol,
+        }),
+        { status: 502, headers: CORS_HEADERS },
       );
     }
 
     const data = await response.json();
     const price = data?.data?.[fetchMint]?.price ?? null;
 
-    if (price === null) {
+    if (price === null || price === undefined) {
+      // Return fallback price
+      const fallbackPrice = FALLBACK_PRICES[tokenSymbol];
+      if (fallbackPrice !== undefined) {
+        const priceInPKR = fallbackPrice * PKR_CONVERSION;
+        return new Response(
+          JSON.stringify({
+            token: tokenSymbol,
+            mint: fetchMint,
+            rate: priceInPKR,
+            priceInPKR,
+            priceUsd: fallbackPrice,
+            source: "fallback",
+            timestamp: new Date().toISOString(),
+          }),
+          { headers: CORS_HEADERS },
+        );
+      }
+
       return new Response(
-        JSON.stringify({ error: "Token price not available" }),
+        JSON.stringify({
+          error: "Token price not available",
+          token: tokenSymbol,
+        }),
         { status: 502, headers: CORS_HEADERS },
       );
     }
 
+    const priceInPKR = price * PKR_CONVERSION;
     return new Response(
       JSON.stringify({
         token: tokenSymbol,
         mint: fetchMint,
+        rate: priceInPKR,
+        priceInPKR,
         priceUsd: price,
+        source: "jupiter",
         timestamp: new Date().toISOString(),
       }),
       { headers: CORS_HEADERS },
     );
   } catch (e: any) {
+    // Return fallback on error
+    const fallbackPrice = FALLBACK_PRICES[tokenSymbol];
+    if (fallbackPrice !== undefined) {
+      const priceInPKR = fallbackPrice * PKR_CONVERSION;
+      return new Response(
+        JSON.stringify({
+          token: tokenSymbol,
+          mint: mint || TOKEN_MINTS[tokenSymbol],
+          rate: priceInPKR,
+          priceInPKR,
+          priceUsd: fallbackPrice,
+          source: "fallback",
+          error: "API failed, using fallback",
+          timestamp: new Date().toISOString(),
+        }),
+        { headers: CORS_HEADERS },
+      );
+    }
+
     return new Response(
       JSON.stringify({
         error: "Failed to fetch token price",
         details: String(e?.message || e),
+        token: tokenSymbol,
       }),
       { status: 502, headers: CORS_HEADERS },
     );
@@ -1521,7 +1700,7 @@ async function handleSolanaRpc(request: Request): Promise<Response> {
   }
 }
 
-async function handler(request: Request): Promise<Response> {
+async function handler(request: Request, env?: Env): Promise<Response> {
   try {
     if (request.method === "OPTIONS") {
       return new Response(null, {
@@ -1576,7 +1755,7 @@ async function handler(request: Request): Promise<Response> {
       pathname.startsWith("/api/wallet/balance") ||
       pathname === "/wallet/balance"
     ) {
-      return await handleWalletBalance(url);
+      return await handleWalletBalance(url, env);
     }
 
     if (
@@ -1588,10 +1767,6 @@ async function handler(request: Request): Promise<Response> {
 
     if (pathname.startsWith("/api/price") || pathname === "/price") {
       return await handlePrice(url);
-    }
-
-    if (pathname === "/api/sol/price") {
-      return await handleSolPrice();
     }
 
     if (pathname === "/api/token/price") {
@@ -1715,6 +1890,7 @@ async function handler(request: Request): Promise<Response> {
 }
 
 export async function onRequest(context: any): Promise<Response> {
-  // Cloudflare Pages Functions pass a context object; extract the Request
-  return handler(context.request as Request);
+  // Cloudflare Pages Functions pass a context object; extract the Request and env
+  const { request, env } = context;
+  return handler(request as Request, env as Env);
 }

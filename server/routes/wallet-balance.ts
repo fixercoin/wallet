@@ -62,9 +62,9 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
           `[WalletBalance] Trying endpoint: ${endpoint.substring(0, 40)}...`,
         );
 
-        // Use AbortController for timeout
+        // Use AbortController for timeout (increased for stability)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         let response: Response;
         try {

@@ -52,7 +52,7 @@ export default function BuyData() {
       if (!wallet?.publicKey) return;
       try {
         const response = await fetch(
-          `/api/p2p/payment-methods?walletAddress=${wallet.publicKey}`,
+          `/api/p2p/payment-methods?wallet=${wallet.publicKey}`,
         );
         if (response.ok) {
           const data = await response.json();

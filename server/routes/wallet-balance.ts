@@ -117,8 +117,12 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
     for (let i = 0; i < RPC_ENDPOINTS.length; i++) {
       const endpoint = RPC_ENDPOINTS[i];
       try {
+        const endpointLabel = endpoint.includes("api-key=")
+          ? `${endpoint.substring(0, 30)}...[API_KEY]`
+          : endpoint.substring(0, 50);
+
         console.log(
-          `[WalletBalance] Trying endpoint: ${endpoint.substring(0, 40)}...`,
+          `[WalletBalance] Attempting endpoint ${i + 1}/${RPC_ENDPOINTS.length}: ${endpointLabel}`,
         );
 
         // Use AbortController for timeout (increased for stability)
@@ -139,22 +143,31 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
 
         if (!response.ok) {
           console.warn(
-            `[WalletBalance] RPC returned ${response.status} from ${endpoint.substring(0, 50)}...`,
+            `[WalletBalance] RPC ${i + 1}/${RPC_ENDPOINTS.length} returned HTTP ${response.status}`,
           );
           lastError = new Error(`HTTP ${response.status}`);
           continue;
         }
 
-        const data = await response.json();
+        let data: any;
+        try {
+          data = await response.json();
+        } catch (parseErr) {
+          console.warn(
+            `[WalletBalance] RPC ${i + 1}/${RPC_ENDPOINTS.length} returned invalid JSON`,
+          );
+          lastError = new Error("Invalid JSON response");
+          continue;
+        }
 
         console.log(
-          `[WalletBalance] RPC response from ${endpoint.substring(0, 40)}...:`,
-          JSON.stringify(data),
+          `[WalletBalance] RPC ${i + 1}/${RPC_ENDPOINTS.length} response:`,
+          JSON.stringify(data).substring(0, 200),
         );
 
         if (data.error) {
           console.warn(
-            `[WalletBalance] RPC error from ${endpoint.substring(0, 50)}...:`,
+            `[WalletBalance] RPC ${i + 1}/${RPC_ENDPOINTS.length} error:`,
             data.error,
           );
           lastError = new Error(data.error.message || "RPC error");
@@ -166,7 +179,7 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
 
         // Debug: log the raw result structure
         console.log(
-          `[WalletBalance] Raw result from ${endpoint.substring(0, 40)}... type=${typeof balanceLamports}, value=${JSON.stringify(balanceLamports)}`,
+          `[WalletBalance] Raw result type: ${typeof balanceLamports}, value: ${JSON.stringify(balanceLamports).substring(0, 100)}`,
         );
 
         // Handle various response formats
@@ -195,8 +208,7 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
         // Validate balance is a number
         if (typeof balanceLamports !== "number" || isNaN(balanceLamports)) {
           console.warn(
-            `[WalletBalance] Invalid balance result type from ${endpoint.substring(0, 40)}...: ${typeof balanceLamports}`,
-            balanceLamports,
+            `[WalletBalance] Invalid balance result type: ${typeof balanceLamports}`,
           );
           lastError = new Error(
             `Invalid balance type: ${typeof balanceLamports}`,
@@ -204,22 +216,40 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
           continue;
         }
 
+        // Sanity check: balance should be >= 0
+        if (balanceLamports < 0) {
+          console.warn(
+            `[WalletBalance] Negative balance returned: ${balanceLamports}`,
+          );
+          lastError = new Error("Negative balance from RPC");
+          continue;
+        }
+
         const balanceSOL = balanceLamports / 1_000_000_000;
 
         console.log(
-          `[WalletBalance] ✅ Got balance: ${balanceSOL} SOL (${balanceLamports} lamports) from ${endpoint.substring(0, 40)}...`,
+          `[WalletBalance] ✅ Success (endpoint ${i + 1}/${RPC_ENDPOINTS.length}): ${balanceSOL} SOL`,
         );
 
         return res.json({
           publicKey,
           balance: balanceSOL,
           balanceLamports,
+          endpoint: endpointLabel,
         });
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-        console.warn(
-          `[WalletBalance] Endpoint ${endpoint.substring(0, 50)}... failed: ${lastError.message}`,
-        );
+        const errorMsg =
+          error instanceof Error ? error.message : String(error);
+        lastError = error instanceof Error ? error : new Error(errorMsg);
+
+        // Check if it's a timeout/abort error
+        if (errorMsg.includes("abort") || errorMsg.includes("timeout")) {
+          console.warn(`[WalletBalance] Endpoint ${i + 1}/${RPC_ENDPOINTS.length} timed out`);
+        } else {
+          console.warn(
+            `[WalletBalance] Endpoint ${i + 1}/${RPC_ENDPOINTS.length} error: ${errorMsg}`,
+          );
+        }
         continue;
       }
     }

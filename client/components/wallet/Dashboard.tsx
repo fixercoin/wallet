@@ -552,6 +552,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return solToken?.price;
   };
 
+  // Check if any tokens with balance are still loading prices
+  const areTokenPricesLoading = (): boolean => {
+    return tokens.some(
+      (token) =>
+        typeof token.balance === "number" &&
+        token.balance > 0 &&
+        token.price === undefined
+    );
+  };
+
   // Calculate total portfolio value including all tokens (USD)
   const getTotalPortfolioValue = (): number => {
     let total = 0;

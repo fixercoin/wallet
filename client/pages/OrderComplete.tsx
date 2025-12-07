@@ -102,16 +102,56 @@ export default function OrderComplete() {
       const remaining = Math.max(0, 600 - elapsedSeconds); // 600 seconds = 10 minutes
 
       setTimeRemaining(remaining);
-
-      // Auto-cancel order if timer reaches 0
-      if (remaining === 0) {
-        clearInterval(timerInterval);
-        handleCancelOrder();
-      }
     }, 1000);
 
     return () => clearInterval(timerInterval);
   }, [orderTimestamp]);
+
+  // Auto-cancel order when timer reaches 0
+  useEffect(() => {
+    if (timeRemaining === 0 && order && order.status !== "COMPLETED" && order.status !== "CANCELLED") {
+      const autoCancel = async () => {
+        try {
+          await updateOrderInBothStorages(order.id, {
+            status: "CANCELLED",
+            buyerPaymentConfirmed: false,
+            sellerPaymentReceived: false,
+            sellerTransferInitiated: false,
+            buyerCryptoReceived: false,
+          });
+
+          if (order.roomId) {
+            await addTradeMessage({
+              room_id: order.roomId,
+              sender_wallet: wallet?.publicKey || "",
+              message: "⏰ Order auto-cancelled due to timeout",
+            });
+          }
+
+          const otherParty = isBuyer ? order.sellerWallet : order.buyerWallet;
+          await createNotification(
+            otherParty,
+            "order_cancelled",
+            order.type,
+            order.id,
+            "Order auto-cancelled due to 10-minute timeout",
+            {
+              token: order.token,
+              amountTokens: order.amountTokens,
+              amountPKR: order.amountPKR,
+            },
+          );
+
+          toast.success("Order auto-cancelled due to timeout");
+          setTimeout(() => navigate(-1), 2000);
+        } catch (error) {
+          console.error("Error auto-cancelling order:", error);
+        }
+      };
+
+      autoCancel();
+    }
+  }, [timeRemaining, order]);
 
   // Fetch exchange rate from API (same as BuyData and SellData)
   useEffect(() => {

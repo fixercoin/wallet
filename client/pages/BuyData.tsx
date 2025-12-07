@@ -74,6 +74,46 @@ export default function BuyData() {
     fetchPaymentMethods();
   }, [wallet?.publicKey, showPaymentDialog]);
 
+  const proceedWithOrderCreation = useCallback(async () => {
+    if (!wallet?.publicKey) {
+      toast.error("Missing wallet information");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const createdOrder = await createOrderFromOffer(
+        {
+          id: `order-${Date.now()}`,
+          type: "BUY",
+          sellerWallet: "",
+          token: "USDC",
+          pricePKRPerQuote: exchangeRate,
+          minAmountTokens: 0,
+          maxAmountTokens: Infinity,
+          minAmountPKR: 0,
+          maxAmountPKR: Infinity,
+        } as P2POrder,
+        wallet.publicKey,
+        "BUY",
+        {
+          token: "USDC",
+          amountTokens: parseFloat(amountTokens),
+          amountPKR: parseFloat(amountPKR),
+          price: exchangeRate,
+        },
+      );
+
+      toast.success("Order created successfully!");
+      navigate("/order-complete", { state: { order: createdOrder } });
+    } catch (error) {
+      console.error("Error creating order:", error);
+      toast.error("Failed to create order");
+    } finally {
+      setLoading(false);
+    }
+  }, [wallet?.publicKey, exchangeRate, amountTokens, amountPKR, navigate]);
+
   // Handle connection countdown timer
   useEffect(() => {
     if (!showConnectingLoader) return;
@@ -98,7 +138,7 @@ export default function BuyData() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [showConnectingLoader, connectionCountdown, paymentMethods]);
+  }, [showConnectingLoader, connectionCountdown, paymentMethods, proceedWithOrderCreation]);
 
   const handlePKRChange = (value: string) => {
     setAmountPKR(value);

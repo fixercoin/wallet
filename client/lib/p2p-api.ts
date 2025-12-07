@@ -36,6 +36,10 @@ export interface TradeRoom {
     | "cancelled";
   created_at: number;
   updated_at: number;
+  buyerPaymentConfirmed?: boolean;
+  sellerPaymentConfirmed?: boolean;
+  buyerConfirmedAt?: number;
+  sellerConfirmedAt?: number;
 }
 
 export interface TradeMessage {

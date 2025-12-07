@@ -61,12 +61,21 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
           `[WalletBalance] Trying endpoint: ${endpoint.substring(0, 40)}...`,
         );
 
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-          timeout: 10000,
-        });
+        // Use AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        let response: Response;
+        try {
+          response = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
 
         if (!response.ok) {
           console.warn(

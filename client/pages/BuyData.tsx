@@ -10,6 +10,12 @@ import { P2PTradeDialog, type TradeDetails } from "@/components/P2PTradeDialog";
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
 import type { P2POrder } from "@/components/P2POffersTable";
 
+interface PaymentMethod {
+  id: string;
+  accountName: string;
+  accountNumber: string;
+}
+
 export default function BuyData() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
@@ -22,6 +28,7 @@ export default function BuyData() {
   const [selectedOffer, setSelectedOffer] = useState<P2POrder | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(280);
   const [fetchingRate, setFetchingRate] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
   // Fetch exchange rate on mount
   useEffect(() => {
@@ -43,6 +50,26 @@ export default function BuyData() {
 
     fetchRate();
   }, []);
+
+  // Fetch payment methods
+  useEffect(() => {
+    const fetchPaymentMethods = async () => {
+      if (!wallet?.publicKey) return;
+      try {
+        const response = await fetch(
+          `/api/p2p/payment-methods?walletAddress=${wallet.publicKey}`,
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setPaymentMethods(data.paymentMethods || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch payment methods:", error);
+      }
+    };
+
+    fetchPaymentMethods();
+  }, [wallet?.publicKey, showPaymentDialog, refreshKey]);
 
   // Auto-refresh data every 10 seconds
   React.useEffect(() => {
@@ -120,6 +147,17 @@ export default function BuyData() {
           try {
             if (!wallet?.publicKey || !selectedOffer) {
               toast.error("Missing information");
+              return;
+            }
+
+            // Check if buyer has added payment details
+            if (paymentMethods.length === 0) {
+              toast.error(
+                "Please add your payment details before creating an order",
+              );
+              setShowTradeDialog(false);
+              setEditingPaymentMethodId(undefined);
+              setShowPaymentDialog(true);
               return;
             }
 

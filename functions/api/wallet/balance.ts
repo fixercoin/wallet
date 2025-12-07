@@ -79,17 +79,19 @@ function buildRpcEndpoints(env?: Env): string[] {
 
   if (endpoints.length === 0) {
     console.log(
-      "[RPC Config] No configured endpoints found, using public fallbacks",
+      "[RPC Config] No configured endpoints found, using Shyft + public fallbacks",
     );
   }
 
-  // Add Cloudflare-compatible public endpoints as fallback
+  // Add Shyft endpoint first (Cloudflare-compatible and proven to work)
+  endpoints.push("https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7");
+
+  // Add other Cloudflare-compatible public endpoints as fallback
   endpoints.push("https://rpc.ironforge.network/mainnet");
   endpoints.push("https://solana.publicnode.com");
   endpoints.push("https://rpc.ankr.com/solana");
   endpoints.push("https://api.mainnet-beta.solana.com");
   endpoints.push("https://rpc.genesysgo.net");
-  endpoints.push("https://ssc-dao.genesysgo.net:8899");
 
   return [...new Set(endpoints)]; // Remove duplicates
 }

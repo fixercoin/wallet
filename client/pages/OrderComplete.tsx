@@ -783,7 +783,13 @@ export default function OrderComplete() {
 
               {!buyerPaymentConfirmed && (
                 <div className="text-xs text-white/60 bg-[#1a2540]/50 p-3 rounded-lg mb-4">
-                  Inactive until buyer confirms payment
+                  Waiting for buyer to confirm payment...
+                </div>
+              )}
+
+              {buyerPaymentConfirmed && !isSeller && (
+                <div className="text-xs text-green-400 bg-green-500/10 border border-green-500/30 p-3 rounded-lg mb-4">
+                  ✓ Buyer has sent payment - waiting for seller confirmation
                 </div>
               )}
 

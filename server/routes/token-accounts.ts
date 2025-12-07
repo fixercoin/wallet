@@ -3,10 +3,9 @@ import { PublicKey, Connection } from "@solana/web3.js";
 
 // Using Helius RPC as primary, with fallbacks
 const RPC_ENDPOINTS = [
-  // Prefer Helius RPC with embedded API key
-  "https://mainnet.helius-rpc.com/?api-key=48e91c19-c676-4c4a-a0dd-a9b4f258d151",
-  // Environment overrides as fallback
+  // Prefer environment-configured RPC
   process.env.SOLANA_RPC_URL || "",
+  // Provider-specific overrides (only add if configured)
   process.env.HELIUS_RPC_URL || "",
   process.env.HELIUS_API_KEY
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
@@ -14,9 +13,9 @@ const RPC_ENDPOINTS = [
   process.env.ALCHEMY_RPC_URL || "",
   process.env.MORALIS_RPC_URL || "",
   // Well-tested public endpoints as final fallback
+  "https://solana.publicnode.com",
+  "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
-  "https://solana-api.projectserum.com",
-  "https://rpc-mainnet.phantom.app",
 ].filter(Boolean);
 
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";

@@ -2,10 +2,6 @@
 // Priority: env vars > default public RPC
 
 export const SOLANA_RPC_URL = (() => {
-  // PRIORITY 1: Use Helius RPC endpoint exclusively
-  const heliusEndpoint =
-    "https://mainnet.helius-rpc.com/?api-key=48e91c19-c676-4c4a-a0dd-a9b4f258d151";
-
   // Prefer Vite/browser env in client builds
   try {
     // @ts-ignore - import.meta may not exist in SSR/Node
@@ -13,17 +9,17 @@ export const SOLANA_RPC_URL = (() => {
     if (viteUrl && String(viteUrl).trim()) return String(viteUrl).trim();
   } catch {}
 
-  // Generic SOLANA_RPC_URL override
+  // PRIORITY 1: Generic SOLANA_RPC_URL override
   if (typeof process !== "undefined" && (process.env as any)?.SOLANA_RPC_URL) {
     return (process.env as any).SOLANA_RPC_URL as string;
   }
 
-  // Helius API key
+  // PRIORITY 2: Helius API key configuration
   if (typeof process !== "undefined" && process.env?.HELIUS_API_KEY) {
     return `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`;
   }
 
-  // Provider-specific URLs
+  // PRIORITY 3: Provider-specific URLs
   if (typeof process !== "undefined" && process.env?.HELIUS_RPC_URL) {
     return process.env.HELIUS_RPC_URL;
   }
@@ -34,8 +30,8 @@ export const SOLANA_RPC_URL = (() => {
     return process.env.ALCHEMY_RPC_URL;
   }
 
-  // Default: Use Helius endpoint
-  return heliusEndpoint;
+  // FALLBACK: Use public Solana RPC
+  return "https://solana.publicnode.com";
 })();
 
 // Legacy export for backward compatibility

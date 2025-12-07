@@ -1247,24 +1247,30 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           balanceRef.current = cachedBalance;
         }
       } else {
-        setError(
-          `Failed to fetch tokens: ${error instanceof Error ? error.message : String(error)}`,
+        // Even if we can't fetch prices, show tokens with their balances
+        console.warn(
+          "[WalletContext] Failed to refresh prices, but showing tokens with available balances:",
+          error,
         );
-        // Show only basic token info without prices until they can be fetched
-        const fallbackTokens: TokenInfo[] = [
-          {
-            mint: "So11111111111111111111111111111111111111112",
-            symbol: "SOL",
-            name: "Solana",
-            decimals: 9,
-            logoURI:
-              "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-            balance: balance || 0,
-          },
-        ];
+
+        // Create fallback tokens from allTokens (which contains balance data)
+        const fallbackTokens: TokenInfo[] = allTokens.length > 0
+          ? allTokens
+          : [
+              {
+                mint: "So11111111111111111111111111111111111111112",
+                symbol: "SOL",
+                name: "Solana",
+                decimals: 9,
+                logoURI:
+                  "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+                balance: balance || 0,
+              },
+            ];
 
         setTokens(fallbackTokens);
         setIsUsingCache(false);
+        setError(null); // Don't show error if we have tokens with balances to display
       }
     } finally {
       setIsLoading(false);

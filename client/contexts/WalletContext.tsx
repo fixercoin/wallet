@@ -759,7 +759,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const refreshBalance = async () => {
     if (!wallet) return;
 
-    setIsLoading(true);
+    // No loading state for balance - use fallback/cache silently
     setError(null);
     setIsUsingCache(false);
 
@@ -793,8 +793,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         balanceRef.current = 0;
         setError("Unable to fetch SOL balance. Please check your connection.");
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -814,9 +812,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       `[WalletContext] Refreshing tokens for wallet: ${wallet.publicKey}`,
     );
     setError(null);
-    setIsLoading(true);
 
     try {
+      // Fetch token accounts (balances) silently - no loading state
       const tokenAccounts = await getTokenAccounts(wallet.publicKey);
       const customTokens = JSON.parse(
         localStorage.getItem("custom_tokens") || "[]",
@@ -956,7 +954,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         });
       }
 
-      // Price fetching logic
+      // Price fetching logic - show loader only during price fetch
+      setIsLoading(true);
       let prices: Record<string, number> = {};
       let priceSource = "fallback";
       let changeMap: Record<string, number> = {};

@@ -150,13 +150,19 @@ export const handleListNotifications: RequestHandler = async (req, res) => {
     // Sort by creation date (newest first)
     notifications.sort((a, b) => b.createdAt - a.createdAt);
 
-    res.json({
+    return res.status(200).json({
       data: notifications,
       total: notifications.length,
     });
   } catch (error) {
-    console.error("List notifications error:", error);
-    res.status(500).json({ error: "Failed to list notifications" });
+    console.error("[Notifications] List notifications error:", error);
+    // Return empty notifications array instead of 500 error for graceful degradation
+    return res.status(200).json({
+      data: [],
+      total: 0,
+      warning:
+        "Could not retrieve notifications. Storage may be unavailable.",
+    });
   }
 };
 

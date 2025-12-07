@@ -61,12 +61,21 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
           `[WalletBalance] Trying endpoint: ${endpoint.substring(0, 40)}...`,
         );
 
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-          timeout: 10000,
-        });
+        // Use AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        let response: Response;
+        try {
+          response = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
 
         if (!response.ok) {
           console.warn(
@@ -92,10 +101,39 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
           continue;
         }
 
-        const balanceLamports = data.result;
+        // Handle different RPC response formats
+        let balanceLamports = data.result;
+
+        // Debug: log the raw result structure
+        console.log(
+          `[WalletBalance] Raw result from ${endpoint.substring(0, 40)}... type=${typeof balanceLamports}, value=${JSON.stringify(balanceLamports)}`,
+        );
+
+        // Handle various response formats
+        if (typeof balanceLamports === "object" && balanceLamports !== null) {
+          // Format 1: { value: <balance> }
+          if (typeof balanceLamports.value === "number") {
+            balanceLamports = balanceLamports.value;
+            console.log(
+              `[WalletBalance] Extracted .value from result object: ${balanceLamports}`,
+            );
+          }
+          // Format 2: Object might be malformed - try to extract any number field
+          else {
+            const numberField = Object.values(balanceLamports).find(
+              (v) => typeof v === "number",
+            );
+            if (typeof numberField === "number") {
+              balanceLamports = numberField;
+              console.log(
+                `[WalletBalance] Extracted numeric value from result object: ${balanceLamports}`,
+              );
+            }
+          }
+        }
 
         // Validate balance is a number
-        if (typeof balanceLamports !== "number") {
+        if (typeof balanceLamports !== "number" || isNaN(balanceLamports)) {
           console.warn(
             `[WalletBalance] Invalid balance result type from ${endpoint.substring(0, 40)}...: ${typeof balanceLamports}`,
             balanceLamports,

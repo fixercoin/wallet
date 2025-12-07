@@ -33,10 +33,18 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
       (req.query.address as string);
 
     if (!publicKey || typeof publicKey !== "string") {
+      console.warn("[WalletBalance] Missing or invalid publicKey:", {
+        publicKey,
+        query: req.query,
+      });
       return res.status(400).json({
         error: "Missing or invalid wallet address parameter",
       });
     }
+
+    console.log(
+      `[WalletBalance] Fetching balance for: ${publicKey.substring(0, 8)}...`,
+    );
 
     const body = {
       jsonrpc: "2.0",
@@ -49,6 +57,10 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
 
     for (const endpoint of RPC_ENDPOINTS) {
       try {
+        console.log(
+          `[WalletBalance] Trying endpoint: ${endpoint.substring(0, 40)}...`,
+        );
+
         const response = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -58,7 +70,7 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
 
         if (!response.ok) {
           console.warn(
-            `RPC ${endpoint.substring(0, 50)}... returned ${response.status}`,
+            `[WalletBalance] RPC returned ${response.status} from ${endpoint.substring(0, 50)}...`,
           );
           lastError = new Error(`HTTP ${response.status}`);
           continue;
@@ -68,7 +80,7 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
 
         if (data.error) {
           console.warn(
-            `RPC error from ${endpoint.substring(0, 50)}...:`,
+            `[WalletBalance] RPC error from ${endpoint.substring(0, 50)}...:`,
             data.error,
           );
           lastError = new Error(data.error.message || "RPC error");
@@ -78,6 +90,10 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
         const balanceLamports = data.result;
         const balanceSOL = balanceLamports / 1_000_000_000;
 
+        console.log(
+          `[WalletBalance] ✅ Got balance: ${balanceSOL} SOL (${balanceLamports} lamports) from ${endpoint.substring(0, 40)}...`,
+        );
+
         return res.json({
           publicKey,
           balance: balanceSOL,
@@ -86,15 +102,14 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         console.warn(
-          `RPC endpoint ${endpoint.substring(0, 50)}... failed:`,
-          lastError.message,
+          `[WalletBalance] Endpoint ${endpoint.substring(0, 50)}... failed: ${lastError.message}`,
         );
         continue;
       }
     }
 
-    console.error("All RPC endpoints failed for wallet balance:", {
-      publicKey,
+    console.error("[WalletBalance] All RPC endpoints failed:", {
+      publicKey: publicKey.substring(0, 8),
       lastError: lastError?.message,
       configuredEndpoints: RPC_ENDPOINTS.length,
     });
@@ -106,7 +121,7 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
       hint: "Please check server RPC configuration. Set HELIUS_API_KEY or SOLANA_RPC_URL environment variable.",
     });
   } catch (error) {
-    console.error("Wallet balance handler error:", error);
+    console.error("[WalletBalance] Handler error:", error);
     res.status(500).json({
       error: error instanceof Error ? error.message : "Internal server error",
     });

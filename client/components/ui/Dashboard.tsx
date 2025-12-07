@@ -377,7 +377,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          {typeof token.price === "number" && isFinite(token.price) ? (
+                          {typeof token.price === "number" &&
+                          isFinite(token.price) ? (
                             <span
                               className={`text-xs text-gray-400 ${
                                 ["SOL", "FIXERCOIN", "LOCKER", "FXM"].includes(

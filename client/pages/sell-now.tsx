@@ -363,10 +363,7 @@ export default function SellNow() {
         status: "PENDING",
       };
 
-      const saved = await saveOrderToAPI(order);
-      if (!saved) {
-        throw new Error("Failed to save order to the server");
-      }
+      await saveOrderToAPI(order);
 
       toast({
         title: "Success",
@@ -378,9 +375,12 @@ export default function SellNow() {
 
       navigate("/sell-order");
     } catch (error: any) {
+      const errorMessage = error?.message || String(error);
+      console.error("[SellNow] Error creating order:", errorMessage);
+
       toast({
-        title: "Failed to save order",
-        description: error?.message || String(error),
+        title: "Failed to create sell order",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

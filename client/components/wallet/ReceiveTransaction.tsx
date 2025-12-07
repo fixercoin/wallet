@@ -69,7 +69,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
                   level="M"
                 />
               </div>
-              <p className="text-sm text-gray-600">Scan to send SOL</p>
+              <p className="text-sm text-gray-600">Scan to get deposit address</p>
             </div>
 
             {/* Address Section */}

@@ -129,7 +129,13 @@ export function usePushNotifications() {
   };
 
   const sendOrderNotification = async (
-    type: "order_created" | "payment_confirmed" | "received_confirmed",
+    type:
+      | "order_created"
+      | "payment_confirmed"
+      | "seller_payment_received"
+      | "transfer_initiated"
+      | "crypto_received"
+      | "order_cancelled",
     message: string,
     orderData: { token: string; amountPKR: number },
   ): Promise<void> => {

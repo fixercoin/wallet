@@ -954,7 +954,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         });
       }
 
-      // Price fetching logic
+      // Price fetching logic - show loader only during price fetch
+      setIsLoading(true);
       let prices: Record<string, number> = {};
       let priceSource = "fallback";
       let changeMap: Record<string, number> = {};

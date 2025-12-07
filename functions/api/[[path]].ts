@@ -137,6 +137,7 @@ async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
 
   // Build RPC endpoints with env variables first
   const endpoints: string[] = [];
+  const priorityEndpoints: string[] = [];
 
   // Add environment-configured endpoints first (highest priority)
   if (
@@ -144,21 +145,21 @@ async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
     typeof env.SOLANA_RPC_URL === "string" &&
     env.SOLANA_RPC_URL.length > 0
   ) {
-    endpoints.push(env.SOLANA_RPC_URL);
+    priorityEndpoints.push(env.SOLANA_RPC_URL);
   }
   if (
     env?.HELIUS_RPC_URL &&
     typeof env.HELIUS_RPC_URL === "string" &&
     env.HELIUS_RPC_URL.length > 0
   ) {
-    endpoints.push(env.HELIUS_RPC_URL);
+    priorityEndpoints.push(env.HELIUS_RPC_URL);
   }
   if (
     env?.HELIUS_API_KEY &&
     typeof env.HELIUS_API_KEY === "string" &&
     env.HELIUS_API_KEY.length > 0
   ) {
-    endpoints.push(
+    priorityEndpoints.push(
       `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
     );
   }
@@ -167,77 +168,100 @@ async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
     typeof env.ALCHEMY_RPC_URL === "string" &&
     env.ALCHEMY_RPC_URL.length > 0
   ) {
-    endpoints.push(env.ALCHEMY_RPC_URL);
+    priorityEndpoints.push(env.ALCHEMY_RPC_URL);
   }
   if (
     env?.MORALIS_RPC_URL &&
     typeof env.MORALIS_RPC_URL === "string" &&
     env.MORALIS_RPC_URL.length > 0
   ) {
-    endpoints.push(env.MORALIS_RPC_URL);
+    priorityEndpoints.push(env.MORALIS_RPC_URL);
   }
 
   // Add fallback endpoints
-  endpoints.push(...FALLBACK_RPC_ENDPOINTS);
+  const allEndpoints = [
+    ...Array.from(new Set(priorityEndpoints)),
+    ...FALLBACK_RPC_ENDPOINTS,
+  ];
+  const uniqueEndpoints = Array.from(new Set(allEndpoints));
 
-  // Remove duplicates
-  const uniqueEndpoints = Array.from(new Set(endpoints));
-
-  let lastError = "";
-  let lastStatus = 502;
-
-  for (let i = 0; i < uniqueEndpoints.length; i++) {
-    const endpoint = uniqueEndpoints[i];
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        const resp = await timeoutFetch(
+  // Try priority endpoints in parallel with shorter timeout
+  if (priorityEndpoints.length > 0) {
+    const priorityResults = await Promise.allSettled(
+      priorityEndpoints.map((endpoint) =>
+        timeoutFetch(
           endpoint,
           {
             method: "POST",
             headers: browserHeaders(),
             body: JSON.stringify(payload),
           },
-          15000,
-        );
+          8000,
+        ),
+      ),
+    );
 
-        lastStatus = resp.status;
-
+    for (const result of priorityResults) {
+      if (result.status === "fulfilled") {
+        const resp = result.value;
         if (resp.ok) {
-          const rpcJson = await resp.json().catch(() => ({}));
-          const lamports = rpcJson?.result?.value ?? rpcJson?.result ?? 0;
-          const balance =
-            typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
-          return new Response(
-            JSON.stringify({ balance, lamports, publicKey }),
-            {
-              headers: CORS_HEADERS,
-            },
-          );
-        }
-
-        // Non-OK response
-        const text = await resp.text().catch(() => "");
-        lastError = `HTTP ${resp.status}: ${text}`;
-
-        // Retry on server errors
-        if (resp.status >= 500) {
-          if (attempt < 2) {
-            await new Promise((r) => setTimeout(r, 500 * attempt));
+          try {
+            const rpcJson = await resp.json();
+            const lamports =
+              rpcJson?.result?.value ?? rpcJson?.result ?? 0;
+            const balance =
+              typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
+            return new Response(
+              JSON.stringify({ balance, lamports, publicKey }),
+              {
+                headers: CORS_HEADERS,
+              },
+            );
+          } catch (e) {
             continue;
           }
         }
-
-        // Not retryable, break to next endpoint
-        break;
-      } catch (e: any) {
-        lastError = e?.message?.includes?.("abort")
-          ? "timeout"
-          : String(e?.message || e);
-        if (attempt < 2) {
-          await new Promise((r) => setTimeout(r, 300 * attempt));
-          continue;
-        }
       }
+    }
+  }
+
+  // Fallback endpoints with sequential retry
+  let lastError = "";
+  let lastStatus = 502;
+
+  for (const endpoint of FALLBACK_RPC_ENDPOINTS) {
+    try {
+      const resp = await timeoutFetch(
+        endpoint,
+        {
+          method: "POST",
+          headers: browserHeaders(),
+          body: JSON.stringify(payload),
+        },
+        8000,
+      );
+
+      lastStatus = resp.status;
+
+      if (resp.ok) {
+        const rpcJson = await resp.json().catch(() => ({}));
+        const lamports = rpcJson?.result?.value ?? rpcJson?.result ?? 0;
+        const balance =
+          typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
+        return new Response(
+          JSON.stringify({ balance, lamports, publicKey }),
+          {
+            headers: CORS_HEADERS,
+          },
+        );
+      }
+
+      const text = await resp.text().catch(() => "");
+      lastError = `HTTP ${resp.status}: ${text.slice(0, 100)}`;
+    } catch (e: any) {
+      lastError = e?.message?.includes?.("abort")
+        ? "timeout"
+        : String(e?.message || e).slice(0, 100);
     }
   }
 

@@ -46,7 +46,7 @@ async function saveWalletPaymentMethods(
   await kv.put(key, JSON.stringify(methods));
 }
 
-export const handleGetPaymentMethods: RequestHandler = (req, res) => {
+export const handleGetPaymentMethods: RequestHandler = async (req, res) => {
   try {
     const id = req.query.id as string | undefined;
     const walletAddress = req.query.wallet as string | undefined;
@@ -60,9 +60,8 @@ export const handleGetPaymentMethods: RequestHandler = (req, res) => {
     }
 
     if (walletAddress) {
-      const methods = Array.from(paymentMethods.values()).filter(
-        (m) => m.walletAddress === walletAddress,
-      );
+      // Fetch from KV storage (persistent)
+      const methods = await getWalletPaymentMethods(walletAddress);
       return res.json({ data: methods });
     }
 

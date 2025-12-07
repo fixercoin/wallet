@@ -519,8 +519,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     // Setup periodic refresh every 5 seconds (adaptive based on visibility)
     const setupRefreshInterval = () => {
-      // Auto-refresh dashboard every 2 minutes (120 seconds) for live price updates
-      const interval = 120000;
+      // Auto-refresh dashboard every 30 seconds for live price updates
+      const interval = 30000;
 
       refreshIntervalRef.current = setInterval(async () => {
         try {

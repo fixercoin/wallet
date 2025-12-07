@@ -18,7 +18,6 @@ export default function SellData() {
   >();
   const [showTradeDialog, setShowTradeDialog] = useState(true);
   const [exchangeRate, setExchangeRate] = useState<number>(280);
-  const [fetchingRate, setFetchingRate] = useState(false);
 
   // Fetch exchange rate on mount
   useEffect(() => {

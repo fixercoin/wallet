@@ -99,7 +99,32 @@ function normalizeOrder(order: any): P2POrder {
     buyerWallet: order.buyerWallet,
     sellerWallet: order.sellerWallet,
     adminWallet: order.adminWallet,
+    sellerVerified: order.sellerVerified || false,
+    sellerPaymentMethodVerified: order.sellerPaymentMethodVerified || false,
+    expiresAt: order.expiresAt,
   };
+}
+
+// Helper to check if order has expired (15 minutes)
+function isOrderExpired(order: P2POrder): boolean {
+  const ORDER_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+  const expiresAt = order.expiresAt || (order.createdAt || 0) + ORDER_TIMEOUT_MS;
+  return Date.now() > expiresAt;
+}
+
+// Helper to verify seller has payment method
+async function sellerHasVerifiedPaymentMethod(walletAddress: string): Promise<boolean> {
+  const kv = getKVStorage();
+  const paymentMethodsKey = `payment_methods:${walletAddress}`;
+  const json = await kv.get(paymentMethodsKey);
+  if (!json) return false;
+
+  try {
+    const paymentMethods = JSON.parse(json);
+    return Array.isArray(paymentMethods) && paymentMethods.length > 0;
+  } catch {
+    return false;
+  }
 }
 
 // Helper functions

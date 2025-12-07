@@ -759,7 +759,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const refreshBalance = async () => {
     if (!wallet) return;
 
-    setIsLoading(true);
+    // No loading state for balance - use fallback/cache silently
     setError(null);
     setIsUsingCache(false);
 
@@ -793,8 +793,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         balanceRef.current = 0;
         setError("Unable to fetch SOL balance. Please check your connection.");
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 

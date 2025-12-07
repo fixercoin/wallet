@@ -110,7 +110,10 @@ export const onRequestPost = async ({
     const validTypes = [
       "order_created",
       "payment_confirmed",
-      "received_confirmed",
+      "seller_payment_received",
+      "transfer_initiated",
+      "crypto_received",
+      "order_cancelled",
     ];
     if (!validTypes.includes(type)) {
       return jsonResponse(400, { error: "Invalid notification type" });

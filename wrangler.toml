@@ -27,20 +27,31 @@ VITE_API_BASE_URL = ""
 # Local development environment variables (for wrangler pages dev)
 [env.development.vars]
 # Default Solana RPC endpoint for development
-SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com"
-# Uncomment and fill in for local testing with Helius
+SOLANA_RPC_URL = "https://solana.publicnode.com"
+# Alternative free RPC endpoints (uncomment one if primary is rate-limited):
+# SOLANA_RPC_URL = "https://api.solflare.com"
+# SOLANA_RPC_URL = "https://rpc.ankr.com/solana"
+# For production, set HELIUS_API_KEY for best performance:
 # HELIUS_API_KEY = "your-helius-api-key"
 # HELIUS_RPC_URL = "https://mainnet.helius-rpc.com"
 
 # Production environment variables
 # NOTE: These MUST be configured in Cloudflare Pages UI for proper SOL balance fetching
-# Set HELIUS_API_KEY or SOLANA_RPC_URL in your Cloudflare Pages project settings
+# Set HELIUS_API_KEY for best performance, or use alternative free RPC endpoints below
 # Path: Project Settings > Environment variables > Production (or Preview)
 [env.production.vars]
-# These are defaults - OVERRIDE in Cloudflare Pages dashboard
-# Leave empty and set in dashboard for sensitive credentials
-SOLANA_RPC_URL = ""
-HELIUS_API_KEY = ""
+# OPTION 1 (RECOMMENDED): Use Helius API Key for reliable production performance
+# HELIUS_API_KEY = "your-helius-api-key"
+
+# OPTION 2: Use a custom RPC endpoint URL
+# SOLANA_RPC_URL = "https://your-rpc-endpoint.com"
+
+# OPTION 3: Free public RPC endpoints (if no auth available)
+# SOLANA_RPC_URL = "https://solana.publicnode.com"      # Most reliable free option
+# SOLANA_RPC_URL = "https://api.solflare.com"           # Alternative free option
+# SOLANA_RPC_URL = "https://rpc.ankr.com/solana"        # Ankr free tier
+
+# Fallback endpoints (system will try these if primary fails)
 HELIUS_RPC_URL = ""
 ALCHEMY_RPC_URL = ""
 MORALIS_RPC_URL = ""

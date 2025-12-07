@@ -18,11 +18,11 @@ function getRpcEndpoint(): string {
     return solanaRpcUrl;
   }
 
-  // Fallback to public Solana RPC endpoint for dev environments
+  // Fallback to reliable public RPC endpoint for dev environments
   console.log(
-    "[TokenAccounts] Using public Solana RPC endpoint (rate-limited). For production, set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
+    "[TokenAccounts] Using public Solana RPC endpoint. For production, set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
   );
-  return "https://api.mainnet-beta.solana.com";
+  return "https://solana.publicnode.com";
 }
 
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";

@@ -5,7 +5,9 @@ export const config = {
 const DEFAULT_SOLANA_RPC = "https://solana.publicnode.com";
 const FALLBACK_RPC_ENDPOINTS = [
   "https://solana.publicnode.com",
+  "https://api.solflare.com",
   "https://rpc.ankr.com/solana",
+  "https://rpc.ironforge.network/mainnet",
   "https://api.mainnet-beta.solana.com",
 ];
 

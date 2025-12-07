@@ -25,9 +25,11 @@ function buildRpcEndpoints(env: Env): string[] {
   if (env.ALCHEMY_RPC_URL) endpoints.push(env.ALCHEMY_RPC_URL);
   if (env.MORALIS_RPC_URL) endpoints.push(env.MORALIS_RPC_URL);
 
-  // Add public fallback endpoints
+  // Add public fallback endpoints (in order of reliability)
   endpoints.push("https://solana.publicnode.com");
+  endpoints.push("https://api.solflare.com");
   endpoints.push("https://rpc.ankr.com/solana");
+  endpoints.push("https://rpc.ironforge.network/mainnet");
   endpoints.push("https://api.mainnet-beta.solana.com");
 
   return [...new Set(endpoints)]; // Remove duplicates

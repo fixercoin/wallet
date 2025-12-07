@@ -24,11 +24,11 @@ export const SOLANA_RPC_URL = (() => {
     return process.env.HELIUS_RPC_URL;
   }
 
-  // FALLBACK: Use public Solana RPC endpoint (rate-limited, for development/testing only)
+  // FALLBACK: Use reliable public RPC endpoint (no auth required)
   console.warn(
-    "HELIUS_API_KEY not configured. Using public RPC endpoint with rate limiting. Set HELIUS_API_KEY for production use.",
+    "HELIUS_API_KEY not configured. Using public RPC endpoint. Set HELIUS_API_KEY for production for better reliability.",
   );
-  return "https://api.mainnet-beta.solana.com";
+  return "https://solana.publicnode.com";
 })();
 
 // Legacy export for backward compatibility

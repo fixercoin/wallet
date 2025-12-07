@@ -36,6 +36,7 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     symbol: "SOL",
     name: "Solana",
     decimals: 9,
+    balance: 0,
     logoURI:
       "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
   },
@@ -45,6 +46,7 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     symbol: "USDC",
     name: "USD Coin",
     decimals: 6,
+    balance: 0,
     logoURI:
       "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
   },
@@ -54,6 +56,7 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     symbol: "USDT",
     name: "Tether USD",
     decimals: 6,
+    balance: 0,
     logoURI:
       "https://cdn.builder.io/api/v1/image/assets%2F559a5e19be114c9d8427d6683b845144%2Fc2ea69828dbc4a90b2deed99c2291802?format=webp&width=800",
   },
@@ -62,6 +65,7 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     symbol: "FIXERCOIN",
     name: "FIXERCOIN",
     decimals: 6,
+    balance: 0,
     logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
   },
   {
@@ -69,6 +73,7 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     symbol: "LOCKER",
     name: "LOCKER",
     decimals: 6,
+    balance: 0,
     logoURI:
       "https://i.postimg.cc/J7p1FPbm/IMG-20250425-004450-removebg-preview-modified-2-6.png",
   },

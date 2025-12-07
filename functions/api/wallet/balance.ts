@@ -160,10 +160,12 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       }
     }
 
+    console.log(`[Balance API] ❌ All ${rpcEndpoints.length} endpoints failed. Last error: ${lastError}`);
     return new Response(
       JSON.stringify({
         error: "Failed to fetch wallet balance",
         details: lastError || "All RPC endpoints failed",
+        endpointsAttempted: rpcEndpoints.length,
       }),
       {
         status: 502,
@@ -174,6 +176,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       },
     );
   } catch (error: any) {
+    console.log(`[Balance API] Exception: ${error?.message || String(error)}`);
     return new Response(
       JSON.stringify({
         error: "Wallet balance error",

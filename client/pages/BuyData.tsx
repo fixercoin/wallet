@@ -295,6 +295,23 @@ export default function BuyData() {
         </div>
       </div>
 
+      {/* Connecting Loader Dialog */}
+      <Dialog open={showConnectingLoader} onOpenChange={setShowConnectingLoader}>
+        <DialogContent className="bg-[#1a2847] border border-gray-300/30 flex flex-col items-center justify-center gap-4">
+          <div className="text-center space-y-4">
+            <Loader2 className="w-12 h-12 animate-spin text-[#FF7A5C] mx-auto" />
+            <div>
+              <DialogTitle className="text-white text-lg mb-2">
+                Wait Connecting to Seller
+              </DialogTitle>
+              <p className="text-white/70 text-sm">
+                Connecting... {connectionCountdown} seconds
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Payment Method Dialog */}
       <PaymentMethodDialog
         open={showPaymentDialog}

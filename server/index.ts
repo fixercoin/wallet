@@ -755,6 +755,9 @@ export async function createServer(): Promise<express.Application> {
   app.get("/api/p2p/rooms/:roomId/messages", handleListTradeMessages);
   app.post("/api/p2p/rooms/:roomId/messages", handleAddTradeMessage);
 
+  // Payment Confirmation route
+  app.post("/api/p2p/rooms/:roomId/confirm-payment", handleConfirmPayment);
+
   // P2P Notifications routes
   app.get("/api/p2p/notifications", handleListNotifications);
   app.post("/api/p2p/notifications", handleCreateNotification);

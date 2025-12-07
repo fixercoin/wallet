@@ -118,19 +118,9 @@ export default function BuyData() {
     return tokens > 0 && pkr > 0;
   }, [amountTokens, amountPKR]);
 
-  const handleSubmit = async () => {
-    if (!isValid) return;
-
+  const proceedWithOrderCreation = async () => {
     if (!wallet?.publicKey) {
       toast.error("Missing wallet information");
-      return;
-    }
-
-    // Check if user has added payment details
-    if (paymentMethods.length === 0) {
-      toast.error("Please add your payment details before creating an order");
-      setEditingPaymentMethodId(undefined);
-      setShowPaymentDialog(true);
       return;
     }
 
@@ -166,6 +156,19 @@ export default function BuyData() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async () => {
+    if (!isValid) return;
+
+    if (!wallet?.publicKey) {
+      toast.error("Missing wallet information");
+      return;
+    }
+
+    // Show connecting loader for 10 seconds
+    setConnectionCountdown(10);
+    setShowConnectingLoader(true);
   };
 
   if (!wallet) {

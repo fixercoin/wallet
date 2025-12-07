@@ -231,6 +231,18 @@ export default function SellData() {
             </div>
           )}
 
+          {/* Payment Method Information */}
+          {paymentMethods.length > 0 && (
+            <PaymentMethodInfoCard
+              accountName={paymentMethods[0].accountName}
+              accountNumber={paymentMethods[0].accountNumber}
+              onEdit={() => {
+                setEditingPaymentMethodId(paymentMethods[0].id);
+                setShowPaymentDialog(true);
+              }}
+            />
+          )}
+
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
             <Button

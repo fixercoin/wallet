@@ -218,22 +218,20 @@ async function handler(request: Request): Promise<Response> {
       },
     );
   } catch (error: any) {
-    // Always return valid JSON with fallback price on error
     console.error("[Token Price] Error:", error?.message || String(error));
 
     return new Response(
       JSON.stringify({
-        token: "FIXERCOIN",
-        priceUsd: FALLBACK_PRICES.FIXERCOIN,
-        source: "fallback",
+        error: "Price service temporarily unavailable",
+        details: error?.message || String(error),
         timestamp: Date.now(),
       }),
       {
-        status: 200,
+        status: 500,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
-          "Cache-Control": "public, max-age=60",
+          "Cache-Control": "no-cache",
         },
       },
     );

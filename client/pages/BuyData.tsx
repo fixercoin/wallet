@@ -74,6 +74,32 @@ export default function BuyData() {
     fetchPaymentMethods();
   }, [wallet?.publicKey, showPaymentDialog]);
 
+  // Handle connection countdown timer
+  useEffect(() => {
+    if (!showConnectingLoader) return;
+
+    if (connectionCountdown <= 0) {
+      setShowConnectingLoader(false);
+      setConnectionCountdown(10);
+
+      // Check if user has added payment method
+      if (paymentMethods.length === 0) {
+        setEditingPaymentMethodId(undefined);
+        setShowPaymentDialog(true);
+      } else {
+        // Proceed with order creation
+        proceedWithOrderCreation();
+      }
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setConnectionCountdown(connectionCountdown - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [showConnectingLoader, connectionCountdown, paymentMethods]);
+
   const handlePKRChange = (value: string) => {
     setAmountPKR(value);
     if (value) {

@@ -2,11 +2,18 @@
 // Supports GET requests with query params: ?publicKey=<address>
 // Also supports POST with JSON body: { walletAddress: <address> }
 
-const RPC_ENDPOINTS = [
-  "https://solana.publicnode.com",
-  "https://api.mainnet-beta.solana.com",
-  "https://rpc.ankr.com/solana",
-];
+// Helius-only RPC configuration
+function getHeliusRpcEndpoint(env: any): string {
+  if (env?.HELIUS_API_KEY) {
+    return `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`;
+  }
+  if (env?.HELIUS_RPC_URL) {
+    return env.HELIUS_RPC_URL;
+  }
+  throw new Error(
+    "Helius RPC endpoint required. Set HELIUS_API_KEY or HELIUS_RPC_URL."
+  );
+}
 
 // Known token metadata for common tokens
 const KNOWN_TOKENS: Record<string, any> = {

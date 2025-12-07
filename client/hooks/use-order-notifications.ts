@@ -150,7 +150,10 @@ export function useOrderNotifications() {
       const titles: Record<string, string> = {
         order_created: "New Order",
         payment_confirmed: "Payment Confirmed",
-        received_confirmed: "Order Received",
+        seller_payment_received: "Payment Received",
+        transfer_initiated: "Crypto Transfer Started",
+        crypto_received: "Crypto Received",
+        order_cancelled: "Order Cancelled",
       };
 
       toast({

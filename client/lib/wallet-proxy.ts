@@ -115,15 +115,27 @@ export const recoverWallet = (mnemonicInput: string): WalletData => {
 };
 
 export const getBalance = async (publicKey: string): Promise<number> => {
-  // Use direct Solana RPC call with public endpoints
-  // No backend proxy needed
   try {
     console.log(`Fetching balance for: ${publicKey}`);
-    const balance = await getSolanaBalance(publicKey);
+
+    // Use server endpoint for balance fetching
+    // This avoids CORS issues and ensures reliability
+    const response = await fetch(
+      `/api/wallet/balance?publicKey=${encodeURIComponent(publicKey)}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Server returned ${response.status}`);
+    }
+
+    const data = await response.json();
+    const balance = data.balance || 0;
+
     console.log(`✅ Balance fetched: ${balance} SOL`);
     return balance;
   } catch (error) {
     console.error("Failed to fetch balance:", error);
+    // Fallback to cached balance or return 0
     return 0;
   }
 };

@@ -92,7 +92,17 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
           continue;
         }
 
-        const balanceLamports = data.result;
+        // Handle different RPC response formats
+        let balanceLamports = data.result;
+
+        // Some RPC providers return { value: <balance> } instead of just the number
+        if (
+          typeof balanceLamports === "object" &&
+          balanceLamports !== null &&
+          typeof balanceLamports.value === "number"
+        ) {
+          balanceLamports = balanceLamports.value;
+        }
 
         // Validate balance is a number
         if (typeof balanceLamports !== "number") {

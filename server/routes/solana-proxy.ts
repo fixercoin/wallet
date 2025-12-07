@@ -17,7 +17,7 @@ function getHeliusRpcEndpoint(): string {
   }
 
   throw new Error(
-    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable."
+    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
   );
 }
 
@@ -43,7 +43,7 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
 
     try {
       console.log(
-        `[RPC Proxy] ${method} - Using Helius: ${RPC_ENDPOINT.substring(0, 50)}...`
+        `[RPC Proxy] ${method} - Using Helius: ${RPC_ENDPOINT.substring(0, 50)}...`,
       );
 
       const controller = new AbortController();
@@ -69,7 +69,7 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
         const errorCode = parsedData.error.code;
         const errorMsg = parsedData.error.message;
         console.warn(
-          `[RPC Proxy] ${method} - Helius returned RPC error code ${errorCode}: ${errorMsg}`
+          `[RPC Proxy] ${method} - Helius returned RPC error code ${errorCode}: ${errorMsg}`,
         );
         lastErrorData = parsedData;
         lastError = new Error(`RPC error (${errorCode}): ${errorMsg}`);
@@ -83,7 +83,7 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
       // Treat 403 errors as endpoint being blocked
       if (response.status === 403) {
         console.warn(
-          `[RPC Proxy] ${method} - Helius returned 403 (Access Forbidden)`
+          `[RPC Proxy] ${method} - Helius returned 403 (Access Forbidden)`,
         );
         lastErrorStatus = 403;
         lastError = new Error("Helius endpoint blocked (403)");
@@ -96,15 +96,14 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
 
       // Treat 429 (rate limit) as temporary issue
       if (response.status === 429) {
-        console.warn(
-          `[RPC Proxy] ${method} - Helius rate limited (429)`
-        );
+        console.warn(`[RPC Proxy] ${method} - Helius rate limited (429)`);
         lastErrorStatus = 429;
         lastError = new Error("Helius rate limited");
 
         return res.status(429).json({
           error: "RPC endpoint rate limited",
-          message: "Please retry after a moment. The Helius service is experiencing high load.",
+          message:
+            "Please retry after a moment. The Helius service is experiencing high load.",
           retryAfter: 60,
         });
       }
@@ -112,7 +111,7 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
       // For other server errors
       if (!response.ok && response.status >= 500) {
         console.warn(
-          `[RPC Proxy] ${method} - Helius returned ${response.status}`
+          `[RPC Proxy] ${method} - Helius returned ${response.status}`,
         );
         lastErrorStatus = response.status;
         lastError = new Error(`Server error: ${response.status}`);
@@ -125,7 +124,7 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
 
       // Success or client error - return response
       console.log(
-        `[RPC Proxy] ${method} - SUCCESS from Helius (status: ${response.status})`
+        `[RPC Proxy] ${method} - SUCCESS from Helius (status: ${response.status})`,
       );
       res.set("Content-Type", "application/json");
       return res.status(response.status).send(data);
@@ -133,15 +132,10 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
       lastError = e instanceof Error ? e : new Error(String(e));
       const errorMsg = lastError.message;
 
-      console.error(
-        `[RPC Proxy] ${method} - Helius error: ${errorMsg}`
-      );
+      console.error(`[RPC Proxy] ${method} - Helius error: ${errorMsg}`);
 
       // Determine error type
-      if (
-        errorMsg.includes("abort") ||
-        errorMsg.includes("timeout")
-      ) {
+      if (errorMsg.includes("abort") || errorMsg.includes("timeout")) {
         return res.status(504).json({
           error: "RPC endpoint timeout",
           message: "The Helius RPC endpoint did not respond in time",

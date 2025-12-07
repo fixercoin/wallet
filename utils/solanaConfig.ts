@@ -26,7 +26,7 @@ export const SOLANA_RPC_URL = (() => {
 
   // REQUIRED: HELIUS_API_KEY must be set - no fallbacks to other providers
   throw new Error(
-    "HELIUS_API_KEY environment variable is required. Please set it to use Helius RPC endpoints."
+    "HELIUS_API_KEY environment variable is required. Please set it to use Helius RPC endpoints.",
   );
 })();
 

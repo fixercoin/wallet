@@ -99,7 +99,7 @@ class HeliusAPI {
     this.endpoints = [SOLANA_RPC_URL].filter(Boolean);
     if (this.endpoints.length === 0) {
       throw new Error(
-        "SOLANA_RPC_URL (Helius) is required. Please set HELIUS_API_KEY environment variable."
+        "SOLANA_RPC_URL (Helius) is required. Please set HELIUS_API_KEY environment variable.",
       );
     }
   }

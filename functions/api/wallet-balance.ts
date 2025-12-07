@@ -15,7 +15,7 @@ function getHeliusRpcEndpoint(env: any): string {
     return env.HELIUS_RPC_URL;
   }
   throw new Error(
-    "Helius RPC endpoint required. Set HELIUS_API_KEY or HELIUS_RPC_URL."
+    "Helius RPC endpoint required. Set HELIUS_API_KEY or HELIUS_RPC_URL.",
   );
 }
 
@@ -34,7 +34,7 @@ export async function onRequestPost(context: any) {
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 
@@ -79,7 +79,7 @@ export async function onRequestPost(context: any) {
           {
             status: 400,
             headers: { "Content-Type": "application/json" },
-          }
+          },
         );
       }
 
@@ -96,7 +96,7 @@ export async function onRequestPost(context: any) {
         {
           status: 502,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
   } catch (err: any) {

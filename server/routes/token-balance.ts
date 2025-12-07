@@ -17,7 +17,7 @@ function getHeliusRpcEndpoint(): string {
   }
 
   throw new Error(
-    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable."
+    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
   );
 }
 
@@ -83,7 +83,7 @@ export const handleGetTokenBalance: RequestHandler = async (req, res) => {
       }
 
       console.log(
-        `[TokenBalance] ✅ Found balance for ${mint.slice(0, 8)}: ${balance}`
+        `[TokenBalance] ✅ Found balance for ${mint.slice(0, 8)}: ${balance}`,
       );
       return res.json({
         wallet,
@@ -92,8 +92,7 @@ export const handleGetTokenBalance: RequestHandler = async (req, res) => {
         accounts: accounts.length,
       });
     } catch (error) {
-      const errorMsg =
-        error instanceof Error ? error.message : String(error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
       console.error("[TokenBalance] Helius RPC error:", errorMsg);
 
       return res.status(502).json({

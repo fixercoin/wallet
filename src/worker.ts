@@ -94,7 +94,7 @@ function getHeliusRpcEndpoint(env: Env): string {
   }
 
   throw new Error(
-    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable."
+    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
   );
 }
 
@@ -185,7 +185,7 @@ async function handleWalletBalance(url: URL, env: Env): Promise<Response> {
         error: "Failed to fetch wallet balance from Helius RPC",
         details: errorMsg,
       }),
-      { status: 502, headers: CORS_HEADERS }
+      { status: 502, headers: CORS_HEADERS },
     );
   }
 }
@@ -247,7 +247,7 @@ async function handleWalletTokens(url: URL, env: Env): Promise<Response> {
         error: "Failed to fetch wallet tokens from Helius RPC",
         details: errorMsg,
       }),
-      { status: 502, headers: CORS_HEADERS }
+      { status: 502, headers: CORS_HEADERS },
     );
   }
 }

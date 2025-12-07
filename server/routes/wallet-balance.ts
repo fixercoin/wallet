@@ -38,7 +38,7 @@ function getHeliusRpcEndpoint(): string {
 
   // No Helius endpoint found - this is a configuration error
   throw new Error(
-    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable."
+    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
   );
 }
 
@@ -60,7 +60,8 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
         details: {
           received: req.query,
           expected: {
-            publicKey: "Solana wallet address (e.g., 8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV)",
+            publicKey:
+              "Solana wallet address (e.g., 8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV)",
           },
         },
       });
@@ -77,7 +78,9 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
       params: [publicKey],
     };
 
-    console.log(`[WalletBalance] Fetching balance from Helius for ${publicKey}`);
+    console.log(
+      `[WalletBalance] Fetching balance from Helius for ${publicKey}`,
+    );
 
     try {
       const controller = new AbortController();
@@ -97,7 +100,7 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
 
       if (!response.ok) {
         throw new Error(
-          `Helius RPC returned HTTP ${response.status} ${response.statusText}`
+          `Helius RPC returned HTTP ${response.status} ${response.statusText}`,
         );
       }
 
@@ -122,7 +125,7 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
 
       if (typeof balanceLamports !== "number" || isNaN(balanceLamports)) {
         throw new Error(
-          `Invalid balance type from Helius: ${typeof balanceLamports}`
+          `Invalid balance type from Helius: ${typeof balanceLamports}`,
         );
       }
 
@@ -132,9 +135,7 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
 
       const balanceSOL = balanceLamports / 1_000_000_000;
 
-      console.log(
-        `[WalletBalance] ✅ Success from Helius: ${balanceSOL} SOL`
-      );
+      console.log(`[WalletBalance] ✅ Success from Helius: ${balanceSOL} SOL`);
 
       return res.json({
         publicKey,

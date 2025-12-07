@@ -18,7 +18,7 @@ function getHeliusRpcEndpoint(): string {
   }
 
   throw new Error(
-    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable."
+    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
   );
 }
 
@@ -108,7 +108,7 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
 
       try {
         console.log(
-          `[TokenAccounts] Fetching token accounts from Helius for ${publicKey}`
+          `[TokenAccounts] Fetching token accounts from Helius for ${publicKey}`,
         );
 
         const response = await fetch(endpoint, {
@@ -122,7 +122,7 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
 
         if (!response.ok) {
           throw new Error(
-            `Helius RPC returned HTTP ${response.status} ${response.statusText}`
+            `Helius RPC returned HTTP ${response.status} ${response.statusText}`,
           );
         }
 
@@ -185,20 +185,20 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
               solBalance = solData.result / 1_000_000_000; // Convert lamports to SOL
               solFetchSucceeded = true;
               console.log(
-                `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`
+                `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
               );
             }
           }
         } catch (solError) {
           console.warn(
             `[TokenAccounts] Warning: Could not fetch SOL balance from Helius`,
-            solError instanceof Error ? solError.message : String(solError)
+            solError instanceof Error ? solError.message : String(solError),
           );
         }
 
         // Only add SOL to tokens array if fetch was successful
         const hasSOL = tokens.some(
-          (t) => t.mint === "So11111111111111111111111111111111111111112"
+          (t) => t.mint === "So11111111111111111111111111111111111111112",
         );
         if (!hasSOL && solFetchSucceeded && solBalance !== null) {
           tokens.unshift({
@@ -208,7 +208,7 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
         }
 
         console.log(
-          `[TokenAccounts] ✅ Found ${tokens.length} tokens for ${publicKey.slice(0, 8)} via Helius${solFetchSucceeded ? ` (SOL: ${solBalance} SOL)` : " (SOL will be fetched separately)"}`
+          `[TokenAccounts] ✅ Found ${tokens.length} tokens for ${publicKey.slice(0, 8)} via Helius${solFetchSucceeded ? ` (SOL: ${solBalance} SOL)` : " (SOL will be fetched separately)"}`,
         );
         return res.json({
           publicKey,
@@ -222,9 +222,7 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
       const errorMsg = lastError.message || "Unknown error";
-      console.error(
-        `[TokenAccounts] Helius RPC error: ${errorMsg}`
-      );
+      console.error(`[TokenAccounts] Helius RPC error: ${errorMsg}`);
 
       // Return default tokens as fallback
       // This ensures the UI still shows known tokens with 0 balance

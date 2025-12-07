@@ -11,7 +11,7 @@ function getHeliusRpcEndpoint(env: any): string {
     return env.HELIUS_RPC_URL;
   }
   throw new Error(
-    "Helius RPC endpoint required. Set HELIUS_API_KEY or HELIUS_RPC_URL."
+    "Helius RPC endpoint required. Set HELIUS_API_KEY or HELIUS_RPC_URL.",
   );
 }
 
@@ -127,7 +127,7 @@ async function handler(request: Request, context: any): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
 
@@ -170,7 +170,7 @@ async function handler(request: Request, context: any): Promise<Response> {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*",
             },
-          }
+          },
         );
       }
 
@@ -220,7 +220,7 @@ async function handler(request: Request, context: any): Promise<Response> {
         `[TokenAccounts] Found ${validTokens.length} token accounts for ${publicKey.slice(
           0,
           8,
-        )} from Helius`
+        )} from Helius`,
       );
 
       return new Response(
@@ -235,7 +235,7 @@ async function handler(request: Request, context: any): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     } catch (error: any) {
       const errorMsg =
@@ -256,7 +256,7 @@ async function handler(request: Request, context: any): Promise<Response> {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-        }
+        },
       );
     }
   } catch (err: any) {

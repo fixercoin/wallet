@@ -623,7 +623,7 @@ export default function OrderComplete() {
             <h2 className="text-lg font-bold text-white mb-4 uppercase">
               Order Details
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div>
                 <div className="text-xs text-white/70 font-semibold uppercase mb-1">
                   Order ID
@@ -667,6 +667,15 @@ export default function OrderComplete() {
                 </div>
                 <div className="text-xs text-white/90">
                   1 {order.token} = {exchangeRate.toFixed(2)} PKR
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                  Total PKR
+                </div>
+                <div className="text-xs text-white/90 font-semibold">
+                  {(order.amountTokens * exchangeRate).toFixed(2)} PKR
                 </div>
               </div>
             </div>

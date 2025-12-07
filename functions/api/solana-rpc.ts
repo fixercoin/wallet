@@ -13,10 +13,11 @@ export async function onRequestPost({ request, env }) {
       // Priority 2: Custom Solana RPC
       env.SOLANA_RPC_URL,
       env.VITE_SOLANA_RPC_URL,
-      // Priority 3: Public fallbacks
-      "https://solana-rpc.publicnode.com",
+      // Priority 3: Public fallbacks (in order of reliability)
       "https://solana.publicnode.com",
+      "https://api.solflare.com",
       "https://rpc.ankr.com/solana",
+      "https://rpc.ironforge.network/mainnet",
       "https://api.mainnet-beta.solana.com",
     ].filter((url) => url && typeof url === "string");
 

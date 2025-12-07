@@ -10,6 +10,10 @@ cwd = "./"
 # Cloudflare Pages output directory
 pages_build_output_dir = "dist"
 
+# Enable Functions in Pages (routes are in functions/ directory)
+[pages_build_output_dir]
+functions = "functions"
+
 # Environment variables available at build time and to Functions (VITE_ prefix exposed to client)
 [vars]
 VITE_API_URL = ""

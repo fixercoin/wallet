@@ -80,6 +80,24 @@ async function safeJson(resp: Response): Promise<any> {
   }
 }
 
+// Utility: Get Helius RPC endpoint ONLY
+function getHeliusRpcEndpoint(env: Env): string {
+  // PRIORITY: Helius API key > HELIUS_RPC_URL > SOLANA_RPC
+  if (env.HELIUS_API_KEY) {
+    return `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`;
+  }
+  if (env.HELIUS_RPC_URL) {
+    return env.HELIUS_RPC_URL;
+  }
+  if (env.SOLANA_RPC) {
+    return env.SOLANA_RPC;
+  }
+
+  throw new Error(
+    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable."
+  );
+}
+
 // ============ ROUTE HANDLERS ============
 
 // Health check

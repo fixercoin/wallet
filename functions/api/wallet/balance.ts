@@ -196,7 +196,11 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         }
 
         const lamports = data.result ?? data.result?.value;
-        if (typeof lamports === "number" && isFinite(lamports) && lamports >= 0) {
+        if (
+          typeof lamports === "number" &&
+          isFinite(lamports) &&
+          lamports >= 0
+        ) {
           const balanceInSol = lamports / 1_000_000_000;
           console.log(
             `[Balance API] ✅ Success from endpoint ${i + 1}: ${lamports} lamports (${balanceInSol} SOL)`,

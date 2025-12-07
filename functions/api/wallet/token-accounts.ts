@@ -143,7 +143,9 @@ async function handler(request: Request, env?: Env): Promise<Response> {
     let lastError: string | null = null;
     const RPC_ENDPOINTS = buildRpcEndpoints(env || {});
 
-    console.log(`[TokenAccounts] Using ${RPC_ENDPOINTS.length} RPC endpoints. Primary: ${RPC_ENDPOINTS[0]?.substring(0, 50)}...`);
+    console.log(
+      `[TokenAccounts] Using ${RPC_ENDPOINTS.length} RPC endpoints. Primary: ${RPC_ENDPOINTS[0]?.substring(0, 50)}...`,
+    );
 
     // Try each RPC endpoint
     for (const endpoint of RPC_ENDPOINTS) {
@@ -240,13 +242,21 @@ async function handler(request: Request, env?: Env): Promise<Response> {
 
           const solData = await solResp.json();
           const lamports = solData.result ?? solData.result?.value;
-          if (!solData.error && typeof lamports === "number" && isFinite(lamports) && lamports >= 0) {
+          if (
+            !solData.error &&
+            typeof lamports === "number" &&
+            isFinite(lamports) &&
+            lamports >= 0
+          ) {
             solBalance = lamports / 1_000_000_000; // Convert lamports to SOL
             console.log(
               `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL (${lamports} lamports)`,
             );
           } else if (solData.error) {
-            console.warn(`[TokenAccounts] RPC error fetching SOL balance:`, solData.error);
+            console.warn(
+              `[TokenAccounts] RPC error fetching SOL balance:`,
+              solData.error,
+            );
           }
         } catch (err) {
           console.warn(`[TokenAccounts] Failed to fetch SOL balance:`, err);

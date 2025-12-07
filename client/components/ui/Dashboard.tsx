@@ -414,9 +414,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         {formatBalance(token.balance || 0)}
                       </p>
                       <p className="text-xs text-gray-400">
-                        {typeof token.price === "number" && token.price > 0 ? (
-                          `$${formatBalance((token.balance || 0) * token.price)}`
-                        ) : null}
+                        {typeof token.price === "number" && token.price > 0
+                          ? `$${formatBalance((token.balance || 0) * token.price)}`
+                          : null}
                       </p>
                     </div>
                   </div>

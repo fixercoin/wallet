@@ -1,12 +1,7 @@
 import { RequestHandler } from "express";
 
-// Helius, Moralis, and Alchemy are RPC providers for Solana blockchain calls
-// They fetch wallet balance and token account data - NOT for token price fetching
-// Token prices should come from dedicated price APIs like Jupiter, DexScreener, or DexTools
 const RPC_ENDPOINTS = [
-  // Prefer Helius RPC with embedded API key
-  "https://mainnet.helius-rpc.com/?api-key=48e91c19-c676-4c4a-a0dd-a9b4f258d151",
-  // Environment-configured RPC as fallback
+  // Environment-configured RPC as primary
   process.env.SOLANA_RPC_URL || "",
   // Provider-specific overrides
   process.env.HELIUS_RPC_URL || "",
@@ -15,13 +10,19 @@ const RPC_ENDPOINTS = [
     : "",
   process.env.ALCHEMY_RPC_URL || "",
   process.env.MORALIS_RPC_URL || "",
-  // Shyft RPC with embedded API key (reliable fallback)
+  // Shyft RPC as reliable fallback
   "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7",
-  // Fallback public endpoints (prefer publicnode and ankr first)
+  // Fallback public endpoints
   "https://solana.publicnode.com",
   "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
 ].filter(Boolean);
+
+// Helius API for specialized token balance lookups (more efficient than RPC)
+const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
+const HELIUS_API_URL = HELIUS_API_KEY
+  ? `https://api.helius.xyz/v0/addresses/${"{publicKey}"}/balances?api-key=${HELIUS_API_KEY}`
+  : null;
 
 export const handleWalletBalance: RequestHandler = async (req, res) => {
   try {
@@ -52,12 +53,24 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
+          timeout: 10000,
         });
+
+        if (!response.ok) {
+          console.warn(
+            `RPC ${endpoint.substring(0, 50)}... returned ${response.status}`,
+          );
+          lastError = new Error(`HTTP ${response.status}`);
+          continue;
+        }
 
         const data = await response.json();
 
         if (data.error) {
-          console.warn(`RPC ${endpoint} returned error:`, data.error);
+          console.warn(
+            `RPC error from ${endpoint.substring(0, 50)}...:`,
+            data.error,
+          );
           lastError = new Error(data.error.message || "RPC error");
           continue;
         }
@@ -72,19 +85,28 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
         });
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        console.warn(`RPC endpoint ${endpoint} failed:`, lastError.message);
+        console.warn(
+          `RPC endpoint ${endpoint.substring(0, 50)}... failed:`,
+          lastError.message,
+        );
         continue;
       }
     }
 
-    console.error("All RPC endpoints failed for wallet balance");
-    return res.status(500).json({
+    console.error("All RPC endpoints failed for wallet balance:", {
+      publicKey,
+      lastError: lastError?.message,
+      configuredEndpoints: RPC_ENDPOINTS.length,
+    });
+
+    return res.status(502).json({
       error:
         lastError?.message ||
         "Failed to fetch balance - all RPC endpoints failed",
+      hint: "Please check server RPC configuration. Set HELIUS_API_KEY or SOLANA_RPC_URL environment variable.",
     });
   } catch (error) {
-    console.error("Wallet balance error:", error);
+    console.error("Wallet balance handler error:", error);
     res.status(500).json({
       error: error instanceof Error ? error.message : "Internal server error",
     });

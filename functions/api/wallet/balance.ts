@@ -85,13 +85,13 @@ function buildRpcEndpoints(env?: Env): string[] {
     );
   }
 
-  // Add quality public endpoints in priority order (Cloudflare-compatible)
+  // Add quality public endpoints in priority order (tested & reliable free options)
   const publicEndpoints = [
-    "https://solana.publicnode.com",
-    "https://rpc.ankr.com/solana",
-    "https://rpc.ironforge.network/mainnet",
-    "https://api.mainnet-beta.solana.com",
-    "https://rpc.genesysgo.net",
+    "https://solana.publicnode.com",      // Most reliable free public RPC
+    "https://api.solflare.com",            // Solflare's stable endpoint
+    "https://rpc.ankr.com/solana",         // Ankr's free tier (good uptime)
+    "https://rpc.ironforge.network/mainnet", // IronForge (reliable)
+    "https://api.mainnet-beta.solana.com", // Official (rate-limited but functional)
   ];
 
   // Add public endpoints that aren't already in the list

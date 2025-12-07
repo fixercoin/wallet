@@ -966,20 +966,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <div className="flex items-center justify-between gap-4 w-full">
                         <div className="text-3xl text-gray-900 leading-tight">
                           {showBalance ? (
-                            <>
-                              <span
-                                style={{
-                                  fontVariantNumeric: "tabular-nums",
-                                  fontFamily: "Arial",
-                                }}
-                              >
-                                {total.toLocaleString(undefined, {
-                                  minimumFractionDigits: 3,
-                                  maximumFractionDigits: 3,
-                                })}
-                              </span>
-                              {" $"}
-                            </>
+                            areTokenPricesLoading() ? (
+                              <PriceLoader size="lg" />
+                            ) : (
+                              <>
+                                <span
+                                  style={{
+                                    fontVariantNumeric: "tabular-nums",
+                                    fontFamily: "Arial",
+                                  }}
+                                >
+                                  {total.toLocaleString(undefined, {
+                                    minimumFractionDigits: 3,
+                                    maximumFractionDigits: 3,
+                                  })}
+                                </span>
+                                {" $"}
+                              </>
+                            )
                           ) : (
                             "****"
                           )}

@@ -32,8 +32,10 @@ export function P2PPaymentConfirmation({
   onConfirmed,
 }: PaymentConfirmationProps) {
   const [loading, setLoading] = useState(false);
-  const [localBuyerConfirmed, setLocalBuyerConfirmed] = useState(buyerConfirmed);
-  const [localSellerConfirmed, setLocalSellerConfirmed] = useState(sellerConfirmed);
+  const [localBuyerConfirmed, setLocalBuyerConfirmed] =
+    useState(buyerConfirmed);
+  const [localSellerConfirmed, setLocalSellerConfirmed] =
+    useState(sellerConfirmed);
 
   const isBuyer = walletAddress === buyerWallet;
   const isSeller = walletAddress === sellerWallet;
@@ -57,8 +59,10 @@ export function P2PPaymentConfirmation({
       }
 
       onConfirmed?.({
-        buyerConfirmed: result.room.buyerPaymentConfirmed || localBuyerConfirmed,
-        sellerConfirmed: result.room.sellerPaymentConfirmed || localSellerConfirmed,
+        buyerConfirmed:
+          result.room.buyerPaymentConfirmed || localBuyerConfirmed,
+        sellerConfirmed:
+          result.room.sellerPaymentConfirmed || localSellerConfirmed,
       });
 
       showP2PToast("success", "Confirmed", result.message);
@@ -150,20 +154,28 @@ export function P2PPaymentConfirmation({
           </div>
 
           {/* Action Button */}
-          {!bothConfirmed && !((isBuyer && localBuyerConfirmed) || (isSeller && localSellerConfirmed)) && (
-            <Button
-              onClick={handleConfirmPayment}
-              disabled={loading}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
-            >
-              {loading ? "Confirming..." : `Confirm ${isBuyer ? "Payment Sent" : "Payment Received"}`}
-            </Button>
-          )}
+          {!bothConfirmed &&
+            !(
+              (isBuyer && localBuyerConfirmed) ||
+              (isSeller && localSellerConfirmed)
+            ) && (
+              <Button
+                onClick={handleConfirmPayment}
+                disabled={loading}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+              >
+                {loading
+                  ? "Confirming..."
+                  : `Confirm ${isBuyer ? "Payment Sent" : "Payment Received"}`}
+              </Button>
+            )}
 
           {/* Already Confirmed */}
-          {(isBuyer && localBuyerConfirmed) || (isSeller && localSellerConfirmed) ? (
+          {(isBuyer && localBuyerConfirmed) ||
+          (isSeller && localSellerConfirmed) ? (
             <div className="w-full bg-green-500/10 border border-green-500/30 text-green-400 rounded-lg py-3 px-4 text-center font-medium">
-              ✓ You have confirmed {isBuyer ? "payment sent" : "payment received"}
+              ✓ You have confirmed{" "}
+              {isBuyer ? "payment sent" : "payment received"}
             </div>
           ) : null}
         </div>

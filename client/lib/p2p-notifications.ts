@@ -7,7 +7,11 @@ import { toast } from "sonner";
 
 export interface P2PNotification {
   id: string;
-  type: "order_expired" | "payment_confirmed" | "auto_released" | "seller_needs_verification";
+  type:
+    | "order_expired"
+    | "payment_confirmed"
+    | "auto_released"
+    | "seller_needs_verification";
   title: string;
   message: string;
   orderId?: string;

@@ -108,12 +108,15 @@ function normalizeOrder(order: any): P2POrder {
 // Helper to check if order has expired (15 minutes)
 function isOrderExpired(order: P2POrder): boolean {
   const ORDER_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
-  const expiresAt = order.expiresAt || (order.createdAt || 0) + ORDER_TIMEOUT_MS;
+  const expiresAt =
+    order.expiresAt || (order.createdAt || 0) + ORDER_TIMEOUT_MS;
   return Date.now() > expiresAt;
 }
 
 // Helper to verify seller has payment method
-async function sellerHasVerifiedPaymentMethod(walletAddress: string): Promise<boolean> {
+async function sellerHasVerifiedPaymentMethod(
+  walletAddress: string,
+): Promise<boolean> {
   const kv = getKVStorage();
   const paymentMethodsKey = `payment_methods:${walletAddress}`;
   const json = await kv.get(paymentMethodsKey);
@@ -258,7 +261,13 @@ export const handleListP2POrders: RequestHandler = async (req, res) => {
     // Check for expired orders and update their status
     for (let i = 0; i < filtered.length; i++) {
       const order = filtered[i];
-      if (isOrderExpired(order) && order.status !== "EXPIRED" && (order.status === "PENDING" || order.status === "active" || order.status === "pending")) {
+      if (
+        isOrderExpired(order) &&
+        order.status !== "EXPIRED" &&
+        (order.status === "PENDING" ||
+          order.status === "active" ||
+          order.status === "pending")
+      ) {
         order.status = "EXPIRED";
         await saveOrder(order);
       }
@@ -327,10 +336,12 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
 
     // For SELL orders, verify seller has payment method
     if (finalType === "SELL") {
-      const hasPaymentMethod = await sellerHasVerifiedPaymentMethod(finalWallet);
+      const hasPaymentMethod =
+        await sellerHasVerifiedPaymentMethod(finalWallet);
       if (!hasPaymentMethod) {
         return res.status(400).json({
-          error: "Seller must have at least one verified payment method to create a SELL order",
+          error:
+            "Seller must have at least one verified payment method to create a SELL order",
           code: "SELLER_NO_PAYMENT_METHOD",
         });
       }
@@ -657,10 +668,12 @@ export const handleConfirmPayment: RequestHandler = async (req, res) => {
     rooms.set(roomId, updated);
     res.json({
       room: updated,
-      autoReleased: updated.buyerPaymentConfirmed && updated.sellerPaymentConfirmed,
-      message: updated.buyerPaymentConfirmed && updated.sellerPaymentConfirmed
-        ? "Both parties confirmed payment. Escrow will be released."
-        : `${isBuyer ? "Buyer" : "Seller"} confirmed payment. Waiting for ${isBuyer ? "seller" : "buyer"} confirmation.`,
+      autoReleased:
+        updated.buyerPaymentConfirmed && updated.sellerPaymentConfirmed,
+      message:
+        updated.buyerPaymentConfirmed && updated.sellerPaymentConfirmed
+          ? "Both parties confirmed payment. Escrow will be released."
+          : `${isBuyer ? "Buyer" : "Seller"} confirmed payment. Waiting for ${isBuyer ? "seller" : "buyer"} confirmation.`,
     });
   } catch (error) {
     console.error("Confirm payment error:", error);

@@ -51,7 +51,8 @@ export interface TradeMessage {
   created_at: number;
 }
 
-const API_BASE = (import.meta as any).env?.VITE_P2P_API || window.location.origin;
+const API_BASE =
+  (import.meta as any).env?.VITE_P2P_API || window.location.origin;
 
 // ===== P2P ORDERS =====
 

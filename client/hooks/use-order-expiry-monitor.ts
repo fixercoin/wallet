@@ -40,7 +40,9 @@ export function useOrderExpiryMonitor(orders: Order[]) {
         isExpired &&
         order.status !== "EXPIRED" &&
         !notified &&
-        (order.status === "PENDING" || order.status === "active" || order.status === "pending")
+        (order.status === "PENDING" ||
+          order.status === "active" ||
+          order.status === "pending")
       ) {
         notifyOrderExpired(order.id);
         notifiedOrdersRef.current.add(order.id);
@@ -50,7 +52,9 @@ export function useOrderExpiryMonitor(orders: Order[]) {
       if (
         isOrderAboutToExpire(order.expiresAt) &&
         !notified &&
-        (order.status === "PENDING" || order.status === "active" || order.status === "pending")
+        (order.status === "PENDING" ||
+          order.status === "active" ||
+          order.status === "pending")
       ) {
         const minutesRemaining = getMinutesRemaining(order.expiresAt);
         notifyOrderExpiring(order.id, minutesRemaining);

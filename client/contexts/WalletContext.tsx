@@ -922,12 +922,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         });
       }
 
-      // Price fetching logic
+      // Price fetching logic - decouple from balance display
       let prices: Record<string, number> = {};
       let priceSource = "fallback";
       let changeMap: Record<string, number> = {};
       const solMint = "So11111111111111111111111111111111111111112";
 
+      // Fetch prices but don't let failures block token display
       try {
         const tokenMints = allTokens.map((token) => token.mint);
 
@@ -1066,15 +1067,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         if (Object.keys(prices).length > 0) {
           priceSource = "birdeye";
         } else {
-          throw new Error(
-            "No prices available from any source, using fallback",
-          );
+          // No prices available - will try fallback below
+          console.warn("[WalletContext] No prices available from primary sources");
         }
       } catch (dexError) {
         console.warn(
-          "[WalletContext] Price fetching failed, using static fallback:",
+          "[WalletContext] Price fetching failed, will use static fallback:",
           dexError,
         );
+      }
+
+      // If still no prices, try fallback sources
+      if (Object.keys(prices).length === 0) {
         try {
           const solPricePromise = solPriceService.getSolPrice();
           const timeout = new Promise<null>((resolve) =>
@@ -1091,7 +1095,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             changeMap[solMint] = solPriceData.price_change_24h;
           }
           priceSource = solPriceData ? "coingecko" : "static";
-        } catch {
+          console.log(
+            `[WalletContext] Using fallback price source: ${priceSource}`,
+          );
+        } catch (e) {
+          console.warn("[WalletContext] Fallback price fetch also failed:", e);
           prices = { [solMint]: 100 };
           priceSource = "static";
         }

@@ -113,7 +113,6 @@ export default function BuyData() {
     }
   }, [wallet?.publicKey, exchangeRate, amountTokens, amountPKR, navigate]);
 
-
   const handlePKRChange = (value: string) => {
     setAmountPKR(value);
     if (value) {

@@ -803,7 +803,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     lockerPriceService.clearCache();
     fxmPriceService.clearCache();
     solPriceService.clearCache();
-    birdeyeAPI.clearCache();
 
     console.log(
       `[WalletContext] Refreshing tokens for wallet: ${wallet.publicKey}`,

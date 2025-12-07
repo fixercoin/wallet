@@ -405,6 +405,65 @@ async function fetchPriceFromJupiter(mint: string): Promise<number | null> {
   }
 }
 
+/**
+ * Fetch SOL price from CoinGecko API as backup
+ */
+async function fetchPriceFromCoingecko(): Promise<number | null> {
+  try {
+    console.log(`[CoinGecko] Fetching SOL price...`);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    try {
+      const response = await fetch(
+        "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd",
+        {
+          signal: controller.signal,
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.warn(
+          `[CoinGecko] API returned ${response.status} for SOL price`,
+        );
+        return null;
+      }
+
+      const data = (await response.json()) as {
+        solana?: { usd?: number };
+      };
+
+      if (data.solana && typeof data.solana.usd === "number") {
+        const price = data.solana.usd;
+        if (isFinite(price) && price > 0) {
+          console.log(
+            `[CoinGecko] ✅ Got SOL price from CoinGecko: $${price.toFixed(2)}`,
+          );
+          return price;
+        }
+      }
+
+      console.warn(`[CoinGecko] No valid price data in response`);
+      return null;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  } catch (error) {
+    console.warn(
+      `[CoinGecko] Failed to fetch SOL price:`,
+      error instanceof Error ? error.message : String(error),
+    );
+    return null;
+  }
+}
+
 export const handleTokenPrice: RequestHandler = async (req, res) => {
   try {
     const tokenParam = (

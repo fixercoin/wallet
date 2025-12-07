@@ -765,11 +765,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     try {
       const newBalance = await getBalance(wallet.publicKey);
-      if (typeof newBalance === "number" && !isNaN(newBalance)) {
+      if (typeof newBalance === "number" && !isNaN(newBalance) && isFinite(newBalance) && newBalance >= 0) {
         setBalance(newBalance);
         balanceRef.current = newBalance;
         saveBalanceToCache(wallet.publicKey, newBalance);
       } else {
+        console.warn("[WalletContext] Invalid balance value:", newBalance);
         setBalance(0);
         balanceRef.current = 0;
       }
@@ -778,7 +779,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
       // Try to use cached balance as fallback on network/RPC errors
       const cachedBalance = getCachedBalance(wallet.publicKey);
-      if (cachedBalance !== null && cachedBalance > 0) {
+      if (cachedBalance !== null && typeof cachedBalance === "number" && isFinite(cachedBalance) && cachedBalance >= 0) {
         console.log(
           "[WalletContext] Using cached SOL balance as fallback:",
           cachedBalance,
@@ -788,7 +789,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         setIsUsingCache(true);
         setError(null);
       } else {
-        console.warn("[WalletContext] No cached balance available, showing 0");
+        console.warn("[WalletContext] No valid cached balance available, showing 0");
         setBalance(0);
         balanceRef.current = 0;
         setError("Unable to fetch SOL balance. Please check your connection.");

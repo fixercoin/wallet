@@ -266,12 +266,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
       if (running) return;
       running = true;
       try {
-        await refreshBalance();
-        await new Promise((r) => setTimeout(r, 300));
-        await refreshTokens();
+        if (!cancelled) await refreshBalance();
+        if (!cancelled) await new Promise((r) => setTimeout(r, 300));
+        if (!cancelled) await refreshTokens();
       } catch (err) {
+        // Silently ignore AbortError and other errors during refresh
+        // They're already logged by the service layer
+        if (!(err instanceof Error && err.name === "AbortError")) {
+          console.debug("[Dashboard] Refresh error:", err);
+        }
       } finally {
-        running = false;
+        if (!cancelled) {
+          running = false;
+        }
       }
     };
 

@@ -2,13 +2,38 @@ export const config = {
   runtime: "nodejs_esmsh",
 };
 
-const RPC_ENDPOINTS = [
-  "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7",
-  "https://api.mainnet-beta.solana.com",
-  "https://solana.publicnode.com",
-];
+interface Env {
+  SOLANA_RPC_URL?: string;
+  HELIUS_RPC_URL?: string;
+  HELIUS_API_KEY?: string;
+  ALCHEMY_RPC_URL?: string;
+  MORALIS_RPC_URL?: string;
+}
 
-async function handler(request: Request): Promise<Response> {
+function buildRpcEndpoints(env?: Env): string[] {
+  const endpoints: string[] = [];
+
+  // Add environment-configured endpoints first (highest priority)
+  if (env?.SOLANA_RPC_URL) endpoints.push(env.SOLANA_RPC_URL);
+  if (env?.HELIUS_RPC_URL) endpoints.push(env.HELIUS_RPC_URL);
+  if (env?.HELIUS_API_KEY) {
+    endpoints.push(
+      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
+    );
+  }
+  if (env?.ALCHEMY_RPC_URL) endpoints.push(env.ALCHEMY_RPC_URL);
+  if (env?.MORALIS_RPC_URL) endpoints.push(env.MORALIS_RPC_URL);
+
+  // Add public fallback endpoints
+  endpoints.push("https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7");
+  endpoints.push("https://solana.publicnode.com");
+  endpoints.push("https://rpc.ankr.com/solana");
+  endpoints.push("https://api.mainnet-beta.solana.com");
+
+  return [...new Set(endpoints)]; // Remove duplicates
+}
+
+async function handler(request: Request, env?: Env): Promise<Response> {
   // Handle CORS preflight
   if (request.method === "OPTIONS") {
     return new Response(null, {
@@ -48,10 +73,11 @@ async function handler(request: Request): Promise<Response> {
       params: [publicKey],
     };
 
+    const rpcEndpoints = buildRpcEndpoints(env);
     let lastError = "";
 
     // Try each RPC endpoint
-    for (const endpoint of RPC_ENDPOINTS) {
+    for (const endpoint of rpcEndpoints) {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -127,5 +153,10 @@ async function handler(request: Request): Promise<Response> {
   }
 }
 
-export const onRequest = async ({ request }: { request: Request }) =>
-  handler(request);
+export const onRequest = async ({
+  request,
+  env,
+}: {
+  request: Request;
+  env?: Env;
+}) => handler(request, env);

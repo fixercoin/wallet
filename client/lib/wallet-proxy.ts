@@ -215,7 +215,30 @@ export const getTokenAccounts = async (
       }
     });
 
-    console.log(`✅ Token accounts loaded: ${allTokens.length} tokens`);
+    // Ensure SOL is present with proper balance
+    const solIndex = allTokens.findIndex(
+      (t) => t.mint === "So11111111111111111111111111111111111111112",
+    );
+    if (solIndex >= 0) {
+      // Ensure SOL balance is a valid number
+      const solBalance = allTokens[solIndex].balance;
+      if (
+        typeof solBalance !== "number" ||
+        !isFinite(solBalance) ||
+        solBalance < 0
+      ) {
+        console.warn(
+          `[TokenAccounts] SOL balance is invalid: ${solBalance}, resetting to 0`,
+        );
+        allTokens[solIndex].balance = 0;
+      }
+    }
+
+    console.log(
+      `✅ Token accounts loaded: ${allTokens.length} tokens (SOL balance: ${
+        allTokens.find((t) => t.symbol === "SOL")?.balance ?? "not found"
+      })`,
+    );
     return allTokens;
   } catch (error) {
     console.error("Failed to fetch token accounts:", error);

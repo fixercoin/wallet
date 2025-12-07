@@ -25,7 +25,6 @@ import { useToast } from "@/hooks/use-toast";
 import { resolveApiUrl } from "@/lib/api-client";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
-import { PriceLoader } from "@/components/ui/price-loader";
 
 interface DashboardProps {
   onSend: () => void;
@@ -390,9 +389,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             >
                               ${formatTokenPriceDisplay(token.price)}
                             </span>
-                          ) : (
-                            <PriceLoader />
-                          )}
+                          ) : null}
                           {percentChange !== null ? (
                             <span className="flex items-center gap-1">
                               <span
@@ -417,11 +414,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         {formatBalance(token.balance || 0)}
                       </p>
                       <p className="text-xs text-gray-400">
-                        {typeof token.price === "number" && token.price > 0 ? (
-                          `$${formatBalance((token.balance || 0) * token.price)}`
-                        ) : (
-                          <PriceLoader />
-                        )}
+                        {typeof token.price === "number" && token.price > 0
+                          ? `$${formatBalance((token.balance || 0) * token.price)}`
+                          : null}
                       </p>
                     </div>
                   </div>

@@ -5,7 +5,6 @@ import { Copy, ExternalLink } from "lucide-react";
 import { TokenInfo, shortenAddress } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { formatTokenAmount } from "@/lib/utils";
-import { PriceLoader } from "@/components/ui/price-loader";
 
 interface TokenInfoCardProps {
   token: TokenInfo;
@@ -104,9 +103,7 @@ export const TokenInfoCard: React.FC<TokenInfoCardProps> = ({ token }) => {
               <div className="font-medium py-1">
                 {["SOL", "USDC", "FIXERCOIN", "LOCKER", "FXM"].includes(
                   token.symbol,
-                ) ? (
-                  <PriceLoader />
-                ) : (
+                ) ? null : (
                   <p className="text-gray-400">—</p>
                 )}
               </div>

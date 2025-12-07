@@ -54,7 +54,6 @@ import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
 import { getUnreadNotifications } from "@/lib/p2p-chat";
-import { PriceLoader } from "@/components/ui/price-loader";
 import { Zap } from "lucide-react";
 
 interface DashboardProps {
@@ -919,12 +918,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     if (!hasAnyBalance) {
                       // If prices are still loading, show loading indicator
                       // Otherwise show 0.000 USD
-                      const isLoadingPrices = areTokenPricesLoading();
-                      const displayValue = isLoadingPrices ? (
-                        <PriceLoader size="lg" />
-                      ) : (
-                        `0.000 $`
-                      );
+                      const displayValue = `0.000 $`;
 
                       return (
                         <div className="flex items-center justify-between gap-4 w-full">
@@ -974,24 +968,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <div className="flex items-center justify-between gap-4 w-full">
                         <div className="text-3xl text-gray-900 leading-tight">
                           {showBalance ? (
-                            areTokenPricesLoading() ? (
-                              <PriceLoader size="lg" />
-                            ) : (
-                              <>
-                                <span
-                                  style={{
-                                    fontVariantNumeric: "tabular-nums",
-                                    fontFamily: "Arial",
-                                  }}
-                                >
-                                  {total.toLocaleString(undefined, {
-                                    minimumFractionDigits: 3,
-                                    maximumFractionDigits: 3,
-                                  })}
-                                </span>
-                                {" $"}
-                              </>
-                            )
+                            <>
+                              <span
+                                style={{
+                                  fontVariantNumeric: "tabular-nums",
+                                  fontFamily: "Arial",
+                                }}
+                              >
+                                {total.toLocaleString(undefined, {
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3,
+                                })}
+                              </span>
+                              {" $"}
+                            </>
                           ) : (
                             "****"
                           )}
@@ -1167,9 +1157,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
                               )}
                             </span>
-                          ) : (
-                            <PriceLoader />
-                          )}
+                          ) : null}
                         </div>
 
                         <div

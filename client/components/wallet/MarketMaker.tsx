@@ -16,7 +16,6 @@ import { useNavigate } from "react-router-dom";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { solPriceService } from "@/lib/services/sol-price";
 import { MarketMakerHistoryCard } from "./MarketMakerHistoryCard";
-import { PriceLoader } from "@/components/ui/price-loader";
 import {
   botOrdersStorage,
   BotSession,
@@ -680,9 +679,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         TARGET LIMIT (FIXERCOIN)
                       </Label>
                       <div className="flex items-center gap-1 text-xs text-gray-400">
-                        {isFetchingPrice ? (
-                          <PriceLoader />
-                        ) : livePrice ? (
+                        {livePrice ? (
                           <>
                             LIVE:{" "}
                             <span className="text-green-400 font-semibold">

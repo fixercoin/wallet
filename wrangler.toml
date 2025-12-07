@@ -26,8 +26,9 @@ VITE_API_BASE_URL = ""
 
 # Local development environment variables (for wrangler pages dev)
 [env.development.vars]
-# Uncomment and fill in for local testing
-# SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com"
+# Default Solana RPC endpoint for development
+SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com"
+# Uncomment and fill in for local testing with Helius
 # HELIUS_API_KEY = "your-helius-api-key"
 # HELIUS_RPC_URL = "https://mainnet.helius-rpc.com"
 

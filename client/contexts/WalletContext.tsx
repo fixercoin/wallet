@@ -775,18 +775,23 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       }
     } catch (error) {
       console.error("Error refreshing balance:", error);
-      setError("Failed to refresh balance");
 
-      // Try to use cached balance as fallback
+      // Try to use cached balance as fallback on network/RPC errors
       const cachedBalance = getCachedBalance(wallet.publicKey);
-      if (cachedBalance !== null) {
-        console.log("[WalletContext] Using cached balance:", cachedBalance);
+      if (cachedBalance !== null && cachedBalance > 0) {
+        console.log(
+          "[WalletContext] Using cached SOL balance as fallback:",
+          cachedBalance,
+        );
         setBalance(cachedBalance);
         balanceRef.current = cachedBalance;
         setIsUsingCache(true);
+        setError(null);
       } else {
+        console.warn("[WalletContext] No cached balance available, showing 0");
         setBalance(0);
         balanceRef.current = 0;
+        setError("Unable to fetch SOL balance. Please check your connection.");
       }
     } finally {
       setIsLoading(false);
@@ -817,6 +822,35 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         localStorage.getItem("custom_tokens") || "[]",
       ) as TokenInfo[];
 
+      // Check if SOL is already in tokenAccounts (new endpoint returns it with balance)
+      const solFromTokenAccounts = tokenAccounts.find(
+        (t) => t.symbol === "SOL",
+      );
+
+      // Use SOL from tokenAccounts if available (for Cloudflare compatibility)
+      // Otherwise use the balance from the separate refreshBalance() call
+      let solBalance = 0;
+      if (
+        solFromTokenAccounts?.balance !== undefined &&
+        solFromTokenAccounts.balance > 0
+      ) {
+        solBalance = solFromTokenAccounts.balance;
+        setBalance(solFromTokenAccounts.balance);
+        balanceRef.current = solFromTokenAccounts.balance;
+        console.log(
+          `[WalletContext] Updated SOL balance from tokenAccounts: ${solFromTokenAccounts.balance}`,
+        );
+      } else {
+        // Fall back to balance from separate endpoint (which should have been fetched via refreshBalance)
+        solBalance =
+          typeof balanceRef.current === "number"
+            ? balanceRef.current
+            : balance || 0;
+        console.log(
+          `[WalletContext] Using SOL balance from balance endpoint: ${solBalance}`,
+        );
+      }
+
       const allTokens: TokenInfo[] = [
         {
           mint: "So11111111111111111111111111111111111111112",
@@ -825,10 +859,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           decimals: 9,
           logoURI:
             "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-          balance:
-            typeof balanceRef.current === "number"
-              ? balanceRef.current
-              : balance || 0,
+          balance: solBalance,
         },
       ];
 

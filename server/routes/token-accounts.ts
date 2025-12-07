@@ -158,13 +158,60 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
             };
           });
 
+          // Also fetch SOL balance using the same endpoint/connection
+          let solBalance: number | null = null;
+          let solFetchSucceeded = false;
+          try {
+            const solBalanceBody = {
+              jsonrpc: "2.0",
+              id: 2,
+              method: "getBalance",
+              params: [publicKey],
+            };
+
+            const solResponse = await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(solBalanceBody),
+              signal: controller.signal,
+            });
+
+            if (solResponse.ok) {
+              const solData = await solResponse.json();
+              if (solData.result !== undefined && !solData.error) {
+                solBalance = solData.result / 1_000_000_000; // Convert lamports to SOL
+                solFetchSucceeded = true;
+                console.log(
+                  `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
+                );
+              }
+            }
+          } catch (solError) {
+            console.warn(
+              `[TokenAccounts] Warning: Could not fetch SOL balance from token-accounts endpoint`,
+              solError instanceof Error ? solError.message : String(solError),
+            );
+          }
+
+          // Only add SOL to tokens array if fetch was successful
+          const hasSOL = tokens.some(
+            (t) => t.mint === "So11111111111111111111111111111111111111112",
+          );
+          if (!hasSOL && solFetchSucceeded && solBalance !== null) {
+            tokens.unshift({
+              ...KNOWN_TOKENS["So11111111111111111111111111111111111111112"],
+              balance: solBalance,
+            });
+          }
+
           console.log(
-            `[TokenAccounts] ✅ Found ${tokens.length} token accounts for ${publicKey.slice(0, 8)} via ${endpoint.slice(0, 40)}`,
+            `[TokenAccounts] ✅ Found ${tokens.length} tokens for ${publicKey.slice(0, 8)} via ${endpoint.slice(0, 40)}${solFetchSucceeded ? ` (SOL included: ${solBalance} SOL)` : " (SOL will be fetched separately)"}`,
           );
           return res.json({
             publicKey,
             tokens,
             count: tokens.length,
+            ...(solFetchSucceeded && { solBalance }),
           });
         } finally {
           clearTimeout(timeoutId);

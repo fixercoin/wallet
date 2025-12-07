@@ -134,19 +134,25 @@ export const getBalance = async (publicKey: string): Promise<number> => {
     const data = await response.json();
     console.log(`Raw balance response:`, data);
 
+    // Check for API error in response
+    if (data.error) {
+      console.error(`Balance API error:`, data.error);
+      throw new Error(`API error: ${data.error}`);
+    }
+
     const balance = data.balance !== undefined ? data.balance : 0;
 
     if (typeof balance !== "number" || isNaN(balance)) {
       console.error(`Invalid balance value: ${balance}`, data);
-      return 0;
+      throw new Error(`Invalid balance type: ${typeof balance}`);
     }
 
     console.log(`✅ Balance fetched: ${balance} SOL`);
     return balance;
   } catch (error) {
     console.error("Failed to fetch balance:", error);
-    // Fallback to cached balance or return 0
-    return 0;
+    // Re-throw error so WalletContext can use cached balance fallback
+    throw error;
   }
 };
 

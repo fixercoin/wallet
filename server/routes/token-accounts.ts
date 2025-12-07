@@ -1,12 +1,13 @@
 import { RequestHandler } from "express";
 import { PublicKey, Connection } from "@solana/web3.js";
 
-// Get Helius RPC endpoint ONLY
-function getHeliusRpcEndpoint(): string {
+// Get RPC endpoint with public fallback
+function getRpcEndpoint(): string {
   const heliusApiKey = process.env.HELIUS_API_KEY?.trim();
   const heliusRpcUrl = process.env.HELIUS_RPC_URL?.trim();
   const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
 
+  // Priority: Helius API key > HELIUS_RPC_URL > SOLANA_RPC_URL > Public endpoint
   if (heliusApiKey) {
     return `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
   }
@@ -17,9 +18,11 @@ function getHeliusRpcEndpoint(): string {
     return solanaRpcUrl;
   }
 
-  throw new Error(
-    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
+  // Fallback to public Solana RPC endpoint for dev environments
+  console.log(
+    "[TokenAccounts] Using public Solana RPC endpoint (rate-limited). For production, set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
   );
+  return "https://api.mainnet-beta.solana.com";
 }
 
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
@@ -95,7 +98,7 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
     };
 
     // Get RPC endpoint on-demand instead of at module load time
-    const endpoint = getHeliusRpcEndpoint();
+    const endpoint = getRpcEndpoint();
     let lastError: Error | null = null;
 
     try {

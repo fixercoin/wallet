@@ -680,6 +680,29 @@ export default function OrderComplete() {
               </div>
             </div>
 
+            <div className="mt-4 pt-4 border-t border-gray-300/20">
+              <div className="text-xs text-white/70 font-semibold uppercase mb-3">
+                Buyer Wallet Address
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="font-mono text-xs text-white/90 break-all">
+                  {order.buyerWallet}
+                </div>
+                <button
+                  onClick={() =>
+                    handleCopy(order.buyerWallet, "Buyer Wallet Address")
+                  }
+                  className="text-gray-400 hover:text-white transition-colors flex-shrink-0"
+                >
+                  {copiedValue === order.buyerWallet ? (
+                    <Check className="w-3 h-3" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </button>
+              </div>
+            </div>
+
             {!isBuyer && order.sellerPaymentMethod && (
               <div className="mt-4 pt-4 border-t border-gray-300/20">
                 <div className="text-xs text-white/70 font-semibold uppercase mb-3">

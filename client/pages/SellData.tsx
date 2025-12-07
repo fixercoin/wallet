@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+import { PaymentMethodInfoCard } from "@/components/wallet/PaymentMethodInfoCard";
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
 import type { P2POrder } from "@/lib/p2p-api";
 
@@ -89,14 +90,6 @@ export default function SellData() {
 
     if (!wallet?.publicKey) {
       toast.error("Missing wallet information");
-      return;
-    }
-
-    // Check if user has added payment details
-    if (paymentMethods.length === 0) {
-      toast.error("Please add your payment details before creating an order");
-      setEditingPaymentMethodId(undefined);
-      setShowPaymentDialog(true);
       return;
     }
 
@@ -228,6 +221,18 @@ export default function SellData() {
                 {amountTokens} USDC = {parseFloat(amountPKR).toFixed(2)} PKR
               </div>
             </div>
+          )}
+
+          {/* Payment Method Information */}
+          {paymentMethods.length > 0 && (
+            <PaymentMethodInfoCard
+              accountName={paymentMethods[0].accountName}
+              accountNumber={paymentMethods[0].accountNumber}
+              onEdit={() => {
+                setEditingPaymentMethodId(paymentMethods[0].id);
+                setShowPaymentDialog(true);
+              }}
+            />
           )}
 
           {/* Action Buttons */}

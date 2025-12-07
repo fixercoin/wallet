@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 
-// Function to get HELIUS RPC endpoint ONLY
-function getHeliusRpcEndpoint(): string | null {
+// Function to get RPC endpoint with public fallback
+function getRpcEndpoint(): string {
   // Helper to safely check env vars (trim empty strings)
   const getEnvVar = (value: string | undefined): string | null => {
     if (!value || typeof value !== "string") return null;
@@ -13,13 +13,7 @@ function getHeliusRpcEndpoint(): string | null {
   const heliusRpcUrl = getEnvVar(process.env.HELIUS_RPC_URL);
   const solanaRpcUrl = getEnvVar(process.env.SOLANA_RPC_URL);
 
-  console.log("[WalletBalance] Helius configuration:", {
-    hasHeliusApiKey: !!heliusApiKey,
-    hasHeliusRpcUrl: !!heliusRpcUrl,
-    hasSolanaRpcUrl: !!solanaRpcUrl,
-  });
-
-  // HELIUS ONLY - Priority: API key > HELIUS_RPC_URL > SOLANA_RPC_URL
+  // Priority: Helius API key > HELIUS_RPC_URL > SOLANA_RPC_URL > Public endpoint
   if (heliusApiKey) {
     const endpoint = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
     console.log("[WalletBalance] Using Helius with API key");
@@ -32,15 +26,16 @@ function getHeliusRpcEndpoint(): string | null {
   }
 
   if (solanaRpcUrl) {
-    console.log("[WalletBalance] Using SOLANA_RPC_URL (Helius)");
+    console.log("[WalletBalance] Using SOLANA_RPC_URL");
     return solanaRpcUrl;
   }
 
-  // No Helius endpoint found - return null for graceful fallback
-  console.warn(
-    "[WalletBalance] No Helius RPC endpoint configured. Set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
+  // Fallback to public Solana RPC endpoint for dev environments
+  const publicEndpoint = "https://api.mainnet-beta.solana.com";
+  console.log(
+    "[WalletBalance] Using public Solana RPC endpoint (rate-limited). For production, set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
   );
-  return null;
+  return publicEndpoint;
 }
 
 export const handleWalletBalance: RequestHandler = async (req, res) => {
@@ -68,24 +63,9 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
       });
     }
 
-    // Use Helius RPC ONLY
-    const heliusEndpoint = getHeliusRpcEndpoint();
-
-    // Return graceful fallback if Helius is not configured
-    if (!heliusEndpoint) {
-      console.warn(
-        "[WalletBalance] Helius not configured - returning fallback balance of 0",
-      );
-      return res.status(200).json({
-        publicKey,
-        balance: 0,
-        balanceLamports: 0,
-        endpoint: "unconfigured",
-        warning:
-          "Balance endpoint not configured. Set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
-      });
-    }
-    const endpointLabel = heliusEndpoint.substring(0, 50);
+    // Get RPC endpoint with fallback to public
+    const rpcEndpoint = getRpcEndpoint();
+    const endpointLabel = rpcEndpoint.substring(0, 50);
 
     const body = {
       jsonrpc: "2.0",
@@ -104,7 +84,7 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
 
       let response: Response;
       try {
-        response = await fetch(heliusEndpoint, {
+        response = await fetch(rpcEndpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),

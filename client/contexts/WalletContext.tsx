@@ -16,7 +16,7 @@ import {
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { solPriceService } from "@/lib/services/sol-price";
-import { birdeyeAPI } from "@/lib/services/birdeye";
+import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { lockerPriceService } from "@/lib/services/locker-price";
 import { fxmPriceService } from "@/lib/services/fxm-price";
@@ -519,8 +519,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     // Setup periodic refresh every 5 seconds (adaptive based on visibility)
     const setupRefreshInterval = () => {
-      // Auto-refresh dashboard every 2 minutes (120 seconds) for live price updates
-      const interval = 120000;
+      // Auto-refresh dashboard every 30 seconds for live price updates
+      const interval = 30000;
 
       refreshIntervalRef.current = setInterval(async () => {
         try {
@@ -535,10 +535,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     setupRefreshInterval();
 
-    // No longer adjust polling based on visibility - use fixed 2-minute interval
+    // No longer adjust polling based on visibility - use fixed 30-second interval
     const handleVisibilityChange = () => {
       // Visibility changes no longer trigger interval reconfiguration
-      // Dashboard will refresh every 2 minutes consistently
+      // Dashboard will refresh every 30 seconds consistently
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -804,7 +804,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     lockerPriceService.clearCache();
     fxmPriceService.clearCache();
     solPriceService.clearCache();
-    birdeyeAPI.clearCache();
 
     console.log(
       `[WalletContext] Refreshing tokens for wallet: ${wallet.publicKey}`,
@@ -932,26 +931,27 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       try {
         const tokenMints = allTokens.map((token) => token.mint);
 
-        // Fetch prices from Birdeye API (via proxy)
+        // Fetch prices from DexScreener API
         try {
           const allMintsToFetch = Array.from(
             new Set(tokenMints.filter(Boolean)),
           );
 
           if (allMintsToFetch.length > 0) {
-            const birdeyeTokens =
-              await birdeyeAPI.getTokensByMints(allMintsToFetch);
-            const birdeyePrices = birdeyeAPI.getTokenPrices(birdeyeTokens);
-            prices = { ...prices, ...birdeyePrices };
+            const dexTokens =
+              await dexscreenerAPI.getTokensByMints(allMintsToFetch);
+            const dexPrices = dexscreenerAPI.getTokenPrices(dexTokens);
+            prices = { ...prices, ...dexPrices };
 
-            birdeyeTokens.forEach((token) => {
-              if (token.address && token.priceChange?.h24) {
-                changeMap[token.address] = token.priceChange.h24;
+            dexTokens.forEach((token) => {
+              const baseMint = token.baseToken?.address;
+              if (baseMint && token.priceChange?.h24) {
+                changeMap[baseMint] = token.priceChange.h24;
               }
             });
           }
         } catch (e) {
-          console.warn("Birdeye fetch failed:", e);
+          console.warn("DexScreener fetch failed:", e);
         }
 
         // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing

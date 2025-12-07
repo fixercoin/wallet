@@ -29,7 +29,6 @@ export default function BuyData() {
   // Fetch exchange rate on mount
   useEffect(() => {
     const fetchRate = async () => {
-      setFetchingRate(true);
       try {
         const response = await fetch("/api/token/price?token=USDC");
         if (!response.ok) throw new Error("Failed to fetch rate");
@@ -39,8 +38,6 @@ export default function BuyData() {
       } catch (error) {
         console.error("Exchange rate error:", error);
         setExchangeRate(280);
-      } finally {
-        setFetchingRate(false);
       }
     };
 

@@ -276,7 +276,7 @@ export async function createServer(): Promise<express.Application> {
     }
   });
 
-  // Unified wallet endpoint - returns balance and token accounts
+  // Unified wallet endpoint - returns balance and token accounts info
   app.get("/api/wallet", async (req, res) => {
     try {
       const publicKey =
@@ -297,51 +297,46 @@ export async function createServer(): Promise<express.Application> {
         });
       }
 
-      // Fetch wallet info in parallel
-      const [balanceRes, tokenAccountsRes] = await Promise.allSettled([
-        // Fetch balance
-        (async () => {
-          const modifiedReq = { ...req, query: { publicKey } };
-          return new Promise<any>((resolve, reject) => {
-            const resProxy = {
-              status: (code: number) => ({
-                json: (data: any) => resolve({ statusCode: code, data }),
-              }),
-              json: (data: any) => resolve({ statusCode: 200, data }),
-            };
-            handleWalletBalance(modifiedReq as any, resProxy as any).catch(reject);
-          });
-        })(),
-        // Fetch token accounts
-        (async () => {
-          const modifiedReq = { ...req, query: { publicKey } };
-          return new Promise<any>((resolve, reject) => {
-            const resProxy = {
-              status: (code: number) => ({
-                json: (data: any) => resolve({ statusCode: code, data }),
-              }),
-              json: (data: any) => resolve({ statusCode: 200, data }),
-            };
-            handleGetTokenAccounts(modifiedReq as any, resProxy as any).catch(reject);
-          });
-        })(),
-      ]);
+      // Call balance and token accounts endpoints to get complete wallet info
+      const modifiedReq = { ...req, query: { publicKey } } as any;
 
-      const result: any = {
-        publicKey,
-        balance: null,
-        tokenAccounts: null,
+      let balanceData: any = null;
+      let tokenAccountsData: any = null;
+
+      // Create response proxies to capture data
+      const balanceRes = {
+        status: (code: number) => ({
+          json: (data: any) => {
+            balanceData = data;
+          },
+        }),
+        json: (data: any) => {
+          balanceData = data;
+        },
       };
 
-      if (balanceRes.status === "fulfilled" && balanceRes.value) {
-        result.balance = balanceRes.value.data;
-      }
+      const tokenRes = {
+        status: (code: number) => ({
+          json: (data: any) => {
+            tokenAccountsData = data;
+          },
+        }),
+        json: (data: any) => {
+          tokenAccountsData = data;
+        },
+      };
 
-      if (tokenAccountsRes.status === "fulfilled" && tokenAccountsRes.value) {
-        result.tokenAccounts = tokenAccountsRes.value.data;
-      }
+      // Execute both handlers
+      await Promise.all([
+        handleWalletBalance(modifiedReq, balanceRes as any),
+        handleGetTokenAccounts(modifiedReq, tokenRes as any),
+      ]);
 
-      return res.json(result);
+      return res.json({
+        publicKey,
+        balance: balanceData,
+        tokenAccounts: tokenAccountsData,
+      });
     } catch (e: any) {
       return res.status(500).json({
         error: "Failed to fetch wallet information",

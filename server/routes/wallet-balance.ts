@@ -78,6 +78,11 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
 
         const data = await response.json();
 
+        console.log(
+          `[WalletBalance] RPC response from ${endpoint.substring(0, 40)}...:`,
+          JSON.stringify(data),
+        );
+
         if (data.error) {
           console.warn(
             `[WalletBalance] RPC error from ${endpoint.substring(0, 50)}...:`,
@@ -88,6 +93,19 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
         }
 
         const balanceLamports = data.result;
+
+        // Validate balance is a number
+        if (typeof balanceLamports !== "number") {
+          console.warn(
+            `[WalletBalance] Invalid balance result type from ${endpoint.substring(0, 40)}...: ${typeof balanceLamports}`,
+            balanceLamports,
+          );
+          lastError = new Error(
+            `Invalid balance type: ${typeof balanceLamports}`,
+          );
+          continue;
+        }
+
         const balanceSOL = balanceLamports / 1_000_000_000;
 
         console.log(

@@ -461,9 +461,10 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
       }
     }
 
-    const solanaPairs = mergePairsByToken(results)
-      .filter((pair: DexscreenerToken) => pair.chainId === "solana")
-      .sort((a: DexscreenerToken, b: DexscreenerToken) => {
+    // Include all chains (not just Solana) to ensure we return any available price data
+    // This is important for tokens that may only have liquidity on other chains
+    const allPairs = mergePairsByToken(results).sort(
+      (a: DexscreenerToken, b: DexscreenerToken) => {
         const aLiquidity = a.liquidity?.usd || 0;
         const bLiquidity = b.liquidity?.usd || 0;
         if (bLiquidity !== aLiquidity) return bLiquidity - aLiquidity;
@@ -471,28 +472,37 @@ export const handleDexscreenerTokens: RequestHandler = async (req, res) => {
         const aVolume = a.volume?.h24 || 0;
         const bVolume = b.volume?.h24 || 0;
         return bVolume - aVolume;
-      });
+      },
+    );
 
-    // If we couldn't find live prices for the requested tokens, return error so client retries
-    if (solanaPairs.length === 0 && uniqueMints.length > 0) {
-      console.error(
-        `[DexScreener] ❌ No live prices found for any of ${uniqueMints.length} requested tokens. Returning 503 so client retries.`,
-      );
-      return res.status(503).json({
-        error: "No live price data available from DexScreener",
-        details: `Could not find prices for: ${uniqueMints.join(", ")}`,
-        schemaVersion,
-        pairs: [],
-      });
-    }
+    // Prefer Solana pairs but include cross-chain pairs if Solana pair not available
+    const solanaPairs = allPairs.filter(
+      (pair: DexscreenerToken) => pair.chainId === "solana",
+    );
 
+    // For tokens without Solana pairs, include best price from any chain
+    const nonSolanaMints = new Set(uniqueMints);
+    solanaPairs.forEach((pair) => {
+      nonSolanaMints.delete(pair.baseToken?.address || "");
+    });
+
+    const crossChainFallback = allPairs.filter(
+      (pair: DexscreenerToken) =>
+        nonSolanaMints.has(pair.baseToken?.address || "") &&
+        pair.chainId !== "solana",
+    );
+
+    const finalPairs = [...solanaPairs, ...crossChainFallback];
+
+    // Return what we found, even if it's less than requested or from other chains
+    // This prevents unnecessary retries and allows clients to display partial data
     console.log(
-      `[DexScreener] ✅ Response: ${solanaPairs.length} Solana pairs found across ${batches.length} batch(es)` +
+      `[DexScreener] ✅ Response: ${solanaPairs.length} Solana + ${crossChainFallback.length} cross-chain pairs found across ${batches.length} batch(es)` +
         (missingMints.length > 0
           ? ` (${missingMints.length} required search fallback)`
           : ""),
     );
-    res.json({ schemaVersion, pairs: solanaPairs });
+    res.json({ schemaVersion, pairs: finalPairs });
   } catch (error) {
     console.error("[DexScreener] ❌ Tokens proxy error:", {
       mints: req.query.mints,

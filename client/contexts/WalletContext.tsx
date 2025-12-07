@@ -826,6 +826,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         localStorage.getItem("custom_tokens") || "[]",
       ) as TokenInfo[];
 
+      // Check if SOL is already in tokenAccounts (new endpoint returns it with balance)
+      const solFromTokenAccounts = tokenAccounts.find(
+        (t) => t.symbol === "SOL",
+      );
+
+      // Use SOL from tokenAccounts if available, otherwise fall back to balanceRef/balance
+      const solBalance =
+        solFromTokenAccounts?.balance ??
+        (typeof balanceRef.current === "number"
+          ? balanceRef.current
+          : balance || 0);
+
       const allTokens: TokenInfo[] = [
         {
           mint: "So11111111111111111111111111111111111111112",
@@ -834,10 +846,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           decimals: 9,
           logoURI:
             "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-          balance:
-            typeof balanceRef.current === "number"
-              ? balanceRef.current
-              : balance || 0,
+          balance: solBalance,
         },
       ];
 

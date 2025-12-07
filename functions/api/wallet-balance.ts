@@ -59,46 +59,46 @@ export async function onRequestPost(context: any) {
       params: [walletAddress],
     };
 
-    // Try each RPC endpoint
-    for (const endpoint of rpcEndpoints) {
-      if (!endpoint) continue;
-
-      try {
-        const resp = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(rpcBody),
-        });
-
-        const data = await resp.json();
-
-        // Check if RPC returned an error
-        if (data.error) {
-          console.warn(`RPC ${endpoint} returned error: ${data.error.message}`);
-          continue; // Try next endpoint
-        }
-
-        return new Response(JSON.stringify(data), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
-      } catch (err: any) {
-        console.warn(`RPC endpoint ${endpoint} failed: ${err?.message}`);
-        continue; // Try next endpoint
-      }
-    }
-
-    // All endpoints failed
-    return new Response(
-      JSON.stringify({
-        error: "Failed to fetch balance - all RPC endpoints failed",
-        details: "No available Solana RPC providers",
-      }),
-      {
-        status: 500,
+    // Use Helius RPC only
+    try {
+      const resp = await fetch(rpcEndpoint, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-      },
-    );
+        body: JSON.stringify(rpcBody),
+      });
+
+      const data = await resp.json();
+
+      // Check if RPC returned an error
+      if (data.error) {
+        return new Response(
+          JSON.stringify({
+            error: data.error.message || "Helius RPC error",
+            code: data.error.code,
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      return new Response(JSON.stringify(data), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (err: any) {
+      return new Response(
+        JSON.stringify({
+          error: "Failed to fetch balance from Helius RPC",
+          details: err?.message,
+        }),
+        {
+          status: 502,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
   } catch (err: any) {
     return new Response(
       JSON.stringify({

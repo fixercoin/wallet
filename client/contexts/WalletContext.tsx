@@ -838,6 +838,15 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           ? balanceRef.current
           : balance || 0);
 
+      // If we got SOL balance from tokenAccounts, also update the balance state
+      if (solFromTokenAccounts?.balance !== undefined) {
+        setBalance(solFromTokenAccounts.balance);
+        balanceRef.current = solFromTokenAccounts.balance;
+        console.log(
+          `[WalletContext] Updated SOL balance from tokenAccounts: ${solFromTokenAccounts.balance}`,
+        );
+      }
+
       const allTokens: TokenInfo[] = [
         {
           mint: "So11111111111111111111111111111111111111112",

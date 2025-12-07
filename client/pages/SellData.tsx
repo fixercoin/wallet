@@ -52,6 +52,26 @@ export default function SellData() {
     fetchRate();
   }, []);
 
+  // Fetch payment methods
+  useEffect(() => {
+    const fetchPaymentMethods = async () => {
+      if (!wallet?.publicKey) return;
+      try {
+        const response = await fetch(
+          `/api/p2p/payment-methods?wallet=${wallet.publicKey}`,
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setPaymentMethods(data.paymentMethods || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch payment methods:", error);
+      }
+    };
+
+    fetchPaymentMethods();
+  }, [wallet?.publicKey, showPaymentDialog]);
+
   const handleTokensChange = (value: string) => {
     setAmountTokens(value);
     if (value) {

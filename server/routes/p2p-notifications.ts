@@ -160,8 +160,7 @@ export const handleListNotifications: RequestHandler = async (req, res) => {
     return res.status(200).json({
       data: [],
       total: 0,
-      warning:
-        "Could not retrieve notifications. Storage may be unavailable.",
+      warning: "Could not retrieve notifications. Storage may be unavailable.",
     });
   }
 };

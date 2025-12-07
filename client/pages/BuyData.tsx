@@ -138,7 +138,12 @@ export default function BuyData() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [showConnectingLoader, connectionCountdown, paymentMethods, proceedWithOrderCreation]);
+  }, [
+    showConnectingLoader,
+    connectionCountdown,
+    paymentMethods,
+    proceedWithOrderCreation,
+  ]);
 
   const handlePKRChange = (value: string) => {
     setAmountPKR(value);
@@ -296,7 +301,10 @@ export default function BuyData() {
       </div>
 
       {/* Connecting Loader Dialog */}
-      <Dialog open={showConnectingLoader} onOpenChange={setShowConnectingLoader}>
+      <Dialog
+        open={showConnectingLoader}
+        onOpenChange={setShowConnectingLoader}
+      >
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 flex flex-col items-center justify-center gap-4">
           <div className="text-center space-y-4">
             <Loader2 className="w-12 h-12 animate-spin text-[#FF7A5C] mx-auto" />

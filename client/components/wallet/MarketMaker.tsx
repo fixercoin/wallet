@@ -680,9 +680,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         TARGET LIMIT (FIXERCOIN)
                       </Label>
                       <div className="flex items-center gap-1 text-xs text-gray-400">
-                        {isFetchingPrice ? (
-                          <PriceLoader />
-                        ) : livePrice ? (
+                        {livePrice ? (
                           <>
                             LIVE:{" "}
                             <span className="text-green-400 font-semibold">

@@ -390,9 +390,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             >
                               ${formatTokenPriceDisplay(token.price)}
                             </span>
-                          ) : (
-                            <PriceLoader />
-                          )}
+                          ) : null}
                           {percentChange !== null ? (
                             <span className="flex items-center gap-1">
                               <span
@@ -419,9 +417,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <p className="text-xs text-gray-400">
                         {typeof token.price === "number" && token.price > 0 ? (
                           `$${formatBalance((token.balance || 0) * token.price)}`
-                        ) : (
-                          <PriceLoader />
-                        )}
+                        ) : null}
                       </p>
                     </div>
                   </div>

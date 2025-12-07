@@ -919,12 +919,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     if (!hasAnyBalance) {
                       // If prices are still loading, show loading indicator
                       // Otherwise show 0.000 USD
-                      const isLoadingPrices = areTokenPricesLoading();
-                      const displayValue = isLoadingPrices ? (
-                        <PriceLoader size="lg" />
-                      ) : (
-                        `0.000 $`
-                      );
+                      const displayValue = `0.000 $`;
 
                       return (
                         <div className="flex items-center justify-between gap-4 w-full">
@@ -1167,9 +1162,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
                               )}
                             </span>
-                          ) : (
-                            <PriceLoader />
-                          )}
+                          ) : null}
                         </div>
 
                         <div

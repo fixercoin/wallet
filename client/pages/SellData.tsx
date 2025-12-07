@@ -15,12 +15,6 @@ interface PaymentMethod {
   accountNumber: string;
 }
 
-interface PaymentMethod {
-  id: string;
-  accountName: string;
-  accountNumber: string;
-}
-
 export default function SellData() {
   const navigate = useNavigate();
   const { wallet } = useWallet();

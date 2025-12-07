@@ -29,7 +29,27 @@ function buildRpcEndpoints(env?: Env): string[] {
     hasMoralisRpcUrl: !!moralisRpcUrl,
   });
 
-  // Add environment-configured endpoints first (highest priority)
+  // Add HELIUS endpoints first (if configured) - highest priority
+  if (
+    heliusRpcUrl &&
+    typeof heliusRpcUrl === "string" &&
+    heliusRpcUrl.length > 0
+  ) {
+    console.log("[RPC Config] Adding HELIUS_RPC_URL (full URL) from env");
+    endpoints.push(heliusRpcUrl);
+  }
+
+  if (
+    heliusApiKey &&
+    typeof heliusApiKey === "string" &&
+    heliusApiKey.length > 0
+  ) {
+    console.log("[RPC Config] Adding Helius constructed endpoint from API key");
+    const heliusEndpoint = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
+    endpoints.push(heliusEndpoint);
+  }
+
+  // Add other environment-configured endpoints
   if (
     solanaRpcUrl &&
     typeof solanaRpcUrl === "string" &&
@@ -38,23 +58,7 @@ function buildRpcEndpoints(env?: Env): string[] {
     console.log("[RPC Config] Using SOLANA_RPC_URL from env");
     endpoints.push(solanaRpcUrl);
   }
-  if (
-    heliusRpcUrl &&
-    typeof heliusRpcUrl === "string" &&
-    heliusRpcUrl.length > 0
-  ) {
-    console.log("[RPC Config] Using HELIUS_RPC_URL from env");
-    endpoints.push(heliusRpcUrl);
-  }
-  if (
-    heliusApiKey &&
-    typeof heliusApiKey === "string" &&
-    heliusApiKey.length > 0
-  ) {
-    console.log("[RPC Config] Using HELIUS_API_KEY from env");
-    const heliusEndpoint = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
-    endpoints.push(heliusEndpoint);
-  }
+
   if (
     alchemyRpcUrl &&
     typeof alchemyRpcUrl === "string" &&
@@ -63,6 +67,7 @@ function buildRpcEndpoints(env?: Env): string[] {
     console.log("[RPC Config] Using ALCHEMY_RPC_URL from env");
     endpoints.push(alchemyRpcUrl);
   }
+
   if (
     moralisRpcUrl &&
     typeof moralisRpcUrl === "string" &&
@@ -78,15 +83,11 @@ function buildRpcEndpoints(env?: Env): string[] {
     );
   }
 
-  // Add Cloudflare-compatible public endpoints first (higher quality & faster)
+  // Add Cloudflare-compatible public endpoints as fallback
   endpoints.push("https://rpc.ironforge.network/mainnet");
   endpoints.push("https://solana.publicnode.com");
-
-  // Add additional fallback endpoints
   endpoints.push("https://rpc.ankr.com/solana");
   endpoints.push("https://api.mainnet-beta.solana.com");
-
-  // Add backup endpoints (tier 2 - fallback if above fail)
   endpoints.push("https://rpc.genesysgo.net");
   endpoints.push("https://ssc-dao.genesysgo.net:8899");
 

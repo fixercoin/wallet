@@ -24,11 +24,14 @@ function buildRpcEndpoints(env?: Env): string[] {
   if (env?.ALCHEMY_RPC_URL) endpoints.push(env.ALCHEMY_RPC_URL);
   if (env?.MORALIS_RPC_URL) endpoints.push(env.MORALIS_RPC_URL);
 
-  // Add public fallback endpoints
-  endpoints.push("https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7");
+  // Add public fallback endpoints (tier 1 - higher quality)
   endpoints.push("https://solana.publicnode.com");
   endpoints.push("https://rpc.ankr.com/solana");
   endpoints.push("https://api.mainnet-beta.solana.com");
+
+  // Add backup endpoints (tier 2 - fallback if above fail)
+  endpoints.push("https://rpc.genesysgo.net");
+  endpoints.push("https://ssc-dao.genesysgo.net:8899");
 
   return [...new Set(endpoints)]; // Remove duplicates
 }

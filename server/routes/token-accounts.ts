@@ -181,22 +181,48 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
 
       if (solResp.ok) {
         const solData = await solResp.json();
-        const lamports = solData.result?.value ?? solData.result ?? 0;
-        solBalance =
-          typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
 
-        if (solBalance < 0) {
+        // Check for JSON-RPC error in the response
+        if (solData.error) {
+          console.warn(
+            `[TokenAccounts] RPC error fetching SOL balance:`,
+            solData.error,
+          );
           solBalance = 0;
+        } else {
+          const lamports = solData.result?.value ?? solData.result ?? 0;
+          solBalance =
+            typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
+
+          if (solBalance < 0) {
+            solBalance = 0;
+          }
+
+          console.log(
+            `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
+          );
+        }
+      } else {
+        // Log HTTP error from RPC endpoint
+        let errorDetails = `HTTP ${solResp.status}`;
+        try {
+          const errorBody = await solResp.text();
+          if (errorBody) {
+            errorDetails += `: ${errorBody.substring(0, 200)}`;
+          }
+        } catch {
+          // Ignore error parsing errors
         }
 
-        console.log(
-          `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
+        console.warn(
+          `[TokenAccounts] Failed to fetch SOL balance - RPC endpoint returned error: ${errorDetails}`,
         );
+        solBalance = 0;
       }
     } catch (solError) {
       clearTimeout(solTimeoutId);
       console.warn(
-        "[TokenAccounts] Failed to fetch SOL balance:",
+        "[TokenAccounts] Failed to fetch SOL balance - Exception:",
         solError instanceof Error ? solError.message : String(solError),
       );
       solBalance = 0;

@@ -299,12 +299,20 @@ export default function SellData() {
           setShowPaymentDialog(open);
           if (!open) {
             setEditingPaymentMethodId(undefined);
+            // Refetch payment methods when dialog closes with a small delay
+            setTimeout(() => {
+              fetchPaymentMethods();
+            }, 500);
           }
         }}
         walletAddress={wallet?.publicKey || ""}
         paymentMethodId={editingPaymentMethodId}
         onSave={() => {
           setEditingPaymentMethodId(undefined);
+          // Refetch payment methods after saving with a small delay
+          setTimeout(() => {
+            fetchPaymentMethods();
+          }, 300);
         }}
       />
 

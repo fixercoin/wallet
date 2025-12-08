@@ -90,6 +90,8 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
     const endpoint = getRpcEndpoint();
     let solBalance = 0;
 
+    console.log(`[TokenAccounts] Fetching token accounts from: ${endpoint.split("?")[0]}...`);
+
     // Fetch SPL token accounts
     const tokenBody = {
       jsonrpc: "2.0",

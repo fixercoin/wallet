@@ -144,17 +144,26 @@ export const handleListNotifications: RequestHandler = async (req, res) => {
       }
     }
 
-    // Include broadcast notifications if requested (for sellers to see generic buy orders)
+    // Include broadcast notifications if requested
+    // Sellers get "BROADCAST_SELLERS" queue (generic buy orders)
+    // Buyers get "BROADCAST_BUYERS" queue (generic sell orders)
     if (includeBroadcast === "true") {
       try {
         const kv = getKVStorage();
-        const broadcastJson = await kv.get("notifications:broadcast");
-        if (broadcastJson) {
-          const broadcastNotifications = JSON.parse(broadcastJson);
+        // Get both seller and buyer broadcast queues
+        const sellerBroadcastJson = await kv.get("notifications:broadcast:sellers");
+        if (sellerBroadcastJson) {
+          const broadcastNotifications = JSON.parse(sellerBroadcastJson);
+          notifications.push(...broadcastNotifications);
+        }
+
+        const buyerBroadcastJson = await kv.get("notifications:broadcast:buyers");
+        if (buyerBroadcastJson) {
+          const broadcastNotifications = JSON.parse(buyerBroadcastJson);
           notifications.push(...broadcastNotifications);
         }
       } catch (error) {
-        console.warn("[Notifications] Failed to get broadcast queue:", error);
+        console.warn("[Notifications] Failed to get broadcast queues:", error);
       }
     }
 

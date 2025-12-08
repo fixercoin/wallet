@@ -48,7 +48,7 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     decimals: 6,
     balance: 0,
     logoURI:
-      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+      "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2F69833acc5e0c464c82791c745fdc8f9a?format=webp&width=800",
   },
   {
     // USDT (Tether USD on Solana)
@@ -66,7 +66,8 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     name: "FIXERCOIN",
     decimals: 6,
     balance: 0,
-    logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
+    logoURI:
+      "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2F66c5cbe0ef78435eab9dfe4b45b5ba0d?format=webp&width=800",
   },
   {
     mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
@@ -75,7 +76,16 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     decimals: 6,
     balance: 0,
     logoURI:
-      "https://i.postimg.cc/J7p1FPbm/IMG-20250425-004450-removebg-preview-modified-2-6.png",
+      "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2Fb8e7b3fa19fe464c8362834eaf1367eb?format=webp&width=800",
+  },
+  {
+    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+    symbol: "FXM",
+    name: "Fixorium",
+    decimals: 6,
+    balance: 0,
+    logoURI:
+      "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2Fef8e21a960894d1b9408732e737a9d1f?format=webp&width=800",
   },
 ];
 
@@ -225,9 +235,12 @@ export const getTokenAccounts = async (
         );
       }
 
-      // Return ALL tokens the wallet actually holds (no merging with defaults)
-      // This ensures we show exactly what the wallet owns via RPC
-      const allTokens = tokenAccounts;
+      // Enrich tokens with logos from DEFAULT_TOKENS
+      const logoMap = new Map(DEFAULT_TOKENS.map((t) => [t.mint, t.logoURI]));
+      const allTokens = tokenAccounts.map((token) => ({
+        ...token,
+        logoURI: token.logoURI || logoMap.get(token.mint),
+      }));
 
       // Ensure SOL is present with proper balance
       const solIndex = allTokens.findIndex(

@@ -10,8 +10,6 @@ export const config = {
 
 interface Env {
   SOLANA_RPC_URL?: string;
-  HELIUS_RPC_URL?: string;
-  HELIUS_API_KEY?: string;
   ALCHEMY_RPC_URL?: string;
   MORALIS_RPC_URL?: string;
 }
@@ -26,18 +24,15 @@ function buildRpcEndpoints(env?: Env): string[] {
   const endpoints: string[] = [];
 
   const solanaRpcUrl = hasValue(env?.SOLANA_RPC_URL) ? env.SOLANA_RPC_URL : process.env.SOLANA_RPC_URL;
-  const heliusRpcUrl = hasValue(env?.HELIUS_RPC_URL) ? env.HELIUS_RPC_URL : process.env.HELIUS_RPC_URL;
-  const heliusApiKey = hasValue(env?.HELIUS_API_KEY) ? env.HELIUS_API_KEY : process.env.HELIUS_API_KEY;
   const alchemyRpcUrl = hasValue(env?.ALCHEMY_RPC_URL) ? env.ALCHEMY_RPC_URL : process.env.ALCHEMY_RPC_URL;
   const moralisRpcUrl = hasValue(env?.MORALIS_RPC_URL) ? env.MORALIS_RPC_URL : process.env.MORALIS_RPC_URL;
 
-  if (hasValue(heliusRpcUrl)) endpoints.push(heliusRpcUrl);
-  if (hasValue(heliusApiKey)) endpoints.push(`https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`);
   if (hasValue(solanaRpcUrl)) endpoints.push(solanaRpcUrl);
   if (hasValue(alchemyRpcUrl)) endpoints.push(alchemyRpcUrl);
   if (hasValue(moralisRpcUrl)) endpoints.push(moralisRpcUrl);
 
   const publicEndpoints = [
+    "https://api.mainnet-beta.solflare.network",
     "https://solana.publicnode.com",
     "https://api.solflare.com",
     "https://rpc.ankr.com/solana",

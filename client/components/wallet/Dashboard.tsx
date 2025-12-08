@@ -1159,7 +1159,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 : 0;
 
             return (
-              <div key={token.mint} className="w-full">
+              <div key={token.mint} className="w-full px-4">
                 <Card className="w-full bg-transparent rounded-md border border-[#22c55e]/40 hover:bg-[#22c55e]/10 transition-colors">
                   <CardContent className="w-full p-0">
                     <div

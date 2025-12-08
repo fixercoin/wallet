@@ -927,11 +927,25 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       });
 
-      // Always include FXM, FIXERCOIN, and LOCKER tokens for display (even if user doesn't own them)
+      // Always include USDT, FXM, FIXERCOIN, and LOCKER tokens for display (even if user doesn't own them)
+      const usdtMintAddress = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns";
       const fxmMintAddress = "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump";
       const fixercoinMintAddress =
         "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
       const lockerMintAddress = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+
+      const hasUSDT = allTokens.some((t) => t.mint === usdtMintAddress);
+      if (!hasUSDT) {
+        allTokens.push({
+          mint: usdtMintAddress,
+          symbol: "USDT",
+          name: "Tether USD",
+          decimals: 6,
+          balance: 0,
+          logoURI:
+            "https://cdn.builder.io/api/v1/image/assets%2F21d46b908e134d9783b898bbea7e6c3d%2F672cb65517fe4c02b396825d21cef757?format=webp&width=800",
+        });
+      }
 
       const hasFXM = allTokens.some((t) => t.mint === fxmMintAddress);
       if (!hasFXM) {

@@ -130,7 +130,7 @@ export default function SellData() {
           "new_sell_order",
           "SELL",
           createdOrder.id,
-          `New sell order: ${parseFloat(amountTokens).toFixed(6)} USDT for ${parseFloat(amountPKR).toFixed(2)} PKR at ${exchangeRate.toFixed(2)} PKR per token. Seller: ${createdOrder.sellerWallet}`,
+          `New sell order: ${parseFloat(amountTokens).toFixed(2)} USDT for ${parseFloat(amountPKR).toFixed(2)} PKR at ${exchangeRate.toFixed(2)} PKR per token. Seller: ${createdOrder.sellerWallet}`,
           {
             token: createdOrder.token,
             amountTokens: parseFloat(amountTokens),

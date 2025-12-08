@@ -154,6 +154,8 @@ import SellOrder from "./pages/SellOrder";
 import BuyData from "./pages/BuyData";
 import SellData from "./pages/SellData";
 import AdminDisputes from "./pages/AdminDisputes";
+import WaitingForSellerResponse from "./pages/WaitingForSellerResponse";
+import SellerOrderConfirmation from "./pages/SellerOrderConfirmation";
 import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();

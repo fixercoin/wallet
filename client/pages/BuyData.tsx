@@ -107,16 +107,16 @@ export default function BuyData() {
 
       toast.success("Order created successfully!");
 
-      // Send notification to all sellers about new buy order
-      // For buy orders without specific seller, use "broadcast" or special handling
+      // Send notification to sellers about new buy order
+      // For generic buy orders, send to a broadcast address that sellers can monitor
       try {
-        const recipientWallet = createdOrder.sellerWallet || "broadcast";
+        const recipientWallet = createdOrder.sellerWallet || "BROADCAST_SELLERS";
         await createNotification(
           recipientWallet,
           "new_buy_order",
           "BUY",
           createdOrder.id,
-          `New buy order: ${parseFloat(amountTokens).toFixed(6)} ${createdOrder.token} for ${parseFloat(amountPKR).toFixed(2)} PKR at ${exchangeRate.toFixed(2)} PKR per token`,
+          `New buy order: ${parseFloat(amountTokens).toFixed(6)} ${createdOrder.token} for ${parseFloat(amountPKR).toFixed(2)} PKR at ${exchangeRate.toFixed(2)} PKR per token. Buyer: ${createdOrder.buyerWallet}`,
           {
             token: createdOrder.token,
             amountTokens: parseFloat(amountTokens),
@@ -128,7 +128,7 @@ export default function BuyData() {
         );
       } catch (notificationError) {
         console.warn(
-          "Failed to send notification to sellers:",
+          "Failed to send notification:",
           notificationError,
         );
         // Don't fail the order creation if notification fails

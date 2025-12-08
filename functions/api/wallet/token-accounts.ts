@@ -231,6 +231,16 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         // Filter out null entries
         const validTokens = tokens.filter(Boolean);
 
+        // Log FXM for debugging
+        const fxmToken = validTokens.find(
+          (t) => t?.symbol === "FXM",
+        );
+        if (fxmToken) {
+          console.log(
+            `[TokenAccounts] ✅ FXM found: balance=${fxmToken.balance}, decimals=${fxmToken.decimals}`,
+          );
+        }
+
         // Fetch and include native SOL balance
         let solBalance = 0;
         try {

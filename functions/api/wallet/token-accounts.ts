@@ -211,12 +211,14 @@ async function handler(request: Request, env?: Env): Promise<Response> {
               symbol: "UNKNOWN",
               name: "Unknown Token",
               decimals,
+              logoURI: "/placeholder.svg",
             };
 
             return {
               ...metadata,
               balance,
               decimals: decimals || metadata.decimals,
+              logoURI: metadata.logoURI || "/placeholder.svg",
             };
           } catch (e) {
             console.warn(`[TokenAccounts] Failed to parse account:`, e);

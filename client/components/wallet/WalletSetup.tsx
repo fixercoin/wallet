@@ -11,10 +11,10 @@ import {
   recoverWallet,
   copyToClipboard,
   importWalletFromPrivateKey,
-  getBalance,
 } from "@/lib/wallet";
 import { assertValidMnemonic, normalizeMnemonicInput } from "@/lib/mnemonic";
 import { prefetchWalletAddressData } from "@/lib/services/address-setup";
+import { fetchSolBalance, displaySolBalance } from "@/lib/services/sol-balance";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";

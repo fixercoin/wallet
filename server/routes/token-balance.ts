@@ -1,27 +1,24 @@
 import { RequestHandler } from "express";
 
-// Get RPC endpoint with public fallback
+// Get RPC endpoint with free endpoints and Alchemy fallback
 function getRpcEndpoint(): string {
-  const heliusApiKey = process.env.HELIUS_API_KEY?.trim();
-  const heliusRpcUrl = process.env.HELIUS_RPC_URL?.trim();
   const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
 
-  // Priority: Helius API key > HELIUS_RPC_URL > SOLANA_RPC_URL > Public endpoint
-  if (heliusApiKey) {
-    return `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
-  }
-  if (heliusRpcUrl) {
-    return heliusRpcUrl;
-  }
   if (solanaRpcUrl) {
     return solanaRpcUrl;
   }
 
-  // Fallback to reliable public RPC endpoint for dev environments
-  console.log(
-    "[TokenBalance] Using public Solana RPC endpoint. For production, set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
-  );
-  return "https://solana.publicnode.com";
+  const freeEndpoints = [
+    "https://api.mainnet-beta.solflare.network",
+    "https://solana-api.projectserum.com",
+    "https://api.mainnet.solflare.com",
+  ];
+
+  const alchemyEndpoint =
+    "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
+
+  console.log("[TokenBalance] Using free Solana RPC endpoints with Alchemy fallback");
+  return freeEndpoints[Math.floor(Math.random() * freeEndpoints.length)];
 }
 
 export const handleGetTokenBalance: RequestHandler = async (req, res) => {

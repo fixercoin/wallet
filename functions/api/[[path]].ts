@@ -4,14 +4,13 @@ export const config = {
 
 interface Env {
   SOLANA_RPC_URL?: string;
-  HELIUS_RPC_URL?: string;
-  HELIUS_API_KEY?: string;
   ALCHEMY_RPC_URL?: string;
   MORALIS_RPC_URL?: string;
 }
 
-const DEFAULT_SOLANA_RPC = "https://solana.publicnode.com";
+const DEFAULT_SOLANA_RPC = "https://api.mainnet-beta.solflare.network";
 const FALLBACK_RPC_ENDPOINTS = [
+  "https://api.mainnet-beta.solflare.network",
   "https://solana.publicnode.com",
   "https://api.solflare.com",
   "https://rpc.ankr.com/solana",

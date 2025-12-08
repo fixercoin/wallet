@@ -57,7 +57,7 @@ const KNOWN_TOKEN_METADATA: Record<string, any> = {
   // USDT
   Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns: {
     symbol: "USDT",
-    name: "USD TETHER",
+    name: "USDT TETHER",
     decimals: 6,
     logoURI:
       "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns/logo.png",

@@ -33,7 +33,7 @@ const KNOWN_TOKENS: Record<string, TokenMetadata> = {
   Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns: {
     mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
     symbol: "USDT",
-    name: "USD TETHER",
+    name: "USDT TETHER",
     decimals: 6,
     logoURI:
       "https://cdn.builder.io/api/v1/image/assets%2F559a5e19be114c9d8427d6683b845144%2Fc2ea69828dbc4a90b2deed99c2291802?format=webp&width=800",

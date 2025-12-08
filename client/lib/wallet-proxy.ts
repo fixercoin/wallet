@@ -246,7 +246,9 @@ export const getTokenAccounts = async (
 
             // Check if FXM is missing or has 0 balance - if so, try Moralis as fallback
             // This handles cases where Helius RPC doesn't return the token account
-            const hasFXM = enrichedTokens.some((t) => t.symbol === "FXM" && t.balance > 0);
+            const hasFXM = enrichedTokens.some(
+              (t) => t.symbol === "FXM" && t.balance > 0,
+            );
             if (!hasFXM) {
               console.log(
                 "[TokenAccounts] FXM not found or has 0 balance via Helius, will try Moralis fallback...",

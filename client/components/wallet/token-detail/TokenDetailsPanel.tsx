@@ -13,21 +13,8 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
   token,
   tokenMint,
 }) => {
-  const { toast } = useToast();
-  const [copiedAddress, setCopiedAddress] = useState(false);
-
   const shortenAddress = (address: string) => {
     return `${address.slice(0, 8)}...${address.slice(-8)}`;
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedAddress(true);
-    setTimeout(() => setCopiedAddress(false), 2000);
-    toast({
-      title: "Copied",
-      description: "Address copied to clipboard",
-    });
   };
 
   const formatNumber = (num: number | undefined) => {

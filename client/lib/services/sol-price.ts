@@ -1,7 +1,4 @@
-import {
-  retryWithExponentialBackoff,
-  AGGRESSIVE_RETRY_OPTIONS,
-} from "./retry-fetch";
+import { retryWithExponentialBackoff } from "./retry-fetch";
 
 export interface SolPriceData {
   price: number;
@@ -70,18 +67,21 @@ class SolPriceService {
             market_cap: data.market_cap ?? 0,
             volume_24h: data.volume_24h ?? 0,
           };
-        }
-        else if (data.solana) {
+        } else if (data.solana) {
           priceData = {
             price: data.solana.usd || 0,
             price_change_24h: data.solana.usd_24h_change || 0,
             market_cap: data.solana.usd_market_cap || 0,
             volume_24h: data.solana.usd_24h_vol || 0,
           };
-        }
-        else {
+        } else {
           console.warn("[SOL Price] Missing price fields");
-          priceData = { price: 0, price_change_24h: 0, market_cap: 0, volume_24h: 0 };
+          priceData = {
+            price: 0,
+            price_change_24h: 0,
+            market_cap: 0,
+            volume_24h: 0,
+          };
         }
 
         if (!isFinite(priceData.price) || priceData.price <= 0) {
@@ -100,7 +100,13 @@ class SolPriceService {
         return priceData;
       },
       "SOL",
-      AGGRESSIVE_RETRY_OPTIONS,
+      {
+        maxRetries: 3,
+        initialDelayMs: 500,
+        maxDelayMs: 2000,
+        backoffMultiplier: 2,
+        timeoutMs: 8000,
+      },
     );
 
     // If retry returned data, return it

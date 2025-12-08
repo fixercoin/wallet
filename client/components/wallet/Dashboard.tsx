@@ -670,7 +670,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const sortedTokens = useMemo(() => {
-    const priority = ["SOL", "USDC", "FIXERCOIN", "LOCKER"];
+    const priority = ["SOL", "USDC", "FIXERCOIN", "FXM", "LOCKER"];
     const arr = [...tokens].filter((t) => t.symbol !== "USDT");
 
     const solToken = arr.find((t) => t.symbol === "SOL");

@@ -8,6 +8,7 @@ import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { PaymentMethodInfoCard } from "@/components/wallet/PaymentMethodInfoCard";
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
+import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import {
   Dialog,
   DialogContent,

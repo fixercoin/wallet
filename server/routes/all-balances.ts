@@ -90,7 +90,7 @@ interface AllBalancesResponse {
 }
 
 /**
- * Fetch all token balances including SOL for a wallet using Helius RPC
+ * Fetch all token balances including SOL for a wallet using free RPC endpoints
  * Accepts: ?publicKey=<address> or ?wallet=<address> or ?address=<address>
  * Returns: All tokens with balances and SOL
  */

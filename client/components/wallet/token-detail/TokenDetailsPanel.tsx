@@ -56,7 +56,9 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
                 <h2 className="text-[10px] font-bold text-white truncate uppercase mb-1">
                   {token.name}
                 </h2>
-                <p className="text-[10px] text-gray-400 uppercase">{token.symbol}</p>
+                <p className="text-[10px] text-gray-400 uppercase">
+                  {token.symbol}
+                </p>
               </div>
             </div>
           </div>
@@ -75,7 +77,9 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
               <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase">
                 24h Change
               </p>
-              <p className={`text-[10px] font-bold uppercase ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
+              <p
+                className={`text-[10px] font-bold uppercase ${isPositive ? "text-emerald-400" : "text-red-400"}`}
+              >
                 {formatPercent(token.priceChange24h)}
               </p>
             </div>
@@ -89,7 +93,9 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
                 <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase">
                   Network
                 </p>
-                <p className="text-[10px] font-semibold text-white uppercase">Solana</p>
+                <p className="text-[10px] font-semibold text-white uppercase">
+                  Solana
+                </p>
               </div>
               <div>
                 <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase">
@@ -104,7 +110,9 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
                 <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase">
                   Chain ID
                 </p>
-                <p className="text-[10px] font-semibold text-white uppercase">Mainnet Beta</p>
+                <p className="text-[10px] font-semibold text-white uppercase">
+                  Mainnet Beta
+                </p>
               </div>
               <div>
                 <div className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded">
@@ -128,7 +136,6 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
               </code>
             </div>
           </div>
-
         </CardContent>
       </Card>
 

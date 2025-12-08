@@ -336,7 +336,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
                 ? fetchError.message
                 : "Unknown error",
             endpoint: endpointLabel,
-            hint: "Check that HELIUS_API_KEY is set in environment",
+            hint: "Check RPC endpoint configuration",
           },
         }),
         {
@@ -354,7 +354,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       JSON.stringify({
         error: error instanceof Error ? error.message : "Internal server error",
         details: {
-          hint: "Check that HELIUS_API_KEY environment variable is configured",
+          hint: "Check RPC endpoint configuration",
         },
       }),
       {

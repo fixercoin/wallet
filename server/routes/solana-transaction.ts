@@ -45,10 +45,10 @@ export const handleSolanaSend: RequestHandler = async (req, res) => {
     try {
       const txBase58 = bs58.encode(txBuffer);
 
-      const signature = await connection.sendRawTransaction(
-        txBuffer,
-        { skipPreflight: false, preflightCommitment: "processed" },
-      );
+      const signature = await connection.sendRawTransaction(txBuffer, {
+        skipPreflight: false,
+        preflightCommitment: "processed",
+      });
 
       console.log(`[Solana Send] ✅ Transaction sent: ${signature}`);
 

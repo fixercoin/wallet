@@ -111,9 +111,7 @@ class SolanaAPI {
         { encoding: "jsonParsed" },
       );
 
-      console.log(
-        `Found ${tokenAccounts.value.length} token accounts`,
-      );
+      console.log(`Found ${tokenAccounts.value.length} token accounts`);
 
       return tokenAccounts.value
         .map((account) => {

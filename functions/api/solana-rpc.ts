@@ -20,8 +20,7 @@ export async function onRequestPost({ request, env }) {
       return new Response(
         JSON.stringify({
           error: "No RPC endpoints configured",
-          details:
-            "Using public Solflare RPC endpoint as fallback",
+          details: "Using public Solflare RPC endpoint as fallback",
         }),
         {
           status: 500,

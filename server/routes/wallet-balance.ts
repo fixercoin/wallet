@@ -13,6 +13,7 @@ function getRpcEndpoint(): string {
 
   console.log("[WalletBalance] Environment check:", {
     hasSolanaRpcUrl: !!solanaRpcUrl,
+    hasHeliusApiKey: !!getEnvVar(process.env.HELIUS_API_KEY),
   });
 
   if (solanaRpcUrl) {
@@ -20,10 +21,21 @@ function getRpcEndpoint(): string {
     return solanaRpcUrl;
   }
 
+  // Try to use Helius if configured
+  const heliusApiKey = getEnvVar(process.env.HELIUS_API_KEY);
+  if (heliusApiKey) {
+    const heliusEndpoint = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
+    console.log("[WalletBalance] Using Helius RPC endpoint");
+    return heliusEndpoint;
+  }
+
+  // Fallback to Alchemy (note: this key may be rate-limited)
   const alchemyEndpoint =
     "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
 
-  console.log("[WalletBalance] Using Alchemy RPC endpoint as primary fallback");
+  console.log(
+    "[WalletBalance] Using Alchemy RPC endpoint (no SOLANA_RPC_URL or HELIUS_API_KEY configured)",
+  );
   return alchemyEndpoint;
 }
 

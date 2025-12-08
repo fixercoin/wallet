@@ -1193,8 +1193,24 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       console.log(
         `[Wallet] Price source: ${priceSource} | SOL price: $${prices["So11111111111111111111111111111111111111112"] || "FALLBACK"}`,
       );
+
+      const solTokenInEnhanced = enhancedTokens.find((t) => t.symbol === "SOL");
+      console.log(
+        `[WalletContext] About to set tokens in state. SOL token:`,
+        {
+          symbol: solTokenInEnhanced?.symbol,
+          balance: solTokenInEnhanced?.balance,
+          price: solTokenInEnhanced?.price,
+          mint: solTokenInEnhanced?.mint,
+        },
+      );
+
       setTokens(enhancedTokens);
       setIsUsingCache(false);
+
+      console.log(
+        `[WalletContext] Tokens set in state. Total ${enhancedTokens.length} tokens`,
+      );
 
       // Save tokens and prices to cache for offline support
       try {

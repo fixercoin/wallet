@@ -97,7 +97,13 @@ class SolPriceService {
         return priceData;
       },
       "SOL",
-      AGGRESSIVE_RETRY_OPTIONS,
+      {
+        maxRetries: 3,
+        initialDelayMs: 500,
+        maxDelayMs: 2000,
+        backoffMultiplier: 2,
+        timeoutMs: 8000,
+      },
     );
 
     // If retry returned data, return it

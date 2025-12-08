@@ -1,7 +1,4 @@
-import {
-  retryWithExponentialBackoff,
-  AGGRESSIVE_RETRY_OPTIONS,
-} from "./retry-fetch";
+import { retryWithExponentialBackoff } from "./retry-fetch";
 
 export interface SolPriceData {
   price: number;

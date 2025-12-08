@@ -478,22 +478,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     // Trigger immediate refresh
     const doRefresh = async () => {
       try {
-        // Try to load cached data first for faster initial display
-        const cachedTokens = getCachedTokens(wallet.publicKey);
-        if (cachedTokens && cachedTokens.length > 0) {
-          console.log("[WalletContext] Loading cached tokens on wallet switch");
-          setTokens(cachedTokens);
-          setIsUsingCache(true);
-        }
-
-        const cachedBalance = getCachedBalance(wallet.publicKey);
-        if (cachedBalance !== null) {
-          console.log(
-            "[WalletContext] Loading cached balance on wallet switch",
-          );
-          setBalance(cachedBalance);
-          balanceRef.current = cachedBalance;
-        }
+        // Skip loading cached tokens/balances - always fetch fresh data from APIs
+        // This prevents stale cached data from showing after deployment
+        setIsUsingCache(false);
 
         // Then fetch fresh data
         await refreshBalance();
@@ -1304,24 +1291,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         `[WalletContext] Tokens set in state. Total ${enhancedTokens.length} tokens`,
       );
 
-      // Save tokens and prices to cache for offline support
-      try {
-        const cachedPrices: Record<string, any> = {};
-        Object.entries(prices).forEach(([mint, price]) => {
-          cachedPrices[mint] = {
-            price,
-            priceChange24h: changeMap[mint],
-            timestamp: Date.now(),
-          };
-        });
-        savePricesToCache(cachedPrices);
-        saveTokensToCache(wallet.publicKey, enhancedTokens);
-      } catch (cacheError) {
-        console.warn(
-          "[WalletContext] Failed to save to offline cache:",
-          cacheError,
-        );
-      }
+      // Skip saving tokens to cache to ensure fresh data always loaded
+      // Price cache is kept for fallback support in error scenarios
     } catch (error) {
       console.error("Error refreshing tokens:", error);
 
@@ -1469,17 +1440,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         token.mint === tokenMint ? { ...token, balance: newBalance } : token,
       );
 
-      // Persist updated tokens to cache immediately
-      if (wallet?.publicKey) {
-        try {
-          saveTokensToCache(wallet.publicKey, updatedTokens);
-        } catch (err) {
-          console.warn(
-            "[WalletContext] Failed to save updated tokens to cache:",
-            err,
-          );
-        }
-      }
+      // Skip saving tokens to cache to ensure fresh data always loaded
 
       return updatedTokens;
     });

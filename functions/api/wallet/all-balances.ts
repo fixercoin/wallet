@@ -277,6 +277,24 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         });
       }
 
+      // Always include known special tokens even if wallet doesn't have them (for consistent dashboard display)
+      const specialTokens = [
+        "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump", // FXM
+        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
+        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
+      ];
+
+      specialTokens.forEach((specialMint) => {
+        const exists = tokens.some((t) => t.mint === specialMint);
+        if (!exists && KNOWN_TOKENS[specialMint]) {
+          tokens.push({
+            ...KNOWN_TOKENS[specialMint],
+            balance: 0,
+            uiAmount: 0,
+          });
+        }
+      });
+
       console.log(
         `[AllBalances] ✅ Found ${tokens.length} tokens for ${publicKey.slice(0, 8)}... (SOL: ${solBalance} SOL)`,
       );

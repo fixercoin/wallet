@@ -123,6 +123,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           getStorageDiagnostics(),
         );
 
+        // Clear stale dashboard token cache to ensure fresh data on app load
+        clearDashboardTokenCache();
+
         // Check legacy wallet first
         const legacy = getStorageItem(LEGACY_WALLET_KEY);
         if (legacy) {

@@ -43,7 +43,6 @@ import {
   getStorageItem,
   setStorageItem,
   removeStorageItem,
-  validateWalletData,
   hasValidWalletData,
   clearAllWalletData,
   getStorageDiagnostics,

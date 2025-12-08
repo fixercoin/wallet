@@ -297,7 +297,10 @@ export function clearDashboardTokenCache(): void {
     });
     console.log("[OfflineCache] Dashboard token cache cleared");
   } catch (error) {
-    console.warn("[OfflineCache] Failed to clear dashboard token cache:", error);
+    console.warn(
+      "[OfflineCache] Failed to clear dashboard token cache:",
+      error,
+    );
   }
 }
 

@@ -232,9 +232,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         const validTokens = tokens.filter(Boolean);
 
         // Log FXM for debugging
-        const fxmToken = validTokens.find(
-          (t) => t?.symbol === "FXM",
-        );
+        const fxmToken = validTokens.find((t) => t?.symbol === "FXM");
         if (fxmToken) {
           console.log(
             `[TokenAccounts] ✅ FXM found: balance=${fxmToken.balance}, decimals=${fxmToken.decimals}`,

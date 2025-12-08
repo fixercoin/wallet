@@ -309,7 +309,7 @@ export const handleGetAllBalances: RequestHandler = async (req, res) => {
           message:
             fetchError instanceof Error ? fetchError.message : "Unknown error",
           endpoint: endpointLabel,
-          hint: "Check that HELIUS_API_KEY is set in environment variables",
+          hint: "Check RPC endpoint configuration",
         },
       });
     }
@@ -318,7 +318,7 @@ export const handleGetAllBalances: RequestHandler = async (req, res) => {
     res.status(500).json({
       error: error instanceof Error ? error.message : "Internal server error",
       details: {
-        hint: "Check that HELIUS_API_KEY environment variable is configured",
+        hint: "Check RPC endpoint configuration",
       },
     });
   }

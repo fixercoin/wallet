@@ -120,6 +120,34 @@ export default function SellData() {
       );
 
       toast.success("Order created successfully!");
+
+      // Send notification to buyers about new sell order
+      // For generic sell orders, send to a broadcast address that buyers can monitor
+      try {
+        const recipientWallet = createdOrder.buyerWallet || "BROADCAST_BUYERS";
+        await createNotification(
+          recipientWallet,
+          "new_sell_order",
+          "SELL",
+          createdOrder.id,
+          `New sell order: ${parseFloat(amountTokens).toFixed(6)} ${createdOrder.token} for ${parseFloat(amountPKR).toFixed(2)} PKR at ${exchangeRate.toFixed(2)} PKR per token. Seller: ${createdOrder.sellerWallet}`,
+          {
+            token: createdOrder.token,
+            amountTokens: parseFloat(amountTokens),
+            amountPKR: parseFloat(amountPKR),
+            orderId: createdOrder.id,
+            sellerWallet: createdOrder.sellerWallet,
+            price: exchangeRate,
+          },
+        );
+      } catch (notificationError) {
+        console.warn(
+          "Failed to send notification:",
+          notificationError,
+        );
+        // Don't fail the order creation if notification fails
+      }
+
       navigate("/order-complete", { state: { order: createdOrder } });
     } catch (error) {
       console.error("Error creating order:", error);

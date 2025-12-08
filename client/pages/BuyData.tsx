@@ -64,7 +64,7 @@ export default function BuyData() {
       );
       if (response.ok) {
         const data = await response.json();
-        setPaymentMethods(data.paymentMethods || []);
+        setPaymentMethods(data.data || data.paymentMethods || []);
       }
     } catch (error) {
       console.error("Failed to fetch payment methods:", error);

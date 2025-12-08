@@ -90,6 +90,89 @@ const CRITICAL_TOKENS_TO_VERIFY = [
 
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
+async function verifyMissingTokens(
+  endpoint: string,
+  publicKey: string,
+  foundTokens: any[],
+  missingMints: string[],
+): Promise<any[]> {
+  if (missingMints.length === 0) return [];
+
+  const additionalTokens: any[] = [];
+
+  for (const mint of missingMints) {
+    try {
+      const rpcBody = {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getTokenAccountsByOwner",
+        params: [
+          publicKey,
+          { mint },
+          { encoding: "jsonParsed" },
+        ],
+      };
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rpcBody),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      const data = await response.json();
+
+      if (!data.error && data.result?.value && data.result.value.length > 0) {
+        const account = data.result.value[0];
+        const parsedInfo = account?.account?.data?.parsed?.info;
+        if (parsedInfo) {
+          const decimals = parsedInfo.tokenAmount?.decimals || 0;
+          const tokenAmount = parsedInfo.tokenAmount;
+          let balance = 0;
+
+          if (typeof tokenAmount?.uiAmount === "number") {
+            balance = tokenAmount.uiAmount;
+          } else if (tokenAmount?.amount) {
+            const rawAmount = BigInt(tokenAmount.amount);
+            balance = Number(rawAmount) / Math.pow(10, decimals);
+          }
+
+          const metadata = KNOWN_TOKENS[mint] || {
+            mint,
+            symbol: "UNKNOWN",
+            name: "Unknown Token",
+            decimals,
+            logoURI: "/placeholder.svg",
+          };
+
+          additionalTokens.push({
+            ...metadata,
+            balance,
+            decimals: decimals || metadata.decimals,
+            logoURI: metadata.logoURI || "/placeholder.svg",
+          });
+
+          console.log(
+            `[TokenAccounts] ✅ Found missing token: ${metadata.symbol} (${mint}) with balance ${balance}`,
+          );
+        }
+      }
+    } catch (err) {
+      console.warn(
+        `[TokenAccounts] Failed to verify token ${mint}:`,
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
+  return additionalTokens;
+}
+
 async function handler(request: Request, env?: Env): Promise<Response> {
   // Handle CORS preflight
   if (request.method === "OPTIONS") {

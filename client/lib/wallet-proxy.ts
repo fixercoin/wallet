@@ -188,69 +188,80 @@ export const getTokenAccounts = async (
     console.log(`Fetching token accounts via server API for: ${publicKey}`);
 
     // Call server endpoint instead of RPC directly
-    const response = await fetch(
-      `/api/wallet/token-accounts?publicKey=${encodeURIComponent(publicKey)}`,
-    );
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-    if (!response.ok) {
-      throw new Error(`Server returned ${response.status}`);
-    }
-
-    const data = await response.json();
-    const tokenAccounts = data.tokens || [];
-    const isUsingFallback =
-      data.warning && data.warning.includes("unavailable");
-
-    if (isUsingFallback) {
-      console.warn(
-        `[TokenAccounts] Server returned fallback data:`,
-        data.warning,
+    try {
+      const response = await fetch(
+        `/api/wallet/token-accounts?publicKey=${encodeURIComponent(publicKey)}`,
+        { signal: controller.signal },
       );
-    }
 
-    // Merge with default tokens to ensure all known tokens are included
-    const allTokens = [...DEFAULT_TOKENS];
+      clearTimeout(timeoutId);
 
-    // Update balances for tokens we found on-chain
-    tokenAccounts.forEach((tokenAccount: TokenInfo) => {
-      const existingTokenIndex = allTokens.findIndex(
-        (t) => t.mint === tokenAccount.mint,
-      );
-      if (existingTokenIndex >= 0) {
-        allTokens[existingTokenIndex] = {
-          ...allTokens[existingTokenIndex],
-          balance: tokenAccount.balance,
-        };
-      } else {
-        allTokens.push(tokenAccount);
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
       }
-    });
 
-    // Ensure SOL is present with proper balance
-    const solIndex = allTokens.findIndex(
-      (t) => t.mint === "So11111111111111111111111111111111111111112",
-    );
-    if (solIndex >= 0) {
-      // Ensure SOL balance is a valid number
-      const solBalance = allTokens[solIndex].balance;
-      if (
-        typeof solBalance !== "number" ||
-        !isFinite(solBalance) ||
-        solBalance < 0
-      ) {
+      const data = await response.json();
+      const tokenAccounts = data.tokens || [];
+      const isUsingFallback =
+        data.warning && data.warning.includes("unavailable");
+
+      if (isUsingFallback) {
         console.warn(
-          `[TokenAccounts] SOL balance is invalid: ${solBalance}, resetting to 0`,
+          `[TokenAccounts] Server returned fallback data:`,
+          data.warning,
         );
-        allTokens[solIndex].balance = 0;
       }
-    }
 
-    console.log(
-      `✅ Token accounts loaded: ${allTokens.length} tokens (SOL balance: ${
-        allTokens.find((t) => t.symbol === "SOL")?.balance ?? "not found"
-      })`,
-    );
-    return allTokens;
+      // Merge with default tokens to ensure all known tokens are included
+      const allTokens = [...DEFAULT_TOKENS];
+
+      // Update balances for tokens we found on-chain
+      tokenAccounts.forEach((tokenAccount: TokenInfo) => {
+        const existingTokenIndex = allTokens.findIndex(
+          (t) => t.mint === tokenAccount.mint,
+        );
+        if (existingTokenIndex >= 0) {
+          allTokens[existingTokenIndex] = {
+            ...allTokens[existingTokenIndex],
+            balance: tokenAccount.balance,
+          };
+        } else {
+          allTokens.push(tokenAccount);
+        }
+      });
+
+      // Ensure SOL is present with proper balance
+      const solIndex = allTokens.findIndex(
+        (t) => t.mint === "So11111111111111111111111111111111111111112",
+      );
+      if (solIndex >= 0) {
+        // Ensure SOL balance is a valid number
+        const solBalance = allTokens[solIndex].balance;
+        if (
+          typeof solBalance !== "number" ||
+          !isFinite(solBalance) ||
+          solBalance < 0
+        ) {
+          console.warn(
+            `[TokenAccounts] SOL balance is invalid: ${solBalance}, will fetch from dedicated endpoint`,
+          );
+          allTokens[solIndex].balance = 0;
+        }
+      }
+
+      console.log(
+        `✅ Token accounts loaded: ${allTokens.length} tokens (SOL balance: ${
+          allTokens.find((t) => t.symbol === "SOL")?.balance ?? "not found"
+        })`,
+      );
+      return allTokens;
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      throw fetchError;
+    }
   } catch (error) {
     console.error("Failed to fetch token accounts:", error);
     return DEFAULT_TOKENS.map((token) => ({ ...token, balance: 0 }));

@@ -63,6 +63,30 @@ export const KNOWN_TOKENS: Record<string, TokenMetadata> = {
 const connection = new Connection(RPC_URL, "confirmed");
 const requestQueue = new Map<string, Promise<any>>();
 
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 500;
+
+const retryableCall = async <T>(
+  fn: () => Promise<T>,
+  method: string,
+): Promise<T> => {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < MAX_RETRIES) {
+        const delay = RETRY_DELAY * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  throw lastError || new Error(`${method} failed after ${MAX_RETRIES + 1} retries`);
+};
+
 export const makeRpcCall = async (
   method: string,
   params: any[] = [],

@@ -90,8 +90,12 @@ function getRpcEndpoint(env?: Env): string {
   }
 
   // Use free endpoints with Alchemy fallback
-  console.log("[AllBalances] Using free Solana RPC endpoints with Alchemy fallback");
-  return FREE_RPC_ENDPOINTS[Math.floor(Math.random() * FREE_RPC_ENDPOINTS.length)];
+  console.log(
+    "[AllBalances] Using free Solana RPC endpoints with Alchemy fallback",
+  );
+  return FREE_RPC_ENDPOINTS[
+    Math.floor(Math.random() * FREE_RPC_ENDPOINTS.length)
+  ];
 }
 
 /**

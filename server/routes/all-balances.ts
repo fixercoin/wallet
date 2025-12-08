@@ -22,7 +22,9 @@ function getRpcEndpoint(): string {
   const alchemyEndpoint =
     "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
 
-  console.log("[AllBalances] Using free Solana RPC endpoints with Alchemy fallback");
+  console.log(
+    "[AllBalances] Using free Solana RPC endpoints with Alchemy fallback",
+  );
   return freeEndpoints[Math.floor(Math.random() * freeEndpoints.length)];
 }
 

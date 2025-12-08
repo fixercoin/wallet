@@ -17,7 +17,9 @@ function getRpcEndpoint(): string {
   const alchemyEndpoint =
     "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
 
-  console.log("[TokenBalance] Using free Solana RPC endpoints with Alchemy fallback");
+  console.log(
+    "[TokenBalance] Using free Solana RPC endpoints with Alchemy fallback",
+  );
   return freeEndpoints[Math.floor(Math.random() * freeEndpoints.length)];
 }
 
@@ -49,7 +51,9 @@ export const handleGetTokenBalance: RequestHandler = async (req, res) => {
     };
 
     try {
-      console.log(`[TokenBalance] Fetching balance for ${mint} from RPC endpoint`);
+      console.log(
+        `[TokenBalance] Fetching balance for ${mint} from RPC endpoint`,
+      );
 
       // Get RPC endpoint on-demand instead of at module load time
       const RPC_ENDPOINT = getRpcEndpoint();

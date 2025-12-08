@@ -109,9 +109,7 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
 
       // For other server errors
       if (!response.ok && response.status >= 500) {
-        console.warn(
-          `[RPC Proxy] ${method} - RPC returned ${response.status}`,
-        );
+        console.warn(`[RPC Proxy] ${method} - RPC returned ${response.status}`);
         lastErrorStatus = response.status;
         lastError = new Error(`Server error: ${response.status}`);
 

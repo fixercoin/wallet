@@ -106,11 +106,7 @@ async function verifyMissingTokens(
         jsonrpc: "2.0",
         id: 1,
         method: "getTokenAccountsByOwner",
-        params: [
-          publicKey,
-          { mint },
-          { encoding: "jsonParsed" },
-        ],
+        params: [publicKey, { mint }, { encoding: "jsonParsed" }],
       };
 
       const controller = new AbortController();
@@ -331,7 +327,9 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         }
 
         // Check for missing critical tokens and fetch them individually
-        const foundMints = new Set(validTokens.map((t) => t?.mint).filter(Boolean));
+        const foundMints = new Set(
+          validTokens.map((t) => t?.mint).filter(Boolean),
+        );
         const missingMints = CRITICAL_TOKENS_TO_VERIFY.filter(
           (mint) => !foundMints.has(mint),
         );

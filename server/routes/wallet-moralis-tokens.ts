@@ -222,7 +222,9 @@ export const handleWalletMoralisTokens: RequestHandler = async (req, res) => {
       }
     });
 
-    console.log(`[TokenBalances] ✅ Found ${tokens.length} tokens for ${walletAddress.slice(0, 8)}...`);
+    console.log(
+      `[TokenBalances] ✅ Found ${tokens.length} tokens for ${walletAddress.slice(0, 8)}...`,
+    );
 
     return res.json({
       tokens,

@@ -902,11 +902,20 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       );
 
       // Ensure SOL balance is always valid before creating token list
-      if (typeof solBalance !== "number" || !isFinite(solBalance) || solBalance < 0) {
+      if (
+        typeof solBalance !== "number" ||
+        !isFinite(solBalance) ||
+        solBalance < 0
+      ) {
         console.warn(
           `[WalletContext] Invalid SOL balance: ${solBalance}, using cached balance: ${balanceRef.current}`,
         );
-        solBalance = typeof balanceRef.current === "number" && isFinite(balanceRef.current) && balanceRef.current >= 0 ? balanceRef.current : 0;
+        solBalance =
+          typeof balanceRef.current === "number" &&
+          isFinite(balanceRef.current) &&
+          balanceRef.current >= 0
+            ? balanceRef.current
+            : 0;
       }
 
       const allTokens: TokenInfo[] = [

@@ -53,18 +53,10 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
                 />
               )}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-lg font-bold text-white truncate">
-                    {token.name}
-                  </h2>
-                  <div className="inline-flex items-center gap-1 bg-emerald-500/20 border border-emerald-500/50 px-2 py-1 rounded-full flex-shrink-0">
-                    <CheckCircle className="w-3 h-3 text-emerald-400" />
-                    <span className="text-xs font-semibold text-emerald-400 uppercase">
-                      Verified
-                    </span>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-400">{token.symbol}</p>
+                <h2 className="text-[10px] font-bold text-white truncate uppercase mb-1">
+                  {token.name}
+                </h2>
+                <p className="text-[10px] text-gray-400 uppercase">{token.symbol}</p>
               </div>
             </div>
           </div>

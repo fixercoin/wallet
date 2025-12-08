@@ -472,7 +472,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
     amount: number | undefined,
     symbol?: string,
   ): string => {
-    if (!amount || isNaN(amount)) return "0.00";
+    if (amount === undefined || amount === null || isNaN(amount)) {
+      if (symbol === "SOL") return "0.000000";
+      if (symbol === "FIXERCOIN" || symbol === "LOCKER") return "0.00";
+      return "0.00";
+    }
     // SOL always show exactly 6 decimal places
     if (symbol === "SOL") {
       return amount.toLocaleString(undefined, {
@@ -485,6 +489,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
       return amount.toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
+      });
+    }
+    // FXM shows up to 8 decimal places
+    if (symbol === "FXM") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 8,
       });
     }
     return amount.toLocaleString(undefined, {

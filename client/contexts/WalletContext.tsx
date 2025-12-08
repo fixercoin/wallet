@@ -829,9 +829,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     try {
       // Fetch token accounts (balances) silently - no loading state
       const tokenAccounts = await getTokenAccounts(wallet.publicKey);
-      const customTokens = JSON.parse(
-        localStorage.getItem("custom_tokens") || "[]",
-      ) as TokenInfo[];
 
       // Check if SOL is already in tokenAccounts (new endpoint returns it with balance)
       const solFromTokenAccounts = tokenAccounts.find(

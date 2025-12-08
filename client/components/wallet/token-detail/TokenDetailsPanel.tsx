@@ -119,11 +119,11 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
 
           {/* Contract Address */}
           <div className="space-y-2">
-            <p className="text-xs text-gray-400 font-semibold uppercase">
+            <p className="text-[10px] text-gray-400 font-semibold uppercase">
               Contract Address
             </p>
             <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
-              <code className="text-xs text-gray-300 break-all font-mono">
+              <code className="text-[10px] text-gray-300 break-all font-mono uppercase">
                 {shortenAddress(tokenMint)}
               </code>
             </div>

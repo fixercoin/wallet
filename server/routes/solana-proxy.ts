@@ -23,7 +23,7 @@ function getRpcEndpoint(): string {
 export const handleSolanaRpc: RequestHandler = async (req, res) => {
   try {
     // Get RPC endpoint on-demand instead of at module load time
-    const RPC_ENDPOINT = getHeliusRpcEndpoint();
+    const RPC_ENDPOINT = getRpcEndpoint();
     const body = req.body;
 
     if (!body) {
@@ -34,7 +34,7 @@ export const handleSolanaRpc: RequestHandler = async (req, res) => {
 
     const method = body.method || "unknown";
 
-    console.log(`[RPC Proxy] ${method} request via Helius`);
+    console.log(`[RPC Proxy] ${method} request via free RPC endpoints`);
 
     let lastError: Error | null = null;
     let lastErrorStatus: number | null = null;

@@ -73,11 +73,15 @@ export function useOrderNotifications() {
       recipientWallet: string,
       type:
         | "order_created"
+        | "new_buy_order"
         | "payment_confirmed"
         | "seller_payment_received"
         | "transfer_initiated"
         | "crypto_received"
-        | "order_cancelled",
+        | "order_cancelled"
+        | "order_accepted"
+        | "order_rejected"
+        | "order_completed_by_seller",
       orderType: "BUY" | "SELL",
       orderId: string,
       message: string,

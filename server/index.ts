@@ -4,6 +4,7 @@ import { handleSolanaRpc } from "./routes/solana-proxy";
 import { handleWalletBalance } from "./routes/wallet-balance";
 import { handleGetTokenBalance } from "./routes/token-balance";
 import { handleGetTokenAccounts } from "./routes/token-accounts";
+import { handleWalletMoralisTokens } from "./routes/wallet-moralis-tokens";
 import { handleExchangeRate } from "./routes/exchange-rate";
 import {
   handleDexscreenerTokens,

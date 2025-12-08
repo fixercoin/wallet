@@ -340,14 +340,14 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
           )}
         </div>
 
-        <DialogFooter className="flex gap-2">
+        <DialogFooter className="flex gap-2 justify-between">
           <Button
             variant="outline"
             onClick={handleCancel}
             disabled={loading}
             className="uppercase bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
           >
-            {isEditing ? "CANCEL" : "CLOSE"}
+            {isEditing ? "CANCEL" : "✕ CLOSE"}
           </Button>
           {!isEditing && savedMethodId ? (
             <Button
@@ -355,7 +355,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               disabled={loading}
               className="bg-blue-600 hover:bg-blue-700 text-white uppercase disabled:bg-blue-800"
             >
-              EDIT
+              ✎ EDIT
             </Button>
           ) : (
             <Button

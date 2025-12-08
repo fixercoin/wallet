@@ -278,6 +278,18 @@ export async function createServer(): Promise<express.Application> {
     }
   });
 
+  // Moralis token balances endpoint - fast token fetching via Moralis REST API
+  app.get("/api/wallet/moralis-tokens", async (req, res) => {
+    try {
+      await handleWalletMoralisTokens(req, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch token balances from Moralis",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
   // Unified wallet endpoint - returns balance (alias for /api/wallet/balance)
   app.get("/api/wallet", async (req, res) => {
     try {

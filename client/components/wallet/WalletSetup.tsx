@@ -4,13 +4,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Copy, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Copy, ArrowLeft, Loader } from "lucide-react";
 import { BouncingDotsLoader } from "@/components/ui/bouncing-dots-loader";
 import {
   generateWallet,
   recoverWallet,
   copyToClipboard,
   importWalletFromPrivateKey,
+  getBalance,
 } from "@/lib/wallet";
 import { assertValidMnemonic, normalizeMnemonicInput } from "@/lib/mnemonic";
 import { prefetchWalletAddressData } from "@/lib/services/address-setup";

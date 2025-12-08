@@ -134,7 +134,10 @@ export const getBalance = async (publicKey: string): Promise<number> => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Balance endpoint returned ${response.status}:`, errorText);
+        console.error(
+          `Balance endpoint returned ${response.status}:`,
+          errorText,
+        );
         throw new Error(`Server returned ${response.status}: ${errorText}`);
       }
 

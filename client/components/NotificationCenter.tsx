@@ -143,7 +143,9 @@ export function NotificationCenter() {
 
                         // For new buy orders, navigate to seller order confirmation page
                         if (notification.type === "new_buy_order") {
-                          navigate(`/seller-order-confirmation/${notification.orderId}`);
+                          navigate(
+                            `/seller-order-confirmation/${notification.orderId}`,
+                          );
                           return;
                         }
 

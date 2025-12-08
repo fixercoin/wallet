@@ -86,7 +86,10 @@ export default function WaitingForSellerResponse() {
           if (updatedOrder.status === "REJECTED") {
             toast.error("Seller rejected your order");
             setTimeout(() => navigate("/"), 2000);
-          } else if (updatedOrder.status === "ACCEPTED" || updatedOrder.sellerPaymentReceived) {
+          } else if (
+            updatedOrder.status === "ACCEPTED" ||
+            updatedOrder.sellerPaymentReceived
+          ) {
             navigate("/order-complete", {
               state: { order: updatedOrder },
             });
@@ -113,7 +116,12 @@ export default function WaitingForSellerResponse() {
       setTimeRemaining(remaining);
 
       // Auto-cancel when timer reaches 0
-      if (remaining === 0 && order && order.status !== "COMPLETED" && order.status !== "CANCELLED") {
+      if (
+        remaining === 0 &&
+        order &&
+        order.status !== "COMPLETED" &&
+        order.status !== "CANCELLED"
+      ) {
         handleCancelOrder();
       }
     }, 1000);
@@ -219,11 +227,12 @@ export default function WaitingForSellerResponse() {
               Waiting for Seller
             </h2>
             <p className="text-white/70 mb-4">
-              Your order has been created and a notification has been sent to the seller.
-              Please wait for their response.
+              Your order has been created and a notification has been sent to
+              the seller. Please wait for their response.
             </p>
             <p className="text-sm text-white/60">
-              Order will auto-cancel if seller doesn't respond within {formatTimeRemaining(timeRemaining)}
+              Order will auto-cancel if seller doesn't respond within{" "}
+              {formatTimeRemaining(timeRemaining)}
             </p>
           </CardContent>
         </Card>

@@ -28,8 +28,12 @@ export default function SellerOrderConfirmation() {
   const [sending, setSending] = useState(false);
   const [exchangeRate, setExchangeRate] = useState<number>(280);
   const [submitting, setSubmitting] = useState(false);
-  const [orderStatus, setOrderStatus] = useState<"PENDING" | "ACCEPTED" | "REJECTED">("PENDING");
-  const [completionStatus, setCompletionStatus] = useState<"PENDING" | "COMPLETED" | "BUYER_RECEIVED">("PENDING");
+  const [orderStatus, setOrderStatus] = useState<
+    "PENDING" | "ACCEPTED" | "REJECTED"
+  >("PENDING");
+  const [completionStatus, setCompletionStatus] = useState<
+    "PENDING" | "COMPLETED" | "BUYER_RECEIVED"
+  >("PENDING");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
 
@@ -42,7 +46,10 @@ export default function SellerOrderConfirmation() {
         const loadedOrder = await syncOrderFromStorage(orderId);
         if (loadedOrder) {
           setOrder(loadedOrder);
-          setOrderStatus((loadedOrder.status as "PENDING" | "ACCEPTED" | "REJECTED") || "PENDING");
+          setOrderStatus(
+            (loadedOrder.status as "PENDING" | "ACCEPTED" | "REJECTED") ||
+              "PENDING",
+          );
           // Determine completion status based on confirmation flags
           if (loadedOrder.buyerCryptoReceived) {
             setCompletionStatus("BUYER_RECEIVED");
@@ -551,8 +558,7 @@ export default function SellerOrderConfirmation() {
             disabled={submitting}
             className="w-full px-4 py-3 bg-blue-600/20 border border-blue-500/50 hover:bg-blue-600/30 text-blue-400 uppercase text-sm font-semibold transition-colors mb-6"
           >
-            <Check className="w-4 h-4 mr-2" />
-            I Have Completed Order
+            <Check className="w-4 h-4 mr-2" />I Have Completed Order
           </Button>
         )}
 

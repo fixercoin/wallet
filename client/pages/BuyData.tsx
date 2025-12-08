@@ -123,18 +123,30 @@ export default function BuyData() {
           },
         );
       } catch (notificationError) {
-        console.warn("Failed to send notification to sellers:", notificationError);
+        console.warn(
+          "Failed to send notification to sellers:",
+          notificationError,
+        );
         // Don't fail the order creation if notification fails
       }
 
-      navigate("/waiting-for-seller-response", { state: { order: createdOrder } });
+      navigate("/waiting-for-seller-response", {
+        state: { order: createdOrder },
+      });
     } catch (error) {
       console.error("Error creating order:", error);
       toast.error("Failed to create order");
     } finally {
       setLoading(false);
     }
-  }, [wallet?.publicKey, exchangeRate, amountTokens, amountPKR, navigate, createNotification]);
+  }, [
+    wallet?.publicKey,
+    exchangeRate,
+    amountTokens,
+    amountPKR,
+    navigate,
+    createNotification,
+  ]);
 
   const handlePKRChange = (value: string) => {
     setAmountPKR(value);
@@ -284,7 +296,8 @@ export default function BuyData() {
                     Complete Your Payment Method
                   </div>
                   <p className="text-xs text-red-300/80 mb-3">
-                    You must add your payment method details before you can create a buy order. This helps sellers confirm payments.
+                    You must add your payment method details before you can
+                    create a buy order. This helps sellers confirm payments.
                   </p>
                   <Button
                     onClick={() => setShowPaymentDialog(true)}

@@ -344,12 +344,16 @@ export default function BuyData() {
           setShowPaymentDialog(open);
           if (!open) {
             setEditingPaymentMethodId(undefined);
+            // Refetch payment methods when dialog closes
+            fetchPaymentMethods();
           }
         }}
         walletAddress={wallet?.publicKey || ""}
         paymentMethodId={editingPaymentMethodId}
         onSave={() => {
           setEditingPaymentMethodId(undefined);
+          // Refetch payment methods after saving
+          fetchPaymentMethods();
         }}
       />
 

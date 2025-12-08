@@ -75,7 +75,7 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
     };
 
     console.log(
-      `[WalletBalance] Fetching balance from Helius for ${publicKey}`,
+      `[WalletBalance] Fetching SOL balance for ${publicKey.substring(0, 8)}... using ${endpointLabel}`,
     );
 
     try {
@@ -96,7 +96,7 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
 
       if (!response.ok) {
         throw new Error(
-          `Helius RPC returned HTTP ${response.status} ${response.statusText}`,
+          `RPC endpoint returned HTTP ${response.status} ${response.statusText}`,
         );
       }
 
@@ -104,11 +104,13 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
       try {
         data = await response.json();
       } catch (parseErr) {
-        throw new Error("Helius RPC returned invalid JSON response");
+        throw new Error("RPC endpoint returned invalid JSON response");
       }
 
       if (data.error) {
-        throw new Error(data.error.message || "Helius RPC error");
+        throw new Error(
+          `RPC error: ${data.error.message || JSON.stringify(data.error)}`,
+        );
       }
 
       let balanceLamports = data.result;
@@ -121,38 +123,41 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
 
       if (typeof balanceLamports !== "number" || isNaN(balanceLamports)) {
         throw new Error(
-          `Invalid balance type from Helius: ${typeof balanceLamports}`,
+          `Invalid balance type: ${typeof balanceLamports}`,
         );
       }
 
       if (balanceLamports < 0) {
-        throw new Error("Invalid negative balance from Helius RPC");
+        throw new Error("Negative balance returned from RPC");
       }
 
       const balanceSOL = balanceLamports / 1_000_000_000;
 
-      console.log(`[WalletBalance] ✅ Success from Helius: ${balanceSOL} SOL`);
+      console.log(
+        `[WalletBalance] ✅ Success: ${balanceSOL} SOL (${balanceLamports} lamports) from ${endpointLabel}`,
+      );
 
       return res.json({
         publicKey,
         balance: balanceSOL,
         balanceLamports,
-        endpoint: endpointLabel,
+        source: endpointLabel,
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
 
-      console.error("[WalletBalance] Helius RPC error:", {
+      console.error("[WalletBalance] ❌ Error:", {
         publicKey: publicKey.substring(0, 8),
         error: errorMsg,
         endpoint: endpointLabel,
       });
 
       return res.status(502).json({
-        error: errorMsg || "Failed to fetch balance from Helius RPC",
+        error: errorMsg || "Failed to fetch balance from RPC endpoint",
         details: {
-          message: "The Helius RPC endpoint failed to return balance data.",
-          hint: "Ensure HELIUS_API_KEY environment variable is set and valid.",
+          message: "Could not retrieve SOL balance from RPC provider.",
+          hint: "Check your RPC configuration (HELIUS_API_KEY or SOLANA_RPC_URL environment variables).",
+          endpoint: endpointLabel,
         },
       });
     }

@@ -7,8 +7,9 @@ This guide explains why Moralis API is the best choice for wallet token fetching
 ## Why Moralis API is Better
 
 ### Current Approach (Slow)
+
 - **Method**: RPC calls using `getTokenAccountsByOwner`
-- **Process**: 
+- **Process**:
   1. Makes RPC call to get all token accounts for wallet
   2. Iterates through each token account
   3. Fetches metadata for each token
@@ -17,13 +18,14 @@ This guide explains why Moralis API is the best choice for wallet token fetching
 - **Bottlenecks**: Network latency, RPC rate limits, metadata fetching
 
 ### Moralis API (Fast)
+
 - **Method**: Direct REST API call to `/wallets/{address}/tokens`
 - **Process**:
   1. Single API call returns all token balances with metadata
   2. Filtered spam tokens automatically
   3. All data in one response
 - **Speed**: 200-500ms per wallet (REST API is optimized for this use case)
-- **Benefits**: 
+- **Benefits**:
   - ✅ Fast response times
   - ✅ Spam token filtering included
   - ✅ Complete token metadata
@@ -82,18 +84,21 @@ The system will now use this API key in your production deployment.
 **GET `/api/wallet/moralis-tokens`**
 
 Query Parameters:
+
 - `address` - Solana wallet address (required)
 
 Example Request:
+
 ```javascript
 const walletAddress = "4toKNLx8Ry7XHDw3xXRUSB5rEVgUXgXEvKbJnNNDvBk";
 const response = await fetch(
-  `/api/wallet/moralis-tokens?address=${walletAddress}`
+  `/api/wallet/moralis-tokens?address=${walletAddress}`,
 );
 const data = await response.json();
 ```
 
 Example Response:
+
 ```json
 {
   "tokens": [
@@ -147,7 +152,7 @@ function MyComponent() {
 async function getWalletTokens(walletAddress: string) {
   try {
     const response = await fetch(
-      `/api/wallet/moralis-tokens?address=${encodeURIComponent(walletAddress)}`
+      `/api/wallet/moralis-tokens?address=${encodeURIComponent(walletAddress)}`,
     );
 
     if (!response.ok) {
@@ -166,6 +171,7 @@ async function getWalletTokens(walletAddress: string) {
 ## Comparison: Before vs After
 
 ### Before (RPC-based)
+
 ```
 Request → RPC Call → Get Token Accounts → Fetch Each Token's Metadata → Response
 ├─ 2-5+ seconds
@@ -174,6 +180,7 @@ Request → RPC Call → Get Token Accounts → Fetch Each Token's Metadata → 
 ```
 
 ### After (Moralis API)
+
 ```
 Request → Moralis REST API → Response
 ├─ 200-500ms
@@ -184,18 +191,24 @@ Request → Moralis REST API → Response
 ## Troubleshooting
 
 ### Error: "Moralis API key not configured"
+
 **Solution**: Make sure `MORALIS_API_KEY` is set in:
+
 - For local dev: `.env.local` or `wrangler.toml` [env.development.vars]
 - For production: Cloudflare Pages environment variables dashboard
 
 ### Error: "Invalid API key"
-**Solution**: 
+
+**Solution**:
+
 1. Verify your API key is correct (copy-paste from Moralis dashboard)
 2. Check there are no spaces or extra characters
 3. Make sure the key is active in your Moralis account
 
 ### Getting timeout errors
+
 **Solution**: This is normal if:
+
 - Wallet has 100+ tokens (Moralis may take 1-2 seconds)
 - First request to a wallet (data is being cached)
 - Solution: Implement client-side caching and loading indicators
@@ -207,14 +220,14 @@ Request → Moralis REST API → Response
 3. **Batch Multiple Wallets**: If fetching multiple wallets, do it in parallel:
    ```typescript
    const allTokens = await Promise.all(
-     addresses.map(addr => fetchTokens(addr))
+     addresses.map((addr) => fetchTokens(addr)),
    );
    ```
 4. **Filter Tokens**: Use the `isSpam` flag to exclude spam tokens from UI
 
 ## Cost Information
 
-- **Moralis Free Tier**: 
+- **Moralis Free Tier**:
   - Up to 10,000 requests/month
   - Sufficient for development and small apps
   - Great for testing

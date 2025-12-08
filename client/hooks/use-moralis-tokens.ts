@@ -50,7 +50,7 @@ export function useMoralisTokens(): UseMoralisTokensResult {
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({})) as any;
+        const errorData = (await response.json().catch(() => ({}))) as any;
         throw new Error(
           errorData.error || `Failed to fetch tokens: ${response.statusText}`,
         );

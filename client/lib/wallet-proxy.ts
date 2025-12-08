@@ -218,7 +218,9 @@ export const getTokenAccounts = async (
           const data = await response.json();
           const moralisTokens = data.tokens || [];
 
-          console.log(`[TokenAccounts] ✅ Moralis endpoint success: ${moralisTokens.length} tokens`);
+          console.log(
+            `[TokenAccounts] ✅ Moralis endpoint success: ${moralisTokens.length} tokens`,
+          );
 
           if (moralisTokens.length > 0) {
             // Enrich with logos from DEFAULT_TOKENS and convert to TokenInfo format
@@ -252,7 +254,9 @@ export const getTokenAccounts = async (
         clearTimeout(timeoutId);
         console.warn(
           "[TokenAccounts] Moralis endpoint failed, falling back to RPC:",
-          moralisError instanceof Error ? moralisError.message : String(moralisError),
+          moralisError instanceof Error
+            ? moralisError.message
+            : String(moralisError),
         );
       }
     } catch (moralisError) {

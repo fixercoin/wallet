@@ -5,11 +5,13 @@
 The Moralis token fetching is now available on both dev server and production:
 
 ### Development Server
+
 - **Endpoint**: `GET /api/wallet/moralis-tokens`
 - **Base URL**: `http://localhost:8080` (dev server)
 - **Full URL**: `http://localhost:8080/api/wallet/moralis-tokens?address=YOUR_WALLET_ADDRESS`
 
 ### Production (Cloudflare Pages)
+
 - **Endpoint**: `/api/wallet/moralis-tokens`
 - **Full URL**: `https://your-domain.com/api/wallet/moralis-tokens?address=YOUR_WALLET_ADDRESS`
 
@@ -40,7 +42,7 @@ export function Dashboard() {
     <div>
       {loading && <p>Loading tokens...</p>}
       {error && <p className="text-red-500">Error: {error}</p>}
-      
+
       {/* Display tokens */}
       <div className="token-list">
         {tokens.map((token) => (
@@ -106,8 +108,8 @@ export function TokenListWithRefresh() {
 
   return (
     <div>
-      <button 
-        onClick={handleRefresh} 
+      <button
+        onClick={handleRefresh}
         disabled={loading}
         className="flex items-center gap-2"
       >
@@ -158,7 +160,7 @@ export function TokenListWithRetry() {
     return (
       <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
         <p className="text-red-800">Failed to load tokens: {error}</p>
-        <button 
+        <button
           onClick={handleRetry}
           className="mt-2 px-4 py-2 bg-red-600 text-white rounded"
           disabled={loading}
@@ -205,6 +207,7 @@ All endpoints return the same token format:
 ## Performance Tips for Dashboard
 
 ### 1. Cache Results Locally
+
 ```typescript
 const [cachedTokens, setCachedTokens] = useState<MoralisTokenBalance[]>([]);
 const [cacheTime, setCacheTime] = useState<number>(0);
@@ -214,6 +217,7 @@ const shouldRefetch = Date.now() - cacheTime > CACHE_DURATION;
 ```
 
 ### 2. Show Loading Skeleton
+
 ```typescript
 {loading && (
   <div className="space-y-2">
@@ -224,6 +228,7 @@ const shouldRefetch = Date.now() - cacheTime > CACHE_DURATION;
 ```
 
 ### 3. Group Tokens by Status
+
 ```typescript
 const activeTokens = tokens.filter((t) => !t.isSpam && t.uiAmount > 0);
 const zeroBalanceTokens = tokens.filter((t) => !t.isSpam && t.uiAmount === 0);
@@ -232,58 +237,66 @@ const zeroBalanceTokens = tokens.filter((t) => !t.isSpam && t.uiAmount === 0);
 ## Testing in Dev Server
 
 ### Test with cURL
+
 ```bash
 curl "http://localhost:8080/api/wallet/moralis-tokens?address=4toKNLx8Ry7XHDw3xXRUSB5rEVgUXgXEvKbJnNNDvBk"
 ```
 
 ### Test with Browser Console
+
 ```javascript
-fetch('/api/wallet/moralis-tokens?address=4toKNLx8Ry7XHDw3xXRUSB5rEVgUXgXEvKbJnNNDvBk')
-  .then(r => r.json())
-  .then(d => console.log(d))
+fetch(
+  "/api/wallet/moralis-tokens?address=4toKNLx8Ry7XHDw3xXRUSB5rEVgUXgXEvKbJnNNDvBk",
+)
+  .then((r) => r.json())
+  .then((d) => console.log(d));
 ```
 
 ### Test with React Hook
+
 ```typescript
 // In any component
 const { fetchTokens } = useMoralisTokens();
-await fetchTokens('4toKNLx8Ry7XHDw3xXRUSB5rEVgUXgXEvKbJnNNDvBk');
+await fetchTokens("4toKNLx8Ry7XHDw3xXRUSB5rEVgUXgXEvKbJnNNDvBk");
 ```
 
 ## Troubleshooting
 
 ### No tokens returned?
+
 1. Check that wallet address is valid and has tokens
 2. Check that `MORALIS_API_KEY` is set in environment
 3. For dev: `echo $MORALIS_API_KEY` should show your key
 4. For production: Check Cloudflare Pages environment variables
 
 ### Timeout errors?
+
 - Normal for wallets with 100+ tokens
 - Implement loading state and give user feedback
 - Consider adding timeout handling in fetch request
 
 ### Spam tokens showing up?
+
 - The endpoint filters `possible_spam: true` automatically
 - Use `isSpam` field in response to filter on client-side if needed
 
 ## Migration from Old Token Fetching
 
 ### Old Way (RPC-based, slow)
+
 ```typescript
 // Slow RPC calls
 const accounts = await connection.getTokenAccountsByOwner(wallet);
-const tokens = await Promise.all(
-  accounts.map(acc => getTokenMetadata(acc))
-);
+const tokens = await Promise.all(accounts.map((acc) => getTokenMetadata(acc)));
 ```
 
 ### New Way (Moralis API, fast)
+
 ```typescript
 // Fast single API call
 const { tokens } = await fetch(
-  `/api/wallet/moralis-tokens?address=${wallet}`
-).then(r => r.json());
+  `/api/wallet/moralis-tokens?address=${wallet}`,
+).then((r) => r.json());
 ```
 
 ## Summary
@@ -292,6 +305,6 @@ const { tokens } = await fetch(
 ✅ **Works on production** - Cloudflare Pages deploys automatically  
 ✅ **Fast** - 200-500ms response times  
 ✅ **Reliable** - Spam filtering included  
-✅ **Easy to use** - Simple hook or direct fetch  
+✅ **Easy to use** - Simple hook or direct fetch
 
 Just set `MORALIS_API_KEY` and start using it!

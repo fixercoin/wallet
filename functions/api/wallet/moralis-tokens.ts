@@ -192,8 +192,7 @@ export const onRequest: PagesFunction<Env> = async ({
     const tokens: TokenBalance[] = moralisData.result
       .filter((t) => !t.possible_spam) // Filter out spam tokens
       .map((token) => {
-        const knownMetadata =
-          KNOWN_TOKEN_METADATA[token.token_address];
+        const knownMetadata = KNOWN_TOKEN_METADATA[token.token_address];
         const decimals = token.decimals || knownMetadata?.decimals || 0;
         const balance = token.balance || "0";
 
@@ -203,9 +202,7 @@ export const onRequest: PagesFunction<Env> = async ({
           name: token.name || knownMetadata?.name || "Unknown Token",
           decimals,
           balance,
-          uiAmount: balance
-            ? Number(balance) / Math.pow(10, decimals)
-            : 0,
+          uiAmount: balance ? Number(balance) / Math.pow(10, decimals) : 0,
           logoURI: token.logo || knownMetadata?.logoURI || "",
           isSpam: token.possible_spam,
         };

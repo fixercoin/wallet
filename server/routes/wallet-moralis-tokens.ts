@@ -138,18 +138,19 @@ export const handleWalletMoralisTokens: RequestHandler = async (req, res) => {
     const moralisData = (await response.json()) as MoralisResponse;
 
     if (!moralisData.result || !Array.isArray(moralisData.result)) {
-      return res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=120").json({
-        tokens: [],
-        count: 0,
-      });
+      return res
+        .set("Cache-Control", "public, max-age=30, stale-while-revalidate=120")
+        .json({
+          tokens: [],
+          count: 0,
+        });
     }
 
     // Transform Moralis response to our token format, merging with known metadata
     const tokens: TokenBalance[] = moralisData.result
       .filter((t) => !t.possible_spam) // Filter out spam tokens
       .map((token) => {
-        const knownMetadata =
-          KNOWN_TOKEN_METADATA[token.token_address];
+        const knownMetadata = KNOWN_TOKEN_METADATA[token.token_address];
         const decimals = token.decimals || knownMetadata?.decimals || 0;
         const balance = token.balance || "0";
 
@@ -159,9 +160,7 @@ export const handleWalletMoralisTokens: RequestHandler = async (req, res) => {
           name: token.name || knownMetadata?.name || "Unknown Token",
           decimals,
           balance,
-          uiAmount: balance
-            ? Number(balance) / Math.pow(10, decimals)
-            : 0,
+          uiAmount: balance ? Number(balance) / Math.pow(10, decimals) : 0,
           logoURI: token.logo || knownMetadata?.logoURI || "",
           isSpam: token.possible_spam,
         };

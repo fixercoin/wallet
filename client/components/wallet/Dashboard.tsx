@@ -1245,10 +1245,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           isFinite(token.price) ? (
                             <span style={{ color: "#ffffff" }}>
                               ${" "}
-                              {tokenBalance.toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
+                              {tokenBalance < 0.01
+                                ? tokenBalance.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 8,
+                                  })
+                                : tokenBalance.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
                             </span>
                           ) : null}
                         </div>

@@ -93,12 +93,14 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       // Set the wallet - this updates context and triggers localStorage save
       setWallet(wallet);
 
-      // Fetch SOL balance from backend API
+      // Fetch SOL balance from backend API endpoint
       setIsFetchingBalance(true);
       try {
-        const balance = await getBalance(wallet.publicKey);
+        const balance = await fetchSolBalance(wallet.publicKey);
         setSolBalance(balance);
-        console.log(`[WalletSetup] SOL balance fetched: ${balance} SOL`);
+        console.log(
+          `[WalletSetup] SOL balance fetched: ${displaySolBalance(balance)}`,
+        );
       } catch (balanceErr) {
         console.error("[WalletSetup] Failed to fetch balance:", balanceErr);
         setSolBalance(0);

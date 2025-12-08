@@ -1231,10 +1231,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     </div>
                   </CardContent>
                 </Card>
-
-                {index < sortedTokens.length - 1 && (
-                  <Separator className="bg-[#14532d]/30" />
-                )}
               </div>
             );
           })}

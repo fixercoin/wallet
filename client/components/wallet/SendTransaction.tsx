@@ -124,17 +124,19 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   );
 
   const availableTokens = useMemo(() => {
-    // Show SOL first, then tokens with positive balance; always include FIXERCOIN and USDC
+    // Show SOL first, then tokens with positive balance; always include FIXERCOIN, USDC, and USDT
     const sol = tokens.find((t) => t.symbol === "SOL");
     const rest = tokens
-      .filter((t) => t.symbol !== "SOL" && t.symbol !== "USDT")
+      .filter((t) => t.symbol !== "SOL")
       .filter(
         (t) =>
           (t.balance || 0) > 0 ||
           t.symbol === "FIXERCOIN" ||
           t.symbol === "USDC" ||
+          t.symbol === "USDT" ||
           t.mint === TOKEN_MINTS.FIXERCOIN ||
-          t.mint === TOKEN_MINTS.USDC,
+          t.mint === TOKEN_MINTS.USDC ||
+          t.mint === TOKEN_MINTS.USDT,
       )
       .sort((a, b) => (b.balance || 0) - (a.balance || 0));
     return sol ? [sol, ...rest] : rest;

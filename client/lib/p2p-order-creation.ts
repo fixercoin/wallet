@@ -110,6 +110,22 @@ export async function createOrderFromOffer(
     // User is selling: they are the seller, offer creator is the buyer
     buyerWallet = offerCreatorWallet;
     sellerWallet = currentUserWallet;
+
+    // For sellers, fetch their own payment method
+    if (sellerWallet && sellerWallet.trim()) {
+      try {
+        const paymentMethods = await getPaymentMethodsByWallet(sellerWallet);
+        if (paymentMethods.length > 0) {
+          const pm = paymentMethods[0];
+          sellerPaymentMethod = {
+            accountName: pm.accountName,
+            accountNumber: pm.accountNumber,
+          };
+        }
+      } catch (error) {
+        console.error("Failed to get seller payment method:", error);
+      }
+    }
   }
 
   // Create trade room only if both buyer and seller wallets are valid

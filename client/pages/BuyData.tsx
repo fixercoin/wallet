@@ -117,7 +117,7 @@ export default function BuyData() {
           "new_buy_order",
           "BUY",
           createdOrder.id,
-          `New buy order: ${parseFloat(amountTokens).toFixed(6)} USDT for ${parseFloat(amountPKR).toFixed(2)} PKR at ${exchangeRate.toFixed(2)} PKR per token. Buyer: ${createdOrder.buyerWallet}`,
+          `New buy order: ${parseFloat(amountTokens).toFixed(2)} USDT for ${parseFloat(amountPKR).toFixed(2)} PKR at ${exchangeRate.toFixed(2)} PKR per token. Buyer: ${createdOrder.buyerWallet}`,
           {
             token: createdOrder.token,
             amountTokens: parseFloat(amountTokens),

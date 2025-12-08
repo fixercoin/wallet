@@ -402,26 +402,49 @@ export default function BuyerOrderConfirmation() {
                 </div>
               </div>
 
-              {order.sellerPaymentMethod && (
-                <>
+              <div className="border-t border-blue-500/20 pt-3 mt-3">
+                <div className="text-xs text-white/70 font-semibold uppercase mb-3">
+                  Payment Method Details
+                </div>
+
+                {order.payment_method && (
                   <div>
                     <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                      Account Name
+                      Payment Method
                     </div>
-                    <div className="text-sm text-white/90">
-                      {order.sellerPaymentMethod.accountName}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                      Account Number
-                    </div>
-                    <div className="text-sm text-white/90 font-mono">
-                      {order.sellerPaymentMethod.accountNumber}
+                    <div className="text-sm text-white/90 font-semibold">
+                      {order.payment_method}
                     </div>
                   </div>
-                </>
-              )}
+                )}
+
+                {order.sellerPaymentMethod && (
+                  <>
+                    <div className="mt-3">
+                      <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                        Account Name
+                      </div>
+                      <div className="text-sm text-white/90">
+                        {order.sellerPaymentMethod.accountName}
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                        Account Number
+                      </div>
+                      <div className="text-sm text-white/90 font-mono break-all">
+                        {order.sellerPaymentMethod.accountNumber}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {!order.sellerPaymentMethod && (
+                  <div className="text-xs text-yellow-400/80 italic">
+                    Payment method details not yet provided by seller
+                  </div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

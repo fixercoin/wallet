@@ -531,7 +531,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                   <div className="p-4 bg-gradient-to-r from-[#064e3b]/50 to-[#052e16]/50 rounded-lg border border-[#22c55e]/30">
                     <p className="text-xs text-gray-400 mb-1">SOL BALANCE</p>
                     <p className="text-2xl font-bold text-[#22c55e]">
-                      {solBalance.toFixed(9)} SOL
+                      {displaySolBalance(solBalance, 9)}
                     </p>
                     <p className="text-xs text-gray-400 mt-2">
                       Your wallet is ready to use! You now have a Solana

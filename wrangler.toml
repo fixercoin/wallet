@@ -28,6 +28,10 @@ VITE_API_BASE_URL = ""
 [env.development.vars]
 # Default Solana RPC endpoint (Solflare public endpoint, no auth required)
 SOLANA_RPC_URL = "https://api.mainnet-beta.solflare.network"
+# Moralis API Key - Get from https://moralis.io/
+# This enables fast token balance fetching without RPC calls
+# Set MORALIS_API_KEY in Cloudflare Pages project settings for production
+MORALIS_API_KEY = ""
 
 # Production environment variables
 # NOTE: By default, uses Solflare public RPC endpoint (no configuration required)
@@ -39,6 +43,9 @@ SOLANA_RPC_URL = "https://api.mainnet-beta.solflare.network"
 # SOLANA_RPC_URL = "https://your-custom-rpc-endpoint.com"
 #
 # By default (if not set), the system uses: https://api.mainnet-beta.solflare.network
+#
+# MORALIS_API_KEY: Set in Cloudflare Pages project settings for production
+# This enables fast token balance fetching via REST API instead of RPC calls
 
 # KV namespace bindings for Pages Functions
 # These bindings are available in functions/api/* routes

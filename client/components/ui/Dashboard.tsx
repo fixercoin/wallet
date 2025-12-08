@@ -103,11 +103,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
         maximumFractionDigits: 6,
       });
     }
-    // FXM shows exactly 6 decimal places (consistent with SOL format)
+    // FXM shows exactly 2 decimal places
     if (symbol === "FXM") {
       return amount.toLocaleString(undefined, {
-        minimumFractionDigits: 6,
-        maximumFractionDigits: 8,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
       });
     }
     // FIXERCOIN and LOCKER always show exactly 2 decimal places

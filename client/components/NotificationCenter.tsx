@@ -141,6 +141,13 @@ export function NotificationCenter() {
 
                         setIsOpen(false);
 
+                        // For new buy orders, navigate to seller order confirmation page
+                        if (notification.type === "new_buy_order") {
+                          navigate(`/seller-order-confirmation/${notification.orderId}`);
+                          return;
+                        }
+
+                        // For other notifications, navigate to order-complete
                         // Determine buyer and seller based on notification type
                         // For BUY orders: senderWallet is buyer, recipientWallet is seller/admin
                         // For SELL orders: senderWallet is seller, recipientWallet is buyer

@@ -198,9 +198,9 @@ class FixercoinPriceService {
       {
         maxRetries: 2, // Fail fast to allow static fallback
         initialDelayMs: 500,
-        maxDelayMs: 1000,
-        backoffMultiplier: 1.5,
-        timeoutMs: 5000,
+        maxDelayMs: 2000,
+        backoffMultiplier: 2,
+        timeoutMs: 8000,
       },
     );
 

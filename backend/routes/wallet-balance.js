@@ -7,8 +7,10 @@ const RPC_ENDPOINTS = [
     ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
     : "",
   "https://solana.publicnode.com",
+  "https://api.solflare.com",
   "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
+  "https://api.marinade.finance/rpc",
 ].filter(Boolean);
 
 export async function handleWalletBalance(req, res) {

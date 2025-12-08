@@ -95,11 +95,12 @@ export default function P2PHome() {
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
+        <h1 className="text-white font-bold text-lg mt-2 uppercase">P2P ORDERS</h1>
       </div>
 
-      {/* Main Content - Two Column Layout */}
-      <div className="max-w-lg mx-auto px-4 py-8">
-        <div className="space-y-3">
+      {/* Main Content */}
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="space-y-4">
           {loadingOrders && (
             <div className="text-center text-white/70 py-8">
               Loading orders...
@@ -113,53 +114,97 @@ export default function P2PHome() {
           {orders.map((order) => (
             <Card
               key={order.id}
-              className="bg-transparent border border-gray-300/30 hover:border-gray-300/50 transition-colors cursor-pointer"
-              onClick={() => navigate(`/order/${encodeURIComponent(order.id)}`)}
+              className="bg-transparent border border-gray-300/30 hover:border-[#FF7A5C]/50 transition-colors"
             >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs opacity-80">Order Number</div>
-                    <div className="font-semibold text-white truncate">
-                      {order.id}
+              <CardContent className="p-6 space-y-4">
+                {/* Order Header */}
+                <div className="flex items-start justify-between gap-4 pb-4 border-b border-gray-300/20">
+                  <div>
+                    <div className="text-xs opacity-80 uppercase">Order Number</div>
+                    <div className="font-semibold text-white text-sm mt-1 font-mono">
+                      {order.id?.substring(0, 12)}...
                     </div>
-                    {(order.token || order.amountPKR || order.amountTokens) && (
-                      <div className="text-xs text-white/70 mt-2">
-                        {order.token && (
-                          <span className="inline-block mr-2">
-                            {order.token}
-                          </span>
-                        )}
-                        {typeof order.amountPKR === "number" &&
-                          isFinite(order.amountPKR) && (
-                            <span className="inline-block mr-2">
-                              {Number(order.amountPKR).toFixed(2)} PKR
-                            </span>
-                          )}
-                        {typeof order.amountTokens === "number" &&
-                          isFinite(order.amountTokens) && (
-                            <span className="inline-block">
-                              {Number(order.amountTokens).toFixed(6)}{" "}
-                              {order.token || ""}
-                            </span>
-                          )}
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs opacity-80 uppercase">Order Type</div>
+                    <div className="font-semibold text-white text-sm mt-1 uppercase">
+                      {order.type || "BUY"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Details Grid */}
+                <div className="grid grid-cols-2 gap-4">
+                  {order.token && (
+                    <div>
+                      <div className="text-xs opacity-80 uppercase">Token</div>
+                      <div className="font-semibold text-white text-sm mt-1">
+                        {order.token}
+                      </div>
+                    </div>
+                  )}
+                  {typeof order.amountPKR === "number" &&
+                    isFinite(order.amountPKR) && (
+                      <div>
+                        <div className="text-xs opacity-80 uppercase">Amount PKR</div>
+                        <div className="font-semibold text-white text-sm mt-1">
+                          {Number(order.amountPKR).toFixed(2)} PKR
+                        </div>
                       </div>
                     )}
-                  </div>
+                  {typeof order.amountTokens === "number" &&
+                    isFinite(order.amountTokens) && (
+                      <div>
+                        <div className="text-xs opacity-80 uppercase">
+                          Amount {order.token}
+                        </div>
+                        <div className="font-semibold text-white text-sm mt-1">
+                          {Number(order.amountTokens).toFixed(6)} {order.token}
+                        </div>
+                      </div>
+                    )}
+                  {order.status && (
+                    <div>
+                      <div className="text-xs opacity-80 uppercase">Status</div>
+                      <div className="font-semibold text-white text-sm mt-1 capitalize">
+                        {order.status}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (wallet?.publicKey === ADMIN_WALLET) {
-                        navigate("/order-complete", {
-                          state: { order, openChat: true },
-                        });
-                      } else {
-                        navigate(`/order/${encodeURIComponent(order.id)}`);
-                      }
-                    }}
-                    className="px-4 py-2 rounded-lg bg-gray-300/10 border border-gray-300/30 text-gray-300 text-xs hover:bg-gray-300/20 transition-colors uppercase font-semibold flex-shrink-0"
+                    onClick={() =>
+                      navigate(`/order/${encodeURIComponent(order.id)}`)
+                    }
+                    className="flex-1 px-4 py-2 rounded-lg bg-gray-300/10 border border-gray-300/30 text-gray-300 text-xs hover:bg-gray-300/20 transition-colors uppercase font-semibold"
                   >
-                    View
+                    Details
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigate("/order-complete", {
+                        state: {
+                          order: {
+                            id: order.id,
+                            type: order.type || "BUY",
+                            token: order.token,
+                            amountTokens: order.amountTokens || 0,
+                            amountPKR: order.amountPKR || 0,
+                            buyerWallet:
+                              order.buyerWallet || wallet?.publicKey,
+                            sellerWallet: order.sellerWallet || ADMIN_WALLET,
+                            paymentMethod: order.paymentMethodId,
+                          },
+                          openChat: true,
+                        },
+                      });
+                    }}
+                    className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-[#FF7A5C]/20 to-[#FF5A8C]/20 border border-[#FF7A5C]/50 text-[#FF7A5C] text-xs hover:bg-gradient-to-r hover:from-[#FF7A5C]/30 hover:to-[#FF5A8C]/30 transition-colors uppercase font-semibold"
+                  >
+                    Chat
                   </button>
                 </div>
               </CardContent>

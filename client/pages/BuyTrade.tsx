@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { API_BASE, ADMIN_WALLET } from "@/lib/p2p";
 import { useWallet } from "@/contexts/WalletContext";
 import { copyToClipboard, shortenAddress } from "@/lib/wallet";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
   Dialog,
@@ -27,6 +27,8 @@ import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import {
   saveChatMessage,
   loadChatHistory,
+  loadServerChatHistory,
+  saveServerChatMessage,
   saveNotification,
   clearNotificationsForRoom,
   parseWebSocketMessage,
@@ -57,6 +59,9 @@ export default function BuyTrade() {
       ? room.buyer_wallet || ""
       : room.seller_wallet || "";
   }, [room, wallet?.publicKey]);
+
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastMessageCountRef = useRef(0);
 
   type Phase =
     | "entry"
@@ -123,44 +128,73 @@ export default function BuyTrade() {
   const canConfirm =
     Boolean(order) && Boolean(pricePKR) && Number(estimatedTokens) > 0;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!canConfirm || !derivedRoomId || !wallet) return;
 
-    const message: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      roomId: derivedRoomId,
-      senderWallet: wallet.publicKey,
-      senderRole: userRole,
-      type: "buyer_confirm",
-      text: `Buyer requested ~${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
-      metadata: {
-        amountPKR: Number(amountPKR),
-        token,
-        estimatedTokens: estimatedTokens.toFixed(6),
-      },
-      timestamp: Date.now(),
-    };
+    const text = `Buyer requested ~${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`;
 
-    saveChatMessage(message);
+    try {
+      // Save to server
+      const serverMsg = await saveServerChatMessage(
+        derivedRoomId,
+        wallet.publicKey,
+        text,
+      );
 
-    const notification: ChatNotification = {
-      type: "trade_initiated",
-      roomId: derivedRoomId,
-      initiatorWallet: wallet.publicKey,
-      initiatorRole: userRole,
-      message: `Trade initiated: ${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
-      data: { amountPKR: Number(amountPKR), token },
-      timestamp: Date.now(),
-    };
+      if (serverMsg) {
+        serverMsg.senderRole = userRole;
+        serverMsg.type = "buyer_confirm";
+        serverMsg.metadata = {
+          amountPKR: Number(amountPKR),
+          token,
+          estimatedTokens: estimatedTokens.toFixed(6),
+        };
+        setChatLog((prev) => [...prev, serverMsg]);
+        lastMessageCountRef.current += 1;
+      } else {
+        // Fallback
+        const message: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId: derivedRoomId,
+          senderWallet: wallet.publicKey,
+          senderRole: userRole,
+          type: "buyer_confirm",
+          text,
+          metadata: {
+            amountPKR: Number(amountPKR),
+            token,
+            estimatedTokens: estimatedTokens.toFixed(6),
+          },
+          timestamp: Date.now(),
+        };
+        saveChatMessage(message);
+        setChatLog((prev) => [...prev, message]);
+      }
 
-    saveNotification(notification);
+      const notification: ChatNotification = {
+        type: "trade_initiated",
+        roomId: derivedRoomId,
+        initiatorWallet: wallet.publicKey,
+        initiatorRole: userRole,
+        message: `Trade initiated: ${estimatedTokens.toFixed(6)} ${token} for PKR ${Number(amountPKR).toFixed(2)}`,
+        data: { amountPKR: Number(amountPKR), token },
+        timestamp: Date.now(),
+      };
 
-    setChatLog((prev) => [...prev, message]);
-    toast({
-      title: "Trade request sent",
-      description: `Request to buy ~${estimatedTokens.toFixed(6)} ${token}`,
-    });
-    setPhase("awaiting_seller_approval");
+      saveNotification(notification);
+
+      toast({
+        title: "Trade request sent",
+        description: `Request to buy ~${estimatedTokens.toFixed(6)} ${token}`,
+      });
+      setPhase("awaiting_seller_approval");
+    } catch (error) {
+      console.error("Failed to confirm trade:", error);
+      toast({
+        title: "Failed to send trade request",
+        variant: "destructive",
+      });
+    }
   };
 
   const notifySeller = () => {
@@ -212,11 +246,51 @@ export default function BuyTrade() {
     const role = order.type === "buy" ? "buyer" : "seller";
     setUserRole(role);
 
-    const history = loadChatHistory(rid);
-    setChatLog(history);
+    const loadHistory = async () => {
+      try {
+        // Load from server (source of truth)
+        const history = await loadServerChatHistory(rid);
+        setChatLog(history);
+        lastMessageCountRef.current = history.length;
+      } catch {
+        // Fallback to localStorage
+        const history = loadChatHistory(rid);
+        setChatLog(history);
+        lastMessageCountRef.current = history.length;
+      }
+    };
 
+    loadHistory();
     clearNotificationsForRoom(rid);
   }, [order?.id, wallet]);
+
+  // Poll for new messages every 2 seconds
+  useEffect(() => {
+    if (!order?.id || !wallet?.publicKey) return;
+
+    const setupPolling = () => {
+      syncIntervalRef.current = setInterval(async () => {
+        try {
+          const messages = await loadServerChatHistory(order.id);
+          // Only update if message count changed
+          if (messages.length !== lastMessageCountRef.current) {
+            setChatLog(messages);
+            lastMessageCountRef.current = messages.length;
+          }
+        } catch (error) {
+          // Silently fail on poll errors
+        }
+      }, 2000);
+    };
+
+    setupPolling();
+
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+      }
+    };
+  }, [order?.id, wallet?.publicKey]);
 
   // Auto-open chat if flagged
   useEffect(() => {
@@ -255,20 +329,41 @@ export default function BuyTrade() {
     }
   }, [counterpartyWallet, toWallet]);
 
-  const sendTextMessage = () => {
+  const sendTextMessage = async () => {
     if (!messageInput.trim() || !derivedRoomId || !wallet) return;
-    const message: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      roomId: derivedRoomId,
-      senderWallet: wallet.publicKey,
-      senderRole: userRole,
-      type: "message",
-      text: messageInput.trim(),
-      timestamp: Date.now(),
-    };
-    saveChatMessage(message);
-    setChatLog((prev) => [...prev, message]);
+    const text = messageInput.trim();
     setMessageInput("");
+
+    try {
+      // Save to server first
+      const serverMsg = await saveServerChatMessage(
+        derivedRoomId,
+        wallet.publicKey,
+        text,
+      );
+
+      if (serverMsg) {
+        serverMsg.senderRole = userRole;
+        setChatLog((prev) => [...prev, serverMsg]);
+        lastMessageCountRef.current += 1;
+      } else {
+        // Fallback to localStorage
+        const message: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          roomId: derivedRoomId,
+          senderWallet: wallet.publicKey,
+          senderRole: userRole,
+          type: "message",
+          text,
+          timestamp: Date.now(),
+        };
+        saveChatMessage(message);
+        setChatLog((prev) => [...prev, message]);
+      }
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      setMessageInput(text);
+    }
   };
 
   const handleReceived = () => {

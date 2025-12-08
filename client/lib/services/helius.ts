@@ -95,12 +95,13 @@ class HeliusAPI {
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
-    // Use public RPC endpoints directly - no backend proxy needed
-    this.endpoints = [
-      SOLANA_RPC_URL,
-      "https://solana-rpc.publicnode.com/",
-      "https://solana.publicnode.com",
-    ].filter(Boolean);
+    // Use ONLY Helius RPC endpoint - no fallbacks to other providers
+    this.endpoints = [SOLANA_RPC_URL].filter(Boolean);
+    if (this.endpoints.length === 0) {
+      throw new Error(
+        "SOLANA_RPC_URL (Helius) is required. Please set HELIUS_API_KEY environment variable.",
+      );
+    }
   }
 
   /**

@@ -16,23 +16,19 @@ import {
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { solPriceService } from "@/lib/services/sol-price";
-import { birdeyeAPI } from "@/lib/services/birdeye";
+import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { lockerPriceService } from "@/lib/services/locker-price";
 import { fxmPriceService } from "@/lib/services/fxm-price";
-import { getTokenBalanceForMint } from "@/lib/services/solana-rpc";
 import { getTokenPriceBySol } from "@/lib/services/derived-price";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
 import {
   savePricesToCache,
-  getCachedPrices,
   saveBalanceToCache,
   getCachedBalance,
   saveTokensToCache,
   getCachedTokens,
-  isCacheFresh,
-  CACHE_VALIDITY_PRICES,
 } from "@/lib/services/offline-cache";
 import {
   isEncryptedWalletStorage,
@@ -47,7 +43,6 @@ import {
   getStorageItem,
   setStorageItem,
   removeStorageItem,
-  validateWalletData,
   hasValidWalletData,
   clearAllWalletData,
   getStorageDiagnostics,
@@ -85,7 +80,6 @@ interface WalletProviderProps {
 
 const WALLETS_STORAGE_KEY = "solana_wallet_accounts";
 const LEGACY_WALLET_KEY = "solana_wallet_data";
-const HIDDEN_TOKENS_KEY = "hidden_tokens";
 const ACTIVE_WALLET_KEY = "solana_active_wallet";
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
@@ -519,10 +513,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     // Setup periodic refresh every 5 seconds (adaptive based on visibility)
     const setupRefreshInterval = () => {
-      // Use 5s interval when tab is visible for more responsive updates
-      // Longer interval (30s) when tab is hidden to conserve battery on mobile
-      const interval =
-        document.hidden || document.visibilityState === "hidden" ? 30000 : 5000;
+      // Auto-refresh dashboard every 30 seconds for live price updates
+      const interval = 30000;
 
       refreshIntervalRef.current = setInterval(async () => {
         try {
@@ -537,12 +529,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     setupRefreshInterval();
 
-    // Handle visibility changes to adjust polling frequency
+    // No longer adjust polling based on visibility - use fixed 30-second interval
     const handleVisibilityChange = () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-      setupRefreshInterval();
+      // Visibility changes no longer trigger interval reconfiguration
+      // Dashboard will refresh every 30 seconds consistently
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -763,37 +753,53 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const refreshBalance = async () => {
     if (!wallet) return;
 
-    setIsLoading(true);
+    // No loading state for balance - use fallback/cache silently
     setError(null);
     setIsUsingCache(false);
 
     try {
       const newBalance = await getBalance(wallet.publicKey);
-      if (typeof newBalance === "number" && !isNaN(newBalance)) {
+      if (
+        typeof newBalance === "number" &&
+        !isNaN(newBalance) &&
+        isFinite(newBalance) &&
+        newBalance >= 0
+      ) {
         setBalance(newBalance);
         balanceRef.current = newBalance;
         saveBalanceToCache(wallet.publicKey, newBalance);
       } else {
+        console.warn("[WalletContext] Invalid balance value:", newBalance);
         setBalance(0);
         balanceRef.current = 0;
       }
     } catch (error) {
       console.error("Error refreshing balance:", error);
-      setError("Failed to refresh balance");
 
-      // Try to use cached balance as fallback
+      // Try to use cached balance as fallback on network/RPC errors
       const cachedBalance = getCachedBalance(wallet.publicKey);
-      if (cachedBalance !== null) {
-        console.log("[WalletContext] Using cached balance:", cachedBalance);
+      if (
+        cachedBalance !== null &&
+        typeof cachedBalance === "number" &&
+        isFinite(cachedBalance) &&
+        cachedBalance >= 0
+      ) {
+        console.log(
+          "[WalletContext] Using cached SOL balance as fallback:",
+          cachedBalance,
+        );
         setBalance(cachedBalance);
         balanceRef.current = cachedBalance;
         setIsUsingCache(true);
+        setError(null);
       } else {
+        console.warn(
+          "[WalletContext] No valid cached balance available, showing 0",
+        );
         setBalance(0);
         balanceRef.current = 0;
+        setError("Unable to fetch SOL balance. Please check your connection.");
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -808,19 +814,88 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     lockerPriceService.clearCache();
     fxmPriceService.clearCache();
     solPriceService.clearCache();
-    birdeyeAPI.clearCache();
 
     console.log(
       `[WalletContext] Refreshing tokens for wallet: ${wallet.publicKey}`,
     );
     setError(null);
-    setIsLoading(true);
 
     try {
+      // Fetch token accounts (balances) silently - no loading state
       const tokenAccounts = await getTokenAccounts(wallet.publicKey);
-      const customTokens = JSON.parse(
-        localStorage.getItem("custom_tokens") || "[]",
-      ) as TokenInfo[];
+
+      // Check if SOL is already in tokenAccounts (new endpoint returns it with balance)
+      const solFromTokenAccounts = tokenAccounts.find(
+        (t) => t.symbol === "SOL",
+      );
+
+      // Use SOL from tokenAccounts if available and valid (for Cloudflare compatibility)
+      // Otherwise use the balance from the separate refreshBalance() call
+      let solBalance = 0;
+      const tokenAccountsHasValidBalance =
+        solFromTokenAccounts?.balance !== undefined &&
+        typeof solFromTokenAccounts.balance === "number" &&
+        isFinite(solFromTokenAccounts.balance) &&
+        solFromTokenAccounts.balance >= 0;
+
+      if (tokenAccountsHasValidBalance) {
+        solBalance = solFromTokenAccounts.balance;
+        setBalance(solFromTokenAccounts.balance);
+        balanceRef.current = solFromTokenAccounts.balance;
+        console.log(
+          `[WalletContext] Updated SOL balance from tokenAccounts: ${solFromTokenAccounts.balance}`,
+        );
+      } else {
+        // If we don't have a valid balance from tokenAccounts, try to fetch it directly
+        // This ensures SOL balance is always correct, especially on Cloudflare
+        if (
+          typeof balanceRef.current !== "number" ||
+          !isFinite(balanceRef.current) ||
+          balanceRef.current < 0
+        ) {
+          console.log(
+            "[WalletContext] Balance endpoint not yet fetched or invalid, fetching SOL balance directly",
+          );
+          try {
+            const directBalance = await getBalance(wallet.publicKey);
+            if (
+              typeof directBalance === "number" &&
+              isFinite(directBalance) &&
+              directBalance >= 0
+            ) {
+              solBalance = directBalance;
+              setBalance(directBalance);
+              balanceRef.current = directBalance;
+              console.log(
+                `[WalletContext] Fetched SOL balance directly: ${directBalance} SOL`,
+              );
+            } else {
+              console.warn(
+                "[WalletContext] Direct balance fetch returned invalid value:",
+                directBalance,
+              );
+              solBalance = 0;
+            }
+          } catch (err) {
+            console.error(
+              "[WalletContext] Failed to fetch SOL balance directly:",
+              err,
+            );
+            solBalance = 0;
+          }
+        } else {
+          // Use cached balance from earlier refreshBalance() call
+          solBalance =
+            typeof balanceRef.current === "number" &&
+            isFinite(balanceRef.current) &&
+            balanceRef.current >= 0
+              ? balanceRef.current
+              : balance || 0;
+          console.log(
+            `[WalletContext] Using SOL balance from balance endpoint: ${solBalance}`,
+          );
+        }
+      }
 
       const allTokens: TokenInfo[] = [
         {
@@ -830,7 +905,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           decimals: 9,
           logoURI:
             "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-          balance: balanceRef.current || balance || 0,
+          balance: solBalance,
         },
       ];
 
@@ -840,94 +915,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       });
 
-      customTokens.forEach((customToken) => {
-        const existingTokenIndex = allTokens.findIndex(
-          (t) => t.mint === customToken.mint,
-        );
-        if (existingTokenIndex >= 0) {
-          // Token exists from RPC - merge by preferring RPC data (especially balance, decimals)
-          // but use custom metadata if RPC returned generic "Unknown Token"
-          const rpcToken = allTokens[existingTokenIndex];
-          const isRpcGeneric =
-            rpcToken.symbol === "UNKNOWN" || !rpcToken.symbol;
-
-          allTokens[existingTokenIndex] = {
-            ...rpcToken,
-            // Override with custom metadata if RPC returned generic data
-            ...(isRpcGeneric && {
-              symbol: customToken.symbol,
-              name: customToken.name,
-              logoURI: customToken.logoURI,
-            }),
-            // Always use custom logoURI if available (user-added logo takes priority)
-            ...(customToken.logoURI && { logoURI: customToken.logoURI }),
-            // Always keep the RPC balance and decimals
-            balance: rpcToken.balance,
-            decimals: rpcToken.decimals,
-          };
-        } else {
-          // Token doesn't exist from RPC - add it with balance 0 for now
-          // Will be updated below with actual balance fetch
-          allTokens.push({ ...customToken, balance: 0 });
-        }
-      });
-
-      // Fetch balances for custom tokens that weren't found in RPC results
-      const customTokenMintSet = new Set(customTokens.map((t) => t.mint));
-      const customTokensWithZeroBalance = allTokens.filter(
-        (token) =>
-          customTokenMintSet.has(token.mint) &&
-          (token.balance === 0 || token.balance === undefined),
-      );
-
-      // Fetch missing balances in parallel
-      if (customTokensWithZeroBalance.length > 0) {
-        console.log(
-          `[WalletContext] Fetching balances for ${customTokensWithZeroBalance.length} custom tokens with zero balance...`,
-        );
-
-        const balanceFetchPromises = customTokensWithZeroBalance.map(
-          async (token) => {
-            try {
-              const balance = await getTokenBalanceForMint(
-                wallet.publicKey,
-                token.mint,
-              );
-              return {
-                mint: token.mint,
-                balance: balance ?? 0,
-              };
-            } catch (error) {
-              console.warn(
-                `[WalletContext] Failed to fetch balance for ${token.mint}:`,
-                error,
-              );
-              return {
-                mint: token.mint,
-                balance: 0,
-              };
-            }
-          },
-        );
-
-        const fetchedBalances = await Promise.all(balanceFetchPromises);
-
-        // Update allTokens with fetched balances
-        fetchedBalances.forEach(({ mint, balance }) => {
-          const tokenIndex = allTokens.findIndex((t) => t.mint === mint);
-          if (tokenIndex >= 0) {
-            allTokens[tokenIndex] = {
-              ...allTokens[tokenIndex],
-              balance,
-            };
-            console.log(
-              `[WalletContext] ✅ Updated balance for ${mint}: ${balance}`,
-            );
-          }
-        });
-      }
-
-      // Price fetching logic
+      // Price fetching logic - show loader only during price fetch
+      setIsLoading(true);
       let prices: Record<string, number> = {};
       let priceSource = "fallback";
       let changeMap: Record<string, number> = {};
@@ -936,26 +925,27 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       try {
         const tokenMints = allTokens.map((token) => token.mint);
 
-        // Fetch prices from Birdeye API (via proxy)
+        // Fetch prices from DexScreener API
         try {
           const allMintsToFetch = Array.from(
             new Set(tokenMints.filter(Boolean)),
           );
 
           if (allMintsToFetch.length > 0) {
-            const birdeyeTokens =
-              await birdeyeAPI.getTokensByMints(allMintsToFetch);
-            const birdeyePrices = birdeyeAPI.getTokenPrices(birdeyeTokens);
-            prices = { ...prices, ...birdeyePrices };
+            const dexTokens =
+              await dexscreenerAPI.getTokensByMints(allMintsToFetch);
+            const dexPrices = dexscreenerAPI.getTokenPrices(dexTokens);
+            prices = { ...prices, ...dexPrices };
 
-            birdeyeTokens.forEach((token) => {
-              if (token.address && token.priceChange?.h24) {
-                changeMap[token.address] = token.priceChange.h24;
+            dexTokens.forEach((token) => {
+              const baseMint = token.baseToken?.address;
+              if (baseMint && token.priceChange?.h24) {
+                changeMap[baseMint] = token.priceChange.h24;
               }
             });
           }
         } catch (e) {
-          console.warn("Birdeye fetch failed:", e);
+          console.warn("DexScreener fetch failed:", e);
         }
 
         // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing
@@ -1101,15 +1091,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       }
 
-      // Load hidden tokens list
-      const hiddenTokens = JSON.parse(
-        localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
-      ) as string[];
-
-      // Filter out hidden tokens from allTokens
-      const visibleTokens = allTokens.filter(
-        (token) => !hiddenTokens.includes(token.mint),
-      );
+      // Use all tokens (removed localStorage-based hidden tokens filtering)
+      const visibleTokens = allTokens;
 
       // Calculate SOL-based prices for tokens without valid prices
       const tokensNeedingPrices = visibleTokens.filter((token) => {
@@ -1255,7 +1238,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             decimals: 9,
             logoURI:
               "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-            balance: balance || 0,
+            balance:
+              typeof balanceRef.current === "number"
+                ? balanceRef.current
+                : balance || 0,
           },
         ];
 
@@ -1274,51 +1260,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       return [...currentTokens, token];
     });
 
-    const customTokens = JSON.parse(
-      localStorage.getItem("custom_tokens") || "[]",
-    );
-    const newCustomTokens = [
-      ...customTokens.filter((t: TokenInfo) => t.mint !== token.mint),
-      token,
-    ];
-    localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
-
-    // If token was previously hidden, remove it from hidden tokens to ensure it becomes visible
-    try {
-      const hiddenTokens = JSON.parse(
-        localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
-      ) as string[];
-      const filtered = hiddenTokens.filter((m) => m !== token.mint);
-      if (filtered.length !== hiddenTokens.length) {
-        localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify(filtered));
-      }
-    } catch (e) {
-      // ignore
-    }
-
     if (wallet) refreshTokens();
   };
 
   const removeToken = (tokenMint: string) => {
-    // Remove from custom tokens if it exists there
-    const customTokens = JSON.parse(
-      localStorage.getItem("custom_tokens") || "[]",
-    ) as TokenInfo[];
-    const newCustomTokens = customTokens.filter(
-      (t: TokenInfo) => t.mint !== tokenMint,
-    );
-    localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
-
-    // Add to hidden tokens list to permanently hide it
-    const hiddenTokens = JSON.parse(
-      localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
-    ) as string[];
-    if (!hiddenTokens.includes(tokenMint)) {
-      hiddenTokens.push(tokenMint);
-      localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify(hiddenTokens));
-    }
-
-    // Update state immediately
     setTokens((currentTokens) =>
       currentTokens.filter((t) => t.mint !== tokenMint),
     );

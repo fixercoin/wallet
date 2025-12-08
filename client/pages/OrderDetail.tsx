@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
+import { cancelOrder } from "@/lib/kv-orders-sync";
 
 export default function OrderDetail() {
   const { formatCurrency } = useCurrency();
@@ -85,6 +86,34 @@ export default function OrderDetail() {
   }, [orderId]);
 
   const goBack = () => navigate(-1);
+
+  const handleCancelOrder = async () => {
+    if (!order || !wallet?.publicKey) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this order? This action cannot be undone.",
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await cancelOrder(order.id, wallet.publicKey);
+
+      toast({
+        title: "Order Cancelled",
+        description: "The order has been successfully cancelled.",
+      });
+
+      navigate(-1);
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel the order.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div
@@ -241,6 +270,12 @@ export default function OrderDetail() {
                 className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl"
               >
                 COMPLETE ORDER
+              </Button>
+              <Button
+                onClick={handleCancelOrder}
+                className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 text-red-400"
+              >
+                CANCEL ORDER
               </Button>
               <Button
                 onClick={goBack}

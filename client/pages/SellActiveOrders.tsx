@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, X, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,8 @@ import { ShoppingCart, TrendingUp } from "lucide-react";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { getOrdersByWallet, P2POrder } from "@/lib/p2p-orders";
+import { getPaymentMethodsByWallet } from "@/lib/p2p-payment-methods";
+import { useP2PPolling } from "@/hooks/use-p2p-polling";
 import { ADMIN_WALLET } from "@/lib/p2p";
 
 export default function SellActiveOrders() {
@@ -29,6 +32,7 @@ export default function SellActiveOrders() {
   const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
   const [offerPassword, setOfferPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [cancelling, setCancelling] = useState<string | null>(null);
 
   const OFFER_PASSWORD = "######Pakistan";
 
@@ -43,8 +47,57 @@ export default function SellActiveOrders() {
     navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
   };
 
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      setCancelling(orderId);
+      const walletAddress = wallet?.publicKey;
+      if (!walletAddress) {
+        throw new Error("Wallet address not found");
+      }
+
+      const response = await fetch(
+        `/api/p2p/orders/${encodeURIComponent(orderId)}?wallet=${encodeURIComponent(walletAddress)}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || `Failed to cancel order: ${response.status}`,
+        );
+      }
+
+      setOrders((prevOrders) => prevOrders.filter((o) => o.id !== orderId));
+      toast.success("Order cancelled successfully");
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to cancel order";
+      toast.error(errorMsg);
+      console.error("Error cancelling order:", err);
+    } finally {
+      setCancelling(null);
+    }
+  };
+
+  // Use polling for real-time order updates
+  useP2PPolling(
+    (fetchedOrders) => {
+      const sellOrders = fetchedOrders.filter((order) => order.type === "SELL");
+      setOrders(sellOrders);
+      setLoadingOrders(false);
+    },
+    {
+      walletAddress: wallet?.publicKey,
+      status: "PENDING",
+      pollInterval: 3000,
+      enabled: !!wallet?.publicKey,
+    },
+  );
+
   useEffect(() => {
-    const loadOrders = async () => {
+    const loadData = async () => {
       if (!wallet?.publicKey) {
         setOrders([]);
         setLoadingOrders(false);
@@ -53,6 +106,8 @@ export default function SellActiveOrders() {
 
       try {
         setLoadingOrders(true);
+
+        // Fetch orders
         const fetchedOrders = await getOrdersByWallet(
           wallet.publicKey,
           "PENDING",
@@ -61,15 +116,25 @@ export default function SellActiveOrders() {
           (order) => order.type === "SELL",
         );
         setOrders(sellOrders);
+
+        // Fetch payment methods from Cloudflare KV
+        const paymentMethods = await getPaymentMethodsByWallet(
+          wallet.publicKey,
+        );
+
+        // Use the first payment method if available
+        if (paymentMethods.length > 0) {
+          setEditingPaymentMethodId(paymentMethods[0].id);
+        }
       } catch (error) {
-        console.error("Error loading orders:", error);
+        console.error("Error loading data:", error);
         setOrders([]);
       } finally {
         setLoadingOrders(false);
       }
     };
 
-    loadOrders();
+    loadData();
   }, [wallet?.publicKey]);
 
   if (!wallet) {
@@ -118,7 +183,11 @@ export default function SellActiveOrders() {
             <Card
               key={order.id}
               className="bg-transparent border border-gray-300/30 hover:border-gray-300/50 transition-colors cursor-pointer"
-              onClick={() => navigate(`/order/${encodeURIComponent(order.id)}`)}
+              onClick={() =>
+                navigate("/order-complete", {
+                  state: { order, openChat: true },
+                })
+              }
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between gap-4">
@@ -150,21 +219,34 @@ export default function SellActiveOrders() {
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (wallet?.publicKey === ADMIN_WALLET) {
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCancelOrder(order.id);
+                      }}
+                      disabled={cancelling === order.id}
+                      className="p-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Cancel order"
+                    >
+                      {cancelling === order.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <X className="w-4 h-4" />
+                      )}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
                         navigate("/order-complete", {
                           state: { order, openChat: true },
                         });
-                      } else {
-                        navigate(`/order/${encodeURIComponent(order.id)}`);
-                      }
-                    }}
-                    className="px-4 py-2 rounded-lg bg-gray-300/10 border border-gray-300/30 text-gray-300 text-xs hover:bg-gray-300/20 transition-colors uppercase font-semibold flex-shrink-0"
-                  >
-                    View
-                  </button>
+                      }}
+                      className="px-4 py-2 rounded-lg bg-gray-300/10 border border-gray-300/30 text-gray-300 text-xs hover:bg-gray-300/20 transition-colors uppercase font-semibold"
+                    >
+                      View
+                    </button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

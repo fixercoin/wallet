@@ -1,70 +1,89 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ShoppingCart, TrendingUp } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
-import { ADMIN_WALLET } from "@/lib/p2p";
+import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
+const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
 export default function BuyOrder() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
-  const [orders, setOrders] = useState<any[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
+
+  // Redirect to buydata on mount
+  useEffect(() => {
+    navigate("/buydata", { replace: true });
+  }, [navigate]);
+
+  const [amountPKR, setAmountPKR] = useState<string>("");
+  const [estimatedUSDC, setEstimatedUSDC] = useState<number>(0);
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
+  const [loadingRate, setLoadingRate] = useState(true);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
   >();
-  const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
-  const [offerPassword, setOfferPassword] = useState("");
-  const [passwordError, setPasswordError] = useState("");
 
-  const OFFER_PASSWORD = "######Pakistan";
-
-  const handleOfferAction = (action: "buy" | "sell") => {
-    if (offerPassword !== OFFER_PASSWORD) {
-      setPasswordError("Invalid password");
-      return;
-    }
-    setShowCreateOfferDialog(false);
-    setOfferPassword("");
-    setPasswordError("");
-    navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
-  };
-
+  // Fetch exchange rate on mount
   useEffect(() => {
-    const loadOrders = () => {
+    const fetchExchangeRate = async () => {
       try {
-        setLoadingOrders(true);
-        const pendingOrders = JSON.parse(
-          localStorage.getItem("orders_pending") || "[]",
-        );
-        const buyOrders = pendingOrders.filter(
-          (order: any) => order.type === "BUY",
-        );
-        setOrders(buyOrders);
+        setLoadingRate(true);
+        const response = await fetch("/api/exchange-rate?token=USDC");
+        if (!response.ok) {
+          throw new Error("Failed to fetch exchange rate");
+        }
+        const data = await response.json();
+        setExchangeRate(data.priceInPKR);
       } catch (error) {
-        console.error("Error loading orders from localStorage:", error);
-        setOrders([]);
+        console.error("Error fetching exchange rate:", error);
+        toast.error("Failed to load exchange rate");
       } finally {
-        setLoadingOrders(false);
+        setLoadingRate(false);
       }
     };
 
-    loadOrders();
-
-    const interval = setInterval(loadOrders, 1000);
-    return () => clearInterval(interval);
+    fetchExchangeRate();
   }, []);
+
+  // Calculate estimated USDC based on PKR amount
+  useEffect(() => {
+    if (amountPKR && exchangeRate) {
+      const pkrAmount = parseFloat(amountPKR);
+      if (!isNaN(pkrAmount) && pkrAmount > 0) {
+        const usdcAmount = pkrAmount / exchangeRate;
+        setEstimatedUSDC(usdcAmount);
+      } else {
+        setEstimatedUSDC(0);
+      }
+    } else {
+      setEstimatedUSDC(0);
+    }
+  }, [amountPKR, exchangeRate]);
+
+  const handleSubmitOrder = () => {
+    if (!wallet?.publicKey) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+
+    const pkrAmount = parseFloat(amountPKR);
+    if (isNaN(pkrAmount) || pkrAmount <= 0) {
+      toast.error("Please enter a valid PKR amount");
+      return;
+    }
+
+    if (!exchangeRate) {
+      toast.error("Exchange rate not available");
+      return;
+    }
+
+    toast.success("Form submitted. Navigating to your orders...");
+    navigate("/buydata");
+  };
 
   if (!wallet) {
     return (
@@ -87,7 +106,7 @@ export default function BuyOrder() {
       {/* Header */}
       <div className="sticky top-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-transparent p-4">
         <button
-          onClick={() => navigate("/p2p")}
+          onClick={() => navigate("/")}
           className="text-gray-300 hover:text-gray-100 transition-colors"
           aria-label="Back"
         >
@@ -102,91 +121,62 @@ export default function BuyOrder() {
             className="text-white/80 text-center uppercase tracking-wide"
             style={{ fontSize: "11px" }}
           >
-            USER CAN BUY ONLY USDC COIN WITH PAKISTANI RUPEE
+            Buy USDC with Pakistani Rupee
           </p>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="w-full px-4 py-8">
-        <div className="space-y-3">
-          {loadingOrders && (
-            <div
-              className="text-center text-white/70 py-8"
-              style={{ fontSize: "12px" }}
-            >
-              Loading orders...
+        <Card className="bg-transparent border border-gray-300/30">
+          <CardContent className="p-6 space-y-6">
+            {/* Amount Input */}
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-3 uppercase">
+                Amount in PKR
+              </label>
+              <input
+                type="number"
+                value={amountPKR}
+                onChange={(e) => setAmountPKR(e.target.value)}
+                placeholder="Enter amount in PKR"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a2847]/50 border border-gray-300/30 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C]/50"
+                disabled={loadingRate}
+              />
             </div>
-          )}
-          {!loadingOrders && orders.length === 0 && (
-            <div
-              className="text-center text-white/70 py-8"
-              style={{ fontSize: "12px" }}
-            >
-              No buy orders yet
+
+            {/* Estimated USDC Display */}
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-3 uppercase">
+                Estimated USDC
+              </label>
+              <div className="w-full px-4 py-3 rounded-lg bg-[#1a2847]/50 border border-gray-300/30 text-white/70 flex items-center">
+                <span className="text-lg font-semibold">
+                  {estimatedUSDC > 0 ? estimatedUSDC.toFixed(6) : "0.000000"}{" "}
+                  USDC
+                </span>
+              </div>
             </div>
-          )}
-          {orders.map((order) => {
-            const isOrderCreator = order.walletAddress === wallet?.publicKey;
-            return (
-              <Card
-                key={order.id}
-                className="bg-transparent border border-gray-300/30 hover:border-gray-300/50 transition-colors cursor-pointer w-full"
-                onClick={() =>
-                  navigate(`/order/${encodeURIComponent(order.id)}`)
-                }
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <div
-                        className="font-semibold text-white"
-                        style={{ fontSize: "12px" }}
-                      >
-                        <span>BUY-{order.id.split("-").pop()}</span>
-                        <span className="text-[#FF7A5C] ml-3">
-                          LIMIT {Number(order.amountPKR || 0).toFixed(2)} PKR
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 flex-shrink-0">
-                      {isOrderCreator && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate("/buy-now", {
-                              state: { editingOrder: order },
-                            });
-                          }}
-                          className="px-4 py-3 rounded-lg bg-blue-600/80 hover:bg-blue-700 text-white transition-colors uppercase font-semibold"
-                          style={{ fontSize: "12px" }}
-                        >
-                          EDIT
-                        </button>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (wallet?.publicKey === ADMIN_WALLET) {
-                            navigate("/order-complete", {
-                              state: { order, openChat: true },
-                            });
-                          } else {
-                            navigate(`/order/${encodeURIComponent(order.id)}`);
-                          }
-                        }}
-                        className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white hover:shadow-lg transition-colors uppercase font-semibold"
-                        style={{ fontSize: "12px" }}
-                      >
-                        BUY
-                      </button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+
+            {/* Exchange Rate Info */}
+            {exchangeRate && (
+              <div className="text-xs text-white/60 bg-[#1a2847]/30 p-3 rounded-lg">
+                <p className="text-center">
+                  1 USDC = {exchangeRate.toFixed(2)} PKR
+                </p>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <Button
+              onClick={handleSubmitOrder}
+              disabled={loadingRate || !amountPKR || amountPKR === "0"}
+              className="w-full py-3 rounded-lg bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white hover:shadow-lg transition-colors uppercase font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Submit Order
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Payment Method Dialog */}
@@ -205,72 +195,15 @@ export default function BuyOrder() {
         }}
       />
 
-      {/* Create Offer Dialog */}
-      <Dialog
-        open={showCreateOfferDialog}
-        onOpenChange={(open) => {
-          setShowCreateOfferDialog(open);
-          if (!open) {
-            setOfferPassword("");
-            setPasswordError("");
-          }
-        }}
-      >
-        <DialogContent className="bg-[#1a2847] border border-gray-300/30 text-white">
-          <DialogHeader>
-            <DialogTitle className="text-white uppercase">
-              CREATE OFFER
-            </DialogTitle>
-            <DialogDescription className="text-white/70 uppercase">
-              CHOOSE WHETHER YOU WANT TO BUY OR SELL CRYPTO
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-2 uppercase">
-                Password
-              </label>
-              <input
-                type="password"
-                value={offerPassword}
-                onChange={(e) => {
-                  setOfferPassword(e.target.value);
-                  setPasswordError("");
-                }}
-                placeholder="Enter password"
-                className="w-full px-4 py-2 rounded-lg bg-[#1a2540]/50 border border-gray-300/30 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-gray-300/50"
-              />
-              {passwordError && (
-                <p className="text-red-500 text-xs mt-1">{passwordError}</p>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Button
-                onClick={() => handleOfferAction("buy")}
-                className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-600/20 to-blue-600/10 border border-blue-500/30 hover:border-blue-500/50 text-white font-semibold rounded-lg transition-all uppercase"
-              >
-                <ShoppingCart className="w-8 h-8" />
-                <span>BUY CRYPTO</span>
-              </Button>
-              <Button
-                onClick={() => handleOfferAction("sell")}
-                className="h-32 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-green-600/20 to-green-600/10 border border-green-500/30 hover:border-green-500/50 text-white font-semibold rounded-lg transition-all uppercase"
-              >
-                <TrendingUp className="w-8 h-8" />
-                <span>SELL CRYPTO</span>
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Bottom Navigation */}
       <P2PBottomNavigation
         onPaymentClick={() => {
           setEditingPaymentMethodId(undefined);
           setShowPaymentDialog(true);
         }}
-        onCreateOfferClick={() => setShowCreateOfferDialog(true)}
+        onCreateOfferClick={() => {
+          navigate("/buy-crypto");
+        }}
       />
     </div>
   );

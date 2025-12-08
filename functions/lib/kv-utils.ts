@@ -25,9 +25,18 @@ export interface P2POrder {
   amountTokens: number;
   amountPKR: number;
   paymentMethodId: string;
-  status: "PENDING" | "COMPLETED" | "CANCELLED";
+  status: "PENDING" | "COMPLETED" | "CANCELLED" | "ESCROW_LOCKED" | "DISPUTED";
   createdAt: number;
   updatedAt: number;
+  escrowId?: string;
+  matchedWith?: string;
+  minAmountPKR?: number;
+  maxAmountPKR?: number;
+  minAmountTokens?: number;
+  maxAmountTokens?: number;
+  pricePKRPerQuote?: number;
+  sellerWallet?: string;
+  buyerWallet?: string;
 }
 
 export interface OrderNotification {
@@ -45,6 +54,35 @@ export interface OrderNotification {
   };
   read: boolean;
   createdAt: number;
+}
+
+export interface Escrow {
+  id: string;
+  orderId: string;
+  buyerWallet: string;
+  sellerWallet: string;
+  amountPKR: number;
+  amountTokens: number;
+  token: string;
+  status: "LOCKED" | "RELEASED" | "REFUNDED" | "DISPUTED";
+  createdAt: number;
+  updatedAt: number;
+  releasedAt?: number;
+}
+
+export interface Dispute {
+  id: string;
+  escrowId: string;
+  orderId: string;
+  initiatedBy: string;
+  reason: string;
+  status: "OPEN" | "RESOLVED" | "CLOSED";
+  resolution?: "RELEASE_TO_SELLER" | "REFUND_TO_BUYER" | "SPLIT";
+  resolvedBy?: string;
+  resolvedAt?: number;
+  evidence: string[];
+  createdAt: number;
+  updatedAt: number;
 }
 
 interface KVNamespace {
@@ -325,7 +363,9 @@ export class KVStore {
    * Create or update an order
    */
   async saveOrder(
-    order: Omit<P2POrder, "id" | "createdAt" | "updatedAt">,
+    order: Omit<P2POrder, "id" | "createdAt" | "updatedAt"> & {
+      [key: string]: any;
+    },
     orderId?: string,
   ): Promise<P2POrder> {
     const id =
@@ -340,7 +380,7 @@ export class KVStore {
       id,
       createdAt: existing?.createdAt || now,
       updatedAt: now,
-    };
+    } as P2POrder;
 
     await this.kv.put(`orders:${id}`, JSON.stringify(p2pOrder));
 
@@ -369,6 +409,44 @@ export class KVStore {
       `orders:wallet:${walletAddress}`,
       JSON.stringify(filtered),
     );
+  }
+
+  /**
+   * Update order status
+   */
+  async updateOrderStatus(
+    orderId: string,
+    status: "PENDING" | "COMPLETED" | "CANCELLED",
+  ): Promise<P2POrder | null> {
+    const order = await this.getOrder(orderId);
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    const updated: P2POrder = {
+      ...order,
+      status,
+      updatedAt: Date.now(),
+    };
+
+    await this.kv.put(`orders:${orderId}`, JSON.stringify(updated));
+    return updated;
+  }
+
+  /**
+   * Get pending orders for a wallet
+   */
+  async getPendingOrdersByWallet(walletAddress: string): Promise<P2POrder[]> {
+    const orders = await this.getOrdersByWallet(walletAddress);
+    return orders.filter((o) => o.status === "PENDING");
+  }
+
+  /**
+   * Get completed orders for a wallet
+   */
+  async getCompletedOrdersByWallet(walletAddress: string): Promise<P2POrder[]> {
+    const orders = await this.getOrdersByWallet(walletAddress);
+    return orders.filter((o) => o.status === "COMPLETED");
   }
 
   /**
@@ -481,6 +559,189 @@ export class KVStore {
     walletAddress: string,
   ): Promise<string[]> {
     const json = await this.kv.get(`notifications:wallet:${walletAddress}`);
+    return json ? JSON.parse(json) : [];
+  }
+
+  /**
+   * Create or update an escrow
+   */
+  async saveEscrow(
+    escrow: Omit<Escrow, "id" | "createdAt" | "updatedAt">,
+    escrowId?: string,
+  ): Promise<Escrow> {
+    const id =
+      escrowId ||
+      `escrow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const now = Date.now();
+
+    const existing = escrowId ? await this.getEscrow(escrowId) : null;
+
+    const newEscrow: Escrow = {
+      ...escrow,
+      id,
+      createdAt: existing?.createdAt || now,
+      updatedAt: now,
+    };
+
+    await this.kv.put(`escrow:${id}`, JSON.stringify(newEscrow));
+
+    const escrowIds = await this.getEscrowIdsForOrder(escrow.orderId);
+    if (!escrowIds.includes(id)) {
+      escrowIds.push(id);
+      await this.kv.put(
+        `escrow:order:${escrow.orderId}`,
+        JSON.stringify(escrowIds),
+      );
+    }
+
+    return newEscrow;
+  }
+
+  /**
+   * Get an escrow by ID
+   */
+  async getEscrow(escrowId: string): Promise<Escrow | null> {
+    const json = await this.kv.get(`escrow:${escrowId}`);
+    return json ? JSON.parse(json) : null;
+  }
+
+  /**
+   * Get all escrows for an order
+   */
+  async getEscrowsByOrder(orderId: string): Promise<Escrow[]> {
+    const escrowIds = await this.getEscrowIdsForOrder(orderId);
+    const escrows: Escrow[] = [];
+
+    for (const escrowId of escrowIds) {
+      const escrow = await this.getEscrow(escrowId);
+      if (escrow) {
+        escrows.push(escrow);
+      }
+    }
+
+    return escrows;
+  }
+
+  /**
+   * Get escrow IDs for order
+   */
+  private async getEscrowIdsForOrder(orderId: string): Promise<string[]> {
+    const json = await this.kv.get(`escrow:order:${orderId}`);
+    return json ? JSON.parse(json) : [];
+  }
+
+  /**
+   * Update escrow status
+   */
+  async updateEscrowStatus(
+    escrowId: string,
+    status: "LOCKED" | "RELEASED" | "REFUNDED" | "DISPUTED",
+  ): Promise<Escrow | null> {
+    const escrow = await this.getEscrow(escrowId);
+    if (!escrow) {
+      throw new Error("Escrow not found");
+    }
+
+    const updated: Escrow = {
+      ...escrow,
+      status,
+      updatedAt: Date.now(),
+      ...(status === "RELEASED" && { releasedAt: Date.now() }),
+    };
+
+    await this.kv.put(`escrow:${escrowId}`, JSON.stringify(updated));
+    return updated;
+  }
+
+  /**
+   * Create a dispute
+   */
+  async createDispute(
+    dispute: Omit<Dispute, "id" | "createdAt" | "updatedAt">,
+  ): Promise<Dispute> {
+    const id = `dispute_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const now = Date.now();
+
+    const newDispute: Dispute = {
+      ...dispute,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await this.kv.put(`dispute:${id}`, JSON.stringify(newDispute));
+
+    const disputeIds = await this.getDisputeIds();
+    disputeIds.push(id);
+    await this.kv.put(`disputes:all`, JSON.stringify(disputeIds));
+
+    return newDispute;
+  }
+
+  /**
+   * Get a dispute by ID
+   */
+  async getDispute(disputeId: string): Promise<Dispute | null> {
+    const json = await this.kv.get(`dispute:${disputeId}`);
+    return json ? JSON.parse(json) : null;
+  }
+
+  /**
+   * Get all disputes
+   */
+  async getAllDisputes(): Promise<Dispute[]> {
+    const disputeIds = await this.getDisputeIds();
+    const disputes: Dispute[] = [];
+
+    for (const disputeId of disputeIds) {
+      const dispute = await this.getDispute(disputeId);
+      if (dispute) {
+        disputes.push(dispute);
+      }
+    }
+
+    return disputes;
+  }
+
+  /**
+   * Get open disputes
+   */
+  async getOpenDisputes(): Promise<Dispute[]> {
+    const allDisputes = await this.getAllDisputes();
+    return allDisputes.filter((d) => d.status === "OPEN");
+  }
+
+  /**
+   * Resolve a dispute
+   */
+  async resolveDispute(
+    disputeId: string,
+    resolution: "RELEASE_TO_SELLER" | "REFUND_TO_BUYER" | "SPLIT",
+    resolvedBy: string,
+  ): Promise<Dispute | null> {
+    const dispute = await this.getDispute(disputeId);
+    if (!dispute) {
+      throw new Error("Dispute not found");
+    }
+
+    const updated: Dispute = {
+      ...dispute,
+      status: "RESOLVED",
+      resolution,
+      resolvedBy,
+      resolvedAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    await this.kv.put(`dispute:${disputeId}`, JSON.stringify(updated));
+    return updated;
+  }
+
+  /**
+   * Get dispute IDs
+   */
+  private async getDisputeIds(): Promise<string[]> {
+    const json = await this.kv.get(`disputes:all`);
     return json ? JSON.parse(json) : [];
   }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShoppingCart, TrendingUp } from "lucide-react";
@@ -23,6 +23,10 @@ import {
 } from "@/components/ui/dialog";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
+import {
+  PaymentMethod,
+  getPaymentMethodsByWallet,
+} from "@/lib/p2p-payment-methods";
 
 interface TokenOption {
   id: string;
@@ -51,14 +55,16 @@ export default function BuyCrypto() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const editOrderId = searchParams.get("edit");
 
   const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
     DEFAULT_TOKENS[0],
   );
-  const [amountPKR, setAmountPKR] = useState<string>("");
+  const [minAmountPKR, setMinAmountPKR] = useState<string>("");
+  const [maxAmountPKR, setMaxAmountPKR] = useState<string>("");
   const [walletAddress, setWalletAddress] = useState<string>("");
-  const [estimatedTokens, setEstimatedTokens] = useState<number>(0);
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [fetchingRate, setFetchingRate] = useState(false);
@@ -69,6 +75,11 @@ export default function BuyCrypto() {
   const [showCreateOfferDialog, setShowCreateOfferDialog] = useState(false);
   const [offerPassword, setOfferPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
+    null,
+  );
+  const [fetchingPaymentMethod, setFetchingPaymentMethod] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<any>(null);
 
   const OFFER_PASSWORD = "######Pakistan";
 
@@ -83,14 +94,85 @@ export default function BuyCrypto() {
     navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
   };
 
-  const addPendingOrder = (o: any) => {
+  const saveOrderToKV = async (order: any, isUpdate: boolean = false) => {
     try {
-      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
-      const arr = Array.isArray(cur) ? cur : [];
-      arr.unshift({ ...o, status: "pending" });
-      localStorage.setItem("orders_pending", JSON.stringify(arr));
-    } catch {}
+      const method = isUpdate ? "PUT" : "POST";
+      const url = isUpdate
+        ? `/api/p2p/orders/${editingOrder.id}`
+        : "/api/p2p/orders";
+
+      const orderPayload: any = {
+        walletAddress: wallet.publicKey,
+        type: order.type,
+        token: order.token,
+        minAmountPKR: order.minAmountPKR,
+        maxAmountPKR: order.maxAmountPKR,
+        pricePKRPerQuote: order.pricePKRPerQuote,
+        paymentMethodId: order.paymentMethod,
+        status: "PENDING",
+      };
+
+      // Only include amountTokens and amountPKR if provided
+      if (order.amountTokens !== undefined) {
+        orderPayload.amountTokens = order.amountTokens;
+      }
+      if (order.amountPKR !== undefined) {
+        orderPayload.amountPKR = order.amountPKR;
+      }
+
+      // For edit operations
+      if (isUpdate && editingOrder?.id) {
+        orderPayload.orderId = editingOrder.id;
+      }
+
+      const response = await fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderPayload),
+      });
+
+      if (!response.ok) {
+        console.error(
+          `Failed to ${isUpdate ? "update" : "save"} order:`,
+          response.status,
+        );
+        return false;
+      }
+      const data = await response.json();
+      return data.order || data.data || data;
+    } catch (error) {
+      console.error(`Error ${isUpdate ? "updating" : "saving"} order:`, error);
+      return false;
+    }
   };
+
+  // Load editing order if edit parameter exists
+  useEffect(() => {
+    const fetchEditingOrder = async () => {
+      if (!editOrderId || !wallet?.publicKey) return;
+
+      try {
+        const response = await fetch(`/api/p2p/orders/${editOrderId}`);
+        if (!response.ok) throw new Error("Failed to fetch order");
+
+        const data = await response.json();
+        const order = data.order || data;
+
+        setEditingOrder(order);
+        setMinAmountPKR(String(order.minAmountPKR || ""));
+        setMaxAmountPKR(String(order.maxAmountPKR || ""));
+      } catch (error) {
+        console.error("Error fetching order:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load order data",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchEditingOrder();
+  }, [editOrderId, wallet?.publicKey, toast]);
 
   // Load token logos/prices (best-effort)
   useEffect(() => {
@@ -140,14 +222,32 @@ export default function BuyCrypto() {
     fetchRate();
   }, [selectedToken]);
 
-  // Estimate tokens on amount/rate change
+  // Fetch payment method from KV for the current wallet
   useEffect(() => {
-    if (amountPKR && exchangeRate > 0) {
-      setEstimatedTokens(Number(amountPKR) / exchangeRate);
-    } else {
-      setEstimatedTokens(0);
-    }
-  }, [amountPKR, exchangeRate]);
+    const fetchPaymentMethod = async () => {
+      if (!wallet?.publicKey) {
+        setPaymentMethod(null);
+        return;
+      }
+
+      setFetchingPaymentMethod(true);
+      try {
+        const methods = await getPaymentMethodsByWallet(wallet.publicKey);
+        if (methods.length > 0) {
+          setPaymentMethod(methods[0]);
+        } else {
+          setPaymentMethod(null);
+        }
+      } catch (error) {
+        console.error("Error fetching payment method:", error);
+        setPaymentMethod(null);
+      } finally {
+        setFetchingPaymentMethod(false);
+      }
+    };
+
+    fetchPaymentMethod();
+  }, [wallet?.publicKey]);
 
   const handleBuyClick = async () => {
     if (!wallet) {
@@ -158,10 +258,42 @@ export default function BuyCrypto() {
       });
       return;
     }
-    if (!amountPKR || Number(amountPKR) <= 0 || !exchangeRate) {
+
+    if (!paymentMethod) {
       toast({
-        title: "Invalid Amount",
-        description: "Enter a valid PKR amount",
+        title: "Payment Method Required",
+        description: "Please add a payment method first",
+        variant: "destructive",
+      });
+      setShowPaymentDialog(true);
+      return;
+    }
+
+    const minAmount = Number(minAmountPKR);
+    const maxAmount = Number(maxAmountPKR);
+
+    if (!minAmountPKR || minAmount <= 0) {
+      toast({
+        title: "Invalid Minimum Amount",
+        description: "Enter a valid minimum PKR amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!maxAmountPKR || maxAmount <= 0) {
+      toast({
+        title: "Invalid Maximum Amount",
+        description: "Enter a valid maximum PKR amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (minAmount >= maxAmount) {
+      toast({
+        title: "Invalid Range",
+        description: "Maximum amount must be greater than minimum amount",
         variant: "destructive",
       });
       return;
@@ -172,28 +304,30 @@ export default function BuyCrypto() {
     setLoading(true);
     try {
       const order = {
-        id: `ORD-${Date.now()}`,
         type: "BUY",
         token: selectedToken.id,
-        amountPKR: Number(amountPKR),
+        minAmountPKR: minAmount,
+        maxAmountPKR: maxAmount,
         pricePKRPerQuote,
-        paymentMethod: "easypaisa",
-        seller: {
-          accountName: "ameer nawaz khan",
-          accountNumber: "030107044833",
-        },
-        buyerWallet: wallet.publicKey,
-        walletAddress: walletAddress || wallet.publicKey,
-        createdAt: Date.now(),
+        paymentMethod: paymentMethod.id,
       };
-      try {
-        localStorage.setItem("buynote_order", JSON.stringify(order));
-      } catch {}
-      addPendingOrder(order);
-      navigate("/buy-order");
+
+      const isUpdate = !!editingOrder;
+      const savedOrder = await saveOrderToKV(order, isUpdate);
+      if (!savedOrder) {
+        throw new Error(`Failed to ${isUpdate ? "update" : "save"} order`);
+      }
+
+      toast({
+        title: "Success",
+        description: `Buy order ${isUpdate ? "updated" : "created"} successfully`,
+        duration: 2000,
+      });
+
+      navigate(isUpdate ? "/buy-data" : "/buy-order");
     } catch (error: any) {
       toast({
-        title: "Failed to start chat",
+        title: `Failed to ${editingOrder ? "update" : "create"} order`,
         description: error?.message || String(error),
         variant: "destructive",
       });
@@ -243,13 +377,28 @@ export default function BuyCrypto() {
 
             <div>
               <label className="block font-medium text-white/80 mb-2 uppercase">
-                AMOUNT (PKR)
+                MINIMUM AMOUNT PKR
               </label>
               <input
                 type="number"
-                value={amountPKR}
-                onChange={(e) => setAmountPKR(e.target.value)}
-                placeholder="Enter amount in PKR"
+                value={minAmountPKR}
+                onChange={(e) => setMinAmountPKR(e.target.value)}
+                placeholder="Enter minimum amount in PKR"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                min="0"
+                step="100"
+              />
+            </div>
+
+            <div>
+              <label className="block font-medium text-white/80 mb-2 uppercase">
+                MAXIMUM AMOUNT PKR
+              </label>
+              <input
+                type="number"
+                value={maxAmountPKR}
+                onChange={(e) => setMaxAmountPKR(e.target.value)}
+                placeholder="Enter maximum amount in PKR"
                 className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
                 min="0"
                 step="100"
@@ -269,45 +418,17 @@ export default function BuyCrypto() {
               />
             </div>
 
-            <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">
-                    EXCHANGE RATE:
-                  </span>
-                  {fetchingRate ? (
-                    <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
-                  ) : (
-                    <span className="font-semibold text-[#FF7A5C]">
-                      1 {selectedToken.symbol} ={" "}
-                      {exchangeRate > 0
-                        ? exchangeRate < 1
-                          ? exchangeRate.toFixed(6)
-                          : exchangeRate.toFixed(2)
-                        : "0.00"}{" "}
-                      PKR
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">
-                    YOU WILL RECEIVE:
-                  </span>
-                  <span className="font-bold text-[#FF7A5C]">
-                    {estimatedTokens.toFixed(6)} {selectedToken.symbol}
-                  </span>
-                </div>
-              </div>
-            </div>
-
             <Button
               onClick={handleBuyClick}
               disabled={
                 loading ||
-                !amountPKR ||
-                Number(amountPKR) <= 0 ||
-                estimatedTokens === 0
+                !minAmountPKR ||
+                !maxAmountPKR ||
+                Number(minAmountPKR) <= 0 ||
+                Number(maxAmountPKR) <= 0 ||
+                Number(minAmountPKR) >= Number(maxAmountPKR) ||
+                !paymentMethod ||
+                fetchingPaymentMethod
               }
               className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -316,13 +437,22 @@ export default function BuyCrypto() {
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   Processing...
                 </>
+              ) : fetchingPaymentMethod ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Loading Payment Method...
+                </>
+              ) : !paymentMethod ? (
+                "ADD PAYMENT METHOD FIRST"
+              ) : editingOrder ? (
+                `UPDATE BUY OFFER`
               ) : (
                 `BUY CRYPTO`
               )}
             </Button>
 
             <Button
-              onClick={() => navigate("/p2p")}
+              onClick={() => navigate("/")}
               variant="outline"
               className="w-full h-12 rounded-lg font-semibold transition-all duration-200 border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 text-white"
             >

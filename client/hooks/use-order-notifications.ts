@@ -8,7 +8,13 @@ export interface OrderNotification {
   orderId: string;
   recipientWallet: string;
   senderWallet: string;
-  type: "order_created" | "payment_confirmed" | "received_confirmed";
+  type:
+    | "order_created"
+    | "payment_confirmed"
+    | "seller_payment_received"
+    | "transfer_initiated"
+    | "crypto_received"
+    | "order_cancelled";
   orderType: "BUY" | "SELL";
   message: string;
   orderData: {
@@ -61,7 +67,13 @@ export function useOrderNotifications() {
   const createNotification = useCallback(
     async (
       recipientWallet: string,
-      type: "order_created" | "payment_confirmed" | "received_confirmed",
+      type:
+        | "order_created"
+        | "payment_confirmed"
+        | "seller_payment_received"
+        | "transfer_initiated"
+        | "crypto_received"
+        | "order_cancelled",
       orderType: "BUY" | "SELL",
       orderId: string,
       message: string,
@@ -138,7 +150,10 @@ export function useOrderNotifications() {
       const titles: Record<string, string> = {
         order_created: "New Order",
         payment_confirmed: "Payment Confirmed",
-        received_confirmed: "Order Received",
+        seller_payment_received: "Payment Received",
+        transfer_initiated: "Crypto Transfer Started",
+        crypto_received: "Crypto Received",
+        order_cancelled: "Order Cancelled",
       };
 
       toast({

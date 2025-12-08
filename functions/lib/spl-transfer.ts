@@ -18,8 +18,10 @@ import {
 
 const RPC_ENDPOINTS = [
   "https://solana.publicnode.com",
+  "https://api.solflare.com",
   "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
+  "https://api.marinade.finance/rpc",
 ];
 
 let connectionInstance: Connection | null = null;

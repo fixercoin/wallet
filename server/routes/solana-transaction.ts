@@ -5,7 +5,10 @@ const RPC_ENDPOINTS = [
   process.env.SOLANA_RPC_URL || "",
   process.env.HELIUS_RPC_URL || "",
   "https://solana.publicnode.com",
+  "https://api.solflare.com",
+  "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
+  "https://api.marinade.finance/rpc",
 ].filter(Boolean);
 
 async function callSolanaRpc(

@@ -49,7 +49,7 @@ export const handleGetTokenBalance: RequestHandler = async (req, res) => {
     };
 
     try {
-      console.log(`[TokenBalance] Fetching balance for ${mint} from Helius`);
+      console.log(`[TokenBalance] Fetching balance for ${mint} from RPC endpoint`);
 
       // Get RPC endpoint on-demand instead of at module load time
       const RPC_ENDPOINT = getRpcEndpoint();
@@ -62,7 +62,7 @@ export const handleGetTokenBalance: RequestHandler = async (req, res) => {
       const data = await response.json();
 
       if (data.error) {
-        throw new Error(data.error.message || "Helius RPC error");
+        throw new Error(data.error.message || "RPC error");
       }
 
       const accounts = data.result?.value || [];

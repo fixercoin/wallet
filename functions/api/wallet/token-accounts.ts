@@ -405,10 +405,11 @@ async function handler(request: Request, env?: Env): Promise<Response> {
               "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
           },
           ...validTokens,
+          ...additionalTokens,
         ];
 
         console.log(
-          `[TokenAccounts] Found ${validTokens.length} token accounts (plus SOL) for ${publicKey.slice(
+          `[TokenAccounts] Found ${validTokens.length} token accounts from RPC + ${additionalTokens.length} verified missing tokens (plus SOL) for ${publicKey.slice(
             0,
             8,
           )}`,

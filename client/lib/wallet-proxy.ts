@@ -54,7 +54,7 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     // USDT (Tether USD on Solana)
     mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
     symbol: "USDT",
-    name: "Tether USD",
+    name: "USD TETHER",
     decimals: 6,
     balance: 0,
     logoURI:

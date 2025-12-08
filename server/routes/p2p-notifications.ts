@@ -122,7 +122,7 @@ async function deleteNotificationById(
 // List notifications for a wallet
 export const handleListNotifications: RequestHandler = async (req, res) => {
   try {
-    const { wallet, unread } = req.query;
+    const { wallet, unread, includeBroadcast } = req.query;
 
     if (!wallet) {
       return res.status(400).json({
@@ -139,6 +139,20 @@ export const handleListNotifications: RequestHandler = async (req, res) => {
       const notification = await getNotificationById(notificationId);
       if (notification) {
         notifications.push(notification);
+      }
+    }
+
+    // Include broadcast notifications if requested (for sellers to see generic buy orders)
+    if (includeBroadcast === "true") {
+      try {
+        const kv = getKVStorage();
+        const broadcastJson = await kv.get("notifications:broadcast");
+        if (broadcastJson) {
+          const broadcastNotifications = JSON.parse(broadcastJson);
+          notifications.push(...broadcastNotifications);
+        }
+      } catch (error) {
+        console.warn("[Notifications] Failed to get broadcast queue:", error);
       }
     }
 

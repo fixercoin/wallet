@@ -90,9 +90,8 @@ export default function WaitingForBuyerResponse() {
             updatedOrder.status === "ACCEPTED" ||
             updatedOrder.buyerPaymentReceived
           ) {
-            navigate("/order-complete", {
-              state: { order: updatedOrder },
-            });
+            toast.success("Buyer accepted your order!");
+            setTimeout(() => navigate("/"), 2000);
           }
         }
       } catch (error) {

@@ -939,7 +939,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         allTokens.push({
           mint: usdtMintAddress,
           symbol: "USDT",
-          name: "Tether USD",
+          name: "USDT TETHER",
           decimals: 6,
           balance: 0,
           logoURI:

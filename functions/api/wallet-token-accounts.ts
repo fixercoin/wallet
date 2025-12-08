@@ -65,7 +65,7 @@ const KNOWN_TOKENS: Record<string, any> = {
   Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns: {
     mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
     symbol: "USDT",
-    name: "Tether USD",
+    name: "USDT TETHER",
     decimals: 6,
   },
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: {

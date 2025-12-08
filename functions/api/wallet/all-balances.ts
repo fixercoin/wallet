@@ -1,7 +1,3 @@
-export const config = {
-  runtime: "nodejs_esmsh",
-};
-
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 
@@ -75,7 +71,8 @@ interface Env {
 }
 
 /**
- * Get Helius RPC endpoint from environment variables with fallback
+ * Get RPC endpoint from environment variables with fallback strategy
+ * Priority: HELIUS_API_KEY > HELIUS_RPC_URL > SOLANA_RPC_URL > Public endpoints
  */
 function getRpcEndpoint(env?: Env): string {
   const heliusApiKey = env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY || "";
@@ -83,21 +80,26 @@ function getRpcEndpoint(env?: Env): string {
   const solanaRpcUrl = env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL || "";
 
   if (heliusApiKey?.trim()) {
+    console.log("[AllBalances] Using HELIUS_API_KEY endpoint");
     return `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey.trim()}`;
   }
   if (heliusRpcUrl?.trim()) {
+    console.log("[AllBalances] Using HELIUS_RPC_URL endpoint");
     return heliusRpcUrl.trim();
   }
   if (solanaRpcUrl?.trim()) {
+    console.log("[AllBalances] Using SOLANA_RPC_URL endpoint");
     return solanaRpcUrl.trim();
   }
 
-  // Fallback to public endpoints
+  // Fallback to reliable public endpoints
+  console.log("[AllBalances] Using public Solana RPC endpoint");
   return "https://solana.publicnode.com";
 }
 
 /**
- * Fetch all token balances including SOL using Helius RPC
+ * Fetch all token balances including SOL using RPC
+ * Handles both token accounts and native SOL balance
  */
 async function handler(request: Request, env?: Env): Promise<Response> {
   // Handle CORS preflight
@@ -203,9 +205,6 @@ async function handler(request: Request, env?: Env): Promise<Response> {
                 const raw = BigInt(rawAmount);
                 const balance = Number(raw) / Math.pow(10, decimals);
 
-                // Skip zero-balance accounts
-                if (balance === 0) return null;
-
                 const metadata = KNOWN_TOKENS[mint] || {
                   mint,
                   symbol: "UNKNOWN",
@@ -277,6 +276,24 @@ async function handler(request: Request, env?: Env): Promise<Response> {
           uiAmount: solBalance,
         });
       }
+
+      // Always include known special tokens even if wallet doesn't have them (for consistent dashboard display)
+      const specialTokens = [
+        "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump", // FXM
+        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
+        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
+      ];
+
+      specialTokens.forEach((specialMint) => {
+        const exists = tokens.some((t) => t.mint === specialMint);
+        if (!exists && KNOWN_TOKENS[specialMint]) {
+          tokens.push({
+            ...KNOWN_TOKENS[specialMint],
+            balance: 0,
+            uiAmount: 0,
+          });
+        }
+      });
 
       console.log(
         `[AllBalances] ✅ Found ${tokens.length} tokens for ${publicKey.slice(0, 8)}... (SOL: ${solBalance} SOL)`,
@@ -354,4 +371,16 @@ async function handler(request: Request, env?: Env): Promise<Response> {
   }
 }
 
-export default handler;
+/**
+ * Cloudflare Pages Functions handler
+ * Supports GET requests with query parameters
+ */
+export const onRequest: PagesFunction<Env> = async ({
+  request,
+  env,
+}: {
+  request: Request;
+  env: Env;
+}): Promise<Response> => {
+  return handler(request, env);
+};

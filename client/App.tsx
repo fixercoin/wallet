@@ -146,7 +146,6 @@ import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import DocumentationPage from "./pages/DocumentationPage";
 import BuyTrade from "./pages/BuyTrade";
-import OrderComplete from "./pages/OrderComplete";
 import TokenSearchPage from "./pages/TokenSearchPage";
 import P2PActiveOrders from "./pages/P2PActiveOrders";
 import BuyOrder from "./pages/BuyOrder";
@@ -155,6 +154,7 @@ import BuyData from "./pages/BuyData";
 import SellData from "./pages/SellData";
 import AdminDisputes from "./pages/AdminDisputes";
 import WaitingForSellerResponse from "./pages/WaitingForSellerResponse";
+import WaitingForBuyerResponse from "./pages/WaitingForBuyerResponse";
 import SellerOrderConfirmation from "./pages/SellerOrderConfirmation";
 import { useLocation } from "react-router-dom";
 
@@ -207,10 +207,13 @@ function AppRoutes() {
       <Route path="/p2p/active-orders" element={<P2PActiveOrders />} />
       <Route path="/p2p/admin-disputes" element={<AdminDisputes />} />
       <Route path="/express/buy-trade" element={<BuyTrade />} />
-      <Route path="/order-complete" element={<OrderComplete />} />
       <Route
         path="/waiting-for-seller-response"
         element={<WaitingForSellerResponse />}
+      />
+      <Route
+        path="/waiting-for-buyer-response"
+        element={<WaitingForBuyerResponse />}
       />
       <Route
         path="/seller-order-confirmation/:orderId"
@@ -238,8 +241,8 @@ function AppContent() {
       "/buynote",
       "/sellnote",
       "/verify-sell",
-      "/order-complete",
       "/waiting-for-seller-response",
+      "/waiting-for-buyer-response",
       "/seller-order-confirmation",
       "/orders/",
       "/order/",

@@ -13,6 +13,12 @@ function getRpcEndpoint(): string {
   const heliusRpcUrl = getEnvVar(process.env.HELIUS_RPC_URL);
   const solanaRpcUrl = getEnvVar(process.env.SOLANA_RPC_URL);
 
+  console.log("[WalletBalance] Environment check:", {
+    hasHeliusApiKey: !!heliusApiKey,
+    hasHeliusRpcUrl: !!heliusRpcUrl,
+    hasSolanaRpcUrl: !!solanaRpcUrl,
+  });
+
   // Priority: Helius API key > HELIUS_RPC_URL > SOLANA_RPC_URL > Public endpoint
   if (heliusApiKey) {
     const endpoint = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;

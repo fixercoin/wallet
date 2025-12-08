@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 
-// Function to get RPC endpoint with public fallback
+// Function to get RPC endpoint with free endpoints and Alchemy fallback
 function getRpcEndpoint(): string {
   // Helper to safely check env vars (trim empty strings)
   const getEnvVar = (value: string | undefined): string | null => {
@@ -9,39 +9,30 @@ function getRpcEndpoint(): string {
     return trimmed.length > 0 ? trimmed : null;
   };
 
-  const heliusApiKey = getEnvVar(process.env.HELIUS_API_KEY);
-  const heliusRpcUrl = getEnvVar(process.env.HELIUS_RPC_URL);
   const solanaRpcUrl = getEnvVar(process.env.SOLANA_RPC_URL);
 
   console.log("[WalletBalance] Environment check:", {
-    hasHeliusApiKey: !!heliusApiKey,
-    hasHeliusRpcUrl: !!heliusRpcUrl,
     hasSolanaRpcUrl: !!solanaRpcUrl,
   });
-
-  // Priority: Helius API key > HELIUS_RPC_URL > SOLANA_RPC_URL > Public endpoint
-  if (heliusApiKey) {
-    const endpoint = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
-    console.log("[WalletBalance] Using Helius with API key");
-    return endpoint;
-  }
-
-  if (heliusRpcUrl) {
-    console.log("[WalletBalance] Using HELIUS_RPC_URL");
-    return heliusRpcUrl;
-  }
 
   if (solanaRpcUrl) {
     console.log("[WalletBalance] Using SOLANA_RPC_URL");
     return solanaRpcUrl;
   }
 
-  // Fallback to reliable public RPC endpoint for dev environments
-  const publicEndpoint = "https://solana.publicnode.com";
+  const freeEndpoints = [
+    "https://api.mainnet-beta.solflare.network",
+    "https://solana-api.projectserum.com",
+    "https://api.mainnet.solflare.com",
+  ];
+
+  const alchemyEndpoint =
+    "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
+
   console.log(
-    "[WalletBalance] Using public Solana RPC endpoint. For production, set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
+    "[WalletBalance] Using free Solana RPC endpoints with Alchemy fallback",
   );
-  return publicEndpoint;
+  return freeEndpoints[Math.floor(Math.random() * freeEndpoints.length)];
 }
 
 export const handleWalletBalance: RequestHandler = async (req, res) => {

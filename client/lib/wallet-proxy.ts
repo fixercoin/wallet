@@ -83,6 +83,8 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     name: "Fixorium",
     decimals: 6,
     balance: 0,
+    logoURI:
+      "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2Fef8e21a960894d1b9408732e737a9d1f?format=webp&width=800",
   },
 ];
 

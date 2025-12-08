@@ -87,7 +87,7 @@ export default function BuyTrade() {
 
   const [amountPKR, setAmountPKR] = useState<number | "">("");
   const [token, setToken] = useState<string>(
-    String(order?.quoteAsset || order?.token || "USDC").toUpperCase(),
+    String(order?.quoteAsset || order?.token || "USDT").toUpperCase(),
   );
 
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);

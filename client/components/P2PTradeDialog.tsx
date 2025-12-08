@@ -32,7 +32,7 @@ export const P2PTradeDialog: React.FC<P2PTradeDialogProps> = ({
   onOpenChange,
   onConfirm,
   orderType,
-  defaultToken = "USDC",
+  defaultToken = "USDT",
   defaultPrice = 280,
   minAmount = 0,
   maxAmount = Infinity,

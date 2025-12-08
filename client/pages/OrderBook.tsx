@@ -36,7 +36,7 @@ export default function OrderBook() {
   const [newOrder, setNewOrder] = useState({
     type: "buy" as "buy" | "sell",
     amountPKR: "",
-    quoteAsset: "USDC",
+    quoteAsset: "USDT",
     pricePKRPerQuote: "",
     paymentMethod: "easypaisa",
     accountName: "",

@@ -41,7 +41,7 @@ export default function BuyData() {
   useEffect(() => {
     const fetchRate = async () => {
       try {
-        const response = await fetch("/api/token/price?token=USDC");
+        const response = await fetch("/api/token/price?token=USDT");
         if (!response.ok) throw new Error("Failed to fetch rate");
         const data = await response.json();
         const rate = data.rate || data.priceInPKR || 280;
@@ -88,7 +88,7 @@ export default function BuyData() {
           id: `order-${Date.now()}`,
           type: "BUY",
           sellerWallet: "",
-          token: "USDC",
+          token: "USDT",
           pricePKRPerQuote: exchangeRate,
           minAmountTokens: 0,
           maxAmountTokens: Infinity,
@@ -98,7 +98,7 @@ export default function BuyData() {
         wallet.publicKey,
         "BUY",
         {
-          token: "USDC",
+          token: "USDT",
           amountTokens: parseFloat(amountTokens),
           amountPKR: parseFloat(amountPKR),
           price: exchangeRate,
@@ -117,7 +117,7 @@ export default function BuyData() {
           "new_buy_order",
           "BUY",
           createdOrder.id,
-          `New buy order: ${parseFloat(amountTokens).toFixed(6)} ${createdOrder.token} for ${parseFloat(amountPKR).toFixed(2)} PKR at ${exchangeRate.toFixed(2)} PKR per token. Buyer: ${createdOrder.buyerWallet}`,
+          `New buy order: ${parseFloat(amountTokens).toFixed(6)} USDT for ${parseFloat(amountPKR).toFixed(2)} PKR at ${exchangeRate.toFixed(2)} PKR per token. Buyer: ${createdOrder.buyerWallet}`,
           {
             token: createdOrder.token,
             amountTokens: parseFloat(amountTokens),
@@ -225,7 +225,7 @@ export default function BuyData() {
               Token
             </label>
             <div className="px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold">
-              USDC
+              USDT
             </div>
           </div>
 
@@ -235,7 +235,7 @@ export default function BuyData() {
               Price
             </label>
             <div className="px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold">
-              1 USDC = {exchangeRate.toFixed(2)} PKR
+              1 USDT = {exchangeRate.toFixed(2)} PKR
             </div>
           </div>
 
@@ -254,14 +254,14 @@ export default function BuyData() {
             />
           </div>
 
-          {/* Estimated USDC */}
+          {/* Estimated USDT */}
           <div>
             <label className="block text-xs font-semibold text-white/80 uppercase mb-2">
-              Estimated USDC
+              Estimated USDT
             </label>
             <div className="px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold">
               {amountTokens ? parseFloat(amountTokens).toFixed(6) : "0.000000"}{" "}
-              USDC
+              USDT
             </div>
           </div>
 
@@ -272,7 +272,7 @@ export default function BuyData() {
                 Summary
               </div>
               <div className="text-sm text-white/90">
-                {amountTokens} USDC = {parseFloat(amountPKR).toFixed(2)} PKR
+                {amountTokens} USDT = {parseFloat(amountPKR).toFixed(2)} PKR
               </div>
             </div>
           )}

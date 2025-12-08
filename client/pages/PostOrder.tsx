@@ -6,7 +6,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { createP2POrder } from "@/lib/p2p-api";
 
 const PRICE_MAP: Record<string, number> = {
-  USDC: 300,
+  USDT: 300,
   SOL: 30000,
   FIXERCOIN: 5,
 };
@@ -17,7 +17,7 @@ export default function PostOrder() {
   const { wallet } = useWallet();
 
   const [mode, setMode] = useState<"buy" | "sell">("buy");
-  const [token, setToken] = useState("USDC");
+  const [token, setToken] = useState("USDT");
   const [minAmount, setMinAmount] = useState("");
   const [maxAmount, setMaxAmount] = useState("");
   const [price, setPrice] = useState("");
@@ -34,7 +34,7 @@ export default function PostOrder() {
   };
 
   const clearForm = () => {
-    setToken("USDC");
+    setToken("USDT");
     setMinAmount("");
     setMaxAmount("");
     setPrice("");

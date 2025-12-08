@@ -1148,7 +1148,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           }
         `}</style>
 
-        <div className="w-full space-y-0">
+        <div className="w-full space-y-3">
           {sortedTokens.map((token, index) => {
             const tokenBalance =
               typeof token.balance === "number" &&

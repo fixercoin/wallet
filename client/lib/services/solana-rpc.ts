@@ -103,7 +103,10 @@ export const makeRpcCall = async (
 
       switch (method) {
         case "getBalance":
-          return await connection.getBalance(new PublicKey(params[0]));
+          return await retryableCall(
+            () => connection.getBalance(new PublicKey(params[0])),
+            method,
+          );
 
         case "getTokenAccountsByOwner": {
           const filter = params[1];
@@ -118,32 +121,50 @@ export const makeRpcCall = async (
               ? new PublicKey(filter.mint)
               : filter.mint;
           }
-          return await connection.getTokenAccountsByOwner(
-            new PublicKey(params[0]),
-            convertedFilter,
-            params[2],
+          return await retryableCall(
+            () => connection.getTokenAccountsByOwner(
+              new PublicKey(params[0]),
+              convertedFilter,
+              params[2],
+            ),
+            method,
           );
         }
 
         case "getTokenSupply":
-          return await connection.getTokenSupply(new PublicKey(params[0]));
+          return await retryableCall(
+            () => connection.getTokenSupply(new PublicKey(params[0])),
+            method,
+          );
 
         case "getMultipleAccounts":
-          return await connection.getMultipleAccountsInfo(
-            params[0].map((pk: string) => new PublicKey(pk)),
+          return await retryableCall(
+            () => connection.getMultipleAccountsInfo(
+              params[0].map((pk: string) => new PublicKey(pk)),
+            ),
+            method,
           );
 
         case "getAccountInfo":
-          return await connection.getAccountInfo(new PublicKey(params[0]));
+          return await retryableCall(
+            () => connection.getAccountInfo(new PublicKey(params[0])),
+            method,
+          );
 
         case "getSignaturesForAddress":
-          return await connection.getSignaturesForAddress(
-            new PublicKey(params[0]),
-            params[1],
+          return await retryableCall(
+            () => connection.getSignaturesForAddress(
+              new PublicKey(params[0]),
+              params[1],
+            ),
+            method,
           );
 
         case "getTransaction":
-          return await connection.getParsedTransaction(params[0], params[1]);
+          return await retryableCall(
+            () => connection.getParsedTransaction(params[0], params[1]),
+            method,
+          );
 
         default:
           throw new Error(`Unsupported RPC method: ${method}`);

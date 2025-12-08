@@ -106,14 +106,35 @@ export default function BuyData() {
       );
 
       toast.success("Order created successfully!");
-      navigate("/order-complete", { state: { order: createdOrder } });
+
+      // Send notification to all sellers about new buy order
+      try {
+        await createNotification(
+          "", // Empty wallet = broadcast to all sellers
+          "new_buy_order",
+          "BUY",
+          createdOrder.id,
+          `New buy order: ${parseFloat(amountTokens).toFixed(6)} ${createdOrder.token} for ${parseFloat(amountPKR).toFixed(2)} PKR`,
+          {
+            token: createdOrder.token,
+            amountTokens: parseFloat(amountTokens),
+            amountPKR: parseFloat(amountPKR),
+            orderId: createdOrder.id,
+          },
+        );
+      } catch (notificationError) {
+        console.warn("Failed to send notification to sellers:", notificationError);
+        // Don't fail the order creation if notification fails
+      }
+
+      navigate("/waiting-for-seller-response", { state: { order: createdOrder } });
     } catch (error) {
       console.error("Error creating order:", error);
       toast.error("Failed to create order");
     } finally {
       setLoading(false);
     }
-  }, [wallet?.publicKey, exchangeRate, amountTokens, amountPKR, navigate]);
+  }, [wallet?.publicKey, exchangeRate, amountTokens, amountPKR, navigate, createNotification]);
 
   const handlePKRChange = (value: string) => {
     setAmountPKR(value);

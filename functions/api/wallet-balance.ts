@@ -3,38 +3,59 @@
 // Accepts GET query: ?publicKey=<Pubkey>
 // Returns the getBalance RPC result using free RPC providers with fallback
 
+// Helper to check if environment variable has a valid value
+function hasValue(val: string | undefined): val is string {
+  return typeof val === "string" && val.trim().length > 0;
+}
+
 // Build list of RPC endpoints from environment and free public providers
 function buildRpcEndpoints(env: any): string[] {
   const endpoints: string[] = [];
 
-  if (env?.SOLANA_RPC_URL && typeof env.SOLANA_RPC_URL === "string") {
-    const trimmed = env.SOLANA_RPC_URL.trim();
-    if (trimmed.length > 0) endpoints.push(trimmed);
+  // Priority 1: Helius (fastest and most reliable)
+  if (hasValue(env?.HELIUS_API_KEY)) {
+    const url = `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY.trim()}`;
+    endpoints.push(url);
+    console.log("[wallet-balance] Using Helius API key endpoint");
   }
 
-  if (env?.ALCHEMY_RPC_URL && typeof env.ALCHEMY_RPC_URL === "string") {
-    const trimmed = env.ALCHEMY_RPC_URL.trim();
-    if (trimmed.length > 0) endpoints.push(trimmed);
+  if (hasValue(env?.HELIUS_RPC_URL)) {
+    endpoints.push(env.HELIUS_RPC_URL.trim());
+    console.log("[wallet-balance] Using Helius RPC URL");
   }
 
-  if (env?.MORALIS_RPC_URL && typeof env.MORALIS_RPC_URL === "string") {
-    const trimmed = env.MORALIS_RPC_URL.trim();
-    if (trimmed.length > 0) endpoints.push(trimmed);
+  // Priority 2: Custom RPC endpoints from environment
+  if (hasValue(env?.SOLANA_RPC_URL)) {
+    endpoints.push(env.SOLANA_RPC_URL.trim());
+    console.log("[wallet-balance] Using custom Solana RPC URL");
   }
 
-  // Free public RPC endpoints
+  if (hasValue(env?.ALCHEMY_RPC_URL)) {
+    endpoints.push(env.ALCHEMY_RPC_URL.trim());
+    console.log("[wallet-balance] Using Alchemy RPC URL");
+  }
+
+  if (hasValue(env?.MORALIS_RPC_URL)) {
+    endpoints.push(env.MORALIS_RPC_URL.trim());
+    console.log("[wallet-balance] Using Moralis RPC URL");
+  }
+
+  // Priority 3: Free public RPC endpoints (always included as fallback)
   const publicEndpoints = [
-    "https://solana.publicnode.com",
-    "https://api.solflare.com",
-    "https://rpc.ankr.com/solana",
-    "https://api.mainnet-beta.solana.com",
-    "https://api.marinade.finance/rpc",
+    "https://solana.publicnode.com",      // Most reliable free endpoint
+    "https://api.solflare.com",           // Good uptime
+    "https://rpc.ankr.com/solana",        // Good fallback
+    "https://api.mainnet-beta.solana.com", // Official but slower
+    "https://api.marinade.finance/rpc",   // Marinade fallback
   ];
 
   publicEndpoints.forEach((endpoint) => {
-    if (!endpoints.includes(endpoint)) endpoints.push(endpoint);
+    if (!endpoints.includes(endpoint)) {
+      endpoints.push(endpoint);
+    }
   });
 
+  console.log(`[wallet-balance] Built ${endpoints.length} RPC endpoints for failover`);
   return endpoints;
 }
 

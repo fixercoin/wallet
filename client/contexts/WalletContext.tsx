@@ -25,13 +25,10 @@ import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
 import {
   savePricesToCache,
-  getCachedPrices,
   saveBalanceToCache,
   getCachedBalance,
   saveTokensToCache,
   getCachedTokens,
-  isCacheFresh,
-  CACHE_VALIDITY_PRICES,
 } from "@/lib/services/offline-cache";
 import {
   isEncryptedWalletStorage,

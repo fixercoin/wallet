@@ -10,19 +10,17 @@ function getRpcEndpoint(): string {
     return solanaRpcUrl;
   }
 
+  const alchemyEndpoint =
+    "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
+
   const freeEndpoints = [
     "https://api.mainnet-beta.solflare.network",
     "https://solana-api.projectserum.com",
     "https://api.mainnet.solflare.com",
   ];
 
-  const alchemyEndpoint =
-    "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
-
-  console.log(
-    "[TokenAccounts] Using free Solana RPC endpoints with Alchemy fallback",
-  );
-  return freeEndpoints[Math.floor(Math.random() * freeEndpoints.length)];
+  console.log("[TokenAccounts] Using Alchemy RPC endpoint as primary fallback");
+  return alchemyEndpoint;
 }
 
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";

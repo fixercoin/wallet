@@ -8,16 +8,10 @@ function getRpcEndpoint(): string {
     return solanaRpcUrl;
   }
 
-  const freeEndpoints = [
-    "https://api.mainnet-beta.solflare.network",
-    "https://solana-api.projectserum.com",
-    "https://api.mainnet.solflare.com",
-  ];
-
   const alchemyEndpoint =
     "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
 
-  return freeEndpoints[Math.floor(Math.random() * freeEndpoints.length)];
+  return alchemyEndpoint;
 }
 
 export const handleSolanaRpc: RequestHandler = async (req, res) => {

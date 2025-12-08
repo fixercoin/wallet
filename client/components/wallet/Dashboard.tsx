@@ -545,31 +545,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // Currency formatting from context
   const { formatCurrency } = useCurrency();
-const SOL_WRAPPED_MINT = "So11111111111111111111111111111111111111112";
 
-// Get SOL token data from tokens list (case-insensitive symbol match + wrapped SOL mint fallback)
-const getSolToken = () => {
-  return tokens.find((token) => {
-    if (!token) return false;
-    const sym = (token.symbol || "").toString().toUpperCase();
-    if (sym === "SOL") return true;
-    if (token.mint === SOL_WRAPPED_MINT) return true;
-    return false;
-  });
-};
+  const SOL_WRAPPED_MINT = "So11111111111111111111111111111111111111112";
 
-// Get SOL price from tokens (try several possible fields)
-const getSolPrice = (): number | undefined => {
-  const solToken = getSolToken();
-  if (!solToken) return undefined;
-  if (typeof solToken.price === "number" && isFinite(solToken.price)) return solToken.price;
+  // Get SOL token data from tokens list (case-insensitive symbol match + wrapped SOL mint fallback)
+  const getSolToken = () => {
+    return tokens.find((token) => {
+      if (!token) return false;
+      const sym = (token.symbol || "").toString().toUpperCase();
+      if (sym === "SOL") return true;
+      if (token.mint === SOL_WRAPPED_MINT) return true;
+      return false;
+    });
+  };
 
-  // common alternative price fields providers may use
-  const alt = (solToken as any).priceUsd ?? (solToken as any).usdPrice ?? (solToken as any).price_usd;
-  if (typeof alt === "number" && isFinite(alt)) return alt;
+  // Get SOL price from tokens (try several possible fields)
+  const getSolPrice = (): number | undefined => {
+    const solToken = getSolToken();
+    if (!solToken) return undefined;
+    if (typeof solToken.price === "number" && isFinite(solToken.price)) return solToken.price;
 
-  return undefined;
-};
+    // common alternative price fields providers may use
+    const alt = (solToken as any).priceUsd ?? (solToken as any).usdPrice ?? (solToken as any).price_usd;
+    if (typeof alt === "number" && isFinite(alt)) return alt;
+
+    return undefined;
+  };
+
   // Check if any tokens with balance are still loading prices
   const areTokenPricesLoading = (): boolean => {
     return tokens.some(

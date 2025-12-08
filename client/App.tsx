@@ -154,6 +154,8 @@ import SellOrder from "./pages/SellOrder";
 import BuyData from "./pages/BuyData";
 import SellData from "./pages/SellData";
 import AdminDisputes from "./pages/AdminDisputes";
+import WaitingForSellerResponse from "./pages/WaitingForSellerResponse";
+import SellerOrderConfirmation from "./pages/SellerOrderConfirmation";
 import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
@@ -206,6 +208,14 @@ function AppRoutes() {
       <Route path="/p2p/admin-disputes" element={<AdminDisputes />} />
       <Route path="/express/buy-trade" element={<BuyTrade />} />
       <Route path="/order-complete" element={<OrderComplete />} />
+      <Route
+        path="/waiting-for-seller-response"
+        element={<WaitingForSellerResponse />}
+      />
+      <Route
+        path="/seller-order-confirmation/:orderId"
+        element={<SellerOrderConfirmation />}
+      />
       <Route path="/search" element={<TokenSearchPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -229,6 +239,8 @@ function AppContent() {
       "/sellnote",
       "/verify-sell",
       "/order-complete",
+      "/waiting-for-seller-response",
+      "/seller-order-confirmation",
       "/orders/",
       "/order/",
       "/buy-order",

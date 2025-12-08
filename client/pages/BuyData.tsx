@@ -8,6 +8,7 @@ import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { PaymentMethodInfoCard } from "@/components/wallet/PaymentMethodInfoCard";
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
+import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,7 @@ interface PaymentMethod {
 export default function BuyData() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
+  const { createNotification } = useOrderNotifications();
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
@@ -104,14 +106,47 @@ export default function BuyData() {
       );
 
       toast.success("Order created successfully!");
-      navigate("/order-complete", { state: { order: createdOrder } });
+
+      // Send notification to all sellers about new buy order
+      try {
+        await createNotification(
+          "", // Empty wallet = broadcast to all sellers
+          "new_buy_order",
+          "BUY",
+          createdOrder.id,
+          `New buy order: ${parseFloat(amountTokens).toFixed(6)} ${createdOrder.token} for ${parseFloat(amountPKR).toFixed(2)} PKR`,
+          {
+            token: createdOrder.token,
+            amountTokens: parseFloat(amountTokens),
+            amountPKR: parseFloat(amountPKR),
+            orderId: createdOrder.id,
+          },
+        );
+      } catch (notificationError) {
+        console.warn(
+          "Failed to send notification to sellers:",
+          notificationError,
+        );
+        // Don't fail the order creation if notification fails
+      }
+
+      navigate("/waiting-for-seller-response", {
+        state: { order: createdOrder },
+      });
     } catch (error) {
       console.error("Error creating order:", error);
       toast.error("Failed to create order");
     } finally {
       setLoading(false);
     }
-  }, [wallet?.publicKey, exchangeRate, amountTokens, amountPKR, navigate]);
+  }, [
+    wallet?.publicKey,
+    exchangeRate,
+    amountTokens,
+    amountPKR,
+    navigate,
+    createNotification,
+  ]);
 
   const handlePKRChange = (value: string) => {
     setAmountPKR(value);
@@ -240,8 +275,8 @@ export default function BuyData() {
             </div>
           )}
 
-          {/* Payment Method Information */}
-          {paymentMethods.length > 0 && (
+          {/* Payment Method Information or Warning */}
+          {paymentMethods.length > 0 ? (
             <PaymentMethodInfoCard
               accountName={paymentMethods[0].accountName}
               accountNumber={paymentMethods[0].accountNumber}
@@ -250,6 +285,29 @@ export default function BuyData() {
                 setShowPaymentDialog(true);
               }}
             />
+          ) : (
+            <div className="p-4 rounded-lg bg-red-600/20 border border-red-500/50">
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0 text-xs font-bold text-white mt-0.5">
+                  !
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-red-400 mb-2">
+                    Complete Your Payment Method
+                  </div>
+                  <p className="text-xs text-red-300/80 mb-3">
+                    You must add your payment method details before you can
+                    create a buy order. This helps sellers confirm payments.
+                  </p>
+                  <Button
+                    onClick={() => setShowPaymentDialog(true)}
+                    className="w-full bg-red-600/50 hover:bg-red-600/70 border border-red-500 text-red-200 uppercase text-xs font-semibold py-2"
+                  >
+                    Add Payment Method
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Action Buttons */}
@@ -263,7 +321,7 @@ export default function BuyData() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!isValid || loading}
+              disabled={!isValid || loading || paymentMethods.length === 0}
               className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (

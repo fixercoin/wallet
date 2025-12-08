@@ -26,6 +26,8 @@ export function NotificationCenter() {
     switch (type) {
       case "order_created":
         return "📦";
+      case "new_buy_order":
+        return "🛍️";
       case "payment_confirmed":
         return "💰";
       case "seller_payment_received":
@@ -36,6 +38,12 @@ export function NotificationCenter() {
         return "🎉";
       case "order_cancelled":
         return "❌";
+      case "order_accepted":
+        return "👍";
+      case "order_rejected":
+        return "👎";
+      case "order_completed_by_seller":
+        return "📋";
       default:
         return "📢";
     }
@@ -45,6 +53,8 @@ export function NotificationCenter() {
     switch (type) {
       case "order_created":
         return "New Order";
+      case "new_buy_order":
+        return "New Buy Order";
       case "payment_confirmed":
         return "Payment Confirmed";
       case "seller_payment_received":
@@ -55,6 +65,12 @@ export function NotificationCenter() {
         return "Crypto Received";
       case "order_cancelled":
         return "Order Cancelled";
+      case "order_accepted":
+        return "Order Accepted";
+      case "order_rejected":
+        return "Order Rejected";
+      case "order_completed_by_seller":
+        return "Order Completed by Seller";
       default:
         return "Notification";
     }
@@ -125,6 +141,15 @@ export function NotificationCenter() {
 
                         setIsOpen(false);
 
+                        // For new buy orders, navigate to seller order confirmation page
+                        if (notification.type === "new_buy_order") {
+                          navigate(
+                            `/seller-order-confirmation/${notification.orderId}`,
+                          );
+                          return;
+                        }
+
+                        // For other notifications, navigate to order-complete
                         // Determine buyer and seller based on notification type
                         // For BUY orders: senderWallet is buyer, recipientWallet is seller/admin
                         // For SELL orders: senderWallet is seller, recipientWallet is buyer

@@ -235,9 +235,12 @@ export const getTokenAccounts = async (
         );
       }
 
-      // Return ALL tokens the wallet actually holds (no merging with defaults)
-      // This ensures we show exactly what the wallet owns via RPC
-      const allTokens = tokenAccounts;
+      // Enrich tokens with logos from DEFAULT_TOKENS
+      const logoMap = new Map(DEFAULT_TOKENS.map((t) => [t.mint, t.logoURI]));
+      const allTokens = tokenAccounts.map((token) => ({
+        ...token,
+        logoURI: token.logoURI || logoMap.get(token.mint),
+      }));
 
       // Ensure SOL is present with proper balance
       const solIndex = allTokens.findIndex(

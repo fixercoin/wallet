@@ -1195,15 +1195,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       );
 
       const solTokenInEnhanced = enhancedTokens.find((t) => t.symbol === "SOL");
-      console.log(
-        `[WalletContext] About to set tokens in state. SOL token:`,
-        {
-          symbol: solTokenInEnhanced?.symbol,
-          balance: solTokenInEnhanced?.balance,
-          price: solTokenInEnhanced?.price,
-          mint: solTokenInEnhanced?.mint,
-        },
-      );
+      console.log(`[WalletContext] About to set tokens in state. SOL token:`, {
+        symbol: solTokenInEnhanced?.symbol,
+        balance: solTokenInEnhanced?.balance,
+        price: solTokenInEnhanced?.price,
+        mint: solTokenInEnhanced?.mint,
+      });
 
       setTokens(enhancedTokens);
       setIsUsingCache(false);

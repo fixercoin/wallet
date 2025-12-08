@@ -563,10 +563,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const getSolPrice = (): number | undefined => {
     const solToken = getSolToken();
     if (!solToken) return undefined;
-    if (typeof solToken.price === "number" && isFinite(solToken.price)) return solToken.price;
+    if (typeof solToken.price === "number" && isFinite(solToken.price))
+      return solToken.price;
 
     // common alternative price fields providers may use
-    const alt = (solToken as any).priceUsd ?? (solToken as any).usdPrice ?? (solToken as any).price_usd;
+    const alt =
+      (solToken as any).priceUsd ??
+      (solToken as any).usdPrice ??
+      (solToken as any).price_usd;
     if (typeof alt === "number" && isFinite(alt)) return alt;
 
     return undefined;
@@ -643,18 +647,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
     const solToken = arr.find((t) => t.symbol === "SOL");
     if (solToken) {
-      console.log(
-        `[Dashboard] SOL token found in tokens array:`,
-        {
-          symbol: solToken.symbol,
-          balance: solToken.balance,
-          price: solToken.price,
-          mint: solToken.mint,
-        },
-      );
+      console.log(`[Dashboard] SOL token found in tokens array:`, {
+        symbol: solToken.symbol,
+        balance: solToken.balance,
+        price: solToken.price,
+        mint: solToken.mint,
+      });
     } else {
       console.warn("[Dashboard] SOL token NOT found in tokens array");
-      console.log("[Dashboard] Available tokens:", tokens.map((t) => t.symbol));
+      console.log(
+        "[Dashboard] Available tokens:",
+        tokens.map((t) => t.symbol),
+      );
     }
 
     arr.sort((a, b) => {

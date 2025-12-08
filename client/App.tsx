@@ -225,6 +225,7 @@ function AppRoutes() {
         path="/buyer-order-confirmation/:orderId"
         element={<BuyerOrderConfirmation />}
       />
+      <Route path="/order-complete" element={<OrderComplete />} />
       <Route path="/search" element={<TokenSearchPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

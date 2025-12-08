@@ -151,13 +151,17 @@ export const handleListNotifications: RequestHandler = async (req, res) => {
       try {
         const kv = getKVStorage();
         // Get both seller and buyer broadcast queues
-        const sellerBroadcastJson = await kv.get("notifications:broadcast:sellers");
+        const sellerBroadcastJson = await kv.get(
+          "notifications:broadcast:sellers",
+        );
         if (sellerBroadcastJson) {
           const broadcastNotifications = JSON.parse(sellerBroadcastJson);
           notifications.push(...broadcastNotifications);
         }
 
-        const buyerBroadcastJson = await kv.get("notifications:broadcast:buyers");
+        const buyerBroadcastJson = await kv.get(
+          "notifications:broadcast:buyers",
+        );
         if (buyerBroadcastJson) {
           const broadcastNotifications = JSON.parse(buyerBroadcastJson);
           notifications.push(...broadcastNotifications);
@@ -260,7 +264,10 @@ export const handleCreateNotification: RequestHandler = async (req, res) => {
         }
         await kv.put(broadcastKey, JSON.stringify(broadcastNotifications));
       } catch (error) {
-        console.warn("[Notifications] Failed to add to broadcast queue:", error);
+        console.warn(
+          "[Notifications] Failed to add to broadcast queue:",
+          error,
+        );
         // Don't fail the request if broadcast queue fails
       }
     }

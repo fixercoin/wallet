@@ -75,7 +75,8 @@ export async function createOrderInAPI(
         id: order.id,
         type: order.type,
         offerId: order.offerId,
-        walletAddress: order.type === "BUY" ? order.buyerWallet : order.sellerWallet,
+        walletAddress:
+          order.type === "BUY" ? order.buyerWallet : order.sellerWallet,
         buyerWallet: order.buyerWallet,
         sellerWallet: order.sellerWallet,
         token: order.token,

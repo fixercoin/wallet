@@ -141,10 +141,7 @@ export default function SellData() {
           },
         );
       } catch (notificationError) {
-        console.warn(
-          "Failed to send notification:",
-          notificationError,
-        );
+        console.warn("Failed to send notification:", notificationError);
         // Don't fail the order creation if notification fails
       }
 

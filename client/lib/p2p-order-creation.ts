@@ -114,7 +114,12 @@ export async function createOrderFromOffer(
 
   // Create trade room only if both buyer and seller wallets are valid
   let roomId = undefined;
-  if (buyerWallet && buyerWallet.trim() && sellerWallet && sellerWallet.trim()) {
+  if (
+    buyerWallet &&
+    buyerWallet.trim() &&
+    sellerWallet &&
+    sellerWallet.trim()
+  ) {
     try {
       const room = await createTradeRoom({
         buyer_wallet: buyerWallet,

@@ -110,7 +110,8 @@ export default function BuyData() {
       // Send notification to sellers about new buy order
       // For generic buy orders, send to a broadcast address that sellers can monitor
       try {
-        const recipientWallet = createdOrder.sellerWallet || "BROADCAST_SELLERS";
+        const recipientWallet =
+          createdOrder.sellerWallet || "BROADCAST_SELLERS";
         await createNotification(
           recipientWallet,
           "new_buy_order",
@@ -127,10 +128,7 @@ export default function BuyData() {
           },
         );
       } catch (notificationError) {
-        console.warn(
-          "Failed to send notification:",
-          notificationError,
-        );
+        console.warn("Failed to send notification:", notificationError);
         // Don't fail the order creation if notification fails
       }
 

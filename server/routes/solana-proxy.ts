@@ -1,24 +1,23 @@
 import { RequestHandler } from "express";
 
-// Get Helius RPC endpoint ONLY
-function getHeliusRpcEndpoint(): string {
-  const heliusApiKey = process.env.HELIUS_API_KEY?.trim();
-  const heliusRpcUrl = process.env.HELIUS_RPC_URL?.trim();
+// Get RPC endpoint with free endpoints and Alchemy fallback
+function getRpcEndpoint(): string {
   const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
 
-  if (heliusApiKey) {
-    return `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
-  }
-  if (heliusRpcUrl) {
-    return heliusRpcUrl;
-  }
   if (solanaRpcUrl) {
     return solanaRpcUrl;
   }
 
-  throw new Error(
-    "Helius RPC endpoint is required. Please set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
-  );
+  const freeEndpoints = [
+    "https://api.mainnet-beta.solflare.network",
+    "https://solana-api.projectserum.com",
+    "https://api.mainnet.solflare.com",
+  ];
+
+  const alchemyEndpoint =
+    "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
+
+  return freeEndpoints[Math.floor(Math.random() * freeEndpoints.length)];
 }
 
 export const handleSolanaRpc: RequestHandler = async (req, res) => {

@@ -242,6 +242,14 @@ export const getTokenAccounts = async (
         logoURI: token.logoURI || logoMap.get(token.mint),
       }));
 
+      // Log FXM and special tokens for debugging
+      const fxmToken = allTokens.find((t) => t.symbol === "FXM");
+      if (fxmToken) {
+        console.log(
+          `[TokenAccounts] FXM token found: balance=${fxmToken.balance}, decimals=${fxmToken.decimals}`,
+        );
+      }
+
       // Ensure SOL is present with proper balance
       const solIndex = allTokens.findIndex(
         (t) => t.mint === "So11111111111111111111111111111111111111112",

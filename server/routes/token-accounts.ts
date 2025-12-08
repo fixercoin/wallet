@@ -8,12 +8,15 @@ function getRpcEndpoint(): string {
   const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
 
   if (heliusApiKey) {
+    console.log("[TokenAccounts] Using HELIUS_API_KEY endpoint");
     return `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
   }
   if (heliusRpcUrl) {
+    console.log("[TokenAccounts] Using HELIUS_RPC_URL endpoint");
     return heliusRpcUrl;
   }
   if (solanaRpcUrl) {
+    console.log("[TokenAccounts] Using SOLANA_RPC_URL endpoint");
     return solanaRpcUrl;
   }
 
@@ -87,6 +90,10 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
     const endpoint = getRpcEndpoint();
     let solBalance = 0;
 
+    console.log(
+      `[TokenAccounts] Fetching token accounts from: ${endpoint.split("?")[0]}...`,
+    );
+
     // Fetch SPL token accounts
     const tokenBody = {
       jsonrpc: "2.0",
@@ -125,6 +132,13 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
 
           const raw = BigInt(info.tokenAmount.amount);
           const balance = Number(raw) / Math.pow(10, decimals);
+
+          // Special logging for FXM and other tokens
+          if (mint === "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump") {
+            console.log(
+              `[TokenAccounts] FXM Token found - Raw: ${raw}, Decimals: ${decimals}, Balance: ${balance}`,
+            );
+          }
 
           const meta = KNOWN_TOKENS[mint] || {
             mint,
@@ -209,6 +223,18 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
     console.log(
       `[TokenAccounts] ✅ Found ${tokens.length} tokens for ${publicKey.slice(0, 8)}... (SOL: ${solBalance} SOL)`,
     );
+
+    // Log all tokens returned
+    tokens.forEach((token) => {
+      const isSpecialToken = ["FXM", "FIXERCOIN", "LOCKER"].includes(
+        token.symbol,
+      );
+      if (isSpecialToken || token.balance > 0) {
+        console.log(
+          `[TokenAccounts]   - ${token.symbol}: ${token.balance} (${token.mint.slice(0, 8)}...)`,
+        );
+      }
+    });
 
     return res.json({
       publicKey,

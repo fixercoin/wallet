@@ -901,6 +901,23 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         `[WalletContext] Creating allTokens array with SOL balance: ${solBalance} SOL`,
       );
 
+      // Ensure SOL balance is always valid before creating token list
+      if (
+        typeof solBalance !== "number" ||
+        !isFinite(solBalance) ||
+        solBalance < 0
+      ) {
+        console.warn(
+          `[WalletContext] Invalid SOL balance: ${solBalance}, using cached balance: ${balanceRef.current}`,
+        );
+        solBalance =
+          typeof balanceRef.current === "number" &&
+          isFinite(balanceRef.current) &&
+          balanceRef.current >= 0
+            ? balanceRef.current
+            : 0;
+      }
+
       const allTokens: TokenInfo[] = [
         {
           mint: "So11111111111111111111111111111111111111112",
@@ -983,9 +1000,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         const tokenMints = allTokens.map((token) => token.mint);
 
         // Fetch prices from DexScreener API
+        // Exclude LOCKER since it has no price data on DexScreener (causes 503 errors)
         try {
+          const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
           const allMintsToFetch = Array.from(
-            new Set(tokenMints.filter(Boolean)),
+            new Set(tokenMints.filter((mint) => mint && mint !== lockerMint)),
           );
 
           if (allMintsToFetch.length > 0) {
@@ -1033,14 +1052,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             fxmPriceService.getFXMPrice(),
           ]);
 
-          // Timeout after 10 seconds - use what we have by then
+          // Timeout after 15 seconds - use what we have by then
           const timeoutPromise = new Promise<[any, any, any]>((resolve) =>
             setTimeout(() => {
               console.warn(
-                "[WalletContext] Price fetching timeout after 10s, using partial results",
+                "[WalletContext] Price fetching timeout after 15s, using partial results with fallbacks",
               );
               resolve([null, null, null]);
-            }, 10000),
+            }, 15000),
           );
 
           const [fixercoinData, lockerData, fxmData] = await Promise.race([
@@ -1077,9 +1096,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             );
           } else {
             console.warn(
-              `[WalletContext] ⚠️ LOCKER price fetch resulted in invalid price:`,
-              lockerData,
+              `[WalletContext] ⚠️ LOCKER price fetch resulted in invalid price, using hardcoded fallback`,
             );
+            // Use hardcoded fallback for LOCKER - no price data on DexScreener
+            prices[lockerMint] = 0.000001;
+            changeMap[lockerMint] = 0;
           }
 
           if (fxmData && fxmData.price > 0 && isFinite(fxmData.price)) {
@@ -1090,12 +1111,23 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             );
           } else {
             console.warn(
-              `[WalletContext] ⚠️ FXM price fetch resulted in invalid price:`,
-              fxmData,
+              `[WalletContext] ⚠️ FXM price fetch resulted in invalid price, using hardcoded fallback`,
             );
+            // Use hardcoded fallback for FXM if fetch fails
+            prices[fxmMint] = 0.000001;
+            changeMap[fxmMint] = 0;
           }
         } catch (e) {
           console.warn("❌ Failed to fetch FIXERCOIN/LOCKER/FXM prices:", e);
+          // Ensure all special tokens have at least hardcoded prices on error
+          if (!prices[lockerMint]) {
+            prices[lockerMint] = 0.000001;
+            changeMap[lockerMint] = 0;
+          }
+          if (!prices[fxmMint]) {
+            prices[fxmMint] = 0.000001;
+            changeMap[fxmMint] = 0;
+          }
         }
 
         // Ensure SOL price is always present - if birdeye didn't return it, fetch from dedicated endpoint

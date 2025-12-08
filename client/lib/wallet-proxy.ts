@@ -203,7 +203,7 @@ export const getTokenAccounts = async (
     // Use RPC-based token fetching (free endpoints with Alchemy fallback)
     console.log("[TokenAccounts] Fetching token accounts via RPC endpoint...");
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     try {
       const response = await fetch(

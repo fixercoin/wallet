@@ -921,7 +921,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
       // Always include FXM, FIXERCOIN, and LOCKER tokens for display (even if user doesn't own them)
       const fxmMintAddress = "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump";
-      const fixercoinMintAddress = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+      const fixercoinMintAddress =
+        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
       const lockerMintAddress = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
 
       const hasFXM = allTokens.some((t) => t.mint === fxmMintAddress);

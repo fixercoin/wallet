@@ -44,20 +44,25 @@ SOLANA_RPC_URL = "https://solana.publicnode.com"
 # Path: Project Settings > Environment variables > Production (or Preview)
 [env.production.vars]
 # OPTION 1 (RECOMMENDED): Use Helius API Key for reliable production performance
-HELIUS_API_KEY = "ff9e8f9e-ec7f-463e-9d7f-46ab0bffbfb3"
+# Set in Cloudflare Pages project settings:
+# HELIUS_API_KEY = "your-helius-api-key-here"
 
 # OPTION 2: Use a custom RPC endpoint URL
+# Set in Cloudflare Pages project settings:
 # SOLANA_RPC_URL = "https://your-rpc-endpoint.com"
 
-# OPTION 3: Free public RPC endpoints (if no auth available)
-# SOLANA_RPC_URL = "https://solana.publicnode.com"      # Most reliable free option
-# SOLANA_RPC_URL = "https://api.solflare.com"           # Alternative free option
-# SOLANA_RPC_URL = "https://rpc.ankr.com/solana"        # Ankr free tier
+# OPTION 3: Free public RPC endpoints (automatically used if no auth available)
+# System will automatically try these endpoints in order:
+# - https://solana.publicnode.com (Most reliable free option)
+# - https://api.solflare.com (Alternative free option)
+# - https://rpc.ankr.com/solana (Ankr free tier)
+# - https://api.mainnet-beta.solana.com
+# - https://api.marinade.finance/rpc
 
-# Fallback endpoints (system will try these if primary fails)
-HELIUS_RPC_URL = ""
-ALCHEMY_RPC_URL = ""
-MORALIS_RPC_URL = ""
+# Optional: Configure additional RPC endpoints
+# HELIUS_RPC_URL = ""
+# ALCHEMY_RPC_URL = ""
+# MORALIS_RPC_URL = ""
 
 # KV namespace bindings for Pages Functions
 # These bindings are available in functions/api/* routes

@@ -244,10 +244,20 @@ export const getTokenAccounts = async (
               );
             }
 
-            console.log(
-              `✅ Token accounts loaded from Helius: ${enrichedTokens.length} tokens`,
-            );
-            return enrichedTokens;
+            // Check if FXM is missing or has 0 balance - if so, try Moralis as fallback
+            // This handles cases where Helius RPC doesn't return the token account
+            const hasFXM = enrichedTokens.some((t) => t.symbol === "FXM" && t.balance > 0);
+            if (!hasFXM) {
+              console.log(
+                "[TokenAccounts] FXM not found or has 0 balance via Helius, will try Moralis fallback...",
+              );
+              // Don't return yet - fall through to Moralis attempt
+            } else {
+              console.log(
+                `✅ Token accounts loaded from Helius: ${enrichedTokens.length} tokens`,
+              );
+              return enrichedTokens;
+            }
           }
         }
       } catch (heliusError) {

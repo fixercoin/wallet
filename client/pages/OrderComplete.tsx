@@ -935,7 +935,7 @@ export default function OrderComplete() {
                           onClick={handleBuyerCryptoReceived}
                           className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
                         >
-                          I Received USDC
+                          I Have Received Crypto
                         </Button>
                       </div>
                     )}

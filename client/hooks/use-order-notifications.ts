@@ -44,8 +44,9 @@ export function useOrderNotifications() {
       setLoading(true);
       try {
         const query = unreadOnly ? "&unread=true" : "";
+        // Include broadcast notifications (for generic buy orders)
         const response = await fetch(
-          `/api/p2p/notifications?wallet=${encodeURIComponent(wallet.publicKey)}${query}`,
+          `/api/p2p/notifications?wallet=${encodeURIComponent(wallet.publicKey)}&includeBroadcast=true${query}`,
         );
 
         if (!response.ok) {

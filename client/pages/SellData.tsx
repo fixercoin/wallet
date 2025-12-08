@@ -145,7 +145,7 @@ export default function SellData() {
         // Don't fail the order creation if notification fails
       }
 
-      navigate("/order-complete", { state: { order: createdOrder } });
+      navigate("/waiting-for-buyer-response", { state: { order: createdOrder } });
     } catch (error) {
       console.error("Error creating order:", error);
       toast.error("Failed to create order");

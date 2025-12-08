@@ -330,6 +330,25 @@ async function handler(request: Request, env?: Env): Promise<Response> {
           );
         }
 
+        // Check for missing critical tokens and fetch them individually
+        const foundMints = new Set(validTokens.map((t) => t?.mint).filter(Boolean));
+        const missingMints = CRITICAL_TOKENS_TO_VERIFY.filter(
+          (mint) => !foundMints.has(mint),
+        );
+
+        let additionalTokens: any[] = [];
+        if (missingMints.length > 0) {
+          console.log(
+            `[TokenAccounts] Found ${missingMints.length} missing critical tokens, verifying individually...`,
+          );
+          additionalTokens = await verifyMissingTokens(
+            endpoint,
+            publicKey,
+            validTokens,
+            missingMints,
+          );
+        }
+
         // Fetch and include native SOL balance
         let solBalance = 0;
         try {

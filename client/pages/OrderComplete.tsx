@@ -372,7 +372,7 @@ export default function OrderComplete() {
         "payment_confirmed",
         order.type,
         order.id,
-        `Buyer confirmed payment for ${order.amountTokens.toFixed(6)} ${order.token}`,
+        `Buyer confirmed payment for ${order.amountTokens.toFixed(2)} ${order.token}`,
         {
           token: order.token,
           amountTokens: order.amountTokens,
@@ -454,7 +454,7 @@ export default function OrderComplete() {
         "transfer_initiated",
         order.type,
         order.id,
-        `Seller initiated crypto transfer of ${order.amountTokens.toFixed(6)} ${order.token}`,
+        `Seller initiated crypto transfer of ${order.amountTokens.toFixed(2)} ${order.token}`,
         {
           token: order.token,
           amountTokens: order.amountTokens,
@@ -494,7 +494,7 @@ export default function OrderComplete() {
         "crypto_received",
         order.type,
         order.id,
-        `Buyer confirmed receipt of ${order.amountTokens.toFixed(6)} ${order.token}`,
+        `Buyer confirmed receipt of ${order.amountTokens.toFixed(2)} ${order.token}`,
         {
           token: order.token,
           amountTokens: order.amountTokens,

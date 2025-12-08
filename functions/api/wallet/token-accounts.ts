@@ -80,6 +80,14 @@ const KNOWN_TOKENS: Record<string, any> = {
   },
 };
 
+// Known tokens that should always be checked, in case RPC doesn't return them
+const CRITICAL_TOKENS_TO_VERIFY = [
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump", // FXM
+  "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
+  "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
+  "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns", // USDT
+];
+
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
 async function handler(request: Request, env?: Env): Promise<Response> {

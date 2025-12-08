@@ -208,6 +208,8 @@ function AppRoutes() {
       <Route path="/p2p/admin-disputes" element={<AdminDisputes />} />
       <Route path="/express/buy-trade" element={<BuyTrade />} />
       <Route path="/order-complete" element={<OrderComplete />} />
+      <Route path="/waiting-for-seller-response" element={<WaitingForSellerResponse />} />
+      <Route path="/seller-order-confirmation/:orderId" element={<SellerOrderConfirmation />} />
       <Route path="/search" element={<TokenSearchPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

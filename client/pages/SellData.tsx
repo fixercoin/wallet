@@ -20,6 +20,7 @@ interface PaymentMethod {
 export default function SellData() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
+  const { createNotification } = useOrderNotifications();
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined

@@ -91,6 +91,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
     symbol?: string,
   ): string => {
     if (!amount || isNaN(amount)) return "0.00";
+    // SOL always show exactly 6 decimal places
+    if (symbol === "SOL") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 6,
+        maximumFractionDigits: 6,
+      });
+    }
     // FIXERCOIN and LOCKER always show exactly 2 decimal places
     if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
       return amount.toLocaleString(undefined, {

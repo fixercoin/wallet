@@ -211,6 +211,13 @@ export const getTokenAccounts = async (
       const isUsingFallback =
         data.warning && data.warning.includes("unavailable");
 
+      console.log(`[TokenAccounts] Raw response from server:`, {
+        publicKey,
+        tokenCount: tokenAccounts.length,
+        firstToken: tokenAccounts[0],
+        solTokenBalance: tokenAccounts.find((t) => t.symbol === "SOL")?.balance,
+      });
+
       if (isUsingFallback) {
         console.warn(
           `[TokenAccounts] Server returned fallback data:`,

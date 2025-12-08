@@ -186,11 +186,23 @@ class FXMPriceService {
       AGGRESSIVE_RETRY_OPTIONS,
     );
 
-    // Return null only if all retries failed - never return fallback
+    // If all retries failed, return a static fallback price
     if (!priceData) {
       console.warn(
-        `[${this.TOKEN_NAME}] All price fetch attempts failed. Will retry on next request.`,
+        `[${this.TOKEN_NAME}] All price fetch attempts failed. Using static fallback price.`,
       );
+      const fallbackData: FXMPriceData = {
+        price: 0.000003567,
+        priceChange24h: 0,
+        volume24h: 0,
+        liquidity: 0,
+        lastUpdated: new Date(),
+        derivationMethod: "static fallback (DexScreener unavailable)",
+        isFallback: true,
+      };
+      this.cachedData = fallbackData;
+      this.lastFetchTime = new Date();
+      return fallbackData;
     }
 
     return priceData;

@@ -897,6 +897,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       }
 
+      console.log(
+        `[WalletContext] Creating allTokens array with SOL balance: ${solBalance} SOL`,
+      );
+
       const allTokens: TokenInfo[] = [
         {
           mint: "So11111111111111111111111111111111111111112",
@@ -914,6 +918,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           allTokens.push(tokenAccount);
         }
       });
+
+      console.log(
+        `[WalletContext] allTokens created with ${allTokens.length} tokens, SOL balance: ${
+          allTokens[0]?.balance || "MISSING"
+        } SOL`,
+      );
 
       // Price fetching logic - show loader only during price fetch
       setIsLoading(true);
@@ -1183,8 +1193,21 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       console.log(
         `[Wallet] Price source: ${priceSource} | SOL price: $${prices["So11111111111111111111111111111111111111112"] || "FALLBACK"}`,
       );
+
+      const solTokenInEnhanced = enhancedTokens.find((t) => t.symbol === "SOL");
+      console.log(`[WalletContext] About to set tokens in state. SOL token:`, {
+        symbol: solTokenInEnhanced?.symbol,
+        balance: solTokenInEnhanced?.balance,
+        price: solTokenInEnhanced?.price,
+        mint: solTokenInEnhanced?.mint,
+      });
+
       setTokens(enhancedTokens);
       setIsUsingCache(false);
+
+      console.log(
+        `[WalletContext] Tokens set in state. Total ${enhancedTokens.length} tokens`,
+      );
 
       // Save tokens and prices to cache for offline support
       try {

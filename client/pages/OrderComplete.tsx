@@ -49,9 +49,21 @@ export default function OrderComplete() {
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(280);
   const [uploading, setUploading] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
+  const [orderTimestamp, setOrderTimestamp] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatSectionRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to chat if openChat is true in location state
+  useEffect(() => {
+    if (location.state?.openChat && chatSectionRef.current) {
+      setTimeout(() => {
+        chatSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 500);
+    }
+  }, [location.state?.openChat, loading]);
 
   // Load order from state or storage (with KV fallback)
   useEffect(() => {
@@ -76,6 +88,13 @@ export default function OrderComplete() {
           loadedOrder.sellerTransferInitiated ?? false,
         );
         setBuyerCryptoReceived(loadedOrder.buyerCryptoReceived ?? false);
+        // Set timestamp for timer (use createdAt if available, otherwise use current time)
+        const timestamp =
+          loadedOrder.createdAt &&
+          !isNaN(new Date(loadedOrder.createdAt).getTime())
+            ? new Date(loadedOrder.createdAt).getTime()
+            : Date.now();
+        setOrderTimestamp(timestamp);
       }
 
       setLoading(false);
@@ -83,6 +102,72 @@ export default function OrderComplete() {
 
     loadOrder();
   }, [location.state]);
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (!orderTimestamp) return;
+
+    const timerInterval = setInterval(() => {
+      const now = Date.now();
+      const elapsedSeconds = Math.floor((now - orderTimestamp) / 1000);
+      const remaining = Math.max(0, 600 - elapsedSeconds); // 600 seconds = 10 minutes
+
+      setTimeRemaining(remaining);
+    }, 1000);
+
+    return () => clearInterval(timerInterval);
+  }, [orderTimestamp]);
+
+  // Auto-cancel order when timer reaches 0
+  useEffect(() => {
+    if (
+      timeRemaining === 0 &&
+      order &&
+      order.status !== "COMPLETED" &&
+      order.status !== "CANCELLED"
+    ) {
+      const autoCancel = async () => {
+        try {
+          await updateOrderInBothStorages(order.id, {
+            status: "CANCELLED",
+            buyerPaymentConfirmed: false,
+            sellerPaymentReceived: false,
+            sellerTransferInitiated: false,
+            buyerCryptoReceived: false,
+          });
+
+          if (order.roomId) {
+            await addTradeMessage({
+              room_id: order.roomId,
+              sender_wallet: wallet?.publicKey || "",
+              message: "⏰ Order auto-cancelled due to timeout",
+            });
+          }
+
+          const otherParty = isBuyer ? order.sellerWallet : order.buyerWallet;
+          await createNotification(
+            otherParty,
+            "order_cancelled",
+            order.type,
+            order.id,
+            "Order auto-cancelled due to 10-minute timeout",
+            {
+              token: order.token,
+              amountTokens: order.amountTokens,
+              amountPKR: order.amountPKR,
+            },
+          );
+
+          toast.success("Order auto-cancelled due to timeout");
+          setTimeout(() => navigate(-1), 2000);
+        } catch (error) {
+          console.error("Error auto-cancelling order:", error);
+        }
+      };
+
+      autoCancel();
+    }
+  }, [timeRemaining, order]);
 
   // Fetch exchange rate from API (same as BuyData and SellData)
   useEffect(() => {
@@ -165,6 +250,12 @@ export default function OrderComplete() {
   const shortenAddress = (addr: string, chars = 6): string => {
     if (!addr) return "";
     return `${addr.slice(0, chars)}...${addr.slice(-chars)}`;
+  };
+
+  const formatTimeRemaining = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -281,7 +372,7 @@ export default function OrderComplete() {
         "payment_confirmed",
         order.type,
         order.id,
-        `Buyer confirmed payment for ${order.amountTokens.toFixed(6)} ${order.token}`,
+        `Buyer confirmed payment for ${order.amountTokens.toFixed(2)} ${order.token}`,
         {
           token: order.token,
           amountTokens: order.amountTokens,
@@ -363,7 +454,7 @@ export default function OrderComplete() {
         "transfer_initiated",
         order.type,
         order.id,
-        `Seller initiated crypto transfer of ${order.amountTokens.toFixed(6)} ${order.token}`,
+        `Seller initiated crypto transfer of ${order.amountTokens.toFixed(2)} ${order.token}`,
         {
           token: order.token,
           amountTokens: order.amountTokens,
@@ -403,7 +494,7 @@ export default function OrderComplete() {
         "crypto_received",
         order.type,
         order.id,
-        `Buyer confirmed receipt of ${order.amountTokens.toFixed(6)} ${order.token}`,
+        `Buyer confirmed receipt of ${order.amountTokens.toFixed(2)} ${order.token}`,
         {
           token: order.token,
           amountTokens: order.amountTokens,
@@ -510,14 +601,17 @@ export default function OrderComplete() {
             {isBuyer ? "BUY ORDER" : "SELL ORDER"}
           </h1>
           {order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
-            <button
-              onClick={handleCancelOrder}
-              className="relative p-2 rounded-lg hover:bg-red-600/20 transition-colors text-red-400"
-              aria-label="Cancel Order"
-              title="Cancel order"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-3">
+              <div
+                className={`text-sm font-bold px-3 py-1 rounded-lg ${
+                  timeRemaining <= 60
+                    ? "bg-red-600/40 text-red-400"
+                    : "bg-[#FF7A5C]/20 text-[#FF7A5C]"
+                }`}
+              >
+                {formatTimeRemaining(timeRemaining)}
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -529,7 +623,7 @@ export default function OrderComplete() {
             <h2 className="text-lg font-bold text-white mb-4 uppercase">
               Order Details
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div>
                 <div className="text-xs text-white/70 font-semibold uppercase mb-1">
                   Order ID
@@ -574,6 +668,38 @@ export default function OrderComplete() {
                 <div className="text-xs text-white/90">
                   1 {order.token} = {exchangeRate.toFixed(2)} PKR
                 </div>
+              </div>
+
+              <div>
+                <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                  Total PKR
+                </div>
+                <div className="text-xs text-white/90 font-semibold">
+                  {(order.amountTokens * exchangeRate).toFixed(2)} PKR
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-300/20">
+              <div className="text-xs text-white/70 font-semibold uppercase mb-3">
+                Buyer Wallet Address
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="font-mono text-xs text-white/90 break-all">
+                  {order.buyerWallet}
+                </div>
+                <button
+                  onClick={() =>
+                    handleCopy(order.buyerWallet, "Buyer Wallet Address")
+                  }
+                  className="text-gray-400 hover:text-white transition-colors flex-shrink-0"
+                >
+                  {copiedValue === order.buyerWallet ? (
+                    <Check className="w-3 h-3" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -699,7 +825,21 @@ export default function OrderComplete() {
 
               {!buyerPaymentConfirmed && (
                 <div className="text-xs text-white/60 bg-[#1a2540]/50 p-3 rounded-lg mb-4">
-                  Inactive until buyer confirms payment
+                  Waiting for buyer to confirm payment...
+                </div>
+              )}
+
+              {buyerPaymentConfirmed && !isBuyer && (
+                <div className="text-xs text-green-400 bg-green-500/10 border border-green-500/30 p-3 rounded-lg mb-4">
+                  ✓ Buyer confirmed payment sent - waiting for you to confirm
+                  receipt
+                </div>
+              )}
+
+              {buyerPaymentConfirmed && isBuyer && !sellerPaymentReceived && (
+                <div className="text-xs text-green-400 bg-green-500/10 border border-green-500/30 p-3 rounded-lg mb-4">
+                  ✓ You confirmed payment sent - waiting for seller to confirm
+                  receipt
                 </div>
               )}
 
@@ -736,7 +876,7 @@ export default function OrderComplete() {
                     <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-orange-500/20">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-semibold uppercase text-white">
-                          Crypto Transfer
+                          I Have Completed Order
                         </span>
                         {sellerTransferInitiated ? (
                           <CheckCircle className="w-5 h-5 text-green-500" />
@@ -749,21 +889,33 @@ export default function OrderComplete() {
                           onClick={handleSellerTransfer}
                           className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
                         >
-                          Release USDC to Buyer
+                          I Have Completed Order
                         </Button>
                       ) : (
                         <div className="text-xs text-orange-400 font-semibold">
-                          ✓ Transfer Initiated
+                          ✓ Completed
                         </div>
                       )}
                     </div>
                   )}
 
-                  {isBuyer && sellerPaymentReceived && (
-                    <div className="p-3 bg-orange-600/20 border border-orange-500/30 rounded-lg text-xs text-orange-300">
-                      Waiting for seller to transfer crypto...
-                    </div>
-                  )}
+                  {isBuyer &&
+                    sellerPaymentReceived &&
+                    !sellerTransferInitiated && (
+                      <div className="p-3 bg-orange-600/20 border border-orange-500/30 rounded-lg text-xs text-orange-300">
+                        ✓ Seller confirmed payment received - waiting for crypto
+                        transfer...
+                      </div>
+                    )}
+
+                  {isBuyer &&
+                    sellerTransferInitiated &&
+                    !buyerCryptoReceived && (
+                      <div className="p-3 bg-green-600/20 border border-green-500/30 rounded-lg text-xs text-green-300">
+                        ✓ Seller initiated transfer - check your wallet and
+                        confirm receipt below
+                      </div>
+                    )}
 
                   {isBuyer &&
                     sellerTransferInitiated &&
@@ -783,7 +935,7 @@ export default function OrderComplete() {
                           onClick={handleBuyerCryptoReceived}
                           className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
                         >
-                          I Received USDC
+                          I Have Received Crypto
                         </Button>
                       </div>
                     )}
@@ -812,7 +964,10 @@ export default function OrderComplete() {
         </div>
 
         {/* FULL-WIDTH CHAT SECTION BELOW */}
-        <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30">
+        <Card
+          className="bg-[#0f1520]/50 border border-[#FF7A5C]/30"
+          ref={chatSectionRef}
+        >
           <CardContent className="p-4 flex flex-col h-full min-h-[400px]">
             <h2 className="text-lg font-bold text-white mb-4 uppercase">
               Chat
@@ -859,7 +1014,7 @@ export default function OrderComplete() {
             </div>
 
             {/* Message Input */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-4">
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
@@ -896,6 +1051,17 @@ export default function OrderComplete() {
                 <Send className="h-4 w-4" />
               </Button>
             </div>
+
+            {/* Cancel Order Button */}
+            {order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
+              <Button
+                onClick={handleCancelOrder}
+                className="w-full px-4 py-2 bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 text-red-400 uppercase text-xs font-semibold transition-colors"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Cancel Trade
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -2,12 +2,21 @@ export const config = {
   runtime: "nodejs_esmsh",
 };
 
-const DEFAULT_SOLANA_RPC = "https://solana.publicnode.com";
+interface Env {
+  SOLANA_RPC_URL?: string;
+  ALCHEMY_RPC_URL?: string;
+}
+
+const DEFAULT_SOLANA_RPC = "https://api.mainnet-beta.solflare.network";
 const FALLBACK_RPC_ENDPOINTS = [
+  "https://api.mainnet-beta.solflare.network",
+  "https://solana-api.projectserum.com",
+  "https://api.mainnet.solflare.com",
   "https://solana.publicnode.com",
-  "https://rpc.ankr.com/solana",
-  "https://api.mainnet-beta.solana.com",
 ];
+
+const ALCHEMY_RPC_FALLBACK =
+  "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
 
 const PUMPFUN_API_BASE = "https://pump.fun/api";
 const PUMPFUN_QUOTE = "https://pumpportal.fun/api/quote";
@@ -110,7 +119,7 @@ async function handleHealth(): Promise<Response> {
   );
 }
 
-async function handleWalletBalance(url: URL): Promise<Response> {
+async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
   const publicKey = url.searchParams.get("publicKey");
   if (!publicKey) {
     return new Response(JSON.stringify({ error: "publicKey required" }), {
@@ -126,56 +135,106 @@ async function handleWalletBalance(url: URL): Promise<Response> {
     params: [publicKey],
   };
 
-  // Build ordered list of endpoints to try (unique)
-  const endpoints = Array.from(
-    new Set([DEFAULT_SOLANA_RPC, ...(FALLBACK_RPC_ENDPOINTS || [])]),
-  );
+  // Build RPC endpoints with env variables first
+  const endpoints: string[] = [];
+  const priorityEndpoints: string[] = [];
 
-  let lastError = "";
-  let lastStatus = 502;
+  // Add environment-configured endpoints first (highest priority)
+  if (
+    env?.SOLANA_RPC_URL &&
+    typeof env.SOLANA_RPC_URL === "string" &&
+    env.SOLANA_RPC_URL.length > 0
+  ) {
+    priorityEndpoints.push(env.SOLANA_RPC_URL);
+  }
+  if (
+    env?.ALCHEMY_RPC_URL &&
+    typeof env.ALCHEMY_RPC_URL === "string" &&
+    env.ALCHEMY_RPC_URL.length > 0
+  ) {
+    priorityEndpoints.push(env.ALCHEMY_RPC_URL);
+  }
 
-  for (let i = 0; i < endpoints.length; i++) {
-    const endpoint = endpoints[i];
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        const resp = await timeoutFetch(endpoint, {
-          method: "POST",
-          headers: browserHeaders(),
-          body: JSON.stringify(payload),
-        });
+  // Add fallback endpoints
+  const allEndpoints = [
+    ...Array.from(new Set(priorityEndpoints)),
+    ...FALLBACK_RPC_ENDPOINTS,
+  ];
+  const uniqueEndpoints = Array.from(new Set(allEndpoints));
 
-        lastStatus = resp.status;
+  // Try priority endpoints in parallel with shorter timeout
+  if (priorityEndpoints.length > 0) {
+    const priorityResults = await Promise.allSettled(
+      priorityEndpoints.map((endpoint) =>
+        timeoutFetch(
+          endpoint,
+          {
+            method: "POST",
+            headers: browserHeaders(),
+            body: JSON.stringify(payload),
+          },
+          8000,
+        ),
+      ),
+    );
 
+    for (const result of priorityResults) {
+      if (result.status === "fulfilled") {
+        const resp = result.value;
         if (resp.ok) {
-          const rpcJson = await resp.json().catch(() => ({}));
-          const lamports = rpcJson?.result?.value ?? 0;
-          const sol = lamports / 1_000_000_000;
-          return new Response(JSON.stringify({ lamports, sol, publicKey }), {
-            headers: CORS_HEADERS,
-          });
-        }
-
-        // Non-OK response
-        const text = await resp.text().catch(() => "");
-        lastError = `HTTP ${resp.status}: ${text}`;
-
-        // Retry on server errors
-        if (resp.status >= 500) {
-          if (attempt < 2) {
-            await new Promise((r) => setTimeout(r, 500 * attempt));
+          try {
+            const rpcJson = await resp.json();
+            const lamports = rpcJson?.result?.value ?? rpcJson?.result ?? 0;
+            const balance =
+              typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
+            return new Response(
+              JSON.stringify({ balance, lamports, publicKey }),
+              {
+                headers: CORS_HEADERS,
+              },
+            );
+          } catch (e) {
             continue;
           }
         }
-
-        // Not retryable, break to next endpoint
-        break;
-      } catch (e: any) {
-        lastError = String(e?.message || e);
-        if (attempt < 2) {
-          await new Promise((r) => setTimeout(r, 300 * attempt));
-          continue;
-        }
       }
+    }
+  }
+
+  // Fallback endpoints with sequential retry
+  let lastError = "";
+  let lastStatus = 502;
+
+  for (const endpoint of FALLBACK_RPC_ENDPOINTS) {
+    try {
+      const resp = await timeoutFetch(
+        endpoint,
+        {
+          method: "POST",
+          headers: browserHeaders(),
+          body: JSON.stringify(payload),
+        },
+        8000,
+      );
+
+      lastStatus = resp.status;
+
+      if (resp.ok) {
+        const rpcJson = await resp.json().catch(() => ({}));
+        const lamports = rpcJson?.result?.value ?? rpcJson?.result ?? 0;
+        const balance =
+          typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
+        return new Response(JSON.stringify({ balance, lamports, publicKey }), {
+          headers: CORS_HEADERS,
+        });
+      }
+
+      const text = await resp.text().catch(() => "");
+      lastError = `HTTP ${resp.status}: ${text.slice(0, 100)}`;
+    } catch (e: any) {
+      lastError = e?.message?.includes?.("abort")
+        ? "timeout"
+        : String(e?.message || e).slice(0, 100);
     }
   }
 
@@ -185,6 +244,7 @@ async function handleWalletBalance(url: URL): Promise<Response> {
       error: "rpc_error",
       details: lastError,
       status: lastStatus,
+      endpointsAttempted: uniqueEndpoints.length,
     }),
     { status: 502, headers: CORS_HEADERS },
   );
@@ -1637,7 +1697,7 @@ async function handleSolanaRpc(request: Request): Promise<Response> {
   }
 }
 
-async function handler(request: Request): Promise<Response> {
+async function handler(request: Request, env?: Env): Promise<Response> {
   try {
     if (request.method === "OPTIONS") {
       return new Response(null, {
@@ -1689,10 +1749,47 @@ async function handler(request: Request): Promise<Response> {
     }
 
     if (
+      pathname === "/api/wallet" ||
+      pathname === "/api/wallet/" ||
+      pathname === "/wallet"
+    ) {
+      // Support multiple parameter names for publicKey
+      const publicKey =
+        url.searchParams.get("publicKey") ||
+        url.searchParams.get("wallet") ||
+        url.searchParams.get("address") ||
+        url.searchParams.get("walletAddress");
+
+      if (!publicKey) {
+        return new Response(
+          JSON.stringify({
+            error: "Missing or invalid wallet address parameter",
+            examples: [
+              "GET /api/wallet?publicKey=...",
+              "GET /api/wallet?wallet=...",
+              "GET /api/wallet?address=...",
+              "GET /api/wallet?walletAddress=...",
+            ],
+            availableEndpoints: [
+              "/api/wallet/balance - Get SOL balance",
+              "/api/wallet/tokens - Get token accounts",
+            ],
+          }),
+          { status: 400, headers: CORS_HEADERS },
+        );
+      }
+
+      // Delegate to wallet balance handler
+      const balanceUrl = new URL(url);
+      balanceUrl.searchParams.set("publicKey", publicKey);
+      return await handleWalletBalance(balanceUrl, env);
+    }
+
+    if (
       pathname.startsWith("/api/wallet/balance") ||
       pathname === "/wallet/balance"
     ) {
-      return await handleWalletBalance(url);
+      return await handleWalletBalance(url, env);
     }
 
     if (
@@ -1704,10 +1801,6 @@ async function handler(request: Request): Promise<Response> {
 
     if (pathname.startsWith("/api/price") || pathname === "/price") {
       return await handlePrice(url);
-    }
-
-    if (pathname === "/api/sol/price") {
-      return await handleSolPrice();
     }
 
     if (pathname === "/api/token/price") {
@@ -1831,6 +1924,7 @@ async function handler(request: Request): Promise<Response> {
 }
 
 export async function onRequest(context: any): Promise<Response> {
-  // Cloudflare Pages Functions pass a context object; extract the Request
-  return handler(context.request as Request);
+  // Cloudflare Pages Functions pass a context object; extract the Request and env
+  const { request, env } = context;
+  return handler(request as Request, env as Env);
 }

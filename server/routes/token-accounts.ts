@@ -1,35 +1,43 @@
 import { RequestHandler } from "express";
-import { PublicKey, Connection } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 
-// Using multiple RPC providers to handle rate limiting
-const RPC_ENDPOINTS = [
-  // Prefer environment-configured RPC first
-  process.env.SOLANA_RPC_URL || "",
-  // Provider-specific overrides
-  process.env.ALCHEMY_RPC_URL || "",
-  process.env.HELIUS_RPC_URL || "",
-  process.env.MORALIS_RPC_URL || "",
-  process.env.HELIUS_API_KEY
-    ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
-    : "",
-  // Well-tested public endpoints
-  "https://api.mainnet-beta.solana.com",
-  // Community-supported endpoints
-  "https://solana-api.projectserum.com",
-  "https://rpc-mainnet.phantom.app",
-  // Geode Network
-  "https://solana.geode.network",
-].filter(Boolean);
+// Get RPC endpoint with free endpoints and Alchemy fallback
+function getRpcEndpoint(): string {
+  const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
+
+  if (solanaRpcUrl) {
+    console.log("[TokenAccounts] Using SOLANA_RPC_URL endpoint");
+    return solanaRpcUrl;
+  }
+
+  // Try to use Helius if configured
+  const heliusApiKey = process.env.HELIUS_API_KEY?.trim();
+  if (heliusApiKey) {
+    const heliusEndpoint = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
+    console.log("[TokenAccounts] Using Helius RPC endpoint");
+    return heliusEndpoint;
+  }
+
+  // Fallback to Alchemy (note: this key may be rate-limited)
+  const alchemyEndpoint =
+    "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
+
+  console.log(
+    "[TokenAccounts] Using Alchemy RPC endpoint (no SOLANA_RPC_URL or HELIUS_API_KEY configured)",
+  );
+  return alchemyEndpoint;
+}
 
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+const SOL_MINT = "So11111111111111111111111111111111111111112";
 
 // Known token metadata
 const KNOWN_TOKENS: Record<
   string,
   { mint: string; symbol: string; name: string; decimals: number }
 > = {
-  So11111111111111111111111111111111111111112: {
-    mint: "So11111111111111111111111111111111111111112",
+  [SOL_MINT]: {
+    mint: SOL_MINT,
     symbol: "SOL",
     name: "Solana",
     decimals: 9,
@@ -43,7 +51,7 @@ const KNOWN_TOKENS: Record<
   Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns: {
     mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
     symbol: "USDT",
-    name: "Tether USD",
+    name: "USDT TETHER",
     decimals: 6,
   },
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: {
@@ -58,6 +66,12 @@ const KNOWN_TOKENS: Record<
     name: "LOCKER",
     decimals: 6,
   },
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump": {
+    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+    symbol: "FXM",
+    name: "Fixorium",
+    decimals: 6,
+  },
 };
 
 export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
@@ -68,21 +82,24 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
       (req.query.address as string);
 
     if (!publicKey || typeof publicKey !== "string") {
-      return res.status(400).json({
-        error: "Missing or invalid wallet address",
-      });
+      return res.status(400).json({ error: "Missing or invalid wallet" });
     }
 
-    // Validate it's a valid Solana address
     try {
       new PublicKey(publicKey);
     } catch {
-      return res.status(400).json({
-        error: "Invalid Solana address",
-      });
+      return res.status(400).json({ error: "Invalid Solana address" });
     }
 
-    const body = {
+    const endpoint = getRpcEndpoint();
+    let solBalance = 0;
+
+    console.log(
+      `[TokenAccounts] Fetching token accounts from: ${endpoint.split("?")[0]}...`,
+    );
+
+    // Fetch SPL token accounts
+    const tokenBody = {
       jsonrpc: "2.0",
       id: 1,
       method: "getTokenAccountsByOwner",
@@ -93,125 +110,182 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
       ],
     };
 
-    let lastError: Error | null = null;
+    const tokenController = new AbortController();
+    const tokenTimeoutId = setTimeout(() => tokenController.abort(), 12000);
 
-    for (const endpoint of RPC_ENDPOINTS) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+    let tokens: any[] = [];
 
-        try {
-          const response = await fetch(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-            signal: controller.signal,
-          });
+    try {
+      const tokenResp = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tokenBody),
+        signal: tokenController.signal,
+      });
 
-          clearTimeout(timeoutId);
+      clearTimeout(tokenTimeoutId);
 
-          if (!response.ok) {
-            console.warn(
-              `[TokenAccounts] RPC ${endpoint.slice(0, 40)} returned status ${response.status}`,
+      if (tokenResp.ok) {
+        const tokenData = await tokenResp.json();
+        const accounts = tokenData?.result?.value ?? [];
+
+        tokens = accounts.map((account: any) => {
+          const info = account.account.data.parsed.info;
+          const mint = info.mint;
+          const decimals = info.tokenAmount.decimals;
+
+          const raw = BigInt(info.tokenAmount.amount);
+          const balance = Number(raw) / Math.pow(10, decimals);
+
+          // Special logging for FXM and other tokens
+          if (mint === "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump") {
+            console.log(
+              `[TokenAccounts] FXM Token found - Raw: ${raw}, Decimals: ${decimals}, Balance: ${balance}`,
             );
-            lastError = new Error(`HTTP ${response.status}`);
-            continue;
           }
 
-          const data = await response.json();
+          const meta = KNOWN_TOKENS[mint] || {
+            mint,
+            symbol: "UNKNOWN",
+            name: "Unknown Token",
+            decimals,
+          };
 
-          if (data.error) {
-            console.warn(
-              `[TokenAccounts] RPC ${endpoint.slice(0, 40)} returned error:`,
-              data.error,
-            );
-            lastError = new Error(data.error.message || "RPC error");
-            continue;
-          }
-
-          const accounts = data.result?.value || [];
-          const tokens = accounts.map((account: any) => {
-            const parsedInfo = account.account.data.parsed.info;
-            const mint = parsedInfo.mint;
-            const decimals = parsedInfo.tokenAmount.decimals;
-
-            // Extract balance
-            let balance = 0;
-            if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
-              balance = parsedInfo.tokenAmount.uiAmount;
-            } else if (parsedInfo.tokenAmount.amount) {
-              const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
-              balance = Number(rawAmount) / Math.pow(10, decimals || 0);
-            }
-
-            const metadata = KNOWN_TOKENS[mint] || {
-              mint,
-              symbol: "UNKNOWN",
-              name: "Unknown Token",
-              decimals,
-            };
-
-            return {
-              ...metadata,
-              balance,
-              decimals: decimals || metadata.decimals,
-            };
-          });
-
-          console.log(
-            `[TokenAccounts] ✅ Found ${tokens.length} token accounts for ${publicKey.slice(0, 8)} via ${endpoint.slice(0, 40)}`,
-          );
-          return res.json({
-            publicKey,
-            tokens,
-            count: tokens.length,
-          });
-        } finally {
-          clearTimeout(timeoutId);
-        }
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-        const errorMsg = lastError.message || "Unknown error";
-        console.warn(
-          `[TokenAccounts] RPC endpoint ${endpoint.slice(0, 40)} failed: ${errorMsg}`,
-        );
-        continue;
+          return { ...meta, balance, decimals };
+        });
       }
+    } catch (tokenError) {
+      clearTimeout(tokenTimeoutId);
+      console.warn(
+        "[TokenAccounts] Failed to fetch token accounts:",
+        tokenError instanceof Error ? tokenError.message : String(tokenError),
+      );
+      tokens = [];
     }
 
-    console.error(
-      "[TokenAccounts] All RPC endpoints failed:",
-      lastError?.message,
+    // Fetch native SOL balance separately with its own timeout
+    const solBody = {
+      jsonrpc: "2.0",
+      id: 2,
+      method: "getBalance",
+      params: [publicKey],
+    };
+
+    const solController = new AbortController();
+    const solTimeoutId = setTimeout(() => solController.abort(), 12000);
+
+    try {
+      const solResp = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(solBody),
+        signal: solController.signal,
+      });
+
+      clearTimeout(solTimeoutId);
+
+      if (solResp.ok) {
+        const solData = await solResp.json();
+
+        // Check for JSON-RPC error in the response
+        if (solData.error) {
+          console.warn(
+            `[TokenAccounts] RPC error fetching SOL balance:`,
+            solData.error,
+          );
+          solBalance = 0;
+        } else {
+          const lamports = solData.result?.value ?? solData.result ?? 0;
+          solBalance =
+            typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
+
+          if (solBalance < 0) {
+            solBalance = 0;
+          }
+
+          console.log(
+            `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
+          );
+        }
+      } else {
+        // Log HTTP error from RPC endpoint
+        let errorDetails = `HTTP ${solResp.status}`;
+        try {
+          const errorBody = await solResp.text();
+          if (errorBody) {
+            errorDetails += `: ${errorBody.substring(0, 200)}`;
+          }
+        } catch {
+          // Ignore error parsing errors
+        }
+
+        console.warn(
+          `[TokenAccounts] Failed to fetch SOL balance - RPC endpoint returned error: ${errorDetails}`,
+        );
+        solBalance = 0;
+      }
+    } catch (solError) {
+      clearTimeout(solTimeoutId);
+      console.warn(
+        "[TokenAccounts] Failed to fetch SOL balance - Exception:",
+        solError instanceof Error ? solError.message : String(solError),
+      );
+      solBalance = 0;
+    }
+
+    // Check if SOL already exists in token list (might be WSOL or SOL account)
+    const solIndex = tokens.findIndex((t) => t.mint === SOL_MINT);
+
+    if (solIndex >= 0) {
+      // Update existing SOL entry with fetched balance
+      tokens[solIndex] = {
+        ...tokens[solIndex],
+        balance: solBalance,
+      };
+    } else {
+      // Insert SOL at the beginning if not found
+      tokens.unshift({
+        ...KNOWN_TOKENS[SOL_MINT],
+        balance: solBalance,
+      });
+    }
+
+    console.log(
+      `[TokenAccounts] ✅ Found ${tokens.length} tokens for ${publicKey.slice(0, 8)}... (SOL: ${solBalance} SOL)`,
     );
 
-    // Return default tokens as fallback when all RPC endpoints fail
-    // This ensures the UI still shows known tokens with 0 balance
-    const defaultTokens = Object.values(KNOWN_TOKENS).map((token) => ({
-      ...token,
-      balance: 0,
-    }));
+    // Log all tokens returned
+    tokens.forEach((token) => {
+      const isSpecialToken = ["FXM", "FIXERCOIN", "LOCKER"].includes(
+        token.symbol,
+      );
+      if (isSpecialToken || token.balance > 0) {
+        console.log(
+          `[TokenAccounts]   - ${token.symbol}: ${token.balance} (${token.mint.slice(0, 8)}...)`,
+        );
+      }
+    });
 
-    return res.status(200).json({
+    return res.json({
       publicKey,
-      tokens: defaultTokens,
-      count: defaultTokens.length,
-      warning:
-        "Token accounts unavailable - returning default tokens with zero balance",
+      tokens,
+      solBalance,
+      count: tokens.length,
     });
   } catch (error) {
     console.error("[TokenAccounts] Unexpected error:", error);
 
-    // Return default tokens even on unexpected errors
-    const defaultTokens = Object.values(KNOWN_TOKENS).map((token) => ({
-      ...token,
+    // Return default tokens with zero balance on error
+    const fallback = Object.values(KNOWN_TOKENS).map((t) => ({
+      ...t,
       balance: 0,
     }));
 
     return res.status(200).json({
       publicKey: (req.query.publicKey as string) || "unknown",
-      tokens: defaultTokens,
-      count: defaultTokens.length,
-      warning: "Token accounts unavailable due to server error",
+      tokens: fallback,
+      solBalance: 0,
+      count: fallback.length,
     });
   }
 };

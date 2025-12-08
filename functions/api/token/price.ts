@@ -129,25 +129,26 @@ async function handler(request: Request): Promise<Response> {
       }
     }
 
-    // Fallback to static prices if DexScreener fails
-    if (FALLBACK_PRICES[token]) {
-      return new Response(
-        JSON.stringify({
-          token,
-          priceUsd: FALLBACK_PRICES[token],
-          source: "fallback",
-          timestamp: Date.now(),
-        }),
-        {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "Cache-Control": "public, max-age=60",
-          },
+    // Return fallback price when DexScreener fails
+    const fallbackPrice = FALLBACK_PRICES[token] || 0;
+    return new Response(
+      JSON.stringify({
+        token,
+        priceUsd: fallbackPrice,
+        priceChange24h: 0,
+        source: "fallback",
+        isFallback: true,
+        timestamp: Date.now(),
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "public, max-age=5",
         },
-      );
-    }
+      },
+    );
 
     // If mint provided, try to resolve it
     if (mint && mint.length > 40) {
@@ -182,36 +183,39 @@ async function handler(request: Request): Promise<Response> {
           }
         }
 
-        // Fallback to static price
-        if (FALLBACK_PRICES[tokenSymbol]) {
-          return new Response(
-            JSON.stringify({
-              token: tokenSymbol,
-              mint,
-              priceUsd: FALLBACK_PRICES[tokenSymbol],
-              source: "fallback",
-              timestamp: Date.now(),
-            }),
-            {
-              status: 200,
-              headers: {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-                "Cache-Control": "public, max-age=60",
-              },
+        // Return fallback price when not available
+        const fallbackMintPrice = FALLBACK_PRICES[tokenSymbol] || 0;
+        return new Response(
+          JSON.stringify({
+            token: tokenSymbol,
+            mint,
+            priceUsd: fallbackMintPrice,
+            priceChange24h: 0,
+            source: "fallback",
+            isFallback: true,
+            timestamp: Date.now(),
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+              "Cache-Control": "public, max-age=5",
             },
-          );
-        }
+          },
+        );
       }
     }
 
-    // Return zero price for unknown token (still valid JSON)
+    // Return fallback price for unknown token
     return new Response(
       JSON.stringify({
         token,
         mint,
-        priceUsd: 0,
-        source: "unknown",
+        priceUsd: FALLBACK_PRICES[token] || 0,
+        priceChange24h: 0,
+        source: "fallback",
+        isFallback: true,
         timestamp: Date.now(),
       }),
       {
@@ -219,27 +223,25 @@ async function handler(request: Request): Promise<Response> {
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
-          "Cache-Control": "public, max-age=60",
+          "Cache-Control": "public, max-age=5",
         },
       },
     );
   } catch (error: any) {
-    // Always return valid JSON with fallback price on error
     console.error("[Token Price] Error:", error?.message || String(error));
 
     return new Response(
       JSON.stringify({
-        token: "FIXERCOIN",
-        priceUsd: FALLBACK_PRICES.FIXERCOIN,
-        source: "fallback",
+        error: "Price service temporarily unavailable",
+        details: error?.message || String(error),
         timestamp: Date.now(),
       }),
       {
-        status: 200,
+        status: 500,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
-          "Cache-Control": "public, max-age=60",
+          "Cache-Control": "no-cache",
         },
       },
     );

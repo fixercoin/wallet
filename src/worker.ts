@@ -1,14 +1,19 @@
 export interface Env {
   SOLANA_RPC?: string;
+  HELIUS_API_KEY?: string;
+  HELIUS_RPC_URL?: string;
+  ALCHEMY_RPC_URL?: string;
+  MORALIS_RPC_URL?: string;
 }
 
-// RPC endpoints
-// Prefer reliable public providers by default
-const DEFAULT_SOLANA_RPC = "https://solana.publicnode.com";
-const FALLBACK_RPC_ENDPOINTS = [
+// RPC endpoints - Free providers with automatic fallback
+// Supports multiple free RPC providers for reliability
+const FREE_RPC_ENDPOINTS = [
   "https://solana.publicnode.com",
+  "https://api.solflare.com",
   "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
+  "https://api.marinade.finance/rpc",
 ];
 
 // External API endpoints
@@ -80,6 +85,42 @@ async function safeJson(resp: Response): Promise<any> {
   }
 }
 
+// Utility: Build list of RPC endpoints with fallbacks
+function buildRpcEndpoints(env: Env): string[] {
+  const endpoints: string[] = [];
+
+  // Add environment-configured endpoints first (highest priority)
+  if (env.SOLANA_RPC && typeof env.SOLANA_RPC === "string") {
+    const trimmed = env.SOLANA_RPC.trim();
+    if (trimmed.length > 0) {
+      endpoints.push(trimmed);
+    }
+  }
+
+  if (env.ALCHEMY_RPC_URL && typeof env.ALCHEMY_RPC_URL === "string") {
+    const trimmed = env.ALCHEMY_RPC_URL.trim();
+    if (trimmed.length > 0) {
+      endpoints.push(trimmed);
+    }
+  }
+
+  if (env.MORALIS_RPC_URL && typeof env.MORALIS_RPC_URL === "string") {
+    const trimmed = env.MORALIS_RPC_URL.trim();
+    if (trimmed.length > 0) {
+      endpoints.push(trimmed);
+    }
+  }
+
+  // Add free public RPC endpoints
+  FREE_RPC_ENDPOINTS.forEach((endpoint) => {
+    if (!endpoints.includes(endpoint)) {
+      endpoints.push(endpoint);
+    }
+  });
+
+  return endpoints;
+}
+
 // ============ ROUTE HANDLERS ============
 
 // Health check
@@ -121,7 +162,7 @@ async function handleHealth(): Promise<Response> {
   );
 }
 
-// Wallet balance - SOL
+// Wallet balance - SOL (with RPC fallback)
 async function handleWalletBalance(url: URL, env: Env): Promise<Response> {
   const publicKey = url.searchParams.get("publicKey");
   if (!publicKey) {
@@ -131,38 +172,81 @@ async function handleWalletBalance(url: URL, env: Env): Promise<Response> {
     });
   }
 
-  const SOLANA_RPC = env.SOLANA_RPC ?? DEFAULT_SOLANA_RPC;
-  const payload = {
-    jsonrpc: "2.0",
-    id: 1,
-    method: "getBalance",
-    params: [publicKey],
-  };
-
   try {
-    const rpcRes = await timeoutFetch(SOLANA_RPC, {
-      method: "POST",
-      headers: browserHeaders(),
-      body: JSON.stringify(payload),
-    });
-    const rpcJson = await rpcRes.json();
-    const lamports = rpcJson?.result?.value ?? 0;
-    const sol = lamports / 1_000_000_000;
-    return new Response(JSON.stringify({ lamports, sol, publicKey }), {
-      headers: CORS_HEADERS,
-    });
+    const rpcEndpoints = buildRpcEndpoints(env);
+    console.log(
+      `[Balance] Using ${rpcEndpoints.length} RPC endpoints. Primary: ${rpcEndpoints[0]?.substring(0, 50)}...`,
+    );
+
+    const payload = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getBalance",
+      params: [publicKey],
+    };
+
+    let lastError = "No RPC endpoints available";
+
+    // Try each RPC endpoint
+    for (let i = 0; i < rpcEndpoints.length; i++) {
+      const endpoint = rpcEndpoints[i];
+      try {
+        console.log(
+          `[Balance] Attempt ${i + 1}/${rpcEndpoints.length}: ${endpoint.substring(0, 60)}...`,
+        );
+
+        const rpcRes = await timeoutFetch(endpoint, {
+          method: "POST",
+          headers: browserHeaders(),
+          body: JSON.stringify(payload),
+        });
+        const rpcJson = await rpcRes.json();
+
+        if (rpcJson.error) {
+          lastError = rpcJson.error.message || "RPC error";
+          console.warn(`[Balance] Endpoint ${i + 1} RPC error: ${lastError}`);
+          continue;
+        }
+
+        const lamports = rpcJson?.result?.value ?? rpcJson?.result ?? 0;
+        if (
+          typeof lamports === "number" &&
+          isFinite(lamports) &&
+          lamports >= 0
+        ) {
+          const balance = lamports / 1_000_000_000;
+          console.log(`[Balance] ✅ Success from endpoint ${i + 1}`);
+          return new Response(
+            JSON.stringify({ balance, lamports, publicKey }),
+            {
+              headers: CORS_HEADERS,
+            },
+          );
+        }
+
+        lastError = "Invalid balance response";
+      } catch (error: any) {
+        lastError = error?.message || String(error);
+        console.warn(`[Balance] Endpoint ${i + 1} error: ${lastError}`);
+      }
+    }
+
+    throw new Error(`All RPC endpoints failed. Last error: ${lastError}`);
   } catch (e: any) {
+    const errorMsg = String(e?.message || e).slice(0, 100);
+    console.error("[Balance] Error:", errorMsg);
+
     return new Response(
       JSON.stringify({
-        error: "rpc_error",
-        details: String(e?.message || e).slice(0, 200),
+        error: "Failed to fetch wallet balance",
+        details: errorMsg,
       }),
       { status: 502, headers: CORS_HEADERS },
     );
   }
 }
 
-// Wallet tokens - SPL accounts
+// Wallet tokens - SPL accounts (with RPC fallback)
 async function handleWalletTokens(url: URL, env: Env): Promise<Response> {
   const publicKey = url.searchParams.get("publicKey");
   if (!publicKey) {
@@ -172,38 +256,78 @@ async function handleWalletTokens(url: URL, env: Env): Promise<Response> {
     });
   }
 
-  const SOLANA_RPC = env.SOLANA_RPC ?? DEFAULT_SOLANA_RPC;
-  const payload = {
-    jsonrpc: "2.0",
-    id: 1,
-    method: "getTokenAccountsByOwner",
-    params: [
-      publicKey,
-      { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
-      { encoding: "jsonParsed" },
-    ],
-  };
-
   try {
-    const rpcRes = await timeoutFetch(SOLANA_RPC, {
-      method: "POST",
-      headers: browserHeaders(),
-      body: JSON.stringify(payload),
-    });
-    const rpcJson = await rpcRes.json();
-    const arr = rpcJson?.result?.value ?? [];
-    const tokens = arr.map((t: any) => {
-      const acc = t.account?.data?.parsed?.info;
-      const mint = acc?.mint;
-      const amountRaw = acc?.tokenAmount?.amount ?? "0";
-      const decimals = acc?.tokenAmount?.decimals ?? 0;
-      const uiAmount = Number(amountRaw) / Math.pow(10, decimals);
-      return { mint, amountRaw, uiAmount, decimals, owner: t.pubkey };
-    });
-    return new Response(JSON.stringify({ tokens }), { headers: CORS_HEADERS });
+    const rpcEndpoints = buildRpcEndpoints(env);
+    console.log(
+      `[Tokens] Using ${rpcEndpoints.length} RPC endpoints. Primary: ${rpcEndpoints[0]?.substring(0, 50)}...`,
+    );
+
+    const payload = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getTokenAccountsByOwner",
+      params: [
+        publicKey,
+        { programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
+        { encoding: "jsonParsed" },
+      ],
+    };
+
+    let lastError = "No RPC endpoints available";
+
+    // Try each RPC endpoint
+    for (let i = 0; i < rpcEndpoints.length; i++) {
+      const endpoint = rpcEndpoints[i];
+      try {
+        console.log(
+          `[Tokens] Attempt ${i + 1}/${rpcEndpoints.length}: ${endpoint.substring(0, 60)}...`,
+        );
+
+        const rpcRes = await timeoutFetch(endpoint, {
+          method: "POST",
+          headers: browserHeaders(),
+          body: JSON.stringify(payload),
+        });
+        const rpcJson = await rpcRes.json();
+
+        if (rpcJson.error) {
+          lastError = rpcJson.error.message || "RPC error";
+          console.warn(`[Tokens] Endpoint ${i + 1} RPC error: ${lastError}`);
+          continue;
+        }
+
+        const arr = rpcJson?.result?.value ?? [];
+        const tokens = arr.map((t: any) => {
+          const acc = t.account?.data?.parsed?.info;
+          const mint = acc?.mint;
+          const amountRaw = acc?.tokenAmount?.amount ?? "0";
+          const decimals = acc?.tokenAmount?.decimals ?? 0;
+          const uiAmount = Number(amountRaw) / Math.pow(10, decimals);
+          return { mint, amountRaw, uiAmount, decimals, owner: t.pubkey };
+        });
+
+        console.log(
+          `[Tokens] ✅ Success from endpoint ${i + 1}: ${tokens.length} tokens`,
+        );
+        return new Response(JSON.stringify({ tokens }), {
+          headers: CORS_HEADERS,
+        });
+      } catch (error: any) {
+        lastError = error?.message || String(error);
+        console.warn(`[Tokens] Endpoint ${i + 1} error: ${lastError}`);
+      }
+    }
+
+    throw new Error(`All RPC endpoints failed. Last error: ${lastError}`);
   } catch (e: any) {
+    const errorMsg = String(e?.message || e);
+    console.error("[Tokens] Error:", errorMsg);
+
     return new Response(
-      JSON.stringify({ error: "rpc_error", details: String(e?.message || e) }),
+      JSON.stringify({
+        error: "Failed to fetch wallet tokens",
+        details: errorMsg,
+      }),
       { status: 502, headers: CORS_HEADERS },
     );
   }

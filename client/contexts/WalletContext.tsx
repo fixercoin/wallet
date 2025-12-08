@@ -16,23 +16,20 @@ import {
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { solPriceService } from "@/lib/services/sol-price";
-import { birdeyeAPI } from "@/lib/services/birdeye";
+import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { lockerPriceService } from "@/lib/services/locker-price";
 import { fxmPriceService } from "@/lib/services/fxm-price";
-import { getTokenBalanceForMint } from "@/lib/services/solana-rpc";
 import { getTokenPriceBySol } from "@/lib/services/derived-price";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
 import {
   savePricesToCache,
-  getCachedPrices,
   saveBalanceToCache,
   getCachedBalance,
   saveTokensToCache,
   getCachedTokens,
-  isCacheFresh,
-  CACHE_VALIDITY_PRICES,
+  clearDashboardTokenCache,
 } from "@/lib/services/offline-cache";
 import {
   isEncryptedWalletStorage,
@@ -47,7 +44,6 @@ import {
   getStorageItem,
   setStorageItem,
   removeStorageItem,
-  validateWalletData,
   hasValidWalletData,
   clearAllWalletData,
   getStorageDiagnostics,
@@ -85,7 +81,6 @@ interface WalletProviderProps {
 
 const WALLETS_STORAGE_KEY = "solana_wallet_accounts";
 const LEGACY_WALLET_KEY = "solana_wallet_data";
-const HIDDEN_TOKENS_KEY = "hidden_tokens";
 const ACTIVE_WALLET_KEY = "solana_active_wallet";
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
@@ -127,6 +122,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           "[WalletContext] Storage diagnostics:",
           getStorageDiagnostics(),
         );
+
+        // Clear stale dashboard token cache to ensure fresh data on app load
+        clearDashboardTokenCache();
 
         // Check legacy wallet first
         const legacy = getStorageItem(LEGACY_WALLET_KEY);
@@ -484,22 +482,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     // Trigger immediate refresh
     const doRefresh = async () => {
       try {
-        // Try to load cached data first for faster initial display
-        const cachedTokens = getCachedTokens(wallet.publicKey);
-        if (cachedTokens && cachedTokens.length > 0) {
-          console.log("[WalletContext] Loading cached tokens on wallet switch");
-          setTokens(cachedTokens);
-          setIsUsingCache(true);
-        }
-
-        const cachedBalance = getCachedBalance(wallet.publicKey);
-        if (cachedBalance !== null) {
-          console.log(
-            "[WalletContext] Loading cached balance on wallet switch",
-          );
-          setBalance(cachedBalance);
-          balanceRef.current = cachedBalance;
-        }
+        // Skip loading cached tokens/balances - always fetch fresh data from APIs
+        // This prevents stale cached data from showing after deployment
+        setIsUsingCache(false);
 
         // Then fetch fresh data
         await refreshBalance();
@@ -519,10 +504,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     // Setup periodic refresh every 5 seconds (adaptive based on visibility)
     const setupRefreshInterval = () => {
-      // Use 5s interval when tab is visible for more responsive updates
-      // Longer interval (30s) when tab is hidden to conserve battery on mobile
-      const interval =
-        document.hidden || document.visibilityState === "hidden" ? 30000 : 5000;
+      // Auto-refresh dashboard every 30 seconds for live price updates
+      const interval = 30000;
 
       refreshIntervalRef.current = setInterval(async () => {
         try {
@@ -537,12 +520,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     setupRefreshInterval();
 
-    // Handle visibility changes to adjust polling frequency
+    // No longer adjust polling based on visibility - use fixed 30-second interval
     const handleVisibilityChange = () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-      setupRefreshInterval();
+      // Visibility changes no longer trigger interval reconfiguration
+      // Dashboard will refresh every 30 seconds consistently
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -763,37 +744,53 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const refreshBalance = async () => {
     if (!wallet) return;
 
-    setIsLoading(true);
+    // No loading state for balance - use fallback/cache silently
     setError(null);
     setIsUsingCache(false);
 
     try {
       const newBalance = await getBalance(wallet.publicKey);
-      if (typeof newBalance === "number" && !isNaN(newBalance)) {
+      if (
+        typeof newBalance === "number" &&
+        !isNaN(newBalance) &&
+        isFinite(newBalance) &&
+        newBalance >= 0
+      ) {
         setBalance(newBalance);
         balanceRef.current = newBalance;
         saveBalanceToCache(wallet.publicKey, newBalance);
       } else {
+        console.warn("[WalletContext] Invalid balance value:", newBalance);
         setBalance(0);
         balanceRef.current = 0;
       }
     } catch (error) {
       console.error("Error refreshing balance:", error);
-      setError("Failed to refresh balance");
 
-      // Try to use cached balance as fallback
+      // Try to use cached balance as fallback on network/RPC errors
       const cachedBalance = getCachedBalance(wallet.publicKey);
-      if (cachedBalance !== null) {
-        console.log("[WalletContext] Using cached balance:", cachedBalance);
+      if (
+        cachedBalance !== null &&
+        typeof cachedBalance === "number" &&
+        isFinite(cachedBalance) &&
+        cachedBalance >= 0
+      ) {
+        console.log(
+          "[WalletContext] Using cached SOL balance as fallback:",
+          cachedBalance,
+        );
         setBalance(cachedBalance);
         balanceRef.current = cachedBalance;
         setIsUsingCache(true);
+        setError(null);
       } else {
+        console.warn(
+          "[WalletContext] No valid cached balance available, showing 0",
+        );
         setBalance(0);
         balanceRef.current = 0;
+        setError("Unable to fetch SOL balance. Please check your connection.");
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -808,19 +805,109 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     lockerPriceService.clearCache();
     fxmPriceService.clearCache();
     solPriceService.clearCache();
-    birdeyeAPI.clearCache();
 
     console.log(
       `[WalletContext] Refreshing tokens for wallet: ${wallet.publicKey}`,
     );
     setError(null);
-    setIsLoading(true);
 
     try {
+      // Fetch token accounts (balances) silently - no loading state
       const tokenAccounts = await getTokenAccounts(wallet.publicKey);
-      const customTokens = JSON.parse(
-        localStorage.getItem("custom_tokens") || "[]",
-      ) as TokenInfo[];
+
+      // Check if SOL is already in tokenAccounts (new endpoint returns it with balance)
+      const solFromTokenAccounts = tokenAccounts.find(
+        (t) => t.symbol === "SOL",
+      );
+
+      // Use SOL from tokenAccounts if available and valid (for Cloudflare compatibility)
+      // Otherwise use the balance from the separate refreshBalance() call
+      let solBalance = 0;
+      const tokenAccountsHasValidBalance =
+        solFromTokenAccounts?.balance !== undefined &&
+        typeof solFromTokenAccounts.balance === "number" &&
+        isFinite(solFromTokenAccounts.balance) &&
+        solFromTokenAccounts.balance >= 0;
+
+      if (tokenAccountsHasValidBalance) {
+        solBalance = solFromTokenAccounts.balance;
+        setBalance(solFromTokenAccounts.balance);
+        balanceRef.current = solFromTokenAccounts.balance;
+        console.log(
+          `[WalletContext] Updated SOL balance from tokenAccounts: ${solFromTokenAccounts.balance}`,
+        );
+      } else {
+        // If we don't have a valid balance from tokenAccounts, try to fetch it directly
+        // This ensures SOL balance is always correct, especially on Cloudflare
+        if (
+          typeof balanceRef.current !== "number" ||
+          !isFinite(balanceRef.current) ||
+          balanceRef.current < 0
+        ) {
+          console.log(
+            "[WalletContext] Balance endpoint not yet fetched or invalid, fetching SOL balance directly",
+          );
+          try {
+            const directBalance = await getBalance(wallet.publicKey);
+            if (
+              typeof directBalance === "number" &&
+              isFinite(directBalance) &&
+              directBalance >= 0
+            ) {
+              solBalance = directBalance;
+              setBalance(directBalance);
+              balanceRef.current = directBalance;
+              console.log(
+                `[WalletContext] Fetched SOL balance directly: ${directBalance} SOL`,
+              );
+            } else {
+              console.warn(
+                "[WalletContext] Direct balance fetch returned invalid value:",
+                directBalance,
+              );
+              solBalance = 0;
+            }
+          } catch (err) {
+            console.error(
+              "[WalletContext] Failed to fetch SOL balance directly:",
+              err,
+            );
+            solBalance = 0;
+          }
+        } else {
+          // Use cached balance from earlier refreshBalance() call
+          solBalance =
+            typeof balanceRef.current === "number" &&
+            isFinite(balanceRef.current) &&
+            balanceRef.current >= 0
+              ? balanceRef.current
+              : balance || 0;
+          console.log(
+            `[WalletContext] Using SOL balance from balance endpoint: ${solBalance}`,
+          );
+        }
+      }
+
+      console.log(
+        `[WalletContext] Creating allTokens array with SOL balance: ${solBalance} SOL`,
+      );
+
+      // Ensure SOL balance is always valid before creating token list
+      if (
+        typeof solBalance !== "number" ||
+        !isFinite(solBalance) ||
+        solBalance < 0
+      ) {
+        console.warn(
+          `[WalletContext] Invalid SOL balance: ${solBalance}, using cached balance: ${balanceRef.current}`,
+        );
+        solBalance =
+          typeof balanceRef.current === "number" &&
+          isFinite(balanceRef.current) &&
+          balanceRef.current >= 0
+            ? balanceRef.current
+            : 0;
+      }
 
       const allTokens: TokenInfo[] = [
         {
@@ -830,7 +917,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           decimals: 9,
           logoURI:
             "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-          balance: balanceRef.current || balance || 0,
+          balance: solBalance,
         },
       ];
 
@@ -840,94 +927,75 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       });
 
-      customTokens.forEach((customToken) => {
-        const existingTokenIndex = allTokens.findIndex(
-          (t) => t.mint === customToken.mint,
-        );
-        if (existingTokenIndex >= 0) {
-          // Token exists from RPC - merge by preferring RPC data (especially balance, decimals)
-          // but use custom metadata if RPC returned generic "Unknown Token"
-          const rpcToken = allTokens[existingTokenIndex];
-          const isRpcGeneric =
-            rpcToken.symbol === "UNKNOWN" || !rpcToken.symbol;
+      // Always include USDT, FXM, FIXERCOIN, and LOCKER tokens for display (even if user doesn't own them)
+      const usdtMintAddress = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns";
+      const fxmMintAddress = "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump";
+      const fixercoinMintAddress =
+        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+      const lockerMintAddress = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
 
-          allTokens[existingTokenIndex] = {
-            ...rpcToken,
-            // Override with custom metadata if RPC returned generic data
-            ...(isRpcGeneric && {
-              symbol: customToken.symbol,
-              name: customToken.name,
-              logoURI: customToken.logoURI,
-            }),
-            // Always use custom logoURI if available (user-added logo takes priority)
-            ...(customToken.logoURI && { logoURI: customToken.logoURI }),
-            // Always keep the RPC balance and decimals
-            balance: rpcToken.balance,
-            decimals: rpcToken.decimals,
-          };
-        } else {
-          // Token doesn't exist from RPC - add it with balance 0 for now
-          // Will be updated below with actual balance fetch
-          allTokens.push({ ...customToken, balance: 0 });
-        }
-      });
-
-      // Fetch balances for custom tokens that weren't found in RPC results
-      const customTokenMintSet = new Set(customTokens.map((t) => t.mint));
-      const customTokensWithZeroBalance = allTokens.filter(
-        (token) =>
-          customTokenMintSet.has(token.mint) &&
-          (token.balance === 0 || token.balance === undefined),
-      );
-
-      // Fetch missing balances in parallel
-      if (customTokensWithZeroBalance.length > 0) {
-        console.log(
-          `[WalletContext] Fetching balances for ${customTokensWithZeroBalance.length} custom tokens with zero balance...`,
-        );
-
-        const balanceFetchPromises = customTokensWithZeroBalance.map(
-          async (token) => {
-            try {
-              const balance = await getTokenBalanceForMint(
-                wallet.publicKey,
-                token.mint,
-              );
-              return {
-                mint: token.mint,
-                balance: balance ?? 0,
-              };
-            } catch (error) {
-              console.warn(
-                `[WalletContext] Failed to fetch balance for ${token.mint}:`,
-                error,
-              );
-              return {
-                mint: token.mint,
-                balance: 0,
-              };
-            }
-          },
-        );
-
-        const fetchedBalances = await Promise.all(balanceFetchPromises);
-
-        // Update allTokens with fetched balances
-        fetchedBalances.forEach(({ mint, balance }) => {
-          const tokenIndex = allTokens.findIndex((t) => t.mint === mint);
-          if (tokenIndex >= 0) {
-            allTokens[tokenIndex] = {
-              ...allTokens[tokenIndex],
-              balance,
-            };
-            console.log(
-              `[WalletContext] ✅ Updated balance for ${mint}: ${balance}`,
-            );
-          }
+      const hasUSDT = allTokens.some((t) => t.mint === usdtMintAddress);
+      if (!hasUSDT) {
+        allTokens.push({
+          mint: usdtMintAddress,
+          symbol: "USDT",
+          name: "USDT TETHER",
+          decimals: 6,
+          balance: 0,
+          logoURI:
+            "https://cdn.builder.io/api/v1/image/assets%2F21d46b908e134d9783b898bbea7e6c3d%2F672cb65517fe4c02b396825d21cef757?format=webp&width=800",
         });
       }
 
-      // Price fetching logic
+      const hasFXM = allTokens.some((t) => t.mint === fxmMintAddress);
+      if (!hasFXM) {
+        allTokens.push({
+          mint: fxmMintAddress,
+          symbol: "FXM",
+          name: "Fixorium",
+          decimals: 6,
+          balance: 0,
+          logoURI:
+            "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2Fef8e21a960894d1b9408732e737a9d1f?format=webp&width=800",
+        });
+      }
+
+      const hasFixercoin = allTokens.some(
+        (t) => t.mint === fixercoinMintAddress,
+      );
+      if (!hasFixercoin) {
+        allTokens.push({
+          mint: fixercoinMintAddress,
+          symbol: "FIXERCOIN",
+          name: "FIXERCOIN",
+          decimals: 6,
+          balance: 0,
+          logoURI:
+            "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2F66c5cbe0ef78435eab9dfe4b45b5ba0d?format=webp&width=800",
+        });
+      }
+
+      const hasLocker = allTokens.some((t) => t.mint === lockerMintAddress);
+      if (!hasLocker) {
+        allTokens.push({
+          mint: lockerMintAddress,
+          symbol: "LOCKER",
+          name: "LOCKER",
+          decimals: 6,
+          balance: 0,
+          logoURI:
+            "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2Fb8e7b3fa19fe464c8362834eaf1367eb?format=webp&width=800",
+        });
+      }
+
+      console.log(
+        `[WalletContext] allTokens created with ${allTokens.length} tokens, SOL balance: ${
+          allTokens[0]?.balance || "MISSING"
+        } SOL`,
+      );
+
+      // Price fetching logic - show loader only during price fetch
+      setIsLoading(true);
       let prices: Record<string, number> = {};
       let priceSource = "fallback";
       let changeMap: Record<string, number> = {};
@@ -936,26 +1004,29 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       try {
         const tokenMints = allTokens.map((token) => token.mint);
 
-        // Fetch prices from Birdeye API (via proxy)
+        // Fetch prices from DexScreener API
+        // Exclude LOCKER since it has no price data on DexScreener (causes 503 errors)
         try {
+          const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
           const allMintsToFetch = Array.from(
-            new Set(tokenMints.filter(Boolean)),
+            new Set(tokenMints.filter((mint) => mint && mint !== lockerMint)),
           );
 
           if (allMintsToFetch.length > 0) {
-            const birdeyeTokens =
-              await birdeyeAPI.getTokensByMints(allMintsToFetch);
-            const birdeyePrices = birdeyeAPI.getTokenPrices(birdeyeTokens);
-            prices = { ...prices, ...birdeyePrices };
+            const dexTokens =
+              await dexscreenerAPI.getTokensByMints(allMintsToFetch);
+            const dexPrices = dexscreenerAPI.getTokenPrices(dexTokens);
+            prices = { ...prices, ...dexPrices };
 
-            birdeyeTokens.forEach((token) => {
-              if (token.address && token.priceChange?.h24) {
-                changeMap[token.address] = token.priceChange.h24;
+            dexTokens.forEach((token) => {
+              const baseMint = token.baseToken?.address;
+              if (baseMint && token.priceChange?.h24) {
+                changeMap[baseMint] = token.priceChange.h24;
               }
             });
           }
         } catch (e) {
-          console.warn("Birdeye fetch failed:", e);
+          console.warn("DexScreener fetch failed:", e);
         }
 
         // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing
@@ -979,10 +1050,26 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         const fxmMint = "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump";
 
         try {
-          const [fixercoinData, lockerData, fxmData] = await Promise.all([
+          // Fetch special token prices with timeout to prevent hanging
+          const specialTokensPromise = Promise.all([
             fixercoinPriceService.getFixercoinPrice(),
             lockerPriceService.getLockerPrice(),
             fxmPriceService.getFXMPrice(),
+          ]);
+
+          // Timeout after 15 seconds - use what we have by then
+          const timeoutPromise = new Promise<[any, any, any]>((resolve) =>
+            setTimeout(() => {
+              console.warn(
+                "[WalletContext] Price fetching timeout after 15s, using partial results with fallbacks",
+              );
+              resolve([null, null, null]);
+            }, 15000),
+          );
+
+          const [fixercoinData, lockerData, fxmData] = await Promise.race([
+            specialTokensPromise,
+            timeoutPromise,
           ]);
 
           if (
@@ -1014,9 +1101,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             );
           } else {
             console.warn(
-              `[WalletContext] ⚠️ LOCKER price fetch resulted in invalid price:`,
-              lockerData,
+              `[WalletContext] ⚠️ LOCKER price fetch resulted in invalid price, using hardcoded fallback`,
             );
+            // Use hardcoded fallback for LOCKER - no price data on DexScreener
+            prices[lockerMint] = 0.000001;
+            changeMap[lockerMint] = 0;
           }
 
           if (fxmData && fxmData.price > 0 && isFinite(fxmData.price)) {
@@ -1027,12 +1116,23 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             );
           } else {
             console.warn(
-              `[WalletContext] ⚠️ FXM price fetch resulted in invalid price:`,
-              fxmData,
+              `[WalletContext] ⚠️ FXM price fetch resulted in invalid price, using hardcoded fallback`,
             );
+            // Use hardcoded fallback for FXM if fetch fails
+            prices[fxmMint] = 0.00000001;
+            changeMap[fxmMint] = 0;
           }
         } catch (e) {
           console.warn("❌ Failed to fetch FIXERCOIN/LOCKER/FXM prices:", e);
+          // Ensure all special tokens have at least hardcoded prices on error
+          if (!prices[lockerMint]) {
+            prices[lockerMint] = 0.000001;
+            changeMap[lockerMint] = 0;
+          }
+          if (!prices[fxmMint]) {
+            prices[fxmMint] = 0.00000001;
+            changeMap[fxmMint] = 0;
+          }
         }
 
         // Ensure SOL price is always present - if birdeye didn't return it, fetch from dedicated endpoint
@@ -1101,15 +1201,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       }
 
-      // Load hidden tokens list
-      const hiddenTokens = JSON.parse(
-        localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
-      ) as string[];
-
-      // Filter out hidden tokens from allTokens
-      const visibleTokens = allTokens.filter(
-        (token) => !hiddenTokens.includes(token.mint),
-      );
+      // Use all tokens (removed localStorage-based hidden tokens filtering)
+      const visibleTokens = allTokens;
 
       // Calculate SOL-based prices for tokens without valid prices
       const tokensNeedingPrices = visibleTokens.filter((token) => {
@@ -1200,27 +1293,24 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       console.log(
         `[Wallet] Price source: ${priceSource} | SOL price: $${prices["So11111111111111111111111111111111111111112"] || "FALLBACK"}`,
       );
+
+      const solTokenInEnhanced = enhancedTokens.find((t) => t.symbol === "SOL");
+      console.log(`[WalletContext] About to set tokens in state. SOL token:`, {
+        symbol: solTokenInEnhanced?.symbol,
+        balance: solTokenInEnhanced?.balance,
+        price: solTokenInEnhanced?.price,
+        mint: solTokenInEnhanced?.mint,
+      });
+
       setTokens(enhancedTokens);
       setIsUsingCache(false);
 
-      // Save tokens and prices to cache for offline support
-      try {
-        const cachedPrices: Record<string, any> = {};
-        Object.entries(prices).forEach(([mint, price]) => {
-          cachedPrices[mint] = {
-            price,
-            priceChange24h: changeMap[mint],
-            timestamp: Date.now(),
-          };
-        });
-        savePricesToCache(cachedPrices);
-        saveTokensToCache(wallet.publicKey, enhancedTokens);
-      } catch (cacheError) {
-        console.warn(
-          "[WalletContext] Failed to save to offline cache:",
-          cacheError,
-        );
-      }
+      console.log(
+        `[WalletContext] Tokens set in state. Total ${enhancedTokens.length} tokens`,
+      );
+
+      // Skip saving tokens to cache to ensure fresh data always loaded
+      // Price cache is kept for fallback support in error scenarios
     } catch (error) {
       console.error("Error refreshing tokens:", error);
 
@@ -1246,7 +1336,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         setError(
           `Failed to fetch tokens: ${error instanceof Error ? error.message : String(error)}`,
         );
-        // Show only basic token info without prices until they can be fetched
+        // Keep all tokens visible even if price fetching fails
+        // Set balances to 0 for non-SOL tokens if we don't have data, but preserve token info
         const fallbackTokens: TokenInfo[] = [
           {
             mint: "So11111111111111111111111111111111111111112",
@@ -1255,12 +1346,44 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             decimals: 9,
             logoURI:
               "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-            balance: balance || 0,
+            balance:
+              typeof balanceRef.current === "number"
+                ? balanceRef.current
+                : balance || 0,
+          },
+          {
+            mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+            symbol: "USDC",
+            name: "USD Coin",
+            decimals: 6,
+            logoURI:
+              "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+            balance: 0,
+          },
+          {
+            mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+            symbol: "FIXERCOIN",
+            name: "FIXERCOIN",
+            decimals: 6,
+            logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
+            balance: 0,
+          },
+          {
+            mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+            symbol: "LOCKER",
+            name: "LOCKER",
+            decimals: 6,
+            logoURI:
+              "https://i.postimg.cc/J7p1FPbm/IMG-20250425-004450-removebg-preview-modified-2-6.png",
+            balance: 0,
           },
         ];
 
         setTokens(fallbackTokens);
         setIsUsingCache(false);
+        console.log(
+          "[WalletContext] Showing fallback tokens with zero balances while prices are unavailable",
+        );
       }
     } finally {
       setIsLoading(false);
@@ -1274,51 +1397,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       return [...currentTokens, token];
     });
 
-    const customTokens = JSON.parse(
-      localStorage.getItem("custom_tokens") || "[]",
-    );
-    const newCustomTokens = [
-      ...customTokens.filter((t: TokenInfo) => t.mint !== token.mint),
-      token,
-    ];
-    localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
-
-    // If token was previously hidden, remove it from hidden tokens to ensure it becomes visible
-    try {
-      const hiddenTokens = JSON.parse(
-        localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
-      ) as string[];
-      const filtered = hiddenTokens.filter((m) => m !== token.mint);
-      if (filtered.length !== hiddenTokens.length) {
-        localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify(filtered));
-      }
-    } catch (e) {
-      // ignore
-    }
-
     if (wallet) refreshTokens();
   };
 
   const removeToken = (tokenMint: string) => {
-    // Remove from custom tokens if it exists there
-    const customTokens = JSON.parse(
-      localStorage.getItem("custom_tokens") || "[]",
-    ) as TokenInfo[];
-    const newCustomTokens = customTokens.filter(
-      (t: TokenInfo) => t.mint !== tokenMint,
-    );
-    localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
-
-    // Add to hidden tokens list to permanently hide it
-    const hiddenTokens = JSON.parse(
-      localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
-    ) as string[];
-    if (!hiddenTokens.includes(tokenMint)) {
-      hiddenTokens.push(tokenMint);
-      localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify(hiddenTokens));
-    }
-
-    // Update state immediately
     setTokens((currentTokens) =>
       currentTokens.filter((t) => t.mint !== tokenMint),
     );
@@ -1376,17 +1458,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         token.mint === tokenMint ? { ...token, balance: newBalance } : token,
       );
 
-      // Persist updated tokens to cache immediately
-      if (wallet?.publicKey) {
-        try {
-          saveTokensToCache(wallet.publicKey, updatedTokens);
-        } catch (err) {
-          console.warn(
-            "[WalletContext] Failed to save updated tokens to cache:",
-            err,
-          );
-        }
-      }
+      // Skip saving tokens to cache to ensure fresh data always loaded
 
       return updatedTokens;
     });

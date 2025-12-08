@@ -508,9 +508,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const formatUSD = (
     amount: number | undefined,
     price: number | undefined,
+    symbol?: string,
   ): string => {
     if (!amount || !price || isNaN(amount) || isNaN(price)) return "$0.00";
     const usdValue = amount * price;
+    // For very small amounts (< $0.01), show up to 8 decimals for precision
+    if (usdValue < 0.01) {
+      return `$${usdValue.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 8,
+      })}`;
+    }
     return `$${usdValue.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,

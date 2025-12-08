@@ -111,53 +111,31 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
 
           {/* Token Information Grid */}
           <div className="space-y-4 mb-6 pb-6 border-b border-gray-700">
-            {/* Balance and Network Row */}
+            {/* Network and Token Type Row */}
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-400 font-semibold mb-2 uppercase">
-                  Balance
-                </p>
-                <p className="text-sm font-semibold text-white">
-                  {(token.amount || 0).toLocaleString(undefined, {
-                    minimumFractionDigits: 4,
-                    maximumFractionDigits: 4,
-                  })}{" "}
-                  {token.symbol}
-                </p>
-              </div>
               <div>
                 <p className="text-xs text-gray-400 font-semibold mb-2 uppercase">
                   Network
                 </p>
                 <p className="text-sm font-semibold text-white">Solana</p>
               </div>
-            </div>
-
-            {/* Chain ID and Token Type Row */}
-            <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-xs text-gray-400 font-semibold mb-2 uppercase">
                   Chain ID
                 </p>
                 <p className="text-sm font-semibold text-white">Mainnet Beta</p>
               </div>
-              <div>
-                <p className="text-xs text-gray-400 font-semibold mb-2 uppercase">
-                  Token Type
-                </p>
-                <p className="text-sm font-semibold text-blue-400">SPL</p>
-              </div>
             </div>
 
-            {/* Mint Authority */}
-            <div>
-              <p className="text-xs text-gray-400 font-semibold mb-2 uppercase">
+            {/* Mint Authority and Verified Badge on Single Line */}
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-gray-400 font-semibold uppercase">
                 Mint Authority
               </p>
               <div className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded">
                 <CheckCircle className="w-3 h-3 text-emerald-400" />
                 <span className="text-xs font-semibold text-emerald-400 uppercase">
-                  Renounced
+                  Verified
                 </span>
               </div>
             </div>

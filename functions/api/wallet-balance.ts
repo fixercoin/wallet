@@ -1,44 +1,66 @@
 // functions/api/wallet-balance.ts
 // Accepts POST JSON: { "walletAddress": "<Pubkey>" }
-// Returns the getBalance RPC result proxied via RPC providers
+// Accepts GET query: ?publicKey=<Pubkey>
+// Returns the getBalance RPC result using free RPC providers with fallback
 
-// NOTE: Helius, Moralis, and Alchemy are RPC providers for Solana blockchain calls
-// They fetch wallet balance and transaction data - NOT for token price fetching
-// Token prices should come from dedicated price APIs like Jupiter, DexScreener, or DexTools
+// Build list of RPC endpoints from environment and free public providers
+function buildRpcEndpoints(env: any): string[] {
+  const endpoints: string[] = [];
 
-const RPC_ENDPOINTS = [
-  "",
-  "https://api.mainnet-beta.solana.com",
-  "https://rpc.ankr.com/solana",
-  "https://solana.publicnode.com",
-];
+  if (env?.SOLANA_RPC_URL && typeof env.SOLANA_RPC_URL === "string") {
+    const trimmed = env.SOLANA_RPC_URL.trim();
+    if (trimmed.length > 0) endpoints.push(trimmed);
+  }
 
-export async function onRequestPost(context: any) {
+  if (env?.ALCHEMY_RPC_URL && typeof env.ALCHEMY_RPC_URL === "string") {
+    const trimmed = env.ALCHEMY_RPC_URL.trim();
+    if (trimmed.length > 0) endpoints.push(trimmed);
+  }
+
+  if (env?.MORALIS_RPC_URL && typeof env.MORALIS_RPC_URL === "string") {
+    const trimmed = env.MORALIS_RPC_URL.trim();
+    if (trimmed.length > 0) endpoints.push(trimmed);
+  }
+
+  // Free public RPC endpoints
+  const publicEndpoints = [
+    "https://solana.publicnode.com",
+    "https://api.solflare.com",
+    "https://rpc.ankr.com/solana",
+    "https://api.mainnet-beta.solana.com",
+    "https://api.marinade.finance/rpc",
+  ];
+
+  publicEndpoints.forEach((endpoint) => {
+    if (!endpoints.includes(endpoint)) endpoints.push(endpoint);
+  });
+
+  return endpoints;
+}
+
+export async function onRequest(context: any) {
   const { request, env } = context;
 
-  // Build RPC endpoint list with env vars first, then fallbacks
-  // Priority: Helius > Moralis > Alchemy > Public Solana RPC nodes
-  const rpcEndpoints = [
-    env?.HELIUS_API_KEY
-      ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`
-      : "",
-    env?.HELIUS_RPC_URL || "",
-    env?.MORALIS_RPC_URL || "",
-    env?.ALCHEMY_RPC_URL || "",
-    ...RPC_ENDPOINTS,
-  ].filter(Boolean);
-
   try {
-    const body = await request.json();
-    const walletAddress = body?.walletAddress ?? body?.address ?? null;
+    let walletAddress: string | null = null;
+
+    if (request.method === "POST") {
+      const body = await request.json().catch(() => null);
+      walletAddress = body?.walletAddress ?? body?.address ?? null;
+    } else if (request.method === "GET") {
+      const url = new URL(request.url);
+      walletAddress =
+        url.searchParams.get("publicKey") ??
+        url.searchParams.get("wallet") ??
+        url.searchParams.get("address") ??
+        url.searchParams.get("walletAddress") ??
+        null;
+    }
 
     if (!walletAddress) {
       return new Response(
-        JSON.stringify({ error: "Missing walletAddress in POST body" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        },
+        JSON.stringify({ error: "Missing walletAddress parameter" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
 
@@ -49,56 +71,76 @@ export async function onRequestPost(context: any) {
       params: [walletAddress],
     };
 
-    // Try each RPC endpoint
-    for (const endpoint of rpcEndpoints) {
-      if (!endpoint) continue;
+    const rpcEndpoints = buildRpcEndpoints(env);
 
+    let lastError = "";
+    let lastStatus = 502;
+
+    for (let i = 0; i < rpcEndpoints.length; i++) {
+      const endpoint = rpcEndpoints[i];
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
         const resp = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(rpcBody),
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
+        lastStatus = resp.status;
+
+        if (!resp.ok) {
+          const text = await resp.text();
+          lastError = `HTTP ${resp.status}: ${text}`;
+          continue;
+        }
 
         const data = await resp.json();
 
-        // Check if RPC returned an error
         if (data.error) {
-          console.warn(`RPC ${endpoint} returned error: ${data.error.message}`);
-          continue; // Try next endpoint
+          lastError = data.error.message || "RPC error";
+          continue;
         }
 
-        return new Response(JSON.stringify(data), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
-      } catch (err: any) {
-        console.warn(`RPC endpoint ${endpoint} failed: ${err?.message}`);
-        continue; // Try next endpoint
+        const lamports = data.result?.value ?? data.result;
+        if (typeof lamports === "number" && isFinite(lamports) && lamports >= 0) {
+          return new Response(
+            JSON.stringify({
+              publicKey: walletAddress,
+              balance: lamports / 1e9, // return SOL
+              lamports,
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+
+        lastError = "Invalid balance response from RPC";
+      } catch (error: any) {
+        lastError =
+          error?.name === "AbortError"
+            ? "Request timeout"
+            : error?.message || String(error);
       }
     }
 
     // All endpoints failed
     return new Response(
       JSON.stringify({
-        error: "Failed to fetch balance - all RPC endpoints failed",
-        details: "No available Solana RPC providers",
+        error: "Failed to fetch balance",
+        details: lastError || "All RPC endpoints failed",
       }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
+      { status: lastStatus, headers: { "Content-Type": "application/json" } },
     );
   } catch (err: any) {
     return new Response(
       JSON.stringify({
         error: "Failed to fetch balance",
-        details: err?.message,
+        details: err?.message || String(err),
       }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
+      { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
 }

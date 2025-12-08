@@ -13,11 +13,12 @@ export async function onRequestPost({ request, env }) {
       // Priority 2: Custom Solana RPC
       env.SOLANA_RPC_URL,
       env.VITE_SOLANA_RPC_URL,
-      // Priority 3: Public fallbacks
-      "https://solana-rpc.publicnode.com",
+      // Priority 3: Public fallbacks (in order of reliability)
       "https://solana.publicnode.com",
+      "https://api.solflare.com",
       "https://rpc.ankr.com/solana",
       "https://api.mainnet-beta.solana.com",
+      "https://api.marinade.finance/rpc",
     ].filter((url) => url && typeof url === "string");
 
     if (!rpcEndpoints.length) {

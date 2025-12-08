@@ -13,17 +13,20 @@ import {
   Copy,
   ArrowUpRight,
   ArrowDownLeft,
+  ArrowRightLeft,
   TrendingUp,
   Settings,
   Bot,
   Plus,
   Menu,
   Gift,
-  Lock,
+  Unlock,
   Bell,
   X,
   Clock,
   Coins,
+  Search as SearchIcon,
+  MessageSquare,
 } from "lucide-react";
 import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import {
@@ -36,10 +39,8 @@ import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
 import { formatAmountCompact } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useStakingTokens } from "@/hooks/use-staking-tokens";
-import { useNetworkSignal } from "@/hooks/use-network-signal";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
-import { NetworkSignalIcon } from "@/components/ui/NetworkSignalIcon";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +48,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
+import { FlyingPrizeBox } from "./FlyingPrizeBox";
+import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
+import bs58 from "bs58";
+import nacl from "tweetnacl";
+import { getUnreadNotifications } from "@/lib/p2p-chat";
+import { Zap } from "lucide-react";
 
 interface DashboardProps {
   onSend: () => void;
@@ -61,15 +69,8 @@ interface DashboardProps {
   onLock: () => void;
   onBurn: () => void;
   onStakeTokens?: () => void;
+  onP2PTrade?: () => void;
 }
-
-import { useNavigate } from "react-router-dom";
-import { FlyingPrizeBox } from "./FlyingPrizeBox";
-import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
-import bs58 from "bs58";
-import nacl from "tweetnacl";
-import { TokenSearch } from "./TokenSearch";
-import { PriceLoader } from "@/components/ui/price-loader";
 
 const QUEST_TASKS = [
   {
@@ -114,6 +115,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onLock,
   onBurn,
   onStakeTokens,
+  onP2PTrade,
 }) => {
   const {
     wallet,
@@ -126,15 +128,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
     addCustomToken,
     removeToken,
   } = useWallet();
+
   const { toast } = useToast();
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const { isStaking } = useStakingTokens(wallet?.publicKey || null);
-  const networkSignal = useNetworkSignal();
 
   // Quest state (per-wallet, persisted locally)
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
@@ -201,7 +205,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const shareOnX = () => {
-    const text = encodeURIComponent("Fixercoin updates ��� #Fixercoin");
+    const text = encodeURIComponent("Fixercoin updates 🚀 #Fixercoin");
     const shareUrl = encodeURIComponent("https://fixorium.com.pk");
     const intent = `https://twitter.com/intent/tweet?text=${text}&url=${shareUrl}`;
     try {
@@ -225,6 +229,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       const msg = `fixercoin-quest-claim:${wallet.publicKey}:${tasksDone}:${Date.now()}`;
       const bytes = new TextEncoder().encode(msg);
       const sig = nacl.sign.detached(bytes, wallet.secretKey);
+
       const body = {
         recipient: wallet.publicKey,
         tasks: Array.from(completedTasks),
@@ -232,15 +237,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
         authMessage: msg,
         authSignature: bs58.encode(sig),
       };
+
       const res = await fetch(resolveApiUrl("/api/quest-claim"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+
       if (!res.ok) {
         const err = await res.text().catch(() => "");
         throw new Error(err || `Claim failed (${res.status})`);
       }
+
       const j = await res.json().catch(() => ({}) as any);
       toast({
         title: "Claimed",
@@ -249,7 +257,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
       setShowQuestModal(false);
     } catch (e) {
       const m = e instanceof Error ? e.message : String(e);
-      toast({ title: "Claim failed", description: m, variant: "destructive" });
+      toast({
+        title: "Claim failed",
+        description: m,
+        variant: "destructive",
+      });
     }
   };
 
@@ -262,22 +274,53 @@ export const Dashboard: React.FC<DashboardProps> = ({
       if (running) return;
       running = true;
       try {
-        await refreshBalance();
-        await new Promise((r) => setTimeout(r, 300));
-        await refreshTokens();
+        if (!cancelled) await refreshBalance();
+        if (!cancelled) await new Promise((r) => setTimeout(r, 300));
+        if (!cancelled) await refreshTokens();
       } catch (err) {
+        // Silently ignore AbortError and other errors during refresh
+        // They're already logged by the service layer
+        if (!(err instanceof Error && err.name === "AbortError")) {
+          console.debug("[Dashboard] Refresh error:", err);
+        }
       } finally {
-        running = false;
+        if (!cancelled) {
+          running = false;
+        }
       }
     };
 
     const id = window.setInterval(tick, 60000); // Auto-refresh every 1 minute
-
     return () => {
       cancelled = true;
       clearInterval(id);
     };
   }, [refreshBalance, refreshTokens]);
+
+  // Monitor unread notifications
+  useEffect(() => {
+    if (!wallet) return;
+
+    const updateUnreadCount = () => {
+      const unread = getUnreadNotifications(wallet.publicKey);
+      setUnreadCount(unread.length);
+    };
+
+    updateUnreadCount();
+    // Check for updates every 2 seconds
+    const interval = setInterval(updateUnreadCount, 2000);
+
+    // Also listen for storage changes
+    const handleStorageChange = () => {
+      updateUnreadCount();
+    };
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [wallet]);
 
   // Check for pending payment verifications if admin
   useEffect(() => {
@@ -310,6 +353,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       try {
         const controller = new AbortController();
         const to = setTimeout(() => controller.abort(), 4000);
+
         // Health check via reliable ping endpoint
         const res = await fetchWithFallback("/api/ping", {
           method: "GET",
@@ -344,6 +388,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const id = setInterval(() => {
       if (!stopped) void check();
     }, 10000);
+
     return () => {
       stopped = true;
       clearInterval(id);
@@ -398,14 +443,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const handleRefresh = async () => {
-    await refreshBalance();
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    await refreshTokens();
-
-    toast({
-      title: "Refreshed",
-      description: "Balance and tokens updated",
-    });
+    if (isRefreshing) return;
+    try {
+      setIsRefreshing(true);
+      await refreshBalance();
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await refreshTokens();
+      toast({
+        title: "Refreshed",
+        description: "Balance and tokens updated",
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh Failed",
+        description: "Could not refresh data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleTokenCardClick = (token: TokenInfo) => {
@@ -501,6 +557,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return solToken?.price;
   };
 
+  // Check if any tokens with balance are still loading prices
+  const areTokenPricesLoading = (): boolean => {
+    return tokens.some(
+      (token) =>
+        typeof token.balance === "number" &&
+        token.balance > 0 &&
+        token.price === undefined,
+    );
+  };
+
   // Calculate total portfolio value including all tokens (USD)
   const getTotalPortfolioValue = (): number => {
     let total = 0;
@@ -562,14 +628,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
     arr.sort((a, b) => {
       const aSym = (a.symbol || "").toUpperCase();
       const bSym = (b.symbol || "").toUpperCase();
-
       const aIdx = priority.indexOf(aSym);
       const bIdx = priority.indexOf(bSym);
-
       if (aIdx >= 0 && bIdx >= 0) return aIdx - bIdx;
       if (aIdx >= 0) return -1;
       if (bIdx >= 0) return 1;
-
       return aSym.localeCompare(bSym);
     });
     return arr;
@@ -629,8 +692,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* About */}
               <p className="text-xs text-gray-300 leading-relaxed">
                 A community challenge inside the Fixorium Wallet. Complete
-                simple tasks, earn rewards, and join random prize draws �����
-                all directly from your wallet.
+                simple tasks, earn rewards, and join random prize draws 🎁🎉 all
+                directly from your wallet.
               </p>
 
               {/* How it works */}
@@ -695,12 +758,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Rewards */}
               <div className="bg-white/5 rounded-lg p-3 border border-[#22c55e]/20">
                 <h3 className="text-sm font-bold text-white mb-3">
-                  ���� Rewards
+                  🎁 Rewards
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
-                  <p>����� {REWARD_PER_TASK} FIXERCOIN per task</p>
+                  <p>🪙 {REWARD_PER_TASK} FIXERCOIN per task</p>
                   <p>🖼️ NFTs and airdrops</p>
-                  <p>���� Early access to wallet updates</p>
+                  <p>🌟 Early access to wallet updates</p>
                   <p>👑 Premium features for top participants</p>
                 </div>
               </div>
@@ -755,15 +818,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {/* Balance Section */}
         <div className="w-full mt-2 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <img
-            src="https://cdn.builder.io/api/v1/image/assets%2F7af6522794cb4e5ca85f19bc91cbec76%2Fce1c4ab24b794d18b14d3087397797f1?format=webp&width=800"
+            src="https://cdn.builder.io/api/v1/image/assets%2F544a1f0862d54740bb19cea328eb3490%2F144647ed9eb7478cac472b3cb771e9ae?format=webp&width=800"
             alt="Balance card background"
             className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
-            style={{
-              backgroundColor: "#1f1f1f",
-            }}
+            style={{ backgroundColor: "#1f1f1f" }}
           />
+
           <div className="relative z-10">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2 gap-2">
               {/* Dropdown menu - moved to left */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -783,19 +845,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <Wallet className="h-4 w-4" />
                     <span>MY WALLET</span>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onSelect={() => onStakeTokens?.()}
+                    onSelect={onAirdrop}
                     className="flex items-center gap-2 text-xs"
                   >
-                    <TrendingUp className="h-4 w-4" />
-                    <span>STAKE NOW</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => onLock()}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Lock className="h-4 w-4" />
-                    <span>LOCK</span>
+                    <Gift className="h-4 w-4" />
+                    <span>AIRDROP</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -807,13 +863,34 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {/* Network signal strength icon and settings - moved to right */}
-              <div className="flex items-center gap-2">
-                <NetworkSignalIcon
-                  bars={networkSignal.bars}
-                  isOnline={networkSignal.isOnline}
-                  latency={networkSignal.latency}
-                />
+
+              <div className="flex items-center gap-2 ml-auto">
+                {/* Refresh button */}
+                <Button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-[#22c55e] ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Refresh balance"
+                  title="Refresh balance and tokens"
+                >
+                  <RefreshCw
+                    className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
+                </Button>
+
+                {/* Search button */}
+                <Button
+                  onClick={() => navigate("/search")}
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-[#22c55e] ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                  aria-label="Search tokens"
+                  title="Search tokens"
+                >
+                  <SearchIcon className="h-4 w-4" />
+                </Button>
+
+                {/* Settings button */}
                 <Button
                   onClick={onSettings}
                   size="sm"
@@ -826,7 +903,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
 
-            <div className="text-center space-y-2 mt-8">
+            <div className="space-y-3 mt-8">
+              <div className="text-left">
+                <div className="text-xs font-semibold text-gray-700 tracking-widest">
+                  MY PORTFOLIO
+                </div>
+              </div>
+
               {wallet
                 ? (() => {
                     const total = getTotalPortfolioValue();
@@ -835,23 +918,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         (t) => typeof t.balance === "number" && t.balance > 0,
                       ) ||
                       (typeof balance === "number" && balance > 0);
+
                     if (!hasAnyBalance) {
-                      // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
-                      const usdZero = `0.000 $`;
+                      // If prices are still loading, show loading indicator
+                      // Otherwise show 0.000 USD
+                      const displayValue = `0.000 $`;
                       return (
-                        <>
-                          <div className="text-3xl font-medium text-gray-900 leading-tight">
-                            {showBalance ? `${usdZero}` : "****"}
+                        <div className="flex items-center justify-between gap-4 w-full">
+                          <div className="text-3xl text-gray-900 leading-tight">
+                            {showBalance ? displayValue : "****"}
                           </div>
-                          <div className="text-xs text-green-400 mt-1 font-medium">
-                            {showBalance ? `▲ + 0.000 0.00 %` : "24h: ****"}
-                          </div>
-                        </>
+                          <Button
+                            onClick={onP2PTrade || onReceive}
+                            className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-5 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
+                          >
+                            P2P TRADE
+                          </Button>
+                        </div>
                       );
                     }
 
                     let totalChange24h = 0;
                     let hasValidPriceChange = false;
+
                     tokens.forEach((token) => {
                       if (
                         typeof token.balance === "number" &&
@@ -877,38 +966,37 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       ? (totalChange24h / (total - totalChange24h)) * 100
                       : 0;
                     const isPositive = totalChange24h >= 0;
+                    const isLoadingPrices = areTokenPricesLoading();
 
                     return (
-                      <>
-                        <div className="text-3xl font-medium text-gray-900 leading-tight">
-                          {showBalance
-                            ? `${total.toLocaleString(undefined, {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
-                              })} $`
-                            : "****"}
+                      <div className="flex items-center justify-between gap-4 w-full">
+                        <div className="text-3xl text-gray-900 leading-tight">
+                          {showBalance ? (
+                            <>
+                              <span
+                                style={{
+                                  fontVariantNumeric: "tabular-nums",
+                                  fontFamily: "Arial",
+                                }}
+                              >
+                                {total.toLocaleString(undefined, {
+                                  minimumFractionDigits: 3,
+                                  maximumFractionDigits: 3,
+                                })}
+                              </span>
+                              {" $"}
+                            </>
+                          ) : (
+                            "****"
+                          )}
                         </div>
-                        {showBalance ? (
-                          <div
-                            className={`text-xs mt-1 font-medium ${isPositive ? "text-green-400" : "text-red-400"}`}
-                          >
-                            {isPositive ? "▲" : "▼"} {isPositive ? "+" : "-"}{" "}
-                            {Math.abs(totalChange24h).toLocaleString(
-                              undefined,
-                              {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
-                              },
-                            )}{" "}
-                            {Math.abs(
-                              isFinite(change24hPercent) ? change24hPercent : 0,
-                            ).toFixed(2)}
-                            %
-                          </div>
-                        ) : (
-                          <div className="text-xs text-gray-400 mt-1">****</div>
-                        )}
-                      </>
+                        <Button
+                          onClick={onP2PTrade || onReceive}
+                          className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-5 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
+                        >
+                          P2P TRADE
+                        </Button>
+                      </div>
                     );
                   })()
                 : "Connect wallet to see balance"}
@@ -918,35 +1006,50 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="flex items-center justify-around gap-2 sm:gap-3 mt-6 w-full px-0">
               <Button
                 onClick={onSend}
-                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
                 <Send className="h-8 w-8 text-[#22c55e]" />
-                <span>SEND</span>
+                <span>WITHDRAW</span>
               </Button>
-
               <Button
                 onClick={onReceive}
-                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
                 <Download className="h-8 w-8 text-[#22c55e]" />
-                <span>RECEIVE</span>
+                <span>DEPOSIT</span>
               </Button>
-
               <Button
                 onClick={onSwap}
-                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
-                <TrendingUp className="h-8 w-8 text-[#22c55e]" />
-                <span>SWAP</span>
+                <ArrowRightLeft className="h-8 w-8 text-[#22c55e]" />
+                <span>CONVERT</span>
               </Button>
             </div>
 
-            {/* Token Search - Under Action Buttons */}
-            <div className="w-full mt-4 px-0">
-              <TokenSearch
-                className="w-full"
-                inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-md"
-              />
+            {/* Additional Action Buttons: TRADE, BURN, LOCK */}
+            <div className="flex items-center justify-around gap-2 sm:gap-3 mt-3 w-full px-0">
+              <Button
+                onClick={onAutoBot}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <ArrowRightLeft className="h-8 w-8 text-[#22c55e]" />
+                <span>LIMIT ORDER</span>
+              </Button>
+              <Button
+                onClick={onBurn}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <Zap className="h-8 w-8 text-[#22c55e]" />
+                <span>BURNING</span>
+              </Button>
+              <Button
+                onClick={onLock}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <Unlock className="h-8 w-8 text-[#22c55e]" />
+                <span>LOCK UP</span>
+              </Button>
             </div>
           </div>
         </div>
@@ -973,8 +1076,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         <style>{`
           @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+            0%, 100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: 0.3;
+            }
           }
           .token-price-blink {
             animation: blink 1.2s ease-in-out infinite;
@@ -993,7 +1100,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             return (
               <div key={token.mint} className="w-full">
-                <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
+                <Card className="w-full bg-gray-900/20 rounded-none sm:rounded-[2px] border-0">
                   <CardContent className="w-full p-0">
                     <div
                       className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-4"
@@ -1017,61 +1124,53 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               </span>
                             )}
                           </div>
-                          <p className="text-xs font-semibold text-white truncate flex items-baseline gap-1">
-                            <span>
-                              {
-                                formatAmountCompact(
-                                  token.balance,
-                                  token.symbol,
-                                ).split(/\s+/)[0]
-                              }
-                            </span>
-                            <span
-                              className="text-xs"
-                              style={{ fontSize: "0.65rem" }}
-                            >
-                              {token.symbol.toUpperCase()}
-                            </span>
+                          <p className="text-xs font-semibold text-white truncate">
+                            {formatBalance(token.balance, token.symbol)}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <div className="text-xs font-semibold whitespace-nowrap">
+                        <div
+                          className={`text-xs whitespace-nowrap ${
+                            typeof token.price === "number" &&
+                            isFinite(token.price) &&
+                            token.price !== 0
+                              ? "font-semibold"
+                              : ""
+                          }`}
+                        >
                           {typeof token.price === "number" &&
                           isFinite(token.price) ? (
                             <span style={{ color: "#ffffff" }}>
-                              $
+                              ${" "}
                               {token.price.toFixed(
                                 ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
                               )}
                             </span>
-                          ) : [
-                              "SOL",
-                              "USDC",
-                              "FIXERCOIN",
-                              "LOCKER",
-                              "FXM",
-                            ].includes(token.symbol) ? (
-                            <PriceLoader />
-                          ) : (
-                            <span style={{ color: "#999999" }}>
-                              $0.00000000
-                            </span>
-                          )}
+                          ) : null}
                         </div>
-
-                        <p className="text-xs font-semibold text-white whitespace-nowrap">
-                          $
-                          {tokenBalance.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p>
+                        <div
+                          className={`text-xs text-white whitespace-nowrap ${
+                            tokenBalance > 0 ? "font-semibold" : ""
+                          }`}
+                        >
+                          {typeof token.price === "number" &&
+                          isFinite(token.price) ? (
+                            <>
+                              ${" "}
+                              {tokenBalance.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
+
                 {index < sortedTokens.length - 1 && (
                   <Separator className="bg-[#14532d]/30" />
                 )}

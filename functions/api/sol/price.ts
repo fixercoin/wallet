@@ -30,12 +30,16 @@ async function handler(request: Request): Promise<Response> {
     });
   }
 
+  let controller: AbortController | null = null;
+  let timeoutId: NodeJS.Timeout | null = null;
+
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 18000);
+    controller = new AbortController();
+    timeoutId = setTimeout(() => controller?.abort(), 18000);
 
     // Try CoinGecko API first
     try {
+      console.log("[SOL Price] Attempting CoinGecko API...");
       const response = await fetch(
         "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true",
         {
@@ -45,34 +49,53 @@ async function handler(request: Request): Promise<Response> {
         },
       );
 
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
-        if (data.solana) {
-          const priceData: SolPriceResponse = {
-            price: data.solana.usd || 0,
-            price_change_24h: data.solana.usd_24h_change || 0,
-            market_cap: data.solana.usd_market_cap || 0,
-            volume_24h: data.solana.usd_24h_vol || 0,
-          };
+        if (data.solana && typeof data.solana.usd === "number") {
+          const price = data.solana.usd;
+          if (price > 0) {
+            const priceData: SolPriceResponse = {
+              price: price,
+              price_change_24h: data.solana.usd_24h_change || 0,
+              market_cap: data.solana.usd_market_cap || 0,
+              volume_24h: data.solana.usd_24h_vol || 0,
+            };
 
-          return new Response(JSON.stringify(priceData), {
-            status: 200,
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*",
-              "Cache-Control": "public, max-age=30",
-            },
-          });
+            console.log(`[SOL Price] ✅ CoinGecko success: $${price}`);
+            const responseBody = {
+              ...priceData,
+              token: "SOL",
+              mint: "So11111111111111111111111111111111111111112",
+              source: "coingecko",
+            };
+            return new Response(JSON.stringify(responseBody), {
+              status: 200,
+              headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+                "Cache-Control": "public, max-age=30",
+              },
+            });
+          }
         }
       }
-    } catch (e) {
-      // CoinGecko failed, try fallback
+      console.log(
+        "[SOL Price] CoinGecko returned invalid data, trying Birdeye...",
+      );
+    } catch (e: any) {
+      console.warn("[SOL Price] CoinGecko failed:", e?.message || String(e));
     }
+
+    // Reset timeout for second attempt
+    if (timeoutId) clearTimeout(timeoutId);
+    controller = new AbortController();
+    timeoutId = setTimeout(() => controller?.abort(), 18000);
 
     // Fallback: Try Birdeye API for SOL
     try {
+      console.log("[SOL Price] Attempting Birdeye API...");
       const birdeyeResponse = await fetch(
         "https://public-api.birdeye.so/defi/price?address=So11111111111111111111111111111111111111112",
         {
@@ -82,11 +105,15 @@ async function handler(request: Request): Promise<Response> {
         },
       );
 
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
 
       if (birdeyeResponse.ok) {
         const data = await birdeyeResponse.json();
-        if (data.data && data.data.value) {
+        if (
+          data.data &&
+          typeof data.data.value === "number" &&
+          data.data.value > 0
+        ) {
           const priceData: SolPriceResponse = {
             price: data.data.value,
             price_change_24h: 0,
@@ -94,7 +121,14 @@ async function handler(request: Request): Promise<Response> {
             volume_24h: 0,
           };
 
-          return new Response(JSON.stringify(priceData), {
+          console.log(`[SOL Price] ✅ Birdeye success: $${data.data.value}`);
+          const responseBody = {
+            ...priceData,
+            token: "SOL",
+            mint: "So11111111111111111111111111111111111111112",
+            source: "birdeye",
+          };
+          return new Response(JSON.stringify(responseBody), {
             status: 200,
             headers: {
               "Content-Type": "application/json",
@@ -104,12 +138,17 @@ async function handler(request: Request): Promise<Response> {
           });
         }
       }
-    } catch (e) {
-      // Birdeye also failed
+      console.log("[SOL Price] Birdeye returned invalid data");
+    } catch (e: any) {
+      console.warn("[SOL Price] Birdeye failed:", e?.message || String(e));
     }
 
     // If all else fails, return 503 Service Unavailable so client will retry
-    console.error("[SOL Price] Both CoinGecko and Birdeye APIs failed");
+    console.error(
+      "[SOL Price] Both CoinGecko and Birdeye APIs failed or returned invalid data",
+    );
+    if (timeoutId) clearTimeout(timeoutId);
+
     return new Response(
       JSON.stringify({
         error: "All price APIs failed - CoinGecko and Birdeye unavailable",
@@ -125,6 +164,8 @@ async function handler(request: Request): Promise<Response> {
       },
     );
   } catch (error: any) {
+    if (timeoutId) clearTimeout(timeoutId);
+
     // Return 503 on error so client retries
     const isTimeout =
       error?.name === "AbortError" || error?.message?.includes("timeout");

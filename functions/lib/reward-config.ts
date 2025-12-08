@@ -4,6 +4,9 @@
  */
 
 export const REWARD_CONFIG = {
+  // Vault wallet that holds staked tokens
+  vaultWallet: "5bW3uEyoP1jhXBMswgkB8xZuKUY3hscMaLJcsuzH2LNU",
+
   // Wallet address that pays out staking rewards
   rewardWallet: "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM",
 
@@ -38,7 +41,7 @@ export interface RewardDistribution {
   walletAddress: string;
   rewardAmount: number;
   tokenMint: string;
-  status: "pending" | "processed";
+  status: "pending" | "processed" | "ready_for_distribution";
   txHash?: string;
   createdAt: number;
   processedAt?: number;

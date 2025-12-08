@@ -5,11 +5,13 @@ This guide explains how to fetch all token balances (including SOL) using the He
 ## Setup
 
 The Helius API key has been set in the environment variables:
+
 ```
 HELIUS_API_KEY=aedd2b62-4cf6-4b84-b260-579fa67d1e8e
 ```
 
 The endpoints will automatically use this key to connect to:
+
 ```
 https://mainnet.helius-rpc.com/?api-key=aedd2b62-4cf6-4b84-b260-579fa67d1e8e
 ```
@@ -21,6 +23,7 @@ https://mainnet.helius-rpc.com/?api-key=aedd2b62-4cf6-4b84-b260-579fa67d1e8e
 **Endpoint:** `GET /api/wallet/all-balances`
 
 **Parameters:**
+
 - `publicKey` (query param) - Solana wallet address
 - OR `wallet` (query param) - Solana wallet address
 - OR `address` (query param) - Solana wallet address
@@ -76,16 +79,19 @@ curl "http://localhost:3000/api/wallet/all-balances?address=8dHKLScV3nMF6mKvwJPG
 The following existing endpoints continue to work and can still be used:
 
 #### Get SOL Balance Only
+
 ```bash
 curl "http://localhost:3000/api/wallet/balance?publicKey=8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV"
 ```
 
 #### Get Token Accounts (including SOL)
+
 ```bash
 curl "http://localhost:3000/api/wallet/token-accounts?publicKey=8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV"
 ```
 
 #### Get Specific Token Balance
+
 ```bash
 curl "http://localhost:3000/api/wallet/token-balance?wallet=8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV&mint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 ```
@@ -99,6 +105,7 @@ The same functionality is available via Cloudflare Pages Functions at:
 **Parameters:** Same as dev server (publicKey, wallet, or address)
 
 **Example Request:**
+
 ```bash
 curl "https://your-domain.com/api/wallet/all-balances?publicKey=8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV"
 ```
@@ -191,7 +198,7 @@ export default WalletBalances;
 // Node.js / Express
 async function getAllBalances(walletAddress: string) {
   const response = await fetch(
-    `http://localhost:3000/api/wallet/all-balances?publicKey=${walletAddress}`
+    `http://localhost:3000/api/wallet/all-balances?publicKey=${walletAddress}`,
   );
 
   if (!response.ok) {
@@ -204,12 +211,14 @@ async function getAllBalances(walletAddress: string) {
 
 // Usage
 try {
-  const balances = await getAllBalances('8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV');
-  console.log('SOL Balance:', balances.solBalance);
-  console.log('Total Tokens:', balances.totalTokens);
-  console.log('Tokens:', balances.tokens);
+  const balances = await getAllBalances(
+    "8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV",
+  );
+  console.log("SOL Balance:", balances.solBalance);
+  console.log("Total Tokens:", balances.totalTokens);
+  console.log("Tokens:", balances.tokens);
 } catch (error) {
-  console.error('Error:', error);
+  console.error("Error:", error);
 }
 ```
 
@@ -217,16 +226,17 @@ try {
 
 The endpoints automatically decode and include metadata for these known tokens:
 
-| Symbol | Mint | Name | Decimals |
-|--------|------|------|----------|
-| SOL | So111... | Solana | 9 |
-| USDC | EPjFW... | USD Coin | 6 |
-| USDT | Es9vM... | Tether USD | 6 |
-| FIXERCOIN | H4qKn... | FIXERCOIN | 6 |
-| LOCKER | EN1nY... | LOCKER | 6 |
-| FXM | 7Fnx5... | Fixorium | 6 |
+| Symbol    | Mint     | Name       | Decimals |
+| --------- | -------- | ---------- | -------- |
+| SOL       | So111... | Solana     | 9        |
+| USDC      | EPjFW... | USD Coin   | 6        |
+| USDT      | Es9vM... | Tether USD | 6        |
+| FIXERCOIN | H4qKn... | FIXERCOIN  | 6        |
+| LOCKER    | EN1nY... | LOCKER     | 6        |
+| FXM       | 7Fnx5... | Fixorium   | 6        |
 
 Unknown tokens will have:
+
 - `symbol`: "UNKNOWN"
 - `name`: "Unknown Token"
 - `decimals`: Fetched from on-chain data
@@ -253,22 +263,29 @@ The system automatically selects the best RPC endpoint in this order:
 ## Troubleshooting
 
 ### Issue: "Missing wallet address parameter"
+
 **Solution:** Make sure you're passing one of these parameters:
+
 - `?publicKey=...`
 - `?wallet=...`
 - `?address=...`
 
 ### Issue: "Invalid Solana address format"
+
 **Solution:** Verify the wallet address is a valid Solana public key (43-44 characters, base58 encoded)
 
 ### Issue: "Failed to fetch balances from RPC endpoint"
-**Solution:** 
+
+**Solution:**
+
 - Check that HELIUS_API_KEY is set in environment variables
 - Verify the API key has not expired
 - Check network connectivity
 
 ### Issue: Endpoint returns empty token list
+
 **Possible causes:**
+
 - The wallet address is valid but has no tokens
 - The wallet is on devnet/testnet instead of mainnet
 - The RPC endpoint is rate-limited (try again after a moment)
@@ -291,6 +308,7 @@ curl "http://localhost:3000/api/wallet/all-balances?wallet=$WALLET"
 ### Test in Browser
 
 Navigate to:
+
 ```
 http://localhost:3000/api/wallet/all-balances?publicKey=8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV
 ```

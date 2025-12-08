@@ -5,24 +5,26 @@
 ### Get All Token Balances (SOL + SPL Tokens)
 
 **Dev Server:**
+
 ```
 GET http://localhost:3000/api/wallet/all-balances?publicKey=<WALLET_ADDRESS>
 ```
 
 **Production (Cloudflare):**
+
 ```
 GET https://your-domain.com/api/wallet/all-balances?publicKey=<WALLET_ADDRESS>
 ```
 
 ## 📋 Parameters
 
-| Parameter | Required | Example |
-|-----------|----------|---------|
-| publicKey | Yes* | `8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV` |
-| wallet | Yes* | `8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV` |
-| address | Yes* | `8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV` |
+| Parameter | Required | Example                                        |
+| --------- | -------- | ---------------------------------------------- |
+| publicKey | Yes\*    | `8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV` |
+| wallet    | Yes\*    | `8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV` |
+| address   | Yes\*    | `8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV` |
 
-*One of these three is required
+\*One of these three is required
 
 ## 🧪 Quick Test
 
@@ -39,17 +41,17 @@ curl "http://localhost:3000/api/wallet/all-balances?publicKey=WALLET_ADDRESS"
   "tokens": [
     {
       "mint": "token_mint_address",
-      "symbol": "SOL",        // Token symbol
-      "name": "Solana",       // Token name
-      "decimals": 9,          // Token decimals
-      "balance": 5.234,       // Human readable balance
-      "uiAmount": 5.234,      // Same as balance
+      "symbol": "SOL", // Token symbol
+      "name": "Solana", // Token name
+      "decimals": 9, // Token decimals
+      "balance": 5.234, // Human readable balance
+      "uiAmount": 5.234, // Same as balance
       "rawAmount": "5234000000", // Raw balance
       "address": "token_account_address" // (optional, only for SPL)
     }
   ],
-  "totalTokens": 5,           // Number of tokens
-  "solBalance": 5.234,        // Native SOL balance
+  "totalTokens": 5, // Number of tokens
+  "solBalance": 5.234, // Native SOL balance
   "source": "https://mainnet.helius-rpc.com",
   "timestamp": 1702500000000
 }
@@ -60,7 +62,7 @@ curl "http://localhost:3000/api/wallet/all-balances?publicKey=WALLET_ADDRESS"
 ```javascript
 // Fetch all balances
 const response = await fetch(
-  `/api/wallet/all-balances?publicKey=8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV`
+  `/api/wallet/all-balances?publicKey=8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV`,
 );
 const data = await response.json();
 
@@ -68,7 +70,7 @@ const data = await response.json();
 console.log(`SOL: ${data.solBalance}`);
 
 // Access token balances
-data.tokens.forEach(token => {
+data.tokens.forEach((token) => {
   console.log(`${token.symbol}: ${token.balance}`);
 });
 ```
@@ -81,15 +83,15 @@ data.tokens.forEach(token => {
 
 ## ✅ Supported Tokens
 
-| Symbol | Automatically Detected |
-|--------|------------------------|
-| SOL | ✅ Yes |
-| USDC | ✅ Yes |
-| USDT | ✅ Yes |
-| FIXERCOIN | ✅ Yes |
-| LOCKER | ✅ Yes |
-| FXM | ✅ Yes |
-| Others | ✅ Yes (unknown tokens included) |
+| Symbol    | Automatically Detected           |
+| --------- | -------------------------------- |
+| SOL       | ✅ Yes                           |
+| USDC      | ✅ Yes                           |
+| USDT      | ✅ Yes                           |
+| FIXERCOIN | ✅ Yes                           |
+| LOCKER    | ✅ Yes                           |
+| FXM       | ✅ Yes                           |
+| Others    | ✅ Yes (unknown tokens included) |
 
 ## ⚙️ Features
 
@@ -133,12 +135,12 @@ curl "http://localhost:3000/api/wallet/token-balance?publicKey=ADDRESS&mint=MINT
 
 ## 🚨 Common Issues
 
-| Issue | Solution |
-|-------|----------|
-| 400 Bad Request | Verify you're passing `publicKey`, `wallet`, or `address` parameter |
-| Invalid address | Ensure wallet address is valid Solana address (43-44 chars, base58) |
-| No tokens returned | Wallet might be empty or on different network (not mainnet) |
-| RPC error | Check HELIUS_API_KEY is set and valid |
+| Issue              | Solution                                                            |
+| ------------------ | ------------------------------------------------------------------- |
+| 400 Bad Request    | Verify you're passing `publicKey`, `wallet`, or `address` parameter |
+| Invalid address    | Ensure wallet address is valid Solana address (43-44 chars, base58) |
+| No tokens returned | Wallet might be empty or on different network (not mainnet)         |
+| RPC error          | Check HELIUS_API_KEY is set and valid                               |
 
 ## 📚 Full Documentation
 

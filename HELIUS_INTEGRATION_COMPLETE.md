@@ -7,14 +7,17 @@ Successfully integrated Helius RPC endpoint to fetch all token balances (includi
 ## What Was Done
 
 ### 1. ✅ Environment Setup
+
 - **HELIUS_API_KEY** set: `aedd2b62-4cf6-4b84-b260-579fa67d1e8e`
 - Helius RPC endpoint: `https://mainnet.helius-rpc.com/?api-key=aedd2b62-4cf6-4b84-b260-579fa67d1e8e`
 
 ### 2. ✅ Dev Server Endpoint (Express)
+
 **File Created:** `server/routes/all-balances.ts`
 **Route Registered:** `GET /api/wallet/all-balances`
 
 **Features:**
+
 - Fetches SOL balance and all SPL token accounts in parallel
 - Returns comprehensive token metadata (mint, symbol, name, decimals, balance)
 - Filters out zero-balance accounts
@@ -22,25 +25,30 @@ Successfully integrated Helius RPC endpoint to fetch all token balances (includi
 - Supports multiple parameter names: `publicKey`, `wallet`, `address`
 
 **Example:**
+
 ```bash
 curl "http://localhost:3000/api/wallet/all-balances?publicKey=8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV"
 ```
 
 ### 3. ✅ Cloudflare Pages Functions
+
 **File Created:** `functions/api/wallet/all-balances.ts`
 
 **Features:**
+
 - Same functionality as Express endpoint
 - Optimized for serverless environment
 - Supports environment variable override for HELIUS_API_KEY
 - Full error handling and CORS support
 
 **Deploy to Production:**
+
 ```bash
 wrangler deploy
 ```
 
 Then access at:
+
 ```
 https://your-domain.com/api/wallet/all-balances?publicKey=...
 ```
@@ -81,11 +89,13 @@ https://your-domain.com/api/wallet/all-balances?publicKey=...
 ## Supported Query Parameters
 
 All of these work:
+
 - `?publicKey=<address>` - Standard Solana RPC parameter
 - `?wallet=<address>` - Alternative parameter name
 - `?address=<address>` - Alternative parameter name
 
 **Example:**
+
 ```bash
 # All are equivalent:
 curl "http://localhost:3000/api/wallet/all-balances?publicKey=8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV"
@@ -95,14 +105,14 @@ curl "http://localhost:3000/api/wallet/all-balances?address=8dHKLScV3nMF6mKvwJPG
 
 ## Known Tokens (Auto-Detected)
 
-| Symbol | Mint | Name |
-|--------|------|------|
-| SOL | So111... | Solana |
-| USDC | EPjFW... | USD Coin |
-| USDT | Es9vM... | Tether USD |
-| FIXERCOIN | H4qKn... | FIXERCOIN |
-| LOCKER | EN1nY... | LOCKER |
-| FXM | 7Fnx5... | Fixorium |
+| Symbol    | Mint     | Name       |
+| --------- | -------- | ---------- |
+| SOL       | So111... | Solana     |
+| USDC      | EPjFW... | USD Coin   |
+| USDT      | Es9vM... | Tether USD |
+| FIXERCOIN | H4qKn... | FIXERCOIN  |
+| LOCKER    | EN1nY... | LOCKER     |
+| FXM       | 7Fnx5... | Fixorium   |
 
 Unknown tokens are returned with `symbol: "UNKNOWN"` and on-chain metadata.
 
@@ -125,24 +135,29 @@ The system automatically uses the best available RPC endpoint:
 ## Files Modified/Created
 
 ### Created:
+
 - `server/routes/all-balances.ts` - Express endpoint handler
 - `functions/api/wallet/all-balances.ts` - Cloudflare function handler
 - `HELIUS_TOKEN_BALANCES_GUIDE.md` - Comprehensive usage guide
 - `HELIUS_INTEGRATION_COMPLETE.md` - This file
 
 ### Modified:
+
 - `server/index.ts` - Added route registration and import
 
 ## Testing
 
 ### Quick Test (Dev Server)
+
 ```bash
 # Replace with a real Solana wallet address
 curl "http://localhost:3000/api/wallet/all-balances?publicKey=8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV"
 ```
 
 ### Browser Test
+
 Navigate to:
+
 ```
 http://localhost:3000/api/wallet/all-balances?publicKey=8dHKLScV3nMF6mKvwJPGn5Nqfnc1k28tNHakN7z3JMEV
 ```
@@ -168,7 +183,7 @@ interface AllBalancesResponse {
 
 async function fetchAllBalances(walletAddress: string) {
   const response = await fetch(
-    `/api/wallet/all-balances?publicKey=${walletAddress}`
+    `/api/wallet/all-balances?publicKey=${walletAddress}`,
   );
   const data: AllBalancesResponse = await response.json();
   return data;
@@ -184,6 +199,7 @@ The endpoints return appropriate HTTP status codes:
 - **500** - Internal server error
 
 Example error response:
+
 ```json
 {
   "error": "Failed to fetch balances from RPC endpoint",
@@ -205,10 +221,12 @@ Example error response:
 ## Documentation
 
 For detailed usage examples and troubleshooting, see:
+
 - `HELIUS_TOKEN_BALANCES_GUIDE.md` - Complete user guide with examples
 
 ## Support
 
 The endpoints include comprehensive logging. Check server logs for:
+
 - `[AllBalances]` prefixed messages for detailed request/response logging
 - Error details and hints for troubleshooting

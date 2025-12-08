@@ -308,9 +308,7 @@ export const handleGetAllBalances: RequestHandler = async (req, res) => {
         error: "Failed to fetch balances from RPC endpoint",
         details: {
           message:
-            fetchError instanceof Error
-              ? fetchError.message
-              : "Unknown error",
+            fetchError instanceof Error ? fetchError.message : "Unknown error",
           endpoint: endpointLabel,
           hint: "Check that HELIUS_API_KEY is set in environment variables",
         },

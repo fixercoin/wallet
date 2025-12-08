@@ -78,12 +78,9 @@ interface Env {
  * Get Helius RPC endpoint from environment variables with fallback
  */
 function getRpcEndpoint(env?: Env): string {
-  const heliusApiKey =
-    env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY || "";
-  const heliusRpcUrl =
-    env?.HELIUS_RPC_URL || process.env.HELIUS_RPC_URL || "";
-  const solanaRpcUrl =
-    env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL || "";
+  const heliusApiKey = env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY || "";
+  const heliusRpcUrl = env?.HELIUS_RPC_URL || process.env.HELIUS_RPC_URL || "";
+  const solanaRpcUrl = env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL || "";
 
   if (heliusApiKey?.trim()) {
     return `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey.trim()}`;
@@ -190,10 +187,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       clearTimeout(timeoutId);
 
       // Process SPL token accounts
-      if (
-        tokenResponse.status === "fulfilled" &&
-        tokenResponse.value?.ok
-      ) {
+      if (tokenResponse.status === "fulfilled" && tokenResponse.value?.ok) {
         try {
           const tokenData = await tokenResponse.value.json();
           const accounts = tokenData?.result?.value ?? [];

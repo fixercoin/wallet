@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  Copy,
-  Check,
-  ExternalLink,
-  CheckCircle,
-  Loader2,
-} from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { TokenInfo } from "@/lib/wallet";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";

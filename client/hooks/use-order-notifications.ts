@@ -11,6 +11,7 @@ export interface OrderNotification {
   type:
     | "order_created"
     | "new_buy_order"
+    | "new_sell_order"
     | "payment_confirmed"
     | "seller_payment_received"
     | "transfer_initiated"

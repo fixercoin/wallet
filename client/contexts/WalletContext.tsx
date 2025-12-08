@@ -855,16 +855,55 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           `[WalletContext] Updated SOL balance from tokenAccounts: ${solFromTokenAccounts.balance}`,
         );
       } else {
-        // Fall back to balance from separate endpoint (which should have been fetched via refreshBalance)
-        solBalance =
-          typeof balanceRef.current === "number" &&
-          isFinite(balanceRef.current) &&
-          balanceRef.current >= 0
-            ? balanceRef.current
-            : balance || 0;
-        console.log(
-          `[WalletContext] Using SOL balance from balance endpoint: ${solBalance}`,
-        );
+        // If we don't have a valid balance from tokenAccounts, try to fetch it directly
+        // This ensures SOL balance is always correct, especially on Cloudflare
+        if (
+          typeof balanceRef.current !== "number" ||
+          !isFinite(balanceRef.current) ||
+          balanceRef.current < 0
+        ) {
+          console.log(
+            "[WalletContext] Balance endpoint not yet fetched or invalid, fetching SOL balance directly",
+          );
+          try {
+            const directBalance = await getBalance(wallet.publicKey);
+            if (
+              typeof directBalance === "number" &&
+              isFinite(directBalance) &&
+              directBalance >= 0
+            ) {
+              solBalance = directBalance;
+              setBalance(directBalance);
+              balanceRef.current = directBalance;
+              console.log(
+                `[WalletContext] Fetched SOL balance directly: ${directBalance} SOL`,
+              );
+            } else {
+              console.warn(
+                "[WalletContext] Direct balance fetch returned invalid value:",
+                directBalance,
+              );
+              solBalance = 0;
+            }
+          } catch (err) {
+            console.error(
+              "[WalletContext] Failed to fetch SOL balance directly:",
+              err,
+            );
+            solBalance = 0;
+          }
+        } else {
+          // Use cached balance from earlier refreshBalance() call
+          solBalance =
+            typeof balanceRef.current === "number" &&
+            isFinite(balanceRef.current) &&
+            balanceRef.current >= 0
+              ? balanceRef.current
+              : balance || 0;
+          console.log(
+            `[WalletContext] Using SOL balance from balance endpoint: ${solBalance}`,
+          );
+        }
       }
 
       const allTokens: TokenInfo[] = [

@@ -263,7 +263,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                   {token.symbol}
                 </p>
                 <p className="text-xs text-gray-500 uppercase">
-                  PRICE: ${token.price?.toFixed(8) || "N/A"}
+                  PRICE: ${token.price?.toFixed(2) || "N/A"}
                 </p>
               </div>
             </div>

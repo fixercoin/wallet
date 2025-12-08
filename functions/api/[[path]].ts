@@ -148,22 +148,6 @@ async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
     priorityEndpoints.push(env.SOLANA_RPC_URL);
   }
   if (
-    env?.HELIUS_RPC_URL &&
-    typeof env.HELIUS_RPC_URL === "string" &&
-    env.HELIUS_RPC_URL.length > 0
-  ) {
-    priorityEndpoints.push(env.HELIUS_RPC_URL);
-  }
-  if (
-    env?.HELIUS_API_KEY &&
-    typeof env.HELIUS_API_KEY === "string" &&
-    env.HELIUS_API_KEY.length > 0
-  ) {
-    priorityEndpoints.push(
-      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
-    );
-  }
-  if (
     env?.ALCHEMY_RPC_URL &&
     typeof env.ALCHEMY_RPC_URL === "string" &&
     env.ALCHEMY_RPC_URL.length > 0

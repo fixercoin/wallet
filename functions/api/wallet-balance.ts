@@ -93,13 +93,19 @@ export async function onRequest(context: any) {
     };
 
     const rpcEndpoints = buildRpcEndpoints(env);
+    console.log(`[wallet-balance] Fetching balance for ${walletAddress.substring(0, 8)}...`);
 
     let lastError = "";
     let lastStatus = 502;
+    let successfulEndpoint = "";
 
     for (let i = 0; i < rpcEndpoints.length; i++) {
       const endpoint = rpcEndpoints[i];
+      const shortEndpoint = endpoint.substring(0, 50);
+
       try {
+        console.log(`[wallet-balance] Attempt ${i + 1}/${rpcEndpoints.length}: ${shortEndpoint}`);
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
@@ -114,44 +120,64 @@ export async function onRequest(context: any) {
         lastStatus = resp.status;
 
         if (!resp.ok) {
-          const text = await resp.text();
-          lastError = `HTTP ${resp.status}: ${text}`;
+          const text = await resp.text().catch(() => `HTTP ${resp.status}`);
+          lastError = `HTTP ${resp.status}: ${text.substring(0, 100)}`;
+          console.log(`[wallet-balance] Endpoint failed: ${lastError}`);
           continue;
         }
 
-        const data = await resp.json();
+        let data: any;
+        try {
+          data = await resp.json();
+        } catch (parseErr) {
+          lastError = "Invalid JSON response";
+          console.log(`[wallet-balance] Failed to parse JSON from endpoint`);
+          continue;
+        }
 
         if (data.error) {
-          lastError = data.error.message || "RPC error";
+          lastError = data.error.message || `RPC error: ${JSON.stringify(data.error)}`;
+          console.log(`[wallet-balance] RPC returned error: ${lastError}`);
           continue;
         }
 
         const lamports = data.result?.value ?? data.result;
+
         if (typeof lamports === "number" && isFinite(lamports) && lamports >= 0) {
+          const balance = lamports / 1e9;
+          successfulEndpoint = shortEndpoint;
+          console.log(`[wallet-balance] ✅ Success: ${balance} SOL from ${successfulEndpoint}`);
+
           return new Response(
             JSON.stringify({
               publicKey: walletAddress,
-              balance: lamports / 1e9, // return SOL
-              lamports,
+              balance,
+              balanceLamports: lamports,
+              source: successfulEndpoint,
             }),
             { status: 200, headers: { "Content-Type": "application/json" } },
           );
         }
 
-        lastError = "Invalid balance response from RPC";
+        lastError = `Invalid balance type: ${typeof lamports} value: ${lamports}`;
+        console.log(`[wallet-balance] Invalid balance response: ${lastError}`);
       } catch (error: any) {
         lastError =
           error?.name === "AbortError"
-            ? "Request timeout"
+            ? "Request timeout (15s exceeded)"
             : error?.message || String(error);
+        console.log(`[wallet-balance] Request failed: ${lastError}`);
       }
     }
 
     // All endpoints failed
+    console.error(`[wallet-balance] ❌ All ${rpcEndpoints.length} endpoints failed. Last error: ${lastError}`);
     return new Response(
       JSON.stringify({
-        error: "Failed to fetch balance",
+        error: "Failed to fetch wallet balance",
         details: lastError || "All RPC endpoints failed",
+        attempts: rpcEndpoints.length,
+        publicKey: walletAddress,
       }),
       { status: lastStatus, headers: { "Content-Type": "application/json" } },
     );

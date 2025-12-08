@@ -199,7 +199,7 @@ export default function SellData() {
               Token
             </label>
             <div className="px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold">
-              USDC
+              USDT
             </div>
           </div>
 
@@ -209,14 +209,14 @@ export default function SellData() {
               Price
             </label>
             <div className="px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold">
-              1 USDC = {exchangeRate.toFixed(2)} PKR
+              1 USDT = {exchangeRate.toFixed(2)} PKR
             </div>
           </div>
 
-          {/* Amount USDC Input */}
+          {/* Amount USDT Input */}
           <div>
             <label className="block text-xs font-semibold text-white/80 uppercase mb-2">
-              Amount (USDC)
+              Amount (USDT)
             </label>
             <input
               type="number"
@@ -245,7 +245,7 @@ export default function SellData() {
                 Summary
               </div>
               <div className="text-sm text-white/90">
-                {amountTokens} USDC = {parseFloat(amountPKR).toFixed(2)} PKR
+                {amountTokens} USDT = {parseFloat(amountPKR).toFixed(2)} PKR
               </div>
             </div>
           )}

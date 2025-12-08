@@ -96,7 +96,7 @@ export const TokenInfoCard: React.FC<TokenInfoCardProps> = ({ token }) => {
                 $
                 {token.price.toLocaleString(undefined, {
                   minimumFractionDigits: 2,
-                  maximumFractionDigits: 6,
+                  maximumFractionDigits: 2,
                 })}
               </p>
             ) : (

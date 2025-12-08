@@ -1,10 +1,7 @@
 import { dexscreenerAPI } from "./dexscreener";
 import { solPriceService } from "./sol-price";
 import { saveServicePrice } from "./offline-cache";
-import {
-  retryWithExponentialBackoff,
-  AGGRESSIVE_RETRY_OPTIONS,
-} from "./retry-fetch";
+import { retryWithExponentialBackoff } from "./retry-fetch";
 
 export interface FixercoinPriceData {
   price: number;
@@ -198,14 +195,35 @@ class FixercoinPriceService {
         }
       },
       this.TOKEN_NAME,
-      AGGRESSIVE_RETRY_OPTIONS,
+      {
+        maxRetries: 3, // Reduced from 50 for faster fallback
+        initialDelayMs: 100,
+        maxDelayMs: 1000,
+        backoffMultiplier: 1.5,
+        timeoutMs: 5000,
+      },
     );
 
-    // Return null only if all retries failed - never return fallback
+    // If all retries failed, return a static fallback price
     if (!priceData) {
       console.warn(
-        `[${this.TOKEN_NAME}] All price fetch attempts failed. Will retry on next request.`,
+        `[${this.TOKEN_NAME}] All price fetch attempts failed. Using static fallback price.`,
       );
+      const fallbackData: FixercoinPriceData = {
+        price: 0.000000001,
+        priceChange24h: 0,
+        volume24h: 0,
+        liquidity: 0,
+        lastUpdated: new Date(),
+        derivationMethod: "static fallback (DexScreener unavailable)",
+        isFallback: true,
+      };
+      this.cachedData = fallbackData;
+      this.lastFetchTime = new Date();
+      console.log(
+        `[${this.TOKEN_NAME}] Returning static fallback price: $${fallbackData.price.toFixed(8)}`,
+      );
+      return fallbackData;
     }
 
     return priceData;

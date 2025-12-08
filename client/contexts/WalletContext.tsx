@@ -979,10 +979,29 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         const fxmMint = "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump";
 
         try {
-          const [fixercoinData, lockerData, fxmData] = await Promise.all([
+          // Fetch special token prices with timeout to prevent hanging
+          const specialTokensPromise = Promise.all([
             fixercoinPriceService.getFixercoinPrice(),
             lockerPriceService.getLockerPrice(),
             fxmPriceService.getFXMPrice(),
+          ]);
+
+          // Timeout after 10 seconds - use what we have by then
+          const timeoutPromise = new Promise<[any, any, any]>((resolve) =>
+            setTimeout(
+              () => {
+                console.warn(
+                  "[WalletContext] Price fetching timeout after 10s, using partial results",
+                );
+                resolve([null, null, null]);
+              },
+              10000,
+            ),
+          );
+
+          const [fixercoinData, lockerData, fxmData] = await Promise.race([
+            specialTokensPromise,
+            timeoutPromise,
           ]);
 
           if (

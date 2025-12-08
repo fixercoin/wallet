@@ -150,30 +150,10 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
             <p className="text-xs text-gray-400 font-semibold uppercase">
               Contract Address
             </p>
-            <div className="flex items-center gap-2 bg-gray-900/50 p-3 rounded border border-gray-700 group hover:border-gray-600 transition-colors">
-              <code className="text-xs text-gray-300 flex-1 break-all font-mono">
+            <div className="bg-gray-900/50 p-3 rounded border border-gray-700">
+              <code className="text-xs text-gray-300 break-all font-mono">
                 {shortenAddress(tokenMint)}
               </code>
-              <button
-                onClick={() => copyToClipboard(tokenMint)}
-                className="p-1.5 hover:bg-gray-700 rounded transition-colors flex-shrink-0"
-                title="Copy full address"
-              >
-                {copiedAddress ? (
-                  <Check className="w-4 h-4 text-emerald-400" />
-                ) : (
-                  <Copy className="w-4 h-4 text-gray-400 group-hover:text-gray-300" />
-                )}
-              </button>
-              <a
-                href={`https://solscan.io/token/${tokenMint}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 hover:bg-gray-700 rounded transition-colors flex-shrink-0"
-                title="View on Solscan"
-              >
-                <ExternalLink className="w-4 h-4 text-gray-400 hover:text-gray-300" />
-              </a>
             </div>
           </div>
 

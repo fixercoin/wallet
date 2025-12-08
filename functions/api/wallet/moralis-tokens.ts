@@ -36,6 +36,57 @@ interface TokenBalance {
   isSpam: boolean;
 }
 
+// Known token metadata for tokens that may not be in Moralis response
+const KNOWN_TOKEN_METADATA: Record<string, any> = {
+  // SOL
+  So11111111111111111111111111111111111111112: {
+    symbol: "SOL",
+    name: "Solana",
+    decimals: 9,
+    logoURI:
+      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+  },
+  // USDC
+  EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: {
+    symbol: "USDC",
+    name: "USD Coin",
+    decimals: 6,
+    logoURI:
+      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+  },
+  // USDT
+  Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns: {
+    symbol: "USDT",
+    name: "Tether USD",
+    decimals: 6,
+    logoURI:
+      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns/logo.png",
+  },
+  // FIXERCOIN
+  H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: {
+    symbol: "FIXERCOIN",
+    name: "FIXERCOIN",
+    decimals: 6,
+    logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
+  },
+  // FXM (FIXORIUM)
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump": {
+    symbol: "FXM",
+    name: "Fixorium",
+    decimals: 6,
+    logoURI:
+      "https://raw.githubusercontent.com/fixorium/assets/main/fxm-logo.png",
+  },
+  // LOCKER
+  EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: {
+    symbol: "LOCKER",
+    name: "LOCKER",
+    decimals: 6,
+    logoURI:
+      "https://i.postimg.cc/J7p1FPbm/IMG-20250425-004450-removebg-preview-modified-2-6.png",
+  },
+};
+
 export const onRequest: PagesFunction<Env> = async ({
   request,
   env,

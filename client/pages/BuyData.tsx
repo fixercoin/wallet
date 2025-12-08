@@ -108,18 +108,22 @@ export default function BuyData() {
       toast.success("Order created successfully!");
 
       // Send notification to all sellers about new buy order
+      // For buy orders without specific seller, use "broadcast" or special handling
       try {
+        const recipientWallet = createdOrder.sellerWallet || "broadcast";
         await createNotification(
-          "", // Empty wallet = broadcast to all sellers
+          recipientWallet,
           "new_buy_order",
           "BUY",
           createdOrder.id,
-          `New buy order: ${parseFloat(amountTokens).toFixed(6)} ${createdOrder.token} for ${parseFloat(amountPKR).toFixed(2)} PKR`,
+          `New buy order: ${parseFloat(amountTokens).toFixed(6)} ${createdOrder.token} for ${parseFloat(amountPKR).toFixed(2)} PKR at ${exchangeRate.toFixed(2)} PKR per token`,
           {
             token: createdOrder.token,
             amountTokens: parseFloat(amountTokens),
             amountPKR: parseFloat(amountPKR),
             orderId: createdOrder.id,
+            buyerWallet: createdOrder.buyerWallet,
+            price: exchangeRate,
           },
         );
       } catch (notificationError) {

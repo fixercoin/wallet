@@ -3,8 +3,11 @@ export const config = {
 };
 
 const RPC_ENDPOINTS = [
-  "https://rpc.shyft.to?api_key=3hAwrhOAmJG82eC7",
-  "https://api.mainnet-beta.solana.com",
+  "https://api.mainnet-beta.solflare.network",
+  "https://solana-api.projectserum.com",
+  "https://api.mainnet.solflare.com",
+  "https://solana.publicnode.com",
+  "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5",
 ];
 
 async function handler(request: Request): Promise<Response> {

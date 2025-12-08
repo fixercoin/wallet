@@ -182,7 +182,13 @@ class LockerPriceService {
         }
       },
       this.TOKEN_NAME,
-      AGGRESSIVE_RETRY_OPTIONS,
+      {
+        maxRetries: 3, // Reduced from 50 for faster fallback
+        initialDelayMs: 100,
+        maxDelayMs: 1000,
+        backoffMultiplier: 1.5,
+        timeoutMs: 5000,
+      },
     );
 
     // If all retries failed, return a static fallback price
@@ -201,6 +207,9 @@ class LockerPriceService {
       };
       this.cachedData = fallbackData;
       this.lastFetchTime = new Date();
+      console.log(
+        `[${this.TOKEN_NAME}] Returning static fallback price: $${fallbackData.price.toFixed(8)}`,
+      );
       return fallbackData;
     }
 

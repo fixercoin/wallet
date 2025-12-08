@@ -72,7 +72,7 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
                 Price
               </p>
               <p className="text-[10px] font-bold text-white uppercase">
-                ${(token.price || 0).toFixed(2)}
+                {formatNumber(token.price)}
               </p>
             </div>
             <div>

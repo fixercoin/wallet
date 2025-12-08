@@ -919,6 +919,21 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       });
 
+      // Always include FXM token for display (even if user doesn't own it)
+      const fxmMintAddress = "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump";
+      const hasFXM = allTokens.some((t) => t.mint === fxmMintAddress);
+      if (!hasFXM) {
+        allTokens.push({
+          mint: fxmMintAddress,
+          symbol: "FXM",
+          name: "Fixorium",
+          decimals: 6,
+          balance: 0,
+          logoURI:
+            "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2Fef8e21a960894d1b9408732e737a9d1f?format=webp&width=800",
+        });
+      }
+
       console.log(
         `[WalletContext] allTokens created with ${allTokens.length} tokens, SOL balance: ${
           allTokens[0]?.balance || "MISSING"

@@ -205,9 +205,6 @@ async function handler(request: Request, env?: Env): Promise<Response> {
                 const raw = BigInt(rawAmount);
                 const balance = Number(raw) / Math.pow(10, decimals);
 
-                // Skip zero-balance accounts
-                if (balance === 0) return null;
-
                 const metadata = KNOWN_TOKENS[mint] || {
                   mint,
                   symbol: "UNKNOWN",

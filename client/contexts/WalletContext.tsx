@@ -29,6 +29,7 @@ import {
   getCachedBalance,
   saveTokensToCache,
   getCachedTokens,
+  clearDashboardTokenCache,
 } from "@/lib/services/offline-cache";
 import {
   isEncryptedWalletStorage,

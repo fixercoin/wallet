@@ -66,7 +66,8 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     name: "FIXERCOIN",
     decimals: 6,
     balance: 0,
-    logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
+    logoURI:
+      "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2F8921e4db88154673870d8835331beb50?format=webp&width=800",
   },
   {
     mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",

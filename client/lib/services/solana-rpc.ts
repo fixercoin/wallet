@@ -311,10 +311,13 @@ export const getTokenBalanceForMint = async (
   tokenMint: string,
 ): Promise<number | null> => {
   try {
-    const response = await connection.getTokenAccountsByOwner(
-      new PublicKey(walletAddress),
-      { mint: new PublicKey(tokenMint) },
-      { encoding: "jsonParsed", commitment: "confirmed" },
+    const response = await retryableCall(
+      () => connection.getTokenAccountsByOwner(
+        new PublicKey(walletAddress),
+        { mint: new PublicKey(tokenMint) },
+        { encoding: "jsonParsed", commitment: "confirmed" },
+      ),
+      "getTokenBalanceForMint",
     );
 
     if (response.value.length > 0) {

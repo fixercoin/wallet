@@ -10,16 +10,21 @@ function getRpcEndpoint(): string {
     return solanaRpcUrl;
   }
 
+  // Try to use Helius if configured
+  const heliusApiKey = process.env.HELIUS_API_KEY?.trim();
+  if (heliusApiKey) {
+    const heliusEndpoint = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
+    console.log("[TokenAccounts] Using Helius RPC endpoint");
+    return heliusEndpoint;
+  }
+
+  // Fallback to Alchemy (note: this key may be rate-limited)
   const alchemyEndpoint =
     "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
 
-  const freeEndpoints = [
-    "https://api.mainnet-beta.solflare.network",
-    "https://solana-api.projectserum.com",
-    "https://api.mainnet.solflare.com",
-  ];
-
-  console.log("[TokenAccounts] Using Alchemy RPC endpoint as primary fallback");
+  console.log(
+    "[TokenAccounts] Using Alchemy RPC endpoint (no SOLANA_RPC_URL or HELIUS_API_KEY configured)",
+  );
   return alchemyEndpoint;
 }
 
@@ -181,22 +186,48 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
 
       if (solResp.ok) {
         const solData = await solResp.json();
-        const lamports = solData.result?.value ?? solData.result ?? 0;
-        solBalance =
-          typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
 
-        if (solBalance < 0) {
+        // Check for JSON-RPC error in the response
+        if (solData.error) {
+          console.warn(
+            `[TokenAccounts] RPC error fetching SOL balance:`,
+            solData.error,
+          );
           solBalance = 0;
+        } else {
+          const lamports = solData.result?.value ?? solData.result ?? 0;
+          solBalance =
+            typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
+
+          if (solBalance < 0) {
+            solBalance = 0;
+          }
+
+          console.log(
+            `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
+          );
+        }
+      } else {
+        // Log HTTP error from RPC endpoint
+        let errorDetails = `HTTP ${solResp.status}`;
+        try {
+          const errorBody = await solResp.text();
+          if (errorBody) {
+            errorDetails += `: ${errorBody.substring(0, 200)}`;
+          }
+        } catch {
+          // Ignore error parsing errors
         }
 
-        console.log(
-          `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
+        console.warn(
+          `[TokenAccounts] Failed to fetch SOL balance - RPC endpoint returned error: ${errorDetails}`,
         );
+        solBalance = 0;
       }
     } catch (solError) {
       clearTimeout(solTimeoutId);
       console.warn(
-        "[TokenAccounts] Failed to fetch SOL balance:",
+        "[TokenAccounts] Failed to fetch SOL balance - Exception:",
         solError instanceof Error ? solError.message : String(solError),
       );
       solBalance = 0;

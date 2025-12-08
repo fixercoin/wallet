@@ -92,6 +92,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   ): string => {
     if (amount === undefined || amount === null || isNaN(amount)) {
       if (symbol === "SOL") return "0.000000";
+      if (symbol === "FXM") return "0.000000";
       if (symbol === "FIXERCOIN" || symbol === "LOCKER") return "0.00";
       return "0.00";
     }
@@ -102,18 +103,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
         maximumFractionDigits: 6,
       });
     }
+    // FXM shows exactly 6 decimal places (consistent with SOL format)
+    if (symbol === "FXM") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 6,
+        maximumFractionDigits: 8,
+      });
+    }
     // FIXERCOIN and LOCKER always show exactly 2 decimal places
     if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
       return amount.toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      });
-    }
-    // FXM shows up to 8 decimal places
-    if (symbol === "FXM") {
-      return amount.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 8,
       });
     }
     return amount.toLocaleString(undefined, {

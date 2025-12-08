@@ -4,6 +4,7 @@ import { handleSolanaRpc } from "./routes/solana-proxy";
 import { handleWalletBalance } from "./routes/wallet-balance";
 import { handleGetTokenBalance } from "./routes/token-balance";
 import { handleGetTokenAccounts } from "./routes/token-accounts";
+import { handleWalletMoralisTokens } from "./routes/wallet-moralis-tokens";
 import { handleExchangeRate } from "./routes/exchange-rate";
 import {
   handleDexscreenerTokens,
@@ -272,6 +273,18 @@ export async function createServer(): Promise<express.Application> {
     } catch (e: any) {
       return res.status(500).json({
         error: "Failed to fetch token accounts",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  // Moralis token balances endpoint - fast token fetching via Moralis REST API
+  app.get("/api/wallet/moralis-tokens", async (req, res) => {
+    try {
+      await handleWalletMoralisTokens(req, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch token balances from Moralis",
         details: e?.message || String(e),
       });
     }

@@ -200,7 +200,71 @@ export const getTokenAccounts = async (
   try {
     console.log(`Fetching token accounts via server API for: ${publicKey}`);
 
-    // Call server endpoint instead of RPC directly
+    // Try Moralis endpoint first (faster and more reliable for all tokens including FXM)
+    try {
+      console.log("[TokenAccounts] Attempting Moralis endpoint...");
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      try {
+        const response = await fetch(
+          `/api/wallet/moralis-tokens?address=${encodeURIComponent(publicKey)}`,
+          { signal: controller.signal },
+        );
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          const moralisTokens = data.tokens || [];
+
+          console.log(
+            `[TokenAccounts] ✅ Moralis endpoint success: ${moralisTokens.length} tokens`,
+          );
+
+          if (moralisTokens.length > 0) {
+            // Enrich with logos from DEFAULT_TOKENS and convert to TokenInfo format
+            const logoMap = new Map(
+              DEFAULT_TOKENS.map((t) => [t.mint, t.logoURI]),
+            );
+            const enrichedTokens = moralisTokens.map((token: any) => ({
+              mint: token.mint,
+              symbol: token.symbol,
+              name: token.name,
+              decimals: token.decimals,
+              balance: parseFloat(token.uiAmount || "0"),
+              logoURI: token.logoURI || logoMap.get(token.mint),
+            }));
+
+            // Log FXM for debugging
+            const fxmToken = enrichedTokens.find((t) => t.symbol === "FXM");
+            if (fxmToken) {
+              console.log(
+                `[TokenAccounts] FXM found via Moralis: balance=${fxmToken.uiAmount}, symbol=${fxmToken.symbol}`,
+              );
+            }
+
+            console.log(
+              `✅ Token accounts loaded from Moralis: ${enrichedTokens.length} tokens`,
+            );
+            return enrichedTokens;
+          }
+        }
+      } catch (moralisError) {
+        clearTimeout(timeoutId);
+        console.warn(
+          "[TokenAccounts] Moralis endpoint failed, falling back to RPC:",
+          moralisError instanceof Error
+            ? moralisError.message
+            : String(moralisError),
+        );
+      }
+    } catch (moralisError) {
+      console.warn("[TokenAccounts] Moralis attempt error:", moralisError);
+    }
+
+    // Fallback to RPC-based endpoint if Moralis fails
+    console.log("[TokenAccounts] Using fallback RPC endpoint...");
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
@@ -221,7 +285,7 @@ export const getTokenAccounts = async (
       const isUsingFallback =
         data.warning && data.warning.includes("unavailable");
 
-      console.log(`[TokenAccounts] Raw response from server:`, {
+      console.log(`[TokenAccounts] RPC response:`, {
         publicKey,
         tokenCount: tokenAccounts.length,
         firstToken: tokenAccounts[0],
@@ -246,7 +310,7 @@ export const getTokenAccounts = async (
       const fxmToken = allTokens.find((t) => t.symbol === "FXM");
       if (fxmToken) {
         console.log(
-          `[TokenAccounts] FXM token found: balance=${fxmToken.balance}, decimals=${fxmToken.decimals}`,
+          `[TokenAccounts] FXM token found (RPC): balance=${fxmToken.balance}, decimals=${fxmToken.decimals}`,
         );
       }
 
@@ -281,7 +345,7 @@ export const getTokenAccounts = async (
       }
 
       console.log(
-        `✅ Token accounts loaded: ${allTokens.length} tokens (SOL balance: ${
+        `✅ Token accounts loaded from RPC: ${allTokens.length} tokens (SOL balance: ${
           allTokens.find((t) => t.symbol === "SOL")?.balance ?? "not found"
         })`,
       );

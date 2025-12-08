@@ -12,19 +12,7 @@ function hasValue(val: string | undefined): val is string {
 function buildRpcEndpoints(env: any): string[] {
   const endpoints: string[] = [];
 
-  // Priority 1: Helius (fastest and most reliable)
-  if (hasValue(env?.HELIUS_API_KEY)) {
-    const url = `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY.trim()}`;
-    endpoints.push(url);
-    console.log("[wallet-balance] Using Helius API key endpoint");
-  }
-
-  if (hasValue(env?.HELIUS_RPC_URL)) {
-    endpoints.push(env.HELIUS_RPC_URL.trim());
-    console.log("[wallet-balance] Using Helius RPC URL");
-  }
-
-  // Priority 2: Custom RPC endpoints from environment
+  // Priority 1: Custom RPC endpoints from environment
   if (hasValue(env?.SOLANA_RPC_URL)) {
     endpoints.push(env.SOLANA_RPC_URL.trim());
     console.log("[wallet-balance] Using custom Solana RPC URL");
@@ -40,8 +28,9 @@ function buildRpcEndpoints(env: any): string[] {
     console.log("[wallet-balance] Using Moralis RPC URL");
   }
 
-  // Priority 3: Free public RPC endpoints (always included as fallback)
+  // Priority 2: Free public RPC endpoints (always included as fallback)
   const publicEndpoints = [
+    "https://api.mainnet-beta.solflare.network", // Primary public endpoint
     "https://solana.publicnode.com", // Most reliable free endpoint
     "https://api.solflare.com", // Good uptime
     "https://rpc.ankr.com/solana", // Good fallback

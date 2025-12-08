@@ -38,8 +38,8 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
       <Card className="bg-gray-800/50 border border-gray-700/50 overflow-hidden">
         <CardContent className="p-6">
           {/* Token Header with Logo and Badge */}
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex gap-4 items-start flex-1">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex gap-4 items-center flex-1">
               {token.logoURI && (
                 <img
                   src={token.logoURI}
@@ -52,12 +52,12 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
                   }}
                 />
               )}
-              <div className="flex-1 min-w-0">
-                <h2 className="text-[10px] font-bold text-white truncate uppercase mb-1">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <h2 className="text-[10px] font-bold text-white truncate uppercase">
                   {token.name}
                 </h2>
-                <p className="text-[10px] text-gray-400 uppercase">
-                  {token.symbol}
+                <p className="text-[10px] text-gray-400 uppercase flex-shrink-0">
+                  ({token.symbol})
                 </p>
               </div>
             </div>

@@ -1,31 +1,8 @@
 import { RequestHandler } from "express";
+import { Connection, PublicKey } from "@solana/web3.js";
 
-// Helius is used as an RPC provider for wallet transaction history
-// NOT for token price fetching - prices should come from Jupiter, DexScreener, or DexTools
-const HELIUS_API_KEY = process.env.HELIUS_API_KEY || "";
-const HELIUS_URL = HELIUS_API_KEY
-  ? `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`
-  : "";
-
-async function heliusRpc(method: string, params: any[] = []) {
-  const resp = await fetch(HELIUS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params }),
-  });
-
-  if (!resp.ok) {
-    const txt = await resp.text().catch(() => "");
-    throw new Error(
-      `Helius RPC failed: ${resp.status} ${resp.statusText} ${txt}`,
-    );
-  }
-
-  const data = await resp.json();
-  if (data.error)
-    throw new Error(data.error.message || JSON.stringify(data.error));
-  return data.result ?? data;
-}
+const RPC_URL = "https://api.mainnet-beta.solflare.network";
+const connection = new Connection(RPC_URL, "confirmed");
 
 export const handleWalletTransactions: RequestHandler = async (req, res) => {
   try {
@@ -36,24 +13,22 @@ export const handleWalletTransactions: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "publicKey query param required" });
     }
 
-    // Get recent signatures for the wallet
-    const sigs = await heliusRpc("getSignaturesForAddress", [
-      publicKey,
+    const sigs = await connection.getSignaturesForAddress(
+      new PublicKey(publicKey),
       { limit: 50 },
-    ]);
+    );
     const recent = Array.isArray(sigs) ? sigs.slice(0, 50) : [];
 
     const results: any[] = [];
 
     for (const s of recent) {
       try {
-        const tx = await heliusRpc("getParsedTransaction", [
-          s.signature,
-          { commitment: "confirmed" },
-        ]);
+        const tx = await connection.getParsedTransaction(s.signature, {
+          commitment: "confirmed",
+          maxSupportedTransactionVersion: 0,
+        });
         if (!tx || !tx.meta) continue;
 
-        // Check token balances changes
         const pre = tx.meta.preTokenBalances || [];
         const post = tx.meta.postTokenBalances || [];
 

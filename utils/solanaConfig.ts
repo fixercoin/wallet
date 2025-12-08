@@ -1,34 +1,23 @@
-// Solana RPC configuration with fallbacks
-// Priority order: Custom RPC URL → Helius API Key → Public RPC
+// Solana RPC configuration
+// Uses public Solflare RPC endpoint (no API key required)
 
 export const SOLANA_RPC_URL = (() => {
-  // PRIORITY 1: Vite env variable (VITE_SOLANA_RPC_URL for browser builds)
+  // PRIORITY 1: Vite env variable
   try {
-    // @ts-ignore - import.meta may not exist in SSR/Node
     const viteUrl = (import.meta as any)?.env?.VITE_SOLANA_RPC_URL;
     if (viteUrl && String(viteUrl).trim()) return String(viteUrl).trim();
   } catch {}
 
-  // PRIORITY 2: Generic SOLANA_RPC_URL override
+  // PRIORITY 2: Process env variable
   if (typeof process !== "undefined" && (process.env as any)?.SOLANA_RPC_URL) {
     return (process.env as any).SOLANA_RPC_URL as string;
   }
 
-  // PRIORITY 3: Helius API key configuration
-  if (typeof process !== "undefined" && process.env?.HELIUS_API_KEY) {
-    return `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`;
-  }
-
-  // PRIORITY 4: Helius RPC URL (if provided without API key)
-  if (typeof process !== "undefined" && process.env?.HELIUS_RPC_URL) {
-    return process.env.HELIUS_RPC_URL;
-  }
-
-  // FALLBACK: Use reliable public RPC endpoint (no auth required)
-  console.warn(
-    "HELIUS_API_KEY not configured. Using public RPC endpoint. Set HELIUS_API_KEY for production for better reliability.",
+  // FALLBACK: Public Solflare RPC endpoint (read-only, no auth required)
+  console.log(
+    "Using public Solflare RPC endpoint: https://api.mainnet-beta.solflare.network",
   );
-  return "https://solana.publicnode.com";
+  return "https://api.mainnet-beta.solflare.network";
 })();
 
 // Legacy export for backward compatibility

@@ -4,8 +4,6 @@ export const config = {
 
 interface Env {
   SOLANA_RPC_URL?: string;
-  HELIUS_RPC_URL?: string;
-  HELIUS_API_KEY?: string;
   ALCHEMY_RPC_URL?: string;
   MORALIS_RPC_URL?: string;
 }
@@ -16,16 +14,12 @@ function buildRpcEndpoints(env: Env): string[] {
 
   // Add environment-configured endpoints first (highest priority)
   if (env.SOLANA_RPC_URL) endpoints.push(env.SOLANA_RPC_URL);
-  if (env.HELIUS_RPC_URL) endpoints.push(env.HELIUS_RPC_URL);
-  if (env.HELIUS_API_KEY) {
-    endpoints.push(
-      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
-    );
-  }
   if (env.ALCHEMY_RPC_URL) endpoints.push(env.ALCHEMY_RPC_URL);
   if (env.MORALIS_RPC_URL) endpoints.push(env.MORALIS_RPC_URL);
 
   // Add public fallback endpoints (in order of reliability)
+  // Solflare is primary public endpoint
+  endpoints.push("https://api.mainnet-beta.solflare.network");
   endpoints.push("https://solana.publicnode.com");
   endpoints.push("https://api.solflare.com");
   endpoints.push("https://rpc.ankr.com/solana");

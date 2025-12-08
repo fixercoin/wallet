@@ -4,14 +4,13 @@ export const config = {
 
 interface Env {
   SOLANA_RPC_URL?: string;
-  HELIUS_RPC_URL?: string;
-  HELIUS_API_KEY?: string;
   ALCHEMY_RPC_URL?: string;
   MORALIS_RPC_URL?: string;
 }
 
-const DEFAULT_SOLANA_RPC = "https://solana.publicnode.com";
+const DEFAULT_SOLANA_RPC = "https://api.mainnet-beta.solflare.network";
 const FALLBACK_RPC_ENDPOINTS = [
+  "https://api.mainnet-beta.solflare.network",
   "https://solana.publicnode.com",
   "https://api.solflare.com",
   "https://rpc.ankr.com/solana",
@@ -147,22 +146,6 @@ async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
     env.SOLANA_RPC_URL.length > 0
   ) {
     priorityEndpoints.push(env.SOLANA_RPC_URL);
-  }
-  if (
-    env?.HELIUS_RPC_URL &&
-    typeof env.HELIUS_RPC_URL === "string" &&
-    env.HELIUS_RPC_URL.length > 0
-  ) {
-    priorityEndpoints.push(env.HELIUS_RPC_URL);
-  }
-  if (
-    env?.HELIUS_API_KEY &&
-    typeof env.HELIUS_API_KEY === "string" &&
-    env.HELIUS_API_KEY.length > 0
-  ) {
-    priorityEndpoints.push(
-      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
-    );
   }
   if (
     env?.ALCHEMY_RPC_URL &&

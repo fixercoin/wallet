@@ -23,9 +23,7 @@ function getRpcEndpoint(): string {
   const alchemyEndpoint =
     "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
 
-  console.log(
-    "[WalletBalance] Using Alchemy RPC endpoint as primary fallback",
-  );
+  console.log("[WalletBalance] Using Alchemy RPC endpoint as primary fallback");
   return alchemyEndpoint;
 }
 

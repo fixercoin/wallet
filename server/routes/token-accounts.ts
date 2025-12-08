@@ -19,9 +19,7 @@ function getRpcEndpoint(): string {
     "https://api.mainnet.solflare.com",
   ];
 
-  console.log(
-    "[TokenAccounts] Using Alchemy RPC endpoint as primary fallback",
-  );
+  console.log("[TokenAccounts] Using Alchemy RPC endpoint as primary fallback");
   return alchemyEndpoint;
 }
 

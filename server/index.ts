@@ -4,6 +4,7 @@ import { handleSolanaRpc } from "./routes/solana-proxy";
 import { handleWalletBalance } from "./routes/wallet-balance";
 import { handleGetTokenBalance } from "./routes/token-balance";
 import { handleGetTokenAccounts } from "./routes/token-accounts";
+import { handleGetAllBalances } from "./routes/all-balances";
 import { handleWalletMoralisTokens } from "./routes/wallet-moralis-tokens";
 import { handleExchangeRate } from "./routes/exchange-rate";
 import {
@@ -273,6 +274,18 @@ export async function createServer(): Promise<express.Application> {
     } catch (e: any) {
       return res.status(500).json({
         error: "Failed to fetch token accounts",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  // All balances endpoint - fetches all tokens including SOL using Helius RPC
+  app.get("/api/wallet/all-balances", async (req, res) => {
+    try {
+      await handleGetAllBalances(req, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch all balances",
         details: e?.message || String(e),
       });
     }

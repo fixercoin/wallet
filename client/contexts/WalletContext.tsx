@@ -1252,7 +1252,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         setError(
           `Failed to fetch tokens: ${error instanceof Error ? error.message : String(error)}`,
         );
-        // Show only basic token info without prices until they can be fetched
+        // Keep all tokens visible even if price fetching fails
+        // Set balances to 0 for non-SOL tokens if we don't have data, but preserve token info
         const fallbackTokens: TokenInfo[] = [
           {
             mint: "So11111111111111111111111111111111111111112",
@@ -1266,10 +1267,39 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 ? balanceRef.current
                 : balance || 0,
           },
+          {
+            mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+            symbol: "USDC",
+            name: "USD Coin",
+            decimals: 6,
+            logoURI:
+              "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+            balance: 0,
+          },
+          {
+            mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+            symbol: "FIXERCOIN",
+            name: "FIXERCOIN",
+            decimals: 6,
+            logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
+            balance: 0,
+          },
+          {
+            mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+            symbol: "LOCKER",
+            name: "LOCKER",
+            decimals: 6,
+            logoURI:
+              "https://i.postimg.cc/J7p1FPbm/IMG-20250425-004450-removebg-preview-modified-2-6.png",
+            balance: 0,
+          },
         ];
 
         setTokens(fallbackTokens);
         setIsUsingCache(false);
+        console.log(
+          "[WalletContext] Showing fallback tokens with zero balances while prices are unavailable",
+        );
       }
     } finally {
       setIsLoading(false);

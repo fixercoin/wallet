@@ -154,13 +154,6 @@ async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
   ) {
     priorityEndpoints.push(env.ALCHEMY_RPC_URL);
   }
-  if (
-    env?.MORALIS_RPC_URL &&
-    typeof env.MORALIS_RPC_URL === "string" &&
-    env.MORALIS_RPC_URL.length > 0
-  ) {
-    priorityEndpoints.push(env.MORALIS_RPC_URL);
-  }
 
   // Add fallback endpoints
   const allEndpoints = [

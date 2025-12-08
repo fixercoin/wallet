@@ -225,23 +225,9 @@ export const getTokenAccounts = async (
         );
       }
 
-      // Merge with default tokens to ensure all known tokens are included
-      const allTokens = [...DEFAULT_TOKENS];
-
-      // Update balances for tokens we found on-chain
-      tokenAccounts.forEach((tokenAccount: TokenInfo) => {
-        const existingTokenIndex = allTokens.findIndex(
-          (t) => t.mint === tokenAccount.mint,
-        );
-        if (existingTokenIndex >= 0) {
-          allTokens[existingTokenIndex] = {
-            ...allTokens[existingTokenIndex],
-            balance: tokenAccount.balance,
-          };
-        } else {
-          allTokens.push(tokenAccount);
-        }
-      });
+      // Return ALL tokens the wallet actually holds (no merging with defaults)
+      // This ensures we show exactly what the wallet owns via RPC
+      const allTokens = tokenAccounts;
 
       // Ensure SOL is present with proper balance
       const solIndex = allTokens.findIndex(
@@ -260,6 +246,17 @@ export const getTokenAccounts = async (
           );
           allTokens[solIndex].balance = 0;
         }
+      } else {
+        // If SOL not found from RPC, add it with 0 balance (will be fetched later)
+        allTokens.unshift({
+          mint: "So11111111111111111111111111111111111111112",
+          symbol: "SOL",
+          name: "Solana",
+          decimals: 9,
+          balance: 0,
+          logoURI:
+            "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+        });
       }
 
       console.log(
@@ -274,7 +271,18 @@ export const getTokenAccounts = async (
     }
   } catch (error) {
     console.error("Failed to fetch token accounts:", error);
-    return DEFAULT_TOKENS.map((token) => ({ ...token, balance: 0 }));
+    // Return at least SOL on error
+    return [
+      {
+        mint: "So11111111111111111111111111111111111111112",
+        symbol: "SOL",
+        name: "Solana",
+        decimals: 9,
+        balance: 0,
+        logoURI:
+          "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+      },
+    ];
   }
 };
 

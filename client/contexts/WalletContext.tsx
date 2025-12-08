@@ -1092,15 +1092,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       }
 
-      // Load hidden tokens list
-      const hiddenTokens = JSON.parse(
-        localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
-      ) as string[];
-
-      // Filter out hidden tokens from allTokens
-      const visibleTokens = allTokens.filter(
-        (token) => !hiddenTokens.includes(token.mint),
-      );
+      // Use all tokens (removed localStorage-based hidden tokens filtering)
+      const visibleTokens = allTokens;
 
       // Calculate SOL-based prices for tokens without valid prices
       const tokensNeedingPrices = visibleTokens.filter((token) => {

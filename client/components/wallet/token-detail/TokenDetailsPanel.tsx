@@ -195,20 +195,6 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
             </div>
           </div>
 
-          {/* View Full Details Button */}
-          <Button
-            asChild
-            className="w-full mt-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold uppercase text-xs h-10"
-          >
-            <a
-              href={`https://solscan.io/token/${tokenMint}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              View Full Details on Solscan
-              <ExternalLink className="w-3 h-3 ml-2" />
-            </a>
-          </Button>
         </CardContent>
       </Card>
 

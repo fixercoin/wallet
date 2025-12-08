@@ -8,6 +8,8 @@ export interface OrderNotification {
   senderWallet: string;
   type:
     | "order_created"
+    | "new_buy_order"
+    | "new_sell_order"
     | "payment_confirmed"
     | "received_confirmed"
     | "order_cancelled";

@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { CheckCircle } from "lucide-react";
 import { TokenInfo } from "@/lib/wallet";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface TokenDetailsPanelProps {

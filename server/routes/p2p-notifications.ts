@@ -210,6 +210,30 @@ export const handleCreateNotification: RequestHandler = async (req, res) => {
 
     await saveNotification(notification);
 
+    // For broadcast notifications (generic buy orders), also store in broadcast queue
+    if (
+      recipientWallet.toLowerCase().includes("broadcast") ||
+      recipientWallet.toLowerCase() === "broadcast_sellers"
+    ) {
+      try {
+        const kv = getKVStorage();
+        const broadcastKey = "notifications:broadcast";
+        const broadcastJson = await kv.get(broadcastKey);
+        const broadcastNotifications = broadcastJson
+          ? JSON.parse(broadcastJson)
+          : [];
+        broadcastNotifications.push(notification);
+        // Keep only last 100 broadcast notifications
+        if (broadcastNotifications.length > 100) {
+          broadcastNotifications.shift();
+        }
+        await kv.put(broadcastKey, JSON.stringify(broadcastNotifications));
+      } catch (error) {
+        console.warn("[Notifications] Failed to add to broadcast queue:", error);
+        // Don't fail the request if broadcast queue fails
+      }
+    }
+
     res.status(201).json({ notification });
   } catch (error) {
     console.error("Create notification error:", error);

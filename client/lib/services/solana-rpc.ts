@@ -199,10 +199,13 @@ export const getTokenAccounts = async (publicKey: string) => {
   const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
   try {
-    const response = await connection.getTokenAccountsByOwner(
-      new PublicKey(publicKey),
-      { programId: new PublicKey(TOKEN_PROGRAM_ID) },
-      { encoding: "jsonParsed", commitment: "confirmed" },
+    const response = await retryableCall(
+      () => connection.getTokenAccountsByOwner(
+        new PublicKey(publicKey),
+        { programId: new PublicKey(TOKEN_PROGRAM_ID) },
+        { encoding: "jsonParsed", commitment: "confirmed" },
+      ),
+      "getTokenAccounts",
     );
 
     console.log(`[Token Accounts] Got ${response.value.length} token accounts`);

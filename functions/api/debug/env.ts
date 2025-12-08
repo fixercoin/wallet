@@ -4,8 +4,6 @@ export const config = {
 
 interface Env {
   SOLANA_RPC_URL?: string;
-  HELIUS_RPC_URL?: string;
-  HELIUS_API_KEY?: string;
   ALCHEMY_RPC_URL?: string;
   MORALIS_RPC_URL?: string;
 }
@@ -29,12 +27,11 @@ export const onRequest = async ({
 
   const envStatus = {
     "SOLANA_RPC_URL (from env param)": !!env?.SOLANA_RPC_URL,
-    "HELIUS_RPC_URL (from env param)": !!env?.HELIUS_RPC_URL,
-    "HELIUS_API_KEY (from env param)": !!env?.HELIUS_API_KEY,
     "SOLANA_RPC_URL (from process.env)": !!process.env.SOLANA_RPC_URL,
-    "HELIUS_RPC_URL (from process.env)": !!process.env.HELIUS_RPC_URL,
-    "HELIUS_API_KEY (from process.env)": !!process.env.HELIUS_API_KEY,
+    "ALCHEMY_RPC_URL (from env param)": !!env?.ALCHEMY_RPC_URL,
+    "MORALIS_RPC_URL (from env param)": !!env?.MORALIS_RPC_URL,
     NODE_ENV: process.env.NODE_ENV,
+    default_rpc: "https://api.mainnet-beta.solflare.network",
   };
 
   console.log("[Debug/Env] Environment status:", envStatus);

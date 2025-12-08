@@ -93,10 +93,10 @@ export const handleGetTokenBalance: RequestHandler = async (req, res) => {
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.error("[TokenBalance] Helius RPC error:", errorMsg);
+      console.error("[TokenBalance] RPC error:", errorMsg);
 
       return res.status(502).json({
-        error: errorMsg || "Failed to fetch token balance from Helius RPC",
+        error: errorMsg || "Failed to fetch token balance from RPC",
         wallet,
         mint,
         balance: 0,
@@ -106,7 +106,7 @@ export const handleGetTokenBalance: RequestHandler = async (req, res) => {
     console.error("[TokenBalance] Handler error:", error);
     res.status(500).json({
       error: error instanceof Error ? error.message : "Internal server error",
-      details: "Check that HELIUS_API_KEY or HELIUS_RPC_URL is configured",
+      details: "Check RPC endpoint configuration",
       balance: 0,
     });
   }

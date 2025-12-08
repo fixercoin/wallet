@@ -109,10 +109,10 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
             </div>
           </div>
 
-          {/* Token Information Grid */}
-          <div className="space-y-4 mb-6 pb-6 border-b border-gray-700">
-            {/* Network and Token Type Row */}
-            <div className="grid grid-cols-2 gap-4">
+          {/* Token Information Grid - Two Columns */}
+          <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-gray-700">
+            {/* Left Column: Network and Mint Authority */}
+            <div className="space-y-4">
               <div>
                 <p className="text-xs text-gray-400 font-semibold mb-2 uppercase">
                   Network
@@ -121,22 +121,27 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
               </div>
               <div>
                 <p className="text-xs text-gray-400 font-semibold mb-2 uppercase">
+                  Mint Authority
+                </p>
+                <p className="text-sm font-semibold text-white">Renounced</p>
+              </div>
+            </div>
+
+            {/* Right Column: Chain ID and Verified Badge */}
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs text-gray-400 font-semibold mb-2 uppercase">
                   Chain ID
                 </p>
                 <p className="text-sm font-semibold text-white">Mainnet Beta</p>
               </div>
-            </div>
-
-            {/* Mint Authority and Verified Badge on Single Line */}
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-400 font-semibold uppercase">
-                Mint Authority
-              </p>
-              <div className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded">
-                <CheckCircle className="w-3 h-3 text-emerald-400" />
-                <span className="text-xs font-semibold text-emerald-400 uppercase">
-                  Verified
-                </span>
+              <div>
+                <div className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded">
+                  <CheckCircle className="w-3 h-3 text-emerald-400" />
+                  <span className="text-xs font-semibold text-emerald-400 uppercase">
+                    Verified
+                  </span>
+                </div>
               </div>
             </div>
           </div>

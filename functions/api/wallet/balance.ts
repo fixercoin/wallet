@@ -21,7 +21,8 @@ const RPC_ENDPOINTS = [
   "https://rpc.ankr.com/solana",
 ];
 
-const ALCHEMY_RPC = "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
+const ALCHEMY_RPC =
+  "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
 
 function buildRpcEndpoints(env?: Env): string[] {
   const endpoints: string[] = [];
@@ -193,16 +194,11 @@ async function fetchBalanceWithFallbacks(
     console.log(`[wallet-balance] Endpoint failed, trying next...`);
   }
 
-  console.error(
-    `[wallet-balance] ❌ All ${endpoints.length} endpoints failed`,
-  );
+  console.error(`[wallet-balance] ❌ All ${endpoints.length} endpoints failed`);
   return null;
 }
 
-async function handler(
-  request: Request,
-  env?: Env,
-): Promise<Response> {
+async function handler(request: Request, env?: Env): Promise<Response> {
   // Handle CORS preflight
   if (request.method === "OPTIONS") {
     return new Response(null, {
@@ -247,7 +243,8 @@ async function handler(
         JSON.stringify({
           error: "Failed to fetch balance from all RPC endpoints",
           details: {
-            message: "Could not retrieve SOL balance after trying all endpoints",
+            message:
+              "Could not retrieve SOL balance after trying all endpoints",
             walletAddress: walletAddress.substring(0, 8),
             endpointsAttempted: rpcEndpoints.length,
           },

@@ -11,7 +11,8 @@ const RPC_ENDPOINTS = [
   { url: "https://rpc.ankr.com/solana", name: "Ankr" },
 ];
 
-const ALCHEMY_RPC = "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
+const ALCHEMY_RPC =
+  "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
 
 // Known token metadata
 const KNOWN_TOKENS: Record<

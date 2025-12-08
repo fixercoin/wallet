@@ -75,7 +75,8 @@ const RPC_ENDPOINTS = [
   "https://rpc.ankr.com/solana",
 ];
 
-const ALCHEMY_RPC = "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
+const ALCHEMY_RPC =
+  "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
 
 function getRpcEndpoint(env?: Env): string {
   const solanaRpcUrl = env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL || "";
@@ -348,9 +349,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       // Process SOL balance
       if (solResult.status === "fulfilled" && solResult.value) {
         solBalance = solResult.value.balance;
-        console.log(
-          `[AllBalances] ✅ Fetched SOL balance: ${solBalance} SOL`,
-        );
+        console.log(`[AllBalances] ✅ Fetched SOL balance: ${solBalance} SOL`);
       } else {
         console.warn("[AllBalances] Failed to fetch SOL balance");
         solBalance = 0;
@@ -417,7 +416,9 @@ async function handler(request: Request, env?: Env): Promise<Response> {
           error: "Failed to fetch balances",
           details: {
             message:
-              fetchError instanceof Error ? fetchError.message : "Unknown error",
+              fetchError instanceof Error
+                ? fetchError.message
+                : "Unknown error",
           },
         }),
         {

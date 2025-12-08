@@ -91,18 +91,20 @@ export async function createOrderFromOffer(
     buyerWallet = currentUserWallet;
     sellerWallet = offerCreatorWallet;
 
-    // For buyers, we need seller's payment method
-    try {
-      const paymentMethods = await getPaymentMethodsByWallet(sellerWallet);
-      if (paymentMethods.length > 0) {
-        const pm = paymentMethods[0];
-        sellerPaymentMethod = {
-          accountName: pm.accountName,
-          accountNumber: pm.accountNumber,
-        };
+    // For buyers with a specific seller, we need seller's payment method
+    if (sellerWallet && sellerWallet.trim()) {
+      try {
+        const paymentMethods = await getPaymentMethodsByWallet(sellerWallet);
+        if (paymentMethods.length > 0) {
+          const pm = paymentMethods[0];
+          sellerPaymentMethod = {
+            accountName: pm.accountName,
+            accountNumber: pm.accountNumber,
+          };
+        }
+      } catch (error) {
+        console.error("Failed to get seller payment method:", error);
       }
-    } catch (error) {
-      console.error("Failed to get seller payment method:", error);
     }
   } else {
     // User is selling: they are the seller, offer creator is the buyer
@@ -110,24 +112,26 @@ export async function createOrderFromOffer(
     sellerWallet = currentUserWallet;
   }
 
-  // Create trade room
+  // Create trade room only if both buyer and seller wallets are valid
   let roomId = undefined;
-  try {
-    const room = await createTradeRoom({
-      buyer_wallet: buyerWallet,
-      seller_wallet: sellerWallet,
-      order_id: orderId,
-    });
-    roomId = room.id;
+  if (buyerWallet && buyerWallet.trim() && sellerWallet && sellerWallet.trim()) {
+    try {
+      const room = await createTradeRoom({
+        buyer_wallet: buyerWallet,
+        seller_wallet: sellerWallet,
+        order_id: orderId,
+      });
+      roomId = room.id;
 
-    // Add initial message
-    await addTradeMessage({
-      room_id: roomId,
-      sender_wallet: currentUserWallet,
-      message: `Order created: ${orderType} order for ${amountTokens} ${offer.token}`,
-    });
-  } catch (error) {
-    console.error("Failed to create trade room:", error);
+      // Add initial message
+      await addTradeMessage({
+        room_id: roomId,
+        sender_wallet: currentUserWallet,
+        message: `Order created: ${orderType} order for ${amountTokens} ${offer.token}`,
+      });
+    } catch (error) {
+      console.error("Failed to create trade room:", error);
+    }
   }
 
   // Save order to localStorage as backup (if no backend storage)

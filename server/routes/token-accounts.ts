@@ -223,17 +223,18 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
           solFetchSucceeded = false;
         }
 
-        // Always ensure SOL is in the tokens array with the fetched balance
+        // Always ensure SOL is in the tokens array
         const hasSOL = tokens.some(
           (t) => t.mint === "So11111111111111111111111111111111111111112",
         );
 
-        if (!hasSOL && solFetchSucceeded) {
+        if (!hasSOL) {
+          // Add SOL with fetched balance if available, otherwise will be fetched separately by client
           tokens.unshift({
             ...KNOWN_TOKENS["So11111111111111111111111111111111111111112"],
-            balance: solBalance ?? 0,
+            balance: solFetchSucceeded ? (solBalance ?? 0) : 0,
           });
-        } else if (hasSOL && solFetchSucceeded && solBalance !== null) {
+        } else if (solFetchSucceeded && solBalance !== null) {
           // Update existing SOL entry with fetched balance
           const solIndex = tokens.findIndex(
             (t) => t.mint === "So11111111111111111111111111111111111111112",

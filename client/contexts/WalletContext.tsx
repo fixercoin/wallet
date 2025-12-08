@@ -1085,9 +1085,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             );
           } else {
             console.warn(
-              `[WalletContext] ⚠️ LOCKER price fetch resulted in invalid price:`,
-              lockerData,
+              `[WalletContext] ⚠️ LOCKER price fetch resulted in invalid price, using hardcoded fallback`,
             );
+            // Use hardcoded fallback for LOCKER - no price data on DexScreener
+            prices[lockerMint] = 0.000001;
+            changeMap[lockerMint] = 0;
           }
 
           if (fxmData && fxmData.price > 0 && isFinite(fxmData.price)) {
@@ -1098,12 +1100,23 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             );
           } else {
             console.warn(
-              `[WalletContext] ⚠️ FXM price fetch resulted in invalid price:`,
-              fxmData,
+              `[WalletContext] ⚠️ FXM price fetch resulted in invalid price, using hardcoded fallback`,
             );
+            // Use hardcoded fallback for FXM if fetch fails
+            prices[fxmMint] = 0.000001;
+            changeMap[fxmMint] = 0;
           }
         } catch (e) {
           console.warn("❌ Failed to fetch FIXERCOIN/LOCKER/FXM prices:", e);
+          // Ensure all special tokens have at least hardcoded prices on error
+          if (!prices[lockerMint]) {
+            prices[lockerMint] = 0.000001;
+            changeMap[lockerMint] = 0;
+          }
+          if (!prices[fxmMint]) {
+            prices[fxmMint] = 0.000001;
+            changeMap[fxmMint] = 0;
+          }
         }
 
         // Ensure SOL price is always present - if birdeye didn't return it, fetch from dedicated endpoint

@@ -1112,7 +1112,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </Button>
             </div>
           </div>
-
         </div>
 
         {/* Tokens List */}
@@ -1152,7 +1151,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="w-full space-y-2">
           {/* Quest Reward Card */}
           <div className="w-full px-4">
-            <div className="w-full bg-gradient-to-br from-[#1a3a2a] to-[#0f2818] rounded-md border border-[#22c55e]/40 p-4 cursor-pointer hover:bg-[#22c55e]/10 transition-colors" onClick={() => setShowQuestModal(true)}>
+            <div
+              className="w-full bg-gradient-to-br from-[#1a3a2a] to-[#0f2818] rounded-md border border-[#22c55e]/40 p-4 cursor-pointer hover:bg-[#22c55e]/10 transition-colors"
+              onClick={() => setShowQuestModal(true)}
+            >
               <div className="flex items-center justify-between gap-4">
                 <div className="flex flex-col gap-2 flex-1">
                   <div className="text-xs font-semibold text-[#22c55e] uppercase tracking-widest">

@@ -66,21 +66,17 @@ interface AllBalancesResponse {
 
 interface Env {
   SOLANA_RPC_URL?: string;
+  HELIUS_API_KEY?: string;
 }
 
-const FREE_RPC_ENDPOINTS = [
-  "https://api.mainnet-beta.solflare.network",
+const RPC_ENDPOINTS = [
+  "https://api.mainnet-beta.solana.com",
   "https://solana-api.projectserum.com",
-  "https://api.mainnet.solflare.com",
+  "https://rpc.ankr.com/solana",
 ];
 
-const ALCHEMY_RPC_URL =
-  "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
+const ALCHEMY_RPC = "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
 
-/**
- * Get RPC endpoint from environment variables with fallback to free endpoints
- * Priority: SOLANA_RPC_URL > Free endpoints > Alchemy fallback
- */
 function getRpcEndpoint(env?: Env): string {
   const solanaRpcUrl = env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL || "";
 
@@ -89,21 +85,154 @@ function getRpcEndpoint(env?: Env): string {
     return solanaRpcUrl.trim();
   }
 
-  // Use free endpoints with Alchemy fallback
-  console.log(
-    "[AllBalances] Using free Solana RPC endpoints with Alchemy fallback",
-  );
-  return FREE_RPC_ENDPOINTS[
-    Math.floor(Math.random() * FREE_RPC_ENDPOINTS.length)
-  ];
+  // Try Helius
+  const heliusApiKey = env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY || "";
+  if (heliusApiKey?.trim()) {
+    const url = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey.trim()}`;
+    console.log("[AllBalances] Using Helius endpoint");
+    return url;
+  }
+
+  console.log("[AllBalances] Using public RPC endpoints");
+  return RPC_ENDPOINTS[0];
 }
 
 /**
- * Fetch all token balances including SOL using RPC
- * Handles both token accounts and native SOL balance
+ * Fetch balance using getBalance RPC method
  */
+async function fetchBalanceWithGetBalance(
+  rpcUrl: string,
+  publicKey: string,
+  timeoutMs: number = 8000,
+): Promise<number | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getBalance",
+        params: [publicKey],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.error || typeof data.result !== "number") {
+      return null;
+    }
+
+    const lamports = data.result;
+    if (lamports < 0) return null;
+
+    return lamports / 1_000_000_000;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch balance using getAccountInfo RPC method
+ */
+async function fetchBalanceWithGetAccountInfo(
+  rpcUrl: string,
+  publicKey: string,
+  timeoutMs: number = 8000,
+): Promise<number | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getAccountInfo",
+        params: [publicKey, { encoding: "base64" }],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.error || !data.result?.value?.lamports) {
+      return null;
+    }
+
+    const lamports = data.result.value.lamports;
+    if (typeof lamports !== "number" || lamports < 0) {
+      return null;
+    }
+
+    return lamports / 1_000_000_000;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Try to fetch balance with multiple endpoints and methods
+ */
+async function fetchSolBalanceWithFallbacks(
+  publicKey: string,
+  primaryEndpoint: string,
+): Promise<{ balance: number; endpoint: string } | null> {
+  // Try primary with both methods
+  let balance = await fetchBalanceWithGetBalance(primaryEndpoint, publicKey);
+  if (balance !== null) {
+    return { balance, endpoint: primaryEndpoint };
+  }
+
+  balance = await fetchBalanceWithGetAccountInfo(primaryEndpoint, publicKey);
+  if (balance !== null) {
+    return { balance, endpoint: primaryEndpoint };
+  }
+
+  // Try fallback endpoints
+  console.log("[AllBalances] Trying fallback RPC endpoints...");
+
+  for (const endpoint of RPC_ENDPOINTS) {
+    balance = await fetchBalanceWithGetBalance(endpoint, publicKey);
+    if (balance !== null) {
+      return { balance, endpoint };
+    }
+
+    balance = await fetchBalanceWithGetAccountInfo(endpoint, publicKey);
+    if (balance !== null) {
+      return { balance, endpoint };
+    }
+  }
+
+  // Try Alchemy
+  balance = await fetchBalanceWithGetBalance(ALCHEMY_RPC, publicKey);
+  if (balance !== null) {
+    return { balance, endpoint: ALCHEMY_RPC };
+  }
+
+  console.error("[AllBalances] All balance fetch attempts failed");
+  return null;
+}
+
 async function handler(request: Request, env?: Env): Promise<Response> {
-  // Handle CORS preflight
   if (request.method === "OPTIONS") {
     return new Response(null, {
       headers: {
@@ -126,8 +255,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         JSON.stringify({
           error: "Missing wallet address parameter",
           details: {
-            expected:
-              "?publicKey=<address> or ?wallet=<address> or ?address=<address>",
+            expected: "?publicKey=<address>",
           },
         }),
         {
@@ -144,19 +272,18 @@ async function handler(request: Request, env?: Env): Promise<Response> {
     const endpointLabel = endpoint.split("?")[0];
 
     console.log(
-      `[AllBalances] Fetching all balances for ${publicKey.slice(0, 8)}... from ${endpointLabel}`,
+      `[AllBalances] Fetching all balances for ${publicKey.slice(0, 8)}...`,
     );
 
     let solBalance = 0;
     let tokens: TokenBalance[] = [];
 
     try {
-      // Fetch SPL token accounts and SOL balance in parallel with timeout
+      // Fetch in parallel with timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const [tokenResponse, solResponse] = await Promise.allSettled([
-        // Fetch all SPL token accounts
+      const [tokenResponse, solResult] = await Promise.allSettled([
         fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -172,19 +299,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
           }),
           signal: controller.signal,
         }),
-
-        // Fetch native SOL balance
-        fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            jsonrpc: "2.0",
-            id: 2,
-            method: "getBalance",
-            params: [publicKey],
-          }),
-          signal: controller.signal,
-        }),
+        fetchSolBalanceWithFallbacks(publicKey, endpoint),
       ]);
 
       clearTimeout(timeoutId);
@@ -221,56 +336,36 @@ async function handler(request: Request, env?: Env): Promise<Response> {
                   uiAmount: balance,
                 };
               } catch (err) {
-                console.warn(
-                  "[AllBalances] Error processing token account:",
-                  err,
-                );
                 return null;
               }
             })
             .filter(Boolean);
         } catch (err) {
-          console.warn(
-            "[AllBalances] Error parsing token response:",
-            err instanceof Error ? err.message : String(err),
-          );
+          console.warn("[AllBalances] Error parsing token response:", err);
         }
       }
 
       // Process SOL balance
-      if (solResponse.status === "fulfilled" && solResponse.value?.ok) {
-        try {
-          const solData = await solResponse.value.json();
-          const lamports = solData.result?.value ?? solData.result ?? 0;
-          solBalance =
-            typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
-
-          if (solBalance < 0) solBalance = 0;
-
-          console.log(
-            `[AllBalances] ✅ Fetched SOL balance: ${solBalance} SOL`,
-          );
-        } catch (err) {
-          console.warn(
-            "[AllBalances] Error parsing SOL response:",
-            err instanceof Error ? err.message : String(err),
-          );
-          solBalance = 0;
-        }
+      if (solResult.status === "fulfilled" && solResult.value) {
+        solBalance = solResult.value.balance;
+        console.log(
+          `[AllBalances] ✅ Fetched SOL balance: ${solBalance} SOL`,
+        );
+      } else {
+        console.warn("[AllBalances] Failed to fetch SOL balance");
+        solBalance = 0;
       }
 
-      // Check if SOL already exists in token list
+      // Insert or update SOL in token list
       const solIndex = tokens.findIndex((t) => t.mint === SOL_MINT);
 
       if (solIndex >= 0) {
-        // Update existing SOL entry
         tokens[solIndex] = {
           ...tokens[solIndex],
           balance: solBalance,
           uiAmount: solBalance,
         };
       } else {
-        // Insert SOL at the beginning
         tokens.unshift({
           ...KNOWN_TOKENS[SOL_MINT],
           balance: solBalance,
@@ -278,11 +373,11 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         });
       }
 
-      // Always include known special tokens even if wallet doesn't have them (for consistent dashboard display)
+      // Add known special tokens
       const specialTokens = [
-        "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump", // FXM
-        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
-        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
+        "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
       ];
 
       specialTokens.forEach((specialMint) => {
@@ -297,22 +392,8 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       });
 
       console.log(
-        `[AllBalances] ✅ Found ${tokens.length} tokens for ${publicKey.slice(0, 8)}... (SOL: ${solBalance} SOL)`,
+        `[AllBalances] ✅ Found ${tokens.length} tokens (SOL: ${solBalance})`,
       );
-
-      // Log significant tokens
-      tokens.forEach((token) => {
-        if (
-          ["FXM", "FIXERCOIN", "LOCKER", "USDC", "USDT"].includes(
-            token.symbol,
-          ) ||
-          token.balance > 0
-        ) {
-          console.log(
-            `[AllBalances] Token: ${token.symbol} Balance: ${token.balance}`,
-          );
-        }
-      });
 
       const response: AllBalancesResponse = {
         publicKey,
@@ -333,14 +414,10 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       console.error("[AllBalances] Fetch error:", fetchError);
       return new Response(
         JSON.stringify({
-          error: "Failed to fetch balances from RPC endpoint",
+          error: "Failed to fetch balances",
           details: {
             message:
-              fetchError instanceof Error
-                ? fetchError.message
-                : "Unknown error",
-            endpoint: endpointLabel,
-            hint: "Check RPC endpoint configuration",
+              fetchError instanceof Error ? fetchError.message : "Unknown error",
           },
         }),
         {
@@ -357,9 +434,6 @@ async function handler(request: Request, env?: Env): Promise<Response> {
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : "Internal server error",
-        details: {
-          hint: "Check RPC endpoint configuration",
-        },
       }),
       {
         status: 500,
@@ -372,10 +446,6 @@ async function handler(request: Request, env?: Env): Promise<Response> {
   }
 }
 
-/**
- * Cloudflare Pages Functions handler
- * Supports GET requests with query parameters
- */
 export const onRequest: PagesFunction<Env> = async ({
   request,
   env,

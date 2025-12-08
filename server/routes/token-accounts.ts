@@ -59,6 +59,12 @@ const KNOWN_TOKENS: Record<
     name: "LOCKER",
     decimals: 6,
   },
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump": {
+    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+    symbol: "FXM",
+    name: "Fixorium",
+    decimals: 6,
+  },
 };
 
 export const handleGetTokenAccounts: RequestHandler = async (req, res) => {

@@ -64,18 +64,18 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
           {/* Price and Change Grid */}
           <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-gray-700">
             <div>
-              <p className="text-xs text-gray-400 font-semibold mb-2 uppercase">
+              <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase">
                 Price
               </p>
-              <p className="text-xl font-bold text-white">
+              <p className="text-[10px] font-bold text-white uppercase">
                 ${(token.price || 0).toFixed(8)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-400 font-semibold mb-2 uppercase">
+              <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase">
                 24h Change
               </p>
-              <p className={`text-xl font-bold ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
+              <p className={`text-[10px] font-bold uppercase ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
                 {formatPercent(token.priceChange24h)}
               </p>
             </div>

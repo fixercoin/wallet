@@ -1273,51 +1273,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       return [...currentTokens, token];
     });
 
-    const customTokens = JSON.parse(
-      localStorage.getItem("custom_tokens") || "[]",
-    );
-    const newCustomTokens = [
-      ...customTokens.filter((t: TokenInfo) => t.mint !== token.mint),
-      token,
-    ];
-    localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
-
-    // If token was previously hidden, remove it from hidden tokens to ensure it becomes visible
-    try {
-      const hiddenTokens = JSON.parse(
-        localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
-      ) as string[];
-      const filtered = hiddenTokens.filter((m) => m !== token.mint);
-      if (filtered.length !== hiddenTokens.length) {
-        localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify(filtered));
-      }
-    } catch (e) {
-      // ignore
-    }
-
     if (wallet) refreshTokens();
   };
 
   const removeToken = (tokenMint: string) => {
-    // Remove from custom tokens if it exists there
-    const customTokens = JSON.parse(
-      localStorage.getItem("custom_tokens") || "[]",
-    ) as TokenInfo[];
-    const newCustomTokens = customTokens.filter(
-      (t: TokenInfo) => t.mint !== tokenMint,
-    );
-    localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
-
-    // Add to hidden tokens list to permanently hide it
-    const hiddenTokens = JSON.parse(
-      localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
-    ) as string[];
-    if (!hiddenTokens.includes(tokenMint)) {
-      hiddenTokens.push(tokenMint);
-      localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify(hiddenTokens));
-    }
-
-    // Update state immediately
     setTokens((currentTokens) =>
       currentTokens.filter((t) => t.mint !== tokenMint),
     );

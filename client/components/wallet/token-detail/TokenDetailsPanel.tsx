@@ -86,13 +86,13 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
             {/* Left Column: Network and Mint Authority */}
             <div className="space-y-4">
               <div>
-                <p className="text-xs text-gray-400 font-semibold mb-2 uppercase">
+                <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase">
                   Network
                 </p>
-                <p className="text-sm font-semibold text-white">Solana</p>
+                <p className="text-[10px] font-semibold text-white uppercase">Solana</p>
               </div>
               <div>
-                <p className="text-xs text-gray-400 font-semibold mb-2 uppercase">
+                <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase">
                   Mint Authority
                 </p>
               </div>
@@ -101,15 +101,15 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
             {/* Right Column: Chain ID and Verified Badge */}
             <div className="space-y-4">
               <div>
-                <p className="text-xs text-gray-400 font-semibold mb-2 uppercase">
+                <p className="text-[10px] text-gray-400 font-semibold mb-2 uppercase">
                   Chain ID
                 </p>
-                <p className="text-sm font-semibold text-white">Mainnet Beta</p>
+                <p className="text-[10px] font-semibold text-white uppercase">Mainnet Beta</p>
               </div>
               <div>
                 <div className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded">
                   <CheckCircle className="w-3 h-3 text-emerald-400" />
-                  <span className="text-xs font-semibold text-emerald-400 uppercase">
+                  <span className="text-[10px] font-semibold text-emerald-400 uppercase">
                     Verified
                   </span>
                 </div>

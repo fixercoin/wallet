@@ -50,24 +50,24 @@ export default function SellData() {
   }, []);
 
   // Fetch payment methods
-  useEffect(() => {
-    const fetchPaymentMethods = async () => {
-      if (!wallet?.publicKey) return;
-      try {
-        const response = await fetch(
-          `/api/p2p/payment-methods?wallet=${wallet.publicKey}`,
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setPaymentMethods(data.paymentMethods || []);
-        }
-      } catch (error) {
-        console.error("Failed to fetch payment methods:", error);
+  const fetchPaymentMethods = useCallback(async () => {
+    if (!wallet?.publicKey) return;
+    try {
+      const response = await fetch(
+        `/api/p2p/payment-methods?wallet=${wallet.publicKey}`,
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setPaymentMethods(data.data || data.paymentMethods || []);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch payment methods:", error);
+    }
+  }, [wallet?.publicKey]);
 
+  useEffect(() => {
     fetchPaymentMethods();
-  }, [wallet?.publicKey, showPaymentDialog]);
+  }, [wallet?.publicKey, showPaymentDialog, fetchPaymentMethods]);
 
   const handleTokensChange = (value: string) => {
     setAmountTokens(value);

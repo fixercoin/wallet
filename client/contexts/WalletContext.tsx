@@ -1033,14 +1033,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             fxmPriceService.getFXMPrice(),
           ]);
 
-          // Timeout after 10 seconds - use what we have by then
+          // Timeout after 20 seconds - use what we have by then
           const timeoutPromise = new Promise<[any, any, any]>((resolve) =>
             setTimeout(() => {
               console.warn(
-                "[WalletContext] Price fetching timeout after 10s, using partial results",
+                "[WalletContext] Price fetching timeout after 20s, using partial results",
               );
               resolve([null, null, null]);
-            }, 10000),
+            }, 20000),
           );
 
           const [fixercoinData, lockerData, fxmData] = await Promise.race([

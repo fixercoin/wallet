@@ -1,19 +1,42 @@
 import { RequestHandler } from "express";
 
-// Function to get RPC endpoint with free endpoints and Alchemy fallback
-function getRpcEndpoint(): string {
-  // Helper to safely check env vars (trim empty strings)
-  const getEnvVar = (value: string | undefined): string | null => {
-    if (!value || typeof value !== "string") return null;
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : null;
-  };
+interface RpcResponse {
+  jsonrpc: string;
+  id: number;
+  result?: any;
+  error?: { code: number; message: string };
+}
 
-  const solanaRpcUrl = getEnvVar(process.env.SOLANA_RPC_URL);
+// List of reliable RPC endpoints to try in order
+const RPC_ENDPOINTS = [
+  {
+    url: "https://api.mainnet-beta.solana.com",
+    name: "Solana Public RPC",
+    priority: 1,
+  },
+  {
+    url: "https://solana-api.projectserum.com",
+    name: "Project Serum",
+    priority: 2,
+  },
+  {
+    url: "https://rpc.ankr.com/solana",
+    name: "Ankr",
+    priority: 3,
+  },
+  {
+    url: "https://api.devnet.solana.com",
+    name: "Devnet",
+    priority: 4,
+  },
+];
+
+function getRpcEndpoint(): string {
+  const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
 
   console.log("[WalletBalance] Environment check:", {
     hasSolanaRpcUrl: !!solanaRpcUrl,
-    hasHeliusApiKey: !!getEnvVar(process.env.HELIUS_API_KEY),
+    hasHeliusApiKey: !!process.env.HELIUS_API_KEY?.trim(),
   });
 
   if (solanaRpcUrl) {
@@ -22,21 +45,176 @@ function getRpcEndpoint(): string {
   }
 
   // Try to use Helius if configured
-  const heliusApiKey = getEnvVar(process.env.HELIUS_API_KEY);
+  const heliusApiKey = process.env.HELIUS_API_KEY?.trim();
   if (heliusApiKey) {
     const heliusEndpoint = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
     console.log("[WalletBalance] Using Helius RPC endpoint");
     return heliusEndpoint;
   }
 
-  // Fallback to Alchemy (note: this key may be rate-limited)
-  const alchemyEndpoint =
-    "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
+  console.log(
+    "[WalletBalance] Using fallback RPC endpoints (SOLANA_RPC_URL or HELIUS_API_KEY not configured)",
+  );
+  return RPC_ENDPOINTS[0].url;
+}
+
+/**
+ * Fetch SOL balance using getBalance RPC method
+ */
+async function fetchBalanceWithGetBalance(
+  rpcUrl: string,
+  publicKey: string,
+  timeoutMs: number = 8000,
+): Promise<number | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getBalance",
+        params: [publicKey],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.warn(
+        `[WalletBalance] getBalance HTTP ${response.status} from ${rpcUrl}`,
+      );
+      return null;
+    }
+
+    const data: RpcResponse = await response.json();
+
+    if (data.error) {
+      console.warn(
+        `[WalletBalance] getBalance RPC error: ${data.error.message}`,
+      );
+      return null;
+    }
+
+    const lamports = data.result;
+    if (typeof lamports !== "number" || lamports < 0) {
+      console.warn(`[WalletBalance] Invalid balance result: ${lamports}`);
+      return null;
+    }
+
+    return lamports / 1_000_000_000;
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.warn(`[WalletBalance] getBalance fetch error: ${errorMsg}`);
+    return null;
+  }
+}
+
+/**
+ * Fetch SOL balance using getAccount RPC method (alternative)
+ */
+async function fetchBalanceWithGetAccount(
+  rpcUrl: string,
+  publicKey: string,
+  timeoutMs: number = 8000,
+): Promise<number | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getAccountInfo",
+        params: [publicKey, { encoding: "base64" }],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data: RpcResponse = await response.json();
+
+    if (data.error || !data.result?.value?.lamports) {
+      return null;
+    }
+
+    const lamports = data.result.value.lamports;
+    if (typeof lamports !== "number" || lamports < 0) {
+      return null;
+    }
+
+    return lamports / 1_000_000_000;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Try to fetch balance with multiple endpoints and methods
+ */
+async function fetchBalanceWithFallbacks(
+  publicKey: string,
+): Promise<{ balance: number; endpoint: string } | null> {
+  // Primary endpoint
+  const primaryEndpoint = getRpcEndpoint();
 
   console.log(
-    "[WalletBalance] Using Alchemy RPC endpoint (no SOLANA_RPC_URL or HELIUS_API_KEY configured)",
+    `[WalletBalance] Fetching balance for ${publicKey.substring(0, 8)}...`,
   );
-  return alchemyEndpoint;
+  console.log(
+    `[WalletBalance] Primary endpoint: ${primaryEndpoint.substring(0, 60)}...`,
+  );
+
+  // Try primary endpoint with both methods
+  let balance = await fetchBalanceWithGetBalance(primaryEndpoint, publicKey);
+  if (balance !== null) {
+    return { balance, endpoint: primaryEndpoint };
+  }
+
+  balance = await fetchBalanceWithGetAccount(primaryEndpoint, publicKey);
+  if (balance !== null) {
+    return { balance, endpoint: primaryEndpoint };
+  }
+
+  // Try fallback endpoints
+  console.log("[WalletBalance] Primary endpoint failed, trying fallbacks...");
+
+  for (const endpoint of RPC_ENDPOINTS) {
+    console.log(`[WalletBalance] Trying ${endpoint.name}...`);
+
+    // Try getBalance first
+    balance = await fetchBalanceWithGetBalance(endpoint.url, publicKey);
+    if (balance !== null) {
+      console.log(
+        `[WalletBalance] ✅ Success with getBalance from ${endpoint.name}`,
+      );
+      return { balance, endpoint: endpoint.url };
+    }
+
+    // Try getAccountInfo as fallback
+    balance = await fetchBalanceWithGetAccount(endpoint.url, publicKey);
+    if (balance !== null) {
+      console.log(
+        `[WalletBalance] ✅ Success with getAccountInfo from ${endpoint.name}`,
+      );
+      return { balance, endpoint: endpoint.url };
+    }
+  }
+
+  console.error("[WalletBalance] ❌ All RPC endpoints failed");
+  return null;
 }
 
 export const handleWalletBalance: RequestHandler = async (req, res) => {
@@ -64,114 +242,42 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
       });
     }
 
-    // Get RPC endpoint with fallback to public
-    const rpcEndpoint = getRpcEndpoint();
-    const endpointLabel = rpcEndpoint.substring(0, 50);
+    const result = await fetchBalanceWithFallbacks(publicKey);
 
-    const body = {
-      jsonrpc: "2.0",
-      id: 1,
-      method: "getBalance",
-      params: [publicKey],
-    };
-
-    console.log(
-      `[WalletBalance] Fetching SOL balance for ${publicKey.substring(0, 8)}... using ${endpointLabel}`,
-    );
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000);
-
-      let response: Response;
-      try {
-        response = await fetch(rpcEndpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-          signal: controller.signal,
-        });
-      } finally {
-        clearTimeout(timeoutId);
-      }
-
-      if (!response.ok) {
-        let errorBody = "";
-        try {
-          errorBody = await response.text();
-        } catch {
-          // Ignore error parsing
-        }
-        throw new Error(
-          `RPC endpoint returned HTTP ${response.status} ${response.statusText}${errorBody ? `: ${errorBody.substring(0, 200)}` : ""}`,
-        );
-      }
-
-      let data: any;
-      try {
-        data = await response.json();
-      } catch (parseErr) {
-        throw new Error("RPC endpoint returned invalid JSON response");
-      }
-
-      if (data.error) {
-        throw new Error(
-          `RPC error: ${data.error.message || JSON.stringify(data.error)}`,
-        );
-      }
-
-      let balanceLamports = data.result;
-
-      if (typeof balanceLamports === "object" && balanceLamports !== null) {
-        if (typeof balanceLamports.value === "number") {
-          balanceLamports = balanceLamports.value;
-        }
-      }
-
-      if (typeof balanceLamports !== "number" || isNaN(balanceLamports)) {
-        throw new Error(`Invalid balance type: ${typeof balanceLamports}`);
-      }
-
-      if (balanceLamports < 0) {
-        throw new Error("Negative balance returned from RPC");
-      }
-
-      const balanceSOL = balanceLamports / 1_000_000_000;
-
-      console.log(
-        `[WalletBalance] ✅ Success: ${balanceSOL} SOL (${balanceLamports} lamports) from ${endpointLabel}`,
+    if (!result) {
+      console.error(
+        "[WalletBalance] ❌ Failed to fetch balance after all attempts",
       );
-
-      return res.json({
-        publicKey,
-        balance: balanceSOL,
-        balanceLamports,
-        source: endpointLabel,
-      });
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-
-      console.error("[WalletBalance] ❌ Error:", {
-        publicKey: publicKey.substring(0, 8),
-        error: errorMsg,
-        endpoint: endpointLabel,
-      });
-
       return res.status(502).json({
-        error: errorMsg || "Failed to fetch balance from RPC endpoint",
+        error: "Failed to fetch balance from all available RPC endpoints",
         details: {
-          message: "Could not retrieve SOL balance from RPC provider.",
-          hint: "Check your RPC configuration (HELIUS_API_KEY or SOLANA_RPC_URL environment variables).",
-          endpoint: endpointLabel,
+          message:
+            "Could not retrieve SOL balance. All RPC providers are unreachable or returning errors.",
+          hint: "Check that SOLANA_RPC_URL environment variable is properly configured. You can also try again in a few moments.",
+          publicKey: publicKey.substring(0, 8),
         },
       });
     }
+
+    const { balance, endpoint } = result;
+    const endpointLabel = endpoint.substring(0, 60);
+
+    console.log(
+      `[WalletBalance] ✅ Success: ${balance} SOL for ${publicKey.substring(0, 8)}... from ${endpointLabel}`,
+    );
+
+    return res.json({
+      publicKey,
+      balance,
+      balanceLamports: Math.round(balance * 1_000_000_000),
+      source: endpointLabel,
+    });
   } catch (error) {
     console.error("[WalletBalance] Handler error:", error);
     res.status(500).json({
       error: error instanceof Error ? error.message : "Internal server error",
       details: {
-        hint: "Check that HELIUS_API_KEY or HELIUS_RPC_URL environment variable is configured.",
+        hint: "An unexpected error occurred while fetching balance",
       },
     });
   }

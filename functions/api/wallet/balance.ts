@@ -1,89 +1,234 @@
-// functions/api/wallet-balance.ts
-// Accepts:
-// - POST JSON: { "walletAddress": "<Pubkey>" }
-// - GET query: ?publicKey=<Pubkey>
-// Returns the SOL balance and lamports using multiple RPC endpoints with fallback
-
-export const config = {
-  runtime: "nodejs_esmsh",
-};
+// functions/api/wallet/balance.ts
+// Improved SOL balance fetching with multiple RPC endpoints and methods
 
 interface Env {
   SOLANA_RPC_URL?: string;
+  HELIUS_API_KEY?: string;
   ALCHEMY_RPC_URL?: string;
   MORALIS_RPC_URL?: string;
 }
 
-// Helper to check if a string has value
-function hasValue(val: string | undefined): val is string {
-  return typeof val === "string" && val.trim().length > 0;
+interface RpcResponse {
+  jsonrpc: string;
+  id: number;
+  result?: any;
+  error?: { code: number; message: string };
 }
 
-// Build RPC endpoints list with priority and public fallbacks
+const RPC_ENDPOINTS = [
+  "https://api.mainnet-beta.solana.com",
+  "https://solana-api.projectserum.com",
+  "https://rpc.ankr.com/solana",
+];
+
+const ALCHEMY_RPC = "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
+
 function buildRpcEndpoints(env?: Env): string[] {
   const endpoints: string[] = [];
 
-  const solanaRpcUrl = hasValue(env?.SOLANA_RPC_URL)
-    ? env.SOLANA_RPC_URL
-    : process.env.SOLANA_RPC_URL;
-  const alchemyRpcUrl = hasValue(env?.ALCHEMY_RPC_URL)
-    ? env.ALCHEMY_RPC_URL
-    : process.env.ALCHEMY_RPC_URL;
-  const moralisRpcUrl = hasValue(env?.MORALIS_RPC_URL)
-    ? env.MORALIS_RPC_URL
-    : process.env.MORALIS_RPC_URL;
+  // Add custom endpoints first (highest priority)
+  if (env?.SOLANA_RPC_URL?.trim()) {
+    endpoints.push(env.SOLANA_RPC_URL.trim());
+    console.log("[wallet-balance] Added SOLANA_RPC_URL");
+  }
 
-  if (hasValue(solanaRpcUrl)) endpoints.push(solanaRpcUrl);
-  if (hasValue(alchemyRpcUrl)) endpoints.push(alchemyRpcUrl);
-  if (hasValue(moralisRpcUrl)) endpoints.push(moralisRpcUrl);
+  // Add Helius if configured
+  if (env?.HELIUS_API_KEY?.trim()) {
+    endpoints.push(
+      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY.trim()}`,
+    );
+    console.log("[wallet-balance] Added Helius endpoint");
+  }
 
-  const publicEndpoints = [
-    "https://api.mainnet-beta.solflare.network",
-    "https://solana.publicnode.com",
-    "https://api.solflare.com",
-    "https://rpc.ankr.com/solana",
-    "https://api.mainnet-beta.solana.com",
-    "https://api.marinade.finance/rpc",
-  ];
-  publicEndpoints.forEach((e) => {
-    if (!endpoints.includes(e)) endpoints.push(e);
-  });
+  // Add other configured endpoints
+  if (env?.ALCHEMY_RPC_URL?.trim()) {
+    endpoints.push(env.ALCHEMY_RPC_URL.trim());
+    console.log("[wallet-balance] Added Alchemy endpoint");
+  }
 
-  return endpoints;
+  if (env?.MORALIS_RPC_URL?.trim()) {
+    endpoints.push(env.MORALIS_RPC_URL.trim());
+    console.log("[wallet-balance] Added Moralis endpoint");
+  }
+
+  // Add public endpoints as fallback
+  endpoints.push(...RPC_ENDPOINTS);
+  endpoints.push(ALCHEMY_RPC);
+
+  // Remove duplicates while preserving order
+  return [...new Set(endpoints)];
 }
 
-// Core handler for GET/POST requests
-async function handler(request: Request, env?: Env): Promise<Response> {
+/**
+ * Fetch balance using getBalance RPC method
+ */
+async function fetchWithGetBalance(
+  rpcUrl: string,
+  walletAddress: string,
+  timeoutMs: number = 8000,
+): Promise<number | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getBalance",
+        params: [walletAddress],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data: RpcResponse = await response.json();
+
+    if (data.error) {
+      return null;
+    }
+
+    const lamports = data.result;
+    if (typeof lamports !== "number" || lamports < 0) {
+      return null;
+    }
+
+    return lamports / 1_000_000_000;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch balance using getAccountInfo RPC method
+ */
+async function fetchWithGetAccountInfo(
+  rpcUrl: string,
+  walletAddress: string,
+  timeoutMs: number = 8000,
+): Promise<number | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getAccountInfo",
+        params: [walletAddress, { encoding: "base64" }],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data: RpcResponse = await response.json();
+
+    if (data.error || !data.result?.value?.lamports) {
+      return null;
+    }
+
+    const lamports = data.result.value.lamports;
+    if (typeof lamports !== "number" || lamports < 0) {
+      return null;
+    }
+
+    return lamports / 1_000_000_000;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch balance with multiple endpoints and methods
+ */
+async function fetchBalanceWithFallbacks(
+  walletAddress: string,
+  endpoints: string[],
+): Promise<{ balance: number; endpoint: string } | null> {
+  console.log(
+    `[wallet-balance] Fetching balance for ${walletAddress.substring(0, 8)}... from ${endpoints.length} endpoints`,
+  );
+
+  for (let i = 0; i < endpoints.length; i++) {
+    const endpoint = endpoints[i];
+    const shortEndpoint = endpoint.substring(0, 50);
+
+    console.log(
+      `[wallet-balance] Attempt ${i + 1}/${endpoints.length}: ${shortEndpoint}...`,
+    );
+
+    // Try getBalance first (faster)
+    let balance = await fetchWithGetBalance(endpoint, walletAddress);
+    if (balance !== null) {
+      console.log(
+        `[wallet-balance] ✅ Success: ${balance} SOL from ${shortEndpoint}`,
+      );
+      return { balance, endpoint };
+    }
+
+    // Try getAccountInfo as fallback
+    balance = await fetchWithGetAccountInfo(endpoint, walletAddress);
+    if (balance !== null) {
+      console.log(
+        `[wallet-balance] ✅ Success (via getAccountInfo): ${balance} SOL from ${shortEndpoint}`,
+      );
+      return { balance, endpoint };
+    }
+
+    console.log(`[wallet-balance] Endpoint failed, trying next...`);
+  }
+
+  console.error(
+    `[wallet-balance] ❌ All ${endpoints.length} endpoints failed`,
+  );
+  return null;
+}
+
+async function handler(
+  request: Request,
+  env?: Env,
+): Promise<Response> {
   // Handle CORS preflight
   if (request.method === "OPTIONS") {
     return new Response(null, {
       headers: {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type",
       },
     });
   }
 
   try {
-    let walletAddress: string | null = null;
-
-    if (request.method === "POST") {
-      const body = await request.json().catch(() => null);
-      walletAddress = body?.walletAddress ?? body?.address ?? null;
-    } else if (request.method === "GET") {
-      const url = new URL(request.url);
-      walletAddress =
-        url.searchParams.get("publicKey") ??
-        url.searchParams.get("wallet") ??
-        url.searchParams.get("address") ??
-        url.searchParams.get("walletAddress") ??
-        null;
-    }
+    const url = new URL(request.url);
+    const walletAddress =
+      url.searchParams.get("publicKey") ||
+      url.searchParams.get("wallet") ||
+      url.searchParams.get("address");
 
     if (!walletAddress) {
       return new Response(
-        JSON.stringify({ error: "Missing walletAddress parameter" }),
+        JSON.stringify({
+          error: "Missing wallet address parameter",
+          details: {
+            expected: "?publicKey=<address> or ?wallet=<address>",
+          },
+        }),
         {
           status: 400,
           headers: {
@@ -94,98 +239,58 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       );
     }
 
-    const rpcBody = {
-      jsonrpc: "2.0",
-      id: 1,
-      method: "getBalance",
-      params: [walletAddress],
-    };
     const rpcEndpoints = buildRpcEndpoints(env);
+    const result = await fetchBalanceWithFallbacks(walletAddress, rpcEndpoints);
 
-    let lastError = "";
-    let lastStatus = 502;
-
-    for (let i = 0; i < rpcEndpoints.length; i++) {
-      const endpoint = rpcEndpoints[i];
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-        const resp = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(rpcBody),
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-        lastStatus = resp.status;
-
-        if (!resp.ok) {
-          lastError = await resp.text();
-          continue;
-        }
-
-        const data = await resp.json();
-        if (data.error) {
-          lastError = data.error.message || "RPC error";
-          continue;
-        }
-
-        const lamports = data.result?.value ?? data.result;
-        if (
-          typeof lamports === "number" &&
-          isFinite(lamports) &&
-          lamports >= 0
-        ) {
-          return new Response(
-            JSON.stringify({
-              publicKey: walletAddress,
-              balance: lamports / 1_000_000_000, // SOL
-              balanceLamports: lamports,
-              source: endpoint.substring(0, 40),
-            }),
-            {
-              status: 200,
-              headers: {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-              },
-            },
-          );
-        }
-
-        lastError = "Invalid balance response from RPC";
-      } catch (err: any) {
-        lastError =
-          err?.name === "AbortError"
-            ? "Request timeout"
-            : err?.message || String(err);
-      }
+    if (!result) {
+      return new Response(
+        JSON.stringify({
+          error: "Failed to fetch balance from all RPC endpoints",
+          details: {
+            message: "Could not retrieve SOL balance after trying all endpoints",
+            walletAddress: walletAddress.substring(0, 8),
+            endpointsAttempted: rpcEndpoints.length,
+          },
+        }),
+        {
+          status: 502,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
     }
+
+    const { balance, endpoint } = result;
+    const balanceLamports = Math.round(balance * 1_000_000_000);
 
     return new Response(
       JSON.stringify({
-        error: "Failed to fetch wallet balance",
-        details: lastError,
-        endpointsAttempted: rpcEndpoints.length,
-        primaryEndpoint: rpcEndpoints[0],
+        publicKey: walletAddress,
+        balance,
+        balanceLamports,
+        source: endpoint.substring(0, 60),
+        timestamp: Date.now(),
       }),
       {
-        status: lastStatus,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
         },
       },
     );
-  } catch (err: any) {
+  } catch (error) {
+    console.error("[wallet-balance] Handler error:", error);
     return new Response(
       JSON.stringify({
-        error: "Wallet balance error",
-        details: err?.message || String(err),
+        error: error instanceof Error ? error.message : "Internal error",
+        details: {
+          hint: "An unexpected error occurred",
+        },
       }),
       {
-        status: 502,
+        status: 500,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
@@ -195,22 +300,12 @@ async function handler(request: Request, env?: Env): Promise<Response> {
   }
 }
 
-// Cloudflare Pages function entry point
-export const onRequest = async ({
+export const onRequest: PagesFunction<Env> = async ({
   request,
   env,
 }: {
   request: Request;
-  env?: Env | Record<string, any>;
-}) => {
-  const envToPass = {
-    ...env,
-    SOLANA_RPC_URL: env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL,
-    HELIUS_RPC_URL: env?.HELIUS_RPC_URL || process.env.HELIUS_RPC_URL,
-    HELIUS_API_KEY: env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY,
-    ALCHEMY_RPC_URL: env?.ALCHEMY_RPC_URL || process.env.ALCHEMY_RPC_URL,
-    MORALIS_RPC_URL: env?.MORALIS_RPC_URL || process.env.MORALIS_RPC_URL,
-  } as Env;
-
-  return handler(request, envToPass);
+  env: Env;
+}): Promise<Response> => {
+  return handler(request, env);
 };

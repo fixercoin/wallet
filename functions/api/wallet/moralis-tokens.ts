@@ -188,21 +188,28 @@ export const onRequest: PagesFunction<Env> = async ({
       });
     }
 
-    // Transform Moralis response to our token format
+    // Transform Moralis response to our token format, merging with known metadata
     const tokens: TokenBalance[] = moralisData.result
       .filter((t) => !t.possible_spam) // Filter out spam tokens
-      .map((token) => ({
-        mint: token.token_address,
-        symbol: token.symbol || "UNKNOWN",
-        name: token.name || "Unknown Token",
-        decimals: token.decimals || 0,
-        balance: token.balance || "0",
-        uiAmount: token.balance
-          ? Number(token.balance) / Math.pow(10, token.decimals || 0)
-          : 0,
-        logoURI: token.logo || "",
-        isSpam: token.possible_spam,
-      }));
+      .map((token) => {
+        const knownMetadata =
+          KNOWN_TOKEN_METADATA[token.token_address];
+        const decimals = token.decimals || knownMetadata?.decimals || 0;
+        const balance = token.balance || "0";
+
+        return {
+          mint: token.token_address,
+          symbol: token.symbol || knownMetadata?.symbol || "UNKNOWN",
+          name: token.name || knownMetadata?.name || "Unknown Token",
+          decimals,
+          balance,
+          uiAmount: balance
+            ? Number(balance) / Math.pow(10, decimals)
+            : 0,
+          logoURI: token.logo || knownMetadata?.logoURI || "",
+          isSpam: token.possible_spam,
+        };
+      });
 
     return new Response(JSON.stringify({ tokens, count: tokens.length }), {
       status: 200,

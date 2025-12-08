@@ -8,12 +8,15 @@ function getRpcEndpoint(): string {
   const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
 
   if (heliusApiKey) {
+    console.log("[TokenAccounts] Using HELIUS_API_KEY endpoint");
     return `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
   }
   if (heliusRpcUrl) {
+    console.log("[TokenAccounts] Using HELIUS_RPC_URL endpoint");
     return heliusRpcUrl;
   }
   if (solanaRpcUrl) {
+    console.log("[TokenAccounts] Using SOLANA_RPC_URL endpoint");
     return solanaRpcUrl;
   }
 

@@ -123,7 +123,6 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
                 <p className="text-xs text-gray-400 font-semibold mb-2 uppercase">
                   Mint Authority
                 </p>
-                <p className="text-sm font-semibold text-white">Renounced</p>
               </div>
             </div>
 

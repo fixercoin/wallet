@@ -356,4 +356,16 @@ async function handler(request: Request, env?: Env): Promise<Response> {
   }
 }
 
-export default handler;
+/**
+ * Cloudflare Pages Functions handler
+ * Supports GET requests with query parameters
+ */
+export const onRequest: PagesFunction<Env> = async ({
+  request,
+  env,
+}: {
+  request: Request;
+  env: Env;
+}): Promise<Response> => {
+  return handler(request, env);
+};

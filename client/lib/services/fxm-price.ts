@@ -50,7 +50,9 @@ class FXMPriceService {
           }
 
           const fxmToken = tokens[0];
-          const price = fxmToken.priceUsd ? parseFloat(fxmToken.priceUsd) : null;
+          const price = fxmToken.priceUsd
+            ? parseFloat(fxmToken.priceUsd)
+            : null;
 
           if (!price || !isFinite(price) || price <= 0) {
             throw new Error(`Invalid FXM price from DexScreener: ${price}`);
@@ -69,7 +71,7 @@ class FXMPriceService {
           this.lastFetchTime = new Date();
 
           console.log(
-            `✅ FXM price updated: $${result.price.toFixed(8)} via ${result.derivationMethod}`
+            `✅ FXM price updated: $${result.price.toFixed(8)} via ${result.derivationMethod}`,
           );
 
           return result;
@@ -77,12 +79,15 @@ class FXMPriceService {
           console.warn(
             `[FXMPrice] Direct fetch failed: ${
               err instanceof Error ? err.message : String(err)
-            }. Trying pair-based lookup...`
+            }. Trying pair-based lookup...`,
           );
 
           // Fallback: try to find FXM/SOL pair
           try {
-            const pairs = await dexscreenerAPI.getTokensByMints([FXM_MINT, SOL_MINT]);
+            const pairs = await dexscreenerAPI.getTokensByMints([
+              FXM_MINT,
+              SOL_MINT,
+            ]);
 
             if (!pairs || pairs.length === 0) {
               throw new Error("Could not fetch FXM/SOL pair from DexScreener");
@@ -90,8 +95,10 @@ class FXMPriceService {
 
             const fxmPair = pairs.find(
               (p) =>
-                (p.baseToken?.address === FXM_MINT || p.quoteToken?.address === FXM_MINT) &&
-                (p.baseToken?.address === SOL_MINT || p.quoteToken?.address === SOL_MINT)
+                (p.baseToken?.address === FXM_MINT ||
+                  p.quoteToken?.address === FXM_MINT) &&
+                (p.baseToken?.address === SOL_MINT ||
+                  p.quoteToken?.address === SOL_MINT),
             );
 
             if (!fxmPair) {
@@ -103,7 +110,9 @@ class FXMPriceService {
               throw new Error("Could not fetch SOL price");
             }
 
-            const priceNative = fxmPair.priceNative ? parseFloat(fxmPair.priceNative) : null;
+            const priceNative = fxmPair.priceNative
+              ? parseFloat(fxmPair.priceNative)
+              : null;
 
             if (!priceNative || !isFinite(priceNative) || priceNative <= 0) {
               throw new Error("Invalid priceNative value");
@@ -133,15 +142,17 @@ class FXMPriceService {
             this.lastFetchTime = new Date();
 
             console.log(
-              `✅ FXM price updated (pair): $${result.price.toFixed(8)} via ${result.derivationMethod}`
+              `✅ FXM price updated (pair): $${result.price.toFixed(8)} via ${result.derivationMethod}`,
             );
 
             return result;
           } catch (fallbackErr) {
             console.warn(
               `[FXMPrice] Pair lookup also failed: ${
-                fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr)
-              }`
+                fallbackErr instanceof Error
+                  ? fallbackErr.message
+                  : String(fallbackErr)
+              }`,
             );
             throw fallbackErr;
           }
@@ -154,11 +165,13 @@ class FXMPriceService {
         maxDelayMs: 2000,
         backoffMultiplier: 2,
         timeoutMs: 8000,
-      }
+      },
     );
 
     if (!priceData) {
-      console.warn(`[${this.TOKEN_NAME}] All price fetch attempts failed. Using static fallback.`);
+      console.warn(
+        `[${this.TOKEN_NAME}] All price fetch attempts failed. Using static fallback.`,
+      );
 
       const fallbackData: FXMPriceData = {
         price: 0.00000001,
@@ -184,7 +197,10 @@ class FXMPriceService {
     return data?.price || 0;
   }
 
-  async getFXMPriceWithMethod(): Promise<{ price: number; derivationMethod: string }> {
+  async getFXMPriceWithMethod(): Promise<{
+    price: number;
+    derivationMethod: string;
+  }> {
     const data = await this.getFXMPrice();
     return {
       price: data?.price || 0,

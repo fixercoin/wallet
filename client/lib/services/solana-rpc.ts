@@ -79,12 +79,14 @@ const retryableCall = async <T>(
       lastError = error as Error;
       if (attempt < MAX_RETRIES) {
         const delay = RETRY_DELAY * Math.pow(2, attempt);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }
 
-  throw lastError || new Error(`${method} failed after ${MAX_RETRIES + 1} retries`);
+  throw (
+    lastError || new Error(`${method} failed after ${MAX_RETRIES + 1} retries`)
+  );
 };
 
 export const makeRpcCall = async (
@@ -112,21 +114,24 @@ export const makeRpcCall = async (
           const filter = params[1];
           const convertedFilter: any = {};
           if (filter.programId) {
-            convertedFilter.programId = typeof filter.programId === 'string'
-              ? new PublicKey(filter.programId)
-              : filter.programId;
+            convertedFilter.programId =
+              typeof filter.programId === "string"
+                ? new PublicKey(filter.programId)
+                : filter.programId;
           }
           if (filter.mint) {
-            convertedFilter.mint = typeof filter.mint === 'string'
-              ? new PublicKey(filter.mint)
-              : filter.mint;
+            convertedFilter.mint =
+              typeof filter.mint === "string"
+                ? new PublicKey(filter.mint)
+                : filter.mint;
           }
           return await retryableCall(
-            () => connection.getTokenAccountsByOwner(
-              new PublicKey(params[0]),
-              convertedFilter,
-              params[2],
-            ),
+            () =>
+              connection.getTokenAccountsByOwner(
+                new PublicKey(params[0]),
+                convertedFilter,
+                params[2],
+              ),
             method,
           );
         }
@@ -139,9 +144,10 @@ export const makeRpcCall = async (
 
         case "getMultipleAccounts":
           return await retryableCall(
-            () => connection.getMultipleAccountsInfo(
-              params[0].map((pk: string) => new PublicKey(pk)),
-            ),
+            () =>
+              connection.getMultipleAccountsInfo(
+                params[0].map((pk: string) => new PublicKey(pk)),
+              ),
             method,
           );
 
@@ -153,10 +159,11 @@ export const makeRpcCall = async (
 
         case "getSignaturesForAddress":
           return await retryableCall(
-            () => connection.getSignaturesForAddress(
-              new PublicKey(params[0]),
-              params[1],
-            ),
+            () =>
+              connection.getSignaturesForAddress(
+                new PublicKey(params[0]),
+                params[1],
+              ),
             method,
           );
 
@@ -200,11 +207,12 @@ export const getTokenAccounts = async (publicKey: string) => {
 
   try {
     const response = await retryableCall(
-      () => connection.getTokenAccountsByOwner(
-        new PublicKey(publicKey),
-        { programId: new PublicKey(TOKEN_PROGRAM_ID) },
-        { encoding: "jsonParsed", commitment: "confirmed" },
-      ),
+      () =>
+        connection.getTokenAccountsByOwner(
+          new PublicKey(publicKey),
+          { programId: new PublicKey(TOKEN_PROGRAM_ID) },
+          { encoding: "jsonParsed", commitment: "confirmed" },
+        ),
       "getTokenAccounts",
     );
 
@@ -312,11 +320,12 @@ export const getTokenBalanceForMint = async (
 ): Promise<number | null> => {
   try {
     const response = await retryableCall(
-      () => connection.getTokenAccountsByOwner(
-        new PublicKey(walletAddress),
-        { mint: new PublicKey(tokenMint) },
-        { encoding: "jsonParsed", commitment: "confirmed" },
-      ),
+      () =>
+        connection.getTokenAccountsByOwner(
+          new PublicKey(walletAddress),
+          { mint: new PublicKey(tokenMint) },
+          { encoding: "jsonParsed", commitment: "confirmed" },
+        ),
       "getTokenBalanceForMint",
     );
 

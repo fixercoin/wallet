@@ -1254,7 +1254,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           {typeof token.price === "number" &&
                           isFinite(token.price) ? (
                             <span style={{ color: "#ffffff" }}>
-                              {formatUSD(token.balance, token.price, token.symbol)}
+                              {formatUSD(
+                                token.balance,
+                                token.price,
+                                token.symbol,
+                              )}
                             </span>
                           ) : null}
                         </div>

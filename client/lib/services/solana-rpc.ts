@@ -81,12 +81,25 @@ export const makeRpcCall = async (
         case "getBalance":
           return await connection.getBalance(new PublicKey(params[0]));
 
-        case "getTokenAccountsByOwner":
+        case "getTokenAccountsByOwner": {
+          const filter = params[1];
+          const convertedFilter: any = {};
+          if (filter.programId) {
+            convertedFilter.programId = typeof filter.programId === 'string'
+              ? new PublicKey(filter.programId)
+              : filter.programId;
+          }
+          if (filter.mint) {
+            convertedFilter.mint = typeof filter.mint === 'string'
+              ? new PublicKey(filter.mint)
+              : filter.mint;
+          }
           return await connection.getTokenAccountsByOwner(
             new PublicKey(params[0]),
-            params[1],
+            convertedFilter,
             params[2],
           );
+        }
 
         case "getTokenSupply":
           return await connection.getTokenSupply(new PublicKey(params[0]));

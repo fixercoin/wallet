@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
@@ -8,6 +8,7 @@ import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { PaymentMethodInfoCard } from "@/components/wallet/PaymentMethodInfoCard";
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
+import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import type { P2POrder } from "@/lib/p2p-api";
 
 interface PaymentMethod {
@@ -19,6 +20,7 @@ interface PaymentMethod {
 export default function SellData() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
+  const { createNotification } = useOrderNotifications();
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
@@ -48,24 +50,24 @@ export default function SellData() {
   }, []);
 
   // Fetch payment methods
-  useEffect(() => {
-    const fetchPaymentMethods = async () => {
-      if (!wallet?.publicKey) return;
-      try {
-        const response = await fetch(
-          `/api/p2p/payment-methods?wallet=${wallet.publicKey}`,
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setPaymentMethods(data.paymentMethods || []);
-        }
-      } catch (error) {
-        console.error("Failed to fetch payment methods:", error);
+  const fetchPaymentMethods = useCallback(async () => {
+    if (!wallet?.publicKey) return;
+    try {
+      const response = await fetch(
+        `/api/p2p/payment-methods?wallet=${wallet.publicKey}`,
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setPaymentMethods(data.data || data.paymentMethods || []);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch payment methods:", error);
+    }
+  }, [wallet?.publicKey]);
 
+  useEffect(() => {
     fetchPaymentMethods();
-  }, [wallet?.publicKey, showPaymentDialog]);
+  }, [wallet?.publicKey, showPaymentDialog, fetchPaymentMethods]);
 
   const handleTokensChange = (value: string) => {
     setAmountTokens(value);
@@ -118,6 +120,31 @@ export default function SellData() {
       );
 
       toast.success("Order created successfully!");
+
+      // Send notification to buyers about new sell order
+      // For generic sell orders, send to a broadcast address that buyers can monitor
+      try {
+        const recipientWallet = createdOrder.buyerWallet || "BROADCAST_BUYERS";
+        await createNotification(
+          recipientWallet,
+          "new_sell_order",
+          "SELL",
+          createdOrder.id,
+          `New sell order: ${parseFloat(amountTokens).toFixed(6)} ${createdOrder.token} for ${parseFloat(amountPKR).toFixed(2)} PKR at ${exchangeRate.toFixed(2)} PKR per token. Seller: ${createdOrder.sellerWallet}`,
+          {
+            token: createdOrder.token,
+            amountTokens: parseFloat(amountTokens),
+            amountPKR: parseFloat(amountPKR),
+            orderId: createdOrder.id,
+            sellerWallet: createdOrder.sellerWallet,
+            price: exchangeRate,
+          },
+        );
+      } catch (notificationError) {
+        console.warn("Failed to send notification:", notificationError);
+        // Don't fail the order creation if notification fails
+      }
+
       navigate("/order-complete", { state: { order: createdOrder } });
     } catch (error) {
       console.error("Error creating order:", error);
@@ -269,12 +296,20 @@ export default function SellData() {
           setShowPaymentDialog(open);
           if (!open) {
             setEditingPaymentMethodId(undefined);
+            // Refetch payment methods when dialog closes with a small delay
+            setTimeout(() => {
+              fetchPaymentMethods();
+            }, 500);
           }
         }}
         walletAddress={wallet?.publicKey || ""}
         paymentMethodId={editingPaymentMethodId}
         onSave={() => {
           setEditingPaymentMethodId(undefined);
+          // Refetch payment methods after saving with a small delay
+          setTimeout(() => {
+            fetchPaymentMethods();
+          }, 300);
         }}
       />
 

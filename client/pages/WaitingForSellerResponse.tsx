@@ -295,6 +295,15 @@ export default function WaitingForSellerResponse() {
                   Pending
                 </div>
               </div>
+
+              <div className="col-span-2 md:col-span-3">
+                <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                  Your Wallet Address
+                </div>
+                <div className="text-xs text-white/90 font-mono break-all">
+                  {order.buyerWallet}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

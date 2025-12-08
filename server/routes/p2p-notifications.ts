@@ -8,6 +8,8 @@ export interface OrderNotification {
   senderWallet: string;
   type:
     | "order_created"
+    | "new_buy_order"
+    | "new_sell_order"
     | "payment_confirmed"
     | "received_confirmed"
     | "order_cancelled";
@@ -122,7 +124,7 @@ async function deleteNotificationById(
 // List notifications for a wallet
 export const handleListNotifications: RequestHandler = async (req, res) => {
   try {
-    const { wallet, unread } = req.query;
+    const { wallet, unread, includeBroadcast } = req.query;
 
     if (!wallet) {
       return res.status(400).json({
@@ -139,6 +141,33 @@ export const handleListNotifications: RequestHandler = async (req, res) => {
       const notification = await getNotificationById(notificationId);
       if (notification) {
         notifications.push(notification);
+      }
+    }
+
+    // Include broadcast notifications if requested
+    // Sellers get "BROADCAST_SELLERS" queue (generic buy orders)
+    // Buyers get "BROADCAST_BUYERS" queue (generic sell orders)
+    if (includeBroadcast === "true") {
+      try {
+        const kv = getKVStorage();
+        // Get both seller and buyer broadcast queues
+        const sellerBroadcastJson = await kv.get(
+          "notifications:broadcast:sellers",
+        );
+        if (sellerBroadcastJson) {
+          const broadcastNotifications = JSON.parse(sellerBroadcastJson);
+          notifications.push(...broadcastNotifications);
+        }
+
+        const buyerBroadcastJson = await kv.get(
+          "notifications:broadcast:buyers",
+        );
+        if (buyerBroadcastJson) {
+          const broadcastNotifications = JSON.parse(buyerBroadcastJson);
+          notifications.push(...broadcastNotifications);
+        }
+      } catch (error) {
+        console.warn("[Notifications] Failed to get broadcast queues:", error);
       }
     }
 
@@ -209,6 +238,39 @@ export const handleCreateNotification: RequestHandler = async (req, res) => {
     };
 
     await saveNotification(notification);
+
+    // For broadcast notifications, store in appropriate broadcast queue
+    const lowerWallet = recipientWallet.toLowerCase();
+    if (lowerWallet.includes("broadcast")) {
+      try {
+        const kv = getKVStorage();
+        let broadcastKey = "notifications:broadcast";
+
+        // Use different queues for sellers vs buyers
+        if (lowerWallet === "broadcast_sellers") {
+          broadcastKey = "notifications:broadcast:sellers";
+        } else if (lowerWallet === "broadcast_buyers") {
+          broadcastKey = "notifications:broadcast:buyers";
+        }
+
+        const broadcastJson = await kv.get(broadcastKey);
+        const broadcastNotifications = broadcastJson
+          ? JSON.parse(broadcastJson)
+          : [];
+        broadcastNotifications.push(notification);
+        // Keep only last 100 broadcast notifications
+        if (broadcastNotifications.length > 100) {
+          broadcastNotifications.shift();
+        }
+        await kv.put(broadcastKey, JSON.stringify(broadcastNotifications));
+      } catch (error) {
+        console.warn(
+          "[Notifications] Failed to add to broadcast queue:",
+          error,
+        );
+        // Don't fail the request if broadcast queue fails
+      }
+    }
 
     res.status(201).json({ notification });
   } catch (error) {

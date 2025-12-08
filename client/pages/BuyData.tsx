@@ -56,24 +56,24 @@ export default function BuyData() {
   }, []);
 
   // Fetch payment methods
-  useEffect(() => {
-    const fetchPaymentMethods = async () => {
-      if (!wallet?.publicKey) return;
-      try {
-        const response = await fetch(
-          `/api/p2p/payment-methods?wallet=${wallet.publicKey}`,
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setPaymentMethods(data.paymentMethods || []);
-        }
-      } catch (error) {
-        console.error("Failed to fetch payment methods:", error);
+  const fetchPaymentMethods = useCallback(async () => {
+    if (!wallet?.publicKey) return;
+    try {
+      const response = await fetch(
+        `/api/p2p/payment-methods?wallet=${wallet.publicKey}`,
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setPaymentMethods(data.data || data.paymentMethods || []);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch payment methods:", error);
+    }
+  }, [wallet?.publicKey]);
 
+  useEffect(() => {
     fetchPaymentMethods();
-  }, [wallet?.publicKey, showPaymentDialog]);
+  }, [wallet?.publicKey, showPaymentDialog, fetchPaymentMethods]);
 
   const proceedWithOrderCreation = useCallback(async () => {
     if (!wallet?.publicKey) {
@@ -107,26 +107,28 @@ export default function BuyData() {
 
       toast.success("Order created successfully!");
 
-      // Send notification to all sellers about new buy order
+      // Send notification to sellers about new buy order
+      // For generic buy orders, send to a broadcast address that sellers can monitor
       try {
+        const recipientWallet =
+          createdOrder.sellerWallet || "BROADCAST_SELLERS";
         await createNotification(
-          "", // Empty wallet = broadcast to all sellers
+          recipientWallet,
           "new_buy_order",
           "BUY",
           createdOrder.id,
-          `New buy order: ${parseFloat(amountTokens).toFixed(6)} ${createdOrder.token} for ${parseFloat(amountPKR).toFixed(2)} PKR`,
+          `New buy order: ${parseFloat(amountTokens).toFixed(6)} ${createdOrder.token} for ${parseFloat(amountPKR).toFixed(2)} PKR at ${exchangeRate.toFixed(2)} PKR per token. Buyer: ${createdOrder.buyerWallet}`,
           {
             token: createdOrder.token,
             amountTokens: parseFloat(amountTokens),
             amountPKR: parseFloat(amountPKR),
             orderId: createdOrder.id,
+            buyerWallet: createdOrder.buyerWallet,
+            price: exchangeRate,
           },
         );
       } catch (notificationError) {
-        console.warn(
-          "Failed to send notification to sellers:",
-          notificationError,
-        );
+        console.warn("Failed to send notification:", notificationError);
         // Don't fail the order creation if notification fails
       }
 
@@ -344,12 +346,20 @@ export default function BuyData() {
           setShowPaymentDialog(open);
           if (!open) {
             setEditingPaymentMethodId(undefined);
+            // Refetch payment methods when dialog closes with a small delay
+            setTimeout(() => {
+              fetchPaymentMethods();
+            }, 500);
           }
         }}
         walletAddress={wallet?.publicKey || ""}
         paymentMethodId={editingPaymentMethodId}
         onSave={() => {
           setEditingPaymentMethodId(undefined);
+          // Refetch payment methods after saving with a small delay
+          setTimeout(() => {
+            fetchPaymentMethods();
+          }, 300);
         }}
       />
 

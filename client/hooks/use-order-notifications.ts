@@ -11,6 +11,7 @@ export interface OrderNotification {
   type:
     | "order_created"
     | "new_buy_order"
+    | "new_sell_order"
     | "payment_confirmed"
     | "seller_payment_received"
     | "transfer_initiated"
@@ -44,8 +45,9 @@ export function useOrderNotifications() {
       setLoading(true);
       try {
         const query = unreadOnly ? "&unread=true" : "";
+        // Include broadcast notifications (for generic buy orders)
         const response = await fetch(
-          `/api/p2p/notifications?wallet=${encodeURIComponent(wallet.publicKey)}${query}`,
+          `/api/p2p/notifications?wallet=${encodeURIComponent(wallet.publicKey)}&includeBroadcast=true${query}`,
         );
 
         if (!response.ok) {
@@ -74,6 +76,7 @@ export function useOrderNotifications() {
       type:
         | "order_created"
         | "new_buy_order"
+        | "new_sell_order"
         | "payment_confirmed"
         | "seller_payment_received"
         | "transfer_initiated"

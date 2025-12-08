@@ -991,9 +991,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         const tokenMints = allTokens.map((token) => token.mint);
 
         // Fetch prices from DexScreener API
+        // Exclude LOCKER since it has no price data on DexScreener (causes 503 errors)
         try {
+          const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
           const allMintsToFetch = Array.from(
-            new Set(tokenMints.filter(Boolean)),
+            new Set(tokenMints.filter((mint) => mint && mint !== lockerMint)),
           );
 
           if (allMintsToFetch.length > 0) {

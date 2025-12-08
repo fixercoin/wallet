@@ -1114,7 +1114,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
               `[WalletContext] ⚠️ FXM price fetch resulted in invalid price, using hardcoded fallback`,
             );
             // Use hardcoded fallback for FXM if fetch fails
-            prices[fxmMint] = 0.000001;
+            prices[fxmMint] = 0.00000001;
             changeMap[fxmMint] = 0;
           }
         } catch (e) {
@@ -1125,7 +1125,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             changeMap[lockerMint] = 0;
           }
           if (!prices[fxmMint]) {
-            prices[fxmMint] = 0.000001;
+            prices[fxmMint] = 0.00000001;
             changeMap[fxmMint] = 0;
           }
         }

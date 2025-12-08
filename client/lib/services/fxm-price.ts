@@ -39,107 +39,123 @@ class FXMPriceService {
     // Fetch with retry logic
     const priceData = await retryWithExponentialBackoff(
       async () => {
-        console.log("Fetching fresh FXM price using DexScreener conversion logic...");
+        console.log("Fetching fresh FXM price directly from DexScreener...");
 
         try {
-          const pairs = await dexscreenerAPI.getTokensByMints([FXM_MINT, SOL_MINT]);
+          // First, try to fetch FXM directly by mint
+          const tokens = await dexscreenerAPI.getTokensByMints([FXM_MINT]);
 
-          if (!pairs || pairs.length === 0) {
-            throw new Error("Could not fetch FXM/SOL pair from DexScreener");
+          if (!tokens || tokens.length === 0) {
+            throw new Error("FXM not found on DexScreener by mint");
           }
 
-          const fxmPair = pairs.find(
-            (p) =>
-              (p.baseToken?.address === FXM_MINT || p.quoteToken?.address === FXM_MINT) &&
-              (p.baseToken?.address === SOL_MINT || p.quoteToken?.address === SOL_MINT)
-          );
+          const fxmToken = tokens[0];
+          const price = fxmToken.priceUsd
+            ? parseFloat(fxmToken.priceUsd)
+            : null;
 
-          if (!fxmPair) {
-            throw new Error("SOL/FXM pair not found on DexScreener");
-          }
-
-          const solPriceData = await solPriceService.getSolPrice();
-          if (!solPriceData || solPriceData.price <= 0) {
-            throw new Error("Could not fetch SOL price");
-          }
-
-          let fxmPrice: number;
-          const priceNative = fxmPair.priceNative ? parseFloat(fxmPair.priceNative) : null;
-
-          if (!priceNative || priceNative <= 0) {
-            throw new Error("Invalid priceNative value");
-          }
-
-          let priceChange24h = fxmPair.priceChange?.h24 || 0;
-          let volume24h = fxmPair.volume?.h24 || 0;
-
-          if (fxmPair.baseToken?.address === FXM_MINT) {
-            fxmPrice = priceNative * solPriceData.price;
-          } else {
-            fxmPrice = solPriceData.price / priceNative;
-          }
-
-          if (!fxmPrice || fxmPrice <= 0) {
-            throw new Error(`Invalid FXM price: ${fxmPrice}`);
+          if (!price || !isFinite(price) || price <= 0) {
+            throw new Error(`Invalid FXM price from DexScreener: ${price}`);
           }
 
           const result: FXMPriceData = {
-            price: fxmPrice,
-            priceChange24h,
-            volume24h,
-            liquidity: fxmPair.liquidity?.usd,
+            price,
+            priceChange24h: fxmToken.priceChange?.h24 || 0,
+            volume24h: fxmToken.volume?.h24 || 0,
+            liquidity: fxmToken.liquidity?.usd,
             lastUpdated: new Date(),
-            derivationMethod: "DexScreener SOL/FXM conversion (live)",
+            derivationMethod: "DexScreener Direct (live)",
           };
 
           this.cachedData = result;
           this.lastFetchTime = new Date();
 
           console.log(
-            `✅ FXM price updated: $${result.price.toFixed(8)} via ${result.derivationMethod}`
+            `✅ FXM price updated: $${result.price.toFixed(8)} via ${result.derivationMethod}`,
           );
 
           return result;
         } catch (err) {
           console.warn(
-            `[FXMPrice] Conversion logic failed: ${
+            `[FXMPrice] Direct fetch failed: ${
               err instanceof Error ? err.message : String(err)
-            }. Falling back to direct DexScreener price...`
+            }. Trying pair-based lookup...`,
           );
 
-          const tokens = await dexscreenerAPI.getTokensByMints([FXM_MINT]);
+          // Fallback: try to find FXM/SOL pair
+          try {
+            const pairs = await dexscreenerAPI.getTokensByMints([
+              FXM_MINT,
+              SOL_MINT,
+            ]);
 
-          if (!tokens || tokens.length === 0) {
-            throw new Error("FXM not found on DexScreener for fallback");
+            if (!pairs || pairs.length === 0) {
+              throw new Error("Could not fetch FXM/SOL pair from DexScreener");
+            }
+
+            const fxmPair = pairs.find(
+              (p) =>
+                (p.baseToken?.address === FXM_MINT ||
+                  p.quoteToken?.address === FXM_MINT) &&
+                (p.baseToken?.address === SOL_MINT ||
+                  p.quoteToken?.address === SOL_MINT),
+            );
+
+            if (!fxmPair) {
+              throw new Error("SOL/FXM pair not found on DexScreener");
+            }
+
+            const solPriceData = await solPriceService.getSolPrice();
+            if (!solPriceData || solPriceData.price <= 0) {
+              throw new Error("Could not fetch SOL price");
+            }
+
+            const priceNative = fxmPair.priceNative
+              ? parseFloat(fxmPair.priceNative)
+              : null;
+
+            if (!priceNative || !isFinite(priceNative) || priceNative <= 0) {
+              throw new Error("Invalid priceNative value");
+            }
+
+            let fxmPrice: number;
+            if (fxmPair.baseToken?.address === FXM_MINT) {
+              fxmPrice = priceNative * solPriceData.price;
+            } else {
+              fxmPrice = solPriceData.price / priceNative;
+            }
+
+            if (!fxmPrice || !isFinite(fxmPrice) || fxmPrice <= 0) {
+              throw new Error(`Invalid calculated FXM price: ${fxmPrice}`);
+            }
+
+            const result: FXMPriceData = {
+              price: fxmPrice,
+              priceChange24h: fxmPair.priceChange?.h24 || 0,
+              volume24h: fxmPair.volume?.h24 || 0,
+              liquidity: fxmPair.liquidity?.usd,
+              lastUpdated: new Date(),
+              derivationMethod: "DexScreener SOL/FXM conversion (live)",
+            };
+
+            this.cachedData = result;
+            this.lastFetchTime = new Date();
+
+            console.log(
+              `✅ FXM price updated (pair): $${result.price.toFixed(8)} via ${result.derivationMethod}`,
+            );
+
+            return result;
+          } catch (fallbackErr) {
+            console.warn(
+              `[FXMPrice] Pair lookup also failed: ${
+                fallbackErr instanceof Error
+                  ? fallbackErr.message
+                  : String(fallbackErr)
+              }`,
+            );
+            throw fallbackErr;
           }
-
-          const token = tokens[0];
-          const price = token.priceUsd ? parseFloat(token.priceUsd) : null;
-
-          if (!price || price <= 0) {
-            throw new Error(`Invalid fallback FXM price: ${price}`);
-          }
-
-          const priceChange24h = token.priceChange?.h24 || 0;
-          const volume24h = token.volume?.h24 || 0;
-
-          const fallbackData: FXMPriceData = {
-            price,
-            priceChange24h,
-            volume24h,
-            liquidity: token.liquidity?.usd,
-            lastUpdated: new Date(),
-            derivationMethod: "DexScreener Direct (fallback)",
-          };
-
-          this.cachedData = fallbackData;
-          this.lastFetchTime = new Date();
-
-          console.log(
-            `✅ FXM price updated (FALLBACK): $${fallbackData.price.toFixed(8)} via ${fallbackData.derivationMethod}`
-          );
-
-          return fallbackData;
         }
       },
       this.TOKEN_NAME,
@@ -149,14 +165,16 @@ class FXMPriceService {
         maxDelayMs: 2000,
         backoffMultiplier: 2,
         timeoutMs: 8000,
-      }
+      },
     );
 
     if (!priceData) {
-      console.warn(`[${this.TOKEN_NAME}] All price fetch attempts failed. Using static fallback.`);
+      console.warn(
+        `[${this.TOKEN_NAME}] All price fetch attempts failed. Using static fallback.`,
+      );
 
       const fallbackData: FXMPriceData = {
-        price: 0.000003567,
+        price: 0.00000001,
         priceChange24h: 0,
         volume24h: 0,
         liquidity: 0,
@@ -179,7 +197,10 @@ class FXMPriceService {
     return data?.price || 0;
   }
 
-  async getFXMPriceWithMethod(): Promise<{ price: number; derivationMethod: string }> {
+  async getFXMPriceWithMethod(): Promise<{
+    price: number;
+    derivationMethod: string;
+  }> {
     const data = await this.getFXMPrice();
     return {
       price: data?.price || 0,

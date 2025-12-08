@@ -63,6 +63,32 @@ export const KNOWN_TOKENS: Record<string, TokenMetadata> = {
 const connection = new Connection(RPC_URL, "confirmed");
 const requestQueue = new Map<string, Promise<any>>();
 
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 500;
+
+const retryableCall = async <T>(
+  fn: () => Promise<T>,
+  method: string,
+): Promise<T> => {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < MAX_RETRIES) {
+        const delay = RETRY_DELAY * Math.pow(2, attempt);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  throw (
+    lastError || new Error(`${method} failed after ${MAX_RETRIES + 1} retries`)
+  );
+};
+
 export const makeRpcCall = async (
   method: string,
   params: any[] = [],
@@ -79,34 +105,73 @@ export const makeRpcCall = async (
 
       switch (method) {
         case "getBalance":
-          return await connection.getBalance(new PublicKey(params[0]));
-
-        case "getTokenAccountsByOwner":
-          return await connection.getTokenAccountsByOwner(
-            new PublicKey(params[0]),
-            params[1],
-            params[2],
+          return await retryableCall(
+            () => connection.getBalance(new PublicKey(params[0])),
+            method,
           );
 
+        case "getTokenAccountsByOwner": {
+          const filter = params[1];
+          const convertedFilter: any = {};
+          if (filter.programId) {
+            convertedFilter.programId =
+              typeof filter.programId === "string"
+                ? new PublicKey(filter.programId)
+                : filter.programId;
+          }
+          if (filter.mint) {
+            convertedFilter.mint =
+              typeof filter.mint === "string"
+                ? new PublicKey(filter.mint)
+                : filter.mint;
+          }
+          return await retryableCall(
+            () =>
+              connection.getTokenAccountsByOwner(
+                new PublicKey(params[0]),
+                convertedFilter,
+                params[2],
+              ),
+            method,
+          );
+        }
+
         case "getTokenSupply":
-          return await connection.getTokenSupply(new PublicKey(params[0]));
+          return await retryableCall(
+            () => connection.getTokenSupply(new PublicKey(params[0])),
+            method,
+          );
 
         case "getMultipleAccounts":
-          return await connection.getMultipleAccountsInfo(
-            params[0].map((pk: string) => new PublicKey(pk)),
+          return await retryableCall(
+            () =>
+              connection.getMultipleAccountsInfo(
+                params[0].map((pk: string) => new PublicKey(pk)),
+              ),
+            method,
           );
 
         case "getAccountInfo":
-          return await connection.getAccountInfo(new PublicKey(params[0]));
+          return await retryableCall(
+            () => connection.getAccountInfo(new PublicKey(params[0])),
+            method,
+          );
 
         case "getSignaturesForAddress":
-          return await connection.getSignaturesForAddress(
-            new PublicKey(params[0]),
-            params[1],
+          return await retryableCall(
+            () =>
+              connection.getSignaturesForAddress(
+                new PublicKey(params[0]),
+                params[1],
+              ),
+            method,
           );
 
         case "getTransaction":
-          return await connection.getParsedTransaction(params[0], params[1]);
+          return await retryableCall(
+            () => connection.getParsedTransaction(params[0], params[1]),
+            method,
+          );
 
         default:
           throw new Error(`Unsupported RPC method: ${method}`);
@@ -141,10 +206,14 @@ export const getTokenAccounts = async (publicKey: string) => {
   const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
   try {
-    const response = await connection.getTokenAccountsByOwner(
-      new PublicKey(publicKey),
-      { programId: new PublicKey(TOKEN_PROGRAM_ID) },
-      { encoding: "jsonParsed", commitment: "confirmed" },
+    const response = await retryableCall(
+      () =>
+        connection.getTokenAccountsByOwner(
+          new PublicKey(publicKey),
+          { programId: new PublicKey(TOKEN_PROGRAM_ID) },
+          { encoding: "jsonParsed", commitment: "confirmed" },
+        ),
+      "getTokenAccounts",
     );
 
     console.log(`[Token Accounts] Got ${response.value.length} token accounts`);
@@ -250,10 +319,14 @@ export const getTokenBalanceForMint = async (
   tokenMint: string,
 ): Promise<number | null> => {
   try {
-    const response = await connection.getTokenAccountsByOwner(
-      new PublicKey(walletAddress),
-      { mint: new PublicKey(tokenMint) },
-      { encoding: "jsonParsed", commitment: "confirmed" },
+    const response = await retryableCall(
+      () =>
+        connection.getTokenAccountsByOwner(
+          new PublicKey(walletAddress),
+          { mint: new PublicKey(tokenMint) },
+          { encoding: "jsonParsed", commitment: "confirmed" },
+        ),
+      "getTokenBalanceForMint",
     );
 
     if (response.value.length > 0) {

@@ -474,7 +474,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   ): string => {
     if (amount === undefined || amount === null || isNaN(amount)) {
       if (symbol === "SOL") return "0.000000";
-      if (symbol === "FXM") return "0.00";
+      if (symbol === "FXM") return "0.000000";
       if (symbol === "FIXERCOIN" || symbol === "LOCKER") return "0.00";
       return "0.00";
     }
@@ -485,11 +485,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
         maximumFractionDigits: 6,
       });
     }
-    // FXM shows exactly 2 decimal places
+    // FXM shows up to 6 decimal places for precision with small amounts
     if (symbol === "FXM") {
       return amount.toLocaleString(undefined, {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        maximumFractionDigits: 6,
       });
     }
     // FIXERCOIN and LOCKER always show exactly 2 decimal places
@@ -508,9 +508,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const formatUSD = (
     amount: number | undefined,
     price: number | undefined,
+    symbol?: string,
   ): string => {
     if (!amount || !price || isNaN(amount) || isNaN(price)) return "$0.00";
+
+    // Stablecoins always show $0.00 format
+    const stablecoins = ["USDC", "USDT"];
+    if (symbol && stablecoins.includes(symbol)) {
+      return `$${(amount * price).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+    }
+
     const usdValue = amount * price;
+    // For very small amounts (< $0.01), show up to 8 decimals for precision
+    if (usdValue < 0.01) {
+      return `$${usdValue.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 8,
+      })}`;
+    }
     return `$${usdValue.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -662,7 +680,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const sortedTokens = useMemo(() => {
-    const priority = ["SOL", "USDC", "FIXERCOIN", "LOCKER"];
+    const priority = ["SOL", "USDC", "FIXERCOIN", "FXM", "LOCKER"];
     const arr = [...tokens].filter((t) => t.symbol !== "USDT");
 
     const solToken = arr.find((t) => t.symbol === "SOL");
@@ -1236,11 +1254,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           {typeof token.price === "number" &&
                           isFinite(token.price) ? (
                             <span style={{ color: "#ffffff" }}>
-                              ${" "}
-                              {tokenBalance.toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
+                              {formatUSD(
+                                token.balance,
+                                token.price,
+                                token.symbol,
+                              )}
                             </span>
                           ) : null}
                         </div>

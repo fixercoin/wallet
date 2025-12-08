@@ -233,6 +233,8 @@ function AppContent() {
       "/sellnote",
       "/verify-sell",
       "/order-complete",
+      "/waiting-for-seller-response",
+      "/seller-order-confirmation",
       "/orders/",
       "/order/",
       "/buy-order",

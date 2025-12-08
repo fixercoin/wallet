@@ -988,15 +988,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
           // Timeout after 10 seconds - use what we have by then
           const timeoutPromise = new Promise<[any, any, any]>((resolve) =>
-            setTimeout(
-              () => {
-                console.warn(
-                  "[WalletContext] Price fetching timeout after 10s, using partial results",
-                );
-                resolve([null, null, null]);
-              },
-              10000,
-            ),
+            setTimeout(() => {
+              console.warn(
+                "[WalletContext] Price fetching timeout after 10s, using partial results",
+              );
+              resolve([null, null, null]);
+            }, 10000),
           );
 
           const [fixercoinData, lockerData, fxmData] = await Promise.race([

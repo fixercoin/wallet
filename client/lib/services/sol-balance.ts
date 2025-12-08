@@ -36,9 +36,7 @@ export async function fetchSolBalance(publicKey: string): Promise<number> {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(
-          `Server returned ${response.status}: ${errorText}`,
-        );
+        throw new Error(`Server returned ${response.status}: ${errorText}`);
       }
 
       const data = (await response.json()) as BalanceResponse;
@@ -82,7 +80,10 @@ export async function fetchSolBalance(publicKey: string): Promise<number> {
  * @param decimals - Number of decimal places (default: 9)
  * @returns Formatted balance string
  */
-export function formatSolBalance(balance: number, decimals: number = 9): string {
+export function formatSolBalance(
+  balance: number,
+  decimals: number = 9,
+): string {
   if (typeof balance !== "number" || !isFinite(balance)) {
     return "0.000000000";
   }

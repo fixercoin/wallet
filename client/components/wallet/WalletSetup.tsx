@@ -534,8 +534,8 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       {displaySolBalance(solBalance, 9)}
                     </p>
                     <p className="text-xs text-gray-400 mt-2">
-                      Your wallet is ready to use! You now have a Solana
-                      address to receive funds.
+                      Your wallet is ready to use! You now have a Solana address
+                      to receive funds.
                     </p>
                   </div>
                 )}

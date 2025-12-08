@@ -1,16 +1,19 @@
 # SOL Balance Fetching Implementation
 
 ## Overview
+
 Implemented direct SOL balance fetching from the Solana blockchain via the backend API endpoint. The balance is displayed on the wallet setup page and dashboard, using the existing backend infrastructure.
 
 ## Architecture
 
 ### Backend API Endpoint
+
 **Endpoint:** `GET /api/wallet/balance?publicKey=<address>`
 
 **Location:** `server/routes/wallet-balance.ts`
 
 **Features:**
+
 - Accepts multiple parameter names: `publicKey`, `wallet`, `address`, `walletAddress`
 - Supports multiple RPC providers via environment variables:
   - `HELIUS_API_KEY` (preferred for production)
@@ -22,6 +25,7 @@ Implemented direct SOL balance fetching from the Solana blockchain via the backe
 - Comprehensive error handling with diagnostic messages
 
 **Response Example:**
+
 ```json
 {
   "publicKey": "EtZ2AqEHo53BN4CbGeXwtDsqkVJktSc6nqKnCNtpeA4Y",
@@ -32,9 +36,11 @@ Implemented direct SOL balance fetching from the Solana blockchain via the backe
 ```
 
 ### Frontend Service Layer
+
 **File:** `client/lib/services/sol-balance.ts`
 
 **Functions:**
+
 1. `fetchSolBalance(publicKey)` - Fetch balance from API
    - Returns: Promise<number> (balance in SOL)
    - Throws: Error on failure
@@ -48,14 +54,17 @@ Implemented direct SOL balance fetching from the Solana blockchain via the backe
    - Returns: Formatted string with "SOL" suffix (e.g., "2.500000000 SOL")
 
 ### Re-exports for Backward Compatibility
+
 The `getBalance` function is also exported from `client/lib/wallet.ts` (re-exported from `wallet-proxy.ts`) for backward compatibility with existing code.
 
 ## Implementation Details
 
 ### Wallet Setup Page
+
 **File:** `client/components/wallet/WalletSetup.tsx`
 
 **Changes:**
+
 1. Added state management for SOL balance:
    - `solBalance`: Stores fetched balance
    - `isFetchingBalance`: Loading state during fetch
@@ -71,6 +80,7 @@ The `getBalance` function is also exported from `client/lib/wallet.ts` (re-expor
    - Includes helpful message about wallet readiness
 
 **UX Flow:**
+
 ```
 1. User creates/imports wallet
 2. [Wallet setup confirms]
@@ -80,9 +90,11 @@ The `getBalance` function is also exported from `client/lib/wallet.ts` (re-expor
 ```
 
 ### Dashboard Integration
+
 **File:** `client/components/wallet/Dashboard.tsx`
 
 **Features:**
+
 1. Auto-refresh every 1 minute
 2. Manual refresh via button click
 3. Scroll-triggered refresh (50px threshold)
@@ -95,6 +107,7 @@ The `getBalance` function is also exported from `client/lib/wallet.ts` (re-expor
 ### In React Components
 
 #### Using the Service Functions
+
 ```typescript
 import { fetchSolBalance, displaySolBalance } from "@/lib/services/sol-balance";
 
@@ -107,6 +120,7 @@ const formatted = displaySolBalance(5.123456789, 4); // "5.1235 SOL"
 ```
 
 #### Using the Context
+
 ```typescript
 import { useWallet } from "@/contexts/WalletContext";
 
@@ -120,10 +134,11 @@ console.log(`SOL: ${balance}`);
 ```
 
 ### Direct API Calls
+
 ```typescript
 // Fetch directly from endpoint
 const response = await fetch(
-  `/api/wallet/balance?publicKey=EtZ2AqEHo53BN4CbGeXwtDsqkVJktSc6nqKnCNtpeA4Y`
+  `/api/wallet/balance?publicKey=EtZ2AqEHo53BN4CbGeXwtDsqkVJktSc6nqKnCNtpeA4Y`,
 );
 const data = await response.json();
 console.log(`Balance: ${data.balance} SOL`);
@@ -132,25 +147,31 @@ console.log(`Balance: ${data.balance} SOL`);
 ## Environment Configuration
 
 ### Required Variables
+
 For production deployments, set one of:
 
 **Option 1: Helius API Key (Recommended)**
+
 ```bash
 HELIUS_API_KEY=your_helius_api_key
 ```
 
 **Option 2: Helius RPC URL**
+
 ```bash
 HELIUS_RPC_URL=https://mainnet.helius-rpc.com
 ```
 
 **Option 3: Custom Solana RPC**
+
 ```bash
 SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 ```
 
 ### Default Behavior
+
 If no variables are set, the system falls back to the public Solana RPC endpoint:
+
 ```
 https://solana.publicnode.com
 ```
@@ -160,22 +181,26 @@ https://solana.publicnode.com
 ## Pages Using SOL Balance
 
 ### 1. **Wallet Setup Page**
+
 - **Component:** `client/components/wallet/WalletSetup.tsx`
 - **When:** After wallet creation or import
 - **Display:** Full 9-decimal balance in green card
 - **Purpose:** Confirm wallet is ready to receive funds
 
 ### 2. **Dashboard Page**
+
 - **Component:** `client/components/wallet/Dashboard.tsx`
 - **When:** Main wallet view
-- **Display:** 
+- **Display:**
   - Total portfolio value (USD)
   - Individual SOL token card
   - Automatic refresh every 60 seconds
 - **Purpose:** Real-time balance monitoring
 
 ### 3. **Other Pages**
+
 Balance can be accessed from any page using the `useWallet()` hook:
+
 - **Accounts Page:** Account selection and balance display
 - **Send/Receive Pages:** Display sender/recipient balance
 - **Token Detail Pages:** Show SOL balance context
@@ -183,6 +208,7 @@ Balance can be accessed from any page using the `useWallet()` hook:
 ## Error Handling
 
 ### API Errors
+
 - **500 Server Error:** RPC provider unreachable
   - **Recovery:** Retries with fallback endpoints
   - **User Impact:** Falls back to cached balance
@@ -192,11 +218,13 @@ Balance can be accessed from any page using the `useWallet()` hook:
   - **User Impact:** Shows validation error
 
 ### Network Errors
+
 - **Timeout:** RPC endpoint takes >15 seconds
   - **Recovery:** AbortController cancels request
   - **User Impact:** Shows timeout error, uses cached balance
 
 ### Fallback Behavior
+
 1. Try primary RPC endpoint
 2. If fails, try fallback endpoint
 3. If all fail, use cached balance
@@ -205,6 +233,7 @@ Balance can be accessed from any page using the `useWallet()` hook:
 ## Testing
 
 ### Manual Testing Checklist
+
 - [ ] Create new wallet and verify balance displays
 - [ ] Import wallet and verify balance displays
 - [ ] Check balance updates on dashboard refresh
@@ -215,6 +244,7 @@ Balance can be accessed from any page using the `useWallet()` hook:
 - [ ] Verify offline mode uses cached balance
 
 ### Test Cases
+
 ```typescript
 // Valid wallet with balance
 const testKey = "EtZ2AqEHo53BN4CbGeXwtDsqkVJktSc6nqKnCNtpeA4Y";
@@ -232,12 +262,14 @@ expect(displaySolBalance(0.123456789, 4)).toBe("0.1235 SOL");
 ## Performance Considerations
 
 ### Caching Strategy
+
 - **Setup Page:** Fetches once after wallet creation
 - **Dashboard:** Uses WalletContext cache + periodic refresh
 - **Offline Support:** LocalStorage caches last known balance
 - **TTL:** No explicit TTL; refreshes on demand or interval
 
 ### Optimization Tips
+
 1. **Reduce Refresh Frequency:** Adjust 60-second interval in Dashboard
 2. **Batch Requests:** Group multiple balance queries together
 3. **Use Cache:** Implement stale-while-revalidate pattern
@@ -246,6 +278,7 @@ expect(displaySolBalance(0.123456789, 4)).toBe("0.1235 SOL");
 ## Troubleshooting
 
 ### Balance Shows 0 or Won't Update
+
 1. Check RPC configuration (`HELIUS_API_KEY`, `SOLANA_RPC_URL`)
 2. Verify public key is valid Solana address
 3. Check browser console for error messages
@@ -253,12 +286,14 @@ expect(displaySolBalance(0.123456789, 4)).toBe("0.1235 SOL");
 5. Clear browser cache and localStorage
 
 ### API Returns 502 Error
+
 1. Verify RPC endpoint is responding
 2. Check network connectivity
 3. Ensure no rate limiting issues
 4. Try fallback RPC endpoint
 
 ### Balance Takes Long to Load
+
 1. Check RPC endpoint performance
 2. Increase timeout if needed
 3. Consider using Helius API for better performance
@@ -284,6 +319,7 @@ expect(displaySolBalance(0.123456789, 4)).toBe("0.1235 SOL");
 ## Support
 
 For issues or questions:
+
 1. Check error messages in browser console
 2. Review this documentation
 3. Check RPC provider status

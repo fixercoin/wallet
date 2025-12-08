@@ -505,13 +505,38 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 PHRASES, OR DIGITAL ASSETS.
               </p>
 
-              <div>
-                <Button
-                  onClick={handleConfirmWallet}
-                  className="w-full h-12 rounded-[2px] font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
-                >
-                  Create Wallet
-                </Button>
+              <div className="space-y-4">
+                <div>
+                  <Button
+                    onClick={handleConfirmWallet}
+                    disabled={isLoading}
+                    className="w-full h-12 rounded-[2px] font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all disabled:opacity-50"
+                  >
+                    {isLoading ? "Setting up wallet..." : "Create Wallet"}
+                  </Button>
+                </div>
+
+                {isFetchingBalance && (
+                  <div className="flex items-center justify-center gap-2 p-3 bg-[#1a1a1a] rounded-lg border border-[#333]">
+                    <Loader className="h-4 w-4 animate-spin text-[#22c55e]" />
+                    <span className="text-sm text-gray-300">
+                      Fetching SOL balance...
+                    </span>
+                  </div>
+                )}
+
+                {solBalance !== null && !isFetchingBalance && (
+                  <div className="p-4 bg-gradient-to-r from-[#064e3b]/50 to-[#052e16]/50 rounded-lg border border-[#22c55e]/30">
+                    <p className="text-xs text-gray-400 mb-1">SOL BALANCE</p>
+                    <p className="text-2xl font-bold text-[#22c55e]">
+                      {solBalance.toFixed(9)} SOL
+                    </p>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Your wallet is ready to use! You now have a Solana
+                      address to receive funds.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

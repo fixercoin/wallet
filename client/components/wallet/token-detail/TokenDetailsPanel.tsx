@@ -119,8 +119,8 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
                 </p>
                 <p className="text-sm font-semibold text-white">
                   {(token.amount || 0).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
+                    minimumFractionDigits: 4,
+                    maximumFractionDigits: 4,
                   })}{" "}
                   {token.symbol}
                 </p>

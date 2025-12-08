@@ -280,6 +280,31 @@ export function clearOfflineCache(): void {
 }
 
 /**
+ * Clear dashboard token cache (balances and wallet-specific tokens only)
+ * This ensures fresh data is always fetched on app load after deployment
+ */
+export function clearDashboardTokenCache(): void {
+  try {
+    localStorage.removeItem(BALANCES_KEY);
+    localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+
+    // Clear all wallet-specific token caches
+    const keys = Object.keys(localStorage);
+    keys.forEach((key) => {
+      if (key.startsWith(`${CACHE_PREFIX}tokens_`)) {
+        localStorage.removeItem(key);
+      }
+    });
+    console.log("[OfflineCache] Dashboard token cache cleared");
+  } catch (error) {
+    console.warn(
+      "[OfflineCache] Failed to clear dashboard token cache:",
+      error,
+    );
+  }
+}
+
+/**
  * Get cache timestamp
  */
 export function getCacheTimestamp(): number | null {

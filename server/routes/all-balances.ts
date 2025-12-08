@@ -4,21 +4,14 @@ import { PublicKey } from "@solana/web3.js";
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 
-// Get RPC endpoint with priority for free endpoints and Alchemy fallback
-function getRpcEndpoint(): string {
-  const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
+// List of reliable RPC endpoints
+const RPC_ENDPOINTS = [
+  { url: "https://api.mainnet-beta.solana.com", name: "Solana Public" },
+  { url: "https://solana-api.projectserum.com", name: "Project Serum" },
+  { url: "https://rpc.ankr.com/solana", name: "Ankr" },
+];
 
-  if (solanaRpcUrl) {
-    console.log("[AllBalances] Using SOLANA_RPC_URL endpoint");
-    return solanaRpcUrl;
-  }
-
-  const alchemyEndpoint =
-    "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
-
-  console.log("[AllBalances] Using Alchemy RPC endpoint as primary fallback");
-  return alchemyEndpoint;
-}
+const ALCHEMY_RPC = "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
 
 // Known token metadata
 const KNOWN_TOKENS: Record<
@@ -83,10 +76,167 @@ interface AllBalancesResponse {
   timestamp: number;
 }
 
+// Get RPC endpoint with priority for custom RPC and Helius fallback
+function getRpcEndpoint(): string {
+  const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
+
+  if (solanaRpcUrl) {
+    console.log("[AllBalances] Using SOLANA_RPC_URL endpoint");
+    return solanaRpcUrl;
+  }
+
+  // Try to use Helius if configured
+  const heliusApiKey = process.env.HELIUS_API_KEY?.trim();
+  if (heliusApiKey) {
+    const heliusEndpoint = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
+    console.log("[AllBalances] Using Helius RPC endpoint");
+    return heliusEndpoint;
+  }
+
+  console.log("[AllBalances] Using public RPC endpoints with Alchemy fallback");
+  return RPC_ENDPOINTS[0].url;
+}
+
 /**
- * Fetch all token balances including SOL for a wallet using free RPC endpoints
- * Accepts: ?publicKey=<address> or ?wallet=<address> or ?address=<address>
- * Returns: All tokens with balances and SOL
+ * Fetch balance using getBalance RPC method
+ */
+async function fetchBalanceWithGetBalance(
+  rpcUrl: string,
+  publicKey: string,
+  timeoutMs: number = 8000,
+): Promise<number | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getBalance",
+        params: [publicKey],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.error || typeof data.result !== "number") {
+      return null;
+    }
+
+    const lamports = data.result;
+    if (lamports < 0) return null;
+
+    return lamports / 1_000_000_000;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Fetch balance using getAccountInfo RPC method
+ */
+async function fetchBalanceWithGetAccountInfo(
+  rpcUrl: string,
+  publicKey: string,
+  timeoutMs: number = 8000,
+): Promise<number | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getAccountInfo",
+        params: [publicKey, { encoding: "base64" }],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.error || !data.result?.value?.lamports) {
+      return null;
+    }
+
+    const lamports = data.result.value.lamports;
+    if (typeof lamports !== "number" || lamports < 0) {
+      return null;
+    }
+
+    return lamports / 1_000_000_000;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Try to fetch balance with multiple endpoints and methods
+ */
+async function fetchSolBalanceWithFallbacks(
+  publicKey: string,
+): Promise<{ balance: number; endpoint: string } | null> {
+  const primaryEndpoint = getRpcEndpoint();
+
+  // Try primary endpoint with both methods
+  let balance = await fetchBalanceWithGetBalance(primaryEndpoint, publicKey);
+  if (balance !== null) {
+    return { balance, endpoint: primaryEndpoint };
+  }
+
+  balance = await fetchBalanceWithGetAccountInfo(primaryEndpoint, publicKey);
+  if (balance !== null) {
+    return { balance, endpoint: primaryEndpoint };
+  }
+
+  // Try fallback endpoints
+  console.log(
+    `[AllBalances] Primary endpoint failed, trying ${RPC_ENDPOINTS.length} fallbacks...`,
+  );
+
+  for (const endpoint of RPC_ENDPOINTS) {
+    balance = await fetchBalanceWithGetBalance(endpoint.url, publicKey);
+    if (balance !== null) {
+      return { balance, endpoint: endpoint.url };
+    }
+
+    balance = await fetchBalanceWithGetAccountInfo(endpoint.url, publicKey);
+    if (balance !== null) {
+      return { balance, endpoint: endpoint.url };
+    }
+  }
+
+  // Try Alchemy as final fallback
+  balance = await fetchBalanceWithGetBalance(ALCHEMY_RPC, publicKey);
+  if (balance !== null) {
+    return { balance, endpoint: ALCHEMY_RPC };
+  }
+
+  console.error("[AllBalances] ❌ All SOL balance fetch attempts failed");
+  return null;
+}
+
+/**
+ * Fetch all token balances including SOL for a wallet
  */
 export const handleGetAllBalances: RequestHandler = async (req, res) => {
   try {
@@ -127,7 +277,7 @@ export const handleGetAllBalances: RequestHandler = async (req, res) => {
 
     try {
       // Fetch SPL token accounts and SOL balance in parallel
-      const [tokenResponse, solResponse] = await Promise.all([
+      const [tokenResponse, solResult] = await Promise.all([
         // Fetch all SPL token accounts
         fetch(endpoint, {
           method: "POST",
@@ -145,18 +295,8 @@ export const handleGetAllBalances: RequestHandler = async (req, res) => {
           signal: AbortSignal.timeout(15000),
         }).catch(() => null),
 
-        // Fetch native SOL balance
-        fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            jsonrpc: "2.0",
-            id: 2,
-            method: "getBalance",
-            params: [publicKey],
-          }),
-          signal: AbortSignal.timeout(15000),
-        }).catch(() => null),
+        // Fetch SOL balance with fallback strategy
+        fetchSolBalanceWithFallbacks(publicKey),
       ]);
 
       // Process SPL token accounts
@@ -207,26 +347,15 @@ export const handleGetAllBalances: RequestHandler = async (req, res) => {
         }
       }
 
-      // Process SOL balance
-      if (solResponse) {
-        try {
-          const solData = await solResponse.json();
-          const lamports = solData.result?.value ?? solData.result ?? 0;
-          solBalance =
-            typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
-
-          if (solBalance < 0) solBalance = 0;
-
-          console.log(
-            `[AllBalances] ✅ Fetched SOL balance: ${solBalance} SOL`,
-          );
-        } catch (err) {
-          console.warn(
-            "[AllBalances] Error parsing SOL response:",
-            err instanceof Error ? err.message : String(err),
-          );
-          solBalance = 0;
-        }
+      // Process SOL balance result
+      if (solResult) {
+        solBalance = solResult.balance;
+        console.log(
+          `[AllBalances] ✅ Fetched SOL balance: ${solBalance} SOL from ${solResult.endpoint}`,
+        );
+      } else {
+        console.warn("[AllBalances] ⚠️ Failed to fetch SOL balance");
+        solBalance = 0;
       }
 
       // Check if SOL already exists in token list
@@ -248,11 +377,11 @@ export const handleGetAllBalances: RequestHandler = async (req, res) => {
         });
       }
 
-      // Always include known tokens even if wallet doesn't have them (for consistent dashboard display)
+      // Always include known tokens even if wallet doesn't have them
       const specialTokens = [
-        "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump", // FXM
-        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
-        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
+        "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
       ];
 
       specialTokens.forEach((specialMint) => {
@@ -266,24 +395,9 @@ export const handleGetAllBalances: RequestHandler = async (req, res) => {
         }
       });
 
-      // Log summary
       console.log(
         `[AllBalances] ✅ Found ${tokens.length} tokens for ${publicKey.slice(0, 8)}... (SOL: ${solBalance} SOL)`,
       );
-
-      // Log significant tokens
-      tokens.forEach((token) => {
-        if (
-          ["FXM", "FIXERCOIN", "LOCKER", "USDC", "USDT"].includes(
-            token.symbol,
-          ) ||
-          token.balance > 0
-        ) {
-          console.log(
-            `[AllBalances] Token: ${token.symbol} (${token.mint.slice(0, 8)}...) Balance: ${token.balance}`,
-          );
-        }
-      });
 
       const response: AllBalancesResponse = {
         publicKey,

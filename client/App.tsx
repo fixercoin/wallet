@@ -252,6 +252,7 @@ function AppContent() {
       "/waiting-for-buyer-response",
       "/seller-order-confirmation",
       "/buyer-order-confirmation",
+      "/order-complete",
       "/orders/",
       "/order/",
       "/buy-order",

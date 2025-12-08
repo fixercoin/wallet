@@ -20,19 +20,15 @@ import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { lockerPriceService } from "@/lib/services/locker-price";
 import { fxmPriceService } from "@/lib/services/fxm-price";
-import { getTokenBalanceForMint } from "@/lib/services/solana-rpc";
 import { getTokenPriceBySol } from "@/lib/services/derived-price";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
 import {
   savePricesToCache,
-  getCachedPrices,
   saveBalanceToCache,
   getCachedBalance,
   saveTokensToCache,
   getCachedTokens,
-  isCacheFresh,
-  CACHE_VALIDITY_PRICES,
 } from "@/lib/services/offline-cache";
 import {
   isEncryptedWalletStorage,
@@ -47,7 +43,6 @@ import {
   getStorageItem,
   setStorageItem,
   removeStorageItem,
-  validateWalletData,
   hasValidWalletData,
   clearAllWalletData,
   getStorageDiagnostics,
@@ -85,7 +80,6 @@ interface WalletProviderProps {
 
 const WALLETS_STORAGE_KEY = "solana_wallet_accounts";
 const LEGACY_WALLET_KEY = "solana_wallet_data";
-const HIDDEN_TOKENS_KEY = "hidden_tokens";
 const ACTIVE_WALLET_KEY = "solana_active_wallet";
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
@@ -829,9 +823,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     try {
       // Fetch token accounts (balances) silently - no loading state
       const tokenAccounts = await getTokenAccounts(wallet.publicKey);
-      const customTokens = JSON.parse(
-        localStorage.getItem("custom_tokens") || "[]",
-      ) as TokenInfo[];
 
       // Check if SOL is already in tokenAccounts (new endpoint returns it with balance)
       const solFromTokenAccounts = tokenAccounts.find(
@@ -923,93 +914,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           allTokens.push(tokenAccount);
         }
       });
-
-      customTokens.forEach((customToken) => {
-        const existingTokenIndex = allTokens.findIndex(
-          (t) => t.mint === customToken.mint,
-        );
-        if (existingTokenIndex >= 0) {
-          // Token exists from RPC - merge by preferring RPC data (especially balance, decimals)
-          // but use custom metadata if RPC returned generic "Unknown Token"
-          const rpcToken = allTokens[existingTokenIndex];
-          const isRpcGeneric =
-            rpcToken.symbol === "UNKNOWN" || !rpcToken.symbol;
-
-          allTokens[existingTokenIndex] = {
-            ...rpcToken,
-            // Override with custom metadata if RPC returned generic data
-            ...(isRpcGeneric && {
-              symbol: customToken.symbol,
-              name: customToken.name,
-              logoURI: customToken.logoURI,
-            }),
-            // Always use custom logoURI if available (user-added logo takes priority)
-            ...(customToken.logoURI && { logoURI: customToken.logoURI }),
-            // Always keep the RPC balance and decimals
-            balance: rpcToken.balance,
-            decimals: rpcToken.decimals,
-          };
-        } else {
-          // Token doesn't exist from RPC - add it with balance 0 for now
-          // Will be updated below with actual balance fetch
-          allTokens.push({ ...customToken, balance: 0 });
-        }
-      });
-
-      // Fetch balances for custom tokens that weren't found in RPC results
-      const customTokenMintSet = new Set(customTokens.map((t) => t.mint));
-      const customTokensWithZeroBalance = allTokens.filter(
-        (token) =>
-          customTokenMintSet.has(token.mint) &&
-          (token.balance === 0 || token.balance === undefined),
-      );
-
-      // Fetch missing balances in parallel
-      if (customTokensWithZeroBalance.length > 0) {
-        console.log(
-          `[WalletContext] Fetching balances for ${customTokensWithZeroBalance.length} custom tokens with zero balance...`,
-        );
-
-        const balanceFetchPromises = customTokensWithZeroBalance.map(
-          async (token) => {
-            try {
-              const balance = await getTokenBalanceForMint(
-                wallet.publicKey,
-                token.mint,
-              );
-              return {
-                mint: token.mint,
-                balance: balance ?? 0,
-              };
-            } catch (error) {
-              console.warn(
-                `[WalletContext] Failed to fetch balance for ${token.mint}:`,
-                error,
-              );
-              return {
-                mint: token.mint,
-                balance: 0,
-              };
-            }
-          },
-        );
-
-        const fetchedBalances = await Promise.all(balanceFetchPromises);
-
-        // Update allTokens with fetched balances
-        fetchedBalances.forEach(({ mint, balance }) => {
-          const tokenIndex = allTokens.findIndex((t) => t.mint === mint);
-          if (tokenIndex >= 0) {
-            allTokens[tokenIndex] = {
-              ...allTokens[tokenIndex],
-              balance,
-            };
-            console.log(
-              `[WalletContext] ✅ Updated balance for ${mint}: ${balance}`,
-            );
-          }
-        });
-      }
 
       // Price fetching logic - show loader only during price fetch
       setIsLoading(true);
@@ -1187,15 +1091,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       }
 
-      // Load hidden tokens list
-      const hiddenTokens = JSON.parse(
-        localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
-      ) as string[];
-
-      // Filter out hidden tokens from allTokens
-      const visibleTokens = allTokens.filter(
-        (token) => !hiddenTokens.includes(token.mint),
-      );
+      // Use all tokens (removed localStorage-based hidden tokens filtering)
+      const visibleTokens = allTokens;
 
       // Calculate SOL-based prices for tokens without valid prices
       const tokensNeedingPrices = visibleTokens.filter((token) => {
@@ -1363,51 +1260,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       return [...currentTokens, token];
     });
 
-    const customTokens = JSON.parse(
-      localStorage.getItem("custom_tokens") || "[]",
-    );
-    const newCustomTokens = [
-      ...customTokens.filter((t: TokenInfo) => t.mint !== token.mint),
-      token,
-    ];
-    localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
-
-    // If token was previously hidden, remove it from hidden tokens to ensure it becomes visible
-    try {
-      const hiddenTokens = JSON.parse(
-        localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
-      ) as string[];
-      const filtered = hiddenTokens.filter((m) => m !== token.mint);
-      if (filtered.length !== hiddenTokens.length) {
-        localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify(filtered));
-      }
-    } catch (e) {
-      // ignore
-    }
-
     if (wallet) refreshTokens();
   };
 
   const removeToken = (tokenMint: string) => {
-    // Remove from custom tokens if it exists there
-    const customTokens = JSON.parse(
-      localStorage.getItem("custom_tokens") || "[]",
-    ) as TokenInfo[];
-    const newCustomTokens = customTokens.filter(
-      (t: TokenInfo) => t.mint !== tokenMint,
-    );
-    localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
-
-    // Add to hidden tokens list to permanently hide it
-    const hiddenTokens = JSON.parse(
-      localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
-    ) as string[];
-    if (!hiddenTokens.includes(tokenMint)) {
-      hiddenTokens.push(tokenMint);
-      localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify(hiddenTokens));
-    }
-
-    // Update state immediately
     setTokens((currentTokens) =>
       currentTokens.filter((t) => t.mint !== tokenMint),
     );

@@ -121,48 +121,62 @@ export const getBalance = async (publicKey: string): Promise<number> => {
 
     // Use server endpoint for balance fetching
     // This avoids CORS issues and ensures reliability
-    const response = await fetch(
-      `/api/wallet/balance?publicKey=${encodeURIComponent(publicKey)}`,
-    );
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Balance endpoint returned ${response.status}:`, errorText);
-      throw new Error(`Server returned ${response.status}: ${errorText}`);
-    }
-
-    const data = await response.json();
-    console.log(`Raw balance response:`, data);
-
-    // Check for API error in response
-    if (data.error) {
-      console.error(`Balance API error:`, data.error, data.details);
-      throw new Error(
-        `API error: ${data.error}${data.details ? ` - ${data.details}` : ""}`,
+    try {
+      const response = await fetch(
+        `/api/wallet/balance?publicKey=${encodeURIComponent(publicKey)}`,
+        { signal: controller.signal },
       );
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(
+          `Balance endpoint returned ${response.status}:`,
+          errorText,
+        );
+        throw new Error(`Server returned ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log(`Raw balance response:`, data);
+
+      // Check for API error in response
+      if (data.error) {
+        console.error(`Balance API error:`, data.error, data.details);
+        throw new Error(
+          `API error: ${data.error}${data.details ? ` - ${data.details}` : ""}`,
+        );
+      }
+
+      const balance =
+        data.balance !== undefined
+          ? data.balance
+          : data.balanceLamports !== undefined
+            ? data.balanceLamports / 1_000_000_000
+            : 0;
+
+      if (typeof balance !== "number" || !isFinite(balance)) {
+        console.error(`Invalid balance value: ${balance}`, data);
+        throw new Error(`Invalid balance type: ${typeof balance}`);
+      }
+
+      if (balance < 0) {
+        console.error(`Negative balance value: ${balance}`, data);
+        throw new Error(`Negative balance: ${balance}`);
+      }
+
+      console.log(
+        `✅ Balance fetched: ${balance} SOL (source: ${data.source || "unknown"})`,
+      );
+      return balance;
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      throw fetchError;
     }
-
-    const balance =
-      data.balance !== undefined
-        ? data.balance
-        : data.balanceLamports !== undefined
-          ? data.balanceLamports / 1_000_000_000
-          : 0;
-
-    if (typeof balance !== "number" || !isFinite(balance)) {
-      console.error(`Invalid balance value: ${balance}`, data);
-      throw new Error(`Invalid balance type: ${typeof balance}`);
-    }
-
-    if (balance < 0) {
-      console.error(`Negative balance value: ${balance}`, data);
-      throw new Error(`Negative balance: ${balance}`);
-    }
-
-    console.log(
-      `✅ Balance fetched: ${balance} SOL (source: ${data.source || "unknown"})`,
-    );
-    return balance;
   } catch (error) {
     console.error("Failed to fetch balance:", error);
     // Re-throw error so WalletContext can use cached balance fallback
@@ -177,69 +191,80 @@ export const getTokenAccounts = async (
     console.log(`Fetching token accounts via server API for: ${publicKey}`);
 
     // Call server endpoint instead of RPC directly
-    const response = await fetch(
-      `/api/wallet/token-accounts?publicKey=${encodeURIComponent(publicKey)}`,
-    );
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-    if (!response.ok) {
-      throw new Error(`Server returned ${response.status}`);
-    }
-
-    const data = await response.json();
-    const tokenAccounts = data.tokens || [];
-    const isUsingFallback =
-      data.warning && data.warning.includes("unavailable");
-
-    if (isUsingFallback) {
-      console.warn(
-        `[TokenAccounts] Server returned fallback data:`,
-        data.warning,
+    try {
+      const response = await fetch(
+        `/api/wallet/token-accounts?publicKey=${encodeURIComponent(publicKey)}`,
+        { signal: controller.signal },
       );
-    }
 
-    // Merge with default tokens to ensure all known tokens are included
-    const allTokens = [...DEFAULT_TOKENS];
+      clearTimeout(timeoutId);
 
-    // Update balances for tokens we found on-chain
-    tokenAccounts.forEach((tokenAccount: TokenInfo) => {
-      const existingTokenIndex = allTokens.findIndex(
-        (t) => t.mint === tokenAccount.mint,
-      );
-      if (existingTokenIndex >= 0) {
-        allTokens[existingTokenIndex] = {
-          ...allTokens[existingTokenIndex],
-          balance: tokenAccount.balance,
-        };
-      } else {
-        allTokens.push(tokenAccount);
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
       }
-    });
 
-    // Ensure SOL is present with proper balance
-    const solIndex = allTokens.findIndex(
-      (t) => t.mint === "So11111111111111111111111111111111111111112",
-    );
-    if (solIndex >= 0) {
-      // Ensure SOL balance is a valid number
-      const solBalance = allTokens[solIndex].balance;
-      if (
-        typeof solBalance !== "number" ||
-        !isFinite(solBalance) ||
-        solBalance < 0
-      ) {
+      const data = await response.json();
+      const tokenAccounts = data.tokens || [];
+      const isUsingFallback =
+        data.warning && data.warning.includes("unavailable");
+
+      if (isUsingFallback) {
         console.warn(
-          `[TokenAccounts] SOL balance is invalid: ${solBalance}, resetting to 0`,
+          `[TokenAccounts] Server returned fallback data:`,
+          data.warning,
         );
-        allTokens[solIndex].balance = 0;
       }
-    }
 
-    console.log(
-      `✅ Token accounts loaded: ${allTokens.length} tokens (SOL balance: ${
-        allTokens.find((t) => t.symbol === "SOL")?.balance ?? "not found"
-      })`,
-    );
-    return allTokens;
+      // Merge with default tokens to ensure all known tokens are included
+      const allTokens = [...DEFAULT_TOKENS];
+
+      // Update balances for tokens we found on-chain
+      tokenAccounts.forEach((tokenAccount: TokenInfo) => {
+        const existingTokenIndex = allTokens.findIndex(
+          (t) => t.mint === tokenAccount.mint,
+        );
+        if (existingTokenIndex >= 0) {
+          allTokens[existingTokenIndex] = {
+            ...allTokens[existingTokenIndex],
+            balance: tokenAccount.balance,
+          };
+        } else {
+          allTokens.push(tokenAccount);
+        }
+      });
+
+      // Ensure SOL is present with proper balance
+      const solIndex = allTokens.findIndex(
+        (t) => t.mint === "So11111111111111111111111111111111111111112",
+      );
+      if (solIndex >= 0) {
+        // Ensure SOL balance is a valid number
+        const solBalance = allTokens[solIndex].balance;
+        if (
+          typeof solBalance !== "number" ||
+          !isFinite(solBalance) ||
+          solBalance < 0
+        ) {
+          console.warn(
+            `[TokenAccounts] SOL balance is invalid: ${solBalance}, will fetch from dedicated endpoint`,
+          );
+          allTokens[solIndex].balance = 0;
+        }
+      }
+
+      console.log(
+        `✅ Token accounts loaded: ${allTokens.length} tokens (SOL balance: ${
+          allTokens.find((t) => t.symbol === "SOL")?.balance ?? "not found"
+        })`,
+      );
+      return allTokens;
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      throw fetchError;
+    }
   } catch (error) {
     console.error("Failed to fetch token accounts:", error);
     return DEFAULT_TOKENS.map((token) => ({ ...token, balance: 0 }));

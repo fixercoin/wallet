@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { PublicKey, Connection } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 
 // Get RPC endpoint with public fallback
 function getRpcEndpoint(): string {
@@ -7,7 +7,6 @@ function getRpcEndpoint(): string {
   const heliusRpcUrl = process.env.HELIUS_RPC_URL?.trim();
   const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
 
-  // Priority: Helius API key > HELIUS_RPC_URL > SOLANA_RPC_URL > Public endpoint
   if (heliusApiKey) {
     return `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
   }
@@ -18,22 +17,20 @@ function getRpcEndpoint(): string {
     return solanaRpcUrl;
   }
 
-  // Fallback to reliable public RPC endpoint for dev environments
-  console.log(
-    "[TokenAccounts] Using public Solana RPC endpoint. For production, set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
-  );
+  console.log("[TokenAccounts] Using public Solana RPC endpoint.");
   return "https://solana.publicnode.com";
 }
 
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+const SOL_MINT = "So11111111111111111111111111111111111111112";
 
 // Known token metadata
 const KNOWN_TOKENS: Record<
   string,
   { mint: string; symbol: string; name: string; decimals: number }
 > = {
-  So11111111111111111111111111111111111111112: {
-    mint: "So11111111111111111111111111111111111111112",
+  [SOL_MINT]: {
+    mint: SOL_MINT,
     symbol: "SOL",
     name: "Solana",
     decimals: 9,
@@ -72,21 +69,20 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
       (req.query.address as string);
 
     if (!publicKey || typeof publicKey !== "string") {
-      return res.status(400).json({
-        error: "Missing or invalid wallet address",
-      });
+      return res.status(400).json({ error: "Missing or invalid wallet" });
     }
 
-    // Validate it's a valid Solana address
     try {
       new PublicKey(publicKey);
     } catch {
-      return res.status(400).json({
-        error: "Invalid Solana address",
-      });
+      return res.status(400).json({ error: "Invalid Solana address" });
     }
 
-    const body = {
+    const endpoint = getRpcEndpoint();
+    let solBalance = 0;
+
+    // Fetch SPL token accounts
+    const tokenBody = {
       jsonrpc: "2.0",
       id: 1,
       method: "getTokenAccountsByOwner",
@@ -97,202 +93,137 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
       ],
     };
 
-    // Get RPC endpoint on-demand instead of at module load time
-    const endpoint = getRpcEndpoint();
-    let lastError: Error | null = null;
+    const tokenController = new AbortController();
+    const tokenTimeoutId = setTimeout(() => tokenController.abort(), 12000);
+
+    let tokens: any[] = [];
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(
-        () => controller.abort("RPC request timeout after 12 seconds"),
-        12000,
-      );
+      const tokenResp = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tokenBody),
+        signal: tokenController.signal,
+      });
 
-      try {
-        console.log(
-          `[TokenAccounts] Fetching token accounts from Helius for ${publicKey}`,
-        );
+      clearTimeout(tokenTimeoutId);
 
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-          signal: controller.signal,
-        });
+      if (tokenResp.ok) {
+        const tokenData = await tokenResp.json();
+        const accounts = tokenData?.result?.value ?? [];
 
-        clearTimeout(timeoutId);
+        tokens = accounts.map((account: any) => {
+          const info = account.account.data.parsed.info;
+          const mint = info.mint;
+          const decimals = info.tokenAmount.decimals;
 
-        if (!response.ok) {
-          throw new Error(
-            `Helius RPC returned HTTP ${response.status} ${response.statusText}`,
-          );
-        }
+          const raw = BigInt(info.tokenAmount.amount);
+          const balance = Number(raw) / Math.pow(10, decimals);
 
-        const data = await response.json();
-
-        if (data.error) {
-          throw new Error(data.error.message || "Helius RPC error");
-        }
-
-        const accounts = data.result?.value || [];
-        const tokens = accounts.map((account: any) => {
-          const parsedInfo = account.account.data.parsed.info;
-          const mint = parsedInfo.mint;
-          const decimals = parsedInfo.tokenAmount.decimals;
-
-          // Extract balance
-          let balance = 0;
-          if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
-            balance = parsedInfo.tokenAmount.uiAmount;
-          } else if (parsedInfo.tokenAmount.amount) {
-            const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
-            balance = Number(rawAmount) / Math.pow(10, decimals || 0);
-          }
-
-          const metadata = KNOWN_TOKENS[mint] || {
+          const meta = KNOWN_TOKENS[mint] || {
             mint,
             symbol: "UNKNOWN",
             name: "Unknown Token",
             decimals,
           };
 
-          return {
-            ...metadata,
-            balance,
-            decimals: decimals || metadata.decimals,
-          };
+          return { ...meta, balance, decimals };
         });
+      }
+    } catch (tokenError) {
+      clearTimeout(tokenTimeoutId);
+      console.warn(
+        "[TokenAccounts] Failed to fetch token accounts:",
+        tokenError instanceof Error ? tokenError.message : String(tokenError),
+      );
+      tokens = [];
+    }
 
-        // Fetch SOL balance using a separate request with its own timeout
-        let solBalance: number | null = null;
-        let solFetchSucceeded = false;
+    // Fetch native SOL balance separately with its own timeout
+    const solBody = {
+      jsonrpc: "2.0",
+      id: 2,
+      method: "getBalance",
+      params: [publicKey],
+    };
 
-        try {
-          const solBalanceBody = {
-            jsonrpc: "2.0",
-            id: 2,
-            method: "getBalance",
-            params: [publicKey],
-          };
+    const solController = new AbortController();
+    const solTimeoutId = setTimeout(() => solController.abort(), 12000);
 
-          // Create a NEW controller for SOL fetch to avoid timeout conflicts
-          const solController = new AbortController();
-          const solTimeoutId = setTimeout(() => {
-            solController.abort();
-          }, 8000); // 8 second timeout for SOL fetch
+    try {
+      const solResp = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(solBody),
+        signal: solController.signal,
+      });
 
-          try {
-            const solResponse = await fetch(endpoint, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(solBalanceBody),
-              signal: solController.signal,
-            });
+      clearTimeout(solTimeoutId);
 
-            clearTimeout(solTimeoutId);
+      if (solResp.ok) {
+        const solData = await solResp.json();
+        const lamports = solData.result?.value ?? solData.result ?? 0;
+        solBalance =
+          typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
 
-            if (solResponse.ok) {
-              const solData = await solResponse.json();
-              if (solData.result !== undefined && !solData.error) {
-                const lamports = solData.result;
-                solBalance =
-                  typeof lamports === "number"
-                    ? lamports / 1_000_000_000
-                    : typeof lamports?.value === "number"
-                      ? lamports.value / 1_000_000_000
-                      : 0;
-
-                if (solBalance >= 0) {
-                  solFetchSucceeded = true;
-                  console.log(
-                    `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
-                  );
-                }
-              }
-            }
-          } catch (err) {
-            clearTimeout(solTimeoutId);
-            throw err;
-          }
-        } catch (solError) {
-          console.warn(
-            `[TokenAccounts] Warning: Could not fetch SOL balance`,
-            solError instanceof Error ? solError.message : String(solError),
-          );
-          // Set solBalance to 0 but still mark as fetched so we don't try again
+        if (solBalance < 0) {
           solBalance = 0;
-          solFetchSucceeded = true;
-        }
-
-        // Always ensure SOL is in the tokens array with the fetched balance
-        const hasSOL = tokens.some(
-          (t) => t.mint === "So11111111111111111111111111111111111111112",
-        );
-
-        if (!hasSOL && solFetchSucceeded) {
-          tokens.unshift({
-            ...KNOWN_TOKENS["So11111111111111111111111111111111111111112"],
-            balance: solBalance ?? 0,
-          });
-        } else if (hasSOL && solFetchSucceeded && solBalance !== null) {
-          // Update existing SOL entry with fetched balance
-          const solIndex = tokens.findIndex(
-            (t) => t.mint === "So11111111111111111111111111111111111111112",
-          );
-          if (solIndex >= 0) {
-            tokens[solIndex] = {
-              ...tokens[solIndex],
-              balance: solBalance,
-            };
-          }
         }
 
         console.log(
-          `[TokenAccounts] ✅ Found ${tokens.length} tokens for ${publicKey.slice(0, 8)} via Helius${solFetchSucceeded ? ` (SOL: ${solBalance} SOL)` : " (SOL will be fetched separately)"}`,
+          `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
         );
-        return res.json({
-          publicKey,
-          tokens,
-          count: tokens.length,
-          ...(solFetchSucceeded && { solBalance }),
-        });
-      } finally {
-        clearTimeout(timeoutId);
       }
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      const errorMsg = lastError.message || "Unknown error";
-      console.error(`[TokenAccounts] Helius RPC error: ${errorMsg}`);
+    } catch (solError) {
+      clearTimeout(solTimeoutId);
+      console.warn(
+        "[TokenAccounts] Failed to fetch SOL balance:",
+        solError instanceof Error ? solError.message : String(solError),
+      );
+      solBalance = 0;
+    }
 
-      // Return default tokens as fallback
-      // This ensures the UI still shows known tokens with 0 balance
-      const defaultTokens = Object.values(KNOWN_TOKENS).map((token) => ({
-        ...token,
-        balance: 0,
-      }));
+    // Check if SOL already exists in token list (might be WSOL or SOL account)
+    const solIndex = tokens.findIndex((t) => t.mint === SOL_MINT);
 
-      return res.status(200).json({
-        publicKey,
-        tokens: defaultTokens,
-        count: defaultTokens.length,
-        warning:
-          "Token accounts unavailable - returning default tokens with zero balance",
+    if (solIndex >= 0) {
+      // Update existing SOL entry with fetched balance
+      tokens[solIndex] = {
+        ...tokens[solIndex],
+        balance: solBalance,
+      };
+    } else {
+      // Insert SOL at the beginning if not found
+      tokens.unshift({
+        ...KNOWN_TOKENS[SOL_MINT],
+        balance: solBalance,
       });
     }
+
+    console.log(
+      `[TokenAccounts] ✅ Found ${tokens.length} tokens for ${publicKey.slice(0, 8)}... (SOL: ${solBalance} SOL)`,
+    );
+
+    return res.json({
+      publicKey,
+      tokens,
+      solBalance,
+      count: tokens.length,
+    });
   } catch (error) {
     console.error("[TokenAccounts] Unexpected error:", error);
 
-    // Return default tokens even on unexpected errors
-    const defaultTokens = Object.values(KNOWN_TOKENS).map((token) => ({
-      ...token,
+    // Return default tokens with zero balance on error
+    const fallback = Object.values(KNOWN_TOKENS).map((t) => ({
+      ...t,
       balance: 0,
     }));
 
     return res.status(200).json({
       publicKey: (req.query.publicKey as string) || "unknown",
-      tokens: defaultTokens,
-      count: defaultTokens.length,
-      warning: "Token accounts unavailable due to server error",
+      tokens: fallback,
+      solBalance: 0,
+      count: fallback.length,
     });
   }
 };

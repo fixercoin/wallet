@@ -215,8 +215,14 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 
         <div className="space-y-4 py-4">
           {!isEditing && savedMethodId ? (
-            // View mode - show saved information
+            // View mode - show saved information with "Payment method is added" message
             <div className="space-y-4 text-sm">
+              <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
+                <p className="text-sm font-semibold text-green-400 uppercase">
+                  ✓ Payment Method Added
+                </p>
+              </div>
+
               <div className="p-3 rounded-lg bg-[#0f1729] border border-gray-600">
                 <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
                   Name

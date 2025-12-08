@@ -200,7 +200,70 @@ export const getTokenAccounts = async (
   try {
     console.log(`Fetching token accounts via server API for: ${publicKey}`);
 
-    // Try Moralis endpoint first (faster and more reliable for all tokens including FXM)
+    // Try Helius-powered all-balances endpoint first (includes all tokens with accurate balances)
+    try {
+      console.log("[TokenAccounts] Attempting Helius all-balances endpoint...");
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+      try {
+        const response = await fetch(
+          `/api/wallet/all-balances?publicKey=${encodeURIComponent(publicKey)}`,
+          { signal: controller.signal },
+        );
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          const allBalancesTokens = data.tokens || [];
+
+          console.log(
+            `[TokenAccounts] ✅ Helius all-balances endpoint success: ${allBalancesTokens.length} tokens`,
+          );
+
+          if (allBalancesTokens.length > 0) {
+            // Enrich with logos from DEFAULT_TOKENS
+            const logoMap = new Map(
+              DEFAULT_TOKENS.map((t) => [t.mint, t.logoURI]),
+            );
+            const enrichedTokens = allBalancesTokens.map((token: any) => ({
+              mint: token.mint,
+              symbol: token.symbol,
+              name: token.name,
+              decimals: token.decimals,
+              balance: token.balance || token.uiAmount || 0,
+              logoURI: token.logoURI || logoMap.get(token.mint),
+            }));
+
+            // Log FXM for debugging
+            const fxmToken = enrichedTokens.find((t) => t.symbol === "FXM");
+            if (fxmToken) {
+              console.log(
+                `[TokenAccounts] ✅ FXM found via Helius: balance=${fxmToken.balance}, symbol=${fxmToken.symbol}`,
+              );
+            }
+
+            console.log(
+              `✅ Token accounts loaded from Helius: ${enrichedTokens.length} tokens`,
+            );
+            return enrichedTokens;
+          }
+        }
+      } catch (heliusError) {
+        clearTimeout(timeoutId);
+        console.warn(
+          "[TokenAccounts] Helius endpoint failed, falling back to Moralis:",
+          heliusError instanceof Error
+            ? heliusError.message
+            : String(heliusError),
+        );
+      }
+    } catch (heliusError) {
+      console.warn("[TokenAccounts] Helius attempt error:", heliusError);
+    }
+
+    // Try Moralis endpoint second
     try {
       console.log("[TokenAccounts] Attempting Moralis endpoint...");
       const controller = new AbortController();
@@ -240,7 +303,7 @@ export const getTokenAccounts = async (
             const fxmToken = enrichedTokens.find((t) => t.symbol === "FXM");
             if (fxmToken) {
               console.log(
-                `[TokenAccounts] FXM found via Moralis: balance=${fxmToken.uiAmount}, symbol=${fxmToken.symbol}`,
+                `[TokenAccounts] FXM found via Moralis: balance=${fxmToken.balance}, symbol=${fxmToken.symbol}`,
               );
             }
 
@@ -263,7 +326,7 @@ export const getTokenAccounts = async (
       console.warn("[TokenAccounts] Moralis attempt error:", moralisError);
     }
 
-    // Fallback to RPC-based endpoint if Moralis fails
+    // Fallback to RPC-based endpoint if Helius and Moralis fail
     console.log("[TokenAccounts] Using fallback RPC endpoint...");
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout

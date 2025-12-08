@@ -1,27 +1,26 @@
 import { RequestHandler } from "express";
 
-// Get RPC endpoint with public fallback
+// Get RPC endpoint with free endpoints and Alchemy fallback
 function getRpcEndpoint(): string {
-  const heliusApiKey = process.env.HELIUS_API_KEY?.trim();
-  const heliusRpcUrl = process.env.HELIUS_RPC_URL?.trim();
   const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
 
-  // Priority: Helius API key > HELIUS_RPC_URL > SOLANA_RPC_URL > Public endpoint
-  if (heliusApiKey) {
-    return `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
-  }
-  if (heliusRpcUrl) {
-    return heliusRpcUrl;
-  }
   if (solanaRpcUrl) {
     return solanaRpcUrl;
   }
 
-  // Fallback to reliable public RPC endpoint for dev environments
+  const freeEndpoints = [
+    "https://api.mainnet-beta.solflare.network",
+    "https://solana-api.projectserum.com",
+    "https://api.mainnet.solflare.com",
+  ];
+
+  const alchemyEndpoint =
+    "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
+
   console.log(
-    "[TokenBalance] Using public Solana RPC endpoint. For production, set HELIUS_API_KEY or HELIUS_RPC_URL environment variable.",
+    "[TokenBalance] Using free Solana RPC endpoints with Alchemy fallback",
   );
-  return "https://solana.publicnode.com";
+  return freeEndpoints[Math.floor(Math.random() * freeEndpoints.length)];
 }
 
 export const handleGetTokenBalance: RequestHandler = async (req, res) => {
@@ -52,7 +51,9 @@ export const handleGetTokenBalance: RequestHandler = async (req, res) => {
     };
 
     try {
-      console.log(`[TokenBalance] Fetching balance for ${mint} from Helius`);
+      console.log(
+        `[TokenBalance] Fetching balance for ${mint} from RPC endpoint`,
+      );
 
       // Get RPC endpoint on-demand instead of at module load time
       const RPC_ENDPOINT = getRpcEndpoint();
@@ -65,7 +66,7 @@ export const handleGetTokenBalance: RequestHandler = async (req, res) => {
       const data = await response.json();
 
       if (data.error) {
-        throw new Error(data.error.message || "Helius RPC error");
+        throw new Error(data.error.message || "RPC error");
       }
 
       const accounts = data.result?.value || [];
@@ -96,10 +97,10 @@ export const handleGetTokenBalance: RequestHandler = async (req, res) => {
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.error("[TokenBalance] Helius RPC error:", errorMsg);
+      console.error("[TokenBalance] RPC error:", errorMsg);
 
       return res.status(502).json({
-        error: errorMsg || "Failed to fetch token balance from Helius RPC",
+        error: errorMsg || "Failed to fetch token balance from RPC",
         wallet,
         mint,
         balance: 0,
@@ -109,7 +110,7 @@ export const handleGetTokenBalance: RequestHandler = async (req, res) => {
     console.error("[TokenBalance] Handler error:", error);
     res.status(500).json({
       error: error instanceof Error ? error.message : "Internal server error",
-      details: "Check that HELIUS_API_KEY or HELIUS_RPC_URL is configured",
+      details: "Check RPC endpoint configuration",
       balance: 0,
     });
   }

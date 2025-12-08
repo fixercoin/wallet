@@ -1,8 +1,10 @@
 // Solana Web3.js Service for blockchain data
-// Uses Solflare public RPC endpoint (no API key required)
+// Uses free public RPC endpoints with Alchemy fallback
 import { Connection, PublicKey } from "@solana/web3.js";
+import { RPC_ENDPOINTS } from "../../../utils/solanaConfig";
 
-const RPC_URL = "https://api.mainnet-beta.solflare.network";
+// Use first available RPC endpoint
+const RPC_URL = RPC_ENDPOINTS[0];
 
 export interface TokenMetadata {
   mint: string;

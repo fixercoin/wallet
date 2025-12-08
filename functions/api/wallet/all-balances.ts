@@ -65,36 +65,37 @@ interface AllBalancesResponse {
 }
 
 interface Env {
-  HELIUS_API_KEY?: string;
-  HELIUS_RPC_URL?: string;
   SOLANA_RPC_URL?: string;
 }
 
+const FREE_RPC_ENDPOINTS = [
+  "https://api.mainnet-beta.solflare.network",
+  "https://solana-api.projectserum.com",
+  "https://api.mainnet.solflare.com",
+];
+
+const ALCHEMY_RPC_URL =
+  "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
+
 /**
- * Get RPC endpoint from environment variables with fallback strategy
- * Priority: HELIUS_API_KEY > HELIUS_RPC_URL > SOLANA_RPC_URL > Public endpoints
+ * Get RPC endpoint from environment variables with fallback to free endpoints
+ * Priority: SOLANA_RPC_URL > Free endpoints > Alchemy fallback
  */
 function getRpcEndpoint(env?: Env): string {
-  const heliusApiKey = env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY || "";
-  const heliusRpcUrl = env?.HELIUS_RPC_URL || process.env.HELIUS_RPC_URL || "";
   const solanaRpcUrl = env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL || "";
 
-  if (heliusApiKey?.trim()) {
-    console.log("[AllBalances] Using HELIUS_API_KEY endpoint");
-    return `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey.trim()}`;
-  }
-  if (heliusRpcUrl?.trim()) {
-    console.log("[AllBalances] Using HELIUS_RPC_URL endpoint");
-    return heliusRpcUrl.trim();
-  }
   if (solanaRpcUrl?.trim()) {
     console.log("[AllBalances] Using SOLANA_RPC_URL endpoint");
     return solanaRpcUrl.trim();
   }
 
-  // Fallback to reliable public endpoints
-  console.log("[AllBalances] Using public Solana RPC endpoint");
-  return "https://solana.publicnode.com";
+  // Use free endpoints with Alchemy fallback
+  console.log(
+    "[AllBalances] Using free Solana RPC endpoints with Alchemy fallback",
+  );
+  return FREE_RPC_ENDPOINTS[
+    Math.floor(Math.random() * FREE_RPC_ENDPOINTS.length)
+  ];
 }
 
 /**
@@ -339,7 +340,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
                 ? fetchError.message
                 : "Unknown error",
             endpoint: endpointLabel,
-            hint: "Check that HELIUS_API_KEY is set in environment",
+            hint: "Check RPC endpoint configuration",
           },
         }),
         {
@@ -357,7 +358,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       JSON.stringify({
         error: error instanceof Error ? error.message : "Internal server error",
         details: {
-          hint: "Check that HELIUS_API_KEY environment variable is configured",
+          hint: "Check RPC endpoint configuration",
         },
       }),
       {

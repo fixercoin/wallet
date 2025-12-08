@@ -5,18 +5,18 @@ export const config = {
 interface Env {
   SOLANA_RPC_URL?: string;
   ALCHEMY_RPC_URL?: string;
-  MORALIS_RPC_URL?: string;
 }
 
 const DEFAULT_SOLANA_RPC = "https://api.mainnet-beta.solflare.network";
 const FALLBACK_RPC_ENDPOINTS = [
   "https://api.mainnet-beta.solflare.network",
+  "https://solana-api.projectserum.com",
+  "https://api.mainnet.solflare.com",
   "https://solana.publicnode.com",
-  "https://api.solflare.com",
-  "https://rpc.ankr.com/solana",
-  "https://api.mainnet-beta.solana.com",
-  "https://api.marinade.finance/rpc",
 ];
+
+const ALCHEMY_RPC_FALLBACK =
+  "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
 
 const PUMPFUN_API_BASE = "https://pump.fun/api";
 const PUMPFUN_QUOTE = "https://pumpportal.fun/api/quote";
@@ -153,13 +153,6 @@ async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
     env.ALCHEMY_RPC_URL.length > 0
   ) {
     priorityEndpoints.push(env.ALCHEMY_RPC_URL);
-  }
-  if (
-    env?.MORALIS_RPC_URL &&
-    typeof env.MORALIS_RPC_URL === "string" &&
-    env.MORALIS_RPC_URL.length > 0
-  ) {
-    priorityEndpoints.push(env.MORALIS_RPC_URL);
   }
 
   // Add fallback endpoints

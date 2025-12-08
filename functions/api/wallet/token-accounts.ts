@@ -80,7 +80,94 @@ const KNOWN_TOKENS: Record<string, any> = {
   },
 };
 
+// Known tokens that should always be checked, in case RPC doesn't return them
+const CRITICAL_TOKENS_TO_VERIFY = [
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump", // FXM
+  "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
+  "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
+  "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns", // USDT
+];
+
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+
+async function verifyMissingTokens(
+  endpoint: string,
+  publicKey: string,
+  foundTokens: any[],
+  missingMints: string[],
+): Promise<any[]> {
+  if (missingMints.length === 0) return [];
+
+  const additionalTokens: any[] = [];
+
+  for (const mint of missingMints) {
+    try {
+      const rpcBody = {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getTokenAccountsByOwner",
+        params: [publicKey, { mint }, { encoding: "jsonParsed" }],
+      };
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rpcBody),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      const data = await response.json();
+
+      if (!data.error && data.result?.value && data.result.value.length > 0) {
+        const account = data.result.value[0];
+        const parsedInfo = account?.account?.data?.parsed?.info;
+        if (parsedInfo) {
+          const decimals = parsedInfo.tokenAmount?.decimals || 0;
+          const tokenAmount = parsedInfo.tokenAmount;
+          let balance = 0;
+
+          if (typeof tokenAmount?.uiAmount === "number") {
+            balance = tokenAmount.uiAmount;
+          } else if (tokenAmount?.amount) {
+            const rawAmount = BigInt(tokenAmount.amount);
+            balance = Number(rawAmount) / Math.pow(10, decimals);
+          }
+
+          const metadata = KNOWN_TOKENS[mint] || {
+            mint,
+            symbol: "UNKNOWN",
+            name: "Unknown Token",
+            decimals,
+            logoURI: "/placeholder.svg",
+          };
+
+          additionalTokens.push({
+            ...metadata,
+            balance,
+            decimals: decimals || metadata.decimals,
+            logoURI: metadata.logoURI || "/placeholder.svg",
+          });
+
+          console.log(
+            `[TokenAccounts] ✅ Found missing token: ${metadata.symbol} (${mint}) with balance ${balance}`,
+          );
+        }
+      }
+    } catch (err) {
+      console.warn(
+        `[TokenAccounts] Failed to verify token ${mint}:`,
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
+  return additionalTokens;
+}
 
 async function handler(request: Request, env?: Env): Promise<Response> {
   // Handle CORS preflight
@@ -239,6 +326,27 @@ async function handler(request: Request, env?: Env): Promise<Response> {
           );
         }
 
+        // Check for missing critical tokens and fetch them individually
+        const foundMints = new Set(
+          validTokens.map((t) => t?.mint).filter(Boolean),
+        );
+        const missingMints = CRITICAL_TOKENS_TO_VERIFY.filter(
+          (mint) => !foundMints.has(mint),
+        );
+
+        let additionalTokens: any[] = [];
+        if (missingMints.length > 0) {
+          console.log(
+            `[TokenAccounts] Found ${missingMints.length} missing critical tokens, verifying individually...`,
+          );
+          additionalTokens = await verifyMissingTokens(
+            endpoint,
+            publicKey,
+            validTokens,
+            missingMints,
+          );
+        }
+
         // Fetch and include native SOL balance
         let solBalance = 0;
         try {
@@ -295,10 +403,11 @@ async function handler(request: Request, env?: Env): Promise<Response> {
               "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
           },
           ...validTokens,
+          ...additionalTokens,
         ];
 
         console.log(
-          `[TokenAccounts] Found ${validTokens.length} token accounts (plus SOL) for ${publicKey.slice(
+          `[TokenAccounts] Found ${validTokens.length} token accounts from RPC + ${additionalTokens.length} verified missing tokens (plus SOL) for ${publicKey.slice(
             0,
             8,
           )}`,

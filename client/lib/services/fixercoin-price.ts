@@ -196,8 +196,8 @@ class FixercoinPriceService {
       },
       this.TOKEN_NAME,
       {
-        maxRetries: 3, // Reduced from 50 for faster fallback
-        initialDelayMs: 100,
+        maxRetries: 2, // Fail fast to allow static fallback
+        initialDelayMs: 500,
         maxDelayMs: 1000,
         backoffMultiplier: 1.5,
         timeoutMs: 5000,

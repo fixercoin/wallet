@@ -1113,39 +1113,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
 
-          {/* Quest Reward Card */}
-          <div className="w-full mt-6 px-4">
-            <div className="w-full bg-gradient-to-br from-[#1a3a2a] to-[#0f2818] rounded-md border border-[#22c55e]/40 p-4 cursor-pointer hover:bg-[#22c55e]/10 transition-colors" onClick={() => setShowQuestModal(true)}>
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex flex-col gap-2 flex-1">
-                  <div className="text-xs font-semibold text-[#22c55e] uppercase tracking-widest">
-                    🎁 Fixercoin Quest
-                  </div>
-                  <div className="text-sm font-bold text-white">
-                    Earn {earnedTokens} FIXERCOIN
-                  </div>
-                  <div className="w-full bg-white/10 rounded-full h-1.5 border border-[#22c55e]/20">
-                    <div
-                      className="bg-gradient-to-r from-[#34d399] to-[#22c55e] h-1.5 rounded-full"
-                      style={{ width: `${progressPct}%` }}
-                    ></div>
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {tasksDone}/{tasksTotal} tasks completed
-                  </div>
-                </div>
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowQuestModal(true);
-                  }}
-                  className="bg-[#22c55e] hover:bg-[#16a34a] text-gray-900 font-bold text-xs px-4 py-2 rounded-md whitespace-nowrap h-auto transition-colors"
-                >
-                  View Quest
-                </Button>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Tokens List */}

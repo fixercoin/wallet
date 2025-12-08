@@ -226,14 +226,20 @@ export const handleCreateNotification: RequestHandler = async (req, res) => {
 
     await saveNotification(notification);
 
-    // For broadcast notifications (generic buy orders), also store in broadcast queue
-    if (
-      recipientWallet.toLowerCase().includes("broadcast") ||
-      recipientWallet.toLowerCase() === "broadcast_sellers"
-    ) {
+    // For broadcast notifications, store in appropriate broadcast queue
+    const lowerWallet = recipientWallet.toLowerCase();
+    if (lowerWallet.includes("broadcast")) {
       try {
         const kv = getKVStorage();
-        const broadcastKey = "notifications:broadcast";
+        let broadcastKey = "notifications:broadcast";
+
+        // Use different queues for sellers vs buyers
+        if (lowerWallet === "broadcast_sellers") {
+          broadcastKey = "notifications:broadcast:sellers";
+        } else if (lowerWallet === "broadcast_buyers") {
+          broadcastKey = "notifications:broadcast:buyers";
+        }
+
         const broadcastJson = await kv.get(broadcastKey);
         const broadcastNotifications = broadcastJson
           ? JSON.parse(broadcastJson)

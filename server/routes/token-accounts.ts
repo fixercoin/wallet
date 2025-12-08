@@ -179,7 +179,7 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
           const solController = new AbortController();
           const solTimeoutId = setTimeout(() => {
             solController.abort();
-          }, 8000); // 8 second timeout for SOL fetch
+          }, 12000); // 12 second timeout for SOL fetch
 
           try {
             const solResponse = await fetch(endpoint, {
@@ -216,12 +216,11 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
           }
         } catch (solError) {
           console.warn(
-            `[TokenAccounts] Warning: Could not fetch SOL balance`,
+            `[TokenAccounts] Warning: Could not fetch SOL balance separately, SOL balance will be fetched from dedicated endpoint`,
             solError instanceof Error ? solError.message : String(solError),
           );
-          // Set solBalance to 0 but still mark as fetched so we don't try again
-          solBalance = 0;
-          solFetchSucceeded = true;
+          // Don't set solBalance here - let client fetch from /api/wallet/balance endpoint
+          solFetchSucceeded = false;
         }
 
         // Always ensure SOL is in the tokens array with the fetched balance

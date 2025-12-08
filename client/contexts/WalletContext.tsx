@@ -897,6 +897,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       }
 
+      console.log(
+        `[WalletContext] Creating allTokens array with SOL balance: ${solBalance} SOL`,
+      );
+
       const allTokens: TokenInfo[] = [
         {
           mint: "So11111111111111111111111111111111111111112",
@@ -914,6 +918,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           allTokens.push(tokenAccount);
         }
       });
+
+      console.log(
+        `[WalletContext] allTokens created with ${allTokens.length} tokens, SOL balance: ${
+          allTokens[0]?.balance || "MISSING"
+        } SOL`,
+      );
 
       // Price fetching logic - show loader only during price fetch
       setIsLoading(true);

@@ -919,8 +919,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       });
 
-      // Always include FXM token for display (even if user doesn't own it)
+      // Always include FXM, FIXERCOIN, and LOCKER tokens for display (even if user doesn't own them)
       const fxmMintAddress = "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump";
+      const fixercoinMintAddress = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+      const lockerMintAddress = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+
       const hasFXM = allTokens.some((t) => t.mint === fxmMintAddress);
       if (!hasFXM) {
         allTokens.push({
@@ -931,6 +934,34 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           balance: 0,
           logoURI:
             "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2Fef8e21a960894d1b9408732e737a9d1f?format=webp&width=800",
+        });
+      }
+
+      const hasFixercoin = allTokens.some(
+        (t) => t.mint === fixercoinMintAddress,
+      );
+      if (!hasFixercoin) {
+        allTokens.push({
+          mint: fixercoinMintAddress,
+          symbol: "FIXERCOIN",
+          name: "FIXERCOIN",
+          decimals: 6,
+          balance: 0,
+          logoURI:
+            "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2F8921e4db88154673870d8835331beb50?format=webp&width=800",
+        });
+      }
+
+      const hasLocker = allTokens.some((t) => t.mint === lockerMintAddress);
+      if (!hasLocker) {
+        allTokens.push({
+          mint: lockerMintAddress,
+          symbol: "LOCKER",
+          name: "LOCKER",
+          decimals: 6,
+          balance: 0,
+          logoURI:
+            "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2Fb8e7b3fa19fe464c8362834eaf1367eb?format=webp&width=800",
         });
       }
 

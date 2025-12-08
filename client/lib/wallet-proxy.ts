@@ -221,12 +221,16 @@ export const getTokenAccounts = async (
           console.log(`[TokenAccounts] ✅ Moralis endpoint success: ${moralisTokens.length} tokens`);
 
           if (moralisTokens.length > 0) {
-            // Enrich with logos from DEFAULT_TOKENS
+            // Enrich with logos from DEFAULT_TOKENS and convert to TokenInfo format
             const logoMap = new Map(
               DEFAULT_TOKENS.map((t) => [t.mint, t.logoURI]),
             );
-            const enrichedTokens = moralisTokens.map((token) => ({
-              ...token,
+            const enrichedTokens = moralisTokens.map((token: any) => ({
+              mint: token.mint,
+              symbol: token.symbol,
+              name: token.name,
+              decimals: token.decimals,
+              balance: parseFloat(token.uiAmount || "0"),
               logoURI: token.logoURI || logoMap.get(token.mint),
             }));
 

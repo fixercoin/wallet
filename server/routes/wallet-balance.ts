@@ -84,8 +84,14 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
       }
 
       if (!response.ok) {
+        let errorBody = "";
+        try {
+          errorBody = await response.text();
+        } catch {
+          // Ignore error parsing
+        }
         throw new Error(
-          `RPC endpoint returned HTTP ${response.status} ${response.statusText}`,
+          `RPC endpoint returned HTTP ${response.status} ${response.statusText}${errorBody ? `: ${errorBody.substring(0, 200)}` : ""}`,
         );
       }
 

@@ -1,7 +1,3 @@
-export const config = {
-  runtime: "nodejs_esmsh",
-};
-
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 
@@ -75,7 +71,8 @@ interface Env {
 }
 
 /**
- * Get Helius RPC endpoint from environment variables with fallback
+ * Get RPC endpoint from environment variables with fallback strategy
+ * Priority: HELIUS_API_KEY > HELIUS_RPC_URL > SOLANA_RPC_URL > Public endpoints
  */
 function getRpcEndpoint(env?: Env): string {
   const heliusApiKey = env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY || "";
@@ -83,21 +80,26 @@ function getRpcEndpoint(env?: Env): string {
   const solanaRpcUrl = env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL || "";
 
   if (heliusApiKey?.trim()) {
+    console.log("[AllBalances] Using HELIUS_API_KEY endpoint");
     return `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey.trim()}`;
   }
   if (heliusRpcUrl?.trim()) {
+    console.log("[AllBalances] Using HELIUS_RPC_URL endpoint");
     return heliusRpcUrl.trim();
   }
   if (solanaRpcUrl?.trim()) {
+    console.log("[AllBalances] Using SOLANA_RPC_URL endpoint");
     return solanaRpcUrl.trim();
   }
 
-  // Fallback to public endpoints
+  // Fallback to reliable public endpoints
+  console.log("[AllBalances] Using public Solana RPC endpoint");
   return "https://solana.publicnode.com";
 }
 
 /**
- * Fetch all token balances including SOL using Helius RPC
+ * Fetch all token balances including SOL using RPC
+ * Handles both token accounts and native SOL balance
  */
 async function handler(request: Request, env?: Env): Promise<Response> {
   // Handle CORS preflight

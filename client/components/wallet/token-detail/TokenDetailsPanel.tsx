@@ -22,6 +22,8 @@ export const TokenDetailsPanel: React.FC<TokenDetailsPanelProps> = ({
     if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
     if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
     if (num >= 1e3) return `$${(num / 1e3).toFixed(2)}K`;
+    // For very small prices (< $0.01), show 8 decimal places
+    if (num < 0.01) return `$${num.toFixed(8)}`;
     return `$${num.toFixed(2)}`;
   };
 

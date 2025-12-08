@@ -474,7 +474,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   ): string => {
     if (amount === undefined || amount === null || isNaN(amount)) {
       if (symbol === "SOL") return "0.000000";
-      if (symbol === "FXM") return "0.000000";
+      if (symbol === "FXM") return "0.00";
       if (symbol === "FIXERCOIN" || symbol === "LOCKER") return "0.00";
       return "0.00";
     }

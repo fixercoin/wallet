@@ -132,7 +132,7 @@ export const getBalance = async (publicKey: string): Promise<number> => {
     // Use server endpoint for balance fetching
     // This avoids CORS issues and ensures reliability
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     try {
       const response = await fetch(

@@ -1160,10 +1160,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             return (
               <div key={token.mint} className="w-full">
-                <Card className="w-full bg-gray-900/20 rounded-none sm:rounded-[2px] border border-[#22c55e]/40">
+                <Card className="w-full bg-transparent rounded-md border border-[#22c55e]/40 hover:bg-[#22c55e]/10 transition-colors">
                   <CardContent className="w-full p-0">
                     <div
-                      className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-4"
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-md cursor-pointer gap-4"
                       onClick={() => handleTokenCardClick(token)}
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">

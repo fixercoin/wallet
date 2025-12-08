@@ -640,6 +640,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const sortedTokens = useMemo(() => {
     const priority = ["SOL", "USDC", "FIXERCOIN", "LOCKER"];
     const arr = [...tokens].filter((t) => t.symbol !== "USDT");
+
+    const solToken = arr.find((t) => t.symbol === "SOL");
+    if (solToken) {
+      console.log(
+        `[Dashboard] SOL token found in tokens array:`,
+        {
+          symbol: solToken.symbol,
+          balance: solToken.balance,
+          price: solToken.price,
+          mint: solToken.mint,
+        },
+      );
+    } else {
+      console.warn("[Dashboard] SOL token NOT found in tokens array");
+      console.log("[Dashboard] Available tokens:", tokens.map((t) => t.symbol));
+    }
+
     arr.sort((a, b) => {
       const aSym = (a.symbol || "").toUpperCase();
       const bSym = (b.symbol || "").toUpperCase();
@@ -650,6 +667,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       if (bIdx >= 0) return 1;
       return aSym.localeCompare(bSym);
     });
+
+    console.log(
+      `[Dashboard] sortedTokens ready: ${arr.length} tokens, first token: ${arr[0]?.symbol} (balance: ${arr[0]?.balance})`,
+    );
     return arr;
   }, [tokens]);
 

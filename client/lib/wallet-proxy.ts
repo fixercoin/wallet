@@ -77,15 +77,6 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     logoURI:
       "https://i.postimg.cc/J7p1FPbm/IMG-20250425-004450-removebg-preview-modified-2-6.png",
   },
-  {
-    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
-    symbol: "FXM",
-    name: "Fixorium",
-    decimals: 6,
-    balance: 0,
-    logoURI:
-      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-  },
 ];
 
 const SOLANA_DERIVATION_PATH = "m/44'/501'/0'/0'" as const;

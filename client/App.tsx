@@ -156,6 +156,7 @@ import AdminDisputes from "./pages/AdminDisputes";
 import WaitingForSellerResponse from "./pages/WaitingForSellerResponse";
 import WaitingForBuyerResponse from "./pages/WaitingForBuyerResponse";
 import SellerOrderConfirmation from "./pages/SellerOrderConfirmation";
+import BuyerOrderConfirmation from "./pages/BuyerOrderConfirmation";
 import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();

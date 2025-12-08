@@ -129,19 +129,23 @@ async function handler(request: Request): Promise<Response> {
       }
     }
 
-    // Return error when DexScreener fails (no fallback prices)
+    // Return fallback price when DexScreener fails
+    const fallbackPrice = FALLBACK_PRICES[token] || 0;
     return new Response(
       JSON.stringify({
         token,
-        error: "Price service temporarily unavailable",
+        priceUsd: fallbackPrice,
+        priceChange24h: 0,
+        source: "fallback",
+        isFallback: true,
         timestamp: Date.now(),
       }),
       {
-        status: 503,
+        status: 200,
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
-          "Cache-Control": "no-cache",
+          "Cache-Control": "public, max-age=5",
         },
       },
     );
@@ -179,33 +183,39 @@ async function handler(request: Request): Promise<Response> {
           }
         }
 
-        // Return error when price not available (no fallback prices)
+        // Return fallback price when not available
+        const fallbackMintPrice = FALLBACK_PRICES[tokenSymbol] || 0;
         return new Response(
           JSON.stringify({
             token: tokenSymbol,
             mint,
-            error: "Price service temporarily unavailable",
+            priceUsd: fallbackMintPrice,
+            priceChange24h: 0,
+            source: "fallback",
+            isFallback: true,
             timestamp: Date.now(),
           }),
           {
-            status: 503,
+            status: 200,
             headers: {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*",
-              "Cache-Control": "no-cache",
+              "Cache-Control": "public, max-age=5",
             },
           },
         );
       }
     }
 
-    // Return zero price for unknown token (still valid JSON)
+    // Return fallback price for unknown token
     return new Response(
       JSON.stringify({
         token,
         mint,
-        priceUsd: 0,
-        source: "unknown",
+        priceUsd: FALLBACK_PRICES[token] || 0,
+        priceChange24h: 0,
+        source: "fallback",
+        isFallback: true,
         timestamp: Date.now(),
       }),
       {
@@ -213,7 +223,7 @@ async function handler(request: Request): Promise<Response> {
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
-          "Cache-Control": "public, max-age=60",
+          "Cache-Control": "public, max-age=5",
         },
       },
     );

@@ -4,27 +4,26 @@ import { PublicKey } from "@solana/web3.js";
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 
-// Get RPC endpoint with priority for Helius
+// Get RPC endpoint with priority for free endpoints and Alchemy fallback
 function getRpcEndpoint(): string {
-  const heliusApiKey = process.env.HELIUS_API_KEY?.trim();
-  const heliusRpcUrl = process.env.HELIUS_RPC_URL?.trim();
   const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
 
-  if (heliusApiKey) {
-    console.log("[AllBalances] Using HELIUS_API_KEY endpoint");
-    return `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
-  }
-  if (heliusRpcUrl) {
-    console.log("[AllBalances] Using HELIUS_RPC_URL endpoint");
-    return heliusRpcUrl;
-  }
   if (solanaRpcUrl) {
     console.log("[AllBalances] Using SOLANA_RPC_URL endpoint");
     return solanaRpcUrl;
   }
 
-  console.log("[AllBalances] Using public Solana RPC endpoint");
-  return "https://solana.publicnode.com";
+  const freeEndpoints = [
+    "https://api.mainnet-beta.solflare.network",
+    "https://solana-api.projectserum.com",
+    "https://api.mainnet.solflare.com",
+  ];
+
+  const alchemyEndpoint =
+    "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
+
+  console.log("[AllBalances] Using free Solana RPC endpoints with Alchemy fallback");
+  return freeEndpoints[Math.floor(Math.random() * freeEndpoints.length)];
 }
 
 // Known token metadata

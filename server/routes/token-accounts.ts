@@ -126,6 +126,13 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
           const raw = BigInt(info.tokenAmount.amount);
           const balance = Number(raw) / Math.pow(10, decimals);
 
+          // Special logging for FXM and other tokens
+          if (mint === "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump") {
+            console.log(
+              `[TokenAccounts] FXM Token found - Raw: ${raw}, Decimals: ${decimals}, Balance: ${balance}`,
+            );
+          }
+
           const meta = KNOWN_TOKENS[mint] || {
             mint,
             symbol: "UNKNOWN",

@@ -232,7 +232,6 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
   return (
     <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground p-4">
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2">
-
         {/* HEADER */}
         <div className="flex items-center gap-3 mb-6">
           <Button
@@ -263,7 +262,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                   {token.symbol}
                 </p>
                 <p className="text-xs text-gray-500 uppercase">
-                  PRICE: ${token.price?.toFixed(8) || "N/A"}
+                  PRICE: ${token.price?.toFixed(2) || "N/A"}
                 </p>
               </div>
             </div>
@@ -351,7 +350,9 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-400 uppercase">TOTAL AT END</span>
+                    <span className="text-gray-400 uppercase">
+                      TOTAL AT END
+                    </span>
                     <span className="text-white font-semibold">
                       {formatTokenAmount(
                         Number(stakeAmount) + calculatedReward,
@@ -378,8 +379,8 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
 
             {stakeAmount && Number(stakeAmount) < MIN_STAKE_AMOUNT && (
               <p className="text-xs text-red-400 mt-2 uppercase">
-                MINIMUM STAKE REQUIRED:{" "}
-                {formatTokenAmount(MIN_STAKE_AMOUNT)} {token.symbol}
+                MINIMUM STAKE REQUIRED: {formatTokenAmount(MIN_STAKE_AMOUNT)}{" "}
+                {token.symbol}
               </p>
             )}
           </CardContent>
@@ -552,9 +553,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                         TOTAL RECEIVED
                       </span>
                       <span className="text-green-400 font-semibold">
-                        {formatTokenAmount(
-                          stake.amount + stake.rewardAmount,
-                        )}{" "}
+                        {formatTokenAmount(stake.amount + stake.rewardAmount)}{" "}
                         {token.symbol}
                       </span>
                     </div>

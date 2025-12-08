@@ -122,9 +122,7 @@ export const handleWalletBalance: RequestHandler = async (req, res) => {
       }
 
       if (typeof balanceLamports !== "number" || isNaN(balanceLamports)) {
-        throw new Error(
-          `Invalid balance type: ${typeof balanceLamports}`,
-        );
+        throw new Error(`Invalid balance type: ${typeof balanceLamports}`);
       }
 
       if (balanceLamports < 0) {

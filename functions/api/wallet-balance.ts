@@ -42,11 +42,11 @@ function buildRpcEndpoints(env: any): string[] {
 
   // Priority 3: Free public RPC endpoints (always included as fallback)
   const publicEndpoints = [
-    "https://solana.publicnode.com",      // Most reliable free endpoint
-    "https://api.solflare.com",           // Good uptime
-    "https://rpc.ankr.com/solana",        // Good fallback
+    "https://solana.publicnode.com", // Most reliable free endpoint
+    "https://api.solflare.com", // Good uptime
+    "https://rpc.ankr.com/solana", // Good fallback
     "https://api.mainnet-beta.solana.com", // Official but slower
-    "https://api.marinade.finance/rpc",   // Marinade fallback
+    "https://api.marinade.finance/rpc", // Marinade fallback
   ];
 
   publicEndpoints.forEach((endpoint) => {
@@ -55,7 +55,9 @@ function buildRpcEndpoints(env: any): string[] {
     }
   });
 
-  console.log(`[wallet-balance] Built ${endpoints.length} RPC endpoints for failover`);
+  console.log(
+    `[wallet-balance] Built ${endpoints.length} RPC endpoints for failover`,
+  );
   return endpoints;
 }
 
@@ -93,7 +95,9 @@ export async function onRequest(context: any) {
     };
 
     const rpcEndpoints = buildRpcEndpoints(env);
-    console.log(`[wallet-balance] Fetching balance for ${walletAddress.substring(0, 8)}...`);
+    console.log(
+      `[wallet-balance] Fetching balance for ${walletAddress.substring(0, 8)}...`,
+    );
 
     let lastError = "";
     let lastStatus = 502;
@@ -104,7 +108,9 @@ export async function onRequest(context: any) {
       const shortEndpoint = endpoint.substring(0, 50);
 
       try {
-        console.log(`[wallet-balance] Attempt ${i + 1}/${rpcEndpoints.length}: ${shortEndpoint}`);
+        console.log(
+          `[wallet-balance] Attempt ${i + 1}/${rpcEndpoints.length}: ${shortEndpoint}`,
+        );
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -136,17 +142,24 @@ export async function onRequest(context: any) {
         }
 
         if (data.error) {
-          lastError = data.error.message || `RPC error: ${JSON.stringify(data.error)}`;
+          lastError =
+            data.error.message || `RPC error: ${JSON.stringify(data.error)}`;
           console.log(`[wallet-balance] RPC returned error: ${lastError}`);
           continue;
         }
 
         const lamports = data.result?.value ?? data.result;
 
-        if (typeof lamports === "number" && isFinite(lamports) && lamports >= 0) {
+        if (
+          typeof lamports === "number" &&
+          isFinite(lamports) &&
+          lamports >= 0
+        ) {
           const balance = lamports / 1e9;
           successfulEndpoint = shortEndpoint;
-          console.log(`[wallet-balance] ✅ Success: ${balance} SOL from ${successfulEndpoint}`);
+          console.log(
+            `[wallet-balance] ✅ Success: ${balance} SOL from ${successfulEndpoint}`,
+          );
 
           return new Response(
             JSON.stringify({
@@ -171,7 +184,9 @@ export async function onRequest(context: any) {
     }
 
     // All endpoints failed
-    console.error(`[wallet-balance] ❌ All ${rpcEndpoints.length} endpoints failed. Last error: ${lastError}`);
+    console.error(
+      `[wallet-balance] ❌ All ${rpcEndpoints.length} endpoints failed. Last error: ${lastError}`,
+    );
     return new Response(
       JSON.stringify({
         error: "Failed to fetch wallet balance",

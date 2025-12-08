@@ -67,7 +67,7 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     decimals: 6,
     balance: 0,
     logoURI:
-      "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2F8921e4db88154673870d8835331beb50?format=webp&width=800",
+      "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2F66c5cbe0ef78435eab9dfe4b45b5ba0d?format=webp&width=800",
   },
   {
     mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",

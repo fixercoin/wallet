@@ -1160,7 +1160,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             return (
               <div key={token.mint} className="w-full">
-                <Card className="w-full bg-gray-900/20 rounded-none sm:rounded-[2px] border-0">
+                <Card className="w-full bg-gray-900/20 rounded-none sm:rounded-[2px] border border-[#22c55e]/40">
                   <CardContent className="w-full p-0">
                     <div
                       className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-4"
@@ -1193,38 +1193,39 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
                         <div
                           className={`text-xs whitespace-nowrap ${
-                            typeof token.price === "number" &&
-                            isFinite(token.price) &&
-                            token.price !== 0
-                              ? "font-semibold"
-                              : ""
+                            tokenBalance > 0 ? "font-semibold" : ""
                           }`}
                         >
                           {typeof token.price === "number" &&
                           isFinite(token.price) ? (
                             <span style={{ color: "#ffffff" }}>
                               ${" "}
-                              {token.price.toFixed(
-                                ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
-                              )}
-                            </span>
-                          ) : null}
-                        </div>
-                        <div
-                          className={`text-xs text-white whitespace-nowrap ${
-                            tokenBalance > 0 ? "font-semibold" : ""
-                          }`}
-                        >
-                          {typeof token.price === "number" &&
-                          isFinite(token.price) ? (
-                            <>
-                              ${" "}
                               {tokenBalance.toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
-                            </>
+                            </span>
                           ) : null}
+                        </div>
+                        <div
+                          className={`text-xs whitespace-nowrap ${
+                            typeof token.priceChange24h === "number" &&
+                            isFinite(token.priceChange24h)
+                              ? token.priceChange24h >= 0
+                                ? "text-green-400"
+                                : "text-red-400"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          {typeof token.priceChange24h === "number" &&
+                          isFinite(token.priceChange24h) ? (
+                            <>
+                              {token.priceChange24h >= 0 ? "+" : ""}
+                              {token.priceChange24h.toFixed(2)}%
+                            </>
+                          ) : (
+                            <span className="text-gray-500">-</span>
+                          )}
                         </div>
                       </div>
                     </div>

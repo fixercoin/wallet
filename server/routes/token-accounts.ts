@@ -217,6 +217,18 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
       `[TokenAccounts] ✅ Found ${tokens.length} tokens for ${publicKey.slice(0, 8)}... (SOL: ${solBalance} SOL)`,
     );
 
+    // Log all tokens returned
+    tokens.forEach((token) => {
+      const isSpecialToken = ["FXM", "FIXERCOIN", "LOCKER"].includes(
+        token.symbol,
+      );
+      if (isSpecialToken || token.balance > 0) {
+        console.log(
+          `[TokenAccounts]   - ${token.symbol}: ${token.balance} (${token.mint.slice(0, 8)}...)`,
+        );
+      }
+    });
+
     return res.json({
       publicKey,
       tokens,

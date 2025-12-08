@@ -1,21 +1,8 @@
 import { RequestHandler } from "express";
+import { PublicKey } from "@solana/web3.js";
 
-interface MoralisToken {
-  token_address: string;
-  name: string;
-  symbol: string;
-  decimals: number;
-  logo: string;
-  balance: string;
-  possible_spam: boolean;
-  verified_collection: boolean;
-  percentage_relative_to_total_supply: number;
-}
-
-interface MoralisResponse {
-  result?: MoralisToken[];
-  message?: string;
-}
+const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+const SOL_MINT = "So11111111111111111111111111111111111111112";
 
 interface TokenBalance {
   mint: string;
@@ -28,9 +15,8 @@ interface TokenBalance {
   isSpam: boolean;
 }
 
-// Known token metadata for tokens that may not be in Moralis response
+// Known token metadata for tokens that may not be in RPC response
 const KNOWN_TOKEN_METADATA: Record<string, any> = {
-  // SOL
   So11111111111111111111111111111111111111112: {
     symbol: "SOL",
     name: "Solana",
@@ -38,7 +24,6 @@ const KNOWN_TOKEN_METADATA: Record<string, any> = {
     logoURI:
       "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
   },
-  // USDC
   EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: {
     symbol: "USDC",
     name: "USD Coin",
@@ -46,7 +31,6 @@ const KNOWN_TOKEN_METADATA: Record<string, any> = {
     logoURI:
       "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
   },
-  // USDT
   Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns: {
     symbol: "USDT",
     name: "USDT TETHER",
@@ -54,14 +38,12 @@ const KNOWN_TOKEN_METADATA: Record<string, any> = {
     logoURI:
       "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns/logo.png",
   },
-  // FIXERCOIN
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: {
     symbol: "FIXERCOIN",
     name: "FIXERCOIN",
     decimals: 6,
     logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
   },
-  // FXM (FIXORIUM)
   "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump": {
     symbol: "FXM",
     name: "Fixorium",
@@ -69,7 +51,6 @@ const KNOWN_TOKEN_METADATA: Record<string, any> = {
     logoURI:
       "https://raw.githubusercontent.com/fixorium/assets/main/fxm-logo.png",
   },
-  // LOCKER
   EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: {
     symbol: "LOCKER",
     name: "LOCKER",
@@ -79,13 +60,30 @@ const KNOWN_TOKEN_METADATA: Record<string, any> = {
   },
 };
 
-const resolveMoralisConfig = () => {
-  const apiKey = String(process?.env?.MORALIS_API_KEY ?? "").trim();
-  return {
-    apiKey,
-  };
-};
+// Get RPC endpoint with free endpoints and Alchemy fallback
+function getRpcEndpoint(): string {
+  const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
 
+  if (solanaRpcUrl) {
+    return solanaRpcUrl;
+  }
+
+  const freeEndpoints = [
+    "https://api.mainnet-beta.solflare.network",
+    "https://solana-api.projectserum.com",
+    "https://api.mainnet.solflare.com",
+  ];
+
+  const alchemyEndpoint =
+    "https://solana-mainnet.g.alchemy.com/v2/T79j33bZKpxgKTLx-KDW5";
+
+  return freeEndpoints[Math.floor(Math.random() * freeEndpoints.length)];
+}
+
+/**
+ * Fetch token balances using RPC-based token account enumeration
+ * This replaces the Moralis API with a free RPC-based approach
+ */
 export const handleWalletMoralisTokens: RequestHandler = async (req, res) => {
   try {
     // Extract wallet address from query or body
@@ -99,82 +97,143 @@ export const handleWalletMoralisTokens: RequestHandler = async (req, res) => {
 
     if (!walletAddress) {
       return res.status(400).json({
-        error: "Missing wallet address parameter",
+        error: "Missing wallet address",
+        tokens: [],
       });
     }
 
-    const { apiKey } = resolveMoralisConfig();
-
-    if (!apiKey) {
-      console.warn(
-        "[wallet-moralis-tokens] MORALIS_API_KEY not set in environment",
-      );
-      return res.status(500).json({
-        error: "Moralis API key not configured in server environment",
+    // Validate Solana address format
+    try {
+      new PublicKey(walletAddress);
+    } catch {
+      return res.status(400).json({
+        error: "Invalid Solana address format",
+        tokens: [],
       });
     }
 
-    // Call Moralis REST API for token balances
-    const moralisUrl = `https://deep-index.moralis.io/api/v2.2/wallets/${walletAddress}/tokens?chain=solana`;
+    const endpoint = getRpcEndpoint();
+    console.log(
+      `[TokenBalances] Fetching tokens for ${walletAddress.slice(0, 8)}... using RPC`,
+    );
 
-    const response = await fetch(moralisUrl, {
-      method: "GET",
-      headers: {
-        accept: "application/json",
-        "X-API-Key": apiKey,
-      },
+    // Fetch SPL token accounts
+    const tokenResponse = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getTokenAccountsByOwner",
+        params: [
+          walletAddress,
+          { programId: TOKEN_PROGRAM_ID },
+          { encoding: "jsonParsed", commitment: "confirmed" },
+        ],
+      }),
     });
 
-    if (!response.ok) {
-      console.error(
-        `[wallet-moralis-tokens] Moralis API error: ${response.status} ${response.statusText}`,
-      );
-      return res.status(response.status).json({
-        error: `Moralis API error: ${response.statusText}`,
-        status: response.status,
+    const tokenData = await tokenResponse.json();
+
+    if (tokenData.error) {
+      console.error("[TokenBalances] RPC error:", tokenData.error);
+      return res.status(502).json({
+        error: "Failed to fetch token balances",
+        tokens: [],
       });
     }
 
-    const moralisData = (await response.json()) as MoralisResponse;
+    const tokenAccounts = tokenData.result?.value || [];
 
-    if (!moralisData.result || !Array.isArray(moralisData.result)) {
-      return res
-        .set("Cache-Control", "public, max-age=30, stale-while-revalidate=120")
-        .json({
-          tokens: [],
-          count: 0,
-        });
-    }
+    // Fetch SOL balance
+    const solResponse = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getBalance",
+        params: [walletAddress],
+      }),
+    });
 
-    // Transform Moralis response to our token format, merging with known metadata
-    const tokens: TokenBalance[] = moralisData.result
-      .filter((t) => !t.possible_spam) // Filter out spam tokens
-      .map((token) => {
-        const knownMetadata = KNOWN_TOKEN_METADATA[token.token_address];
-        const decimals = token.decimals || knownMetadata?.decimals || 0;
-        const balance = token.balance || "0";
+    const solData = await solResponse.json();
+    const solBalance = (solData.result?.value || 0) / 1e9;
 
-        return {
-          mint: token.token_address,
-          symbol: token.symbol || knownMetadata?.symbol || "UNKNOWN",
-          name: token.name || knownMetadata?.name || "Unknown Token",
-          decimals,
-          balance,
-          uiAmount: balance ? Number(balance) / Math.pow(10, decimals) : 0,
-          logoURI: token.logo || knownMetadata?.logoURI || "",
-          isSpam: token.possible_spam,
-        };
-      });
+    // Build token list
+    const tokens: TokenBalance[] = [];
 
-    res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+    // Add SOL first
+    const solMetadata = KNOWN_TOKEN_METADATA[SOL_MINT];
+    tokens.push({
+      mint: SOL_MINT,
+      symbol: solMetadata.symbol,
+      name: solMetadata.name,
+      decimals: solMetadata.decimals,
+      balance: solBalance.toString(),
+      uiAmount: solBalance,
+      logoURI: solMetadata.logoURI,
+      isSpam: false,
+    });
+
+    // Process SPL tokens
+    tokenAccounts.forEach((account: any) => {
+      try {
+        const parsedData = account.account.data;
+        if (
+          typeof parsedData === "object" &&
+          "parsed" in parsedData &&
+          "info" in parsedData.parsed
+        ) {
+          const info = (parsedData.parsed as any).info;
+          const mint = info.mint;
+          const decimals = info.tokenAmount?.decimals || 6;
+          const rawAmount = info.tokenAmount?.amount || "0";
+          const uiAmount =
+            typeof info.tokenAmount?.uiAmount === "number"
+              ? info.tokenAmount.uiAmount
+              : Number(rawAmount) / Math.pow(10, decimals);
+
+          // Skip zero-balance tokens
+          if (uiAmount === 0) {
+            return;
+          }
+
+          const metadata = KNOWN_TOKEN_METADATA[mint] || {
+            symbol: "UNKNOWN",
+            name: "Unknown Token",
+            decimals,
+            logoURI: "",
+          };
+
+          tokens.push({
+            mint,
+            symbol: metadata.symbol,
+            name: metadata.name,
+            decimals: decimals || metadata.decimals,
+            balance: uiAmount.toString(),
+            uiAmount,
+            logoURI: metadata.logoURI || "",
+            isSpam: false,
+          });
+        }
+      } catch (err) {
+        console.warn("[TokenBalances] Error parsing token account:", err);
+      }
+    });
+
+    console.log(`[TokenBalances] ✅ Found ${tokens.length} tokens for ${walletAddress.slice(0, 8)}...`);
+
     return res.json({
       tokens,
-      count: tokens.length,
+      total: tokens.length,
+      source: "rpc",
     });
   } catch (error) {
-    console.error("[wallet-moralis-tokens] Error:", error);
+    console.error("[TokenBalances] Handler error:", error);
     return res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: error instanceof Error ? error.message : "Internal server error",
+      tokens: [],
     });
   }
 };

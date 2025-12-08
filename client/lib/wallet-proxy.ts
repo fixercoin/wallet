@@ -77,6 +77,13 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     logoURI:
       "https://i.postimg.cc/J7p1FPbm/IMG-20250425-004450-removebg-preview-modified-2-6.png",
   },
+  {
+    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+    symbol: "FXM",
+    name: "Fixorium",
+    decimals: 6,
+    balance: 0,
+  },
 ];
 
 const SOLANA_DERIVATION_PATH = "m/44'/501'/0'/0'" as const;

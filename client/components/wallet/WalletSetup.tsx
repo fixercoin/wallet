@@ -59,6 +59,10 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   const [privateKeyInput, setPrivateKeyInput] = useState<string>("");
   const [showPrivateKeyInput, setShowPrivateKeyInput] = useState(false);
 
+  // SOL balance state
+  const [solBalance, setSolBalance] = useState<number | null>(null);
+  const [isFetchingBalance, setIsFetchingBalance] = useState(false);
+
   const normalizedRecoveryPhrase = normalizeMnemonicInput(recoveryPhrase);
   const recoveryWordCount = normalizedRecoveryPhrase
     ? normalizedRecoveryPhrase.split(" ").length

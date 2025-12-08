@@ -48,7 +48,7 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     decimals: 6,
     balance: 0,
     logoURI:
-      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+      "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2F69833acc5e0c464c82791c745fdc8f9a?format=webp&width=800",
   },
   {
     // USDT (Tether USD on Solana)

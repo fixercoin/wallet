@@ -240,8 +240,8 @@ export default function BuyData() {
             </div>
           )}
 
-          {/* Payment Method Information */}
-          {paymentMethods.length > 0 && (
+          {/* Payment Method Information or Warning */}
+          {paymentMethods.length > 0 ? (
             <PaymentMethodInfoCard
               accountName={paymentMethods[0].accountName}
               accountNumber={paymentMethods[0].accountNumber}
@@ -250,6 +250,28 @@ export default function BuyData() {
                 setShowPaymentDialog(true);
               }}
             />
+          ) : (
+            <div className="p-4 rounded-lg bg-red-600/20 border border-red-500/50">
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0 text-xs font-bold text-white mt-0.5">
+                  !
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-red-400 mb-2">
+                    Complete Your Payment Method
+                  </div>
+                  <p className="text-xs text-red-300/80 mb-3">
+                    You must add your payment method details before you can create a buy order. This helps sellers confirm payments.
+                  </p>
+                  <Button
+                    onClick={() => setShowPaymentDialog(true)}
+                    className="w-full bg-red-600/50 hover:bg-red-600/70 border border-red-500 text-red-200 uppercase text-xs font-semibold py-2"
+                  >
+                    Add Payment Method
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Action Buttons */}
@@ -263,7 +285,7 @@ export default function BuyData() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!isValid || loading}
+              disabled={!isValid || loading || paymentMethods.length === 0}
               className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (

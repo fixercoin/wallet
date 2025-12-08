@@ -75,6 +75,7 @@ export async function createOrderInAPI(
         id: order.id,
         type: order.type,
         offerId: order.offerId,
+        walletAddress: order.type === "BUY" ? order.buyerWallet : order.sellerWallet,
         buyerWallet: order.buyerWallet,
         sellerWallet: order.sellerWallet,
         token: order.token,
@@ -94,7 +95,10 @@ export async function createOrderInAPI(
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to create order: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `Failed to create order: ${response.status} - ${errorData.error || "Unknown error"}`,
+      );
     }
 
     const data = await response.json();

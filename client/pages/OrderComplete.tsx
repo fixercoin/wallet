@@ -876,7 +876,7 @@ export default function OrderComplete() {
                     <div className="p-4 rounded-lg bg-[#1a2540]/30 border border-orange-500/20">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-semibold uppercase text-white">
-                          Crypto Transfer
+                          I Have Completed Order
                         </span>
                         {sellerTransferInitiated ? (
                           <CheckCircle className="w-5 h-5 text-green-500" />
@@ -889,11 +889,11 @@ export default function OrderComplete() {
                           onClick={handleSellerTransfer}
                           className="w-full bg-orange-600/30 border border-orange-500/50 hover:bg-orange-600/40 text-orange-400 uppercase text-xs font-semibold py-2"
                         >
-                          Release USDC to Buyer
+                          I Have Completed Order
                         </Button>
                       ) : (
                         <div className="text-xs text-orange-400 font-semibold">
-                          ✓ Transfer Initiated
+                          ✓ Completed
                         </div>
                       )}
                     </div>

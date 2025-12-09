@@ -399,7 +399,8 @@ export const handleGetP2POrder: RequestHandler = async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    res.json({ order });
+    // Return in consistent format with list endpoint
+    res.json({ orders: [order] });
   } catch (error) {
     console.error("Get P2P order error:", error);
     res.status(500).json({ error: "Failed to get order" });

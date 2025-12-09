@@ -45,7 +45,7 @@ export function useOrderNotifications() {
       setLoading(true);
       try {
         const query = unreadOnly ? "&unread=true" : "";
-        // Include broadcast notifications (for generic buy orders)
+        // Fetch direct notifications + broadcast notifications but filter out self-created ones
         const response = await fetch(
           `/api/p2p/notifications?wallet=${encodeURIComponent(wallet.publicKey)}&includeBroadcast=true${query}`,
         );
@@ -55,9 +55,15 @@ export function useOrderNotifications() {
         }
 
         const data = await response.json();
-        setNotifications(data.data || []);
 
-        const unread = (data.data || []).filter(
+        // Filter out notifications where the user is the sender (self-created)
+        const filteredNotifications = (data.data || []).filter(
+          (n: OrderNotification) => n.senderWallet !== wallet.publicKey,
+        );
+
+        setNotifications(filteredNotifications);
+
+        const unread = filteredNotifications.filter(
           (n: OrderNotification) => !n.read,
         ).length;
         setUnreadCount(unread);

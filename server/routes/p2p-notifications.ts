@@ -236,7 +236,7 @@ export const handleCreateNotification: RequestHandler = async (req, res) => {
       type,
       orderType,
       message,
-      orderData,
+      orderData: orderData || { token: "", amountTokens: 0, amountPKR: 0 },
       read: false,
       createdAt: now,
     };

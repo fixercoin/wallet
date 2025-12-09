@@ -124,6 +124,15 @@ export default function BuyData() {
         },
       );
 
+      // First, persist the order to server before sending notification (prevents race condition)
+      try {
+        await createOrderInAPI(createdOrder);
+        console.log(`[BuyData] Order ${createdOrder.id} persisted to server`);
+      } catch (apiError) {
+        console.error("[BuyData] Failed to persist order to server:", apiError);
+        toast.warning("Order created locally but failed to sync to server");
+      }
+
       toast.success("Order created successfully!");
 
       // Send notification to sellers about new buy order

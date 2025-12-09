@@ -370,7 +370,16 @@ async function handler(request: Request, env?: Env): Promise<Response> {
           clearTimeout(solTimeoutId);
 
           const solData = await solResp.json();
-          const lamports = solData.result ?? solData.result?.value;
+
+          // Handle RPC response: result can be a number (lamports) directly
+          // The getBalance RPC method returns: { "result": <lamports as number> }
+          let lamports = solData.result;
+
+          // If result is wrapped in a value property (some RPC versions), extract it
+          if (typeof lamports === "object" && lamports !== null && "value" in lamports) {
+            lamports = lamports.value;
+          }
+
           if (
             !solData.error &&
             typeof lamports === "number" &&
@@ -385,6 +394,10 @@ async function handler(request: Request, env?: Env): Promise<Response> {
             console.warn(
               `[TokenAccounts] RPC error fetching SOL balance:`,
               solData.error,
+            );
+          } else {
+            console.warn(
+              `[TokenAccounts] Invalid SOL balance response. Result type: ${typeof lamports}, value: ${lamports}`,
             );
           }
         } catch (err) {

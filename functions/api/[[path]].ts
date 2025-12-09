@@ -10,8 +10,10 @@ interface Env {
 const DEFAULT_SOLANA_RPC = "https://api.mainnet-beta.solflare.network";
 const FALLBACK_RPC_ENDPOINTS = [
   "https://api.mainnet-beta.solflare.network",
-  "https://solana-api.projectserum.com",
   "https://api.mainnet.solflare.com",
+  "https://api.mainnet-beta.solana.com",
+  "https://solana-api.projectserum.com",
+  "https://rpc.ankr.com/solana",
   "https://solana.publicnode.com",
 ];
 

@@ -944,6 +944,70 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       )}
 
+      {/* Help Chat Modal */}
+      {showHelpChat && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-end z-50 p-4">
+          <div className="bg-gray-900 rounded-2xl border border-[#22c55e]/40 shadow-2xl w-full max-w-sm h-[600px] flex flex-col animate-fade-in">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-[#22c55e]/20">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-[#22c55e]" />
+                Wallet Assistant
+              </h2>
+              <button
+                onClick={() => setShowHelpChat(false)}
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+              {chatMessages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-xs px-4 py-2 rounded-lg text-sm ${
+                      msg.role === 'user'
+                        ? 'bg-[#22c55e] text-gray-900 font-medium'
+                        : 'bg-gray-800 text-gray-300 border border-[#22c55e]/30'
+                    }`}
+                  >
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Input */}
+            <div className="border-t border-[#22c55e]/20 p-4 flex gap-2">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSendMessage();
+                  }
+                }}
+                placeholder="Ask a question..."
+                className="flex-1 bg-gray-800 border border-[#22c55e]/30 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#22c55e]/60"
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!chatInput.trim()}
+                className="bg-[#22c55e] hover:bg-[#16a34a] text-gray-900 font-bold text-xs px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Send
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2 relative z-20">
         {/* Balance Section */}
         <div className="w-full mt-2 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">

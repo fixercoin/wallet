@@ -238,10 +238,17 @@ export const getTokenAccounts = async (
 
       // Enrich tokens with logos from DEFAULT_TOKENS
       const logoMap = new Map(DEFAULT_TOKENS.map((t) => [t.mint, t.logoURI]));
-      const allTokens = tokenAccounts.map((token) => ({
-        ...token,
-        logoURI: token.logoURI || logoMap.get(token.mint),
-      }));
+      const allTokens = tokenAccounts.map((token) => {
+        // Ensure SOL has proper metadata
+        const isSol = token.mint === "So11111111111111111111111111111111111111112" || token.symbol === "SOL";
+        return {
+          ...token,
+          symbol: isSol ? "SOL" : token.symbol,
+          name: isSol ? "Solana" : token.name,
+          decimals: isSol ? 9 : token.decimals,
+          logoURI: token.logoURI || logoMap.get(token.mint) || (isSol ? "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png" : undefined),
+        };
+      });
 
       // Log FXM and special tokens for debugging
       const fxmToken = allTokens.find((t) => t.symbol === "FXM");

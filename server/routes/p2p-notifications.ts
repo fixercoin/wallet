@@ -212,13 +212,7 @@ export const handleCreateNotification: RequestHandler = async (req, res) => {
       orderData,
     } = req.body;
 
-    if (
-      !recipientWallet ||
-      !senderWallet ||
-      !type ||
-      !orderType ||
-      !orderId
-    ) {
+    if (!recipientWallet || !senderWallet || !type || !orderType || !orderId) {
       return res.status(400).json({
         error:
           "Missing required fields: recipientWallet, senderWallet, type, orderType, orderId",

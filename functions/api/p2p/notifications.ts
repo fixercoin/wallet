@@ -48,7 +48,8 @@ export const onRequestGet = async ({
     const url = new URL(request.url);
     const walletAddress = url.searchParams.get("wallet");
     const unreadOnly = url.searchParams.get("unread") === "true";
-    const includeBroadcast = url.searchParams.get("includeBroadcast") === "true";
+    const includeBroadcast =
+      url.searchParams.get("includeBroadcast") === "true";
 
     if (!walletAddress) {
       return jsonResponse(400, { error: "Missing wallet address" });
@@ -59,9 +60,15 @@ export const onRequestGet = async ({
 
     if (includeBroadcast) {
       try {
-        const broadcastSellerNotifications = await kvStore.getBroadcastNotifications("sellers");
-        const broadcastBuyerNotifications = await kvStore.getBroadcastNotifications("buyers");
-        notifications = [...notifications, ...broadcastSellerNotifications, ...broadcastBuyerNotifications];
+        const broadcastSellerNotifications =
+          await kvStore.getBroadcastNotifications("sellers");
+        const broadcastBuyerNotifications =
+          await kvStore.getBroadcastNotifications("buyers");
+        notifications = [
+          ...notifications,
+          ...broadcastSellerNotifications,
+          ...broadcastBuyerNotifications,
+        ];
       } catch (error) {
         console.warn("Failed to fetch broadcast notifications:", error);
       }
@@ -183,7 +190,10 @@ export const onRequestPost = async ({
         if (broadcastNotifications.length > 100) {
           broadcastNotifications.shift();
         }
-        await env.STAKING_KV.put(broadcastKey, JSON.stringify(broadcastNotifications));
+        await env.STAKING_KV.put(
+          broadcastKey,
+          JSON.stringify(broadcastNotifications),
+        );
       } catch (error) {
         console.warn("Failed to add to broadcast queue:", error);
         // Don't fail the request if broadcast queue fails

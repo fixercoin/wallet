@@ -77,16 +77,25 @@ export default function BuyData() {
   }, [wallet?.publicKey, showPaymentDialog, fetchPaymentMethods]);
 
   const proceedWithOrderCreation = useCallback(async () => {
+    // Prevent multiple simultaneous order creations (race condition)
+    if (isCreatingOrderRef.current) {
+      console.warn("[BuyData] Order creation already in progress, ignoring duplicate request");
+      return;
+    }
+
     if (!wallet?.publicKey) {
       toast.error("Missing wallet information");
       return;
     }
 
     try {
+      // Mark that we're starting order creation
+      isCreatingOrderRef.current = true;
       setLoading(true);
+
       const createdOrder = await createOrderFromOffer(
         {
-          id: `order-${Date.now()}`,
+          id: `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           type: "BUY",
           sellerWallet: "",
           token: "USDT",
@@ -140,6 +149,8 @@ export default function BuyData() {
       console.error("Error creating order:", error);
       toast.error("Failed to create order");
     } finally {
+      // Clear the flag to allow future order creation attempts
+      isCreatingOrderRef.current = false;
       setLoading(false);
     }
   }, [

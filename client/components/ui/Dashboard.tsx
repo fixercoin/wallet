@@ -90,7 +90,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
     amount: number | undefined,
     symbol?: string,
   ): string => {
-    if (!amount || isNaN(amount)) return "0.00";
+    if (amount === undefined || amount === null || isNaN(amount)) {
+      if (symbol === "SOL") return "0.000000";
+      if (symbol === "FXM") return "0.00";
+      if (symbol === "FIXERCOIN" || symbol === "LOCKER") return "0.00";
+      return "0.00";
+    }
+    // SOL always show exactly 6 decimal places
+    if (symbol === "SOL") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 6,
+        maximumFractionDigits: 6,
+      });
+    }
+    // FXM shows exactly 2 decimal places
+    if (symbol === "FXM") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
     // FIXERCOIN and LOCKER always show exactly 2 decimal places
     if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
       return amount.toLocaleString(undefined, {
@@ -117,7 +136,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const formatTokenPriceDisplay = (price?: number): string => {
-    if (typeof price !== "number" || !isFinite(price)) return "0.00000000";
+    if (typeof price !== "number" || !isFinite(price)) return "0.000000";
+    if (price === 0) return "0.000000";
     if (price >= 1) return price.toFixed(2);
     if (price >= 0.01) return price.toFixed(4);
     if (price >= 0.0001) return price.toFixed(6);
@@ -376,17 +396,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span
-                            className={`text-xs text-gray-400 ${
-                              ["SOL", "FIXERCOIN", "LOCKER", "FXM"].includes(
-                                (token.symbol || "").toUpperCase(),
-                              )
-                                ? "animate-price-pulse"
-                                : ""
-                            }`}
-                          >
-                            ${formatTokenPriceDisplay(token.price)}
-                          </span>
+                          {typeof token.price === "number" &&
+                          isFinite(token.price) ? (
+                            <span
+                              className={`text-xs text-gray-400 ${
+                                ["SOL", "FIXERCOIN", "LOCKER", "FXM"].includes(
+                                  (token.symbol || "").toUpperCase(),
+                                )
+                                  ? "animate-price-pulse"
+                                  : ""
+                              }`}
+                            >
+                              ${formatTokenPriceDisplay(token.price)}
+                            </span>
+                          ) : null}
                           {percentChange !== null ? (
                             <span className="flex items-center gap-1">
                               <span
@@ -408,14 +431,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                     <div className="text-right">
                       <p className="text-sm font-semibold text-white">
-                        {formatBalance(
-                          token.symbol === "SOL" ? balance : token.balance || 0,
-                        )}
+                        {formatBalance(token.balance || 0)}
                       </p>
                       <p className="text-xs text-gray-400">
                         {typeof token.price === "number" && token.price > 0
-                          ? `$${formatBalance((token.symbol === "SOL" ? balance : token.balance || 0) * token.price)}`
-                          : "$0.00"}
+                          ? `$${formatBalance((token.balance || 0) * token.price)}`
+                          : null}
                       </p>
                     </div>
                   </div>

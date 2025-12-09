@@ -10,26 +10,74 @@ cwd = "./"
 # Cloudflare Pages output directory
 pages_build_output_dir = "dist"
 
+# Functions directory - tells Cloudflare Pages where API routes are
+functions_dir = "functions"
+
 # Environment variables available at build time and to Functions (VITE_ prefix exposed to client)
 [vars]
 VITE_API_URL = ""
 VITE_API_BASE_URL = ""
 
+# RPC endpoint configuration
+# Uses public Solflare RPC endpoint by default (no API key required)
+# These can be set via Cloudflare dashboard or here for development
+# Configure these variables in Cloudflare Pages project settings for production:
+# - SOLANA_RPC_URL: Custom Solana RPC endpoint (optional - uses Solflare public endpoint if not set)
+
+# Local development environment variables (for wrangler pages dev)
+[env.development.vars]
+# Default Solana RPC endpoint (Solflare public endpoint, no auth required)
+SOLANA_RPC_URL = "https://api.mainnet-beta.solflare.network"
+# Moralis API Key - Get from https://moralis.io/
+# This enables fast token balance fetching without RPC calls
+# Set MORALIS_API_KEY in Cloudflare Pages project settings for production
+MORALIS_API_KEY = ""
+
+# Production environment variables
+# NOTE: By default, uses Solflare public RPC endpoint (no configuration required)
+# If you want to use a custom RPC endpoint, set in Cloudflare Pages UI:
+# Path: Project Settings > Environment variables > Production (or Preview)
+[env.production.vars]
+# OPTIONAL: Use a custom RPC endpoint URL if you have one
+# Set in Cloudflare Pages project settings:
+# SOLANA_RPC_URL = "https://your-custom-rpc-endpoint.com"
+#
+# By default (if not set), the system uses: https://api.mainnet-beta.solflare.network
+#
+# MORALIS_API_KEY: Set in Cloudflare Pages project settings for production
+# This enables fast token balance fetching via REST API instead of RPC calls
+
 # KV namespace bindings for Pages Functions
 # These bindings are available in functions/api/* routes
 [[kv_namespaces]]
 binding = "STAKING_KV"
-id = "YOUR_PRODUCTION_NAMESPACE_ID"
-preview_id = "YOUR_PREVIEW_NAMESPACE_ID"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
+
+# Alias for backwards compatibility
+[[kv_namespaces]]
+binding = "KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
 
 # Enable KV for Pages Functions (development environment)
-[env.development.kv_namespaces]
+[[env.development.kv_namespaces]]
 binding = "STAKING_KV"
-id = "YOUR_PREVIEW_NAMESPACE_ID"
-preview_id = "YOUR_PREVIEW_NAMESPACE_ID"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
+
+[[env.development.kv_namespaces]]
+binding = "KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
 
 # Enable KV for Pages Functions (production environment)
-[env.production.kv_namespaces]
+[[env.production.kv_namespaces]]
 binding = "STAKING_KV"
-id = "YOUR_PRODUCTION_NAMESPACE_ID"
-preview_id = "YOUR_PREVIEW_NAMESPACE_ID"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
+
+[[env.production.kv_namespaces]]
+binding = "KV"
+id = "295bfeb238c344ccb5afdd2bb93e497f"
+preview_id = "295bfeb238c344ccb5afdd2bb93e497f"

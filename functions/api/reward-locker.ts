@@ -47,12 +47,10 @@ function jsonCors(status: number, body: any) {
 }
 
 function pickRpcUrl(env: Record<string, any>): string {
-  if (env.HELIUS_API_KEY)
-    return `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`;
-  if (env.HELIUS_RPC_URL) return env.HELIUS_RPC_URL;
+  if (env.SOLANA_RPC_URL) return env.SOLANA_RPC_URL;
   if (env.MORALIS_RPC_URL) return env.MORALIS_RPC_URL;
   if (env.ALCHEMY_RPC_URL) return env.ALCHEMY_RPC_URL;
-  return SOLANA_RPC_URL;
+  return "https://api.mainnet-beta.solflare.network";
 }
 
 async function rpcCall(rpcUrl: string, method: string, params: any[]) {

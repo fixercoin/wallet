@@ -177,7 +177,7 @@ class DexscreenerAPI {
         console.warn(
           `[DexScreener] Request timeout after 15s for ${toFetch.length} mints`,
         );
-        controller.abort();
+        controller.abort("Request timeout after 15 seconds");
       }, 15000);
       try {
         const url = `${this.baseUrl}/tokens?mints=${mintString}`;
@@ -285,10 +285,10 @@ class DexscreenerAPI {
       }
     }
 
-    // If fetch failed, try to serve stale cached data instead of failing completely
+    // If fetch failed, try to serve stale cached data or return empty array to allow fallbacks
     if (fetchFailed && toFetch.length > 0) {
-      console.log(
-        `[DexScreener] ⚠️ Fetch failed (${lastError}), trying stale cache for ${toFetch.length} tokens`,
+      console.warn(
+        `[DexScreener] ❌ Fetch failed (${lastError}), trying stale cache for ${toFetch.length} tokens`,
       );
       toFetch.forEach((mint) => {
         const stale = DexscreenerAPI.tokenCache.get(mint);

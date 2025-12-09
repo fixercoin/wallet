@@ -20,7 +20,7 @@ import {
   Plus,
   Menu,
   Gift,
-  Lock,
+  Unlock,
   Bell,
   X,
   Clock,
@@ -54,7 +54,6 @@ import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
 import { getUnreadNotifications } from "@/lib/p2p-chat";
-import { PriceLoader } from "@/components/ui/price-loader";
 import { Zap } from "lucide-react";
 
 interface DashboardProps {
@@ -70,6 +69,7 @@ interface DashboardProps {
   onLock: () => void;
   onBurn: () => void;
   onStakeTokens?: () => void;
+  onP2PTrade?: () => void;
 }
 
 const QUEST_TASKS = [
@@ -115,6 +115,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onLock,
   onBurn,
   onStakeTokens,
+  onP2PTrade,
 }) => {
   const {
     wallet,
@@ -127,6 +128,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     addCustomToken,
     removeToken,
   } = useWallet();
+
   const { toast } = useToast();
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
@@ -203,7 +205,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const shareOnX = () => {
-    const text = encodeURIComponent("Fixercoin updates ��� #Fixercoin");
+    const text = encodeURIComponent("Fixercoin updates 🚀 #Fixercoin");
     const shareUrl = encodeURIComponent("https://fixorium.com.pk");
     const intent = `https://twitter.com/intent/tweet?text=${text}&url=${shareUrl}`;
     try {
@@ -227,6 +229,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       const msg = `fixercoin-quest-claim:${wallet.publicKey}:${tasksDone}:${Date.now()}`;
       const bytes = new TextEncoder().encode(msg);
       const sig = nacl.sign.detached(bytes, wallet.secretKey);
+
       const body = {
         recipient: wallet.publicKey,
         tasks: Array.from(completedTasks),
@@ -234,15 +237,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
         authMessage: msg,
         authSignature: bs58.encode(sig),
       };
+
       const res = await fetch(resolveApiUrl("/api/quest-claim"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+
       if (!res.ok) {
         const err = await res.text().catch(() => "");
         throw new Error(err || `Claim failed (${res.status})`);
       }
+
       const j = await res.json().catch(() => ({}) as any);
       toast({
         title: "Claimed",
@@ -251,7 +257,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
       setShowQuestModal(false);
     } catch (e) {
       const m = e instanceof Error ? e.message : String(e);
-      toast({ title: "Claim failed", description: m, variant: "destructive" });
+      toast({
+        title: "Claim failed",
+        description: m,
+        variant: "destructive",
+      });
     }
   };
 
@@ -264,17 +274,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
       if (running) return;
       running = true;
       try {
-        await refreshBalance();
-        await new Promise((r) => setTimeout(r, 300));
-        await refreshTokens();
+        if (!cancelled) await refreshBalance();
+        if (!cancelled) await new Promise((r) => setTimeout(r, 300));
+        if (!cancelled) await refreshTokens();
       } catch (err) {
+        // Silently ignore AbortError and other errors during refresh
+        // They're already logged by the service layer
+        if (!(err instanceof Error && err.name === "AbortError")) {
+          console.debug("[Dashboard] Refresh error:", err);
+        }
       } finally {
-        running = false;
+        if (!cancelled) {
+          running = false;
+        }
       }
     };
 
     const id = window.setInterval(tick, 60000); // Auto-refresh every 1 minute
-
     return () => {
       cancelled = true;
       clearInterval(id);
@@ -291,7 +307,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
 
     updateUnreadCount();
-
     // Check for updates every 2 seconds
     const interval = setInterval(updateUnreadCount, 2000);
 
@@ -299,7 +314,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const handleStorageChange = () => {
       updateUnreadCount();
     };
-
     window.addEventListener("storage", handleStorageChange);
 
     return () => {
@@ -339,6 +353,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       try {
         const controller = new AbortController();
         const to = setTimeout(() => controller.abort(), 4000);
+
         // Health check via reliable ping endpoint
         const res = await fetchWithFallback("/api/ping", {
           method: "GET",
@@ -373,6 +388,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const id = setInterval(() => {
       if (!stopped) void check();
     }, 10000);
+
     return () => {
       stopped = true;
       clearInterval(id);
@@ -428,13 +444,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const handleRefresh = async () => {
     if (isRefreshing) return;
-
     try {
       setIsRefreshing(true);
       await refreshBalance();
       await new Promise((resolve) => setTimeout(resolve, 300));
       await refreshTokens();
-
       toast({
         title: "Refreshed",
         description: "Balance and tokens updated",
@@ -458,7 +472,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
     amount: number | undefined,
     symbol?: string,
   ): string => {
-    if (!amount || isNaN(amount)) return "0.00";
+    if (amount === undefined || amount === null || isNaN(amount)) {
+      if (symbol === "SOL") return "0.000000";
+      if (symbol === "FXM") return "0.000000";
+      if (symbol === "FIXERCOIN" || symbol === "LOCKER") return "0.00";
+      return "0.00";
+    }
+    // SOL always show exactly 6 decimal places
+    if (symbol === "SOL") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 6,
+        maximumFractionDigits: 6,
+      });
+    }
+    // FXM shows up to 6 decimal places for precision with small amounts
+    if (symbol === "FXM") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 6,
+      });
+    }
     // FIXERCOIN and LOCKER always show exactly 2 decimal places
     if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
       return amount.toLocaleString(undefined, {
@@ -475,17 +508,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const formatUSD = (
     amount: number | undefined,
     price: number | undefined,
+    symbol?: string,
   ): string => {
-    if (!amount || !price || isNaN(amount) || isNaN(price)) return "$0.00";
+    if (!amount || !price || isNaN(amount) || isNaN(price)) return "$ 0.000";
+
     const usdValue = amount * price;
-    return `$${usdValue.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+
+    // Token cards use $ 0.000 format (dollar sign, space, 3 decimal places)
+    return `$ ${usdValue.toLocaleString(undefined, {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
     })}`;
   };
 
   const formatTokenPriceDisplay = (price?: number): string => {
-    if (typeof price !== "number" || !isFinite(price)) return "0.00000000";
+    if (typeof price !== "number" || !isFinite(price)) return "0.000000";
+    if (price === 0) return "0.000000";
     if (price >= 1) return price.toFixed(2);
     if (price >= 0.01) return price.toFixed(4);
     if (price >= 0.0001) return price.toFixed(6);
@@ -532,15 +570,44 @@ export const Dashboard: React.FC<DashboardProps> = ({
   // Currency formatting from context
   const { formatCurrency } = useCurrency();
 
-  // Get SOL token data from tokens list
+  const SOL_WRAPPED_MINT = "So11111111111111111111111111111111111111112";
+
+  // Get SOL token data from tokens list (case-insensitive symbol match + wrapped SOL mint fallback)
   const getSolToken = () => {
-    return tokens.find((token) => token.symbol === "SOL");
+    return tokens.find((token) => {
+      if (!token) return false;
+      const sym = (token.symbol || "").toString().toUpperCase();
+      if (sym === "SOL") return true;
+      if (token.mint === SOL_WRAPPED_MINT) return true;
+      return false;
+    });
   };
 
-  // Get SOL price from tokens or fetch it
+  // Get SOL price from tokens (try several possible fields)
   const getSolPrice = (): number | undefined => {
     const solToken = getSolToken();
-    return solToken?.price;
+    if (!solToken) return undefined;
+    if (typeof solToken.price === "number" && isFinite(solToken.price))
+      return solToken.price;
+
+    // common alternative price fields providers may use
+    const alt =
+      (solToken as any).priceUsd ??
+      (solToken as any).usdPrice ??
+      (solToken as any).price_usd;
+    if (typeof alt === "number" && isFinite(alt)) return alt;
+
+    return undefined;
+  };
+
+  // Check if any tokens with balance are still loading prices
+  const areTokenPricesLoading = (): boolean => {
+    return tokens.some(
+      (token) =>
+        typeof token.balance === "number" &&
+        token.balance > 0 &&
+        token.price === undefined,
+    );
   };
 
   // Calculate total portfolio value including all tokens (USD)
@@ -599,21 +666,39 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const sortedTokens = useMemo(() => {
-    const priority = ["SOL", "USDC", "FIXERCOIN", "LOCKER"];
-    const arr = [...tokens].filter((t) => t.symbol !== "USDT");
+    const priority = ["SOL", "USDT", "FIXERCOIN", "FXM", "LOCKER"];
+    const arr = [...tokens];
+
+    const solToken = arr.find((t) => t.symbol === "SOL");
+    if (solToken) {
+      console.log(`[Dashboard] SOL token found in tokens array:`, {
+        symbol: solToken.symbol,
+        balance: solToken.balance,
+        price: solToken.price,
+        mint: solToken.mint,
+      });
+    } else {
+      console.warn("[Dashboard] SOL token NOT found in tokens array");
+      console.log(
+        "[Dashboard] Available tokens:",
+        tokens.map((t) => t.symbol),
+      );
+    }
+
     arr.sort((a, b) => {
       const aSym = (a.symbol || "").toUpperCase();
       const bSym = (b.symbol || "").toUpperCase();
-
       const aIdx = priority.indexOf(aSym);
       const bIdx = priority.indexOf(bSym);
-
       if (aIdx >= 0 && bIdx >= 0) return aIdx - bIdx;
       if (aIdx >= 0) return -1;
       if (bIdx >= 0) return 1;
-
       return aSym.localeCompare(bSym);
     });
+
+    console.log(
+      `[Dashboard] sortedTokens ready: ${arr.length} tokens, first token: ${arr[0]?.symbol} (balance: ${arr[0]?.balance})`,
+    );
     return arr;
   }, [tokens]);
 
@@ -671,8 +756,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* About */}
               <p className="text-xs text-gray-300 leading-relaxed">
                 A community challenge inside the Fixorium Wallet. Complete
-                simple tasks, earn rewards, and join random prize draws �����
-                all directly from your wallet.
+                simple tasks, earn rewards, and join random prize draws 🎁🎉 all
+                directly from your wallet.
               </p>
 
               {/* How it works */}
@@ -737,12 +822,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Rewards */}
               <div className="bg-white/5 rounded-lg p-3 border border-[#22c55e]/20">
                 <h3 className="text-sm font-bold text-white mb-3">
-                  ���� Rewards
+                  🎁 Rewards
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
-                  <p>����� {REWARD_PER_TASK} FIXERCOIN per task</p>
+                  <p>🪙 {REWARD_PER_TASK} FIXERCOIN per task</p>
                   <p>🖼️ NFTs and airdrops</p>
-                  <p>���� Early access to wallet updates</p>
+                  <p>🌟 Early access to wallet updates</p>
                   <p>👑 Premium features for top participants</p>
                 </div>
               </div>
@@ -800,10 +885,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
             src="https://cdn.builder.io/api/v1/image/assets%2F544a1f0862d54740bb19cea328eb3490%2F144647ed9eb7478cac472b3cb771e9ae?format=webp&width=800"
             alt="Balance card background"
             className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
-            style={{
-              backgroundColor: "#1f1f1f",
-            }}
+            style={{ backgroundColor: "#1f1f1f" }}
           />
+
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-2 gap-2">
               {/* Dropdown menu - moved to left */}
@@ -826,27 +910,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <span>MY WALLET</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={() => navigate("/autobot")}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <ArrowRightLeft className="h-4 w-4" />
-                    <span>TRADE</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => navigate("/burn")}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Zap className="h-4 w-4" />
-                    <span>TOKEN</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => onLock()}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <Lock className="h-4 w-4" />
-                    <span>LOCK</span>
-                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={onAirdrop}
                     className="flex items-center gap-2 text-xs"
@@ -904,7 +967,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
 
-            <div className="text-center space-y-2 mt-8">
+            <div className="space-y-3 mt-8">
+              <div className="text-left">
+                <div className="text-xs font-semibold text-gray-700 tracking-widest">
+                  MY PORTFOLIO
+                </div>
+              </div>
+
               {wallet
                 ? (() => {
                     const total = getTotalPortfolioValue();
@@ -913,27 +982,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         (t) => typeof t.balance === "number" && t.balance > 0,
                       ) ||
                       (typeof balance === "number" && balance > 0);
+
                     if (!hasAnyBalance) {
-                      // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
-                      const usdZero = `0.000 $`;
+                      // If prices are still loading, show loading indicator
+                      // Otherwise show 0.000 USD
+                      const displayValue = `0.000 $`;
                       return (
-                        <>
+                        <div className="flex items-center justify-between gap-4 w-full">
                           <div className="text-3xl text-gray-900 leading-tight">
-                            {showBalance ? `${usdZero}` : "****"}
+                            {showBalance ? displayValue : "****"}
                           </div>
-                          <div className="text-xs mt-1">
-                            <span
-                              style={{ color: "#FACC15", display: "block" }}
-                            >
-                              {showBalance ? `▲ + 0.000 0.00 %` : "24h: ****"}
-                            </span>
-                          </div>
-                        </>
+                          <Button
+                            onClick={onP2PTrade || onReceive}
+                            className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-5 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
+                          >
+                            P2P TRADE
+                          </Button>
+                        </div>
                       );
                     }
 
                     let totalChange24h = 0;
                     let hasValidPriceChange = false;
+
                     tokens.forEach((token) => {
                       if (
                         typeof token.balance === "number" &&
@@ -959,9 +1030,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       ? (totalChange24h / (total - totalChange24h)) * 100
                       : 0;
                     const isPositive = totalChange24h >= 0;
+                    const isLoadingPrices = areTokenPricesLoading();
 
                     return (
-                      <>
+                      <div className="flex items-center justify-between gap-4 w-full">
                         <div className="text-3xl text-gray-900 leading-tight">
                           {showBalance ? (
                             <>
@@ -982,34 +1054,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             "****"
                           )}
                         </div>
-                        {showBalance ? (
-                          <div className="text-xs mt-1">
-                            <span
-                              style={{
-                                color: isPositive ? "#FACC15" : "#F87171",
-                                display: "block",
-                              }}
-                            >
-                              {isPositive ? "▲" : "▼"} {isPositive ? "+" : "-"}{" "}
-                              {Math.abs(totalChange24h).toLocaleString(
-                                undefined,
-                                {
-                                  minimumFractionDigits: 3,
-                                  maximumFractionDigits: 3,
-                                },
-                              )}{" "}
-                              {Math.abs(
-                                isFinite(change24hPercent)
-                                  ? change24hPercent
-                                  : 0,
-                              ).toFixed(2)}
-                              %
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="text-xs text-gray-400 mt-1">****</div>
-                        )}
-                      </>
+                        <Button
+                          onClick={onP2PTrade || onReceive}
+                          className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-5 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
+                        >
+                          P2P TRADE
+                        </Button>
+                      </div>
                     );
                   })()
                 : "Connect wallet to see balance"}
@@ -1022,41 +1073,46 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
                 <Send className="h-8 w-8 text-[#22c55e]" />
-                <span>SEND</span>
+                <span>WITHDRAW</span>
               </Button>
-
               <Button
                 onClick={onReceive}
                 className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
                 <Download className="h-8 w-8 text-[#22c55e]" />
-                <span>RECEIVE</span>
+                <span>DEPOSIT</span>
               </Button>
-
               <Button
                 onClick={onSwap}
                 className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
                 <ArrowRightLeft className="h-8 w-8 text-[#22c55e]" />
-                <span>SWAP</span>
+                <span>CONVERT</span>
               </Button>
             </div>
 
-            {/* P2P EXPRESS SERVICE Button with Notification Badge */}
-            <div className="flex items-center justify-center gap-2 sm:gap-3 mt-4 w-full px-0">
+            {/* Additional Action Buttons: TRADE, BURN, LOCK */}
+            <div className="flex items-center justify-around gap-2 sm:gap-3 mt-3 w-full px-0">
               <Button
-                onClick={() => navigate("/p2p")}
-                className="relative flex-1 flex items-center bg-transparent border border-[#22c55e]/40 rounded-md px-4 py-3 hover:bg-[#22c55e]/10 transition-colors text-white font-bold text-xs h-auto py-3"
+                onClick={onAutoBot}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
-                <Bell className="h-4 w-4 text-[#22c55e] flex-shrink-0" />
-                <span className="flex-1 text-center">OFFICIAL P2P SERVICE</span>
-                {unreadCount > 0 && (
-                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#FF7A5C] rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  </div>
-                )}
+                <ArrowRightLeft className="h-8 w-8 text-[#22c55e]" />
+                <span>LIMIT ORDER</span>
+              </Button>
+              <Button
+                onClick={onBurn}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <Zap className="h-8 w-8 text-[#22c55e]" />
+                <span>BURNING</span>
+              </Button>
+              <Button
+                onClick={onLock}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <Unlock className="h-8 w-8 text-[#22c55e]" />
+                <span>LOCK UP</span>
               </Button>
             </div>
           </div>
@@ -1084,15 +1140,56 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         <style>{`
           @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+            0%, 100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: 0.3;
+            }
           }
           .token-price-blink {
             animation: blink 1.2s ease-in-out infinite;
           }
         `}</style>
 
-        <div className="w-full space-y-0">
+        <div className="w-full space-y-2">
+          {/* Quest Reward Card */}
+          <div className="w-full px-4">
+            <div
+              className="w-full bg-gradient-to-br from-[#1a3a2a] to-[#0f2818] rounded-md border border-[#22c55e]/40 p-4 cursor-pointer hover:bg-[#22c55e]/10 transition-colors"
+              onClick={() => setShowQuestModal(true)}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex flex-col gap-2 flex-1">
+                  <div className="text-xs font-semibold text-[#22c55e] uppercase tracking-widest">
+                    🎁 Fixercoin Quest
+                  </div>
+                  <div className="text-sm font-bold text-white">
+                    Earn {earnedTokens} FIXERCOIN
+                  </div>
+                  <div className="w-full bg-white/10 rounded-full h-1.5 border border-[#22c55e]/20">
+                    <div
+                      className="bg-gradient-to-r from-[#34d399] to-[#22c55e] h-1.5 rounded-full"
+                      style={{ width: `${progressPct}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {tasksDone}/{tasksTotal} tasks completed
+                  </div>
+                </div>
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowQuestModal(true);
+                  }}
+                  className="bg-[#22c55e] hover:bg-[#16a34a] text-gray-900 font-bold text-xs px-4 py-2 rounded-md whitespace-nowrap h-auto transition-colors"
+                >
+                  View Quest
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {sortedTokens.map((token, index) => {
             const tokenBalance =
               typeof token.balance === "number" &&
@@ -1103,11 +1200,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 : 0;
 
             return (
-              <div key={token.mint} className="w-full">
-                <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
+              <div key={token.mint} className="w-full px-4">
+                <Card className="w-full bg-transparent rounded-md border border-[#22c55e]/40 hover:bg-[#22c55e]/10 transition-colors">
                   <CardContent className="w-full p-0">
                     <div
-                      className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-4"
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-md cursor-pointer gap-4"
                       onClick={() => handleTokenCardClick(token)}
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1128,21 +1225,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               </span>
                             )}
                           </div>
-                          <p className="text-xs font-semibold text-white truncate flex items-baseline gap-1">
-                            <span>
-                              {
-                                formatAmountCompact(
-                                  token.balance,
-                                  token.symbol,
-                                ).split(/\s+/)[0]
-                              }
-                            </span>
-                            <span
-                              className="text-xs"
-                              style={{ fontSize: "0.65rem" }}
-                            >
-                              {token.symbol.toUpperCase()}
-                            </span>
+                          <p className="text-xs font-semibold text-white truncate">
+                            {formatBalance(token.balance, token.symbol)}
                           </p>
                         </div>
                       </div>
@@ -1150,54 +1234,44 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
                         <div
                           className={`text-xs whitespace-nowrap ${
-                            typeof token.price === "number" &&
-                            isFinite(token.price) &&
-                            token.price !== 0
-                              ? "font-semibold"
-                              : ""
+                            tokenBalance > 0 ? "font-semibold" : ""
                           }`}
                         >
                           {typeof token.price === "number" &&
                           isFinite(token.price) ? (
                             <span style={{ color: "#ffffff" }}>
-                              $
-                              {token.price.toFixed(
-                                ["SOL", "USDC"].includes(token.symbol) ? 2 : 8,
+                              {formatUSD(
+                                token.balance,
+                                token.price,
+                                token.symbol,
                               )}
                             </span>
-                          ) : [
-                              "SOL",
-                              "USDC",
-                              "FIXERCOIN",
-                              "LOCKER",
-                              "FXM",
-                            ].includes(token.symbol) ? (
-                            <PriceLoader />
-                          ) : (
-                            <span style={{ color: "#999999" }}>
-                              $0.00000000
-                            </span>
-                          )}
+                          ) : null}
                         </div>
-
-                        <p
-                          className={`text-xs text-white whitespace-nowrap ${
-                            tokenBalance > 0 ? "font-semibold" : ""
+                        <div
+                          className={`text-xs whitespace-nowrap ${
+                            typeof token.priceChange24h === "number" &&
+                            isFinite(token.priceChange24h)
+                              ? token.priceChange24h >= 0
+                                ? "text-green-400"
+                                : "text-red-400"
+                              : "text-gray-400"
                           }`}
                         >
-                          $
-                          {tokenBalance.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p>
+                          {typeof token.priceChange24h === "number" &&
+                          isFinite(token.priceChange24h) ? (
+                            <>
+                              {token.priceChange24h >= 0 ? "+" : ""}
+                              {token.priceChange24h.toFixed(2)}%
+                            </>
+                          ) : (
+                            <span className="text-gray-500">-</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-                {index < sortedTokens.length - 1 && (
-                  <Separator className="bg-[#14532d]/30" />
-                )}
               </div>
             );
           })}

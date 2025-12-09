@@ -1,10 +1,6 @@
 import { dexscreenerAPI } from "./dexscreener";
 import { solPriceService } from "./sol-price";
-import { saveServicePrice } from "./offline-cache";
-import {
-  retryWithExponentialBackoff,
-  AGGRESSIVE_RETRY_OPTIONS,
-} from "./retry-fetch";
+import { retryWithExponentialBackoff } from "./retry-fetch";
 
 export interface FXMPriceData {
   price: number;
@@ -22,11 +18,11 @@ const SOL_MINT = "So11111111111111111111111111111111111111112";
 class FXMPriceService {
   private cachedData: FXMPriceData | null = null;
   private lastFetchTime: Date | null = null;
-  private readonly CACHE_DURATION = 250; // 250ms - ensures live price updates every 250ms for real-time display
+  private readonly CACHE_DURATION = 250; // live updates every 250ms
   private readonly TOKEN_NAME = "FXM";
 
   async getFXMPrice(): Promise<FXMPriceData | null> {
-    // Check if we have valid cached data (only from live prices, not fallbacks)
+    // Return cached (only from live source)
     if (
       this.cachedData &&
       this.lastFetchTime &&
@@ -40,169 +36,167 @@ class FXMPriceService {
       }
     }
 
-    // Use retry logic to fetch price using conversion logic
+    // Fetch with retry logic
     const priceData = await retryWithExponentialBackoff(
       async () => {
-        console.log(
-          "Fetching fresh FXM price using DexScreener conversion logic...",
-        );
+        console.log("Fetching fresh FXM price directly from DexScreener...");
 
         try {
-          // Fetch SOL/FXM pair from DexScreener
-          const pairs = await dexscreenerAPI.getTokensByMints([
-            FXM_MINT,
-            SOL_MINT,
-          ]);
-
-          if (!pairs || pairs.length === 0) {
-            throw new Error("Could not fetch FXM/SOL pair from DexScreener");
-          }
-
-          // Find the pair where FXM and SOL interact
-          const fxmPair = pairs.find(
-            (p) =>
-              (p.baseToken?.address === FXM_MINT ||
-                p.quoteToken?.address === FXM_MINT) &&
-              (p.baseToken?.address === SOL_MINT ||
-                p.quoteToken?.address === SOL_MINT),
-          );
-
-          if (!fxmPair) {
-            throw new Error(
-              "SOL/FXM pair not found on DexScreener - cannot calculate conversion rate",
-            );
-          }
-
-          // Get SOL price in USDT
-          const solPriceData = await solPriceService.getSolPrice();
-          if (!solPriceData || solPriceData.price <= 0) {
-            throw new Error("Could not fetch SOL price in USDT");
-          }
-
-          // Calculate FXM price based on conversion logic
-          let fxmPrice: number;
-          let priceChange24h: number = fxmPair.priceChange?.h24 || 0;
-          let volume24h: number = fxmPair.volume?.h24 || 0;
-
-          const priceNative = fxmPair.priceNative
-            ? parseFloat(fxmPair.priceNative)
-            : null;
-
-          if (!priceNative || priceNative <= 0) {
-            throw new Error("Invalid price native value from DexScreener pair");
-          }
-
-          if (fxmPair.baseToken?.address === FXM_MINT) {
-            // FXM/SOL pair: priceNative is SOL per FXM
-            fxmPrice = priceNative * solPriceData.price;
-            console.log(
-              `[FXMPrice] FXM/SOL pair: priceNative=${priceNative} SOL/FXM, SOL price=${solPriceData.price} USDT, FXM price=${fxmPrice} USDT`,
-            );
-          } else {
-            // SOL/FXM pair: priceNative is FXM per SOL
-            fxmPrice = solPriceData.price / priceNative;
-            console.log(
-              `[FXMPrice] SOL/FXM pair: priceNative=${priceNative} FXM/SOL, SOL price=${solPriceData.price} USDT, FXM price=${fxmPrice} USDT`,
-            );
-          }
-
-          if (!fxmPrice || fxmPrice <= 0) {
-            throw new Error(
-              `Invalid FXM price from conversion logic: ${fxmPrice}`,
-            );
-          }
-
-          const priceData: FXMPriceData = {
-            price: fxmPrice,
-            priceChange24h,
-            volume24h,
-            liquidity: fxmPair.liquidity?.usd,
-            lastUpdated: new Date(),
-            derivationMethod: "DexScreener SOL/FXM conversion (live)",
-          };
-
-          this.cachedData = priceData;
-          this.lastFetchTime = new Date();
-          console.log(
-            `✅ FXM price updated: $${priceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${priceData.derivationMethod}`,
-          );
-
-          // Save to localStorage for offline support
-          saveServicePrice("FXM", {
-            price: priceData.price,
-            priceChange24h: priceData.priceChange24h,
-          });
-
-          return priceData;
-        } catch (conversionError) {
-          // If conversion logic fails, fall back to direct FXM price from DexScreener
-          console.warn(
-            `[FXMPrice] Conversion logic failed: ${conversionError instanceof Error ? conversionError.message : String(conversionError)}. Falling back to direct DexScreener price...`,
-          );
-
+          // First, try to fetch FXM directly by mint
           const tokens = await dexscreenerAPI.getTokensByMints([FXM_MINT]);
 
           if (!tokens || tokens.length === 0) {
-            throw new Error("FXM not found on DexScreener for fallback");
+            throw new Error("FXM not found on DexScreener by mint");
           }
 
-          const token = tokens[0];
-          const price = token.priceUsd ? parseFloat(token.priceUsd) : null;
-          const priceChange24h = token.priceChange?.h24 || 0;
-          const volume24h = token.volume?.h24 || 0;
-          const liquidity = token.liquidity?.usd;
+          const fxmToken = tokens[0];
+          const price = fxmToken.priceUsd
+            ? parseFloat(fxmToken.priceUsd)
+            : null;
 
-          if (!price || price <= 0) {
-            throw new Error(
-              `Invalid FXM price from direct DexScreener fallback: ${price}`,
-            );
+          if (!price || !isFinite(price) || price <= 0) {
+            throw new Error(`Invalid FXM price from DexScreener: ${price}`);
           }
 
-          const fallbackPriceData: FXMPriceData = {
+          const result: FXMPriceData = {
             price,
-            priceChange24h,
-            volume24h,
-            liquidity,
+            priceChange24h: fxmToken.priceChange?.h24 || 0,
+            volume24h: fxmToken.volume?.h24 || 0,
+            liquidity: fxmToken.liquidity?.usd,
             lastUpdated: new Date(),
-            derivationMethod: "DexScreener Direct (fallback)",
+            derivationMethod: "DexScreener Direct (live)",
           };
 
-          this.cachedData = fallbackPriceData;
+          this.cachedData = result;
           this.lastFetchTime = new Date();
+
           console.log(
-            `✅ FXM price updated (FALLBACK): $${fallbackPriceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${fallbackPriceData.derivationMethod}`,
+            `✅ FXM price updated: $${result.price.toFixed(8)} via ${result.derivationMethod}`,
           );
 
-          // Save to localStorage for offline support
-          saveServicePrice("FXM", {
-            price: fallbackPriceData.price,
-            priceChange24h: fallbackPriceData.priceChange24h,
-          });
+          return result;
+        } catch (err) {
+          console.warn(
+            `[FXMPrice] Direct fetch failed: ${
+              err instanceof Error ? err.message : String(err)
+            }. Trying pair-based lookup...`,
+          );
 
-          return fallbackPriceData;
+          // Fallback: try to find FXM/SOL pair
+          try {
+            const pairs = await dexscreenerAPI.getTokensByMints([
+              FXM_MINT,
+              SOL_MINT,
+            ]);
+
+            if (!pairs || pairs.length === 0) {
+              throw new Error("Could not fetch FXM/SOL pair from DexScreener");
+            }
+
+            const fxmPair = pairs.find(
+              (p) =>
+                (p.baseToken?.address === FXM_MINT ||
+                  p.quoteToken?.address === FXM_MINT) &&
+                (p.baseToken?.address === SOL_MINT ||
+                  p.quoteToken?.address === SOL_MINT),
+            );
+
+            if (!fxmPair) {
+              throw new Error("SOL/FXM pair not found on DexScreener");
+            }
+
+            const solPriceData = await solPriceService.getSolPrice();
+            if (!solPriceData || solPriceData.price <= 0) {
+              throw new Error("Could not fetch SOL price");
+            }
+
+            const priceNative = fxmPair.priceNative
+              ? parseFloat(fxmPair.priceNative)
+              : null;
+
+            if (!priceNative || !isFinite(priceNative) || priceNative <= 0) {
+              throw new Error("Invalid priceNative value");
+            }
+
+            let fxmPrice: number;
+            if (fxmPair.baseToken?.address === FXM_MINT) {
+              fxmPrice = priceNative * solPriceData.price;
+            } else {
+              fxmPrice = solPriceData.price / priceNative;
+            }
+
+            if (!fxmPrice || !isFinite(fxmPrice) || fxmPrice <= 0) {
+              throw new Error(`Invalid calculated FXM price: ${fxmPrice}`);
+            }
+
+            const result: FXMPriceData = {
+              price: fxmPrice,
+              priceChange24h: fxmPair.priceChange?.h24 || 0,
+              volume24h: fxmPair.volume?.h24 || 0,
+              liquidity: fxmPair.liquidity?.usd,
+              lastUpdated: new Date(),
+              derivationMethod: "DexScreener SOL/FXM conversion (live)",
+            };
+
+            this.cachedData = result;
+            this.lastFetchTime = new Date();
+
+            console.log(
+              `✅ FXM price updated (pair): $${result.price.toFixed(8)} via ${result.derivationMethod}`,
+            );
+
+            return result;
+          } catch (fallbackErr) {
+            console.warn(
+              `[FXMPrice] Pair lookup also failed: ${
+                fallbackErr instanceof Error
+                  ? fallbackErr.message
+                  : String(fallbackErr)
+              }`,
+            );
+            throw fallbackErr;
+          }
         }
       },
       this.TOKEN_NAME,
-      AGGRESSIVE_RETRY_OPTIONS,
+      {
+        maxRetries: 2,
+        initialDelayMs: 500,
+        maxDelayMs: 2000,
+        backoffMultiplier: 2,
+        timeoutMs: 8000,
+      },
     );
 
-    // Return null only if all retries failed - never return fallback
     if (!priceData) {
       console.warn(
-        `[${this.TOKEN_NAME}] All price fetch attempts failed. Will retry on next request.`,
+        `[${this.TOKEN_NAME}] All price fetch attempts failed. Using static fallback.`,
       );
+
+      const fallbackData: FXMPriceData = {
+        price: 0.00000001,
+        priceChange24h: 0,
+        volume24h: 0,
+        liquidity: 0,
+        lastUpdated: new Date(),
+        derivationMethod: "static fallback (DexScreener unavailable)",
+        isFallback: true,
+      };
+
+      this.cachedData = fallbackData;
+      this.lastFetchTime = new Date();
+
+      return fallbackData;
     }
 
     return priceData;
   }
 
-  // Get just the price number for quick access
   async getPrice(): Promise<number> {
     const data = await this.getFXMPrice();
     return data?.price || 0;
   }
 
-  // Get the price with derivation method info
   async getFXMPriceWithMethod(): Promise<{
     price: number;
     derivationMethod: string;
@@ -214,11 +208,10 @@ class FXMPriceService {
     };
   }
 
-  // Clear cache to force fresh fetch
   clearCache(): void {
     this.cachedData = null;
     this.lastFetchTime = null;
-    console.log("[FXMPriceService] Cache cleared - next fetch will be fresh");
+    console.log("[FXMPriceService] Cache cleared");
   }
 }
 

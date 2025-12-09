@@ -94,7 +94,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({ token, mint }) => {
       <div className="flex items-end justify-between gap-2">
         <div>
           <div className="text-2xl font-bold text-white">
-            ${(token.price || 0).toFixed(8)}
+            ${(token.price || 0).toFixed(2)}
           </div>
           <div
             className={`flex items-center gap-1 text-sm font-semibold ${

@@ -24,15 +24,14 @@ export const onRequest: PagesFunction = async ({ request, env }) => {
   const candidateRpcs = [
     env.SOLANA_RPC as string,
     env.SOLANA_RPC_URL as string,
-    env.HELIUS_RPC_URL as string,
     env.MORALIS_RPC_URL as string,
     env.ALCHEMY_RPC_URL as string,
-    env.HELIUS_API_KEY
-      ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`
-      : "",
-    "https://api.mainnet-beta.solana.com",
-    "https://rpc.ankr.com/solana",
+    "https://api.mainnet-beta.solflare.network",
     "https://solana.publicnode.com",
+    "https://api.solflare.com",
+    "https://rpc.ankr.com/solana",
+    "https://api.mainnet-beta.solana.com",
+    "https://api.marinade.finance/rpc",
   ].filter((x) => !!x && typeof x === "string");
 
   const rpcBody = {

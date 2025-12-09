@@ -250,7 +250,9 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
   console.log(`[SOL Price] Fetching price for SOL`);
 
   try {
+    // Try DexScreener first
     try {
+      console.log(`[SOL Price] Attempting DexScreener...`);
       const data = await fetchDexscreenerData(`/tokens/${SOL_MINT}`);
       const pair = data?.pairs?.[0];
 
@@ -259,7 +261,7 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
 
         if (isFinite(priceUsd) && priceUsd > 0) {
           console.log(
-            `[SOL Price] ✅ Successfully fetched SOL price: $${priceUsd}`,
+            `[SOL Price] ✅ DexScreener success: $${priceUsd.toFixed(2)}`,
           );
           return res.json({
             token: "SOL",
@@ -274,21 +276,20 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
       }
 
       console.warn(
-        `[SOL Price] Invalid or missing price data from DexScreener`,
+        `[SOL Price] DexScreener returned invalid/missing price data`,
       );
     } catch (error) {
       console.warn(
-        `[SOL Price] DexScreener fetch failed:`,
-        error instanceof Error ? error.message : String(error),
+        `[SOL Price] DexScreener error: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
 
     // Try Jupiter API as fallback
-    console.log(`[SOL Price] Trying Jupiter API for SOL price...`);
+    console.log(`[SOL Price] Attempting Jupiter API...`);
     const jupiterPrice = await fetchPriceFromJupiter(SOL_MINT);
-    if (jupiterPrice !== null) {
+    if (jupiterPrice !== null && jupiterPrice > 0) {
       console.log(
-        `[SOL Price] ✅ Got SOL price from Jupiter: $${jupiterPrice}`,
+        `[SOL Price] ✅ Jupiter success: $${jupiterPrice.toFixed(2)}`,
       );
       return res.json({
         token: "SOL",
@@ -301,9 +302,27 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
       });
     }
 
-    // Fallback response with status 200 (not 502) to ensure client receives valid JSON
-    console.log(
-      `[SOL Price] Both DexScreener and Jupiter failed, using hardcoded fallback: $${FALLBACK_SOL_PRICE}`,
+    // Try CoinGecko API as second fallback
+    console.log(`[SOL Price] Attempting CoinGecko...`);
+    const coingeckoPrice = await fetchPriceFromCoingecko();
+    if (coingeckoPrice !== null && coingeckoPrice > 0) {
+      console.log(
+        `[SOL Price] ✅ CoinGecko success: $${coingeckoPrice.toFixed(2)}`,
+      );
+      return res.json({
+        token: "SOL",
+        price: coingeckoPrice,
+        priceUsd: coingeckoPrice,
+        priceChange24h: 0,
+        volume24h: 0,
+        marketCap: 0,
+        source: "coingecko",
+      });
+    }
+
+    // All external APIs failed - return fallback with status 200 to prevent client errors
+    console.warn(
+      `[SOL Price] All APIs failed (DexScreener, Jupiter, CoinGecko), using fallback: $${FALLBACK_SOL_PRICE}`,
     );
     return res.json({
       token: "SOL",
@@ -313,10 +332,14 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
       volume24h: 0,
       marketCap: 0,
       source: "fallback",
+      warning:
+        "Using fallback price - all API endpoints are unavailable. Price may be outdated.",
     });
   } catch (error) {
     // Last-resort fallback - always return valid JSON
-    console.error(`[SOL Price] Handler error:`, error);
+    console.error(
+      `[SOL Price] Handler error: ${error instanceof Error ? error.message : String(error)}`,
+    );
     return res.json({
       token: "SOL",
       price: FALLBACK_SOL_PRICE,
@@ -325,6 +348,7 @@ export const handleSolPrice: RequestHandler = async (req, res) => {
       volume24h: 0,
       marketCap: 0,
       source: "fallback",
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 };
@@ -377,6 +401,65 @@ async function fetchPriceFromJupiter(mint: string): Promise<number | null> {
   } catch (error) {
     console.warn(
       `[Jupiter Fallback] Failed to fetch price:`,
+      error instanceof Error ? error.message : String(error),
+    );
+    return null;
+  }
+}
+
+/**
+ * Fetch SOL price from CoinGecko API as backup
+ */
+async function fetchPriceFromCoingecko(): Promise<number | null> {
+  try {
+    console.log(`[CoinGecko] Fetching SOL price...`);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    try {
+      const response = await fetch(
+        "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd",
+        {
+          signal: controller.signal,
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.warn(
+          `[CoinGecko] API returned ${response.status} for SOL price`,
+        );
+        return null;
+      }
+
+      const data = (await response.json()) as {
+        solana?: { usd?: number };
+      };
+
+      if (data.solana && typeof data.solana.usd === "number") {
+        const price = data.solana.usd;
+        if (isFinite(price) && price > 0) {
+          console.log(
+            `[CoinGecko] ✅ Got SOL price from CoinGecko: $${price.toFixed(2)}`,
+          );
+          return price;
+        }
+      }
+
+      console.warn(`[CoinGecko] No valid price data in response`);
+      return null;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  } catch (error) {
+    console.warn(
+      `[CoinGecko] Failed to fetch SOL price:`,
       error instanceof Error ? error.message : String(error),
     );
     return null;

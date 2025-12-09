@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, ShoppingCart, TrendingUp } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
-import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import {
@@ -24,7 +23,10 @@ import {
 } from "@/components/ui/dialog";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
-import { ADMIN_WALLET } from "@/lib/p2p";
+import {
+  PaymentMethod,
+  getPaymentMethodsByWallet,
+} from "@/lib/p2p-payment-methods";
 
 interface TokenOption {
   id: string;
@@ -47,7 +49,7 @@ const DEFAULT_TOKENS: TokenOption[] = [
     id: "USDC",
     name: "USDC",
     symbol: "USDC",
-    logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5Au7BXRSpJfDw3gEPrwwAau4vTNihtQ5go5Q/logo.png",
+    logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
     mint: SUPPORTED_TOKEN_MINTS.USDC,
   },
 ];
@@ -57,13 +59,13 @@ export default function SellNow() {
   const location = useLocation();
   const { wallet, tokens: walletTokens = [] } = useWallet();
   const { toast } = useToast();
-  const { createNotification } = useOrderNotifications();
 
   const [tokens, setTokens] = useState<TokenOption[]>(DEFAULT_TOKENS);
   const [selectedToken, setSelectedToken] = useState<TokenOption>(
     DEFAULT_TOKENS[0],
   );
-  const [sellAmountTokens, setSellAmountTokens] = useState<string>("");
+  const [minAmountTokens, setMinAmountTokens] = useState<string>("");
+  const [maxAmountTokens, setMaxAmountTokens] = useState<string>("");
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [fetchingRate, setFetchingRate] = useState(false);
@@ -77,6 +79,10 @@ export default function SellNow() {
   const [editingOrder, setEditingOrder] = useState<any>(
     (location.state as any)?.editingOrder || null,
   );
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
+    null,
+  );
+  const [fetchingPaymentMethod, setFetchingPaymentMethod] = useState(false);
 
   const OFFER_PASSWORD = "######Pakistan";
 
@@ -91,13 +97,58 @@ export default function SellNow() {
     navigate(action === "buy" ? "/buy-crypto" : "/sell-now");
   };
 
+  const [usdcDirectBalance, setUsdcDirectBalance] = useState<number | null>(
+    null,
+  );
+  const [fetchingUsdcBalance, setFetchingUsdcBalance] = useState(false);
+
+  // Direct USDC balance fetch via server API
+  useEffect(() => {
+    const fetchUsdcDirectBalance = async () => {
+      if (!wallet?.publicKey) return;
+
+      setFetchingUsdcBalance(true);
+      try {
+        const response = await fetch(
+          `/api/wallet/token-balance?wallet=${encodeURIComponent(wallet.publicKey)}&mint=${encodeURIComponent(SUPPORTED_TOKEN_MINTS.USDC)}`,
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const balance = typeof data.balance === "number" ? data.balance : 0;
+        setUsdcDirectBalance(balance);
+        console.log("[SellNow] Server USDC balance fetched:", balance);
+      } catch (err) {
+        console.warn("[SellNow] Server USDC balance fetch failed:", err);
+        setUsdcDirectBalance(0);
+      } finally {
+        setFetchingUsdcBalance(false);
+      }
+    };
+
+    if (selectedToken.symbol === "USDC") {
+      fetchUsdcDirectBalance();
+    }
+  }, [wallet?.publicKey, selectedToken.symbol]);
+
   const selectedTokenBalance = useMemo(() => {
     const t = (walletTokens || []).find(
       (tk) =>
         (tk.symbol || "").toUpperCase() === selectedToken.symbol.toUpperCase(),
     );
-    return t?.balance || 0;
-  }, [walletTokens, selectedToken]);
+    const balance = t?.balance || 0;
+
+    // For USDC, prioritize direct balance if available and valid
+    if (selectedToken.symbol === "USDC" && usdcDirectBalance !== null) {
+      // Use direct balance if it's more recent (non-zero or explicitly fetched)
+      return usdcDirectBalance > 0 ? usdcDirectBalance : balance;
+    }
+
+    return balance;
+  }, [walletTokens, selectedToken, usdcDirectBalance]);
 
   // Load editing order data if available
   useEffect(() => {
@@ -107,8 +158,13 @@ export default function SellNow() {
       if (token) {
         setSelectedToken(token);
       }
-      // Set the amount
-      setSellAmountTokens(String(editingOrder.amountTokens || ""));
+      // Set the min/max amounts
+      setMinAmountTokens(
+        String(editingOrder.minAmountTokens || editingOrder.minAmountPKR || ""),
+      );
+      setMaxAmountTokens(
+        String(editingOrder.maxAmountTokens || editingOrder.maxAmountPKR || ""),
+      );
     }
   }, [editingOrder, tokens]);
 
@@ -160,38 +216,83 @@ export default function SellNow() {
     fetchRate();
   }, [selectedToken]);
 
-  const addPendingOrder = (o: any) => {
-    try {
-      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
-      const arr = Array.isArray(cur) ? cur : [];
-      arr.unshift({ ...o, status: "pending" });
-      localStorage.setItem("orders_pending", JSON.stringify(arr));
-    } catch {}
-  };
-
-  const updatePendingOrder = (updatedOrder: any) => {
-    try {
-      const cur = JSON.parse(localStorage.getItem("orders_pending") || "[]");
-      const arr = Array.isArray(cur) ? cur : [];
-      const index = arr.findIndex((o: any) => o.id === updatedOrder.id);
-      if (index >= 0) {
-        arr[index] = { ...updatedOrder, status: "pending" };
-        localStorage.setItem("orders_pending", JSON.stringify(arr));
+  useEffect(() => {
+    const fetchPaymentMethod = async () => {
+      if (!wallet?.publicKey) {
+        setPaymentMethod(null);
+        return;
       }
-    } catch {}
-  };
 
-  const getAvailableBuyerWallet = () => {
-    try {
-      const pendingOrders = JSON.parse(
-        localStorage.getItem("orders_pending") || "[]",
-      );
-      const buyOrders = pendingOrders.filter((o: any) => o.buyerWallet);
-      if (buyOrders.length > 0) {
-        return buyOrders[0].buyerWallet;
+      setFetchingPaymentMethod(true);
+      try {
+        const methods = await getPaymentMethodsByWallet(wallet.publicKey);
+        if (methods.length > 0) {
+          setPaymentMethod(methods[0]);
+        } else {
+          setPaymentMethod(null);
+        }
+      } catch (error) {
+        console.error("Error fetching payment method:", error);
+        setPaymentMethod(null);
+      } finally {
+        setFetchingPaymentMethod(false);
       }
-    } catch {}
-    return undefined;
+    };
+
+    fetchPaymentMethod();
+  }, [wallet?.publicKey]);
+
+  const saveOrderToAPI = async (order: any) => {
+    try {
+      const orderPayload: any = {
+        type: "SELL",
+        walletAddress: wallet.publicKey,
+        token: order.token,
+        minAmountTokens: order.minAmountTokens,
+        maxAmountTokens: order.maxAmountTokens,
+        pricePKRPerQuote: order.pricePKRPerQuote,
+        paymentMethodId: order.paymentMethod,
+        status: "PENDING",
+        orderId: order.id,
+        sellerWallet: wallet.publicKey,
+      };
+
+      // Only include amountTokens and amountPKR if they are defined
+      if (order.amountTokens !== undefined) {
+        orderPayload.amountTokens = order.amountTokens;
+      }
+      if (order.amountPKR !== undefined) {
+        orderPayload.amountPKR = order.amountPKR;
+      }
+
+      const response = await fetch("/api/p2p/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderPayload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = "Failed to save order";
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || errorMessage;
+        } catch {
+          // If not JSON, use the text as-is
+          errorMessage = errorText || errorMessage;
+        }
+        console.error(
+          "Failed to save order to API:",
+          response.status,
+          errorMessage,
+        );
+        throw new Error(errorMessage);
+      }
+      return true;
+    } catch (error) {
+      console.error("Error saving order to API:", error);
+      throw error;
+    }
   };
 
   const handleSellClick = async () => {
@@ -203,87 +304,66 @@ export default function SellNow() {
       });
       return;
     }
-    const amount = Number(sellAmountTokens);
-    if (
-      !sellAmountTokens ||
-      !isFinite(amount) ||
-      amount <= 0 ||
-      !exchangeRate
-    ) {
+
+    if (!paymentMethod) {
       toast({
-        title: "Invalid Amount",
-        description: "Enter a valid token amount",
+        title: "Payment Method Required",
+        description: "Please add a payment method first",
+        variant: "destructive",
+      });
+      setShowPaymentDialog(true);
+      return;
+    }
+
+    const minAmount = Number(minAmountTokens);
+    const maxAmount = Number(maxAmountTokens);
+
+    if (!minAmountTokens || !isFinite(minAmount) || minAmount <= 0) {
+      toast({
+        title: "Invalid Minimum Amount",
+        description: "Enter a valid minimum USDC amount",
         variant: "destructive",
       });
       return;
     }
+
+    if (!maxAmountTokens || !isFinite(maxAmount) || maxAmount <= 0) {
+      toast({
+        title: "Invalid Maximum Amount",
+        description: "Enter a valid maximum USDC amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (minAmount >= maxAmount) {
+      toast({
+        title: "Invalid Range",
+        description: "Maximum amount must be greater than minimum amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      const buyerWallet = getAvailableBuyerWallet();
       const orderId = editingOrder?.id || `SELL-${Date.now()}`;
       const order = {
         id: orderId,
         type: "SELL",
         token: selectedToken.id,
-        amountTokens: amount,
-        amountPKR: amount * exchangeRate,
+        minAmountTokens: minAmount,
+        maxAmountTokens: maxAmount,
         pricePKRPerQuote: exchangeRate,
-        paymentMethod: "easypaisa",
+        paymentMethod: paymentMethod.id,
         sellerWallet: wallet.publicKey,
         walletAddress: wallet.publicKey,
-        adminWallet: ADMIN_WALLET,
-        buyerWallet: buyerWallet,
         createdAt: editingOrder?.createdAt || Date.now(),
         updatedAt: Date.now(),
-        status: "pending",
+        status: "PENDING",
       };
 
-      try {
-        localStorage.setItem("sellnote_order", JSON.stringify(order));
-      } catch {}
-
-      if (editingOrder) {
-        updatePendingOrder(order);
-      } else {
-        addPendingOrder(order);
-      }
-
-      try {
-        const response = await fetch("/api/p2p/orders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            walletAddress: wallet.publicKey,
-            type: "SELL",
-            token: selectedToken.id,
-            amountTokens: amount,
-            amountPKR: amount * exchangeRate,
-            paymentMethodId: "easypaisa",
-            status: "PENDING",
-            orderId,
-          }),
-        });
-        if (!response.ok) {
-          console.error("Failed to save order to KV:", response.status);
-        }
-      } catch (kvError) {
-        console.error("Error saving to KV storage:", kvError);
-      }
-
-      if (!editingOrder) {
-        await createNotification(
-          ADMIN_WALLET,
-          "order_created",
-          "SELL",
-          orderId,
-          `New sell order created: ${amount.toFixed(6)} ${selectedToken.id} for ${(amount * exchangeRate).toFixed(2)} PKR`,
-          {
-            token: selectedToken.id,
-            amountTokens: amount,
-            amountPKR: amount * exchangeRate,
-          },
-        );
-      }
+      await saveOrderToAPI(order);
 
       toast({
         title: "Success",
@@ -295,9 +375,12 @@ export default function SellNow() {
 
       navigate("/sell-order");
     } catch (error: any) {
+      const errorMessage = error?.message || String(error);
+      console.error("[SellNow] Error creating order:", errorMessage);
+
       toast({
-        title: "Failed to save order",
-        description: error?.message || String(error),
+        title: "Failed to create sell order",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -321,68 +404,62 @@ export default function SellNow() {
                 AVAILABLE BALANCE
               </div>
               <div className="mt-1 text-sm">
-                <span className="font-semibold">
-                  {selectedTokenBalance.toFixed(6)} {selectedToken.symbol}
+                <span className="font-semibold flex items-center gap-2">
+                  {fetchingUsdcBalance && selectedToken.symbol === "USDC" ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Fetching...</span>
+                    </>
+                  ) : (
+                    <>
+                      {selectedTokenBalance.toFixed(6)} {selectedToken.symbol}
+                    </>
+                  )}
                 </span>
               </div>
             </div>
 
             <div>
               <label className="block font-medium text-white/80 mb-2 uppercase">
-                AMOUNT ({selectedToken.symbol})
+                MINIMUM AMOUNT (USDC)
               </label>
               <input
                 type="number"
-                value={sellAmountTokens}
-                onChange={(e) => setSellAmountTokens(e.target.value)}
-                placeholder={`Enter amount in ${selectedToken.symbol}`}
+                value={minAmountTokens}
+                onChange={(e) => setMinAmountTokens(e.target.value)}
+                placeholder="Enter minimum amount in USDC"
                 className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
                 min="0"
                 step="0.000001"
               />
             </div>
 
-            <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">
-                    EXCHANGE RATE:
-                  </span>
-                  {fetchingRate ? (
-                    <Loader2 className="w-4 h-4 text-[#FF7A5C] animate-spin" />
-                  ) : (
-                    <span className="font-semibold text-[#FF7A5C]">
-                      1 {selectedToken.symbol} ={" "}
-                      {exchangeRate > 0
-                        ? exchangeRate < 1
-                          ? exchangeRate.toFixed(6)
-                          : exchangeRate.toFixed(2)
-                        : "0.00"}{" "}
-                      PKR
-                    </span>
-                  )}
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-white/70 uppercase">
-                    YOU WILL RECEIVE:
-                  </span>
-                  <span className="font-bold text-[#FF7A5C]">
-                    {(
-                      Number(sellAmountTokens || 0) * (exchangeRate || 0)
-                    ).toFixed(2)}{" "}
-                    PKR
-                  </span>
-                </div>
-              </div>
+            <div>
+              <label className="block font-medium text-white/80 mb-2 uppercase">
+                MAXIMUM AMOUNT (USDC)
+              </label>
+              <input
+                type="number"
+                value={maxAmountTokens}
+                onChange={(e) => setMaxAmountTokens(e.target.value)}
+                placeholder="Enter maximum amount in USDC"
+                className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 focus:outline-none focus:ring-2 focus:ring-[#FF7A5C] text-white placeholder-white/40"
+                min="0"
+                step="0.000001"
+              />
             </div>
 
             <Button
               onClick={handleSellClick}
               disabled={
                 loading ||
-                !sellAmountTokens ||
-                Number(sellAmountTokens) <= 0 ||
-                !exchangeRate
+                !minAmountTokens ||
+                !maxAmountTokens ||
+                Number(minAmountTokens) <= 0 ||
+                Number(maxAmountTokens) <= 0 ||
+                Number(minAmountTokens) >= Number(maxAmountTokens) ||
+                !paymentMethod ||
+                fetchingPaymentMethod
               }
               className="w-full h-12 rounded-lg font-semibold transition-all duration-200 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -391,6 +468,13 @@ export default function SellNow() {
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   Processing...
                 </>
+              ) : fetchingPaymentMethod ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Loading Payment Method...
+                </>
+              ) : !paymentMethod ? (
+                "ADD PAYMENT METHOD FIRST"
               ) : editingOrder ? (
                 "UPDATE SELL ORDER"
               ) : (
@@ -399,7 +483,7 @@ export default function SellNow() {
             </Button>
 
             <Button
-              onClick={() => navigate("/p2p")}
+              onClick={() => navigate("/")}
               variant="outline"
               className="w-full h-12 rounded-lg font-semibold transition-all duration-200 border border-[#FF7A5C]/50 text-[#FF7A5C] hover:bg-[#FF7A5C]/10"
             >

@@ -26,7 +26,7 @@ import {
   Clock,
   Coins,
   Search as SearchIcon,
-  MessageSquare,
+  Headphones,
 } from "lucide-react";
 import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import {

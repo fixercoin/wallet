@@ -427,42 +427,50 @@ export default function SellerOrderConfirmation() {
           </CardContent>
         </Card>
 
-        {/* Buyer Details */}
-        <Card className="bg-[#0f1520]/50 border border-blue-500/30 mb-6">
+        {/* Transfer Instructions */}
+        <Card className="bg-[#0f1520]/50 border border-green-500/30 mb-6">
           <CardContent className="p-4">
             <h2 className="text-lg font-bold text-white mb-4 uppercase">
-              Buyer Details
+              Transfer Instructions
             </h2>
-            <div className="space-y-3">
-              <div>
-                <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                  Wallet Address
-                </div>
-                <div className="text-xs text-white/90 font-mono break-all">
-                  {order.buyerWallet}
-                </div>
-              </div>
+            <div className="space-y-4">
+              <SystemAccountDisplay type="seller" />
 
-              {order.sellerPaymentMethod && (
-                <>
-                  <div>
-                    <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                      Account Name
-                    </div>
-                    <div className="text-sm text-white/90">
-                      {order.sellerPaymentMethod.accountName}
-                    </div>
+              <div className="border-t border-green-500/20 pt-3 mt-3">
+                <div className="text-xs text-white/70 font-semibold uppercase mb-3">
+                  Buyer Details
+                </div>
+
+                <div>
+                  <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                    Buyer Wallet Address
                   </div>
-                  <div>
-                    <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                      Account Number
-                    </div>
-                    <div className="text-sm text-white/90 font-mono">
-                      {order.sellerPaymentMethod.accountNumber}
-                    </div>
+                  <div className="text-xs text-white/90 font-mono break-all">
+                    {order.buyerWallet}
                   </div>
-                </>
-              )}
+                </div>
+
+                {order.sellerPaymentMethod && (
+                  <>
+                    <div className="mt-3">
+                      <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                        Buyer Payment Account Name
+                      </div>
+                      <div className="text-sm text-white/90">
+                        {order.sellerPaymentMethod.accountName}
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                        Buyer Payment Account Number
+                      </div>
+                      <div className="text-sm text-white/90 font-mono">
+                        {order.sellerPaymentMethod.accountNumber}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

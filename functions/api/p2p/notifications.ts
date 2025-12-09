@@ -139,22 +139,56 @@ export const onRequestPost = async ({
 
     const kvStore = new KVStore(env.STAKING_KV);
 
+    const notificationType = type as
+      | "order_created"
+      | "new_buy_order"
+      | "new_sell_order"
+      | "payment_confirmed"
+      | "seller_payment_received"
+      | "transfer_initiated"
+      | "crypto_received"
+      | "order_cancelled"
+      | "order_accepted"
+      | "order_rejected"
+      | "order_completed_by_seller";
+
     const savedNotification = await kvStore.saveNotification({
       orderId,
       recipientWallet,
       senderWallet,
-      type: type as
-        | "order_created"
-        | "payment_confirmed"
-        | "seller_payment_received"
-        | "transfer_initiated"
-        | "crypto_received"
-        | "order_cancelled",
+      type: notificationType,
       orderType: orderType as "BUY" | "SELL",
       message,
       orderData: orderData || {},
       read: false,
     });
+
+    // If this is a broadcast notification, also save to broadcast queue
+    const lowerWallet = recipientWallet.toLowerCase();
+    if (lowerWallet.includes("broadcast")) {
+      try {
+        let broadcastKey = "notifications:broadcast";
+        if (lowerWallet === "broadcast_sellers") {
+          broadcastKey = "notifications:broadcast:sellers";
+        } else if (lowerWallet === "broadcast_buyers") {
+          broadcastKey = "notifications:broadcast:buyers";
+        }
+
+        const broadcastJson = await env.STAKING_KV.get(broadcastKey);
+        const broadcastNotifications = broadcastJson
+          ? JSON.parse(broadcastJson)
+          : [];
+        broadcastNotifications.push(savedNotification);
+        // Keep only last 100 broadcast notifications
+        if (broadcastNotifications.length > 100) {
+          broadcastNotifications.shift();
+        }
+        await env.STAKING_KV.put(broadcastKey, JSON.stringify(broadcastNotifications));
+      } catch (error) {
+        console.warn("Failed to add to broadcast queue:", error);
+        // Don't fail the request if broadcast queue fails
+      }
+    }
 
     return jsonResponse(200, {
       success: true,

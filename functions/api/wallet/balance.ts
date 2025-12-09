@@ -168,12 +168,15 @@ async function fetchBalanceWithFallbacks(
     `[wallet-balance] Fetching balance for ${walletAddress.substring(0, 8)}... from ${endpoints.length} endpoints`,
   );
 
-  for (let i = 0; i < endpoints.length; i++) {
-    const endpoint = endpoints[i];
+  // Try priority endpoints first (in sequence)
+  const priorityEndpoints = endpoints.slice(0, 3);
+
+  for (let i = 0; i < priorityEndpoints.length; i++) {
+    const endpoint = priorityEndpoints[i];
     const shortEndpoint = endpoint.substring(0, 50);
 
     console.log(
-      `[wallet-balance] Attempt ${i + 1}/${endpoints.length}: ${shortEndpoint}...`,
+      `[wallet-balance] Attempt ${i + 1}/${priorityEndpoints.length}: ${shortEndpoint}...`,
     );
 
     // Try getBalance first (faster)
@@ -194,7 +197,31 @@ async function fetchBalanceWithFallbacks(
       return { balance, endpoint };
     }
 
-    console.log(`[wallet-balance] Endpoint failed, trying next...`);
+    console.log(`[wallet-balance] Priority endpoint failed, trying next...`);
+  }
+
+  // Try remaining endpoints in parallel (faster recovery)
+  if (endpoints.length > 3) {
+    console.log(`[wallet-balance] Trying remaining ${endpoints.length - 3} endpoints in parallel...`);
+
+    const remainingResults = await Promise.allSettled(
+      endpoints.slice(3).map(async (endpoint) => {
+        let b = await fetchWithGetBalance(endpoint, walletAddress);
+        if (b !== null) return { balance: b, endpoint };
+
+        b = await fetchWithGetAccountInfo(endpoint, walletAddress);
+        if (b !== null) return { balance: b, endpoint };
+
+        return null;
+      })
+    );
+
+    for (const result of remainingResults) {
+      if (result.status === "fulfilled" && result.value !== null) {
+        console.log(`[wallet-balance] ✅ Success from fallback: ${result.value.balance}`);
+        return result.value;
+      }
+    }
   }
 
   console.error(`[wallet-balance] ❌ All ${endpoints.length} endpoints failed`);

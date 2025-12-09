@@ -10,8 +10,10 @@ interface Env {
 const DEFAULT_SOLANA_RPC = "https://api.mainnet-beta.solflare.network";
 const FALLBACK_RPC_ENDPOINTS = [
   "https://api.mainnet-beta.solflare.network",
-  "https://solana-api.projectserum.com",
   "https://api.mainnet.solflare.com",
+  "https://api.mainnet-beta.solana.com",
+  "https://solana-api.projectserum.com",
+  "https://rpc.ankr.com/solana",
   "https://solana.publicnode.com",
 ];
 
@@ -201,11 +203,13 @@ async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
     }
   }
 
-  // Fallback endpoints with sequential retry
+  // Try sequential fallback endpoints, prioritizing Solflare
   let lastError = "";
   let lastStatus = 502;
+  const priorityEndpoints = FALLBACK_RPC_ENDPOINTS.slice(0, 3);
 
-  for (const endpoint of FALLBACK_RPC_ENDPOINTS) {
+  // Try priority endpoints first (sequential)
+  for (const endpoint of priorityEndpoints) {
     try {
       const resp = await timeoutFetch(
         endpoint,
@@ -221,7 +225,7 @@ async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
 
       if (resp.ok) {
         const rpcJson = await resp.json().catch(() => ({}));
-        const lamports = rpcJson?.result?.value ?? rpcJson?.result ?? 0;
+        const lamports = rpcJson?.result ?? rpcJson?.result?.value ?? 0;
         const balance =
           typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
         return new Response(JSON.stringify({ balance, lamports, publicKey }), {
@@ -235,6 +239,48 @@ async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
       lastError = e?.message?.includes?.("abort")
         ? "timeout"
         : String(e?.message || e).slice(0, 100);
+    }
+  }
+
+  // Try remaining endpoints in parallel for faster recovery
+  const remainingEndpoints = FALLBACK_RPC_ENDPOINTS.slice(3);
+  if (remainingEndpoints.length > 0) {
+    const parallelResults = await Promise.allSettled(
+      remainingEndpoints.map((endpoint) =>
+        timeoutFetch(
+          endpoint,
+          {
+            method: "POST",
+            headers: browserHeaders(),
+            body: JSON.stringify(payload),
+          },
+          8000,
+        ),
+      ),
+    );
+
+    for (const result of parallelResults) {
+      if (result.status === "fulfilled") {
+        const resp = result.value;
+        lastStatus = resp.status;
+
+        if (resp.ok) {
+          try {
+            const rpcJson = await resp.json();
+            const lamports = rpcJson?.result ?? rpcJson?.result?.value ?? 0;
+            const balance =
+              typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
+            return new Response(
+              JSON.stringify({ balance, lamports, publicKey }),
+              {
+                headers: CORS_HEADERS,
+              },
+            );
+          } catch (e) {
+            continue;
+          }
+        }
+      }
     }
   }
 

@@ -73,6 +73,9 @@ const RPC_ENDPOINTS = [
   "https://api.mainnet-beta.solana.com",
   "https://solana-api.projectserum.com",
   "https://rpc.ankr.com/solana",
+  "https://api.mainnet-beta.solflare.network",
+  "https://api.mainnet.solflare.com",
+  "https://solana.publicnode.com",
 ];
 
 const ALCHEMY_RPC =
@@ -200,36 +203,66 @@ async function fetchSolBalanceWithFallbacks(
   // Try primary with both methods
   let balance = await fetchBalanceWithGetBalance(primaryEndpoint, publicKey);
   if (balance !== null) {
+    console.log(
+      `[AllBalances] ✅ SOL balance fetched from primary: ${balance}`,
+    );
     return { balance, endpoint: primaryEndpoint };
   }
 
   balance = await fetchBalanceWithGetAccountInfo(primaryEndpoint, publicKey);
   if (balance !== null) {
+    console.log(
+      `[AllBalances] ✅ SOL balance fetched from primary (getAccountInfo): ${balance}`,
+    );
     return { balance, endpoint: primaryEndpoint };
   }
 
-  // Try fallback endpoints
-  console.log("[AllBalances] Trying fallback RPC endpoints...");
-
-  for (const endpoint of RPC_ENDPOINTS) {
-    balance = await fetchBalanceWithGetBalance(endpoint, publicKey);
-    if (balance !== null) {
-      return { balance, endpoint };
-    }
-
-    balance = await fetchBalanceWithGetAccountInfo(endpoint, publicKey);
-    if (balance !== null) {
-      return { balance, endpoint };
-    }
-  }
-
-  // Try Alchemy
+  // Try Alchemy early (high priority)
+  console.log("[AllBalances] Primary endpoint failed, trying Alchemy...");
   balance = await fetchBalanceWithGetBalance(ALCHEMY_RPC, publicKey);
   if (balance !== null) {
+    console.log(
+      `[AllBalances] ✅ SOL balance fetched from Alchemy: ${balance}`,
+    );
     return { balance, endpoint: ALCHEMY_RPC };
   }
 
-  console.error("[AllBalances] All balance fetch attempts failed");
+  balance = await fetchBalanceWithGetAccountInfo(ALCHEMY_RPC, publicKey);
+  if (balance !== null) {
+    console.log(
+      `[AllBalances] ✅ SOL balance fetched from Alchemy (getAccountInfo): ${balance}`,
+    );
+    return { balance, endpoint: ALCHEMY_RPC };
+  }
+
+  // Try all fallback endpoints in parallel (faster)
+  console.log("[AllBalances] Trying fallback RPC endpoints in parallel...");
+
+  const fallbackResults = await Promise.allSettled(
+    RPC_ENDPOINTS.map(async (endpoint) => {
+      let b = await fetchBalanceWithGetBalance(endpoint, publicKey);
+      if (b !== null) return { balance: b, endpoint };
+
+      b = await fetchBalanceWithGetAccountInfo(endpoint, publicKey);
+      if (b !== null) return { balance: b, endpoint };
+
+      return null;
+    }),
+  );
+
+  for (const result of fallbackResults) {
+    if (result.status === "fulfilled" && result.value !== null) {
+      console.log(
+        `[AllBalances] ✅ SOL balance fetched from fallback: ${result.value.balance}`,
+      );
+      return result.value;
+    }
+  }
+
+  console.error(
+    "[AllBalances] ❌ All balance fetch attempts failed for:",
+    publicKey.slice(0, 8),
+  );
   return null;
 }
 
@@ -349,9 +382,19 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       // Process SOL balance
       if (solResult.status === "fulfilled" && solResult.value) {
         solBalance = solResult.value.balance;
-        console.log(`[AllBalances] ✅ Fetched SOL balance: ${solBalance} SOL`);
+        console.log(
+          `[AllBalances] ✅ Fetched SOL balance: ${solBalance} SOL from ${solResult.value.endpoint.substring(0, 50)}`,
+        );
+      } else if (solResult.status === "fulfilled") {
+        console.warn(
+          "[AllBalances] ⚠️ SOL balance fetch returned null from all endpoints",
+        );
+        solBalance = 0;
       } else {
-        console.warn("[AllBalances] Failed to fetch SOL balance");
+        console.warn(
+          "[AllBalances] ❌ SOL balance fetch promise rejected:",
+          solResult.reason,
+        );
         solBalance = 0;
       }
 

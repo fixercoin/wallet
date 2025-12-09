@@ -258,12 +258,16 @@ export const getTokenAccounts = async (
         );
       }
 
-      // Ensure SOL is present with proper balance
+      // Ensure SOL is present with proper balance and metadata
+      const solMint = "So11111111111111111111111111111111111111112";
+      const solLogoURI = "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png";
+
       const solIndex = allTokens.findIndex(
-        (t) => t.mint === "So11111111111111111111111111111111111111112",
+        (t) => t.mint === solMint || t.symbol === "SOL",
       );
+
       if (solIndex >= 0) {
-        // Ensure SOL balance is a valid number
+        // Ensure SOL has correct metadata and valid balance
         const solBalance = allTokens[solIndex].balance;
         if (
           typeof solBalance !== "number" ||
@@ -271,20 +275,28 @@ export const getTokenAccounts = async (
           solBalance < 0
         ) {
           console.warn(
-            `[TokenAccounts] SOL balance is invalid: ${solBalance}, will fetch from dedicated endpoint`,
+            `[TokenAccounts] SOL balance is invalid: ${solBalance}, resetting to 0`,
           );
           allTokens[solIndex].balance = 0;
         }
+        // Ensure SOL has correct metadata
+        allTokens[solIndex] = {
+          ...allTokens[solIndex],
+          mint: solMint,
+          symbol: "SOL",
+          name: "Solana",
+          decimals: 9,
+          logoURI: allTokens[solIndex].logoURI || solLogoURI,
+        };
       } else {
         // If SOL not found from RPC, add it with 0 balance (will be fetched later)
         allTokens.unshift({
-          mint: "So11111111111111111111111111111111111111112",
+          mint: solMint,
           symbol: "SOL",
           name: "Solana",
           decimals: 9,
           balance: 0,
-          logoURI:
-            "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+          logoURI: solLogoURI,
         });
       }
 

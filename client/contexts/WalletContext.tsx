@@ -18,6 +18,7 @@ import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { solPriceService } from "@/lib/services/sol-price";
 import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { birdeyeAPI } from "@/lib/services/birdeye";
+import { jupiterAPI } from "@/lib/services/jupiter";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { lockerPriceService } from "@/lib/services/locker-price";
 import { fxmPriceService } from "@/lib/services/fxm-price";

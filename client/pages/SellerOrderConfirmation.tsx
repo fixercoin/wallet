@@ -216,14 +216,18 @@ export default function SellerOrderConfirmation() {
 
     setSubmitting(true);
     try {
-      // Update order status to REJECTED
-      await updateOrderInBothStorages(order.id, {
+      // Update order status to REJECTED and set seller wallet
+      const updatedOrder = await updateOrderInBothStorages(order.id, {
         status: "REJECTED",
+        sellerWallet: wallet.publicKey, // Record which seller rejected this order
       });
 
+      if (updatedOrder) {
+        setOrder(updatedOrder);
+      }
       setOrderStatus("REJECTED");
 
-      // Send message to chat
+      // Send message to chat if room exists
       if (order.roomId) {
         await addTradeMessage({
           room_id: order.roomId,

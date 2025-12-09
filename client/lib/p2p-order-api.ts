@@ -15,24 +15,37 @@ export async function getOrderFromAPI(
   orderId: string,
 ): Promise<CreatedOrder | null> {
   try {
-    const response = await fetch(
-      `${API_BASE}?id=${encodeURIComponent(orderId)}`,
-    );
+    const url = `${API_BASE}?id=${encodeURIComponent(orderId)}`;
+    console.log(`[P2P Order API] Fetching order from: ${url}`);
+
+    const response = await fetch(url);
+
     if (!response.ok) {
       if (response.status === 404) {
+        console.warn(`[P2P Order API] Order not found: ${orderId}`);
         return null;
       }
-      console.error("Failed to fetch order:", response.status);
+      const errorText = await response.text();
+      console.error(
+        `[P2P Order API] Failed to fetch order ${orderId}: ${response.status} - ${errorText}`,
+      );
       return null;
     }
+
     const data = await response.json();
     const orders = data.orders || [];
+
     if (orders.length > 0) {
+      console.log(`[P2P Order API] ✅ Found order: ${orderId}`);
       return orders[0] as CreatedOrder;
     }
+
+    console.warn(`[P2P Order API] No orders returned for: ${orderId}`);
     return null;
   } catch (error) {
-    console.error("Error fetching order from API:", error);
+    console.error(
+      `[P2P Order API] Error fetching order: ${error instanceof Error ? error.message : String(error)}`,
+    );
     return null;
   }
 }

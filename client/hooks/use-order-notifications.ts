@@ -45,9 +45,10 @@ export function useOrderNotifications() {
       setLoading(true);
       try {
         const query = unreadOnly ? "&unread=true" : "";
-        // Include broadcast notifications (for generic buy orders)
+        // Only fetch direct notifications to this wallet (no broadcasts)
+        // Broadcasts should be handled separately to prevent users from seeing irrelevant notifications
         const response = await fetch(
-          `/api/p2p/notifications?wallet=${encodeURIComponent(wallet.publicKey)}&includeBroadcast=true${query}`,
+          `/api/p2p/notifications?wallet=${encodeURIComponent(wallet.publicKey)}${query}`,
         );
 
         if (!response.ok) {

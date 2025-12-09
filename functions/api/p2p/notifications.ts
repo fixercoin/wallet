@@ -48,6 +48,7 @@ export const onRequestGet = async ({
     const url = new URL(request.url);
     const walletAddress = url.searchParams.get("wallet");
     const unreadOnly = url.searchParams.get("unread") === "true";
+    const includeBroadcast = url.searchParams.get("includeBroadcast") === "true";
 
     if (!walletAddress) {
       return jsonResponse(400, { error: "Missing wallet address" });
@@ -56,9 +57,21 @@ export const onRequestGet = async ({
     const kvStore = new KVStore(env.STAKING_KV);
     let notifications = await kvStore.getNotificationsByWallet(walletAddress);
 
+    if (includeBroadcast) {
+      try {
+        const broadcastSellerNotifications = await kvStore.getBroadcastNotifications("sellers");
+        const broadcastBuyerNotifications = await kvStore.getBroadcastNotifications("buyers");
+        notifications = [...notifications, ...broadcastSellerNotifications, ...broadcastBuyerNotifications];
+      } catch (error) {
+        console.warn("Failed to fetch broadcast notifications:", error);
+      }
+    }
+
     if (unreadOnly) {
       notifications = notifications.filter((n) => !n.read);
     }
+
+    notifications.sort((a, b) => b.createdAt - a.createdAt);
 
     return jsonResponse(200, {
       success: true,

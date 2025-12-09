@@ -206,10 +206,10 @@ async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
   // Try sequential fallback endpoints, prioritizing Solflare
   let lastError = "";
   let lastStatus = 502;
-  const priorityEndpoints = FALLBACK_RPC_ENDPOINTS.slice(0, 3);
+  const fallbackPriority = FALLBACK_RPC_ENDPOINTS.slice(0, 3);
 
   // Try priority endpoints first (sequential)
-  for (const endpoint of priorityEndpoints) {
+  for (const endpoint of fallbackPriority) {
     try {
       const resp = await timeoutFetch(
         endpoint,

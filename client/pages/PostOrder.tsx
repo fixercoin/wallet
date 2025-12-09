@@ -33,6 +33,24 @@ export default function PostOrder() {
   const [isLoading, setIsLoading] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!isSystemP2PEnabled()) return;
+
+    if (mode === "buy") {
+      const buyerAccount = getSystemBuyerAccount();
+      setAccountName(buyerAccount.accountName);
+      setAccountNumber(buyerAccount.accountNumber);
+      setPaymentMethod(buyerAccount.paymentMethod.toLowerCase());
+      setWalletAddress("");
+    } else {
+      const sellerWallet = getSystemSellerWallet();
+      setWalletAddress(sellerWallet);
+      setAccountName("");
+      setAccountNumber("");
+      setPaymentMethod("easypaisa");
+    }
+  }, [mode]);
+
   const autoFillPrice = (t: string) => {
     const p = PRICE_MAP[t] ?? 0;
     setPrice(String(p));

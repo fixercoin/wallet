@@ -6,6 +6,47 @@ const MAX_RETRIES = 2;
 const INITIAL_RETRY_DELAY_MS = 500;
 const MAX_RETRY_DELAY_MS = 2000;
 
+/**
+ * Helper to retry an async operation with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  operationName: string,
+  maxRetries: number = MAX_RETRIES,
+): Promise<T> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await operation();
+      if (attempt > 0) {
+        console.log(
+          `[TokenAccounts] ✅ ${operationName} succeeded on attempt ${attempt + 1}`,
+        );
+      }
+      return result;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (attempt < maxRetries) {
+        const delayMs = Math.min(
+          INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt),
+          MAX_RETRY_DELAY_MS,
+        );
+        console.warn(
+          `[TokenAccounts] ⚠️ ${operationName} failed (attempt ${attempt + 1}/${maxRetries + 1}): ${lastError.message}, retrying in ${delayMs}ms...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      } else {
+        console.error(
+          `[TokenAccounts] ❌ ${operationName} failed after ${maxRetries + 1} attempts: ${lastError.message}`,
+        );
+      }
+    }
+  }
+
+  throw lastError || new Error(`${operationName} failed after ${maxRetries + 1} attempts`);
+}
+
 // Get RPC endpoint with free endpoints and Alchemy fallback
 function getRpcEndpoint(): string {
   const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();

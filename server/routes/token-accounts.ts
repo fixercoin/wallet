@@ -295,12 +295,17 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
     }
 
     // Check if SOL already exists in token list (might be WSOL or SOL account)
-    const solIndex = tokens.findIndex((t) => t.mint === SOL_MINT);
+    const solIndex = tokens.findIndex((t) => t.mint === SOL_MINT || t.symbol === "SOL");
 
     if (solIndex >= 0) {
-      // Update existing SOL entry with fetched balance
+      // Update existing SOL entry with fetched balance and correct metadata
       tokens[solIndex] = {
+        ...KNOWN_TOKENS[SOL_MINT],
         ...tokens[solIndex],
+        mint: SOL_MINT,
+        symbol: "SOL",
+        name: "Solana",
+        decimals: 9,
         balance: solBalance,
       };
     } else {

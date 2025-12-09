@@ -44,7 +44,18 @@ export interface OrderNotification {
   orderId: string;
   recipientWallet: string;
   senderWallet: string;
-  type: "order_created" | "payment_confirmed" | "received_confirmed";
+  type:
+    | "order_created"
+    | "new_buy_order"
+    | "new_sell_order"
+    | "payment_confirmed"
+    | "seller_payment_received"
+    | "transfer_initiated"
+    | "crypto_received"
+    | "order_cancelled"
+    | "order_accepted"
+    | "order_rejected"
+    | "order_completed_by_seller";
   orderType: "BUY" | "SELL";
   message: string;
   orderData: {
@@ -550,6 +561,21 @@ export class KVStore {
       `notifications:${notificationId}`,
       JSON.stringify(updated),
     );
+  }
+
+  /**
+   * Get broadcast notifications for sellers or buyers
+   */
+  async getBroadcastNotifications(
+    type: "sellers" | "buyers",
+  ): Promise<OrderNotification[]> {
+    const key = `notifications:broadcast:${type}`;
+    const json = await this.kv.get(key);
+    if (!json) {
+      return [];
+    }
+    const notifications = JSON.parse(json);
+    return Array.isArray(notifications) ? notifications : [];
   }
 
   /**

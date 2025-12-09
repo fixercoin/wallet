@@ -111,7 +111,7 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({
             <span
               className={`font-semibold ${data.close >= data.open ? "text-emerald-400" : "text-red-400"}`}
             >
-              ${data.close.toFixed(8)}
+              ${data.close.toFixed(2)}
             </span>
           </p>
         </div>

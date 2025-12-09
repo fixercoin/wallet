@@ -215,44 +215,11 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
 
         <div className="space-y-4 py-4">
           {!isEditing && savedMethodId ? (
-            // View mode - show saved information
-            <div className="space-y-4 text-sm">
-              <div className="p-3 rounded-lg bg-[#0f1729] border border-gray-600">
-                <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
-                  Name
-                </p>
-                <p className="text-white font-medium">{userName}</p>
-              </div>
-
-              <div className="p-3 rounded-lg bg-[#0f1729] border border-gray-600">
-                <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
-                  Payment Method
-                </p>
-                <p className="text-white font-medium">{paymentMethod}</p>
-              </div>
-
-              <div className="p-3 rounded-lg bg-[#0f1729] border border-gray-600">
-                <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
-                  Account Name
-                </p>
-                <p className="text-white font-medium">{accountName}</p>
-              </div>
-
-              <div className="p-3 rounded-lg bg-[#0f1729] border border-gray-600">
-                <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
-                  Account Number
-                </p>
-                <p className="text-white font-medium">{accountNumber}</p>
-              </div>
-
-              <div className="p-3 rounded-lg bg-[#0f1729] border border-gray-600">
-                <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
-                  Solana Wallet Address
-                </p>
-                <p className="text-white font-medium break-all text-xs">
-                  {solanawWalletAddress}
-                </p>
-              </div>
+            // View mode - show only success message
+            <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
+              <p className="text-sm font-semibold text-green-400 uppercase">
+                ✓ Payment Method Added
+              </p>
             </div>
           ) : (
             // Edit mode - show form
@@ -334,14 +301,14 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
           )}
         </div>
 
-        <DialogFooter className="flex gap-2">
+        <DialogFooter className="flex gap-2 justify-between">
           <Button
             variant="outline"
             onClick={handleCancel}
             disabled={loading}
             className="uppercase bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
           >
-            {isEditing ? "CANCEL" : "CLOSE"}
+            {isEditing ? "CANCEL" : "✕ CLOSE"}
           </Button>
           {!isEditing && savedMethodId ? (
             <Button
@@ -349,7 +316,7 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
               disabled={loading}
               className="bg-blue-600 hover:bg-blue-700 text-white uppercase disabled:bg-blue-800"
             >
-              EDIT
+              ✎ EDIT
             </Button>
           ) : (
             <Button

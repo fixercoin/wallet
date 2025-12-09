@@ -36,6 +36,10 @@ export interface TradeRoom {
     | "cancelled";
   created_at: number;
   updated_at: number;
+  buyerPaymentConfirmed?: boolean;
+  sellerPaymentConfirmed?: boolean;
+  buyerConfirmedAt?: number;
+  sellerConfirmedAt?: number;
 }
 
 export interface TradeMessage {
@@ -47,7 +51,8 @@ export interface TradeMessage {
   created_at: number;
 }
 
-const API_BASE = (import.meta as any).env?.VITE_P2P_API || window.location.origin;
+const API_BASE =
+  (import.meta as any).env?.VITE_P2P_API || window.location.origin;
 
 // ===== P2P ORDERS =====
 
@@ -179,6 +184,31 @@ export async function updateTradeRoomStatus(
   if (!res.ok) throw new Error(`Failed to update room: ${res.status}`);
   const data = await res.json();
   return data.room;
+}
+
+export async function confirmPayment(
+  roomId: string,
+  walletAddress: string,
+): Promise<{
+  room: TradeRoom;
+  autoReleased: boolean;
+  message: string;
+}> {
+  const res = await fetch(
+    `${API_BASE}/api/p2p/rooms/${encodeURIComponent(roomId)}/confirm-payment`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ walletAddress }),
+    },
+  );
+  if (!res.ok) throw new Error(`Failed to confirm payment: ${res.status}`);
+  const data = await res.json();
+  return {
+    room: data.room,
+    autoReleased: data.autoReleased,
+    message: data.message,
+  };
 }
 
 // ===== TRADE MESSAGES =====

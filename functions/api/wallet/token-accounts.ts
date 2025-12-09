@@ -4,8 +4,6 @@ export const config = {
 
 interface Env {
   SOLANA_RPC_URL?: string;
-  HELIUS_RPC_URL?: string;
-  HELIUS_API_KEY?: string;
   ALCHEMY_RPC_URL?: string;
   MORALIS_RPC_URL?: string;
 }
@@ -16,19 +14,17 @@ function buildRpcEndpoints(env: Env): string[] {
 
   // Add environment-configured endpoints first (highest priority)
   if (env.SOLANA_RPC_URL) endpoints.push(env.SOLANA_RPC_URL);
-  if (env.HELIUS_RPC_URL) endpoints.push(env.HELIUS_RPC_URL);
-  if (env.HELIUS_API_KEY) {
-    endpoints.push(
-      `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`,
-    );
-  }
   if (env.ALCHEMY_RPC_URL) endpoints.push(env.ALCHEMY_RPC_URL);
   if (env.MORALIS_RPC_URL) endpoints.push(env.MORALIS_RPC_URL);
 
-  // Add public fallback endpoints
+  // Add public fallback endpoints (in order of reliability)
+  // Solflare is primary public endpoint
+  endpoints.push("https://api.mainnet-beta.solflare.network");
   endpoints.push("https://solana.publicnode.com");
+  endpoints.push("https://api.solflare.com");
   endpoints.push("https://rpc.ankr.com/solana");
   endpoints.push("https://api.mainnet-beta.solana.com");
+  endpoints.push("https://api.marinade.finance/rpc");
 
   return [...new Set(endpoints)]; // Remove duplicates
 }
@@ -40,34 +36,138 @@ const KNOWN_TOKENS: Record<string, any> = {
     symbol: "SOL",
     name: "Solana",
     decimals: 9,
+    logoURI:
+      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
   },
   EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: {
     mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
     symbol: "USDC",
     name: "USD Coin",
     decimals: 6,
+    logoURI:
+      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
   },
   Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns: {
     mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
     symbol: "USDT",
-    name: "Tether USD",
+    name: "USDT TETHER",
     decimals: 6,
+    logoURI:
+      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns/logo.png",
   },
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: {
     mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
     symbol: "FIXERCOIN",
     name: "FIXERCOIN",
     decimals: 6,
+    logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
   },
   EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: {
     mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
     symbol: "LOCKER",
     name: "LOCKER",
     decimals: 6,
+    logoURI:
+      "https://i.postimg.cc/J7p1FPbm/IMG-20250425-004450-removebg-preview-modified-2-6.png",
+  },
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump": {
+    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+    symbol: "FXM",
+    name: "Fixorium",
+    decimals: 6,
+    logoURI:
+      "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2Fef8e21a960894d1b9408732e737a9d1f?format=webp&width=800",
   },
 };
 
+// Known tokens that should always be checked, in case RPC doesn't return them
+const CRITICAL_TOKENS_TO_VERIFY = [
+  "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump", // FXM
+  "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump", // LOCKER
+  "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump", // FIXERCOIN
+  "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns", // USDT
+];
+
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+
+async function verifyMissingTokens(
+  endpoint: string,
+  publicKey: string,
+  foundTokens: any[],
+  missingMints: string[],
+): Promise<any[]> {
+  if (missingMints.length === 0) return [];
+
+  const additionalTokens: any[] = [];
+
+  for (const mint of missingMints) {
+    try {
+      const rpcBody = {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getTokenAccountsByOwner",
+        params: [publicKey, { mint }, { encoding: "jsonParsed" }],
+      };
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rpcBody),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      const data = await response.json();
+
+      if (!data.error && data.result?.value && data.result.value.length > 0) {
+        const account = data.result.value[0];
+        const parsedInfo = account?.account?.data?.parsed?.info;
+        if (parsedInfo) {
+          const decimals = parsedInfo.tokenAmount?.decimals || 0;
+          const tokenAmount = parsedInfo.tokenAmount;
+          let balance = 0;
+
+          if (typeof tokenAmount?.uiAmount === "number") {
+            balance = tokenAmount.uiAmount;
+          } else if (tokenAmount?.amount) {
+            const rawAmount = BigInt(tokenAmount.amount);
+            balance = Number(rawAmount) / Math.pow(10, decimals);
+          }
+
+          const metadata = KNOWN_TOKENS[mint] || {
+            mint,
+            symbol: "UNKNOWN",
+            name: "Unknown Token",
+            decimals,
+            logoURI: "/placeholder.svg",
+          };
+
+          additionalTokens.push({
+            ...metadata,
+            balance,
+            decimals: decimals || metadata.decimals,
+            logoURI: metadata.logoURI || "/placeholder.svg",
+          });
+
+          console.log(
+            `[TokenAccounts] ✅ Found missing token: ${metadata.symbol} (${mint}) with balance ${balance}`,
+          );
+        }
+      }
+    } catch (err) {
+      console.warn(
+        `[TokenAccounts] Failed to verify token ${mint}:`,
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
+  return additionalTokens;
+}
 
 async function handler(request: Request, env?: Env): Promise<Response> {
   // Handle CORS preflight
@@ -141,6 +241,10 @@ async function handler(request: Request, env?: Env): Promise<Response> {
     let lastError: string | null = null;
     const RPC_ENDPOINTS = buildRpcEndpoints(env || {});
 
+    console.log(
+      `[TokenAccounts] Using ${RPC_ENDPOINTS.length} RPC endpoints. Primary: ${RPC_ENDPOINTS[0]?.substring(0, 50)}...`,
+    );
+
     // Try each RPC endpoint
     for (const endpoint of RPC_ENDPOINTS) {
       if (!endpoint) continue;
@@ -196,12 +300,14 @@ async function handler(request: Request, env?: Env): Promise<Response> {
               symbol: "UNKNOWN",
               name: "Unknown Token",
               decimals,
+              logoURI: "/placeholder.svg",
             };
 
             return {
               ...metadata,
               balance,
               decimals: decimals || metadata.decimals,
+              logoURI: metadata.logoURI || "/placeholder.svg",
             };
           } catch (e) {
             console.warn(`[TokenAccounts] Failed to parse account:`, e);
@@ -212,24 +318,153 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         // Filter out null entries
         const validTokens = tokens.filter(Boolean);
 
+        // Log FXM for debugging
+        const fxmToken = validTokens.find((t) => t?.symbol === "FXM");
+        if (fxmToken) {
+          console.log(
+            `[TokenAccounts] ✅ FXM found: balance=${fxmToken.balance}, decimals=${fxmToken.decimals}`,
+          );
+        }
+
+        // Check for missing critical tokens and fetch them individually
+        const foundMints = new Set(
+          validTokens.map((t) => t?.mint).filter(Boolean),
+        );
+        const missingMints = CRITICAL_TOKENS_TO_VERIFY.filter(
+          (mint) => !foundMints.has(mint),
+        );
+
+        let additionalTokens: any[] = [];
+        if (missingMints.length > 0) {
+          console.log(
+            `[TokenAccounts] Found ${missingMints.length} missing critical tokens, verifying individually...`,
+          );
+          additionalTokens = await verifyMissingTokens(
+            endpoint,
+            publicKey,
+            validTokens,
+            missingMints,
+          );
+        }
+
+        // Fetch and include native SOL balance
+        let solBalance = 0;
+        try {
+          const solRpcBody = {
+            jsonrpc: "2.0",
+            id: 1,
+            method: "getBalance",
+            params: [publicKey],
+          };
+
+          const solController = new AbortController();
+          const solTimeoutId = setTimeout(() => solController.abort(), 10000);
+
+          const solResp = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(solRpcBody),
+            signal: solController.signal,
+          });
+
+          clearTimeout(solTimeoutId);
+
+          const solData = await solResp.json();
+
+          // Handle RPC response: result can be a number (lamports) directly
+          // The getBalance RPC method returns: { "result": <lamports as number> }
+          let lamports = solData.result;
+
+          // If result is wrapped in a value property (some RPC versions), extract it
+          if (
+            typeof lamports === "object" &&
+            lamports !== null &&
+            "value" in lamports
+          ) {
+            lamports = lamports.value;
+          }
+
+          if (
+            !solData.error &&
+            typeof lamports === "number" &&
+            isFinite(lamports) &&
+            lamports >= 0
+          ) {
+            solBalance = lamports / 1_000_000_000; // Convert lamports to SOL
+            console.log(
+              `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL (${lamports} lamports)`,
+            );
+          } else if (solData.error) {
+            console.warn(
+              `[TokenAccounts] RPC error fetching SOL balance:`,
+              solData.error,
+            );
+          } else {
+            console.warn(
+              `[TokenAccounts] Invalid SOL balance response. Result type: ${typeof lamports}, value: ${lamports}`,
+            );
+          }
+        } catch (err) {
+          console.warn(`[TokenAccounts] Failed to fetch SOL balance:`, err);
+        }
+
+        // Check if SOL already exists in validTokens (from RPC query)
+        const solMint = "So11111111111111111111111111111111111111112";
+        const solIndex = validTokens.findIndex(
+          (t) => t?.mint === solMint || t?.symbol === "SOL",
+        );
+
+        // Prepare all tokens, ensuring SOL is correct
+        let allTokens: any[] = [];
+        if (solIndex >= 0) {
+          // SOL exists in validTokens, update it with correct balance and metadata
+          const solToken = validTokens[solIndex];
+          allTokens = [
+            {
+              ...KNOWN_TOKENS[solMint],
+              balance: solBalance,
+              logoURI: solToken?.logoURI || KNOWN_TOKENS[solMint].logoURI,
+            },
+            ...validTokens.filter((_, i) => i !== solIndex),
+            ...additionalTokens,
+          ];
+        } else {
+          // SOL not in validTokens, add it at the beginning
+          allTokens = [
+            {
+              ...KNOWN_TOKENS[solMint],
+              balance: solBalance,
+              logoURI: KNOWN_TOKENS[solMint].logoURI,
+            },
+            ...validTokens,
+            ...additionalTokens,
+          ];
+        }
+
         console.log(
-          `[TokenAccounts] Found ${validTokens.length} token accounts for ${publicKey.slice(
+          `[TokenAccounts] Found ${validTokens.length} token accounts from RPC + ${additionalTokens.length} verified missing tokens (plus SOL) for ${publicKey.slice(
             0,
             8,
           )}`,
         );
 
+        console.log(
+          `[TokenAccounts] ✅ Successfully fetched tokens for ${publicKey.slice(0, 8)}`,
+        );
+
         return new Response(
           JSON.stringify({
             publicKey,
-            tokens: validTokens,
-            count: validTokens.length,
+            tokens: allTokens,
+            count: allTokens.length,
+            source: endpoint.substring(0, 50),
           }),
           {
             status: 200,
             headers: {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
             },
           },
         );
@@ -248,12 +483,14 @@ async function handler(request: Request, env?: Env): Promise<Response> {
 
     // All endpoints failed
     console.error(
-      `[TokenAccounts] All RPC endpoints failed. Last error: ${lastError}`,
+      `[TokenAccounts] All ${RPC_ENDPOINTS.length} RPC endpoints failed. Last error: ${lastError}`,
     );
     return new Response(
       JSON.stringify({
         error: "Failed to fetch token accounts - all RPC endpoints failed",
         details: lastError || "No available Solana RPC providers",
+        endpointsAttempted: RPC_ENDPOINTS.length,
+        primaryEndpoint: RPC_ENDPOINTS[0]?.substring(0, 60) || "none",
         tokens: [],
       }),
       {
@@ -261,6 +498,7 @@ async function handler(request: Request, env?: Env): Promise<Response> {
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
         },
       },
     );
@@ -288,21 +526,53 @@ export const onRequest = async ({
   env,
 }: {
   request: Request;
-  env: Env;
-}) => handler(request, env);
+  env?: Env | Record<string, any>;
+}) => {
+  // Cloudflare Pages Functions pass env directly
+  // Ensure environment variables are properly available
+  const envToPass = {
+    ...env,
+    SOLANA_RPC_URL: env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL,
+    HELIUS_RPC_URL: env?.HELIUS_RPC_URL || process.env.HELIUS_RPC_URL,
+    HELIUS_API_KEY: env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY,
+    ALCHEMY_RPC_URL: env?.ALCHEMY_RPC_URL || process.env.ALCHEMY_RPC_URL,
+    MORALIS_RPC_URL: env?.MORALIS_RPC_URL || process.env.MORALIS_RPC_URL,
+  } as Env;
+  return handler(request, envToPass);
+};
 
 export const onRequestGet = async ({
   request,
   env,
 }: {
   request: Request;
-  env: Env;
-}) => handler(request, env);
+  env?: Env | Record<string, any>;
+}) => {
+  const envToPass = {
+    ...env,
+    SOLANA_RPC_URL: env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL,
+    HELIUS_RPC_URL: env?.HELIUS_RPC_URL || process.env.HELIUS_RPC_URL,
+    HELIUS_API_KEY: env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY,
+    ALCHEMY_RPC_URL: env?.ALCHEMY_RPC_URL || process.env.ALCHEMY_RPC_URL,
+    MORALIS_RPC_URL: env?.MORALIS_RPC_URL || process.env.MORALIS_RPC_URL,
+  } as Env;
+  return handler(request, envToPass);
+};
 
 export const onRequestPost = async ({
   request,
   env,
 }: {
   request: Request;
-  env: Env;
-}) => handler(request, env);
+  env?: Env | Record<string, any>;
+}) => {
+  const envToPass = {
+    ...env,
+    SOLANA_RPC_URL: env?.SOLANA_RPC_URL || process.env.SOLANA_RPC_URL,
+    HELIUS_RPC_URL: env?.HELIUS_RPC_URL || process.env.HELIUS_RPC_URL,
+    HELIUS_API_KEY: env?.HELIUS_API_KEY || process.env.HELIUS_API_KEY,
+    ALCHEMY_RPC_URL: env?.ALCHEMY_RPC_URL || process.env.ALCHEMY_RPC_URL,
+    MORALIS_RPC_URL: env?.MORALIS_RPC_URL || process.env.MORALIS_RPC_URL,
+  } as Env;
+  return handler(request, envToPass);
+};

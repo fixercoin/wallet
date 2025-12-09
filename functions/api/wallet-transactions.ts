@@ -4,9 +4,11 @@
 
 const RPC_ENDPOINTS = [
   "",
-  "https://api.mainnet-beta.solana.com",
-  "https://rpc.ankr.com/solana",
   "https://solana.publicnode.com",
+  "https://api.solflare.com",
+  "https://rpc.ankr.com/solana",
+  "https://api.mainnet-beta.solana.com",
+  "https://api.marinade.finance/rpc",
 ];
 
 export async function onRequestPost(context: any) {
@@ -14,10 +16,7 @@ export async function onRequestPost(context: any) {
 
   // Build RPC endpoint list with env vars first, then fallbacks
   const rpcEndpoints = [
-    env?.HELIUS_API_KEY
-      ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`
-      : "",
-    env?.HELIUS_RPC_URL || "",
+    env?.SOLANA_RPC_URL || "",
     env?.MORALIS_RPC_URL || "",
     env?.ALCHEMY_RPC_URL || "",
     ...RPC_ENDPOINTS,

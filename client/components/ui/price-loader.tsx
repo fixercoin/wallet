@@ -1,28 +1,52 @@
 import React from "react";
 
-export const PriceLoader: React.FC = () => {
+export const PriceLoader: React.FC<{ size?: "sm" | "md" | "lg" }> = ({
+  size = "sm",
+}) => {
+  const sizeMap = {
+    sm: "4px",
+    md: "6px",
+    lg: "8px",
+  };
+
+  const dotSize = sizeMap[size];
+  const gapSize = size === "sm" ? "3px" : size === "md" ? "4px" : "6px";
+
   return (
-    <div className="inline-flex items-center">
+    <div className="inline-flex items-center" style={{ gap: gapSize }}>
       <style>{`
-        @keyframes pulse-breath {
+        @keyframes price-loader-blink {
           0%, 100% {
             opacity: 0.4;
+            transform: translateY(0px);
           }
           50% {
             opacity: 1;
+            transform: translateY(-2px);
           }
         }
-        .price-pulse {
+        .price-loader-dot {
           display: inline-block;
-          background: linear-gradient(90deg, #4a5568 0%, #6b7280 50%, #4a5568 100%);
-          background-size: 200% 100%;
-          animation: pulse-breath 2s ease-in-out infinite;
-          height: 1em;
-          width: 2.5em;
-          border-radius: 3px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+          animation: price-loader-blink 1.4s ease-in-out infinite;
         }
+        .price-loader-dot:nth-child(1) { animation-delay: 0s; }
+        .price-loader-dot:nth-child(2) { animation-delay: 0.2s; }
+        .price-loader-dot:nth-child(3) { animation-delay: 0.4s; }
       `}</style>
-      <div className="price-pulse"></div>
+      <div
+        className="price-loader-dot"
+        style={{ width: dotSize, height: dotSize }}
+      ></div>
+      <div
+        className="price-loader-dot"
+        style={{ width: dotSize, height: dotSize }}
+      ></div>
+      <div
+        className="price-loader-dot"
+        style={{ width: dotSize, height: dotSize }}
+      ></div>
     </div>
   );
 };

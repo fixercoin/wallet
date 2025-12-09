@@ -24,7 +24,8 @@ export interface P2POrder {
     | "pending"
     | "completed"
     | "cancelled"
-    | "disputed";
+    | "disputed"
+    | "EXPIRED";
   online?: boolean;
   created_at?: number;
   createdAt?: number;
@@ -39,6 +40,9 @@ export interface P2POrder {
   sellerWallet?: string;
   adminWallet?: string;
   orderId?: string;
+  sellerVerified?: boolean;
+  sellerPaymentMethodVerified?: boolean;
+  expiresAt?: number;
 }
 
 export interface TradeRoom {
@@ -54,6 +58,10 @@ export interface TradeRoom {
     | "cancelled";
   created_at: number;
   updated_at: number;
+  buyerPaymentConfirmed?: boolean;
+  sellerPaymentConfirmed?: boolean;
+  buyerConfirmedAt?: number;
+  sellerConfirmedAt?: number;
 }
 
 // In-memory stores for trade rooms and messages
@@ -91,7 +99,35 @@ function normalizeOrder(order: any): P2POrder {
     buyerWallet: order.buyerWallet,
     sellerWallet: order.sellerWallet,
     adminWallet: order.adminWallet,
+    sellerVerified: order.sellerVerified || false,
+    sellerPaymentMethodVerified: order.sellerPaymentMethodVerified || false,
+    expiresAt: order.expiresAt,
   };
+}
+
+// Helper to check if order has expired (15 minutes)
+function isOrderExpired(order: P2POrder): boolean {
+  const ORDER_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+  const expiresAt =
+    order.expiresAt || (order.createdAt || 0) + ORDER_TIMEOUT_MS;
+  return Date.now() > expiresAt;
+}
+
+// Helper to verify seller has payment method
+async function sellerHasVerifiedPaymentMethod(
+  walletAddress: string,
+): Promise<boolean> {
+  const kv = getKVStorage();
+  const paymentMethodsKey = `payment_methods:${walletAddress}`;
+  const json = await kv.get(paymentMethodsKey);
+  if (!json) return false;
+
+  try {
+    const paymentMethods = JSON.parse(json);
+    return Array.isArray(paymentMethods) && paymentMethods.length > 0;
+  } catch {
+    return false;
+  }
 }
 
 // Helper functions
@@ -222,12 +258,30 @@ export const handleListP2POrders: RequestHandler = async (req, res) => {
       filtered = filtered.filter((o) => o.token === token);
     }
 
-    filtered.sort(
+    // Check for expired orders and update their status
+    for (let i = 0; i < filtered.length; i++) {
+      const order = filtered[i];
+      if (
+        isOrderExpired(order) &&
+        order.status !== "EXPIRED" &&
+        (order.status === "PENDING" ||
+          order.status === "active" ||
+          order.status === "pending")
+      ) {
+        order.status = "EXPIRED";
+        await saveOrder(order);
+      }
+    }
+
+    // Filter out expired orders from results
+    const activeOrders = filtered.filter((o) => o.status !== "EXPIRED");
+
+    activeOrders.sort(
       (a, b) =>
         (b.createdAt || b.created_at || 0) - (a.createdAt || a.created_at || 0),
     );
 
-    res.json({ orders: filtered });
+    res.json({ orders: activeOrders });
   } catch (error) {
     console.error("List P2P orders error:", error);
     res.status(500).json({ error: "Failed to list orders" });
@@ -280,8 +334,22 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
       });
     }
 
+    // For SELL orders, verify seller has payment method
+    if (finalType === "SELL") {
+      const hasPaymentMethod =
+        await sellerHasVerifiedPaymentMethod(finalWallet);
+      if (!hasPaymentMethod) {
+        return res.status(400).json({
+          error:
+            "Seller must have at least one verified payment method to create a SELL order",
+          code: "SELLER_NO_PAYMENT_METHOD",
+        });
+      }
+    }
+
     const id = orderId || generateId("order");
     const now = Date.now();
+    const ORDER_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 
     const order: any = {
       id,
@@ -303,6 +371,9 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
       buyerWallet,
       sellerWallet,
       adminWallet,
+      expiresAt: now + ORDER_TIMEOUT_MS,
+      sellerVerified: finalType === "SELL",
+      sellerPaymentMethodVerified: finalType === "SELL",
       // Marketplace fields for min/max amounts
       ...(minAmountPKR !== undefined && { minAmountPKR }),
       ...(maxAmountPKR !== undefined && { maxAmountPKR }),
@@ -536,5 +607,76 @@ export const handleAddTradeMessage: RequestHandler = async (req, res) => {
   } catch (error) {
     console.error("Add trade message error:", error);
     res.status(500).json({ error: "Failed to add message" });
+  }
+};
+
+export const handleConfirmPayment: RequestHandler = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const { walletAddress } = req.body;
+
+    if (!roomId || !walletAddress) {
+      return res.status(400).json({
+        error: "Missing required fields: roomId, walletAddress",
+      });
+    }
+
+    const room = rooms.get(roomId);
+    if (!room) {
+      return res.status(404).json({ error: "Trade room not found" });
+    }
+
+    // Determine if this is the buyer or seller
+    const isBuyer = room.buyer_wallet === walletAddress;
+    const isSeller = room.seller_wallet === walletAddress;
+
+    if (!isBuyer && !isSeller) {
+      return res.status(403).json({
+        error: "Wallet is not part of this trade",
+      });
+    }
+
+    // Mark payment as confirmed for this party
+    const updated: any = {
+      ...room,
+      updatedAt: Date.now(),
+      updated_at: Date.now(),
+    };
+
+    if (isBuyer) {
+      updated.buyerPaymentConfirmed = true;
+      updated.buyerConfirmedAt = Date.now();
+    } else {
+      updated.sellerPaymentConfirmed = true;
+      updated.sellerConfirmedAt = Date.now();
+    }
+
+    // If both parties have confirmed, auto-release escrow and mark order as payment_confirmed
+    if (updated.buyerPaymentConfirmed && updated.sellerPaymentConfirmed) {
+      updated.status = "payment_confirmed";
+
+      // Also update the order status to reflect payment confirmation
+      const order = await getOrderById(room.order_id);
+      if (order) {
+        order.status = "payment_confirmed" as P2POrder["status"];
+        order.updatedAt = Date.now();
+        order.updated_at = Date.now();
+        await saveOrder(order);
+      }
+    }
+
+    rooms.set(roomId, updated);
+    res.json({
+      room: updated,
+      autoReleased:
+        updated.buyerPaymentConfirmed && updated.sellerPaymentConfirmed,
+      message:
+        updated.buyerPaymentConfirmed && updated.sellerPaymentConfirmed
+          ? "Both parties confirmed payment. Escrow will be released."
+          : `${isBuyer ? "Buyer" : "Seller"} confirmed payment. Waiting for ${isBuyer ? "seller" : "buyer"} confirmation.`,
+    });
+  } catch (error) {
+    console.error("Confirm payment error:", error);
+    res.status(500).json({ error: "Failed to confirm payment" });
   }
 };

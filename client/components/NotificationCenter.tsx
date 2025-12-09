@@ -1,25 +1,49 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Bell, X, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "@/contexts/WalletContext";
+import { playNotificationSound } from "@/lib/services/notification-sound";
 
 export function NotificationCenter() {
   const { notifications, unreadCount, markAsRead } = useOrderNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const { wallet } = useWallet();
+  const previousUnreadCountRef = useRef(0);
+
+  // Play bell sound when new notifications arrive
+  useEffect(() => {
+    if (unreadCount > previousUnreadCountRef.current && unreadCount > 0) {
+      playNotificationSound();
+    }
+    previousUnreadCountRef.current = unreadCount;
+  }, [unreadCount]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "order_created":
         return "📦";
+      case "new_buy_order":
+        return "🛍️";
       case "payment_confirmed":
+        return "💰";
+      case "seller_payment_received":
         return "✅";
-      case "received_confirmed":
+      case "transfer_initiated":
+        return "🚀";
+      case "crypto_received":
         return "🎉";
+      case "order_cancelled":
+        return "❌";
+      case "order_accepted":
+        return "👍";
+      case "order_rejected":
+        return "👎";
+      case "order_completed_by_seller":
+        return "📋";
       default:
         return "📢";
     }
@@ -29,10 +53,24 @@ export function NotificationCenter() {
     switch (type) {
       case "order_created":
         return "New Order";
+      case "new_buy_order":
+        return "New Buy Order";
       case "payment_confirmed":
         return "Payment Confirmed";
-      case "received_confirmed":
-        return "Order Received";
+      case "seller_payment_received":
+        return "Payment Received";
+      case "transfer_initiated":
+        return "Crypto Transfer Started";
+      case "crypto_received":
+        return "Crypto Received";
+      case "order_cancelled":
+        return "Order Cancelled";
+      case "order_accepted":
+        return "Order Accepted";
+      case "order_rejected":
+        return "Order Rejected";
+      case "order_completed_by_seller":
+        return "Order Completed by Seller";
       default:
         return "Notification";
     }
@@ -103,6 +141,23 @@ export function NotificationCenter() {
 
                         setIsOpen(false);
 
+                        // For new buy orders, navigate to seller order confirmation page
+                        if (notification.type === "new_buy_order") {
+                          navigate(
+                            `/seller-order-confirmation/${notification.orderId}`,
+                          );
+                          return;
+                        }
+
+                        // For new sell orders, navigate to buyer order confirmation page
+                        if (notification.type === "new_sell_order") {
+                          navigate(
+                            `/buyer-order-confirmation/${notification.orderId}`,
+                          );
+                          return;
+                        }
+
+                        // For other notifications, navigate to order-complete
                         // Determine buyer and seller based on notification type
                         // For BUY orders: senderWallet is buyer, recipientWallet is seller/admin
                         // For SELL orders: senderWallet is seller, recipientWallet is buyer
@@ -124,9 +179,13 @@ export function NotificationCenter() {
                               amountPKR: notification.orderData.amountPKR,
                               buyerWallet,
                               sellerWallet,
-                              paymentMethod: "easypaisa",
+                              payment_method: "easypaisa",
+                              roomId: notification.orderId,
+                              offerId: "",
+                              pricePKRPerQuote: 280,
+                              status: "PENDING",
+                              createdAt: notification.createdAt,
                             },
-                            roomId: notification.orderId,
                             openChat: true,
                           },
                         });

@@ -11,8 +11,13 @@ export interface OrderNotification {
     | "new_buy_order"
     | "new_sell_order"
     | "payment_confirmed"
-    | "received_confirmed"
-    | "order_cancelled";
+    | "seller_payment_received"
+    | "transfer_initiated"
+    | "crypto_received"
+    | "order_cancelled"
+    | "order_accepted"
+    | "order_rejected"
+    | "order_completed_by_seller";
   orderType: "BUY" | "SELL";
   message: string;
   orderData: {

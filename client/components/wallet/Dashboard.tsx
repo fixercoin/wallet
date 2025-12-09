@@ -139,6 +139,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const { isStaking } = useStakingTokens(wallet?.publicKey || null);
+  const [showHelpChat, setShowHelpChat] = useState(false);
+  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'bot'; content: string }>>([]);
+  const [chatInput, setChatInput] = useState('');
 
   // Quest state (per-wallet, persisted locally)
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());

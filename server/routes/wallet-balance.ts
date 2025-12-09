@@ -205,7 +205,9 @@ async function fetchBalanceWithFallbacks(
   }
 
   // Try first 3 fallback endpoints sequentially
-  console.log("[WalletBalance] Primary endpoint failed, trying sequential fallbacks...");
+  console.log(
+    "[WalletBalance] Primary endpoint failed, trying sequential fallbacks...",
+  );
   const priorityFallbacks = RPC_ENDPOINTS.slice(0, 3);
 
   for (const endpoint of priorityFallbacks) {
@@ -239,10 +241,12 @@ async function fetchBalanceWithFallbacks(
     const parallelResults = await Promise.allSettled(
       RPC_ENDPOINTS.slice(3).map(async (endpoint) => {
         let b = await fetchBalanceWithGetBalance(endpoint.url, publicKey);
-        if (b !== null) return { balance: b, endpoint: endpoint.url, name: endpoint.name };
+        if (b !== null)
+          return { balance: b, endpoint: endpoint.url, name: endpoint.name };
 
         b = await fetchBalanceWithGetAccount(endpoint.url, publicKey);
-        if (b !== null) return { balance: b, endpoint: endpoint.url, name: endpoint.name };
+        if (b !== null)
+          return { balance: b, endpoint: endpoint.url, name: endpoint.name };
 
         return null;
       }),
@@ -253,7 +257,10 @@ async function fetchBalanceWithFallbacks(
         console.log(
           `[WalletBalance] ✅ Success from parallel fallback: ${result.value.name}`,
         );
-        return { balance: result.value.balance, endpoint: result.value.endpoint };
+        return {
+          balance: result.value.balance,
+          endpoint: result.value.endpoint,
+        };
       }
     }
   }

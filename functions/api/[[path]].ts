@@ -270,9 +270,12 @@ async function handleWalletBalance(url: URL, env?: Env): Promise<Response> {
             const lamports = rpcJson?.result ?? rpcJson?.result?.value ?? 0;
             const balance =
               typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
-            return new Response(JSON.stringify({ balance, lamports, publicKey }), {
-              headers: CORS_HEADERS,
-            });
+            return new Response(
+              JSON.stringify({ balance, lamports, publicKey }),
+              {
+                headers: CORS_HEADERS,
+              },
+            );
           } catch (e) {
             continue;
           }

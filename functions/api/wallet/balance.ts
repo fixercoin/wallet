@@ -202,7 +202,9 @@ async function fetchBalanceWithFallbacks(
 
   // Try remaining endpoints in parallel (faster recovery)
   if (endpoints.length > 3) {
-    console.log(`[wallet-balance] Trying remaining ${endpoints.length - 3} endpoints in parallel...`);
+    console.log(
+      `[wallet-balance] Trying remaining ${endpoints.length - 3} endpoints in parallel...`,
+    );
 
     const remainingResults = await Promise.allSettled(
       endpoints.slice(3).map(async (endpoint) => {
@@ -213,12 +215,14 @@ async function fetchBalanceWithFallbacks(
         if (b !== null) return { balance: b, endpoint };
 
         return null;
-      })
+      }),
     );
 
     for (const result of remainingResults) {
       if (result.status === "fulfilled" && result.value !== null) {
-        console.log(`[wallet-balance] ✅ Success from fallback: ${result.value.balance}`);
+        console.log(
+          `[wallet-balance] ✅ Success from fallback: ${result.value.balance}`,
+        );
         return result.value;
       }
     }

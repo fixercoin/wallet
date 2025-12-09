@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
@@ -22,6 +22,7 @@ export default function SellData() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();
+  const isCreatingOrderRef = useRef(false); // Prevent multiple simultaneous order creations
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined

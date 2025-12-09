@@ -90,6 +90,14 @@ export default function SellData() {
   }, [amountTokens, amountPKR]);
 
   const handleSubmit = async () => {
+    // Prevent multiple simultaneous order creations (race condition)
+    if (isCreatingOrderRef.current) {
+      console.warn(
+        "[SellData] Order creation already in progress, ignoring duplicate request",
+      );
+      return;
+    }
+
     if (!isValid) return;
 
     if (!wallet?.publicKey) {
@@ -98,10 +106,13 @@ export default function SellData() {
     }
 
     try {
+      // Mark that we're starting order creation
+      isCreatingOrderRef.current = true;
       setLoading(true);
+
       const createdOrder = await createOrderFromOffer(
         {
-          id: `order-${Date.now()}`,
+          id: `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           type: "SELL",
           buyerWallet: "",
           token: "USDT",
@@ -166,6 +177,8 @@ export default function SellData() {
       console.error("Error creating order:", error);
       toast.error("Failed to create order");
     } finally {
+      // Clear the flag to allow future order creation attempts
+      isCreatingOrderRef.current = false;
       setLoading(false);
     }
   };

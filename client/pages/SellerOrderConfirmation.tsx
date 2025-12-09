@@ -151,17 +151,38 @@ export default function SellerOrderConfirmation() {
 
     setSubmitting(true);
     try {
-      // Update order status to ACCEPTED
-      await updateOrderInBothStorages(order.id, {
+      // Update order status to ACCEPTED and set seller wallet (for generic buy orders)
+      const updatedOrder = await updateOrderInBothStorages(order.id, {
         status: "ACCEPTED",
+        sellerWallet: wallet.publicKey, // Record which seller accepted this order
       });
 
+      if (updatedOrder) {
+        setOrder(updatedOrder);
+      }
       setOrderStatus("ACCEPTED");
 
-      // Send message to chat
-      if (order.roomId) {
+      // Send message to chat (create room if it doesn't exist)
+      let roomId = order.roomId;
+      if (!roomId && order.buyerWallet && wallet.publicKey) {
+        try {
+          const { createTradeRoom } = await import("@/lib/p2p-api");
+          const room = await createTradeRoom({
+            buyer_wallet: order.buyerWallet,
+            seller_wallet: wallet.publicKey,
+            order_id: order.id,
+          });
+          roomId = room.id;
+          // Update order with new room ID
+          await updateOrderInBothStorages(order.id, { roomId });
+        } catch (roomError) {
+          console.warn("Failed to create trade room:", roomError);
+        }
+      }
+
+      if (roomId) {
         await addTradeMessage({
-          room_id: order.roomId,
+          room_id: roomId,
           sender_wallet: wallet.publicKey,
           message: "✅ I have accepted your order",
         });

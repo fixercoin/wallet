@@ -1072,7 +1072,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   aria-label="Help and support chat"
                   title="Ask me anything about wallet features"
                 >
-                  <MessageSquare className="h-4 w-4" />
+                  <Headphones className="h-4 w-4" />
                 </Button>
 
                 {/* Search button */}

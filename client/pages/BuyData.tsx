@@ -181,6 +181,12 @@ export default function BuyData() {
   }, [amountTokens, amountPKR]);
 
   const handleSubmit = async () => {
+    // Prevent submission if already loading or creating order
+    if (loading || isCreatingOrderRef.current) {
+      console.warn("[BuyData] Submission already in progress, ignoring duplicate request");
+      return;
+    }
+
     if (!isValid) return;
 
     if (!wallet?.publicKey) {

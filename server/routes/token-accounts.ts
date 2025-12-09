@@ -1,6 +1,11 @@
 import { RequestHandler } from "express";
 import { PublicKey } from "@solana/web3.js";
 
+// Retry configuration
+const MAX_RETRIES = 2;
+const INITIAL_RETRY_DELAY_MS = 500;
+const MAX_RETRY_DELAY_MS = 2000;
+
 // Get RPC endpoint with free endpoints and Alchemy fallback
 function getRpcEndpoint(): string {
   const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();

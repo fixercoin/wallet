@@ -61,7 +61,7 @@ id = "295bfeb238c344ccb5afdd2bb93e497f"
 preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
 
 # Enable KV for Pages Functions (development environment)
-[env.development.kv_namespaces]
+[[env.development.kv_namespaces]]
 binding = "STAKING_KV"
 id = "295bfeb238c344ccb5afdd2bb93e497f"
 preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
@@ -72,7 +72,7 @@ id = "295bfeb238c344ccb5afdd2bb93e497f"
 preview_id = "295bfeb238c344ccb5afdd2bb93e497f"
 
 # Enable KV for Pages Functions (production environment)
-[env.production.kv_namespaces]
+[[env.production.kv_namespaces]]
 binding = "STAKING_KV"
 id = "295bfeb238c344ccb5afdd2bb93e497f"
 preview_id = "295bfeb238c344ccb5afdd2bb93e497f"

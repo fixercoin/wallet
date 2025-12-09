@@ -186,23 +186,12 @@ export function NotificationCenter() {
                           buyerWallet = notification.senderWallet;
                         }
 
+                        // Navigate to order-complete
+                        // Pass orderId so it can be loaded from storage
+                        // (Storing full order in state can cause issues with missing roomId and other fields)
                         navigate("/order-complete", {
                           state: {
-                            order: {
-                              id: notification.orderId,
-                              type: notification.orderType,
-                              token: notification.orderData.token,
-                              amountTokens: notification.orderData.amountTokens,
-                              amountPKR: notification.orderData.amountPKR,
-                              buyerWallet,
-                              sellerWallet,
-                              payment_method: "easypaisa",
-                              roomId: notification.orderId,
-                              offerId: "",
-                              pricePKRPerQuote: 280,
-                              status: "PENDING",
-                              createdAt: notification.createdAt,
-                            },
+                            orderId: notification.orderId,
                             openChat: true,
                           },
                         });

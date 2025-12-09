@@ -1,6 +1,9 @@
 import React from "react";
 import { Info, CheckCircle } from "lucide-react";
-import { generateTransferInstructions, validateTransferConfiguration } from "@/lib/p2p-transfer";
+import {
+  generateTransferInstructions,
+  validateTransferConfiguration,
+} from "@/lib/p2p-transfer";
 import type { CreatedOrder } from "@/lib/p2p-order-creation";
 
 interface P2PTransferInstructionsProps {
@@ -8,10 +11,9 @@ interface P2PTransferInstructionsProps {
   variant?: "card" | "inline" | "modal";
 }
 
-export const P2PTransferInstructions: React.FC<P2PTransferInstructionsProps> = ({
-  order,
-  variant = "card",
-}) => {
+export const P2PTransferInstructions: React.FC<
+  P2PTransferInstructionsProps
+> = ({ order, variant = "card" }) => {
   const validation = validateTransferConfiguration(order);
   const instructions = generateTransferInstructions(order);
 
@@ -59,8 +61,8 @@ export const P2PTransferInstructions: React.FC<P2PTransferInstructionsProps> = (
 
       <div className="mt-4 p-3 bg-blue-100 rounded border border-blue-300">
         <p className="text-xs text-blue-900">
-          <strong>🔒 Security:</strong> All transfers go through the official system
-          accounts to ensure secure handling and dispute resolution.
+          <strong>🔒 Security:</strong> All transfers go through the official
+          system accounts to ensure secure handling and dispute resolution.
         </p>
       </div>
     </div>

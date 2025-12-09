@@ -7,6 +7,7 @@ This document describes how the P2P (Peer-to-Peer) trading system is configured 
 The P2P system uses two primary system-level accounts to facilitate all transactions:
 
 ### 1. **System Seller Wallet (Crypto Intermediary)**
+
 - **Address**: `7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw`
 - **Purpose**: Acts as the intermediary for all cryptocurrency transfers
 - **Role**:
@@ -15,6 +16,7 @@ The P2P system uses two primary system-level accounts to facilitate all transact
   - Ensures secure custody and transfer of digital assets
 
 ### 2. **System Buyer Account (Fiat Intermediary)**
+
 - **Account Holder**: AMEER NAWAZ KHAN
 - **Account Number**: 03107044833
 - **Payment Method**: EASYPAISA
@@ -68,6 +70,7 @@ The P2P system uses two primary system-level accounts to facilitate all transact
 ## Configuration Files
 
 ### Client-Side Configuration
+
 **File**: `client/lib/constants/system-config.ts`
 
 ```typescript
@@ -87,18 +90,21 @@ To disable system accounts and allow users to specify custom accounts, change `e
 ## User Interface Integration
 
 ### PostOrder Page (`client/pages/PostOrder.tsx`)
+
 - **Buy Mode**: Auto-fills with system buyer account (AMEER NAWAZ KHAN, 03107044833)
 - **Sell Mode**: Auto-fills with system seller wallet address
 - Fields are disabled when system accounts are enabled
 - Green info banner confirms use of official system accounts
 
 ### BuyerOrderConfirmation (`client/pages/BuyerOrderConfirmation.tsx`)
+
 - Displays system buyer account details prominently
 - Shows where the buyer needs to send payment
 - Displays seller details and payment instructions
 - Uses `SystemAccountDisplay` component for clear formatting
 
 ### SellerOrderConfirmation (`client/pages/SellerOrderConfirmation.tsx`)
+
 - Displays system seller wallet address
 - Shows where the seller needs to send crypto
 - Displays buyer payment account details
@@ -107,25 +113,31 @@ To disable system accounts and allow users to specify custom accounts, change `e
 ## Components
 
 ### SystemAccountDisplay (`client/components/p2p/SystemAccountDisplay.tsx`)
+
 Reusable component that displays system account information with:
+
 - Copy-to-clipboard functionality
 - Clear labeling of system accounts
 - Security notices and verification messages
 - Compact and full variants for different layouts
 
 ### P2PTransferInstructions (`client/components/p2p/P2PTransferInstructions.tsx`)
+
 Component that displays step-by-step transfer instructions for:
+
 - Buy orders: How to send payment and receive crypto
 - Sell orders: How to send crypto and receive payment
 
 ## Libraries and Utilities
 
 ### System Configuration (`client/lib/constants/system-config.ts`)
+
 - `getSystemSellerWallet()`: Returns the system seller wallet address
 - `getSystemBuyerAccount()`: Returns the system buyer account details
 - `isSystemP2PEnabled()`: Checks if system accounts are enabled
 
 ### P2P Transfer Logic (`client/lib/p2p-transfer.ts`)
+
 - `getTransferRecipient()`: Determines who receives in a transfer
 - `getTransferSender()`: Determines who sends in a transfer
 - `getP2PTransferDetails()`: Gets full transfer details
@@ -149,6 +161,7 @@ To change the system accounts:
 4. **Test** the P2P flow to ensure transfers work correctly
 
 Example:
+
 ```typescript
 export const SYSTEM_P2P_CONFIG: SystemP2PConfig = {
   sellerWallet: "NEW_SOLANA_WALLET_ADDRESS_HERE",
@@ -173,6 +186,7 @@ export const SYSTEM_P2P_CONFIG: SystemP2PConfig = {
 ```
 
 This will:
+
 - Allow users to enter custom wallet addresses
 - Not auto-fill form fields
 - Show optional system account info instead of enforcement
@@ -213,15 +227,18 @@ The system configuration is used in:
 ## Troubleshooting
 
 ### Users can't copy system account details
+
 - Check that `SystemAccountDisplay` component is properly imported
 - Verify browser clipboard permissions are granted
 
 ### System wallet address not showing in sell orders
+
 - Verify `isSystemP2PEnabled()` returns true
 - Check that `system-config.ts` has valid wallet address
 - Ensure sell mode is selected when creating order
 
 ### System buyer account not auto-filling in buy mode
+
 - Verify `isSystemP2PEnabled()` returns true
 - Check that `system-config.ts` has complete buyer account details
 - Ensure buy mode is selected when creating order

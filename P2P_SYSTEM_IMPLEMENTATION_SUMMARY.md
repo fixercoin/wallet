@@ -7,10 +7,13 @@ This document summarizes the implementation of the P2P (Peer-to-Peer) cryptocurr
 ## What Was Implemented
 
 ### 1. System Configuration Layer
+
 **Files Created/Modified:**
+
 - `client/lib/constants/system-config.ts` - System wallet and account configuration
 
 **Features:**
+
 - Centralized configuration for system seller wallet: `7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw`
 - System buyer account: AMEER NAWAZ KHAN, 03107044833, EASYPAISA
 - Enable/disable system accounts via configuration flag
@@ -18,7 +21,11 @@ This document summarizes the implementation of the P2P (Peer-to-Peer) cryptocurr
 
 ```typescript
 // Usage in code
-import { getSystemSellerWallet, getSystemBuyerAccount, isSystemP2PEnabled } from '@/lib/constants/system-config';
+import {
+  getSystemSellerWallet,
+  getSystemBuyerAccount,
+  isSystemP2PEnabled,
+} from "@/lib/constants/system-config";
 
 const sellerWallet = getSystemSellerWallet();
 const buyerAccount = getSystemBuyerAccount();
@@ -26,10 +33,13 @@ const isEnabled = isSystemP2PEnabled();
 ```
 
 ### 2. Order Creation Integration
+
 **Files Modified:**
+
 - `client/pages/PostOrder.tsx` - Post order page with system account integration
 
 **Features:**
+
 - Auto-fills system buyer account when creating buy orders (AMEER NAWAZ KHAN, 03107044833)
 - Auto-fills system seller wallet when creating sell orders
 - Fields are disabled when system accounts are enabled (prevents accidental changes)
@@ -37,26 +47,33 @@ const isEnabled = isSystemP2PEnabled();
 - Form validation ensures required system account data is present
 
 **User Experience:**
+
 - Buy orders automatically show: Account Name, Account Number, and EASYPAISA payment method
 - Sell orders automatically show: System seller wallet address
 - Clear visual feedback that these are system-controlled accounts
 
 ### 3. Order Confirmation Display
+
 **Files Modified:**
+
 - `client/pages/BuyerOrderConfirmation.tsx` - Buyer order confirmation page
 - `client/pages/SellerOrderConfirmation.tsx` - Seller order confirmation page
 
 **Features:**
+
 - Both pages now display system account information prominently
 - Renamed sections to "Payment Instructions" and "Transfer Instructions"
 - Integrated system account display component with copy-to-clipboard functionality
 - Security notices remind users they're using official system accounts
 
 ### 4. System Account Display Component
+
 **Files Created:**
+
 - `client/components/p2p/SystemAccountDisplay.tsx` - Reusable system account display
 
 **Features:**
+
 - Two variants: "buyer" and "seller"
 - Two display modes: "compact" and "default"
 - Copy-to-clipboard functionality for all account details
@@ -65,23 +82,28 @@ const isEnabled = isSystemP2PEnabled();
 - Responsive design that works on mobile and desktop
 
 **Example Usage:**
+
 ```typescript
 <SystemAccountDisplay type="buyer" variant="default" />
 <SystemAccountDisplay type="seller" variant="compact" />
 ```
 
 ### 5. P2P Transfer Logic
+
 **Files Created:**
+
 - `client/lib/p2p-transfer.ts` - Transfer configuration and validation logic
 - `client/components/p2p/P2PTransferInstructions.tsx` - User-friendly transfer instructions
 
 **Features:**
+
 - Determines correct transfer sender and recipient based on order type
 - Validates transfer configuration for correctness
 - Generates user-friendly step-by-step instructions
 - Provides transfer details in structured format
 
 **Key Functions:**
+
 - `getTransferRecipient(order)` - Who receives in the transfer
 - `getTransferSender(order)` - Who sends in the transfer
 - `getP2PTransferDetails(order)` - Complete transfer information
@@ -89,13 +111,16 @@ const isEnabled = isSystemP2PEnabled();
 - `generateTransferInstructions(order)` - Creates step-by-step guide
 
 ### 6. Documentation
+
 **Files Created:**
+
 - `P2P_SYSTEM_CONFIGURATION.md` - Comprehensive system configuration guide
 - `P2P_SYSTEM_IMPLEMENTATION_SUMMARY.md` - This file
 
 ## Transaction Flow
 
 ### Buy Order Flow
+
 1. **Buyer creates order** - System buyer account auto-filled (AMEER NAWAZ KHAN)
 2. **Order matched** - Buyer sees payment instructions
 3. **Buyer pays** - Transfers PKR to system buyer account
@@ -103,6 +128,7 @@ const isEnabled = isSystemP2PEnabled();
 5. **Buyer receives** - Crypto transferred to buyer's wallet
 
 ### Sell Order Flow
+
 1. **Seller creates order** - System seller wallet auto-filled
 2. **Order matched** - Seller sees transfer instructions
 3. **Seller transfers** - Sends crypto to system seller wallet
@@ -137,6 +163,7 @@ Root/
 ## Configuration Management
 
 ### Current Configuration
+
 ```typescript
 {
   sellerWallet: "7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw",
@@ -150,11 +177,13 @@ Root/
 ```
 
 ### To Change System Accounts
+
 1. Open `client/lib/constants/system-config.ts`
 2. Modify the `SYSTEM_P2P_CONFIG` object with new wallet/account details
 3. Rebuild and redeploy the application
 
 ### To Disable System Accounts
+
 Change `enabled: false` in `system-config.ts` to allow users to enter custom accounts.
 
 ## Security Features
@@ -239,17 +268,20 @@ Potential improvements for the future:
 ## Troubleshooting
 
 ### System account not appearing in forms
+
 - Check that `isSystemP2PEnabled()` returns true
 - Verify `system-config.ts` has valid configuration
 - Check browser console for errors
 - Clear browser cache and reload
 
 ### Copy functionality not working
+
 - Check browser clipboard permissions
 - Verify `SystemAccountDisplay` component is imported correctly
 - Check that copy button is being clicked, not text
 
 ### Orders not storing system account info
+
 - Verify `PostOrder.tsx` is passing system accounts to `createP2POrder`
 - Check that form validation passes system account data
 - Verify API endpoint stores all order fields
@@ -266,6 +298,7 @@ For issues or questions:
 ## Conclusion
 
 The P2P system is now fully integrated with system-level accounts for:
+
 - Secure cryptocurrency transfers
 - Fiat currency payment handling
 - Clear user instructions

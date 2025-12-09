@@ -37,10 +37,7 @@ export const SystemAccountDisplay: React.FC<SystemAccountDisplayProps> = ({
               <span>{buyerAccount.accountName}</span>
               <button
                 onClick={() =>
-                  copyToClipboard(
-                    buyerAccount.accountName,
-                    "buyer-name",
-                  )
+                  copyToClipboard(buyerAccount.accountName, "buyer-name")
                 }
                 className="text-blue-600 hover:text-blue-800"
               >
@@ -55,10 +52,7 @@ export const SystemAccountDisplay: React.FC<SystemAccountDisplayProps> = ({
               <span>📞 {buyerAccount.accountNumber}</span>
               <button
                 onClick={() =>
-                  copyToClipboard(
-                    buyerAccount.accountNumber,
-                    "buyer-number",
-                  )
+                  copyToClipboard(buyerAccount.accountNumber, "buyer-number")
                 }
                 className="text-blue-600 hover:text-blue-800"
               >
@@ -93,10 +87,7 @@ export const SystemAccountDisplay: React.FC<SystemAccountDisplayProps> = ({
               </div>
               <button
                 onClick={() =>
-                  copyToClipboard(
-                    buyerAccount.accountName,
-                    "buyer-name",
-                  )
+                  copyToClipboard(buyerAccount.accountName, "buyer-name")
                 }
                 className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded"
               >
@@ -123,10 +114,7 @@ export const SystemAccountDisplay: React.FC<SystemAccountDisplayProps> = ({
               </div>
               <button
                 onClick={() =>
-                  copyToClipboard(
-                    buyerAccount.accountNumber,
-                    "buyer-number",
-                  )
+                  copyToClipboard(buyerAccount.accountNumber, "buyer-number")
                 }
                 className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded"
               >
@@ -155,8 +143,8 @@ export const SystemAccountDisplay: React.FC<SystemAccountDisplayProps> = ({
 
         <div className="bg-blue-100 border border-blue-300 rounded p-2">
           <p className="text-xs text-blue-900">
-            ✓ This is the official system account. Send your payment here
-            to complete the transaction securely.
+            ✓ This is the official system account. Send your payment here to
+            complete the transaction securely.
           </p>
         </div>
       </div>
@@ -199,7 +187,9 @@ export const SystemAccountDisplay: React.FC<SystemAccountDisplayProps> = ({
         <div className="bg-white rounded border border-green-100 p-3 space-y-3">
           <div className="flex justify-between items-start gap-2">
             <div className="flex-1">
-              <p className="text-xs text-gray-600 mb-1">Solana Wallet Address</p>
+              <p className="text-xs text-gray-600 mb-1">
+                Solana Wallet Address
+              </p>
               <p className="text-xs font-mono text-gray-900 break-all">
                 {sellerWallet}
               </p>

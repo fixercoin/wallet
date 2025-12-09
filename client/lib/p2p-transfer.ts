@@ -71,9 +71,10 @@ export function getP2PTransferDetails(order: CreatedOrder): P2PTransferDetails {
 /**
  * Validate transfer configuration
  */
-export function validateTransferConfiguration(
-  order: CreatedOrder,
-): { valid: boolean; error?: string } {
+export function validateTransferConfiguration(order: CreatedOrder): {
+  valid: boolean;
+  error?: string;
+} {
   try {
     // Validate sender address
     new PublicKey(getTransferSender(order));
@@ -103,9 +104,7 @@ export function validateTransferConfiguration(
  * Generate transfer instructions for a P2P order
  * This can be displayed to the user to show what will happen
  */
-export function generateTransferInstructions(
-  order: CreatedOrder,
-): string[] {
+export function generateTransferInstructions(order: CreatedOrder): string[] {
   const sender = getTransferSender(order);
   const recipient = getTransferRecipient(order);
 

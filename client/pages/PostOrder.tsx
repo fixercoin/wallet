@@ -299,7 +299,8 @@ export default function PostOrder() {
                 {isSystemP2PEnabled() && (
                   <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                     <p className="text-xs text-green-800">
-                      <strong>✓ System Account:</strong> Pay to the official system account to ensure secure and verified transactions.
+                      <strong>✓ System Account:</strong> Pay to the official
+                      system account to ensure secure and verified transactions.
                     </p>
                   </div>
                 )}
@@ -322,7 +323,9 @@ export default function PostOrder() {
                 {isSystemP2PEnabled() && (
                   <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                     <p className="text-xs text-green-800">
-                      <strong>✓ System Wallet:</strong> Crypto will be sent to the official system wallet for secure handling and disbursement.
+                      <strong>✓ System Wallet:</strong> Crypto will be sent to
+                      the official system wallet for secure handling and
+                      disbursement.
                     </p>
                   </div>
                 )}

@@ -995,18 +995,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </DropdownMenu>
 
               <div className="flex items-center gap-2 ml-auto">
-                {/* Refresh button */}
+                {/* Help Chat button */}
                 <Button
-                  onClick={handleRefresh}
-                  disabled={isRefreshing}
+                  onClick={() => {
+                    setShowHelpChat(true);
+                    if (chatMessages.length === 0) {
+                      setChatMessages([{ role: 'bot', content: 'Hello! I\'m here to help you with your wallet. Ask me about any feature or function. What would you like to know?' }]);
+                    }
+                  }}
                   size="sm"
-                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-[#22c55e] ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="Refresh balance"
-                  title="Refresh balance and tokens"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-[#22c55e] ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                  aria-label="Help and support chat"
+                  title="Ask me anything about wallet features"
                 >
-                  <RefreshCw
-                    className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-                  />
+                  <MessageSquare className="h-4 w-4" />
                 </Button>
 
                 {/* Search button */}

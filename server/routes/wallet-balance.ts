@@ -25,9 +25,19 @@ const RPC_ENDPOINTS = [
     priority: 3,
   },
   {
-    url: "https://api.devnet.solana.com",
-    name: "Devnet",
+    url: "https://api.mainnet-beta.solflare.network",
+    name: "Solflare",
     priority: 4,
+  },
+  {
+    url: "https://api.mainnet.solflare.com",
+    name: "Solflare (mainnet)",
+    priority: 5,
+  },
+  {
+    url: "https://solana.publicnode.com",
+    name: "PublicNode",
+    priority: 6,
   },
 ];
 

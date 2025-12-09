@@ -11,8 +11,13 @@ export interface OrderNotification {
     | "new_buy_order"
     | "new_sell_order"
     | "payment_confirmed"
-    | "received_confirmed"
-    | "order_cancelled";
+    | "seller_payment_received"
+    | "transfer_initiated"
+    | "crypto_received"
+    | "order_cancelled"
+    | "order_accepted"
+    | "order_rejected"
+    | "order_completed_by_seller";
   orderType: "BUY" | "SELL";
   message: string;
   orderData: {
@@ -207,17 +212,10 @@ export const handleCreateNotification: RequestHandler = async (req, res) => {
       orderData,
     } = req.body;
 
-    if (
-      !recipientWallet ||
-      !senderWallet ||
-      !type ||
-      !orderType ||
-      !orderId ||
-      !orderData
-    ) {
+    if (!recipientWallet || !senderWallet || !type || !orderType || !orderId) {
       return res.status(400).json({
         error:
-          "Missing required fields: recipientWallet, senderWallet, type, orderType, orderId, orderData",
+          "Missing required fields: recipientWallet, senderWallet, type, orderType, orderId",
       });
     }
 
@@ -232,7 +230,7 @@ export const handleCreateNotification: RequestHandler = async (req, res) => {
       type,
       orderType,
       message,
-      orderData,
+      orderData: orderData || { token: "", amountTokens: 0, amountPKR: 0 },
       read: false,
       createdAt: now,
     };

@@ -951,7 +951,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-[#22c55e]/20">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-[#22c55e]" />
+                <Headphones className="h-5 w-5 text-[#22c55e]" />
                 Wallet Assistant
               </h2>
               <button

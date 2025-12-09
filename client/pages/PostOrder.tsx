@@ -260,7 +260,8 @@ export default function PostOrder() {
                   <select
                     value={paymentMethod}
                     onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm"
+                    disabled={isSystemP2PEnabled()}
+                    className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
                     <option value="easypaisa">EasyPaisa</option>
                     <option value="jazzcash">JazzCash</option>
@@ -276,8 +277,9 @@ export default function PostOrder() {
                     <input
                       value={accountName}
                       onChange={(e) => setAccountName(e.target.value)}
+                      disabled={isSystemP2PEnabled()}
                       placeholder="Your Name"
-                      className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm"
+                      className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -287,24 +289,44 @@ export default function PostOrder() {
                     <input
                       value={accountNumber}
                       onChange={(e) => setAccountNumber(e.target.value)}
+                      disabled={isSystemP2PEnabled()}
                       placeholder="03001234567"
-                      className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm"
+                      className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
+
+                {isSystemP2PEnabled() && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-xs text-green-800">
+                      <strong>✓ System Account:</strong> Pay to the official system account to ensure secure and verified transactions.
+                    </p>
+                  </div>
+                )}
               </>
             ) : (
-              <div>
-                <label className="block text-xs text-gray-600 mb-2 font-medium">
-                  Solana Wallet Address
-                </label>
-                <input
-                  value={walletAddress}
-                  onChange={(e) => setWalletAddress(e.target.value)}
-                  placeholder="Enter recipient wallet address"
-                  className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
+              <>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-2 font-medium">
+                    Solana Wallet Address
+                  </label>
+                  <input
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    disabled={isSystemP2PEnabled()}
+                    placeholder="Enter recipient wallet address"
+                    className="w-full border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  />
+                </div>
+
+                {isSystemP2PEnabled() && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-xs text-green-800">
+                      <strong>✓ System Wallet:</strong> Crypto will be sent to the official system wallet for secure handling and disbursement.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
 
             <div className="flex gap-2 pt-2">

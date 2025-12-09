@@ -376,7 +376,11 @@ async function handler(request: Request, env?: Env): Promise<Response> {
           let lamports = solData.result;
 
           // If result is wrapped in a value property (some RPC versions), extract it
-          if (typeof lamports === "object" && lamports !== null && "value" in lamports) {
+          if (
+            typeof lamports === "object" &&
+            lamports !== null &&
+            "value" in lamports
+          ) {
             lamports = lamports.value;
           }
 
@@ -406,7 +410,9 @@ async function handler(request: Request, env?: Env): Promise<Response> {
 
         // Check if SOL already exists in validTokens (from RPC query)
         const solMint = "So11111111111111111111111111111111111111112";
-        const solIndex = validTokens.findIndex((t) => t?.mint === solMint || t?.symbol === "SOL");
+        const solIndex = validTokens.findIndex(
+          (t) => t?.mint === solMint || t?.symbol === "SOL",
+        );
 
         // Prepare all tokens, ensuring SOL is correct
         let allTokens: any[] = [];

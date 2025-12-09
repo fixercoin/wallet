@@ -370,7 +370,20 @@ async function handler(request: Request, env?: Env): Promise<Response> {
           clearTimeout(solTimeoutId);
 
           const solData = await solResp.json();
-          const lamports = solData.result ?? solData.result?.value;
+
+          // Handle RPC response: result can be a number (lamports) directly
+          // The getBalance RPC method returns: { "result": <lamports as number> }
+          let lamports = solData.result;
+
+          // If result is wrapped in a value property (some RPC versions), extract it
+          if (
+            typeof lamports === "object" &&
+            lamports !== null &&
+            "value" in lamports
+          ) {
+            lamports = lamports.value;
+          }
+
           if (
             !solData.error &&
             typeof lamports === "number" &&
@@ -386,25 +399,47 @@ async function handler(request: Request, env?: Env): Promise<Response> {
               `[TokenAccounts] RPC error fetching SOL balance:`,
               solData.error,
             );
+          } else {
+            console.warn(
+              `[TokenAccounts] Invalid SOL balance response. Result type: ${typeof lamports}, value: ${lamports}`,
+            );
           }
         } catch (err) {
           console.warn(`[TokenAccounts] Failed to fetch SOL balance:`, err);
         }
 
-        // Add SOL to the beginning of tokens list
-        const allTokens = [
-          {
-            mint: "So11111111111111111111111111111111111111112",
-            symbol: "SOL",
-            name: "Solana",
-            decimals: 9,
-            balance: solBalance,
-            logoURI:
-              "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-          },
-          ...validTokens,
-          ...additionalTokens,
-        ];
+        // Check if SOL already exists in validTokens (from RPC query)
+        const solMint = "So11111111111111111111111111111111111111112";
+        const solIndex = validTokens.findIndex(
+          (t) => t?.mint === solMint || t?.symbol === "SOL",
+        );
+
+        // Prepare all tokens, ensuring SOL is correct
+        let allTokens: any[] = [];
+        if (solIndex >= 0) {
+          // SOL exists in validTokens, update it with correct balance and metadata
+          const solToken = validTokens[solIndex];
+          allTokens = [
+            {
+              ...KNOWN_TOKENS[solMint],
+              balance: solBalance,
+              logoURI: solToken?.logoURI || KNOWN_TOKENS[solMint].logoURI,
+            },
+            ...validTokens.filter((_, i) => i !== solIndex),
+            ...additionalTokens,
+          ];
+        } else {
+          // SOL not in validTokens, add it at the beginning
+          allTokens = [
+            {
+              ...KNOWN_TOKENS[solMint],
+              balance: solBalance,
+              logoURI: KNOWN_TOKENS[solMint].logoURI,
+            },
+            ...validTokens,
+            ...additionalTokens,
+          ];
+        }
 
         console.log(
           `[TokenAccounts] Found ${validTokens.length} token accounts from RPC + ${additionalTokens.length} verified missing tokens (plus SOL) for ${publicKey.slice(

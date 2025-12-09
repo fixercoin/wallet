@@ -15,7 +15,7 @@ export async function getOrderFromAPI(
   orderId: string,
 ): Promise<CreatedOrder | null> {
   try {
-    const url = `${API_BASE}?id=${encodeURIComponent(orderId)}`;
+    const url = `${API_BASE}/${encodeURIComponent(orderId)}`;
     console.log(`[P2P Order API] Fetching order from: ${url}`);
 
     const response = await fetch(url);

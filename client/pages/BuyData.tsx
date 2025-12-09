@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
@@ -79,7 +85,9 @@ export default function BuyData() {
   const proceedWithOrderCreation = useCallback(async () => {
     // Prevent multiple simultaneous order creations (race condition)
     if (isCreatingOrderRef.current) {
-      console.warn("[BuyData] Order creation already in progress, ignoring duplicate request");
+      console.warn(
+        "[BuyData] Order creation already in progress, ignoring duplicate request",
+      );
       return;
     }
 
@@ -183,7 +191,9 @@ export default function BuyData() {
   const handleSubmit = async () => {
     // Prevent submission if already loading or creating order
     if (loading || isCreatingOrderRef.current) {
-      console.warn("[BuyData] Submission already in progress, ignoring duplicate request");
+      console.warn(
+        "[BuyData] Submission already in progress, ignoring duplicate request",
+      );
       return;
     }
 

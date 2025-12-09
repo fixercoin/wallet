@@ -1,6 +1,7 @@
 # SOL Balance Issue After Cloudflare Deployment - Complete Fix
 
 ## Problem Summary
+
 After deploying to Cloudflare, SOL balance shows as **0** even though the wallet has funds. This happens because:
 
 1. **RPC endpoint fails silently** - The blockchain RPC calls time out or fail
@@ -35,6 +36,7 @@ But it comes with a **trade-off**: stale data can appear after updates.
 ### 3. **Why is SOL showing as 0?**
 
 **Root causes:**
+
 - RPC endpoint (`/api/wallet/token-accounts`) is failing when fetching SOL balance
 - When the fetch fails, it defaults to `solBalance = 0`
 - This failure happens because:
@@ -46,10 +48,12 @@ But it comes with a **trade-off**: stale data can appear after updates.
 ## Solutions Implemented
 
 ### 1. **Clear Cache on App Initialization** ✅
+
 ```typescript
 // client/contexts/WalletContext.tsx
 clearDashboardTokenCache();
 ```
+
 - Cache is cleared every time the app loads
 - Forces fresh data to be fetched from RPC
 - Prevents stale cached data from showing after deployment
@@ -57,6 +61,7 @@ clearDashboardTokenCache();
 **Location:** `client/contexts/WalletContext.tsx` (line 129)
 
 ### 2. **Improved Error Logging** ✅
+
 ```typescript
 // server/routes/token-accounts.ts
 - Added detailed error messages for RPC failures
@@ -66,11 +71,13 @@ clearDashboardTokenCache();
 ```
 
 **Benefits:**
+
 - You'll see exact reason why SOL balance is 0 in server logs
 - Helps diagnose RPC endpoint issues
 - Shows which RPC provider failed
 
 ### 3. **Retry Logic with Exponential Backoff** ✅
+
 ```typescript
 // server/routes/token-accounts.ts
 retryWithBackoff(operation, operationName, MAX_RETRIES = 2)
@@ -79,6 +86,7 @@ Retry delays: 500ms → 1000ms → 2000ms (exponential)
 ```
 
 **Benefits:**
+
 - Automatically retries failed RPC calls
 - Increases success rate for flaky networks
 - Prevents timeouts on first attempt from failing immediately
@@ -86,23 +94,28 @@ Retry delays: 500ms → 1000ms → 2000ms (exponential)
 ## How to Fix SOL Balance = 0 Issue
 
 ### Option 1: **Configure Helius RPC** (Recommended)
+
 ```bash
 # Set environment variable at Cloudflare
 HELIUS_API_KEY=your-helius-api-key
 ```
+
 - Free tier: 100 requests/second
 - More reliable than public endpoints
 - Get key at: https://www.helius.dev/
 
 ### Option 2: **Configure Custom RPC URL**
+
 ```bash
 # Set environment variable at Cloudflare
 SOLANA_RPC_URL=https://your-rpc-provider.com
 ```
+
 - Use QuickNode, Alchemy, or other RPC provider
 - Ensure rate limits are sufficient
 
 ### Option 3: **Check Logs at Cloudflare**
+
 ```
 Look for errors like:
 [TokenAccounts] ❌ Failed to fetch SOL balance - Exception: timeout
@@ -114,6 +127,7 @@ This tells you what's wrong so you can fix it.
 ## What Changed in the Code
 
 ### Backend (`server/routes/token-accounts.ts`):
+
 ```typescript
 // Before: Single attempt, then give up
 await fetch(endpoint, {...})
@@ -127,6 +141,7 @@ await retryWithBackoff(
 ```
 
 ### Frontend (`client/contexts/WalletContext.tsx`):
+
 ```typescript
 // Before: Cached data could be used if fresh data wasn't available
 // After: Cache is cleared on app initialization, forcing fresh fetch
@@ -136,16 +151,19 @@ clearDashboardTokenCache();
 ## Testing the Fix
 
 ### 1. Clear your browser cache
+
 ```
 Open DevTools > Application > Clear all site data
 ```
 
 ### 2. Refresh the page
+
 - App will reload with empty cache
 - It will attempt to fetch fresh SOL balance from RPC
 - You'll see detailed logs in browser console
 
 ### 3. Check error logs
+
 ```
 Browser console (F12):
 [TokenAccounts] Fetching SOL balance from RPC endpoint...
@@ -167,12 +185,12 @@ This is intentional and good UX - better to show old balance than crash the app.
 
 ## Summary
 
-| Question | Answer |
-|----------|--------|
-| **Why localStorage?** | Offline support + resilience + performance |
-| **Why offline cache?** | Better UX when internet/RPC is unavailable |
-| **Why SOL = 0?** | RPC endpoint failing + no SOLANA_RPC_URL configured |
-| **How to fix?** | 1. Set HELIUS_API_KEY or SOLANA_RPC_URL at Cloudflare 2. Check logs for RPC errors |
+| Question               | Answer                                                                             |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| **Why localStorage?**  | Offline support + resilience + performance                                         |
+| **Why offline cache?** | Better UX when internet/RPC is unavailable                                         |
+| **Why SOL = 0?**       | RPC endpoint failing + no SOLANA_RPC_URL configured                                |
+| **How to fix?**        | 1. Set HELIUS_API_KEY or SOLANA_RPC_URL at Cloudflare 2. Check logs for RPC errors |
 
 ## Next Steps
 

@@ -44,7 +44,10 @@ async function retryWithBackoff<T>(
     }
   }
 
-  throw lastError || new Error(`${operationName} failed after ${maxRetries + 1} attempts`);
+  throw (
+    lastError ||
+    new Error(`${operationName} failed after ${maxRetries + 1} attempts`)
+  );
 }
 
 // Get RPC endpoint with free endpoints and Alchemy fallback

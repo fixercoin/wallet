@@ -1,9 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
 import { createP2POrder } from "@/lib/p2p-api";
+import {
+  getSystemSellerWallet,
+  getSystemBuyerAccount,
+  isSystemP2PEnabled,
+} from "@/lib/constants/system-config";
 
 const PRICE_MAP: Record<string, number> = {
   USDT: 300,

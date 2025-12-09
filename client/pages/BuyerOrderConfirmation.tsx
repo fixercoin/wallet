@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
+import { SystemAccountDisplay } from "@/components/p2p/SystemAccountDisplay";
 import {
   syncOrderFromStorage,
   updateOrderInBothStorages,

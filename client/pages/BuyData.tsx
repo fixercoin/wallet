@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
@@ -27,6 +33,7 @@ export default function BuyData() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();
+  const isCreatingOrderRef = useRef(false); // Prevent multiple simultaneous order creations
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
@@ -76,16 +83,27 @@ export default function BuyData() {
   }, [wallet?.publicKey, showPaymentDialog, fetchPaymentMethods]);
 
   const proceedWithOrderCreation = useCallback(async () => {
+    // Prevent multiple simultaneous order creations (race condition)
+    if (isCreatingOrderRef.current) {
+      console.warn(
+        "[BuyData] Order creation already in progress, ignoring duplicate request",
+      );
+      return;
+    }
+
     if (!wallet?.publicKey) {
       toast.error("Missing wallet information");
       return;
     }
 
     try {
+      // Mark that we're starting order creation
+      isCreatingOrderRef.current = true;
       setLoading(true);
+
       const createdOrder = await createOrderFromOffer(
         {
-          id: `order-${Date.now()}`,
+          id: `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           type: "BUY",
           sellerWallet: "",
           token: "USDT",
@@ -139,6 +157,8 @@ export default function BuyData() {
       console.error("Error creating order:", error);
       toast.error("Failed to create order");
     } finally {
+      // Clear the flag to allow future order creation attempts
+      isCreatingOrderRef.current = false;
       setLoading(false);
     }
   }, [
@@ -169,6 +189,14 @@ export default function BuyData() {
   }, [amountTokens, amountPKR]);
 
   const handleSubmit = async () => {
+    // Prevent submission if already loading or creating order
+    if (loading || isCreatingOrderRef.current) {
+      console.warn(
+        "[BuyData] Submission already in progress, ignoring duplicate request",
+      );
+      return;
+    }
+
     if (!isValid) return;
 
     if (!wallet?.publicKey) {

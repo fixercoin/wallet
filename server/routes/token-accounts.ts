@@ -1,6 +1,55 @@
 import { RequestHandler } from "express";
 import { PublicKey } from "@solana/web3.js";
 
+// Retry configuration
+const MAX_RETRIES = 2;
+const INITIAL_RETRY_DELAY_MS = 500;
+const MAX_RETRY_DELAY_MS = 2000;
+
+/**
+ * Helper to retry an async operation with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  operationName: string,
+  maxRetries: number = MAX_RETRIES,
+): Promise<T> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await operation();
+      if (attempt > 0) {
+        console.log(
+          `[TokenAccounts] ✅ ${operationName} succeeded on attempt ${attempt + 1}`,
+        );
+      }
+      return result;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (attempt < maxRetries) {
+        const delayMs = Math.min(
+          INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt),
+          MAX_RETRY_DELAY_MS,
+        );
+        console.warn(
+          `[TokenAccounts] ⚠️ ${operationName} failed (attempt ${attempt + 1}/${maxRetries + 1}): ${lastError.message}, retrying in ${delayMs}ms...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      } else {
+        console.error(
+          `[TokenAccounts] ❌ ${operationName} failed after ${maxRetries + 1} attempts: ${lastError.message}`,
+        );
+      }
+    }
+  }
+
+  throw (
+    lastError ||
+    new Error(`${operationName} failed after ${maxRetries + 1} attempts`)
+  );
+}
+
 // Get RPC endpoint with free endpoints and Alchemy fallback
 function getRpcEndpoint(): string {
   const solanaRpcUrl = process.env.SOLANA_RPC_URL?.trim();
@@ -98,136 +147,148 @@ export const handleGetTokenAccounts: RequestHandler = async (req, res) => {
       `[TokenAccounts] Fetching token accounts from: ${endpoint.split("?")[0]}...`,
     );
 
-    // Fetch SPL token accounts
-    const tokenBody = {
-      jsonrpc: "2.0",
-      id: 1,
-      method: "getTokenAccountsByOwner",
-      params: [
-        publicKey,
-        { programId: TOKEN_PROGRAM_ID },
-        { encoding: "jsonParsed", commitment: "confirmed" },
-      ],
-    };
-
-    const tokenController = new AbortController();
-    const tokenTimeoutId = setTimeout(() => tokenController.abort(), 12000);
-
     let tokens: any[] = [];
 
+    // Fetch SPL token accounts with retry
     try {
-      const tokenResp = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(tokenBody),
-        signal: tokenController.signal,
-      });
-
-      clearTimeout(tokenTimeoutId);
-
-      if (tokenResp.ok) {
-        const tokenData = await tokenResp.json();
-        const accounts = tokenData?.result?.value ?? [];
-
-        tokens = accounts.map((account: any) => {
-          const info = account.account.data.parsed.info;
-          const mint = info.mint;
-          const decimals = info.tokenAmount.decimals;
-
-          const raw = BigInt(info.tokenAmount.amount);
-          const balance = Number(raw) / Math.pow(10, decimals);
-
-          // Special logging for FXM and other tokens
-          if (mint === "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump") {
-            console.log(
-              `[TokenAccounts] FXM Token found - Raw: ${raw}, Decimals: ${decimals}, Balance: ${balance}`,
-            );
-          }
-
-          const meta = KNOWN_TOKENS[mint] || {
-            mint,
-            symbol: "UNKNOWN",
-            name: "Unknown Token",
-            decimals,
+      tokens = await retryWithBackoff(
+        async () => {
+          const tokenBody = {
+            jsonrpc: "2.0",
+            id: 1,
+            method: "getTokenAccountsByOwner",
+            params: [
+              publicKey,
+              { programId: TOKEN_PROGRAM_ID },
+              { encoding: "jsonParsed", commitment: "confirmed" },
+            ],
           };
 
-          return { ...meta, balance, decimals };
-        });
-      }
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+          try {
+            const resp = await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(tokenBody),
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!resp.ok) {
+              throw new Error(`HTTP ${resp.status} from RPC endpoint`);
+            }
+
+            const data = await resp.json();
+            if (data.error) {
+              throw new Error(`RPC error: ${data.error.message}`);
+            }
+
+            const accounts = data?.result?.value ?? [];
+            return accounts.map((account: any) => {
+              const info = account.account.data.parsed.info;
+              const mint = info.mint;
+              const decimals = info.tokenAmount.decimals;
+
+              const raw = BigInt(info.tokenAmount.amount);
+              const balance = Number(raw) / Math.pow(10, decimals);
+
+              // Special logging for FXM and other tokens
+              if (mint === "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump") {
+                console.log(
+                  `[TokenAccounts] FXM Token found - Raw: ${raw}, Decimals: ${decimals}, Balance: ${balance}`,
+                );
+              }
+
+              const meta = KNOWN_TOKENS[mint] || {
+                mint,
+                symbol: "UNKNOWN",
+                name: "Unknown Token",
+                decimals,
+              };
+
+              return { ...meta, balance, decimals };
+            });
+          } catch (error) {
+            clearTimeout(timeoutId);
+            throw error;
+          }
+        },
+        "Fetch token accounts",
+        MAX_RETRIES,
+      );
     } catch (tokenError) {
-      clearTimeout(tokenTimeoutId);
       console.warn(
-        "[TokenAccounts] Failed to fetch token accounts:",
+        "[TokenAccounts] Failed to fetch token accounts after retries:",
         tokenError instanceof Error ? tokenError.message : String(tokenError),
       );
       tokens = [];
     }
 
-    // Fetch native SOL balance separately with its own timeout
-    const solBody = {
-      jsonrpc: "2.0",
-      id: 2,
-      method: "getBalance",
-      params: [publicKey],
-    };
-
-    const solController = new AbortController();
-    const solTimeoutId = setTimeout(() => solController.abort(), 12000);
-
+    // Fetch native SOL balance separately with retry
     try {
-      const solResp = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(solBody),
-        signal: solController.signal,
-      });
+      solBalance = await retryWithBackoff(
+        async () => {
+          const solBody = {
+            jsonrpc: "2.0",
+            id: 2,
+            method: "getBalance",
+            params: [publicKey],
+          };
 
-      clearTimeout(solTimeoutId);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-      if (solResp.ok) {
-        const solData = await solResp.json();
+          try {
+            const resp = await fetch(endpoint, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(solBody),
+              signal: controller.signal,
+            });
 
-        // Check for JSON-RPC error in the response
-        if (solData.error) {
-          console.warn(
-            `[TokenAccounts] RPC error fetching SOL balance:`,
-            solData.error,
-          );
-          solBalance = 0;
-        } else {
-          const lamports = solData.result?.value ?? solData.result ?? 0;
-          solBalance =
-            typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
+            clearTimeout(timeoutId);
 
-          if (solBalance < 0) {
-            solBalance = 0;
+            if (!resp.ok) {
+              throw new Error(`HTTP ${resp.status} from RPC endpoint`);
+            }
+
+            const data = await resp.json();
+
+            if (data.error) {
+              throw new Error(`RPC error: ${data.error.message}`);
+            }
+
+            if (data.result === null || data.result === undefined) {
+              throw new Error("RPC returned null/undefined result");
+            }
+
+            const lamports = data.result?.value ?? data.result ?? 0;
+            const balance =
+              typeof lamports === "number" ? lamports / 1_000_000_000 : 0;
+
+            if (balance < 0) {
+              throw new Error(`Negative balance received: ${balance}`);
+            }
+
+            return balance;
+          } catch (error) {
+            clearTimeout(timeoutId);
+            throw error;
           }
+        },
+        "Fetch SOL balance",
+        MAX_RETRIES,
+      );
 
-          console.log(
-            `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
-          );
-        }
-      } else {
-        // Log HTTP error from RPC endpoint
-        let errorDetails = `HTTP ${solResp.status}`;
-        try {
-          const errorBody = await solResp.text();
-          if (errorBody) {
-            errorDetails += `: ${errorBody.substring(0, 200)}`;
-          }
-        } catch {
-          // Ignore error parsing errors
-        }
-
-        console.warn(
-          `[TokenAccounts] Failed to fetch SOL balance - RPC endpoint returned error: ${errorDetails}`,
-        );
-        solBalance = 0;
-      }
+      console.log(
+        `[TokenAccounts] ✅ Successfully fetched SOL balance: ${solBalance} SOL`,
+      );
     } catch (solError) {
-      clearTimeout(solTimeoutId);
-      console.warn(
-        "[TokenAccounts] Failed to fetch SOL balance - Exception:",
+      console.error(
+        `[TokenAccounts] ❌ Failed to fetch SOL balance after retries:`,
         solError instanceof Error ? solError.message : String(solError),
       );
       solBalance = 0;

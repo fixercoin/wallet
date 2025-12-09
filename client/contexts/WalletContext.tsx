@@ -1092,7 +1092,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             console.log(
               `[WalletContext] Fetching prices from Jupiter for ${missingMints.length} tokens`,
             );
-            const jupiterPrices = await jupiterAPI.getPricesByMints(missingMints);
+            const jupiterPrices =
+              await jupiterAPI.getPricesByMints(missingMints);
 
             // Only use Jupiter prices for tokens still missing
             Object.entries(jupiterPrices).forEach(([mint, price]) => {

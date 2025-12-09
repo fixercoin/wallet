@@ -590,14 +590,16 @@ class JupiterAPI {
         const data = await response.json();
 
         if (data?.data && typeof data.data === "object") {
-          Object.entries(data.data).forEach(([mint, priceData]: [string, any]) => {
-            if (priceData?.price && typeof priceData.price === "string") {
-              const price = parseFloat(priceData.price);
-              if (isFinite(price) && price > 0) {
-                prices[mint] = price;
+          Object.entries(data.data).forEach(
+            ([mint, priceData]: [string, any]) => {
+              if (priceData?.price && typeof priceData.price === "string") {
+                const price = parseFloat(priceData.price);
+                if (isFinite(price) && price > 0) {
+                  prices[mint] = price;
+                }
               }
-            }
-          });
+            },
+          );
 
           console.log(
             `[Jupiter Price] ✅ Got ${Object.keys(prices).length} prices from Jupiter`,

@@ -140,8 +140,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const { isStaking } = useStakingTokens(wallet?.publicKey || null);
   const [showHelpChat, setShowHelpChat] = useState(false);
-  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'bot'; content: string }>>([]);
-  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState<
+    Array<{ role: "user" | "bot"; content: string }>
+  >([]);
+  const [chatInput, setChatInput] = useState("");
 
   // Quest state (per-wallet, persisted locally)
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
@@ -470,44 +472,44 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const getBotResponse = (question: string): string => {
     const q = question.toLowerCase().trim();
 
-    if (q.includes('withdraw') || q.includes('send')) {
+    if (q.includes("withdraw") || q.includes("send")) {
       return 'To withdraw funds, click the "WITHDRAW" button in the balance card. You can transfer your crypto to another wallet address. Make sure to verify the recipient address before confirming.';
     }
-    if (q.includes('deposit') || q.includes('receive')) {
+    if (q.includes("deposit") || q.includes("receive")) {
       return 'To deposit funds, click the "DEPOSIT" button in the balance card. You\'ll get your wallet address to share with others for receiving crypto. Anyone can send funds to this address.';
     }
-    if (q.includes('convert') || q.includes('swap')) {
+    if (q.includes("convert") || q.includes("swap")) {
       return 'Use the "CONVERT" button to swap between different tokens. You can exchange one cryptocurrency for another at the current market rate. The conversion happens instantly using Jupiter DEX.';
     }
-    if (q.includes('lock') || q.includes('lock up')) {
+    if (q.includes("lock") || q.includes("lock up")) {
       return 'The "LOCK UP" button allows you to lock your tokens for a specific period. Locked tokens earn rewards and cannot be transferred until the lock period expires. This is useful for staking and earning interest.';
     }
-    if (q.includes('limit order') || q.includes('bot')) {
+    if (q.includes("limit order") || q.includes("bot")) {
       return 'The "LIMIT ORDER" button lets you set automated trading orders. You can set buy/sell orders at specific prices that execute automatically when the market reaches those prices.';
     }
-    if (q.includes('burn') || q.includes('burning')) {
+    if (q.includes("burn") || q.includes("burning")) {
       return 'The "BURNING" button allows you to permanently remove tokens from circulation. Burned tokens are sent to a zero address and cannot be recovered. This is often done to reduce token supply.';
     }
-    if (q.includes('quest') || q.includes('earn')) {
+    if (q.includes("quest") || q.includes("earn")) {
       return 'Complete quests to earn FIXERCOIN rewards! Click "View Quest" on the quest card to see available tasks. Complete tasks like following social media, joining communities, and sharing updates. Each completed task earns you 50 FIXERCOIN.';
     }
-    if (q.includes('portfolio') || q.includes('balance')) {
-      return 'Your portfolio shows the total value of all your holdings in USD. It includes all tokens and their current market values. Your balance updates automatically or you can click the refresh button to update manually.';
+    if (q.includes("portfolio") || q.includes("balance")) {
+      return "Your portfolio shows the total value of all your holdings in USD. It includes all tokens and their current market values. Your balance updates automatically or you can click the refresh button to update manually.";
     }
-    if (q.includes('token') || q.includes('add token')) {
-      return 'Click on any token to view details, or search for tokens using the search button. To add a custom token, use the add token dialog. Make sure you have the correct contract address.';
+    if (q.includes("token") || q.includes("add token")) {
+      return "Click on any token to view details, or search for tokens using the search button. To add a custom token, use the add token dialog. Make sure you have the correct contract address.";
     }
-    if (q.includes('transaction') || q.includes('history')) {
+    if (q.includes("transaction") || q.includes("history")) {
       return 'Click the wallet menu (three dots) in the top-left of the balance card and select "WALLET HISTORY" to see all your past transactions. You can view details of each transaction and its status.';
     }
-    if (q.includes('settings')) {
-      return 'Click the settings icon (gear) in the top-right to access wallet preferences. You can manage security settings, export your seed phrase, and configure wallet options.';
+    if (q.includes("settings")) {
+      return "Click the settings icon (gear) in the top-right to access wallet preferences. You can manage security settings, export your seed phrase, and configure wallet options.";
     }
-    if (q.includes('help') || q.includes('how')) {
-      return 'I\'m here to help! Ask me about any wallet function like withdraw, deposit, convert, lock, quest, portfolio, or any other feature. What would you like to know?';
+    if (q.includes("help") || q.includes("how")) {
+      return "I'm here to help! Ask me about any wallet function like withdraw, deposit, convert, lock, quest, portfolio, or any other feature. What would you like to know?";
     }
 
-    return 'I can help you with wallet functions! Ask me about: withdraw, deposit, convert, lock up, limit orders, burning, quests, portfolio, tokens, transaction history, or settings.';
+    return "I can help you with wallet functions! Ask me about: withdraw, deposit, convert, lock up, limit orders, burning, quests, portfolio, tokens, transaction history, or settings.";
   };
 
   const handleSendMessage = () => {
@@ -515,14 +517,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
     const newMessages = [
       ...chatMessages,
-      { role: 'user' as const, content: chatInput }
+      { role: "user" as const, content: chatInput },
     ];
 
     const botResponse = getBotResponse(chatInput);
-    newMessages.push({ role: 'bot' as const, content: botResponse });
+    newMessages.push({ role: "bot" as const, content: botResponse });
 
     setChatMessages(newMessages);
-    setChatInput('');
+    setChatInput("");
   };
 
   const handleTokenCardClick = (token: TokenInfo) => {
@@ -846,7 +848,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       key={t.id}
                       className="flex items-center justify-between gap-2"
                     >
-                      <label className={`flex items-start gap-2 select-none ${completedTasks.has(t.id) ? 'cursor-pointer' : 'cursor-not-allowed'}`}>
+                      <label
+                        className={`flex items-start gap-2 select-none ${completedTasks.has(t.id) ? "cursor-pointer" : "cursor-not-allowed"}`}
+                      >
                         <input
                           type="checkbox"
                           className="mt-0.5 accent-[#22c55e]"
@@ -858,7 +862,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           }}
                           disabled={!completedTasks.has(t.id)}
                         />
-                        <span className={completedTasks.has(t.id) ? 'text-gray-300' : 'text-gray-500'}>{t.label}</span>
+                        <span
+                          className={
+                            completedTasks.has(t.id)
+                              ? "text-gray-300"
+                              : "text-gray-500"
+                          }
+                        >
+                          {t.label}
+                        </span>
                       </label>
                       {t.type === "link" ? (
                         <button
@@ -967,13 +979,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {chatMessages.map((msg, idx) => (
                 <div
                   key={idx}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div
                     className={`max-w-xs px-4 py-2 rounded-lg text-sm ${
-                      msg.role === 'user'
-                        ? 'bg-[#22c55e] text-gray-900 font-medium'
-                        : 'bg-gray-800 text-gray-300 border border-[#22c55e]/30'
+                      msg.role === "user"
+                        ? "bg-[#22c55e] text-gray-900 font-medium"
+                        : "bg-gray-800 text-gray-300 border border-[#22c55e]/30"
                     }`}
                   >
                     {msg.content}
@@ -989,7 +1001,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     handleSendMessage();
                   }
                 }}
@@ -1064,7 +1076,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   onClick={() => {
                     setShowHelpChat(true);
                     if (chatMessages.length === 0) {
-                      setChatMessages([{ role: 'bot', content: 'Hello! I\'m here to help you with your wallet. Ask me about any feature or function. What would you like to know?' }]);
+                      setChatMessages([
+                        {
+                          role: "bot",
+                          content:
+                            "Hello! I'm here to help you with your wallet. Ask me about any feature or function. What would you like to know?",
+                        },
+                      ]);
                     }
                   }}
                   size="sm"

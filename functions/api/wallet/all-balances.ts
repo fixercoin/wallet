@@ -369,9 +369,12 @@ async function handler(request: Request, env?: Env): Promise<Response> {
       // Process SOL balance
       if (solResult.status === "fulfilled" && solResult.value) {
         solBalance = solResult.value.balance;
-        console.log(`[AllBalances] ✅ Fetched SOL balance: ${solBalance} SOL`);
+        console.log(`[AllBalances] ✅ Fetched SOL balance: ${solBalance} SOL from ${solResult.value.endpoint.substring(0, 50)}`);
+      } else if (solResult.status === "fulfilled") {
+        console.warn("[AllBalances] ⚠️ SOL balance fetch returned null from all endpoints");
+        solBalance = 0;
       } else {
-        console.warn("[AllBalances] Failed to fetch SOL balance");
+        console.warn("[AllBalances] ❌ SOL balance fetch promise rejected:", solResult.reason);
         solBalance = 0;
       }
 

@@ -17,6 +17,7 @@ import {
   handleSolPrice,
   handleTokenPrice,
 } from "./routes/dexscreener-price";
+import { handleBirdeyePrice } from "./routes/api-birdeye";
 import {
   handleCoinMarketCapQuotes,
   handleCoinMarketCapSearch,

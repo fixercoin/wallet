@@ -13,11 +13,13 @@ When a buyer creates a generic buy order and a seller receives the notification:
 ## Root Cause
 
 When a seller accepts a generic buy order, the system was:
+
 - ✅ Updating order status to "ACCEPTED"
 - ✅ Creating a chat room
 - ❌ **NOT recording which seller accepted the order** (missing `sellerWallet` update)
 
 This caused downstream issues:
+
 - Buyer notifications wouldn't know which seller accepted the order
 - Trade room wouldn't be created properly (requires both buyer and seller wallets)
 - Order data would be incomplete for further operations
@@ -27,6 +29,7 @@ This caused downstream issues:
 Updated `client/pages/SellerOrderConfirmation.tsx` with three key changes:
 
 ### 1. **handleAcceptOrder** - Record seller's wallet
+
 ```typescript
 // Before: only updated status
 await updateOrderInBothStorages(order.id, {
@@ -41,6 +44,7 @@ await updateOrderInBothStorages(order.id, {
 ```
 
 ### 2. **Auto-create Trade Room if Missing**
+
 ```typescript
 // If order doesn't have a room, create one when seller accepts
 let roomId = order.roomId;
@@ -57,6 +61,7 @@ if (!roomId && order.buyerWallet && wallet.publicKey) {
 ```
 
 ### 3. **Similar Fixes for Other Actions**
+
 - `handleRejectOrder`: Also records seller's wallet when rejecting
 - `handleCompleteOrder`: Auto-creates room if needed when marking order as complete
 
@@ -65,22 +70,22 @@ if (!roomId && order.buyerWallet && wallet.publicKey) {
 ```
 1. Buyer creates BUY order
    ↓ (Order stored with sellerWallet: "")
-   
+
 2. Seller receives notification "new_buy_order"
    ↓ (Navigates to /seller-order-confirmation/{orderId})
-   
+
 3. Page loads and displays:
    - Order details (token, amount, buyer wallet)
    - Accept Order button
    - Reject Order button
-   
+
 4. Seller clicks "Accept Order"
    ↓ (Order updated with: status="ACCEPTED", sellerWallet="{seller_public_key}")
    ↓ (Trade room created if not exists)
-   
+
 5. Buyer receives notification "order_accepted"
    ↓ (Now knows which seller accepted and seller's wallet is recorded)
-   
+
 6. Order is now complete and properly linked between buyer and seller
 ```
 
@@ -104,7 +109,7 @@ To verify the fix:
 
 - `client/pages/SellerOrderConfirmation.tsx`
   - Updated `handleAcceptOrder()` function
-  - Updated `handleRejectOrder()` function  
+  - Updated `handleRejectOrder()` function
   - Updated `handleCompleteOrder()` function
 
 ## Impact

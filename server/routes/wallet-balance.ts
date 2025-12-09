@@ -190,18 +190,25 @@ async function fetchBalanceWithFallbacks(
   // Try primary endpoint with both methods
   let balance = await fetchBalanceWithGetBalance(primaryEndpoint, publicKey);
   if (balance !== null) {
+    console.log(
+      `[WalletBalance] ✅ Success with getBalance from primary endpoint`,
+    );
     return { balance, endpoint: primaryEndpoint };
   }
 
   balance = await fetchBalanceWithGetAccount(primaryEndpoint, publicKey);
   if (balance !== null) {
+    console.log(
+      `[WalletBalance] ✅ Success with getAccountInfo from primary endpoint`,
+    );
     return { balance, endpoint: primaryEndpoint };
   }
 
-  // Try fallback endpoints
-  console.log("[WalletBalance] Primary endpoint failed, trying fallbacks...");
+  // Try first 3 fallback endpoints sequentially
+  console.log("[WalletBalance] Primary endpoint failed, trying sequential fallbacks...");
+  const priorityFallbacks = RPC_ENDPOINTS.slice(0, 3);
 
-  for (const endpoint of RPC_ENDPOINTS) {
+  for (const endpoint of priorityFallbacks) {
     console.log(`[WalletBalance] Trying ${endpoint.name}...`);
 
     // Try getBalance first
@@ -220,6 +227,34 @@ async function fetchBalanceWithFallbacks(
         `[WalletBalance] ✅ Success with getAccountInfo from ${endpoint.name}`,
       );
       return { balance, endpoint: endpoint.url };
+    }
+  }
+
+  // Try remaining endpoints in parallel (faster recovery)
+  if (RPC_ENDPOINTS.length > 3) {
+    console.log(
+      `[WalletBalance] Trying remaining ${RPC_ENDPOINTS.length - 3} endpoints in parallel...`,
+    );
+
+    const parallelResults = await Promise.allSettled(
+      RPC_ENDPOINTS.slice(3).map(async (endpoint) => {
+        let b = await fetchBalanceWithGetBalance(endpoint.url, publicKey);
+        if (b !== null) return { balance: b, endpoint: endpoint.url, name: endpoint.name };
+
+        b = await fetchBalanceWithGetAccount(endpoint.url, publicKey);
+        if (b !== null) return { balance: b, endpoint: endpoint.url, name: endpoint.name };
+
+        return null;
+      }),
+    );
+
+    for (const result of parallelResults) {
+      if (result.status === "fulfilled" && result.value !== null) {
+        console.log(
+          `[WalletBalance] ✅ Success from parallel fallback: ${result.value.name}`,
+        );
+        return { balance: result.value.balance, endpoint: result.value.endpoint };
+      }
     }
   }
 

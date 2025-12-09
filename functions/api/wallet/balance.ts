@@ -19,6 +19,9 @@ const RPC_ENDPOINTS = [
   "https://api.mainnet-beta.solana.com",
   "https://solana-api.projectserum.com",
   "https://rpc.ankr.com/solana",
+  "https://api.mainnet-beta.solflare.network",
+  "https://api.mainnet.solflare.com",
+  "https://solana.publicnode.com",
 ];
 
 const ALCHEMY_RPC =

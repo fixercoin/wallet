@@ -785,14 +785,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       key={t.id}
                       className="flex items-center justify-between gap-2"
                     >
-                      <label className="flex items-start gap-2 cursor-pointer select-none">
+                      <label className={`flex items-start gap-2 select-none ${completedTasks.has(t.id) ? 'cursor-pointer' : 'cursor-not-allowed'}`}>
                         <input
                           type="checkbox"
                           className="mt-0.5 accent-[#22c55e]"
                           checked={completedTasks.has(t.id)}
-                          onChange={() => toggleTask(t.id)}
+                          onChange={() => {
+                            if (completedTasks.has(t.id)) {
+                              toggleTask(t.id);
+                            }
+                          }}
+                          disabled={!completedTasks.has(t.id)}
                         />
-                        <span>{t.label}</span>
+                        <span className={completedTasks.has(t.id) ? 'text-gray-300' : 'text-gray-500'}>{t.label}</span>
                       </label>
                       {t.type === "link" ? (
                         <button

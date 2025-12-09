@@ -1005,7 +1005,41 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       try {
         const tokenMints = allTokens.map((token) => token.mint);
 
-        // Fetch prices from DexScreener API
+        // Fetch prices from Birdeye API (primary source with free tier)
+        try {
+          const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+          const allMintsToFetch = Array.from(
+            new Set(tokenMints.filter((mint) => mint && mint !== lockerMint)),
+          );
+
+          if (allMintsToFetch.length > 0) {
+            console.log(
+              `[WalletContext] Fetching prices from Birdeye for ${allMintsToFetch.length} tokens`,
+            );
+            const birdeyeTokens =
+              await birdeyeAPI.getTokensByMints(allMintsToFetch);
+            const birdeyePrices = birdeyeAPI.getTokenPrices(birdeyeTokens);
+            prices = { ...prices, ...birdeyePrices };
+
+            birdeyeTokens.forEach((token) => {
+              if (
+                token.address &&
+                token.priceChange?.h24 &&
+                isFinite(token.priceChange.h24)
+              ) {
+                changeMap[token.address] = token.priceChange.h24;
+              }
+            });
+
+            console.log(
+              `[WalletContext] ✅ Birdeye: Got ${Object.keys(birdeyePrices).length} prices`,
+            );
+          }
+        } catch (e) {
+          console.warn("[WalletContext] Birdeye fetch failed:", e);
+        }
+
+        // Fetch prices from DexScreener API (fallback/complementary source)
         // Exclude LOCKER since it has no price data on DexScreener (causes 503 errors)
         try {
           const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
@@ -1014,20 +1048,37 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           );
 
           if (allMintsToFetch.length > 0) {
+            console.log(
+              `[WalletContext] Fetching prices from DexScreener for ${allMintsToFetch.length} tokens`,
+            );
             const dexTokens =
               await dexscreenerAPI.getTokensByMints(allMintsToFetch);
             const dexPrices = dexscreenerAPI.getTokenPrices(dexTokens);
-            prices = { ...prices, ...dexPrices };
+
+            // Only use DexScreener prices for tokens missing from Birdeye
+            Object.entries(dexPrices).forEach(([mint, price]) => {
+              if (!prices[mint] || !isFinite(prices[mint])) {
+                prices[mint] = price;
+              }
+            });
 
             dexTokens.forEach((token) => {
               const baseMint = token.baseToken?.address;
-              if (baseMint && token.priceChange?.h24) {
+              if (
+                baseMint &&
+                token.priceChange?.h24 &&
+                (!changeMap[baseMint] || !isFinite(changeMap[baseMint]))
+              ) {
                 changeMap[baseMint] = token.priceChange.h24;
               }
             });
+
+            console.log(
+              `[WalletContext] ✅ DexScreener: Got ${Object.keys(dexPrices).length} prices`,
+            );
           }
         } catch (e) {
-          console.warn("DexScreener fetch failed:", e);
+          console.warn("[WalletContext] DexScreener fetch failed:", e);
         }
 
         // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing

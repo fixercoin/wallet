@@ -26,7 +26,7 @@ import {
   Clock,
   Coins,
   Search as SearchIcon,
-  MessageSquare,
+  Headphones,
 } from "lucide-react";
 import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import {
@@ -139,6 +139,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const { isStaking } = useStakingTokens(wallet?.publicKey || null);
+  const [showHelpChat, setShowHelpChat] = useState(false);
+  const [chatMessages, setChatMessages] = useState<
+    Array<{ role: "user" | "bot"; content: string }>
+  >([]);
+  const [chatInput, setChatInput] = useState("");
 
   // Quest state (per-wallet, persisted locally)
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
@@ -464,6 +469,64 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
+  const getBotResponse = (question: string): string => {
+    const q = question.toLowerCase().trim();
+
+    if (q.includes("withdraw") || q.includes("send")) {
+      return 'To withdraw funds, click the "WITHDRAW" button in the balance card. You can transfer your crypto to another wallet address. Make sure to verify the recipient address before confirming.';
+    }
+    if (q.includes("deposit") || q.includes("receive")) {
+      return 'To deposit funds, click the "DEPOSIT" button in the balance card. You\'ll get your wallet address to share with others for receiving crypto. Anyone can send funds to this address.';
+    }
+    if (q.includes("convert") || q.includes("swap")) {
+      return 'Use the "CONVERT" button to swap between different tokens. You can exchange one cryptocurrency for another at the current market rate. The conversion happens instantly using Jupiter DEX.';
+    }
+    if (q.includes("lock") || q.includes("lock up")) {
+      return 'The "LOCK UP" button allows you to lock your tokens for a specific period. Locked tokens earn rewards and cannot be transferred until the lock period expires. This is useful for staking and earning interest.';
+    }
+    if (q.includes("limit order") || q.includes("bot")) {
+      return 'The "LIMIT ORDER" button lets you set automated trading orders. You can set buy/sell orders at specific prices that execute automatically when the market reaches those prices.';
+    }
+    if (q.includes("burn") || q.includes("burning")) {
+      return 'The "BURNING" button allows you to permanently remove tokens from circulation. Burned tokens are sent to a zero address and cannot be recovered. This is often done to reduce token supply.';
+    }
+    if (q.includes("quest") || q.includes("earn")) {
+      return 'Complete quests to earn FIXERCOIN rewards! Click "View Quest" on the quest card to see available tasks. Complete tasks like following social media, joining communities, and sharing updates. Each completed task earns you 50 FIXERCOIN.';
+    }
+    if (q.includes("portfolio") || q.includes("balance")) {
+      return "Your portfolio shows the total value of all your holdings in USD. It includes all tokens and their current market values. Your balance updates automatically or you can click the refresh button to update manually.";
+    }
+    if (q.includes("token") || q.includes("add token")) {
+      return "Click on any token to view details, or search for tokens using the search button. To add a custom token, use the add token dialog. Make sure you have the correct contract address.";
+    }
+    if (q.includes("transaction") || q.includes("history")) {
+      return 'Click the wallet menu (three dots) in the top-left of the balance card and select "WALLET HISTORY" to see all your past transactions. You can view details of each transaction and its status.';
+    }
+    if (q.includes("settings")) {
+      return "Click the settings icon (gear) in the top-right to access wallet preferences. You can manage security settings, export your seed phrase, and configure wallet options.";
+    }
+    if (q.includes("help") || q.includes("how")) {
+      return "I'm here to help! Ask me about any wallet function like withdraw, deposit, convert, lock, quest, portfolio, or any other feature. What would you like to know?";
+    }
+
+    return "I can help you with wallet functions! Ask me about: withdraw, deposit, convert, lock up, limit orders, burning, quests, portfolio, tokens, transaction history, or settings.";
+  };
+
+  const handleSendMessage = () => {
+    if (!chatInput.trim()) return;
+
+    const newMessages = [
+      ...chatMessages,
+      { role: "user" as const, content: chatInput },
+    ];
+
+    const botResponse = getBotResponse(chatInput);
+    newMessages.push({ role: "bot" as const, content: botResponse });
+
+    setChatMessages(newMessages);
+    setChatInput("");
+  };
+
   const handleTokenCardClick = (token: TokenInfo) => {
     onTokenClick(token.mint);
   };
@@ -785,14 +848,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       key={t.id}
                       className="flex items-center justify-between gap-2"
                     >
-                      <label className="flex items-start gap-2 cursor-pointer select-none">
+                      <label
+                        className={`flex items-start gap-2 select-none ${completedTasks.has(t.id) ? "cursor-pointer" : "cursor-not-allowed"}`}
+                      >
                         <input
                           type="checkbox"
                           className="mt-0.5 accent-[#22c55e]"
                           checked={completedTasks.has(t.id)}
-                          onChange={() => toggleTask(t.id)}
+                          onChange={() => {
+                            if (completedTasks.has(t.id)) {
+                              toggleTask(t.id);
+                            }
+                          }}
+                          disabled={!completedTasks.has(t.id)}
                         />
-                        <span>{t.label}</span>
+                        <span
+                          className={
+                            completedTasks.has(t.id)
+                              ? "text-gray-300"
+                              : "text-gray-500"
+                          }
+                        >
+                          {t.label}
+                        </span>
                       </label>
                       {t.type === "link" ? (
                         <button
@@ -878,6 +956,70 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       )}
 
+      {/* Help Chat Modal */}
+      {showHelpChat && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-end z-50 p-4">
+          <div className="bg-gray-900 rounded-2xl border border-[#22c55e]/40 shadow-2xl w-full max-w-sm h-[600px] flex flex-col animate-fade-in">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-[#22c55e]/20">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Headphones className="h-5 w-5 text-[#22c55e]" />
+                Wallet Assistant
+              </h2>
+              <button
+                onClick={() => setShowHelpChat(false)}
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+              {chatMessages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-xs px-4 py-2 rounded-lg text-sm ${
+                      msg.role === "user"
+                        ? "bg-[#22c55e] text-gray-900 font-medium"
+                        : "bg-gray-800 text-gray-300 border border-[#22c55e]/30"
+                    }`}
+                  >
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Input */}
+            <div className="border-t border-[#22c55e]/20 p-4 flex gap-2">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    handleSendMessage();
+                  }
+                }}
+                placeholder="Ask a question..."
+                className="flex-1 bg-gray-800 border border-[#22c55e]/30 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#22c55e]/60"
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!chatInput.trim()}
+                className="bg-[#22c55e] hover:bg-[#16a34a] text-gray-900 font-bold text-xs px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Send
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2 relative z-20">
         {/* Balance Section */}
         <div className="w-full mt-2 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
@@ -929,18 +1071,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </DropdownMenu>
 
               <div className="flex items-center gap-2 ml-auto">
-                {/* Refresh button */}
+                {/* Help Chat button */}
                 <Button
-                  onClick={handleRefresh}
-                  disabled={isRefreshing}
+                  onClick={() => {
+                    setShowHelpChat(true);
+                    if (chatMessages.length === 0) {
+                      setChatMessages([
+                        {
+                          role: "bot",
+                          content:
+                            "Hello! I'm here to help you with your wallet. Ask me about any feature or function. What would you like to know?",
+                        },
+                      ]);
+                    }
+                  }}
                   size="sm"
-                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-[#22c55e] ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="Refresh balance"
-                  title="Refresh balance and tokens"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-[#22c55e] ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                  aria-label="Help and support chat"
+                  title="Ask me anything about wallet features"
                 >
-                  <RefreshCw
-                    className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-                  />
+                  <Headphones className="h-4 w-4" />
                 </Button>
 
                 {/* Search button */}
@@ -1115,6 +1265,43 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <span>LOCK UP</span>
               </Button>
             </div>
+
+            {/* Quest Reward Card */}
+            <div className="w-full mt-4">
+              <div
+                className="w-full bg-gradient-to-br from-[#1a3a2a] to-[#0f2818] rounded-md border border-[#22c55e]/40 p-4 cursor-pointer hover:bg-[#22c55e]/10 transition-colors"
+                onClick={() => setShowQuestModal(true)}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col gap-2 flex-1">
+                    <div className="text-xs font-semibold text-[#22c55e] uppercase tracking-widest">
+                      🎁 Fixercoin Quest
+                    </div>
+                    <div className="text-sm font-bold text-white">
+                      Earn {earnedTokens} FIXERCOIN
+                    </div>
+                    <div className="w-full bg-white/10 rounded-full h-1.5 border border-[#22c55e]/20">
+                      <div
+                        className="bg-gradient-to-r from-[#34d399] to-[#22c55e] h-1.5 rounded-full"
+                        style={{ width: `${progressPct}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {tasksDone}/{tasksTotal} tasks completed
+                    </div>
+                  </div>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowQuestModal(true);
+                    }}
+                    className="bg-[#22c55e] hover:bg-[#16a34a] text-gray-900 font-bold text-xs px-4 py-2 rounded-md whitespace-nowrap h-auto transition-colors"
+                  >
+                    View Quest
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1153,43 +1340,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         `}</style>
 
         <div className="w-full space-y-2">
-          {/* Quest Reward Card */}
-          <div className="w-full px-4">
-            <div
-              className="w-full bg-gradient-to-br from-[#1a3a2a] to-[#0f2818] rounded-md border border-[#22c55e]/40 p-4 cursor-pointer hover:bg-[#22c55e]/10 transition-colors"
-              onClick={() => setShowQuestModal(true)}
-            >
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex flex-col gap-2 flex-1">
-                  <div className="text-xs font-semibold text-[#22c55e] uppercase tracking-widest">
-                    🎁 Fixercoin Quest
-                  </div>
-                  <div className="text-sm font-bold text-white">
-                    Earn {earnedTokens} FIXERCOIN
-                  </div>
-                  <div className="w-full bg-white/10 rounded-full h-1.5 border border-[#22c55e]/20">
-                    <div
-                      className="bg-gradient-to-r from-[#34d399] to-[#22c55e] h-1.5 rounded-full"
-                      style={{ width: `${progressPct}%` }}
-                    ></div>
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {tasksDone}/{tasksTotal} tasks completed
-                  </div>
-                </div>
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowQuestModal(true);
-                  }}
-                  className="bg-[#22c55e] hover:bg-[#16a34a] text-gray-900 font-bold text-xs px-4 py-2 rounded-md whitespace-nowrap h-auto transition-colors"
-                >
-                  View Quest
-                </Button>
-              </div>
-            </div>
-          </div>
-
           {sortedTokens.map((token, index) => {
             const tokenBalance =
               typeof token.balance === "number" &&

@@ -8,6 +8,7 @@ import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { PaymentMethodInfoCard } from "@/components/wallet/PaymentMethodInfoCard";
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
+import { createOrderInAPI } from "@/lib/p2p-order-api";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import type { P2POrder } from "@/lib/p2p-api";
 
@@ -118,6 +119,18 @@ export default function SellData() {
           price: exchangeRate,
         },
       );
+
+      // First, persist the order to server before sending notification (prevents race condition)
+      try {
+        await createOrderInAPI(createdOrder);
+        console.log(`[SellData] Order ${createdOrder.id} persisted to server`);
+      } catch (apiError) {
+        console.error(
+          "[SellData] Failed to persist order to server:",
+          apiError,
+        );
+        toast.warning("Order created locally but failed to sync to server");
+      }
 
       toast.success("Order created successfully!");
 

@@ -553,6 +553,21 @@ export class KVStore {
   }
 
   /**
+   * Get broadcast notifications for sellers or buyers
+   */
+  async getBroadcastNotifications(
+    type: "sellers" | "buyers",
+  ): Promise<OrderNotification[]> {
+    const key = `notifications:broadcast:${type}`;
+    const json = await this.kv.get(key);
+    if (!json) {
+      return [];
+    }
+    const notifications = JSON.parse(json);
+    return Array.isArray(notifications) ? notifications : [];
+  }
+
+  /**
    * Get notification IDs for wallet
    */
   private async getNotificationIdsForWallet(

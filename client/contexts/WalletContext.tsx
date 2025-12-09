@@ -1082,6 +1082,33 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           console.warn("[WalletContext] DexScreener fetch failed:", e);
         }
 
+        // Fetch prices from Jupiter API (free tier fallback for any remaining tokens)
+        try {
+          const missingMints = tokenMints.filter(
+            (mint) => mint && (!prices[mint] || !isFinite(prices[mint])),
+          );
+
+          if (missingMints.length > 0) {
+            console.log(
+              `[WalletContext] Fetching prices from Jupiter for ${missingMints.length} tokens`,
+            );
+            const jupiterPrices = await jupiterAPI.getPricesByMints(missingMints);
+
+            // Only use Jupiter prices for tokens still missing
+            Object.entries(jupiterPrices).forEach(([mint, price]) => {
+              if (!prices[mint] || !isFinite(prices[mint])) {
+                prices[mint] = price;
+              }
+            });
+
+            console.log(
+              `[WalletContext] ✅ Jupiter: Got ${Object.keys(jupiterPrices).length} prices`,
+            );
+          }
+        } catch (e) {
+          console.warn("[WalletContext] Jupiter fetch failed:", e);
+        }
+
         // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing
         const stableMints = [
           "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC

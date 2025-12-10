@@ -664,7 +664,7 @@ export default function SellData() {
 
             <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
               <p className="text-sm text-blue-300">
-                Transaction: {parseFloat(amountTokens).toFixed(6)} USDT ←→{" "}
+                Transaction: {parseFloat(amountTokens).toFixed(6)} {selectedToken} ←→{" "}
                 {parseFloat(amountPKR).toFixed(2)} PKR
               </p>
             </div>

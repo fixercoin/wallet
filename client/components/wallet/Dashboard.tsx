@@ -1120,7 +1120,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="space-y-3 mt-8">
               <div className="text-left">
                 <div className="text-xs font-semibold text-gray-700 tracking-widest">
-                  TOTAL BALANCE IN USDT
+                  MY BALANCE
                 </div>
               </div>
 

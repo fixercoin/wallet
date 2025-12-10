@@ -64,7 +64,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
             {/* Address Section */}
             <div className="space-y-2">
               <h3 className="text-sm font-medium text-gray-900">
-                Your Address
+                YOUR ADDRESS
               </h3>
               <div className="flex gap-2">
                 <Input

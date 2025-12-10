@@ -1084,6 +1084,14 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   ? "Quote Expired - Get New Quote"
                   : "Swap (Smart Route)"}
             </Button>
+
+            <Button
+              onClick={onBack}
+              variant="outline"
+              className="w-full bg-transparent border border-gray-400 text-gray-900 hover:bg-gray-100 uppercase font-semibold py-3 rounded-lg transition-all duration-200"
+            >
+              Back
+            </Button>
           </div>
 
           <SuccessDialog

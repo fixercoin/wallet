@@ -71,16 +71,22 @@ export function CryptoSentDialog() {
     setTimeout(() => setCopiedAddress(false), 2000);
   };
 
+  const calculateAmount = (value: any): number => {
+    if (typeof value === "number") return value;
+    if (typeof value === "string") {
+      const parsed = parseFloat(value);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  };
+
   const handleIHaveSentCrypto = async () => {
     if (!currentOrder || !wallet) return;
 
     setSending(true);
     try {
-      const pkrAmount =
-        typeof currentOrder.pkr_amount === "number"
-          ? currentOrder.pkr_amount
-          : parseFloat(currentOrder.pkr_amount as any) || 0;
-      const tokenAmount = parseFloat(currentOrder.token_amount) || 0;
+      const pkrAmount = calculateAmount(currentOrder.pkr_amount);
+      const tokenAmount = calculateAmount(currentOrder.token_amount);
 
       // Send notification to buyer that crypto has been sent
       await createNotification(

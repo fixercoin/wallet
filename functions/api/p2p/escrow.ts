@@ -1,12 +1,17 @@
 /**
  * GET/POST /api/p2p/escrow
- * Manage escrow (fund holding) for P2P orders
+ * Manage escrow (fund holding) for P2P orders using Cloudflare KV or Appwrite
  */
 
 import { KVStore, Escrow } from "../../lib/kv-utils";
+import { getKVStore } from "../../lib/kv-store-factory";
 
 interface Env {
-  STAKING_KV: any;
+  STAKING_KV?: any;
+  APPWRITE_ENDPOINT?: string;
+  APPWRITE_PROJECT_ID?: string;
+  APPWRITE_API_KEY?: string;
+  APPWRITE_DATABASE_ID?: string;
   [key: string]: any;
 }
 
@@ -39,17 +44,19 @@ export const onRequestGet = async ({
   env: Env;
 }) => {
   try {
-    if (!env.STAKING_KV) {
+    let kvStore: any;
+    try {
+      kvStore = getKVStore(env);
+    } catch (error) {
       return jsonResponse(500, {
-        error: "KV storage not configured",
+        error:
+          "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
       });
     }
 
     const url = new URL(request.url);
     const escrowId = url.searchParams.get("id");
     const orderId = url.searchParams.get("orderId");
-
-    const kvStore = new KVStore(env.STAKING_KV);
 
     if (escrowId) {
       const escrow = await kvStore.getEscrow(escrowId);
@@ -87,9 +94,13 @@ export const onRequestPost = async ({
   env: Env;
 }) => {
   try {
-    if (!env.STAKING_KV) {
+    let kvStore: any;
+    try {
+      kvStore = getKVStore(env);
+    } catch (error) {
       return jsonResponse(500, {
-        error: "KV storage not configured",
+        error:
+          "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
       });
     }
 
@@ -108,8 +119,6 @@ export const onRequestPost = async ({
         error: "Missing required fields",
       });
     }
-
-    const kvStore = new KVStore(env.STAKING_KV);
 
     const escrow = await kvStore.saveEscrow({
       orderId,
@@ -140,9 +149,13 @@ export const onRequestPut = async ({
   env: Env;
 }) => {
   try {
-    if (!env.STAKING_KV) {
+    let kvStore: any;
+    try {
+      kvStore = getKVStore(env);
+    } catch (error) {
       return jsonResponse(500, {
-        error: "KV storage not configured",
+        error:
+          "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
       });
     }
 
@@ -161,7 +174,6 @@ export const onRequestPut = async ({
       });
     }
 
-    const kvStore = new KVStore(env.STAKING_KV);
     const updated = await kvStore.updateEscrowStatus(escrowId, status);
 
     return jsonResponse(200, {

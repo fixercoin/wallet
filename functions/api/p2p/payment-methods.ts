@@ -1,18 +1,26 @@
 /**
  * GET/POST /api/p2p/payment-methods
- * Manage payment methods for P2P trading using Cloudflare KV
+ * Manage payment methods for P2P trading using Cloudflare KV or Appwrite
  */
 
 import { KVStore } from "../../lib/kv-utils";
+import { getKVStore } from "../../lib/kv-store-factory";
 
 interface Env {
-  STAKING_KV: any;
+  STAKING_KV?: any;
+  APPWRITE_ENDPOINT?: string;
+  APPWRITE_PROJECT_ID?: string;
+  APPWRITE_API_KEY?: string;
+  APPWRITE_DATABASE_ID?: string;
   [key: string]: any;
 }
 
 function applyCors(headers: Headers) {
   headers.set("Access-Control-Allow-Origin", "*");
-  headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS",
+  );
   headers.set("Access-Control-Allow-Headers", "Content-Type");
   headers.set("Vary", "Origin");
   return headers;
@@ -36,9 +44,13 @@ export const onRequestGet = async ({
   env: Env;
 }) => {
   try {
-    if (!env.STAKING_KV) {
+    let kvStore: any;
+    try {
+      kvStore = getKVStore(env);
+    } catch (error) {
       return jsonResponse(500, {
-        error: "KV storage not configured",
+        error:
+          "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
       });
     }
 
@@ -49,8 +61,6 @@ export const onRequestGet = async ({
     if (!walletAddress) {
       return jsonResponse(400, { error: "Missing wallet address" });
     }
-
-    const kvStore = new KVStore(env.STAKING_KV);
 
     if (methodId) {
       // Get single payment method
@@ -86,14 +96,26 @@ export const onRequestPost = async ({
   env: Env;
 }) => {
   try {
-    if (!env.STAKING_KV) {
+    let kvStore: any;
+    try {
+      kvStore = getKVStore(env);
+    } catch (error) {
       return jsonResponse(500, {
-        error: "KV storage not configured",
+        error:
+          "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
       });
     }
 
     const body = await request.json();
-    const { walletAddress, userName, paymentMethod, accountName, accountNumber, solanawWalletAddress, methodId } = body;
+    const {
+      walletAddress,
+      userName,
+      paymentMethod,
+      accountName,
+      accountNumber,
+      solanawWalletAddress,
+      methodId,
+    } = body;
 
     if (!walletAddress) {
       return jsonResponse(400, { error: "Missing wallet address" });
@@ -104,8 +126,6 @@ export const onRequestPost = async ({
         error: "Missing required fields",
       });
     }
-
-    const kvStore = new KVStore(env.STAKING_KV);
 
     const savedMethod = await kvStore.savePaymentMethod(
       {
@@ -138,9 +158,13 @@ export const onRequestDelete = async ({
   env: Env;
 }) => {
   try {
-    if (!env.STAKING_KV) {
+    let kvStore: any;
+    try {
+      kvStore = getKVStore(env);
+    } catch (error) {
       return jsonResponse(500, {
-        error: "KV storage not configured",
+        error:
+          "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
       });
     }
 
@@ -153,8 +177,6 @@ export const onRequestDelete = async ({
         error: "Missing wallet address or method ID",
       });
     }
-
-    const kvStore = new KVStore(env.STAKING_KV);
     await kvStore.deletePaymentMethod(methodId, walletAddress);
 
     return jsonResponse(200, {

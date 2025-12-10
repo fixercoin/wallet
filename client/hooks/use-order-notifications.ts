@@ -101,6 +101,7 @@ export function useOrderNotifications() {
         amountTokens: number;
         amountPKR: number;
       },
+      sendPushNotification: boolean = true,
     ) => {
       if (!wallet) {
         console.error("Wallet not connected");
@@ -126,11 +127,14 @@ export function useOrderNotifications() {
           throw new Error(`Failed to create notification: ${response.status}`);
         }
 
-        await pushNotificationService.sendOrderNotification(
-          type,
-          message,
-          orderData,
-        );
+        // Only send push notifications to other users, not to the user creating the notification
+        if (sendPushNotification) {
+          await pushNotificationService.sendOrderNotification(
+            type,
+            message,
+            orderData,
+          );
+        }
 
         console.log(`Notification created for ${recipientWallet}`);
       } catch (error) {

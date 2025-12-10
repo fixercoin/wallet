@@ -6,7 +6,7 @@ import React, {
   useRef,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Check, Copy } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,13 +16,13 @@ import { PaymentMethodInfoCard } from "@/components/wallet/PaymentMethodInfoCard
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
 import { createOrderInAPI } from "@/lib/p2p-order-api";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
-import { useP2POrderFlow } from "@/contexts/P2POrderFlowContext";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import QRCode from "react-qr-code";
 import type { P2POrder } from "@/lib/p2p-api";
 
 interface PaymentMethod {
@@ -31,12 +31,20 @@ interface PaymentMethod {
   accountNumber: string;
 }
 
+type BuyFlowStep =
+  | "form"
+  | "seller_payment"
+  | "waiting_confirmation"
+  | "buyer_wallet"
+  | "complete";
+
 export default function BuyData() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();
-  const { openSellerPaymentDialog } = useP2POrderFlow();
   const isCreatingOrderRef = useRef(false);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
@@ -46,6 +54,14 @@ export default function BuyData() {
   const [amountPKR, setAmountPKR] = useState("");
   const [amountTokens, setAmountTokens] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // P2P Dialog Flow State
+  const [flowStep, setFlowStep] = useState<BuyFlowStep>("form");
+  const [currentOrder, setCurrentOrder] = useState<P2POrder | null>(null);
+  const [orderStatus, setOrderStatus] = useState<{
+    sellerReceivedPayment?: boolean;
+    sellerCryptoSent?: boolean;
+  }>({});
 
   // Fetch exchange rate on mount
   useEffect(() => {
@@ -85,14 +101,80 @@ export default function BuyData() {
     fetchPaymentMethods();
   }, [wallet?.publicKey, showPaymentDialog, fetchPaymentMethods]);
 
-  const proceedWithOrderCreation = useCallback(async () => {
-    // Prevent multiple simultaneous order creations (race condition)
+  // Polling for order status updates
+  const startPollingOrderStatus = useCallback(
+    (orderId: string) => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+
+      pollingIntervalRef.current = setInterval(async () => {
+        try {
+          const response = await fetch(
+            `/api/p2p/orders/${encodeURIComponent(orderId)}/status`,
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setOrderStatus({
+              sellerReceivedPayment: data.sellerReceivedPayment,
+              sellerCryptoSent: data.sellerCryptoSent,
+            });
+
+            // If seller received payment and we're in waiting state, show next dialog
+            if (
+              data.sellerReceivedPayment &&
+              flowStep === "waiting_confirmation"
+            ) {
+              setFlowStep("buyer_wallet");
+            }
+
+            // If seller sent crypto, mark as complete
+            if (data.sellerCryptoSent) {
+              setFlowStep("complete");
+            }
+          }
+        } catch (error) {
+          console.error("Polling error:", error);
+        }
+      }, 2000); // Poll every 2 seconds
+    },
+    [flowStep],
+  );
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
+
+  const handlePKRChange = (value: string) => {
+    setAmountPKR(value);
+    if (value) {
+      const num = parseFloat(value);
+      if (!isNaN(num)) {
+        setAmountTokens((num / exchangeRate).toFixed(6));
+      }
+    } else {
+      setAmountTokens("");
+    }
+  };
+
+  const isFormValid = useMemo(() => {
+    const tokens = parseFloat(amountTokens) || 0;
+    const pkr = parseFloat(amountPKR) || 0;
+    return tokens > 0 && pkr > 0;
+  }, [amountTokens, amountPKR]);
+
+  const handleStartBuy = async () => {
     if (isCreatingOrderRef.current) {
-      console.warn(
-        "[BuyData] Order creation already in progress, ignoring duplicate request",
-      );
+      console.warn("[BuyData] Order creation already in progress");
       return;
     }
+
+    if (!isFormValid) return;
 
     if (!wallet?.publicKey) {
       toast.error("Missing wallet information");
@@ -100,7 +182,6 @@ export default function BuyData() {
     }
 
     try {
-      // Mark that we're starting order creation
       isCreatingOrderRef.current = true;
       setLoading(true);
 
@@ -126,22 +207,17 @@ export default function BuyData() {
         },
       );
 
-      // First, persist the order to server before sending notification (prevents race condition)
       try {
         await createOrderInAPI(createdOrder);
         console.log(`[BuyData] Order ${createdOrder.id} persisted to server`);
       } catch (apiError) {
-        console.error("[BuyData] Failed to persist order to server:", apiError);
-        toast.error(
-          "Failed to create order - could not save to server. Please try again.",
-        );
+        console.error("[BuyData] Failed to persist order:", apiError);
+        toast.error("Failed to create order - could not save to server");
         throw new Error("Order creation failed - server sync error");
       }
 
-      toast.success("Order created successfully!");
+      setCurrentOrder(createdOrder);
 
-      // Send notification to sellers about new buy order
-      // For generic buy orders, send to a broadcast address that sellers can monitor
       try {
         const recipientWallet =
           createdOrder.sellerWallet || "BROADCAST_SELLERS";
@@ -150,7 +226,7 @@ export default function BuyData() {
           "new_buy_order",
           "BUY",
           createdOrder.id,
-          `New buy order: ${parseFloat(amountTokens).toFixed(2)} USDT for ${parseFloat(amountPKR).toFixed(2)} PKR at ${exchangeRate.toFixed(2)} PKR per token. Buyer: ${createdOrder.buyerWallet}`,
+          `New buy order: ${parseFloat(amountTokens).toFixed(2)} USDT for ${parseFloat(amountPKR).toFixed(2)} PKR`,
           {
             token: createdOrder.token,
             amountTokens: parseFloat(amountTokens),
@@ -165,73 +241,76 @@ export default function BuyData() {
         console.warn("Failed to send notification:", notificationError);
       }
 
-      // Show seller payment method dialog if payment methods exist
-      if (paymentMethods.length > 0) {
-        const paymentMethod = paymentMethods[0];
-        openSellerPaymentDialog(createdOrder, {
-          accountName: paymentMethod.accountName,
-          accountNumber: paymentMethod.accountNumber,
-        });
-      } else {
-        navigate("/waiting-for-seller-response", {
-          state: { order: createdOrder },
-        });
-      }
+      // Move to seller payment dialog
+      setFlowStep("seller_payment");
+      setLoading(false);
     } catch (error) {
       console.error("Error creating order:", error);
       toast.error("Failed to create order");
-    } finally {
-      // Clear the flag to allow future order creation attempts
-      isCreatingOrderRef.current = false;
       setLoading(false);
-    }
-  }, [
-    wallet?.publicKey,
-    exchangeRate,
-    amountTokens,
-    amountPKR,
-    navigate,
-    createNotification,
-    openSellerPaymentDialog,
-    paymentMethods,
-  ]);
-
-  const handlePKRChange = (value: string) => {
-    setAmountPKR(value);
-    if (value) {
-      const num = parseFloat(value);
-      if (!isNaN(num)) {
-        setAmountTokens((num / exchangeRate).toFixed(6));
-      }
-    } else {
-      setAmountTokens("");
+    } finally {
+      isCreatingOrderRef.current = false;
     }
   };
 
-  const isValid = useMemo(() => {
-    const tokens = parseFloat(amountTokens) || 0;
-    const pkr = parseFloat(amountPKR) || 0;
-    return tokens > 0 && pkr > 0;
-  }, [amountTokens, amountPKR]);
+  const handlePaymentSent = async () => {
+    if (!currentOrder) return;
 
-  const handleSubmit = async () => {
-    // Prevent submission if already loading or creating order
-    if (loading || isCreatingOrderRef.current) {
-      console.warn(
-        "[BuyData] Submission already in progress, ignoring duplicate request",
+    try {
+      // Update order status: buyer payment sent
+      const response = await fetch(
+        `/api/p2p/orders/${encodeURIComponent(currentOrder.id)}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ buyerPaymentSent: true }),
+        },
       );
-      return;
+
+      if (response.ok) {
+        // Start polling for seller confirmation
+        startPollingOrderStatus(currentOrder.id);
+        setFlowStep("waiting_confirmation");
+        setOrderStatus({
+          sellerReceivedPayment: false,
+          sellerCryptoSent: false,
+        });
+      } else {
+        toast.error("Failed to update order status");
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      toast.error("Failed to update order");
     }
+  };
 
-    if (!isValid) return;
-
-    if (!wallet?.publicKey) {
-      toast.error("Missing wallet information");
-      return;
+  const handleCompleteTransaction = () => {
+    toast.success("Transaction completed successfully!");
+    // Clean up polling
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
     }
+    // Reset flow
+    setFlowStep("form");
+    setCurrentOrder(null);
+    setOrderStatus({});
+    setAmountPKR("");
+    setAmountTokens("");
+    navigate("/");
+  };
 
-    // Proceed directly with order creation
-    proceedWithOrderCreation();
+  const handleCancelFlow = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+    setFlowStep("form");
+    setCurrentOrder(null);
+    setOrderStatus({});
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
   };
 
   if (!wallet) {
@@ -331,7 +410,7 @@ export default function BuyData() {
             </div>
           )}
 
-          {/* Payment Method Information or Warning */}
+          {/* Payment Method Information */}
           {paymentMethods.length > 0 ? (
             <PaymentMethodInfoCard
               accountName={paymentMethods[0].accountName}
@@ -344,7 +423,7 @@ export default function BuyData() {
           ) : (
             <div className="p-4 rounded-lg bg-red-600/20 border border-red-500/50">
               <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0 text-xs font-bold text-white mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0 text-xs font-bold text-white">
                   !
                 </div>
                 <div>
@@ -353,7 +432,7 @@ export default function BuyData() {
                   </div>
                   <p className="text-xs text-red-300/80 mb-3">
                     You must add your payment method details before you can
-                    create a buy order. This helps sellers confirm payments.
+                    create a buy order.
                   </p>
                   <Button
                     onClick={() => setShowPaymentDialog(true)}
@@ -376,8 +455,8 @@ export default function BuyData() {
               Cancel
             </Button>
             <Button
-              onClick={handleSubmit}
-              disabled={!isValid || loading || paymentMethods.length === 0}
+              onClick={handleStartBuy}
+              disabled={!isFormValid || loading || paymentMethods.length === 0}
               className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
@@ -400,7 +479,6 @@ export default function BuyData() {
           setShowPaymentDialog(open);
           if (!open) {
             setEditingPaymentMethodId(undefined);
-            // Refetch payment methods when dialog closes with a small delay
             setTimeout(() => {
               fetchPaymentMethods();
             }, 500);
@@ -410,12 +488,239 @@ export default function BuyData() {
         paymentMethodId={editingPaymentMethodId}
         onSave={() => {
           setEditingPaymentMethodId(undefined);
-          // Refetch payment methods after saving with a small delay
           setTimeout(() => {
             fetchPaymentMethods();
           }, 300);
         }}
       />
+
+      {/* Seller Payment Method Dialog */}
+      <Dialog open={flowStep === "seller_payment"}>
+        <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              Seller Payment Details
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 space-y-3">
+              <div>
+                <p className="text-xs text-white/70 uppercase mb-1">
+                  Account Title
+                </p>
+                <p className="text-white font-semibold">Niazi</p>
+              </div>
+
+              <div className="border-t border-gray-300/10 pt-3">
+                <p className="text-xs text-white/70 uppercase mb-1">
+                  Account Name
+                </p>
+                <p className="text-white font-semibold">Ameer Nawaz Khan</p>
+              </div>
+
+              <div className="border-t border-gray-300/10 pt-3">
+                <p className="text-xs text-white/70 uppercase mb-1">
+                  Account Number
+                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-white font-semibold">03107044833</p>
+                  <button
+                    onClick={() => copyToClipboard("03107044833")}
+                    className="text-[#FF7A5C] hover:text-[#FF6B4D]"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-300/10 pt-3">
+                <p className="text-xs text-white/70 uppercase mb-1">
+                  Payment Method
+                </p>
+                <p className="text-white font-semibold">Easypaisa</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
+              <p className="text-sm text-green-300">
+                Send {parseFloat(amountPKR).toFixed(2)} PKR to the above account
+                for {parseFloat(amountTokens).toFixed(6)} USDT
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                onClick={handleCancelFlow}
+                variant="outline"
+                className="flex-1 border border-gray-300/30 text-gray-300"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handlePaymentSent}
+                className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+              >
+                I've Sent Payment
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Waiting for Seller Confirmation Dialog */}
+      <Dialog open={flowStep === "waiting_confirmation"}>
+        <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white">Waiting for Seller</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="flex justify-center">
+              <Loader2 className="w-10 h-10 text-[#FF7A5C] animate-spin" />
+            </div>
+
+            <div className="text-center space-y-2">
+              <p className="text-white font-semibold">
+                Waiting for Seller Confirmation
+              </p>
+              <p className="text-white/70 text-sm">
+                Seller is verifying your payment. This may take a few moments...
+              </p>
+            </div>
+
+            {!orderStatus.sellerReceivedPayment ? (
+              <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
+                <p className="text-sm text-blue-300">
+                  Transaction: {parseFloat(amountPKR).toFixed(2)} PKR →{" "}
+                  {parseFloat(amountTokens).toFixed(6)} USDT
+                </p>
+              </div>
+            ) : (
+              <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
+                <div className="flex items-center gap-2">
+                  <Check className="w-5 h-5 text-green-500" />
+                  <p className="text-sm text-green-300">
+                    Seller received your payment!
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <Button
+              onClick={handleCancelFlow}
+              variant="outline"
+              className="w-full border border-gray-300/30 text-gray-300"
+            >
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Buyer Wallet Address Dialog */}
+      <Dialog open={flowStep === "buyer_wallet"}>
+        <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              Your Wallet Address
+            </DialogTitle>
+          </DialogHeader>
+
+          {currentOrder && wallet && (
+            <div className="space-y-4">
+              <p className="text-sm text-white/70">
+                Seller is sending your crypto to this address:
+              </p>
+
+              <div className="flex justify-center p-4 bg-white rounded-lg">
+                <QRCode
+                  value={wallet.publicKey || ""}
+                  size={200}
+                  level="H"
+                  includeMargin={true}
+                />
+              </div>
+
+              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 break-all">
+                <p className="text-xs text-white/70 uppercase mb-2">
+                  Wallet Address
+                </p>
+                <p className="text-white/90 text-xs font-mono">
+                  {wallet.publicKey}
+                </p>
+                <button
+                  onClick={() => copyToClipboard(wallet.publicKey || "")}
+                  className="mt-2 text-[#FF7A5C] hover:text-[#FF6B4D] text-xs flex items-center gap-2"
+                >
+                  <Copy className="w-3 h-3" />
+                  Copy Address
+                </button>
+              </div>
+
+              <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
+                <p className="text-sm text-blue-300">
+                  Waiting for {parseFloat(amountTokens).toFixed(6)} USDT to
+                  arrive...
+                </p>
+              </div>
+
+              <Button
+                onClick={handleCompleteTransaction}
+                className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+              >
+                I've Received Crypto
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Transaction Complete Dialog */}
+      <Dialog open={flowStep === "complete"}>
+        <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              Transaction Complete
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="flex justify-center">
+              <div className="w-16 h-16 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center">
+                <Check className="w-8 h-8 text-green-500" />
+              </div>
+            </div>
+
+            <div className="text-center space-y-2">
+              <p className="text-white font-semibold">
+                Transaction Completed Successfully!
+              </p>
+              <p className="text-white/70 text-sm">
+                You have successfully received{" "}
+                {parseFloat(amountTokens).toFixed(6)} USDT for{" "}
+                {parseFloat(amountPKR).toFixed(2)} PKR
+              </p>
+            </div>
+
+            {currentOrder && (
+              <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
+                <p className="text-xs text-white/70 uppercase mb-1">Order ID</p>
+                <p className="text-white/90 text-xs font-mono break-all">
+                  {currentOrder.id}
+                </p>
+              </div>
+            )}
+
+            <Button
+              onClick={handleCompleteTransaction}
+              className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+            >
+              Back to Home
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Bottom Navigation */}
       <P2PBottomNavigation

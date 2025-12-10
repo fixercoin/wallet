@@ -147,7 +147,10 @@ export default function SellData() {
           "[SellData] Failed to persist order to server:",
           apiError,
         );
-        toast.warning("Order created locally but failed to sync to server");
+        toast.error(
+          "Failed to create order - could not save to server. Please try again.",
+        );
+        throw new Error("Order creation failed - server sync error");
       }
 
       toast.success("Order created successfully!");

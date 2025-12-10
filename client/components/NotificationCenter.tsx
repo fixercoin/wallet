@@ -6,6 +6,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "@/contexts/WalletContext";
 import { playNotificationSound } from "@/lib/services/notification-sound";
+import { useP2POrderFlow } from "@/contexts/P2POrderFlowContext";
+import { syncOrderFromStorage } from "@/lib/p2p-order-api";
+import type { P2POrder } from "@/lib/p2p-api";
 
 export function NotificationCenter() {
   const { notifications, unreadCount, markAsRead } = useOrderNotifications();
@@ -13,6 +16,7 @@ export function NotificationCenter() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const previousUnreadCountRef = useRef(0);
+  const { openBuyerWalletDialog, openCryptoReceivedDialog } = useP2POrderFlow();
 
   // Play bell sound when new notifications arrive
   useEffect(() => {
@@ -134,18 +138,42 @@ export function NotificationCenter() {
                       className={`p-4 hover:bg-gray-900/50 transition-colors cursor-pointer ${
                         !notification.read ? "bg-gray-900/30" : ""
                       }`}
-                      onClick={() => {
+                      onClick={async () => {
                         if (!notification.read) {
                           markAsRead(notification.id);
                         }
 
                         setIsOpen(false);
 
-                        // For new buy orders, navigate to seller order confirmation page
-                        if (notification.type === "new_buy_order") {
-                          navigate("/seller-order-confirmation", {
-                            state: { orderId: notification.orderId },
-                          });
+                        // Load the order from storage
+                        let order: P2POrder | null = null;
+                        try {
+                          order = await syncOrderFromStorage(
+                            notification.orderId,
+                          );
+                        } catch (error) {
+                          console.error("Failed to load order:", error);
+                        }
+
+                        // Handle new buy order - seller receives notification
+                        if (notification.type === "new_buy_order" && order) {
+                          // Open buyer wallet dialog for seller
+                          // Get buyer wallet from the loaded order
+                          const buyerWallet =
+                            order.creator_wallet ||
+                            notification.senderWallet ||
+                            "";
+                          openBuyerWalletDialog(order, buyerWallet);
+                          return;
+                        }
+
+                        // Handle crypto transfer initiated - buyer receives notification
+                        if (
+                          notification.type === "transfer_initiated" &&
+                          order
+                        ) {
+                          // Open crypto received dialog for buyer
+                          openCryptoReceivedDialog(order);
                           return;
                         }
 
@@ -158,37 +186,6 @@ export function NotificationCenter() {
                         }
 
                         // For other notifications, navigate to order-complete
-                        // Determine buyer and seller based on order type and who sent the notification
-                        // The order always has specific buyer and seller wallets
-                        // We need to reconstruct this from the order type context
-                        const isBuyOrder = notification.orderType === "BUY";
-
-                        // For BUY order: recipientWallet = buyer, senderWallet = seller (when seller updates)
-                        // For SELL order: recipientWallet = seller, senderWallet = buyer (when buyer updates)
-                        // But notifications can be from either party
-                        // Best approach: use the orderData from notification which might have this info
-                        // If not available, we need to look at the actual order
-
-                        // For now, use recipientWallet as a clue about who this notification is FOR
-                        // (the recipient is getting notified about a state change by the sender)
-                        let buyerWallet: string;
-                        let sellerWallet: string;
-
-                        if (isBuyOrder) {
-                          // BUY order: buyer is who initiated the buy, seller is the counterparty
-                          // Typically the recipientWallet gets the notification when counterparty acts
-                          // So if seller acts → buyer is recipient; if buyer acts → seller is recipient
-                          buyerWallet = notification.recipientWallet;
-                          sellerWallet = notification.senderWallet;
-                        } else {
-                          // SELL order: seller is who initiated the sell, buyer is the counterparty
-                          sellerWallet = notification.recipientWallet;
-                          buyerWallet = notification.senderWallet;
-                        }
-
-                        // Navigate to order-complete
-                        // Pass orderId so it can be loaded from storage
-                        // (Storing full order in state can cause issues with missing roomId and other fields)
                         navigate("/order-complete", {
                           state: {
                             orderId: notification.orderId,

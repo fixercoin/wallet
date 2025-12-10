@@ -16,6 +16,7 @@ import { PaymentMethodInfoCard } from "@/components/wallet/PaymentMethodInfoCard
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
 import { createOrderInAPI } from "@/lib/p2p-order-api";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
+import { useP2POrderFlow } from "@/contexts/P2POrderFlowContext";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +35,8 @@ export default function BuyData() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();
-  const isCreatingOrderRef = useRef(false); // Prevent multiple simultaneous order creations
+  const { openSellerPaymentDialog } = useP2POrderFlow();
+  const isCreatingOrderRef = useRef(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
@@ -157,16 +159,24 @@ export default function BuyData() {
             buyerWallet: createdOrder.buyerWallet,
             price: exchangeRate,
           },
-          false, // Don't send push notification to the buyer who created the order
+          false,
         );
       } catch (notificationError) {
         console.warn("Failed to send notification:", notificationError);
-        // Don't fail the order creation if notification fails
       }
 
-      navigate("/waiting-for-seller-response", {
-        state: { order: createdOrder },
-      });
+      // Show seller payment method dialog if payment methods exist
+      if (paymentMethods.length > 0) {
+        const paymentMethod = paymentMethods[0];
+        openSellerPaymentDialog(createdOrder, {
+          accountName: paymentMethod.accountName,
+          accountNumber: paymentMethod.accountNumber,
+        });
+      } else {
+        navigate("/waiting-for-seller-response", {
+          state: { order: createdOrder },
+        });
+      }
     } catch (error) {
       console.error("Error creating order:", error);
       toast.error("Failed to create order");
@@ -182,6 +192,8 @@ export default function BuyData() {
     amountPKR,
     navigate,
     createNotification,
+    openSellerPaymentDialog,
+    paymentMethods,
   ]);
 
   const handlePKRChange = (value: string) => {

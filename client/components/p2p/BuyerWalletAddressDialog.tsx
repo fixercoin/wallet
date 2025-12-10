@@ -1,0 +1,218 @@
+import React, { useState } from "react";
+import { Copy, Check, X } from "lucide-react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useP2POrderFlow } from "@/contexts/P2POrderFlowContext";
+import { useOrderNotifications } from "@/hooks/use-order-notifications";
+import { useWallet } from "@/contexts/WalletContext";
+
+export function BuyerWalletAddressDialog() {
+  const {
+    activeDialog,
+    buyerWalletAddress,
+    currentOrder,
+    setActiveDialog,
+    setSellerConfirmed,
+  } = useP2POrderFlow();
+  const { wallet } = useWallet();
+  const { createNotification } = useOrderNotifications();
+  const [copied, setCopied] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
+
+  const isOpen = activeDialog === "buyer_wallet_address";
+
+  const handleCopyWallet = () => {
+    navigator.clipboard.writeText(buyerWalletAddress);
+    setCopied(true);
+    toast.success("Wallet address copied");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleIHaveReceived = async () => {
+    if (!currentOrder || !wallet) return;
+
+    setConfirming(true);
+    try {
+      // Update seller confirmation status
+      setSellerConfirmed(true);
+
+      const pkrAmount =
+        typeof currentOrder.pkr_amount === "number"
+          ? currentOrder.pkr_amount
+          : parseFloat(currentOrder.pkr_amount as any) || 0;
+
+      // Send notification to buyer that payment was received
+      await createNotification(
+        buyerWalletAddress,
+        "seller_payment_received",
+        "BUY",
+        currentOrder.id,
+        `Payment received! I am now transferring your crypto. Please wait for the transfer to complete.`,
+        {
+          token: currentOrder.token || "USDT",
+          amountTokens: parseFloat(currentOrder.token_amount) || 0,
+          amountPKR: pkrAmount,
+        },
+      );
+
+      toast.success("Payment confirmed! You can now send the crypto.");
+      setActiveDialog("crypto_sent_confirmation");
+    } catch (error) {
+      console.error("Error confirming payment:", error);
+      toast.error("Failed to confirm payment");
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!currentOrder || !wallet) return;
+
+    setRejecting(true);
+    try {
+      const pkrAmount =
+        typeof currentOrder.pkr_amount === "number"
+          ? currentOrder.pkr_amount
+          : parseFloat(currentOrder.pkr_amount as any) || 0;
+
+      // Send notification to buyer that order was rejected
+      await createNotification(
+        buyerWalletAddress,
+        "order_rejected",
+        "BUY",
+        currentOrder.id,
+        `Your order has been rejected. No payment required.`,
+        {
+          token: currentOrder.token || "USDT",
+          amountTokens: parseFloat(currentOrder.token_amount) || 0,
+          amountPKR: pkrAmount,
+        },
+      );
+
+      toast.success("Order rejected and buyer notified");
+      setActiveDialog(null);
+    } catch (error) {
+      console.error("Error rejecting order:", error);
+      toast.error("Failed to reject order");
+    } finally {
+      setRejecting(false);
+    }
+  };
+
+  if (!isOpen || !buyerWalletAddress || !currentOrder) return null;
+
+  const pkrAmount =
+    typeof currentOrder.pkr_amount === "number"
+      ? currentOrder.pkr_amount
+      : parseFloat(currentOrder.pkr_amount as any) || 0;
+  const tokenAmount = parseFloat(currentOrder.token_amount) || 0;
+
+  return (
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => !open && setActiveDialog(null)}
+    >
+      <DialogContent className="w-full max-w-sm bg-[#1a2847] border border-gray-300/30">
+        <DialogHeader>
+          <DialogTitle className="text-white uppercase">
+            Buyer Wallet Address
+          </DialogTitle>
+          <DialogDescription className="text-white/70 uppercase text-xs">
+            Confirm payment received or reject the order
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Order Summary */}
+          <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
+            <div className="text-xs text-white/70 uppercase mb-2">
+              Order Summary
+            </div>
+            <div className="space-y-2 text-sm text-white">
+              <div className="flex justify-between">
+                <span>Token:</span>
+                <span className="font-semibold">
+                  {currentOrder.token || "USDT"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Amount:</span>
+                <span className="font-semibold">
+                  {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Price:</span>
+                <span className="font-semibold">
+                  {pkrAmount.toFixed(2)} PKR
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Wallet Address */}
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-white/80 uppercase">
+              Buyer's Wallet Address
+            </label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-mono text-sm break-all">
+                {buyerWalletAddress}
+              </div>
+              <button
+                onClick={handleCopyWallet}
+                className="p-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 hover:bg-[#1a2540]/70 transition-colors flex-shrink-0"
+                title="Copy wallet address"
+              >
+                {copied ? (
+                  <Check className="w-5 h-5 text-green-500" />
+                ) : (
+                  <Copy className="w-5 h-5 text-white/70" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Instructions */}
+          <div className="p-4 rounded-lg bg-yellow-600/20 border border-yellow-500/50">
+            <div className="text-xs font-semibold text-yellow-300 mb-2 uppercase">
+              Important
+            </div>
+            <p className="text-xs text-yellow-200/80">
+              Before confirming, ensure you have received the payment from the
+              buyer. You will be expected to transfer the crypto to this wallet
+              address after confirmation.
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4">
+            <Button
+              onClick={handleReject}
+              disabled={rejecting}
+              variant="outline"
+              className="flex-1 border border-red-500/50 text-red-400 hover:bg-red-500/10"
+            >
+              {rejecting ? "Rejecting..." : "Reject"}
+            </Button>
+            <Button
+              onClick={handleIHaveReceived}
+              disabled={confirming}
+              className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {confirming ? "Confirming..." : "I Have Received"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

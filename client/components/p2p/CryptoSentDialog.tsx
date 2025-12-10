@@ -61,8 +61,14 @@ export function CryptoSentDialog() {
         },
       );
 
-      toast.success("Buyer notified! Crypto transfer sent.");
-      setActiveDialog(null);
+      toast.success("Crypto transfer confirmed!");
+      setSent(true);
+
+      // After 2 seconds, transition to show buyer the receive confirmation dialog
+      setTimeout(() => {
+        openCryptoReceivedDialog(currentOrder);
+        setActiveDialog("crypto_received_confirmation");
+      }, 2000);
     } catch (error) {
       console.error("Error notifying buyer:", error);
       toast.error("Failed to notify buyer");

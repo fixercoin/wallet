@@ -417,50 +417,52 @@ export default function BuyData() {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
-              <p className="text-xs text-white/70 uppercase mb-2">
-                Account Title
-              </p>
-              <p className="text-white font-semibold">
-                Niazi
-              </p>
-            </div>
-
-            <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
-              <p className="text-xs text-white/70 uppercase mb-2">
-                Account Name
-              </p>
-              <p className="text-white font-semibold">
-                Ameer Nawaz Khan
-              </p>
-            </div>
-
-            <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
-              <p className="text-xs text-white/70 uppercase mb-2">
-                Account Number
-              </p>
-              <div className="flex items-center justify-between">
-                <p className="text-white font-semibold">
-                  03107044833
+            <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 space-y-3">
+              <div>
+                <p className="text-xs text-white/70 uppercase mb-1">
+                  Account Title
                 </p>
-                <button
-                  onClick={() =>
-                    copyToClipboard("03107044833")
-                  }
-                  className="text-[#FF7A5C] hover:text-[#FF6B4D]"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
+                <p className="text-white font-semibold">
+                  Niazi
+                </p>
               </div>
-            </div>
 
-            <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
-              <p className="text-xs text-white/70 uppercase mb-2">
-                Payment Method
-              </p>
-              <p className="text-white font-semibold">
-                Easypaisa
-              </p>
+              <div className="border-t border-gray-300/10 pt-3">
+                <p className="text-xs text-white/70 uppercase mb-1">
+                  Account Name
+                </p>
+                <p className="text-white font-semibold">
+                  Ameer Nawaz Khan
+                </p>
+              </div>
+
+              <div className="border-t border-gray-300/10 pt-3">
+                <p className="text-xs text-white/70 uppercase mb-1">
+                  Account Number
+                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-white font-semibold">
+                    03107044833
+                  </p>
+                  <button
+                    onClick={() =>
+                      copyToClipboard("03107044833")
+                    }
+                    className="text-[#FF7A5C] hover:text-[#FF6B4D]"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-300/10 pt-3">
+                <p className="text-xs text-white/70 uppercase mb-1">
+                  Payment Method
+                </p>
+                <p className="text-white font-semibold">
+                  Easypaisa
+                </p>
+              </div>
             </div>
 
             <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">

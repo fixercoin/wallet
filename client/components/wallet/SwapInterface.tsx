@@ -1073,8 +1073,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
             <Button
               onClick={onBack}
-              variant="outline"
-              className="w-full bg-transparent border border-gray-400 text-gray-900 hover:bg-gray-100 uppercase font-semibold py-3 rounded-lg transition-all duration-200"
+              className="w-full bg-[#22c55e] hover:bg-[#1ea853] text-white uppercase font-semibold py-3 rounded-lg transition-all duration-200 mt-8"
             >
               Back
             </Button>

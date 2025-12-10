@@ -125,8 +125,13 @@ export function CryptoSentDialog() {
 
   if (!isOpen || !buyerWalletAddress || !currentOrder) return null;
 
-  const tokenAmount = calculateAmount(currentOrder.token_amount);
-  const pkrAmount = calculateAmount(currentOrder.pkr_amount);
+  // Support both field name formats from server/client
+  const tokenAmount =
+    calculateAmount(currentOrder.amountTokens) ||
+    calculateAmount(currentOrder.token_amount);
+  const pkrAmount =
+    calculateAmount(currentOrder.amountPKR) ||
+    calculateAmount(currentOrder.pkr_amount);
 
   return (
     <Dialog

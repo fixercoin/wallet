@@ -35,10 +35,18 @@ export function SellerPaymentMethodDialog() {
 
     setNotifying(true);
     try {
+      // Support both field name formats from server/client
       const pkrAmount =
-        typeof currentOrder.pkr_amount === "number"
-          ? currentOrder.pkr_amount
-          : parseFloat(currentOrder.pkr_amount as any) || 0;
+        typeof currentOrder.amountPKR === "number"
+          ? currentOrder.amountPKR
+          : typeof currentOrder.pkr_amount === "number"
+            ? currentOrder.pkr_amount
+            : parseFloat(currentOrder.pkr_amount as any) || 0;
+
+      const tokenAmount =
+        typeof currentOrder.amountTokens === "number"
+          ? currentOrder.amountTokens
+          : parseFloat(currentOrder.token_amount) || 0;
 
       await createNotification(
         currentOrder.creator_wallet || "",
@@ -48,7 +56,7 @@ export function SellerPaymentMethodDialog() {
         `Buyer is ready to send payment. Please check your payment method details and confirm when payment is received.`,
         {
           token: currentOrder.token || "USDT",
-          amountTokens: parseFloat(currentOrder.token_amount) || 0,
+          amountTokens: tokenAmount,
           amountPKR: pkrAmount,
         },
       );
@@ -65,11 +73,18 @@ export function SellerPaymentMethodDialog() {
 
   if (!isOpen || !sellerPaymentDetails || !currentOrder) return null;
 
+  // Support both field name formats from server/client
   const pkrAmount =
-    typeof currentOrder.pkr_amount === "number"
-      ? currentOrder.pkr_amount
-      : parseFloat(currentOrder.pkr_amount as any) || 0;
-  const tokenAmount = parseFloat(currentOrder.token_amount) || 0;
+    typeof currentOrder.amountPKR === "number"
+      ? currentOrder.amountPKR
+      : typeof currentOrder.pkr_amount === "number"
+        ? currentOrder.pkr_amount
+        : parseFloat(currentOrder.pkr_amount as any) || 0;
+
+  const tokenAmount =
+    typeof currentOrder.amountTokens === "number"
+      ? currentOrder.amountTokens
+      : parseFloat(currentOrder.token_amount) || 0;
 
   return (
     <Dialog

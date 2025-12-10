@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useP2POrderFlow } from "@/contexts/P2POrderFlowContext";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import { useWallet } from "@/contexts/WalletContext";
+import type { P2POrder } from "@/lib/p2p-api";
 
 export function CryptoSentDialog() {
   const {
@@ -26,8 +27,35 @@ export function CryptoSentDialog() {
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [buyerOrder, setBuyerOrder] = useState<P2POrder | null>(null);
+  const [loadingBuyerOrder, setLoadingBuyerOrder] = useState(false);
+  const [copiedAddress, setCopiedAddress] = useState(false);
 
   const isOpen = activeDialog === "crypto_sent_confirmation";
+
+  // Fetch buyer order details when dialog opens
+  useEffect(() => {
+    if (isOpen && currentOrder && currentOrder.matchedWith) {
+      setLoadingBuyerOrder(true);
+      fetch(`/api/p2p/orders/${currentOrder.matchedWith}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch buyer order");
+          return res.json();
+        })
+        .then((data) => {
+          const order = data.order || data.orders?.[0];
+          if (order) {
+            setBuyerOrder(order);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching buyer order:", error);
+        })
+        .finally(() => {
+          setLoadingBuyerOrder(false);
+        });
+    }
+  }, [isOpen, currentOrder]);
 
   const handleCopyWallet = () => {
     navigator.clipboard.writeText(buyerWalletAddress);
@@ -36,16 +64,34 @@ export function CryptoSentDialog() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleCopyBuyerAddress = () => {
+    navigator.clipboard.writeText(buyerWalletAddress);
+    setCopiedAddress(true);
+    toast.success("Buyer wallet address copied");
+    setTimeout(() => setCopiedAddress(false), 2000);
+  };
+
+  const calculateAmount = (value: any): number => {
+    if (typeof value === "number") return value;
+    if (typeof value === "string") {
+      const parsed = parseFloat(value);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  };
+
   const handleIHaveSentCrypto = async () => {
     if (!currentOrder || !wallet) return;
 
     setSending(true);
     try {
+      // Support both field name formats from server/client
       const pkrAmount =
-        typeof currentOrder.pkr_amount === "number"
-          ? currentOrder.pkr_amount
-          : parseFloat(currentOrder.pkr_amount as any) || 0;
-      const tokenAmount = parseFloat(currentOrder.token_amount) || 0;
+        calculateAmount(currentOrder.amountPKR) ||
+        calculateAmount(currentOrder.pkr_amount);
+      const tokenAmount =
+        calculateAmount(currentOrder.amountTokens) ||
+        calculateAmount(currentOrder.token_amount);
 
       // Send notification to buyer that crypto has been sent
       await createNotification(
@@ -79,11 +125,13 @@ export function CryptoSentDialog() {
 
   if (!isOpen || !buyerWalletAddress || !currentOrder) return null;
 
+  // Support both field name formats from server/client
+  const tokenAmount =
+    calculateAmount(currentOrder.amountTokens) ||
+    calculateAmount(currentOrder.token_amount);
   const pkrAmount =
-    typeof currentOrder.pkr_amount === "number"
-      ? currentOrder.pkr_amount
-      : parseFloat(currentOrder.pkr_amount as any) || 0;
-  const tokenAmount = parseFloat(currentOrder.token_amount) || 0;
+    calculateAmount(currentOrder.amountPKR) ||
+    calculateAmount(currentOrder.pkr_amount);
 
   return (
     <Dialog
@@ -171,10 +219,10 @@ export function CryptoSentDialog() {
           ) : (
             <>
               {/* Pre-Send State - Simplified */}
-              {/* Order Summary */}
+              {/* Seller Order Summary */}
               <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
                 <div className="text-xs text-white/70 uppercase mb-3 font-semibold">
-                  Order Summary
+                  Seller Order Summary
                 </div>
                 <div className="space-y-3 text-sm text-white">
                   <div className="flex justify-between items-center">
@@ -195,17 +243,87 @@ export function CryptoSentDialog() {
                       {pkrAmount.toFixed(2)} PKR
                     </span>
                   </div>
-                  <div className="border-t border-gray-300/20 pt-3 mt-3 flex justify-between items-center">
-                    <span className="text-white/70">Recipient:</span>
-                    <span
-                      className="text-xs font-mono text-white/90 max-w-[150px] truncate"
-                      title={buyerWalletAddress}
-                    >
-                      {buyerWalletAddress}
-                    </span>
+                  <div className="border-t border-gray-300/20 pt-3 mt-3">
+                    <div className="flex justify-between items-start gap-2">
+                      <span className="text-white/70">Recipient:</span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="text-xs font-mono text-white/90 truncate max-w-[120px]"
+                          title={buyerWalletAddress}
+                        >
+                          {buyerWalletAddress}
+                        </span>
+                        <button
+                          onClick={handleCopyBuyerAddress}
+                          className="p-1 hover:bg-gray-700/50 rounded transition-colors flex-shrink-0"
+                          title="Copy wallet address"
+                        >
+                          {copiedAddress ? (
+                            <Check className="w-3 h-3 text-green-400" />
+                          ) : (
+                            <Copy className="w-3 h-3 text-white/70 hover:text-white" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* Buyer Order Details */}
+              {loadingBuyerOrder ? (
+                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 flex items-center justify-center gap-2">
+                  <Loader className="w-4 h-4 text-blue-400 animate-spin" />
+                  <span className="text-xs text-white/70">
+                    Loading buyer order details...
+                  </span>
+                </div>
+              ) : buyerOrder ? (
+                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
+                  <div className="text-xs text-white/70 uppercase mb-3 font-semibold">
+                    Buyer Order Details
+                  </div>
+                  <div className="space-y-3 text-sm text-white">
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/70">Token:</span>
+                      <span className="font-semibold">
+                        {buyerOrder.token || "USDT"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/70">Buyer Wallet:</span>
+                      <span
+                        className="text-xs font-mono text-white/70 truncate max-w-[150px]"
+                        title={buyerOrder.walletAddress || ""}
+                      >
+                        {buyerOrder.walletAddress?.slice(0, 10)}...
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/70">Order Status:</span>
+                      <span
+                        className={`text-xs font-semibold ${
+                          buyerOrder.status === "MATCHED"
+                            ? "text-blue-400"
+                            : buyerOrder.status === "completed"
+                              ? "text-green-400"
+                              : "text-yellow-400"
+                        }`}
+                      >
+                        {buyerOrder.status}
+                      </span>
+                    </div>
+                    {buyerOrder.payment_method && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/70">Payment Method:</span>
+                        <span className="text-xs font-semibold">
+                          {buyerOrder.payment_method}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : null}
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-2">

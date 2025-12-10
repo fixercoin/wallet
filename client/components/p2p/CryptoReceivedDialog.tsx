@@ -27,10 +27,18 @@ export function CryptoReceivedDialog() {
 
     setConfirming(true);
     try {
+      // Support both field name formats from server/client
       const pkrAmount =
-        typeof currentOrder.pkr_amount === "number"
-          ? currentOrder.pkr_amount
-          : parseFloat(currentOrder.pkr_amount as any) || 0;
+        typeof currentOrder.amountPKR === "number"
+          ? currentOrder.amountPKR
+          : typeof currentOrder.pkr_amount === "number"
+            ? currentOrder.pkr_amount
+            : parseFloat(currentOrder.pkr_amount as any) || 0;
+
+      const tokenAmount =
+        typeof currentOrder.amountTokens === "number"
+          ? currentOrder.amountTokens
+          : parseFloat(currentOrder.token_amount) || 0;
 
       // Send final notification to seller confirming crypto was received
       await createNotification(
@@ -41,7 +49,7 @@ export function CryptoReceivedDialog() {
         `Order completed! Buyer has received the crypto. Transaction successful.`,
         {
           token: currentOrder.token || "USDT",
-          amountTokens: parseFloat(currentOrder.token_amount) || 0,
+          amountTokens: tokenAmount,
           amountPKR: pkrAmount,
         },
       );
@@ -63,11 +71,18 @@ export function CryptoReceivedDialog() {
 
   if (!isOpen || !currentOrder) return null;
 
+  // Support both field name formats from server/client
   const pkrAmount =
-    typeof currentOrder.pkr_amount === "number"
-      ? currentOrder.pkr_amount
-      : parseFloat(currentOrder.pkr_amount as any) || 0;
-  const tokenAmount = parseFloat(currentOrder.token_amount) || 0;
+    typeof currentOrder.amountPKR === "number"
+      ? currentOrder.amountPKR
+      : typeof currentOrder.pkr_amount === "number"
+        ? currentOrder.pkr_amount
+        : parseFloat(currentOrder.pkr_amount as any) || 0;
+
+  const tokenAmount =
+    typeof currentOrder.amountTokens === "number"
+      ? currentOrder.amountTokens
+      : parseFloat(currentOrder.token_amount) || 0;
 
   return (
     <Dialog

@@ -866,7 +866,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     return (
       <div className="w-full">
         <div className="rounded-none border border-[#e6f6ec]/20 bg-transparent overflow-hidden">
-          <div className="space-y-6 p-6">
+          <div className="space-y-6 p-6 pt-12">
             <p className="text-gray-600 text-center">
               No wallet detected. Please set up or import a wallet to use the
               swap feature.

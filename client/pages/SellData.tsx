@@ -1,12 +1,6 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useCallback,
-  useRef,
-} from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Check, Copy } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,6 +10,12 @@ import { PaymentMethodInfoCard } from "@/components/wallet/PaymentMethodInfoCard
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
 import { createOrderInAPI } from "@/lib/p2p-order-api";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { P2POrder } from "@/lib/p2p-api";
 
 interface PaymentMethod {
@@ -24,11 +24,14 @@ interface PaymentMethod {
   accountNumber: string;
 }
 
+type SellFlowStep = "form" | "buyer_wallet" | "confirm_payment" | "complete";
+
 export default function SellData() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();
-  const isCreatingOrderRef = useRef(false); // Prevent multiple simultaneous order creations
+  const isCreatingOrderRef = useRef(false);
+
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
@@ -38,6 +41,13 @@ export default function SellData() {
   const [amountPKR, setAmountPKR] = useState("");
   const [loading, setLoading] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+
+  // P2P Dialog Flow State
+  const [flowStep, setFlowStep] = useState<SellFlowStep>("form");
+  const [currentOrder, setCurrentOrder] = useState<P2POrder | null>(null);
+  const [buyerWalletAddress, setBuyerWalletAddress] = useState("");
+  const [paymentReceived, setPaymentReceived] = useState(false);
+  const [cryptoSent, setCryptoSent] = useState(false);
 
   // Fetch exchange rate on mount
   useEffect(() => {
@@ -89,22 +99,19 @@ export default function SellData() {
     }
   };
 
-  const isValid = useMemo(() => {
+  const isFormValid = useMemo(() => {
     const tokens = parseFloat(amountTokens) || 0;
     const pkr = parseFloat(amountPKR) || 0;
     return tokens > 0 && pkr > 0;
   }, [amountTokens, amountPKR]);
 
-  const handleSubmit = async () => {
-    // Prevent multiple simultaneous order creations (race condition)
+  const handleStartSell = async () => {
     if (isCreatingOrderRef.current) {
-      console.warn(
-        "[SellData] Order creation already in progress, ignoring duplicate request",
-      );
+      console.warn("[SellData] Order creation already in progress");
       return;
     }
 
-    if (!isValid) return;
+    if (!isFormValid) return;
 
     if (!wallet?.publicKey) {
       toast.error("Missing wallet information");
@@ -112,7 +119,6 @@ export default function SellData() {
     }
 
     try {
-      // Mark that we're starting order creation
       isCreatingOrderRef.current = true;
       setLoading(true);
 
@@ -138,25 +144,17 @@ export default function SellData() {
         },
       );
 
-      // First, persist the order to server before sending notification (prevents race condition)
       try {
         await createOrderInAPI(createdOrder);
         console.log(`[SellData] Order ${createdOrder.id} persisted to server`);
       } catch (apiError) {
-        console.error(
-          "[SellData] Failed to persist order to server:",
-          apiError,
-        );
-        toast.error(
-          "Failed to create order - could not save to server. Please try again.",
-        );
+        console.error("[SellData] Failed to persist order:", apiError);
+        toast.error("Failed to create order - could not save to server");
         throw new Error("Order creation failed - server sync error");
       }
 
-      toast.success("Order created successfully!");
+      setCurrentOrder(createdOrder);
 
-      // Send notification to buyers about new sell order
-      // For generic sell orders, send to a broadcast address that buyers can monitor
       try {
         const recipientWallet = createdOrder.buyerWallet || "BROADCAST_BUYERS";
         await createNotification(
@@ -164,7 +162,7 @@ export default function SellData() {
           "new_sell_order",
           "SELL",
           createdOrder.id,
-          `New sell order: ${parseFloat(amountTokens).toFixed(2)} USDT for ${parseFloat(amountPKR).toFixed(2)} PKR at ${exchangeRate.toFixed(2)} PKR per token. Seller: ${createdOrder.sellerWallet}`,
+          `New sell order: ${parseFloat(amountTokens).toFixed(2)} USDT for ${parseFloat(amountPKR).toFixed(2)} PKR`,
           {
             token: createdOrder.token,
             amountTokens: parseFloat(amountTokens),
@@ -173,24 +171,62 @@ export default function SellData() {
             sellerWallet: createdOrder.sellerWallet,
             price: exchangeRate,
           },
-          false, // Don't send push notification to the seller who created the order
+          false,
         );
       } catch (notificationError) {
         console.warn("Failed to send notification:", notificationError);
-        // Don't fail the order creation if notification fails
       }
 
-      navigate("/waiting-for-buyer-response", {
-        state: { order: createdOrder },
-      });
+      // Generate a random buyer wallet for demo (in real scenario, this would come from matching)
+      const demoBuyerWallet = `buyer_${Math.random().toString(36).substr(2, 9)}SOL`;
+      setBuyerWalletAddress(demoBuyerWallet);
+
+      // Move to buyer wallet dialog
+      setFlowStep("buyer_wallet");
+      setLoading(false);
     } catch (error) {
       console.error("Error creating order:", error);
       toast.error("Failed to create order");
-    } finally {
-      // Clear the flag to allow future order creation attempts
-      isCreatingOrderRef.current = false;
       setLoading(false);
+    } finally {
+      isCreatingOrderRef.current = false;
     }
+  };
+
+  const handlePaymentReceived = () => {
+    setPaymentReceived(true);
+    setFlowStep("confirm_payment");
+  };
+
+  const handleCryptoSent = () => {
+    setCryptoSent(true);
+    setFlowStep("complete");
+  };
+
+  const handleCompleteTransaction = () => {
+    toast.success("Transaction completed successfully!");
+    // Reset flow
+    setFlowStep("form");
+    setCurrentOrder(null);
+    setBuyerWalletAddress("");
+    setPaymentReceived(false);
+    setCryptoSent(false);
+    setAmountTokens("");
+    setAmountPKR("");
+    navigate("/");
+  };
+
+  const handleCancelFlow = () => {
+    setFlowStep("form");
+    setCurrentOrder(null);
+    setBuyerWalletAddress("");
+    setPaymentReceived(false);
+    setCryptoSent(false);
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
   };
 
   if (!wallet) {
@@ -280,9 +316,7 @@ export default function SellData() {
           {/* Calculation Preview */}
           {amountTokens && amountPKR && (
             <div className="p-3 rounded-lg bg-[#1a2540]/30 border border-[#FF7A5C]/20">
-              <div className="text-xs text-white/70 uppercase mb-2">
-                Summary
-              </div>
+              <div className="text-xs text-white/70 uppercase mb-2">Summary</div>
               <div className="text-sm text-white/90">
                 {amountTokens} USDT = {parseFloat(amountPKR).toFixed(2)} PKR
               </div>
@@ -311,8 +345,8 @@ export default function SellData() {
               Cancel
             </Button>
             <Button
-              onClick={handleSubmit}
-              disabled={!isValid || loading}
+              onClick={handleStartSell}
+              disabled={!isFormValid || loading}
               className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
@@ -335,7 +369,6 @@ export default function SellData() {
           setShowPaymentDialog(open);
           if (!open) {
             setEditingPaymentMethodId(undefined);
-            // Refetch payment methods when dialog closes with a small delay
             setTimeout(() => {
               fetchPaymentMethods();
             }, 500);
@@ -345,12 +378,172 @@ export default function SellData() {
         paymentMethodId={editingPaymentMethodId}
         onSave={() => {
           setEditingPaymentMethodId(undefined);
-          // Refetch payment methods after saving with a small delay
           setTimeout(() => {
             fetchPaymentMethods();
           }, 300);
         }}
       />
+
+      {/* Buyer Wallet Address Dialog */}
+      <Dialog open={flowStep === "buyer_wallet"}>
+        <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white">Buyer Wallet Address</DialogTitle>
+          </DialogHeader>
+
+          {currentOrder && buyerWalletAddress && (
+            <div className="space-y-4">
+              <p className="text-sm text-white/70">
+                Send {parseFloat(amountTokens).toFixed(6)} USDT to this wallet
+                address:
+              </p>
+
+              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 break-all">
+                <p className="text-xs text-white/70 uppercase mb-2">
+                  Buyer Wallet
+                </p>
+                <p className="text-white/90 text-xs font-mono">
+                  {buyerWalletAddress}
+                </p>
+                <button
+                  onClick={() => copyToClipboard(buyerWalletAddress)}
+                  className="mt-2 text-[#FF7A5C] hover:text-[#FF6B4D] text-xs flex items-center gap-2"
+                >
+                  <Copy className="w-3 h-3" />
+                  Copy Address
+                </button>
+              </div>
+
+              <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
+                <p className="text-sm text-blue-300">
+                  Waiting for buyer to send {parseFloat(amountPKR).toFixed(2)}{" "}
+                  PKR...
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={handleCancelFlow}
+                  variant="outline"
+                  className="flex-1 border border-gray-300/30 text-gray-300"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handlePaymentReceived}
+                  className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+                >
+                  I've Received Payment
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Payment Dialog */}
+      <Dialog open={flowStep === "confirm_payment"}>
+        <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white">Confirm Payment</DialogTitle>
+          </DialogHeader>
+
+          {paymentMethods.length > 0 && (
+            <div className="space-y-4">
+              <p className="text-sm text-white/70">
+                Payment received from buyer. Ready to send crypto?
+              </p>
+
+              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
+                <p className="text-xs text-white/70 uppercase mb-2">
+                  You will receive
+                </p>
+                <p className="text-white font-semibold">
+                  {parseFloat(amountPKR).toFixed(2)} PKR
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
+                <p className="text-xs text-white/70 uppercase mb-2">
+                  From your account
+                </p>
+                <p className="text-white font-semibold">
+                  {paymentMethods[0].accountName}
+                </p>
+                <p className="text-white/70 text-xs">
+                  {paymentMethods[0].accountNumber}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
+                <p className="text-sm text-green-300">
+                  You will send {parseFloat(amountTokens).toFixed(6)} USDT to
+                  the buyer
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={handleCancelFlow}
+                  variant="outline"
+                  className="flex-1 border border-gray-300/30 text-gray-300"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCryptoSent}
+                  className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+                >
+                  I've Sent Crypto
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Transaction Complete Dialog */}
+      <Dialog open={flowStep === "complete"}>
+        <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white">Transaction Complete</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="flex justify-center">
+              <div className="w-16 h-16 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center">
+                <Check className="w-8 h-8 text-green-500" />
+              </div>
+            </div>
+
+            <div className="text-center space-y-2">
+              <p className="text-white font-semibold">
+                Transaction Completed Successfully!
+              </p>
+              <p className="text-white/70 text-sm">
+                You have successfully sent {parseFloat(amountTokens).toFixed(6)}{" "}
+                USDT and received {parseFloat(amountPKR).toFixed(2)} PKR
+              </p>
+            </div>
+
+            {currentOrder && (
+              <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
+                <p className="text-xs text-white/70 uppercase mb-1">Order ID</p>
+                <p className="text-white/90 text-xs font-mono break-all">
+                  {currentOrder.id}
+                </p>
+              </div>
+            )}
+
+            <Button
+              onClick={handleCompleteTransaction}
+              className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+            >
+              Back to Home
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Bottom Navigation */}
       <P2PBottomNavigation

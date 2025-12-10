@@ -27,8 +27,8 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       toast({
-        title: "Address Copied",
-        description: "Wallet address copied to clipboard",
+        title: "ADDRESS COPIED",
+        description: "WALLET ADDRESS COPIED TO CLIPBOARD",
       });
     } else {
       toast({

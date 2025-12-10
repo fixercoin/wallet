@@ -238,6 +238,17 @@ function AppRoutes() {
   );
 }
 
+function P2POrderFlowDialogs() {
+  return (
+    <>
+      <SellerPaymentMethodDialog />
+      <BuyerWalletAddressDialog />
+      <CryptoSentDialog />
+      <CryptoReceivedDialog />
+    </>
+  );
+}
+
 function AppContent() {
   const location = useLocation();
 
@@ -277,6 +288,7 @@ function AppContent() {
           <NotificationCenter />
         </div>
       )}
+      <P2POrderFlowDialogs />
       <AppRoutes />
     </div>
   );

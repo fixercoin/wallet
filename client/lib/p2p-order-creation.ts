@@ -81,6 +81,15 @@ export async function createOrderFromOffer(
 
   const orderId = `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+  console.log(`[P2P Order Creation] Creating new order:`, {
+    orderId,
+    offerCreatorWallet,
+    currentUserWallet,
+    orderType,
+    token: offer.token,
+    timestamp: new Date().toISOString(),
+  });
+
   // Determine buyer and seller based on order type
   let buyerWallet: string;
   let sellerWallet: string;

@@ -32,9 +32,9 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
       });
     } else {
       toast({
-        title: "Copy Failed",
+        title: "COPY FAILED",
         description:
-          "Could not copy address. Please copy it manually from the input field.",
+          "COULD NOT COPY ADDRESS. PLEASE COPY IT MANUALLY FROM THE INPUT FIELD.",
         variant: "destructive",
       });
     }

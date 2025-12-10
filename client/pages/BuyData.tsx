@@ -499,7 +499,7 @@ export default function BuyData() {
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-white">
-              Make Payment
+              MAKE PAYMENT
             </DialogTitle>
           </DialogHeader>
 
@@ -507,21 +507,21 @@ export default function BuyData() {
             <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 space-y-3">
               <div>
                 <p className="text-xs text-white/70 uppercase mb-1">
-                  Account Title
+                  ACCOUNT TITLE
                 </p>
                 <p className="text-white font-semibold">Niazi</p>
               </div>
 
               <div className="border-t border-gray-300/10 pt-3">
                 <p className="text-xs text-white/70 uppercase mb-1">
-                  Account Name
+                  ACCOUNT NAME
                 </p>
                 <p className="text-white font-semibold">Ameer Nawaz Khan</p>
               </div>
 
               <div className="border-t border-gray-300/10 pt-3">
                 <p className="text-xs text-white/70 uppercase mb-1">
-                  Account Number
+                  ACCOUNT NUMBER
                 </p>
                 <div className="flex items-center justify-between">
                   <p className="text-white font-semibold">03107044833</p>
@@ -536,7 +536,7 @@ export default function BuyData() {
 
               <div className="border-t border-gray-300/10 pt-3">
                 <p className="text-xs text-white/70 uppercase mb-1">
-                  Payment Method
+                  PAYMENT METHOD
                 </p>
                 <p className="text-white font-semibold">Easypaisa</p>
               </div>
@@ -544,8 +544,8 @@ export default function BuyData() {
 
             <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
               <p className="text-sm text-green-300">
-                Send {parseFloat(amountPKR).toFixed(2)} PKR to the above account
-                for {parseFloat(amountTokens).toFixed(6)} USDT
+                SEND {parseFloat(amountPKR).toFixed(2)} PKR TO THE ABOVE ACCOUNT
+                FOR {parseFloat(amountTokens).toFixed(6)} USDT
               </p>
             </div>
 
@@ -555,13 +555,13 @@ export default function BuyData() {
                 variant="outline"
                 className="flex-1 border border-gray-300/30 text-gray-300"
               >
-                Cancel
+                CANCEL
               </Button>
               <Button
                 onClick={handlePaymentSent}
                 className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
               >
-                I've Sent Payment
+                I'VE SENT PAYMENT
               </Button>
             </div>
           </div>

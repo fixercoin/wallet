@@ -617,6 +617,7 @@ export default function BuyData() {
             <DialogTitle className="text-white">Waiting for Seller</DialogTitle>
           </DialogHeader>
 
+          {!minimizedDialogs["waiting_confirmation"] && (
           <div className="space-y-4 py-4">
             <div className="flex justify-center">
               <Loader2 className="w-10 h-10 text-[#FF7A5C] animate-spin" />
@@ -657,6 +658,7 @@ export default function BuyData() {
               Cancel
             </Button>
           </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -728,12 +730,20 @@ export default function BuyData() {
       {/* Transaction Complete Dialog */}
       <Dialog open={flowStep === "complete"}>
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-white">
+          <DialogHeader className="flex flex-row items-start justify-between">
+            <DialogTitle className="text-white flex-1">
               Transaction Complete
             </DialogTitle>
+            <button
+              onClick={() => toggleMinimize("complete")}
+              className="p-1 rounded hover:bg-gray-700/50 transition-colors flex-shrink-0"
+              title={minimizedDialogs["complete"] ? "Maximize" : "Minimize"}
+            >
+              <Minus className="w-5 h-5 text-white/70 hover:text-white" />
+            </button>
           </DialogHeader>
 
+          {!minimizedDialogs["complete"] && (
           <div className="space-y-4 py-4">
             <div className="flex justify-center">
               <div className="w-16 h-16 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center">
@@ -768,6 +778,7 @@ export default function BuyData() {
               Back to Home
             </Button>
           </div>
+          )}
         </DialogContent>
       </Dialog>
 

@@ -6,10 +6,17 @@ import React, {
   useRef,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Check, Copy } from "lucide-react";
+import { ArrowLeft, Loader2, Check, Copy, Minus } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { PaymentMethodInfoCard } from "@/components/wallet/PaymentMethodInfoCard";
@@ -49,11 +56,17 @@ export default function BuyData() {
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
   >();
+  const [selectedToken, setSelectedToken] = useState<"USDT" | "FIXERCOIN">(
+    "USDT",
+  );
   const [exchangeRate, setExchangeRate] = useState<number>(280);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [amountPKR, setAmountPKR] = useState("");
   const [amountTokens, setAmountTokens] = useState("");
   const [loading, setLoading] = useState(false);
+  const [minimizedDialogs, setMinimizedDialogs] = useState<
+    Record<string, boolean>
+  >({});
 
   // P2P Dialog Flow State
   const [flowStep, setFlowStep] = useState<BuyFlowStep>("form");
@@ -63,11 +76,12 @@ export default function BuyData() {
     sellerCryptoSent?: boolean;
   }>({});
 
-  // Fetch exchange rate on mount
+  // Fetch exchange rate based on selected token
   useEffect(() => {
     const fetchRate = async () => {
       try {
-        const response = await fetch("/api/token/price?token=USDT");
+        const tokenParam = selectedToken === "USDT" ? "USDT" : "FIXERCOIN";
+        const response = await fetch(`/api/token/price?token=${tokenParam}`);
         if (!response.ok) throw new Error("Failed to fetch rate");
         const data = await response.json();
         const rate = data.rate || data.priceInPKR || 280;
@@ -79,7 +93,7 @@ export default function BuyData() {
     };
 
     fetchRate();
-  }, []);
+  }, [selectedToken]);
 
   // Fetch payment methods
   const fetchPaymentMethods = useCallback(async () => {
@@ -190,7 +204,7 @@ export default function BuyData() {
           id: `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           type: "BUY",
           sellerWallet: "",
-          token: "USDT",
+          token: selectedToken,
           pricePKRPerQuote: exchangeRate,
           minAmountTokens: 0,
           maxAmountTokens: Infinity,
@@ -200,7 +214,7 @@ export default function BuyData() {
         wallet.publicKey,
         "BUY",
         {
-          token: "USDT",
+          token: selectedToken,
           amountTokens: parseFloat(amountTokens),
           amountPKR: parseFloat(amountPKR),
           price: exchangeRate,
@@ -226,9 +240,9 @@ export default function BuyData() {
           "new_buy_order",
           "BUY",
           createdOrder.id,
-          `New buy order: ${parseFloat(amountTokens).toFixed(2)} USDT for ${parseFloat(amountPKR).toFixed(2)} PKR`,
+          `New buy order: ${parseFloat(amountTokens).toFixed(2)} ${selectedToken} for ${parseFloat(amountPKR).toFixed(2)} PKR`,
           {
-            token: createdOrder.token,
+            token: selectedToken,
             amountTokens: parseFloat(amountTokens),
             amountPKR: parseFloat(amountPKR),
             orderId: createdOrder.id,
@@ -324,6 +338,13 @@ export default function BuyData() {
     toast.success("Copied to clipboard");
   };
 
+  const toggleMinimize = (dialogName: string) => {
+    setMinimizedDialogs((prev) => ({
+      ...prev,
+      [dialogName]: !prev[dialogName],
+    }));
+  };
+
   if (!wallet) {
     return (
       <div
@@ -363,14 +384,31 @@ export default function BuyData() {
             </p>
           </div>
 
-          {/* Token Display */}
+          {/* Token Selection Dropdown */}
           <div>
             <label className="block text-xs font-semibold text-white/80 uppercase mb-2">
               Token
             </label>
-            <div className="px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold">
-              USDT
-            </div>
+            <Select
+              value={selectedToken}
+              onValueChange={(value) => {
+                setSelectedToken(value as "USDT" | "FIXERCOIN");
+                setAmountPKR("");
+                setAmountTokens("");
+              }}
+            >
+              <SelectTrigger className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold focus:ring-[#FF7A5C]/50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a2847] border border-gray-300/20">
+                <SelectItem value="USDT" className="text-white">
+                  USDT
+                </SelectItem>
+                <SelectItem value="FIXERCOIN" className="text-white">
+                  FIXERCOIN
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Price Display */}
@@ -379,7 +417,7 @@ export default function BuyData() {
               Price
             </label>
             <div className="px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold">
-              1 USDT = {exchangeRate.toFixed(2)} PKR
+              1 {selectedToken} = {exchangeRate.toFixed(2)} PKR
             </div>
           </div>
 
@@ -398,14 +436,14 @@ export default function BuyData() {
             />
           </div>
 
-          {/* Estimated USDT */}
+          {/* Estimated Token */}
           <div>
             <label className="block text-xs font-semibold text-white/80 uppercase mb-2">
-              Estimated USDT
+              Estimated {selectedToken}
             </label>
             <div className="px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold">
               {amountTokens ? parseFloat(amountTokens).toFixed(6) : "0.000000"}{" "}
-              USDT
+              {selectedToken}
             </div>
           </div>
 
@@ -416,7 +454,8 @@ export default function BuyData() {
                 Summary
               </div>
               <div className="text-sm text-white/90">
-                {amountTokens} USDT = {parseFloat(amountPKR).toFixed(2)} PKR
+                {amountTokens} {selectedToken} ={" "}
+                {parseFloat(amountPKR).toFixed(2)} PKR
               </div>
             </div>
           )}
@@ -554,7 +593,7 @@ export default function BuyData() {
             <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
               <p className="text-sm text-green-300">
                 SEND {parseFloat(amountPKR).toFixed(2)} PKR TO THE ABOVE ACCOUNT
-                FOR {parseFloat(amountTokens).toFixed(6)} USDT
+                FOR {parseFloat(amountTokens).toFixed(6)} {selectedToken}
               </p>
             </div>
 
@@ -584,59 +623,69 @@ export default function BuyData() {
             <DialogTitle className="text-white">Waiting for Seller</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="flex justify-center">
-              <Loader2 className="w-10 h-10 text-[#FF7A5C] animate-spin" />
-            </div>
+          {!minimizedDialogs["waiting_confirmation"] && (
+            <div className="space-y-4 py-4">
+              <div className="flex justify-center">
+                <Loader2 className="w-10 h-10 text-[#FF7A5C] animate-spin" />
+              </div>
 
-            <div className="text-center space-y-2">
-              <p className="text-white font-semibold">
-                Waiting for Seller Confirmation
-              </p>
-              <p className="text-white/70 text-sm">
-                Seller is verifying your payment. This may take a few moments...
-              </p>
-            </div>
-
-            {!orderStatus.sellerReceivedPayment ? (
-              <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
-                <p className="text-sm text-blue-300">
-                  Transaction: {parseFloat(amountPKR).toFixed(2)} PKR →{" "}
-                  {parseFloat(amountTokens).toFixed(6)} USDT
+              <div className="text-center space-y-2">
+                <p className="text-white font-semibold">
+                  Waiting for Seller Confirmation
+                </p>
+                <p className="text-white/70 text-sm">
+                  Seller is verifying your payment. This may take a few
+                  moments...
                 </p>
               </div>
-            ) : (
-              <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
-                <div className="flex items-center gap-2">
-                  <Check className="w-5 h-5 text-green-500" />
-                  <p className="text-sm text-green-300">
-                    Seller received your payment!
+
+              {!orderStatus.sellerReceivedPayment ? (
+                <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
+                  <p className="text-sm text-blue-300">
+                    Transaction: {parseFloat(amountPKR).toFixed(2)} PKR →{" "}
+                    {parseFloat(amountTokens).toFixed(6)} {selectedToken}
                   </p>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
+                  <div className="flex items-center gap-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <p className="text-sm text-green-300">
+                      Seller received your payment!
+                    </p>
+                  </div>
+                </div>
+              )}
 
-            <Button
-              onClick={handleCancelFlow}
-              variant="outline"
-              className="w-full border border-gray-300/30 text-gray-300"
-            >
-              Cancel
-            </Button>
-          </div>
+              <Button
+                onClick={handleCancelFlow}
+                variant="outline"
+                className="w-full border border-gray-300/30 text-gray-300"
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
       {/* Buyer Wallet Address Dialog */}
       <Dialog open={flowStep === "buyer_wallet"}>
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-white">
+          <DialogHeader className="flex flex-row items-start justify-between">
+            <DialogTitle className="text-white flex-1">
               Your Wallet Address
             </DialogTitle>
+            <button
+              onClick={() => toggleMinimize("buyer_wallet")}
+              className="p-1 rounded hover:bg-gray-700/50 transition-colors flex-shrink-0"
+              title={minimizedDialogs["buyer_wallet"] ? "Maximize" : "Minimize"}
+            >
+              <Minus className="w-5 h-5 text-white/70 hover:text-white" />
+            </button>
           </DialogHeader>
 
-          {currentOrder && wallet && (
+          {!minimizedDialogs["buyer_wallet"] && currentOrder && wallet && (
             <div className="space-y-4">
               <p className="text-sm text-white/70">
                 Seller is sending your crypto to this address:
@@ -669,8 +718,8 @@ export default function BuyData() {
 
               <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
                 <p className="text-sm text-blue-300">
-                  Waiting for {parseFloat(amountTokens).toFixed(6)} USDT to
-                  arrive...
+                  Waiting for {parseFloat(amountTokens).toFixed(6)}{" "}
+                  {selectedToken} to arrive...
                 </p>
               </div>
 
@@ -688,46 +737,57 @@ export default function BuyData() {
       {/* Transaction Complete Dialog */}
       <Dialog open={flowStep === "complete"}>
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-white">
+          <DialogHeader className="flex flex-row items-start justify-between">
+            <DialogTitle className="text-white flex-1">
               Transaction Complete
             </DialogTitle>
+            <button
+              onClick={() => toggleMinimize("complete")}
+              className="p-1 rounded hover:bg-gray-700/50 transition-colors flex-shrink-0"
+              title={minimizedDialogs["complete"] ? "Maximize" : "Minimize"}
+            >
+              <Minus className="w-5 h-5 text-white/70 hover:text-white" />
+            </button>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="flex justify-center">
-              <div className="w-16 h-16 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center">
-                <Check className="w-8 h-8 text-green-500" />
+          {!minimizedDialogs["complete"] && (
+            <div className="space-y-4 py-4">
+              <div className="flex justify-center">
+                <div className="w-16 h-16 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center">
+                  <Check className="w-8 h-8 text-green-500" />
+                </div>
               </div>
-            </div>
 
-            <div className="text-center space-y-2">
-              <p className="text-white font-semibold">
-                Transaction Completed Successfully!
-              </p>
-              <p className="text-white/70 text-sm">
-                You have successfully received{" "}
-                {parseFloat(amountTokens).toFixed(6)} USDT for{" "}
-                {parseFloat(amountPKR).toFixed(2)} PKR
-              </p>
-            </div>
-
-            {currentOrder && (
-              <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
-                <p className="text-xs text-white/70 uppercase mb-1">Order ID</p>
-                <p className="text-white/90 text-xs font-mono break-all">
-                  {currentOrder.id}
+              <div className="text-center space-y-2">
+                <p className="text-white font-semibold">
+                  Transaction Completed Successfully!
+                </p>
+                <p className="text-white/70 text-sm">
+                  You have successfully received{" "}
+                  {parseFloat(amountTokens).toFixed(6)} {selectedToken} for{" "}
+                  {parseFloat(amountPKR).toFixed(2)} PKR
                 </p>
               </div>
-            )}
 
-            <Button
-              onClick={handleCompleteTransaction}
-              className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
-            >
-              Back to Home
-            </Button>
-          </div>
+              {currentOrder && (
+                <div className="p-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
+                  <p className="text-xs text-white/70 uppercase mb-1">
+                    Order ID
+                  </p>
+                  <p className="text-white/90 text-xs font-mono break-all">
+                    {currentOrder.id}
+                  </p>
+                </div>
+              )}
+
+              <Button
+                onClick={handleCompleteTransaction}
+                className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+              >
+                Back to Home
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

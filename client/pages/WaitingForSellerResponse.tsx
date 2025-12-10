@@ -395,6 +395,69 @@ export default function WaitingForSellerResponse() {
           </Card>
         )}
 
+        {/* Messages Chat */}
+        <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30 mb-6">
+          <CardContent className="p-4 flex flex-col h-full min-h-[300px]">
+            <h2 className="text-lg font-bold text-white mb-4 uppercase">
+              Messages
+            </h2>
+
+            {/* Messages Container */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-4 p-3 bg-[#1a2540]/30 rounded-lg border border-white/5">
+              {messages.length === 0 ? (
+                <div className="text-center text-white/60 text-xs py-8">
+                  No messages yet. Send a message to start chatting!
+                </div>
+              ) : (
+                messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`text-xs p-3 rounded-lg ${
+                      msg.sender_wallet === wallet.publicKey
+                        ? "bg-[#FF7A5C]/20 text-white/90 ml-4"
+                        : "bg-[#1a2540]/50 text-white/70 mr-4"
+                    }`}
+                  >
+                    <div className="font-semibold text-white/80 uppercase text-xs mb-1">
+                      {msg.sender_wallet === order.sellerWallet
+                        ? "SELLER"
+                        : "YOU"}
+                    </div>
+                    <div className="break-words">{msg.message}</div>
+                    <div className="text-xs text-white/50 mt-2">
+                      {new Date(msg.created_at).toLocaleTimeString()}
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Message Input */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40 text-sm"
+                placeholder="Type a message..."
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter" && !sending) {
+                    handleSendMessage();
+                  }
+                }}
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!messageInput.trim() || sending}
+                className="px-3 py-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white disabled:opacity-50"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Cancel Button */}
         <Button
           onClick={handleCancelOrder}

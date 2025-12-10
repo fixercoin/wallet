@@ -1,14 +1,12 @@
 const RPC_ENDPOINTS = [
-  // Prefer environment-configured Helius RPC
-  process.env.HELIUS_API_KEY
-    ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
-    : null,
   process.env.SOLANA_RPC_URL,
-  process.env.HELIUS_RPC_URL,
-  // Public fallbacks
+  // Public fallbacks (in order of reliability)
+  "https://api.mainnet-beta.solflare.network",
   "https://solana.publicnode.com",
+  "https://api.solflare.com",
   "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
+  "https://api.marinade.finance/rpc",
 ].filter(Boolean) as string[];
 
 function cors(h: Headers = new Headers()) {

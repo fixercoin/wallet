@@ -124,17 +124,19 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   );
 
   const availableTokens = useMemo(() => {
-    // Show SOL first, then tokens with positive balance; always include FIXERCOIN and USDC
+    // Show SOL first, then tokens with positive balance; always include FIXERCOIN, USDC, and USDT
     const sol = tokens.find((t) => t.symbol === "SOL");
     const rest = tokens
-      .filter((t) => t.symbol !== "SOL" && t.symbol !== "USDT")
+      .filter((t) => t.symbol !== "SOL")
       .filter(
         (t) =>
           (t.balance || 0) > 0 ||
           t.symbol === "FIXERCOIN" ||
           t.symbol === "USDC" ||
+          t.symbol === "USDT" ||
           t.mint === TOKEN_MINTS.FIXERCOIN ||
-          t.mint === TOKEN_MINTS.USDC,
+          t.mint === TOKEN_MINTS.USDC ||
+          t.mint === TOKEN_MINTS.USDT,
       )
       .sort((a, b) => (b.balance || 0) - (a.balance || 0));
     return sol ? [sol, ...rest] : rest;
@@ -866,19 +868,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       <div className="flex flex-col relative z-20 pt-4">
         <div className="w-full">
           <div className="border-0 bg-transparent">
-            <div className="space-y-6 px-6 py-4">
-              <div className="flex items-center gap-3 pb-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onBack}
-                  className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
-                  aria-label="Back"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div className="font-medium text-sm">SEND {selectedSymbol}</div>
-              </div>
+            <div className="space-y-6 px-6 pt-20 pb-4">
               {step === "form" ? (
                 <>
                   <div className="space-y-2">
@@ -1025,13 +1015,22 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     />
                   </div>
 
-                  <Button
-                    onClick={handleContinue}
-                    className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase rounded-lg"
-                    disabled={!recipient || !amount}
-                  >
-                    Continue
-                  </Button>
+                  <div className="space-y-3">
+                    <Button
+                      onClick={handleContinue}
+                      className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase rounded-lg"
+                      disabled={!recipient || !amount}
+                    >
+                      Continue
+                    </Button>
+                    <Button
+                      onClick={onBack}
+                      className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 rounded-lg transition-colors uppercase"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Back
+                    </Button>
+                  </div>
                 </>
               ) : (
                 <>

@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DollarSign } from "lucide-react";
 import { TokenInfo } from "@/lib/wallet";
-import { PriceLoader } from "@/components/ui/price-loader";
 import { useState } from "react";
 
 interface SellPanelProps {
@@ -69,11 +68,7 @@ export const SellPanel: React.FC<SellPanelProps> = ({
         <div className="space-y-2 text-sm">
           <div className="flex justify-between text-gray-400">
             <span>Price per {token.symbol}</span>
-            {token.price ? (
-              <span>${token.price.toFixed(6)}</span>
-            ) : (
-              <PriceLoader />
-            )}
+            {token.price ? <span>${token.price.toFixed(6)}</span> : null}
           </div>
           <div className="flex justify-between text-gray-400">
             <span>Network Fee</span>

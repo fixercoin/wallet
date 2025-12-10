@@ -26,12 +26,24 @@ export function NotificationCenter() {
     switch (type) {
       case "order_created":
         return "📦";
+      case "new_buy_order":
+        return "🛍️";
       case "payment_confirmed":
+        return "💰";
+      case "seller_payment_received":
         return "✅";
-      case "received_confirmed":
+      case "transfer_initiated":
+        return "🚀";
+      case "crypto_received":
         return "🎉";
       case "order_cancelled":
         return "❌";
+      case "order_accepted":
+        return "👍";
+      case "order_rejected":
+        return "👎";
+      case "order_completed_by_seller":
+        return "📋";
       default:
         return "📢";
     }
@@ -41,12 +53,24 @@ export function NotificationCenter() {
     switch (type) {
       case "order_created":
         return "New Order";
+      case "new_buy_order":
+        return "New Buy Order";
       case "payment_confirmed":
         return "Payment Confirmed";
-      case "received_confirmed":
-        return "Order Received";
+      case "seller_payment_received":
+        return "Payment Received";
+      case "transfer_initiated":
+        return "Crypto Transfer Started";
+      case "crypto_received":
+        return "Crypto Received";
       case "order_cancelled":
         return "Order Cancelled";
+      case "order_accepted":
+        return "Order Accepted";
+      case "order_rejected":
+        return "Order Rejected";
+      case "order_completed_by_seller":
+        return "Order Completed by Seller";
       default:
         return "Notification";
     }
@@ -117,34 +141,57 @@ export function NotificationCenter() {
 
                         setIsOpen(false);
 
-                        // Determine buyer and seller based on notification type
-                        // For BUY orders: senderWallet is buyer, recipientWallet is seller/admin
-                        // For SELL orders: senderWallet is seller, recipientWallet is buyer
-                        const isBuyOrder = notification.orderType === "BUY";
-                        const buyerWallet = isBuyOrder
-                          ? notification.senderWallet
-                          : notification.recipientWallet;
-                        const sellerWallet = isBuyOrder
-                          ? notification.recipientWallet
-                          : notification.senderWallet;
+                        // For new buy orders, navigate to seller order confirmation page
+                        if (notification.type === "new_buy_order") {
+                          navigate(
+                            `/seller-order-confirmation/${notification.orderId}`,
+                          );
+                          return;
+                        }
 
+                        // For new sell orders, navigate to buyer order confirmation page
+                        if (notification.type === "new_sell_order") {
+                          navigate(
+                            `/buyer-order-confirmation/${notification.orderId}`,
+                          );
+                          return;
+                        }
+
+                        // For other notifications, navigate to order-complete
+                        // Determine buyer and seller based on order type and who sent the notification
+                        // The order always has specific buyer and seller wallets
+                        // We need to reconstruct this from the order type context
+                        const isBuyOrder = notification.orderType === "BUY";
+
+                        // For BUY order: recipientWallet = buyer, senderWallet = seller (when seller updates)
+                        // For SELL order: recipientWallet = seller, senderWallet = buyer (when buyer updates)
+                        // But notifications can be from either party
+                        // Best approach: use the orderData from notification which might have this info
+                        // If not available, we need to look at the actual order
+
+                        // For now, use recipientWallet as a clue about who this notification is FOR
+                        // (the recipient is getting notified about a state change by the sender)
+                        let buyerWallet: string;
+                        let sellerWallet: string;
+
+                        if (isBuyOrder) {
+                          // BUY order: buyer is who initiated the buy, seller is the counterparty
+                          // Typically the recipientWallet gets the notification when counterparty acts
+                          // So if seller acts → buyer is recipient; if buyer acts → seller is recipient
+                          buyerWallet = notification.recipientWallet;
+                          sellerWallet = notification.senderWallet;
+                        } else {
+                          // SELL order: seller is who initiated the sell, buyer is the counterparty
+                          sellerWallet = notification.recipientWallet;
+                          buyerWallet = notification.senderWallet;
+                        }
+
+                        // Navigate to order-complete
+                        // Pass orderId so it can be loaded from storage
+                        // (Storing full order in state can cause issues with missing roomId and other fields)
                         navigate("/order-complete", {
                           state: {
-                            order: {
-                              id: notification.orderId,
-                              type: notification.orderType,
-                              token: notification.orderData.token,
-                              amountTokens: notification.orderData.amountTokens,
-                              amountPKR: notification.orderData.amountPKR,
-                              buyerWallet,
-                              sellerWallet,
-                              payment_method: "easypaisa",
-                              roomId: notification.orderId,
-                              offerId: "",
-                              pricePKRPerQuote: 280,
-                              status: "PENDING",
-                              createdAt: notification.createdAt,
-                            },
+                            orderId: notification.orderId,
                             openChat: true,
                           },
                         });

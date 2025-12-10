@@ -1,12 +1,52 @@
 // Cloudflare Pages Functions handler for fetching token accounts
 // Supports GET requests with query params: ?publicKey=<address>
 // Also supports POST with JSON body: { walletAddress: <address> }
+// Uses free RPC providers with automatic fallback
 
-const RPC_ENDPOINTS = [
-  "https://solana.publicnode.com",
-  "https://api.mainnet-beta.solana.com",
-  "https://rpc.ankr.com/solana",
-];
+// Build list of RPC endpoints from environment and free public providers
+function buildRpcEndpoints(env: any): string[] {
+  const endpoints: string[] = [];
+
+  // Add environment-configured endpoints first (highest priority)
+  if (env?.SOLANA_RPC_URL && typeof env.SOLANA_RPC_URL === "string") {
+    const trimmed = env.SOLANA_RPC_URL.trim();
+    if (trimmed.length > 0) {
+      endpoints.push(trimmed);
+    }
+  }
+
+  if (env?.ALCHEMY_RPC_URL && typeof env.ALCHEMY_RPC_URL === "string") {
+    const trimmed = env.ALCHEMY_RPC_URL.trim();
+    if (trimmed.length > 0) {
+      endpoints.push(trimmed);
+    }
+  }
+
+  if (env?.MORALIS_RPC_URL && typeof env.MORALIS_RPC_URL === "string") {
+    const trimmed = env.MORALIS_RPC_URL.trim();
+    if (trimmed.length > 0) {
+      endpoints.push(trimmed);
+    }
+  }
+
+  // Add free public RPC endpoints (tested, reliable)
+  const publicEndpoints = [
+    "https://solana.publicnode.com",
+    "https://api.solflare.com",
+    "https://rpc.ankr.com/solana",
+    "https://api.mainnet-beta.solana.com",
+    "https://api.marinade.finance/rpc",
+  ];
+
+  // Add public endpoints that aren't already in the list
+  publicEndpoints.forEach((endpoint) => {
+    if (!endpoints.includes(endpoint)) {
+      endpoints.push(endpoint);
+    }
+  });
+
+  return endpoints;
+}
 
 // Known token metadata for common tokens
 const KNOWN_TOKENS: Record<string, any> = {
@@ -25,7 +65,7 @@ const KNOWN_TOKENS: Record<string, any> = {
   Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns: {
     mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
     symbol: "USDT",
-    name: "Tether USD",
+    name: "USDT TETHER",
     decimals: 6,
   },
   H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: {
@@ -104,17 +144,6 @@ async function handler(request: Request, context: any): Promise<Response> {
       );
     }
 
-    // Build RPC endpoint list with env vars first
-    const rpcEndpoints = [
-      env?.HELIUS_API_KEY
-        ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`
-        : "",
-      env?.HELIUS_RPC_URL || "",
-      env?.MORALIS_RPC_URL || "",
-      env?.ALCHEMY_RPC_URL || "",
-      ...RPC_ENDPOINTS,
-    ].filter(Boolean);
-
     const rpcBody = {
       jsonrpc: "2.0",
       id: 1,
@@ -127,14 +156,24 @@ async function handler(request: Request, context: any): Promise<Response> {
     };
 
     let lastError: string | null = null;
+    const rpcEndpoints = buildRpcEndpoints(env);
+
+    console.log(
+      `[TokenAccounts] Using ${rpcEndpoints.length} RPC endpoints. Primary: ${rpcEndpoints[0]?.substring(0, 50)}...`,
+    );
 
     // Try each RPC endpoint
-    for (const endpoint of rpcEndpoints) {
+    for (let i = 0; i < rpcEndpoints.length; i++) {
+      const endpoint = rpcEndpoints[i];
       if (!endpoint) continue;
 
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        console.log(
+          `[TokenAccounts] Attempt ${i + 1}/${rpcEndpoints.length}: ${endpoint.substring(0, 60)}...`,
+        );
 
         const resp = await fetch(endpoint, {
           method: "POST",
@@ -145,14 +184,22 @@ async function handler(request: Request, context: any): Promise<Response> {
 
         clearTimeout(timeoutId);
 
+        if (!resp.ok) {
+          const errorText = await resp.text();
+          lastError = `HTTP ${resp.status}: ${errorText}`;
+          console.warn(
+            `[TokenAccounts] Endpoint ${i + 1} non-OK response: ${lastError}`,
+          );
+          continue;
+        }
+
         const data = await resp.json();
 
         // Check if RPC returned an error
         if (data.error) {
           lastError = data.error.message || "RPC error";
           console.warn(
-            `[TokenAccounts] RPC ${endpoint.slice(0, 40)} returned error:`,
-            data.error,
+            `[TokenAccounts] Endpoint ${i + 1} RPC error: ${lastError}`,
           );
           continue;
         }
@@ -199,8 +246,59 @@ async function handler(request: Request, context: any): Promise<Response> {
         // Filter out null entries
         const validTokens = tokens.filter(Boolean);
 
+        // Fetch and include native SOL balance
+        let solBalance = 0;
+        try {
+          const solRpcBody = {
+            jsonrpc: "2.0",
+            id: 1,
+            method: "getBalance",
+            params: [publicKey],
+          };
+
+          const solController = new AbortController();
+          const solTimeoutId = setTimeout(() => solController.abort(), 10000);
+
+          const solResp = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(solRpcBody),
+            signal: solController.signal,
+          });
+
+          clearTimeout(solTimeoutId);
+
+          const solData = await solResp.json();
+          const lamports = solData.result ?? solData.result?.value;
+          if (
+            !solData.error &&
+            typeof lamports === "number" &&
+            isFinite(lamports) &&
+            lamports >= 0
+          ) {
+            solBalance = lamports / 1_000_000_000;
+            console.log(
+              `[TokenAccounts] ✅ Fetched SOL balance: ${solBalance} SOL`,
+            );
+          }
+        } catch (err) {
+          console.warn(`[TokenAccounts] Failed to fetch SOL balance:`, err);
+        }
+
+        // Add SOL to the beginning of tokens list
+        const allTokens = [
+          {
+            mint: "So11111111111111111111111111111111111111112",
+            symbol: "SOL",
+            name: "Solana",
+            decimals: 9,
+            balance: solBalance,
+          },
+          ...validTokens,
+        ];
+
         console.log(
-          `[TokenAccounts] Found ${validTokens.length} token accounts for ${publicKey.slice(
+          `[TokenAccounts] ✅ Found ${validTokens.length} token accounts (plus SOL) for ${publicKey.slice(
             0,
             8,
           )}`,
@@ -209,8 +307,9 @@ async function handler(request: Request, context: any): Promise<Response> {
         return new Response(
           JSON.stringify({
             publicKey,
-            tokens: validTokens,
-            count: validTokens.length,
+            tokens: allTokens,
+            count: allTokens.length,
+            source: endpoint.substring(0, 50),
           }),
           {
             status: 200,
@@ -221,26 +320,26 @@ async function handler(request: Request, context: any): Promise<Response> {
           },
         );
       } catch (error: any) {
-        lastError =
-          error?.name === "AbortError"
-            ? "timeout"
-            : error?.message || String(error);
-        console.warn(
-          `[TokenAccounts] RPC endpoint ${endpoint.slice(0, 40)} failed:`,
-          lastError,
-        );
-        continue;
+        if (error?.name === "AbortError") {
+          lastError = "Request timeout";
+          console.warn(`[TokenAccounts] Endpoint ${i + 1} timeout`);
+        } else {
+          lastError = error?.message || String(error);
+          console.warn(`[TokenAccounts] Endpoint ${i + 1} error: ${lastError}`);
+        }
       }
     }
 
     // All endpoints failed
     console.error(
-      `[TokenAccounts] All RPC endpoints failed. Last error: ${lastError}`,
+      `[TokenAccounts] All ${rpcEndpoints.length} RPC endpoints failed. Last error: ${lastError}`,
     );
     return new Response(
       JSON.stringify({
         error: "Failed to fetch token accounts - all RPC endpoints failed",
         details: lastError || "No available Solana RPC providers",
+        endpointsAttempted: rpcEndpoints.length,
+        primaryEndpoint: rpcEndpoints[0]?.substring(0, 60) || "none",
         tokens: [],
       }),
       {

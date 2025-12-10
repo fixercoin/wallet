@@ -68,14 +68,23 @@ export class PushNotificationService {
   }
 
   async sendOrderNotification(
-    type: "order_created" | "payment_confirmed" | "received_confirmed",
+    type:
+      | "order_created"
+      | "payment_confirmed"
+      | "seller_payment_received"
+      | "transfer_initiated"
+      | "crypto_received"
+      | "order_cancelled",
     message: string,
     orderData: { token: string; amountPKR: number },
   ): Promise<void> {
     const titles = {
       order_created: "📦 New Order",
-      payment_confirmed: "✅ Payment Confirmed",
-      received_confirmed: "🎉 Order Received",
+      payment_confirmed: "💰 Payment Confirmed",
+      seller_payment_received: "✅ Payment Received",
+      transfer_initiated: "🚀 Crypto Transfer Started",
+      crypto_received: "🎉 Crypto Received",
+      order_cancelled: "❌ Order Cancelled",
     };
 
     const title = titles[type] || "Order Notification";
@@ -120,7 +129,13 @@ export function usePushNotifications() {
   };
 
   const sendOrderNotification = async (
-    type: "order_created" | "payment_confirmed" | "received_confirmed",
+    type:
+      | "order_created"
+      | "payment_confirmed"
+      | "seller_payment_received"
+      | "transfer_initiated"
+      | "crypto_received"
+      | "order_cancelled",
     message: string,
     orderData: { token: string; amountPKR: number },
   ): Promise<void> => {

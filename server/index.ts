@@ -4,6 +4,8 @@ import { handleSolanaRpc } from "./routes/solana-proxy";
 import { handleWalletBalance } from "./routes/wallet-balance";
 import { handleGetTokenBalance } from "./routes/token-balance";
 import { handleGetTokenAccounts } from "./routes/token-accounts";
+import { handleGetAllBalances } from "./routes/all-balances";
+import { handleWalletMoralisTokens } from "./routes/wallet-moralis-tokens";
 import { handleExchangeRate } from "./routes/exchange-rate";
 import {
   handleDexscreenerTokens,
@@ -15,6 +17,7 @@ import {
   handleSolPrice,
   handleTokenPrice,
 } from "./routes/dexscreener-price";
+import { handleBirdeyePrice } from "./routes/api-birdeye";
 import {
   handleCoinMarketCapQuotes,
   handleCoinMarketCapSearch,
@@ -35,6 +38,7 @@ import {
   handleUpdateTradeRoom,
   handleListTradeMessages,
   handleAddTradeMessage,
+  handleConfirmPayment,
   handleListP2POrders,
   handleCreateP2POrder,
   handleGetP2POrder,
@@ -87,6 +91,14 @@ import {
   handleMarkNotificationAsRead,
   handleDeleteNotification,
 } from "./routes/p2p-notifications";
+import {
+  handleGetMatches,
+  handleCreateMatch,
+  handleGetMatch,
+  handleUpdateMatch,
+  handleListMatches,
+  handleCancelMatch,
+} from "./routes/p2p-matching";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
@@ -263,6 +275,68 @@ export async function createServer(): Promise<express.Application> {
     } catch (e: any) {
       return res.status(500).json({
         error: "Failed to fetch token accounts",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  // All balances endpoint - fetches all tokens including SOL using Helius RPC
+  app.get("/api/wallet/all-balances", async (req, res) => {
+    try {
+      await handleGetAllBalances(req, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch all balances",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  // Moralis token balances endpoint - fast token fetching via Moralis REST API
+  app.get("/api/wallet/moralis-tokens", async (req, res) => {
+    try {
+      await handleWalletMoralisTokens(req, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch token balances from Moralis",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
+  // Unified wallet endpoint - returns balance (alias for /api/wallet/balance)
+  app.get("/api/wallet", async (req, res) => {
+    try {
+      // Support multiple parameter names for publicKey
+      const publicKey =
+        (req.query.publicKey as string) ||
+        (req.query.wallet as string) ||
+        (req.query.address as string) ||
+        (req.query.walletAddress as string);
+
+      if (!publicKey || typeof publicKey !== "string") {
+        return res.status(400).json({
+          error: "Missing or invalid wallet address parameter",
+          examples: [
+            "GET /api/wallet?publicKey=...",
+            "GET /api/wallet?wallet=...",
+            "GET /api/wallet?address=...",
+            "GET /api/wallet?walletAddress=...",
+          ],
+          availableEndpoints: [
+            "/api/wallet/balance - Get SOL balance",
+            "/api/wallet/token-accounts - Get token accounts",
+            "/api/wallet/token-balance - Get specific token balance",
+          ],
+        });
+      }
+
+      // Delegate to wallet balance handler
+      const modifiedReq = { ...req, query: { publicKey } };
+      await handleWalletBalance(modifiedReq as any, res);
+    } catch (e: any) {
+      return res.status(500).json({
+        error: "Failed to fetch wallet information",
         details: e?.message || String(e),
       });
     }
@@ -685,6 +759,14 @@ export async function createServer(): Promise<express.Application> {
   app.put("/api/p2p/orders/:orderId", handleUpdateP2POrder);
   app.delete("/api/p2p/orders/:orderId", handleDeleteP2POrder);
 
+  // P2P Order Matching routes (Smart matching engine)
+  app.get("/api/p2p/matches", handleGetMatches); // Get matches for an order
+  app.post("/api/p2p/matches", handleCreateMatch); // Create a matched pair
+  app.get("/api/p2p/matches/:matchId", handleGetMatch); // Get match details
+  app.put("/api/p2p/matches/:matchId", handleUpdateMatch); // Update match status
+  app.get("/api/p2p/matches/list/all", handleListMatches); // List matches for wallet
+  app.delete("/api/p2p/matches/:matchId", handleCancelMatch); // Cancel a match
+
   // P2P Payment Methods routes
   app.get("/api/p2p/payment-methods", handleGetPaymentMethods);
   app.post("/api/p2p/payment-methods", handleSavePaymentMethod);
@@ -699,6 +781,9 @@ export async function createServer(): Promise<express.Application> {
   // Trade Messages routes
   app.get("/api/p2p/rooms/:roomId/messages", handleListTradeMessages);
   app.post("/api/p2p/rooms/:roomId/messages", handleAddTradeMessage);
+
+  // Payment Confirmation route
+  app.post("/api/p2p/rooms/:roomId/confirm-payment", handleConfirmPayment);
 
   // P2P Notifications routes
   app.get("/api/p2p/notifications", handleListNotifications);

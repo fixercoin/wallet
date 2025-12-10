@@ -45,7 +45,7 @@ export const TokenQuickInfoCard: React.FC<TokenQuickInfoCardProps> = ({
               $
               {currentPrice.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
-                maximumFractionDigits: 8,
+                maximumFractionDigits: 2,
               })}
             </div>
           </div>

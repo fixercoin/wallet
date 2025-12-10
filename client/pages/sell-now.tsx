@@ -272,17 +272,26 @@ export default function SellNow() {
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = "Failed to save order";
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || errorMessage;
+        } catch {
+          // If not JSON, use the text as-is
+          errorMessage = errorText || errorMessage;
+        }
         console.error(
           "Failed to save order to API:",
           response.status,
-          await response.text(),
+          errorMessage,
         );
-        return false;
+        throw new Error(errorMessage);
       }
       return true;
     } catch (error) {
       console.error("Error saving order to API:", error);
-      return false;
+      throw error;
     }
   };
 
@@ -354,10 +363,7 @@ export default function SellNow() {
         status: "PENDING",
       };
 
-      const saved = await saveOrderToAPI(order);
-      if (!saved) {
-        throw new Error("Failed to save order to the server");
-      }
+      await saveOrderToAPI(order);
 
       toast({
         title: "Success",
@@ -369,9 +375,12 @@ export default function SellNow() {
 
       navigate("/sell-order");
     } catch (error: any) {
+      const errorMessage = error?.message || String(error);
+      console.error("[SellNow] Error creating order:", errorMessage);
+
       toast({
-        title: "Failed to save order",
-        description: error?.message || String(error),
+        title: "Failed to create sell order",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

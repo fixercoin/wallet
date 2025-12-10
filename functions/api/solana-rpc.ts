@@ -4,28 +4,23 @@ export async function onRequestPost({ request, env }) {
 
     // Get RPC endpoints from environment with fallbacks
     const rpcEndpoints = [
-      // Priority 1: Helius RPC (if env var is set)
-      env.HELIUS_RPC_URL,
-      env.VITE_HELIUS_RPC_URL,
-      env.HELIUS_API_KEY
-        ? `https://mainnet.helius-rpc.com/?api-key=${env.HELIUS_API_KEY}`
-        : null,
-      // Priority 2: Custom Solana RPC
+      // Priority 1: Custom Solana RPC
       env.SOLANA_RPC_URL,
       env.VITE_SOLANA_RPC_URL,
-      // Priority 3: Public fallbacks
-      "https://solana-rpc.publicnode.com",
+      // Priority 2: Public fallbacks (in order of reliability)
+      "https://api.mainnet-beta.solflare.network",
       "https://solana.publicnode.com",
+      "https://api.solflare.com",
       "https://rpc.ankr.com/solana",
       "https://api.mainnet-beta.solana.com",
+      "https://api.marinade.finance/rpc",
     ].filter((url) => url && typeof url === "string");
 
     if (!rpcEndpoints.length) {
       return new Response(
         JSON.stringify({
           error: "No RPC endpoints configured",
-          details:
-            "Please set SOLANA_RPC_URL, HELIUS_RPC_URL, or HELIUS_API_KEY in environment variables",
+          details: "Using public Solflare RPC endpoint as fallback",
         }),
         {
           status: 500,

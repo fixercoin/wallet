@@ -10,9 +10,16 @@ export interface OrderNotification {
   senderWallet: string;
   type:
     | "order_created"
+    | "new_buy_order"
+    | "new_sell_order"
     | "payment_confirmed"
-    | "received_confirmed"
-    | "order_cancelled";
+    | "seller_payment_received"
+    | "transfer_initiated"
+    | "crypto_received"
+    | "order_cancelled"
+    | "order_accepted"
+    | "order_rejected"
+    | "order_completed_by_seller";
   orderType: "BUY" | "SELL";
   message: string;
   orderData: {
@@ -38,8 +45,9 @@ export function useOrderNotifications() {
       setLoading(true);
       try {
         const query = unreadOnly ? "&unread=true" : "";
+        // Fetch direct notifications + broadcast notifications but filter out self-created ones
         const response = await fetch(
-          `/api/p2p/notifications?wallet=${encodeURIComponent(wallet.publicKey)}${query}`,
+          `/api/p2p/notifications?wallet=${encodeURIComponent(wallet.publicKey)}&includeBroadcast=true${query}`,
         );
 
         if (!response.ok) {
@@ -47,9 +55,15 @@ export function useOrderNotifications() {
         }
 
         const data = await response.json();
-        setNotifications(data.data || []);
 
-        const unread = (data.data || []).filter(
+        // Filter out notifications where the user is the sender (self-created)
+        const filteredNotifications = (data.data || []).filter(
+          (n: OrderNotification) => n.senderWallet !== wallet.publicKey,
+        );
+
+        setNotifications(filteredNotifications);
+
+        const unread = filteredNotifications.filter(
           (n: OrderNotification) => !n.read,
         ).length;
         setUnreadCount(unread);
@@ -67,9 +81,16 @@ export function useOrderNotifications() {
       recipientWallet: string,
       type:
         | "order_created"
+        | "new_buy_order"
+        | "new_sell_order"
         | "payment_confirmed"
-        | "received_confirmed"
-        | "order_cancelled",
+        | "seller_payment_received"
+        | "transfer_initiated"
+        | "crypto_received"
+        | "order_cancelled"
+        | "order_accepted"
+        | "order_rejected"
+        | "order_completed_by_seller",
       orderType: "BUY" | "SELL",
       orderId: string,
       message: string,
@@ -146,7 +167,10 @@ export function useOrderNotifications() {
       const titles: Record<string, string> = {
         order_created: "New Order",
         payment_confirmed: "Payment Confirmed",
-        received_confirmed: "Order Received",
+        seller_payment_received: "Payment Received",
+        transfer_initiated: "Crypto Transfer Started",
+        crypto_received: "Crypto Received",
+        order_cancelled: "Order Cancelled",
       };
 
       toast({

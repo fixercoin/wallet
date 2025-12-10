@@ -1,6 +1,7 @@
-// Token metadata interface for simplified token info
+// Solana RPC Service using Web3.js and public Solflare endpoint
 import { Connection, PublicKey } from "@solana/web3.js";
-import { SOLANA_RPC_URL } from "../../../utils/solanaConfig";
+
+const RPC_URL = "https://api.mainnet-beta.solflare.network";
 
 export interface TokenMetadata {
   mint: string;
@@ -10,7 +11,6 @@ export interface TokenMetadata {
   logoURI?: string;
 }
 
-// Basic known token list (minimal, can be expanded)
 export const KNOWN_TOKENS: Record<string, TokenMetadata> = {
   So11111111111111111111111111111111111111112: {
     mint: "So11111111111111111111111111111111111111112",
@@ -31,7 +31,7 @@ export const KNOWN_TOKENS: Record<string, TokenMetadata> = {
   Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns: {
     mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
     symbol: "USDT",
-    name: "Tether USD",
+    name: "USDT TETHER",
     decimals: 6,
     logoURI:
       "https://cdn.builder.io/api/v1/image/assets%2F559a5e19be114c9d8427d6683b845144%2Fc2ea69828dbc4a90b2deed99c2291802?format=webp&width=800",
@@ -60,210 +60,182 @@ export const KNOWN_TOKENS: Record<string, TokenMetadata> = {
   },
 };
 
-// Request queue to prevent duplicate requests
+const connection = new Connection(RPC_URL, "confirmed");
 const requestQueue = new Map<string, Promise<any>>();
 
-// Use Helius RPC exclusively for reliability
-// Helius is the primary RPC endpoint with rate limit protection and CORS support
-const HELIUS_RPC_ENDPOINT = SOLANA_RPC_URL;
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 500;
 
-/**
- * Make a Solana JSON RPC call directly to public endpoints
- * No backend proxy needed - calls public RPC endpoints directly
- */
+const retryableCall = async <T>(
+  fn: () => Promise<T>,
+  method: string,
+): Promise<T> => {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < MAX_RETRIES) {
+        const delay = RETRY_DELAY * Math.pow(2, attempt);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  throw (
+    lastError || new Error(`${method} failed after ${MAX_RETRIES + 1} retries`)
+  );
+};
+
 export const makeRpcCall = async (
   method: string,
   params: any[] = [],
-  retries = 2,
 ): Promise<any> => {
   const requestKey = `${method}-${JSON.stringify(params)}`;
 
-  // Return existing promise if request is already in progress
   if (requestQueue.has(requestKey)) {
     return requestQueue.get(requestKey);
   }
 
   const requestPromise = (async () => {
-    console.log(
-      `[RPC] Using endpoint: ${HELIUS_RPC_ENDPOINT.substring(0, 50)}...`,
-    );
-    let lastError: Error | null = null;
-    let lastErrorStatus: number | null = null;
+    try {
+      console.log(`[RPC] Calling ${method} on Solflare`);
 
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        const controller = new AbortController();
-        const timeoutMs = 12000; // 12s timeout
-        const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-        console.log(
-          `[RPC] Calling ${method} on Helius (attempt ${attempt + 1}/${retries + 1})`,
-        );
-
-        const response = await fetch(HELIUS_RPC_ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            jsonrpc: "2.0",
-            id: Date.now(),
+      switch (method) {
+        case "getBalance":
+          return await retryableCall(
+            () => connection.getBalance(new PublicKey(params[0])),
             method,
-            params,
-          }),
-          signal: controller.signal,
-        });
+          );
 
-        clearTimeout(timeout);
-
-        if (!response.ok) {
-          const responseText = await response.text().catch(() => "");
-          const errorMsg = `HTTP ${response.status} ${response.statusText}: ${responseText}`;
-          console.warn(`[RPC] ${method} on Helius returned ${response.status}`);
-
-          if (response.status === 429 || response.status === 503) {
-            lastErrorStatus = response.status;
+        case "getTokenAccountsByOwner": {
+          const filter = params[1];
+          const convertedFilter: any = {};
+          if (filter.programId) {
+            convertedFilter.programId =
+              typeof filter.programId === "string"
+                ? new PublicKey(filter.programId)
+                : filter.programId;
           }
-
-          lastError = new Error(errorMsg);
-        } else {
-          const text = await response.text().catch(() => "");
-          let data: any = null;
-
-          try {
-            data = text ? JSON.parse(text) : null;
-          } catch (e) {
-            console.warn(`[RPC] Failed to parse response from Helius`);
-            lastError = new Error(`Failed to parse response: ${String(e)}`);
-            throw lastError;
+          if (filter.mint) {
+            convertedFilter.mint =
+              typeof filter.mint === "string"
+                ? new PublicKey(filter.mint)
+                : filter.mint;
           }
-
-          if (data && data.error) {
-            const errorMsg = data.error.message || JSON.stringify(data.error);
-            console.warn(
-              `[RPC] ${method} on Helius returned error:`,
-              data.error,
-            );
-            lastError = new Error(errorMsg);
-            throw lastError;
-          }
-
-          // Success!
-          return data?.result ?? data ?? text;
-        }
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        const isTimeout =
-          errorMsg.includes("abort") || errorMsg.includes("timeout");
-        const isCors =
-          errorMsg.includes("Failed to fetch") ||
-          errorMsg.includes("CORS") ||
-          errorMsg.includes("cors");
-
-        if (isTimeout) {
-          console.warn(`[RPC] ${method} on Helius timed out after 12s`);
-        } else if (isCors) {
-          console.warn(`[RPC] ${method} on Helius blocked by CORS policy`);
-        } else {
-          console.warn(`[RPC] ${method} on Helius failed:`, errorMsg);
+          return await retryableCall(
+            () =>
+              connection.getTokenAccountsByOwner(
+                new PublicKey(params[0]),
+                convertedFilter,
+                params[2],
+              ),
+            method,
+          );
         }
 
-        lastError = error instanceof Error ? error : new Error(errorMsg);
+        case "getTokenSupply":
+          return await retryableCall(
+            () => connection.getTokenSupply(new PublicKey(params[0])),
+            method,
+          );
+
+        case "getMultipleAccounts":
+          return await retryableCall(
+            () =>
+              connection.getMultipleAccountsInfo(
+                params[0].map((pk: string) => new PublicKey(pk)),
+              ),
+            method,
+          );
+
+        case "getAccountInfo":
+          return await retryableCall(
+            () => connection.getAccountInfo(new PublicKey(params[0])),
+            method,
+          );
+
+        case "getSignaturesForAddress":
+          return await retryableCall(
+            () =>
+              connection.getSignaturesForAddress(
+                new PublicKey(params[0]),
+                params[1],
+              ),
+            method,
+          );
+
+        case "getTransaction":
+          return await retryableCall(
+            () => connection.getParsedTransaction(params[0], params[1]),
+            method,
+          );
+
+        default:
+          throw new Error(`Unsupported RPC method: ${method}`);
       }
-
-      // Retry if we have attempts left
-      if (attempt < retries) {
-        const isRateLimited =
-          lastErrorStatus === 429 || lastErrorStatus === 503;
-        const baseDelay = isRateLimited ? 3000 : 800;
-        const delayMs = baseDelay * Math.pow(2, attempt);
-        const cappedDelayMs = Math.min(delayMs, 30000); // Cap at 30 seconds
-
-        console.warn(
-          `[RPC] ${method} failed (attempt ${attempt + 1}/${retries + 1}), retrying in ${cappedDelayMs}ms`,
-        );
-
-        await new Promise((resolve) => setTimeout(resolve, cappedDelayMs));
-      }
+    } catch (error) {
+      console.error(`[RPC] ${method} failed:`, error);
+      throw error;
     }
-
-    throw new Error(
-      `RPC call failed after ${retries + 1} attempts on Helius: ${lastError?.message || "Unknown error"}`,
-    );
   })();
 
   requestQueue.set(requestKey, requestPromise);
 
   try {
-    const result = await requestPromise;
-    return result;
+    return await requestPromise;
   } finally {
     requestQueue.delete(requestKey);
   }
 };
 
-/**
- * Get SOL balance for a wallet using Helius
- */
 export const getWalletBalance = async (publicKey: string): Promise<number> => {
   try {
-    const res = await makeRpcCall("getBalance", [publicKey], 3);
-    const lamports =
-      typeof res === "number"
-        ? res
-        : typeof (res as any)?.value === "number"
-          ? (res as any).value
-          : 0;
+    const lamports = await connection.getBalance(new PublicKey(publicKey));
     const sol = lamports / 1_000_000_000;
     return Number.isFinite(sol) ? sol : 0;
   } catch (error) {
-    console.error("[Balance] Failed to fetch balance from Helius:", error);
+    console.error("[Balance] Failed to fetch balance:", error);
     return 0;
   }
 };
 
-/**
- * Get all token accounts for a wallet using Helius
- */
 export const getTokenAccounts = async (publicKey: string) => {
   const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
-  console.log(
-    `[Token Accounts] Fetching token accounts for ${publicKey} using Helius...`,
-  );
-
   try {
-    const response = await makeRpcCall(
-      "getTokenAccountsByOwner",
-      [
-        publicKey,
-        { programId: TOKEN_PROGRAM_ID },
-        { encoding: "jsonParsed", commitment: "confirmed" },
-      ],
-      3, // Retry up to 3 times via Helius
+    const response = await retryableCall(
+      () =>
+        connection.getTokenAccountsByOwner(
+          new PublicKey(publicKey),
+          { programId: new PublicKey(TOKEN_PROGRAM_ID) },
+          { encoding: "jsonParsed", commitment: "confirmed" },
+        ),
+      "getTokenAccounts",
     );
 
-    console.log(`[Token Accounts] Helius response received:`, response);
+    console.log(`[Token Accounts] Got ${response.value.length} token accounts`);
 
-    const value = (response as any)?.value || [];
-    if (Array.isArray(value)) {
-      console.log(
-        `[Token Accounts] Got ${value.length} token accounts from Helius`,
-      );
-      return value
-        .map((account: any) => {
-          try {
-            const parsedInfo = account.account.data.parsed.info;
-            const mint = parsedInfo.mint;
-            const decimals = parsedInfo.tokenAmount.decimals;
+    return response.value
+      .map((account: any) => {
+        try {
+          const parsedData = account.account.data;
+          if (
+            typeof parsedData === "object" &&
+            "parsed" in parsedData &&
+            "info" in parsedData.parsed
+          ) {
+            const info = (parsedData.parsed as any).info;
+            const mint = info.mint;
+            const decimals = info.tokenAmount.decimals;
 
-            // Extract balance - prefer uiAmount, fall back to calculating from raw amount
             let balance = 0;
-            if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
-              balance = parsedInfo.tokenAmount.uiAmount;
-            } else if (parsedInfo.tokenAmount.amount) {
-              // Convert raw amount to UI amount using decimals
-              const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
+            if (typeof info.tokenAmount.uiAmount === "number") {
+              balance = info.tokenAmount.uiAmount;
+            } else if (info.tokenAmount.amount) {
+              const rawAmount = BigInt(info.tokenAmount.amount);
               balance = Number(rawAmount) / Math.pow(10, decimals || 0);
             }
 
@@ -279,47 +251,34 @@ export const getTokenAccounts = async (publicKey: string) => {
               balance,
               decimals: decimals || metadata.decimals,
             };
-          } catch (parseError) {
-            console.error(
-              "[Token Accounts] Error parsing account:",
-              account,
-              parseError,
-            );
-            return null;
           }
-        })
-        .filter((token) => token !== null);
-    }
-    return [];
+          return null;
+        } catch (parseError) {
+          console.error("[Token Accounts] Error parsing account:", parseError);
+          return null;
+        }
+      })
+      .filter((token) => token !== null);
   } catch (error) {
-    console.error(
-      "[Token Accounts] Failed to fetch token accounts from Helius:",
-      error,
-    );
+    console.error("[Token Accounts] Failed to fetch token accounts:", error);
     return [];
   }
 };
 
-/**
- * Get token metadata from on-chain data
- */
 export const getTokenMetadata = async (
   mint: string,
 ): Promise<TokenMetadata | null> => {
-  // First check if it's a known token
   if (KNOWN_TOKENS[mint]) {
     return KNOWN_TOKENS[mint];
   }
 
   try {
-    // Try to get token supply info which includes decimals
-    const supplyInfo = await makeRpcCall("getTokenSupply", [mint]);
-
+    const supplyInfo = await connection.getTokenSupply(new PublicKey(mint));
     return {
       mint,
       symbol: "UNKNOWN",
       name: "Unknown Token",
-      decimals: supplyInfo.decimals || 9,
+      decimals: supplyInfo.value.decimals || 9,
     };
   } catch (error) {
     console.error(`Error fetching metadata for token ${mint}:`, error);
@@ -327,98 +286,76 @@ export const getTokenMetadata = async (
   }
 };
 
-/**
- * Get multiple account info in batch
- */
 export const getMultipleAccounts = async (publicKeys: string[]) => {
   try {
-    return await makeRpcCall("getMultipleAccounts", [
-      publicKeys,
-      {
-        encoding: "jsonParsed",
-        commitment: "confirmed",
-      },
-    ]);
+    return await connection.getMultipleAccountsInfo(
+      publicKeys.map((pk) => new PublicKey(pk)),
+    );
   } catch (error) {
     console.error("Error fetching multiple accounts:", error);
-    return { value: [] };
+    return [];
   }
 };
 
-/**
- * Get account info for a specific account
- */
 export const getAccountInfo = async (publicKey: string) => {
   try {
-    return await makeRpcCall("getAccountInfo", [
-      publicKey,
-      {
-        encoding: "jsonParsed",
-        commitment: "confirmed",
-      },
-    ]);
+    return await connection.getAccountInfo(new PublicKey(publicKey));
   } catch (error) {
     console.error(`Error fetching account info for ${publicKey}:`, error);
     return null;
   }
 };
 
-/**
- * Add custom token to known tokens list
- */
 export const addKnownToken = (metadata: TokenMetadata) => {
   KNOWN_TOKENS[metadata.mint] = metadata;
 };
 
-/**
- * Get all known tokens
- */
 export const getKnownTokens = (): Record<string, TokenMetadata> => {
   return { ...KNOWN_TOKENS };
 };
 
-/**
- * Fetch balance for a specific token mint using Helius
- * This is useful for custom tokens that might not be in the general token list
- */
 export const getTokenBalanceForMint = async (
   walletAddress: string,
   tokenMint: string,
 ): Promise<number | null> => {
   try {
-    const response = await makeRpcCall(
-      "getTokenAccountsByOwner",
-      [
-        walletAddress,
-        { mint: tokenMint },
-        { encoding: "jsonParsed", commitment: "confirmed" },
-      ],
-      2,
+    const response = await retryableCall(
+      () =>
+        connection.getTokenAccountsByOwner(
+          new PublicKey(walletAddress),
+          { mint: new PublicKey(tokenMint) },
+          { encoding: "jsonParsed", commitment: "confirmed" },
+        ),
+      "getTokenBalanceForMint",
     );
 
-    const value = (response as any)?.value || [];
-    if (Array.isArray(value) && value.length > 0) {
-      const account = value[0];
-      const parsedInfo = account.account.data.parsed.info;
-      const decimals = parsedInfo.tokenAmount.decimals;
+    if (response.value.length > 0) {
+      const account = response.value[0];
+      const parsedData = account.account.data;
+      if (
+        typeof parsedData === "object" &&
+        "parsed" in parsedData &&
+        "info" in parsedData.parsed
+      ) {
+        const info = (parsedData.parsed as any).info;
+        const decimals = info.tokenAmount.decimals;
 
-      let balance = 0;
-      if (typeof parsedInfo.tokenAmount.uiAmount === "number") {
-        balance = parsedInfo.tokenAmount.uiAmount;
-      } else if (parsedInfo.tokenAmount.amount) {
-        const rawAmount = BigInt(parsedInfo.tokenAmount.amount);
-        balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+        let balance = 0;
+        if (typeof info.tokenAmount.uiAmount === "number") {
+          balance = info.tokenAmount.uiAmount;
+        } else if (info.tokenAmount.amount) {
+          const rawAmount = BigInt(info.tokenAmount.amount);
+          balance = Number(rawAmount) / Math.pow(10, decimals || 0);
+        }
+
+        console.log(`[Token Balance] Fetched ${tokenMint}: ${balance}`);
+        return balance;
       }
-
-      console.log(
-        `[Token Balance] Fetched ${tokenMint}: ${balance} via Helius`,
-      );
-      return balance;
     }
     return null;
   } catch (error) {
     console.error(
-      `[Token Balance] Failed to fetch balance for ${tokenMint} from Helius:`,
+      `[Token Balance] Failed to fetch balance for ${tokenMint}:`,
       error,
     );
     return null;

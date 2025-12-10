@@ -179,30 +179,6 @@ export default function SellerOrderConfirmation() {
     return () => clearInterval(interval);
   }, [order?.roomId]);
 
-  // Poll for order updates
-  useEffect(() => {
-    if (!order?.id) return;
-
-    const pollOrderStatus = async () => {
-      try {
-        const updatedOrder = await syncOrderFromStorage(order.id);
-        if (updatedOrder) {
-          setOrder(updatedOrder);
-          if (updatedOrder.buyerCryptoReceived) {
-            setCompletionStatus("BUYER_RECEIVED");
-          } else if (updatedOrder.sellerTransferInitiated) {
-            setCompletionStatus("COMPLETED");
-          }
-        }
-      } catch (error) {
-        console.error("Failed to poll order status:", error);
-      }
-    };
-
-    const interval = setInterval(pollOrderStatus, 1000);
-    return () => clearInterval(interval);
-  }, [order?.id]);
-
   // Scroll to bottom on new messages
   useEffect(() => {
     if (messages.length > previousMessageCountRef.current) {
@@ -213,10 +189,169 @@ export default function SellerOrderConfirmation() {
     previousMessageCountRef.current = messages.length;
   }, [messages]);
 
-  const shortenAddress = (addr: string, chars = 6): string => {
-    if (!addr) return "";
-    return `${addr.slice(0, chars)}...${addr.slice(-chars)}`;
+  const handleBuyerConfirmPayment = async () => {
+    if (!order || !wallet?.publicKey) return;
+
+    try {
+      setBuyerPaymentConfirmed(true);
+      await updateOrderInBothStorages(order.id, {
+        status: "PENDING",
+        buyerPaymentConfirmed: true,
+      });
+
+      if (order.roomId) {
+        await addTradeMessage({
+          room_id: order.roomId,
+          sender_wallet: wallet.publicKey,
+          message: "✅ I have confirmed payment sent",
+        });
+      }
+
+      // Send notification to seller
+      await createNotification(
+        order.sellerWallet,
+        "payment_confirmed",
+        order.type,
+        order.id,
+        `Buyer confirmed payment for ${order.amountTokens.toFixed(2)} ${order.token}`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+
+      toast.success(
+        "Payment confirmed! Waiting for seller to transfer crypto...",
+      );
+    } catch (error) {
+      console.error("Error confirming payment:", error);
+      toast.error("Failed to confirm");
+      setBuyerPaymentConfirmed(false);
+    }
   };
+
+  const handleSellerPaymentReceived = async () => {
+    if (!order || !wallet?.publicKey) return;
+
+    try {
+      setSellerPaymentReceived(true);
+      await updateOrderInBothStorages(order.id, {
+        sellerPaymentReceived: true,
+      });
+
+      if (order.roomId) {
+        await addTradeMessage({
+          room_id: order.roomId,
+          sender_wallet: wallet.publicKey,
+          message: "✅ I have received payment",
+        });
+      }
+
+      // Send notification to buyer
+      await createNotification(
+        order.buyerWallet,
+        "seller_payment_received",
+        order.type,
+        order.id,
+        `Seller confirmed they received the payment`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+
+      toast.success(
+        "Payment received confirmed! Now send the crypto transfer...",
+      );
+    } catch (error) {
+      console.error("Error confirming payment received:", error);
+      toast.error("Failed to confirm");
+      setSellerPaymentReceived(false);
+    }
+  };
+
+  const handleSellerTransfer = async () => {
+    if (!order || !wallet?.publicKey) return;
+
+    try {
+      setSellerTransferInitiated(true);
+      await updateOrderInBothStorages(order.id, {
+        sellerTransferInitiated: true,
+      });
+
+      if (order.roomId) {
+        await addTradeMessage({
+          room_id: order.roomId,
+          sender_wallet: wallet.publicKey,
+          message: "✅ I have initiated the crypto transfer",
+        });
+      }
+
+      // Send notification to buyer
+      await createNotification(
+        order.buyerWallet,
+        "transfer_initiated",
+        order.type,
+        order.id,
+        `Seller has initiated the crypto transfer for ${order.amountTokens.toFixed(2)} ${order.token}`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+
+      toast.success("Transfer initiated! Waiting for buyer confirmation...");
+      setCompletionStatus("COMPLETED");
+    } catch (error) {
+      console.error("Error confirming transfer:", error);
+      toast.error("Failed to confirm");
+      setSellerTransferInitiated(false);
+    }
+  };
+
+  const handleBuyerCryptoReceived = async () => {
+    if (!order || !wallet?.publicKey) return;
+
+    try {
+      setBuyerCryptoReceived(true);
+      await updateOrderInBothStorages(order.id, {
+        buyerCryptoReceived: true,
+        status: "COMPLETED",
+      });
+
+      if (order.roomId) {
+        await addTradeMessage({
+          room_id: order.roomId,
+          sender_wallet: wallet.publicKey,
+          message: "✅ I have received the crypto transfer",
+        });
+      }
+
+      // Send notification to seller
+      await createNotification(
+        order.sellerWallet,
+        "crypto_received",
+        order.type,
+        order.id,
+        `Buyer confirmed receiving the crypto transfer`,
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+
+      toast.success("Order completed successfully!");
+      setCompletionStatus("BUYER_RECEIVED");
+    } catch (error) {
+      console.error("Error confirming crypto receipt:", error);
+      toast.error("Failed to confirm");
+      setBuyerCryptoReceived(false);
+    }
+  }
 
   const handleAcceptOrder = async () => {
     if (!order || !wallet?.publicKey) return;

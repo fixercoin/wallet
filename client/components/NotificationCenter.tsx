@@ -12,12 +12,44 @@ import type { P2POrder } from "@/lib/p2p-api";
 
 export function NotificationCenter() {
   const { notifications, unreadCount, markAsRead } = useOrderNotifications();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState<"buyer" | "seller" | null>(null);
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const previousUnreadCountRef = useRef(0);
   const processedNotificationsRef = useRef<Set<string>>(new Set());
   const { openBuyerWalletDialog, openCryptoReceivedDialog } = useP2POrderFlow();
+
+  // Determine if a notification is for buyer or seller
+  const isBuyerNotification = (type: string): boolean => {
+    return [
+      "transfer_initiated",
+      "order_accepted",
+      "order_rejected",
+      "order_completed_by_seller",
+      "new_sell_order",
+      "crypto_received",
+    ].includes(type);
+  };
+
+  const isSellerNotification = (type: string): boolean => {
+    return [
+      "new_buy_order",
+      "seller_payment_received",
+      "order_created",
+      "payment_confirmed",
+    ].includes(type);
+  };
+
+  // Filter notifications by type
+  const buyerNotifications = notifications.filter((n) =>
+    isBuyerNotification(n.type),
+  );
+  const sellerNotifications = notifications.filter((n) =>
+    isSellerNotification(n.type),
+  );
+
+  const buyerUnreadCount = buyerNotifications.filter((n) => !n.read).length;
+  const sellerUnreadCount = sellerNotifications.filter((n) => !n.read).length;
 
   // Play bell sound when new notifications arrive
   useEffect(() => {

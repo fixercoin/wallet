@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
@@ -8,6 +14,7 @@ import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { PaymentMethodInfoCard } from "@/components/wallet/PaymentMethodInfoCard";
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
+import { createOrderInAPI } from "@/lib/p2p-order-api";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import type { P2POrder } from "@/lib/p2p-api";
 
@@ -21,6 +28,7 @@ export default function SellData() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();
+  const isCreatingOrderRef = useRef(false); // Prevent multiple simultaneous order creations
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
@@ -88,6 +96,14 @@ export default function SellData() {
   }, [amountTokens, amountPKR]);
 
   const handleSubmit = async () => {
+    // Prevent multiple simultaneous order creations (race condition)
+    if (isCreatingOrderRef.current) {
+      console.warn(
+        "[SellData] Order creation already in progress, ignoring duplicate request",
+      );
+      return;
+    }
+
     if (!isValid) return;
 
     if (!wallet?.publicKey) {
@@ -96,10 +112,13 @@ export default function SellData() {
     }
 
     try {
+      // Mark that we're starting order creation
+      isCreatingOrderRef.current = true;
       setLoading(true);
+
       const createdOrder = await createOrderFromOffer(
         {
-          id: `order-${Date.now()}`,
+          id: `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           type: "SELL",
           buyerWallet: "",
           token: "USDT",
@@ -118,6 +137,18 @@ export default function SellData() {
           price: exchangeRate,
         },
       );
+
+      // First, persist the order to server before sending notification (prevents race condition)
+      try {
+        await createOrderInAPI(createdOrder);
+        console.log(`[SellData] Order ${createdOrder.id} persisted to server`);
+      } catch (apiError) {
+        console.error(
+          "[SellData] Failed to persist order to server:",
+          apiError,
+        );
+        toast.warning("Order created locally but failed to sync to server");
+      }
 
       toast.success("Order created successfully!");
 
@@ -139,6 +170,7 @@ export default function SellData() {
             sellerWallet: createdOrder.sellerWallet,
             price: exchangeRate,
           },
+          false, // Don't send push notification to the seller who created the order
         );
       } catch (notificationError) {
         console.warn("Failed to send notification:", notificationError);
@@ -152,6 +184,8 @@ export default function SellData() {
       console.error("Error creating order:", error);
       toast.error("Failed to create order");
     } finally {
+      // Clear the flag to allow future order creation attempts
+      isCreatingOrderRef.current = false;
       setLoading(false);
     }
   };

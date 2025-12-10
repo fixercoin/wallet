@@ -193,6 +193,26 @@ async function deleteOrderById(
   await saveOrderIdsForWallet(walletAddress, filtered);
 }
 
+/**
+ * Helper to get a specific order by ID with better logging
+ */
+async function getOrderByIdWithLogging(
+  orderId: string,
+): Promise<P2POrder | null> {
+  try {
+    const order = await getOrderById(orderId);
+    if (!order) {
+      console.warn(`[P2P Orders] Order not found in KV: ${orderId}`);
+    } else {
+      console.log(`[P2P Orders] Found order: ${orderId}`);
+    }
+    return order;
+  } catch (error) {
+    console.error(`[P2P Orders] Error fetching order ${orderId}:`, error);
+    return null;
+  }
+}
+
 // P2P Orders endpoints
 export const handleListP2POrders: RequestHandler = async (req, res) => {
   try {
@@ -393,16 +413,40 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
 export const handleGetP2POrder: RequestHandler = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const order = await getOrderById(orderId);
 
-    if (!order) {
-      return res.status(404).json({ error: "Order not found" });
+    if (!orderId || typeof orderId !== "string") {
+      return res.status(400).json({
+        error: "Invalid order ID",
+        details: "Order ID must be a non-empty string",
+      });
     }
 
-    res.json({ order });
+    console.log(`[P2P Orders] GET request for order: ${orderId}`);
+    const order = await getOrderByIdWithLogging(orderId);
+
+    if (!order) {
+      // Provide helpful error message with diagnostic info
+      return res.status(404).json({
+        error: "Order not found",
+        orderId,
+        details:
+          "Order does not exist in KV storage. Check that the order was created successfully and synced to the server.",
+        hint: "Call /api/p2p/orders with wallet parameter to list all orders for a wallet",
+      });
+    }
+
+    // Return in consistent format with list endpoint
+    res.json({
+      success: true,
+      orders: [order],
+      order,
+    });
   } catch (error) {
     console.error("Get P2P order error:", error);
-    res.status(500).json({ error: "Failed to get order" });
+    res.status(500).json({
+      error: "Failed to get order",
+      details: error instanceof Error ? error.message : String(error),
+    });
   }
 };
 

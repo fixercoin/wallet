@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Send, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
+import { SystemAccountDisplay } from "@/components/p2p/SystemAccountDisplay";
 import {
   syncOrderFromStorage,
   updateOrderInBothStorages,
@@ -17,7 +18,8 @@ import type { TradeMessage } from "@/lib/p2p-api";
 
 export default function SellerOrderConfirmation() {
   const navigate = useNavigate();
-  const { orderId } = useParams<{ orderId: string }>();
+  const location = useLocation();
+  const orderId = (location.state as any)?.orderId;
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();
 
@@ -150,17 +152,38 @@ export default function SellerOrderConfirmation() {
 
     setSubmitting(true);
     try {
-      // Update order status to ACCEPTED
-      await updateOrderInBothStorages(order.id, {
+      // Update order status to ACCEPTED and set seller wallet (for generic buy orders)
+      const updatedOrder = await updateOrderInBothStorages(order.id, {
         status: "ACCEPTED",
+        sellerWallet: wallet.publicKey, // Record which seller accepted this order
       });
 
+      if (updatedOrder) {
+        setOrder(updatedOrder);
+      }
       setOrderStatus("ACCEPTED");
 
-      // Send message to chat
-      if (order.roomId) {
+      // Send message to chat (create room if it doesn't exist)
+      let roomId = order.roomId;
+      if (!roomId && order.buyerWallet && wallet.publicKey) {
+        try {
+          const { createTradeRoom } = await import("@/lib/p2p-api");
+          const room = await createTradeRoom({
+            buyer_wallet: order.buyerWallet,
+            seller_wallet: wallet.publicKey,
+            order_id: order.id,
+          });
+          roomId = room.id;
+          // Update order with new room ID
+          await updateOrderInBothStorages(order.id, { roomId });
+        } catch (roomError) {
+          console.warn("Failed to create trade room:", roomError);
+        }
+      }
+
+      if (roomId) {
         await addTradeMessage({
-          room_id: order.roomId,
+          room_id: roomId,
           sender_wallet: wallet.publicKey,
           message: "✅ I have accepted your order",
         });
@@ -194,14 +217,18 @@ export default function SellerOrderConfirmation() {
 
     setSubmitting(true);
     try {
-      // Update order status to REJECTED
-      await updateOrderInBothStorages(order.id, {
+      // Update order status to REJECTED and set seller wallet
+      const updatedOrder = await updateOrderInBothStorages(order.id, {
         status: "REJECTED",
+        sellerWallet: wallet.publicKey, // Record which seller rejected this order
       });
 
+      if (updatedOrder) {
+        setOrder(updatedOrder);
+      }
       setOrderStatus("REJECTED");
 
-      // Send message to chat
+      // Send message to chat if room exists
       if (order.roomId) {
         await addTradeMessage({
           room_id: order.roomId,
@@ -240,16 +267,36 @@ export default function SellerOrderConfirmation() {
     setSubmitting(true);
     try {
       // Update order to mark seller has completed
-      await updateOrderInBothStorages(order.id, {
+      const updatedOrder = await updateOrderInBothStorages(order.id, {
         sellerTransferInitiated: true,
       });
 
+      if (updatedOrder) {
+        setOrder(updatedOrder);
+      }
       setCompletionStatus("COMPLETED");
 
-      // Send message to chat
-      if (order.roomId) {
+      // Send message to chat (create room if it doesn't exist)
+      let roomId = order.roomId;
+      if (!roomId && order.buyerWallet && wallet.publicKey) {
+        try {
+          const { createTradeRoom } = await import("@/lib/p2p-api");
+          const room = await createTradeRoom({
+            buyer_wallet: order.buyerWallet,
+            seller_wallet: wallet.publicKey,
+            order_id: order.id,
+          });
+          roomId = room.id;
+          // Update order with new room ID
+          await updateOrderInBothStorages(order.id, { roomId });
+        } catch (roomError) {
+          console.warn("Failed to create trade room:", roomError);
+        }
+      }
+
+      if (roomId) {
         await addTradeMessage({
-          room_id: order.roomId,
+          room_id: roomId,
           sender_wallet: wallet.publicKey,
           message: "✅ I have completed order",
         });
@@ -426,42 +473,50 @@ export default function SellerOrderConfirmation() {
           </CardContent>
         </Card>
 
-        {/* Buyer Details */}
-        <Card className="bg-[#0f1520]/50 border border-blue-500/30 mb-6">
+        {/* Transfer Instructions */}
+        <Card className="bg-[#0f1520]/50 border border-green-500/30 mb-6">
           <CardContent className="p-4">
             <h2 className="text-lg font-bold text-white mb-4 uppercase">
-              Buyer Details
+              Transfer Instructions
             </h2>
-            <div className="space-y-3">
-              <div>
-                <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                  Wallet Address
-                </div>
-                <div className="text-xs text-white/90 font-mono break-all">
-                  {order.buyerWallet}
-                </div>
-              </div>
+            <div className="space-y-4">
+              <SystemAccountDisplay type="seller" />
 
-              {order.sellerPaymentMethod && (
-                <>
-                  <div>
-                    <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                      Account Name
-                    </div>
-                    <div className="text-sm text-white/90">
-                      {order.sellerPaymentMethod.accountName}
-                    </div>
+              <div className="border-t border-green-500/20 pt-3 mt-3">
+                <div className="text-xs text-white/70 font-semibold uppercase mb-3">
+                  Buyer Details
+                </div>
+
+                <div>
+                  <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                    Buyer Wallet Address
                   </div>
-                  <div>
-                    <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                      Account Number
-                    </div>
-                    <div className="text-sm text-white/90 font-mono">
-                      {order.sellerPaymentMethod.accountNumber}
-                    </div>
+                  <div className="text-xs text-white/90 font-mono break-all">
+                    {order.buyerWallet}
                   </div>
-                </>
-              )}
+                </div>
+
+                {order.sellerPaymentMethod && (
+                  <>
+                    <div className="mt-3">
+                      <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                        Buyer Payment Account Name
+                      </div>
+                      <div className="text-sm text-white/90">
+                        {order.sellerPaymentMethod.accountName}
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                        Buyer Payment Account Number
+                      </div>
+                      <div className="text-sm text-white/90 font-mono">
+                        {order.sellerPaymentMethod.accountNumber}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

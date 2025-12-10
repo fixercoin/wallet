@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Send, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
+import { SystemAccountDisplay } from "@/components/p2p/SystemAccountDisplay";
 import {
   syncOrderFromStorage,
   updateOrderInBothStorages,
@@ -17,7 +18,8 @@ import type { TradeMessage } from "@/lib/p2p-api";
 
 export default function BuyerOrderConfirmation() {
   const navigate = useNavigate();
-  const { orderId } = useParams<{ orderId: string }>();
+  const location = useLocation();
+  const orderId = (location.state as any)?.orderId;
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();
 
@@ -386,29 +388,31 @@ export default function BuyerOrderConfirmation() {
           </CardContent>
         </Card>
 
-        {/* Seller Details */}
+        {/* Payment Instructions */}
         <Card className="bg-[#0f1520]/50 border border-blue-500/30 mb-6">
           <CardContent className="p-4">
             <h2 className="text-lg font-bold text-white mb-4 uppercase">
-              Seller Details
+              Payment Instructions
             </h2>
-            <div className="space-y-3">
-              <div>
-                <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                  Wallet Address
-                </div>
-                <div className="text-xs text-white/90 font-mono break-all">
-                  {order.sellerWallet}
-                </div>
-              </div>
+            <div className="space-y-4">
+              <SystemAccountDisplay type="buyer" />
 
               <div className="border-t border-blue-500/20 pt-3 mt-3">
                 <div className="text-xs text-white/70 font-semibold uppercase mb-3">
-                  Payment Method Details
+                  Seller Details
+                </div>
+
+                <div>
+                  <div className="text-xs text-white/70 font-semibold uppercase mb-1">
+                    Seller Wallet Address
+                  </div>
+                  <div className="text-xs text-white/90 font-mono break-all">
+                    {order.sellerWallet}
+                  </div>
                 </div>
 
                 {order.payment_method && (
-                  <div>
+                  <div className="mt-3">
                     <div className="text-xs text-white/70 font-semibold uppercase mb-1">
                       Payment Method
                     </div>
@@ -422,7 +426,7 @@ export default function BuyerOrderConfirmation() {
                   <>
                     <div className="mt-3">
                       <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                        Account Name
+                        Seller Account Name
                       </div>
                       <div className="text-sm text-white/90">
                         {order.sellerPaymentMethod.accountName}
@@ -430,7 +434,7 @@ export default function BuyerOrderConfirmation() {
                     </div>
                     <div className="mt-3">
                       <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                        Account Number
+                        Seller Account Number
                       </div>
                       <div className="text-sm text-white/90 font-mono break-all">
                         {order.sellerPaymentMethod.accountNumber}
@@ -440,8 +444,8 @@ export default function BuyerOrderConfirmation() {
                 )}
 
                 {!order.sellerPaymentMethod && (
-                  <div className="text-xs text-yellow-400/80 italic">
-                    Payment method details not yet provided by seller
+                  <div className="text-xs text-yellow-400/80 italic mt-3">
+                    Seller payment method details not yet provided
                   </div>
                 )}
               </div>

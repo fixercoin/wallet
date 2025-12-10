@@ -157,17 +157,41 @@ export function NotificationCenter() {
     return new Date(timestamp).toLocaleDateString();
   };
 
+  const displayNotifications =
+    isOpen === "buyer"
+      ? buyerNotifications
+      : isOpen === "seller"
+        ? sellerNotifications
+        : [];
+
+  const panelTitle = isOpen === "buyer" ? "Buyer Messages" : "Seller Messages";
+
   return (
-    <div className="relative">
+    <div className="relative flex gap-2">
+      {/* Buyer Messages Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen(isOpen === "buyer" ? null : "buyer")}
         className="relative p-2 rounded-lg hover:bg-gray-900 transition-colors"
-        aria-label="Notifications"
+        aria-label="Buyer Messages"
       >
-        <Bell className="w-6 h-6 text-white" />
-        {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-            {unreadCount > 9 ? "9+" : unreadCount}
+        <User className="w-6 h-6 text-white" />
+        {buyerUnreadCount > 0 && (
+          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-blue-600 rounded-full">
+            {buyerUnreadCount > 9 ? "9+" : buyerUnreadCount}
+          </span>
+        )}
+      </button>
+
+      {/* Seller Messages Button */}
+      <button
+        onClick={() => setIsOpen(isOpen === "seller" ? null : "seller")}
+        className="relative p-2 rounded-lg hover:bg-gray-900 transition-colors"
+        aria-label="Seller Messages"
+      >
+        <Store className="w-6 h-6 text-white" />
+        {sellerUnreadCount > 0 && (
+          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-purple-600 rounded-full">
+            {sellerUnreadCount > 9 ? "9+" : sellerUnreadCount}
           </span>
         )}
       </button>
@@ -176,10 +200,10 @@ export function NotificationCenter() {
         <div className="absolute right-0 top-full mt-2 w-80 rounded-lg bg-[#1a2847] border border-gray-300/30 shadow-xl z-50">
           <div className="p-4 border-b border-gray-300/30 flex items-center justify-between">
             <h3 className="font-semibold text-white uppercase text-sm">
-              Notifications
+              {panelTitle}
             </h3>
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={() => setIsOpen(null)}
               className="p-1 hover:bg-gray-900 rounded transition-colors"
             >
               <X className="w-4 h-4 text-white/70" />
@@ -187,13 +211,13 @@ export function NotificationCenter() {
           </div>
 
           <ScrollArea className="h-96">
-            {notifications.length === 0 ? (
+            {displayNotifications.length === 0 ? (
               <div className="p-8 text-center text-white/70">
                 <p className="text-sm">No notifications yet</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-300/20">
-                {notifications
+                {displayNotifications
                   .sort((a, b) => b.createdAt - a.createdAt)
                   .map((notification) => (
                     <div

@@ -887,7 +887,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col">
       <div className="w-full relative z-0">
         <div className="border-0 bg-transparent">
-          <div className="space-y-6 p-6 pt-12 relative">
+          <div className="space-y-6 p-6 pt-20 relative">
             <div className="space-y-2">
               <Label
                 htmlFor="from-token"

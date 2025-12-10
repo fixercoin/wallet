@@ -27,6 +27,11 @@ export function CryptoReceivedDialog() {
 
     setConfirming(true);
     try {
+      const pkrAmount =
+        typeof currentOrder.pkr_amount === "number"
+          ? currentOrder.pkr_amount
+          : parseFloat(currentOrder.pkr_amount as any) || 0;
+
       // Send final notification to seller confirming crypto was received
       await createNotification(
         currentOrder.creator_wallet || "",
@@ -35,9 +40,9 @@ export function CryptoReceivedDialog() {
         currentOrder.id,
         `Order completed! Buyer has received the crypto. Transaction successful.`,
         {
-          token: currentOrder.token,
-          amountTokens: parseFloat(currentOrder.token_amount),
-          amountPKR: currentOrder.pkr_amount,
+          token: currentOrder.token || "USDT",
+          amountTokens: parseFloat(currentOrder.token_amount) || 0,
+          amountPKR: pkrAmount,
         },
       );
 

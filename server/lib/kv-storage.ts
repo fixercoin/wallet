@@ -340,9 +340,7 @@ export class KVStorage {
     const backendlessUrl = process.env.BACKENDLESS_URL;
 
     if (backendlessAppId && backendlessApiKey) {
-      console.log(
-        "[KVStorage] Using Backendless storage backend (fallback)",
-      );
+      console.log("[KVStorage] Using Backendless storage backend (fallback)");
       try {
         return new KVStorage(
           new BackendlessKVStorage(

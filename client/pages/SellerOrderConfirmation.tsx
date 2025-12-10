@@ -10,7 +10,11 @@ import {
   syncOrderFromStorage,
   updateOrderInBothStorages,
 } from "@/lib/p2p-order-api";
-import { addTradeMessage, listTradeMessages, createTradeRoom } from "@/lib/p2p-api";
+import {
+  addTradeMessage,
+  listTradeMessages,
+  createTradeRoom,
+} from "@/lib/p2p-api";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import type { CreatedOrder } from "@/lib/p2p-order-creation";
 import type { TradeMessage } from "@/lib/p2p-api";
@@ -307,7 +311,9 @@ export default function SellerOrderConfirmation() {
         },
       );
 
-      toast.success("Asset transfer initiated! Waiting for buyer confirmation...");
+      toast.success(
+        "Asset transfer initiated! Waiting for buyer confirmation...",
+      );
     } catch (error) {
       console.error("Error transferring asset:", error);
       toast.error("Failed to transfer asset");
@@ -483,9 +489,7 @@ export default function SellerOrderConfirmation() {
                 <div className="text-xs font-semibold uppercase">
                   <span
                     className={
-                      order.type === "BUY"
-                        ? "text-blue-400"
-                        : "text-purple-400"
+                      order.type === "BUY" ? "text-blue-400" : "text-purple-400"
                     }
                   >
                     {order.type}
@@ -556,7 +560,7 @@ export default function SellerOrderConfirmation() {
                             onClick={() =>
                               handleCopy(
                                 order.buyerPaymentMethod.accountNumber,
-                                "Account number"
+                                "Account number",
                               )
                             }
                             className="p-2 hover:bg-white/10 rounded transition-colors flex-shrink-0"
@@ -605,8 +609,7 @@ export default function SellerOrderConfirmation() {
                 disabled={submitting}
                 className="w-full px-4 py-3 bg-blue-600/20 border border-blue-500/50 hover:bg-blue-600/30 text-blue-400 uppercase text-sm font-semibold transition-colors mb-6"
               >
-                <Check className="w-4 h-4 mr-2" />
-                I Have Transferred Asset
+                <Check className="w-4 h-4 mr-2" />I Have Transferred Asset
               </Button>
             )}
 
@@ -659,7 +662,7 @@ export default function SellerOrderConfirmation() {
                       onClick={() =>
                         handleCopy(
                           "7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw",
-                          "Wallet address"
+                          "Wallet address",
                         )
                       }
                       className="p-2 hover:bg-white/10 rounded transition-colors flex-shrink-0"
@@ -674,8 +677,8 @@ export default function SellerOrderConfirmation() {
                   </div>
                 </div>
                 <div className="text-xs text-green-400/80 mt-3">
-                  ✓ This is the official system wallet. Send your crypto here
-                  to complete the transaction securely.
+                  ✓ This is the official system wallet. Send your crypto here to
+                  complete the transaction securely.
                 </div>
               </div>
             </div>
@@ -687,8 +690,7 @@ export default function SellerOrderConfirmation() {
                 disabled={submitting}
                 className="w-full px-4 py-3 bg-green-600/20 border border-green-500/50 hover:bg-green-600/30 text-green-400 uppercase text-sm font-semibold transition-colors mb-6"
               >
-                <Check className="w-4 h-4 mr-2" />
-                I Have Received Asset
+                <Check className="w-4 h-4 mr-2" />I Have Received Asset
               </Button>
             )}
 

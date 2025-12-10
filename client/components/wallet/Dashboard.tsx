@@ -1120,7 +1120,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="space-y-3 mt-8">
               <div className="text-left">
                 <div className="text-xs font-semibold text-gray-700 tracking-widest">
-                  MY PORTFOLIO
+                  TOTAL BALANCE IN USDT
                 </div>
               </div>
 
@@ -1138,16 +1138,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       // Otherwise show 0.000 USD
                       const displayValue = `0.000 $`;
                       return (
-                        <div className="flex items-center justify-between gap-4 w-full">
-                          <div className="text-3xl text-gray-900 leading-tight">
-                            {showBalance ? displayValue : "****"}
+                        <div className="space-y-2 w-full">
+                          <div className="flex items-center justify-between gap-4 w-full">
+                            <div className="text-3xl text-gray-900 leading-tight">
+                              {showBalance ? displayValue : "****"}
+                            </div>
+                            <Button
+                              onClick={onP2PTrade || onReceive}
+                              className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-5 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
+                            >
+                              P2P TRADE
+                            </Button>
                           </div>
-                          <Button
-                            onClick={onP2PTrade || onReceive}
-                            className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-5 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
-                          >
-                            P2P TRADE
-                          </Button>
+                          <div className="text-xs text-gray-600">
+                            TODAY PNL +/- 0.000 - 0.00 %
+                          </div>
                         </div>
                       );
                     }
@@ -1183,33 +1188,38 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     const isLoadingPrices = areTokenPricesLoading();
 
                     return (
-                      <div className="flex items-center justify-between gap-4 w-full">
-                        <div className="text-3xl text-gray-900 leading-tight">
-                          {showBalance ? (
-                            <>
-                              <span
-                                style={{
-                                  fontVariantNumeric: "tabular-nums",
-                                  fontFamily: "Arial",
-                                }}
-                              >
-                                {total.toLocaleString(undefined, {
-                                  minimumFractionDigits: 3,
-                                  maximumFractionDigits: 3,
-                                })}
-                              </span>
-                              {" $"}
-                            </>
-                          ) : (
-                            "****"
-                          )}
+                      <div className="space-y-2 w-full">
+                        <div className="flex items-center justify-between gap-4 w-full">
+                          <div className="text-3xl text-gray-900 leading-tight">
+                            {showBalance ? (
+                              <>
+                                <span
+                                  style={{
+                                    fontVariantNumeric: "tabular-nums",
+                                    fontFamily: "Arial",
+                                  }}
+                                >
+                                  {total.toLocaleString(undefined, {
+                                    minimumFractionDigits: 3,
+                                    maximumFractionDigits: 3,
+                                  })}
+                                </span>
+                                {" $"}
+                              </>
+                            ) : (
+                              "****"
+                            )}
+                          </div>
+                          <Button
+                            onClick={onP2PTrade || onReceive}
+                            className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-5 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
+                          >
+                            P2P TRADE
+                          </Button>
                         </div>
-                        <Button
-                          onClick={onP2PTrade || onReceive}
-                          className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-5 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
-                        >
-                          P2P TRADE
-                        </Button>
+                        <div className={`text-xs ${isPositive ? "text-green-400" : "text-red-400"}`}>
+                          TODAY PNL {isPositive ? "+" : ""}{showBalance ? totalChange24h.toFixed(3) : "0.000"} - {showBalance ? Math.abs(change24hPercent).toFixed(2) : "0.00"} %
+                        </div>
                       </div>
                     );
                   })()

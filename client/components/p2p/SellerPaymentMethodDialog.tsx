@@ -58,7 +58,13 @@ export function SellerPaymentMethodDialog() {
     }
   };
 
-  if (!sellerPaymentDetails || !currentOrder) return null;
+  if (!isOpen || !sellerPaymentDetails || !currentOrder) return null;
+
+  const pkrAmount =
+    typeof currentOrder.pkr_amount === "number"
+      ? currentOrder.pkr_amount
+      : parseFloat(currentOrder.pkr_amount as any) || 0;
+  const tokenAmount = parseFloat(currentOrder.token_amount) || 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && setActiveDialog(null)}>
@@ -81,19 +87,18 @@ export function SellerPaymentMethodDialog() {
             <div className="space-y-2 text-sm text-white">
               <div className="flex justify-between">
                 <span>Token:</span>
-                <span className="font-semibold">{currentOrder.token}</span>
+                <span className="font-semibold">{currentOrder.token || "USDT"}</span>
               </div>
               <div className="flex justify-between">
                 <span>Amount:</span>
                 <span className="font-semibold">
-                  {parseFloat(currentOrder.token_amount).toFixed(6)}{" "}
-                  {currentOrder.token}
+                  {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Price:</span>
                 <span className="font-semibold">
-                  {currentOrder.pkr_amount.toFixed(2)} PKR
+                  {pkrAmount.toFixed(2)} PKR
                 </span>
               </div>
             </div>

@@ -142,8 +142,7 @@ export function CryptoSentDialog() {
               <li>
                 Go to your crypto wallet and send{" "}
                 <span className="font-semibold">
-                  {parseFloat(currentOrder.token_amount).toFixed(6)}{" "}
-                  {currentOrder.token}
+                  {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
                 </span>
               </li>
               <li>Paste the address and confirm the transaction</li>

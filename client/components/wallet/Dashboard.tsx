@@ -1217,8 +1217,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             P2P TRADE
                           </Button>
                         </div>
-                        <div className={`text-xs ${isPositive ? "text-green-400" : "text-red-400"}`}>
-                          TODAY PNL {isPositive ? "+" : ""}{showBalance ? totalChange24h.toFixed(3) : "0.000"} - {showBalance ? Math.abs(change24hPercent).toFixed(2) : "0.00"} %
+                        <div
+                          className={`text-xs ${isPositive ? "text-green-400" : "text-red-400"}`}
+                        >
+                          TODAY PNL {isPositive ? "+" : ""}
+                          {showBalance
+                            ? totalChange24h.toFixed(3)
+                            : "0.000"} -{" "}
+                          {showBalance
+                            ? Math.abs(change24hPercent).toFixed(2)
+                            : "0.00"}{" "}
+                          %
                         </div>
                       </div>
                     );

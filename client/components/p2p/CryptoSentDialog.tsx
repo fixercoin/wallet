@@ -292,17 +292,24 @@ export function CryptoSentDialog() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-white/70">Buyer Wallet:</span>
-                      <span className="text-xs font-mono text-white/70 truncate max-w-[150px]" title={buyerOrder.walletAddress || ""}>
+                      <span
+                        className="text-xs font-mono text-white/70 truncate max-w-[150px]"
+                        title={buyerOrder.walletAddress || ""}
+                      >
                         {buyerOrder.walletAddress?.slice(0, 10)}...
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-white/70">Order Status:</span>
-                      <span className={`text-xs font-semibold ${
-                        buyerOrder.status === "MATCHED" ? "text-blue-400" :
-                        buyerOrder.status === "completed" ? "text-green-400" :
-                        "text-yellow-400"
-                      }`}>
+                      <span
+                        className={`text-xs font-semibold ${
+                          buyerOrder.status === "MATCHED"
+                            ? "text-blue-400"
+                            : buyerOrder.status === "completed"
+                              ? "text-green-400"
+                              : "text-yellow-400"
+                        }`}
+                      >
                         {buyerOrder.status}
                       </span>
                     </div>

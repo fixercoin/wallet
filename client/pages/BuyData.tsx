@@ -132,30 +132,44 @@ export default function BuyData() {
         orderPersistedToKV = true;
       } catch (apiError) {
         console.error("[BuyData] Failed to persist order to server:", apiError);
-        toast.warning("Order created locally but failed to sync to server");
+        toast.error(
+          "Failed to create order - could not save to server. Please try again.",
+        );
+        throw new Error("Order creation failed - server sync error");
       }
 
-      // Verify order is in KV before sending notification (extra safety check)
-      if (orderPersistedToKV) {
-        try {
-          const response = await fetch(
+      // Verify order is in KV before sending notification (critical safety check)
+      try {
+        const response = await fetch(
+          `/api/p2p/orders/${encodeURIComponent(createdOrder.id)}`,
+        );
+        if (!response.ok) {
+          console.warn(
+            `[BuyData] Order verification failed: ${response.status}, retrying...`,
+          );
+          // Retry once more with a small delay
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          const retryResponse = await fetch(
             `/api/p2p/orders/${encodeURIComponent(createdOrder.id)}`,
           );
-          if (!response.ok) {
-            console.warn(
-              `[BuyData] Order verification failed: ${response.status}, retrying...`,
-            );
-            // Retry once more
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            await createOrderInAPI(createdOrder);
-          } else {
-            console.log(
-              `[BuyData] ✅ Order ${createdOrder.id} verified in KV storage`,
+          if (!retryResponse.ok) {
+            throw new Error(
+              `Order verification failed after retry: ${retryResponse.status}`,
             );
           }
-        } catch (verifyError) {
-          console.warn("[BuyData] Failed to verify order in KV:", verifyError);
         }
+        console.log(
+          `[BuyData] ✅ Order ${createdOrder.id} verified in KV storage`,
+        );
+      } catch (verifyError) {
+        console.error("[BuyData] Order verification failed:", verifyError);
+        toast.error(
+          "Order created but verification failed. The seller may not see your order. Refreshing...",
+        );
+        // Give a moment for any recovery, then refresh
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        window.location.reload();
+        return;
       }
 
       toast.success("Order created successfully!");

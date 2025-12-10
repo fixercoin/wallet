@@ -218,7 +218,7 @@ function AppRoutes() {
         element={<WaitingForBuyerResponse />}
       />
       <Route
-        path="/seller-order-confirmation/:orderId"
+        path="/seller-order-confirmation"
         element={<SellerOrderConfirmation />}
       />
       <Route

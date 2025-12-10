@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useP2POrderFlow } from "@/contexts/P2POrderFlowContext";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import { useWallet } from "@/contexts/WalletContext";
+import type { P2POrder } from "@/lib/p2p-api";
 
 export function CryptoSentDialog() {
   const {
@@ -26,8 +27,34 @@ export function CryptoSentDialog() {
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [buyerOrder, setBuyerOrder] = useState<P2POrder | null>(null);
+  const [loadingBuyerOrder, setLoadingBuyerOrder] = useState(false);
 
   const isOpen = activeDialog === "crypto_sent_confirmation";
+
+  // Fetch buyer order details when dialog opens
+  useEffect(() => {
+    if (isOpen && currentOrder && currentOrder.matchedWith) {
+      setLoadingBuyerOrder(true);
+      fetch(`/api/p2p/orders/${currentOrder.matchedWith}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch buyer order");
+          return res.json();
+        })
+        .then((data) => {
+          const order = data.order || data.orders?.[0];
+          if (order) {
+            setBuyerOrder(order);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching buyer order:", error);
+        })
+        .finally(() => {
+          setLoadingBuyerOrder(false);
+        });
+    }
+  }, [isOpen, currentOrder]);
 
   const handleCopyWallet = () => {
     navigator.clipboard.writeText(buyerWalletAddress);

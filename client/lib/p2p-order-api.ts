@@ -111,12 +111,31 @@ export async function getOrdersByWalletFromAPI(
 }
 
 /**
- * Create order in server KV storage
+ * Create order in server KV storage + backup to localStorage
  */
 export async function createOrderInAPI(
   order: CreatedOrder,
 ): Promise<CreatedOrder> {
   try {
+    // Always backup to localStorage first for redundancy
+    try {
+      const ordersJson = localStorage.getItem("p2p_orders") || "[]";
+      const orders = JSON.parse(ordersJson);
+      const existingIndex = orders.findIndex((o: CreatedOrder) => o.id === order.id);
+
+      if (existingIndex >= 0) {
+        orders[existingIndex] = order;
+      } else {
+        orders.push(order);
+      }
+
+      localStorage.setItem("p2p_orders", JSON.stringify(orders));
+      console.log(`[P2P Order API] ✅ Backed up order to localStorage: ${order.id}`);
+    } catch (localError) {
+      console.warn(`[P2P Order API] Failed to backup to localStorage: ${localError instanceof Error ? localError.message : String(localError)}`);
+      // Continue anyway - KV save is still attempted
+    }
+
     const response = await fetch(API_BASE, {
       method: "POST",
       headers: {
@@ -148,16 +167,20 @@ export async function createOrderInAPI(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `Failed to create order: ${response.status} - ${errorData.error || "Unknown error"}`,
+      console.error(
+        `[P2P Order API] Failed to create order in KV: ${response.status} - ${errorData.error}`,
       );
+      // Return the order anyway since it's backed up in localStorage
+      return order;
     }
 
     const data = await response.json();
+    console.log(`[P2P Order API] ✅ Order created in KV: ${order.id}`);
     return data.order as CreatedOrder;
   } catch (error) {
     console.error("Error creating order in API:", error);
-    throw error;
+    // Order is backed up in localStorage, so return it anyway
+    return order;
   }
 }
 

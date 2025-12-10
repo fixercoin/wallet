@@ -16,6 +16,7 @@ import { PaymentMethodInfoCard } from "@/components/wallet/PaymentMethodInfoCard
 import { createOrderFromOffer } from "@/lib/p2p-order-creation";
 import { createOrderInAPI } from "@/lib/p2p-order-api";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
+import { useP2POrderFlow } from "@/contexts/P2POrderFlowContext";
 import {
   Dialog,
   DialogContent,

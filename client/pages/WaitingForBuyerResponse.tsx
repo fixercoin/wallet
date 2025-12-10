@@ -236,6 +236,42 @@ export default function WaitingForBuyerResponse() {
           </CardContent>
         </Card>
 
+        {/* Buyer Actions Notifications */}
+        {(order.buyerPaymentConfirmed || order.buyerReceivedCrypto) && (
+          <Card className="bg-green-600/20 border border-green-500/30 mb-6">
+            <CardContent className="p-4">
+              <div className="space-y-2">
+                {order.buyerPaymentConfirmed && (
+                  <div className="flex items-start gap-3">
+                    <span className="text-green-400 font-bold text-lg">✓</span>
+                    <div>
+                      <p className="text-sm font-semibold text-green-300">
+                        Buyer Confirmed Payment Sent
+                      </p>
+                      <p className="text-xs text-green-200/70">
+                        The buyer has sent their payment. You can now transfer the crypto to their wallet.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {order.buyerReceivedCrypto && (
+                  <div className="flex items-start gap-3">
+                    <span className="text-green-400 font-bold text-lg">✓</span>
+                    <div>
+                      <p className="text-sm font-semibold text-green-300">
+                        Buyer Confirmed Crypto Received
+                      </p>
+                      <p className="text-xs text-green-200/70">
+                        The buyer has confirmed receiving the crypto. The order is now complete!
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Order Details */}
         <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30 mb-6">
           <CardContent className="p-4">

@@ -146,12 +146,14 @@ export async function createOrderFromOffer(
     sellerWallet.trim()
   ) {
     try {
+      console.log(`[P2P Order Creation] Creating trade room for order ${orderId}`);
       const room = await createTradeRoom({
         buyer_wallet: buyerWallet,
         seller_wallet: sellerWallet,
         order_id: orderId,
       });
       roomId = room.id;
+      console.log(`[P2P Order Creation] ✅ Trade room created: ${roomId}`);
 
       // Add initial message
       await addTradeMessage({
@@ -160,7 +162,7 @@ export async function createOrderFromOffer(
         message: `Order created: ${orderType} order for ${amountTokens} ${offer.token}`,
       });
     } catch (error) {
-      console.error("Failed to create trade room:", error);
+      console.error(`[P2P Order Creation] Failed to create trade room for ${orderId}:`, error);
     }
   }
 
@@ -188,9 +190,17 @@ export async function createOrderFromOffer(
     const orders = JSON.parse(ordersJson);
     orders.push(order);
     localStorage.setItem("p2p_orders", JSON.stringify(orders));
+    console.log(`[P2P Order Creation] ✅ Order stored in localStorage: ${orderId}`);
   } catch (error) {
-    console.error("Failed to store order:", error);
+    console.error(`[P2P Order Creation] Failed to store order in localStorage: ${orderId}`, error);
   }
+
+  console.log(`[P2P Order Creation] ✅ Order created successfully:`, {
+    orderId,
+    status: order.status,
+    roomId,
+    timestamp: new Date().toISOString(),
+  });
 
   return order;
 }

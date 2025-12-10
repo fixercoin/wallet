@@ -159,16 +159,24 @@ export default function BuyData() {
             buyerWallet: createdOrder.buyerWallet,
             price: exchangeRate,
           },
-          false, // Don't send push notification to the buyer who created the order
+          false,
         );
       } catch (notificationError) {
         console.warn("Failed to send notification:", notificationError);
-        // Don't fail the order creation if notification fails
       }
 
-      navigate("/waiting-for-seller-response", {
-        state: { order: createdOrder },
-      });
+      // Show seller payment method dialog if payment methods exist
+      if (paymentMethods.length > 0) {
+        const paymentMethod = paymentMethods[0];
+        openSellerPaymentDialog(createdOrder, {
+          accountName: paymentMethod.accountName,
+          accountNumber: paymentMethod.accountNumber,
+        });
+      } else {
+        navigate("/waiting-for-seller-response", {
+          state: { order: createdOrder },
+        });
+      }
     } catch (error) {
       console.error("Error creating order:", error);
       toast.error("Failed to create order");

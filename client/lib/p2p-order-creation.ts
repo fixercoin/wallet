@@ -209,9 +209,17 @@ export function getOrderFromStorage(orderId: string): CreatedOrder | null {
   try {
     const ordersJson = localStorage.getItem("p2p_orders") || "[]";
     const orders = JSON.parse(ordersJson);
-    return orders.find((o: CreatedOrder) => o.id === orderId) || null;
+    const order = orders.find((o: CreatedOrder) => o.id === orderId) || null;
+
+    if (order) {
+      console.log(`[P2P Order Storage] ✅ Found order in localStorage: ${orderId}`);
+    } else {
+      console.warn(`[P2P Order Storage] Order not found in localStorage: ${orderId}. Total orders in storage: ${orders.length}`);
+    }
+
+    return order;
   } catch (error) {
-    console.error("Failed to get order from storage:", error);
+    console.error(`[P2P Order Storage] Failed to get order ${orderId}:`, error);
     return null;
   }
 }

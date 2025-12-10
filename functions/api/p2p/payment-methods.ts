@@ -92,9 +92,12 @@ export const onRequestPost = async ({
   env: Env;
 }) => {
   try {
-    if (!env.STAKING_KV) {
+    let kvStore: any;
+    try {
+      kvStore = getKVStore(env);
+    } catch (error) {
       return jsonResponse(500, {
-        error: "KV storage not configured",
+        error: "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
       });
     }
 
@@ -110,8 +113,6 @@ export const onRequestPost = async ({
         error: "Missing required fields",
       });
     }
-
-    const kvStore = new KVStore(env.STAKING_KV);
 
     const savedMethod = await kvStore.savePaymentMethod(
       {
@@ -144,9 +145,12 @@ export const onRequestDelete = async ({
   env: Env;
 }) => {
   try {
-    if (!env.STAKING_KV) {
+    let kvStore: any;
+    try {
+      kvStore = getKVStore(env);
+    } catch (error) {
       return jsonResponse(500, {
-        error: "KV storage not configured",
+        error: "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
       });
     }
 
@@ -159,8 +163,6 @@ export const onRequestDelete = async ({
         error: "Missing wallet address or method ID",
       });
     }
-
-    const kvStore = new KVStore(env.STAKING_KV);
     await kvStore.deletePaymentMethod(methodId, walletAddress);
 
     return jsonResponse(200, {

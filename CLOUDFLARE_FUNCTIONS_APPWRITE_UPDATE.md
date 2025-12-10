@@ -5,6 +5,7 @@ This document shows the pattern for updating all Cloudflare Functions P2P endpoi
 ## Pattern: Import KV Store Factory
 
 ### Before:
+
 ```typescript
 import { KVStore } from "../../lib/kv-utils";
 
@@ -15,6 +16,7 @@ interface Env {
 ```
 
 ### After:
+
 ```typescript
 import { KVStore } from "../../lib/kv-utils";
 import { getKVStore } from "../../lib/kv-store-factory";
@@ -32,6 +34,7 @@ interface Env {
 ## Pattern: Initialize KV Store
 
 ### Before:
+
 ```typescript
 export const onRequestGet = async ({ request, env }: { request: Request; env: Env }) => {
   try {
@@ -46,6 +49,7 @@ export const onRequestGet = async ({ request, env }: { request: Request; env: En
 ```
 
 ### After:
+
 ```typescript
 export const onRequestGet = async ({ request, env }: { request: Request; env: Env }) => {
   try {
@@ -117,6 +121,7 @@ curl http://localhost:8787/api/p2p/orders?wallet=test_wallet
 ## Backwards Compatibility
 
 The system maintains backwards compatibility:
+
 1. If Appwrite credentials are present → use Appwrite
 2. Else if STAKING_KV is present → use Cloudflare KV
 3. Else → return error

@@ -11,6 +11,7 @@ This guide will help you migrate P2P functions from Cloudflare KV to Appwrite da
 ## Step 1: Set up Appwrite Instance
 
 ### Option A: Self-Hosted Appwrite
+
 ```bash
 docker run -d \
   -h localhost \
@@ -24,11 +25,13 @@ docker run -d \
 ```
 
 ### Option B: Cloud Appwrite
+
 Visit https://cloud.appwrite.io and create a project.
 
 ## Step 2: Create Database and Collections
 
 ### Create Database
+
 1. Go to Appwrite Console
 2. Create a new database named "p2p_db" (or note your database ID)
 3. Copy the database ID
@@ -68,7 +71,7 @@ async function setupCollections() {
         databaseId,
         collection.id,
         collection.name,
-        "encrypt"
+        "encrypt",
       );
       console.log(`✅ Created collection: ${collection.id}`);
     } catch (error: any) {
@@ -139,7 +142,7 @@ async function setupAttributes() {
           collectionId,
           attr.key,
           attr.key === "key" ? 255 : 65536, // Max sizes
-          true // Required
+          true, // Required
         );
         console.log(`✅ Created attribute: ${collectionId}.${attr.key}`);
       } catch (error: any) {
@@ -173,8 +176,9 @@ APPWRITE_DATABASE_ID=p2p_db
 The system will automatically detect Appwrite credentials and use them for P2P storage.
 
 Priority order:
+
 1. **Appwrite** (if APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY are set)
-2. **Cloudflare KV** (if CLOUDFLARE_* variables are set)
+2. **Cloudflare KV** (if CLOUDFLARE\_\* variables are set)
 3. **File-based storage** (development fallback)
 
 ## Step 5: Migrate Data from Cloudflare KV to Appwrite
@@ -197,7 +201,7 @@ async function migrateP2PData() {
     process.env.APPWRITE_ENDPOINT!,
     process.env.APPWRITE_PROJECT_ID!,
     process.env.APPWRITE_API_KEY!,
-    process.env.APPWRITE_DATABASE_ID || "p2p_db"
+    process.env.APPWRITE_DATABASE_ID || "p2p_db",
   );
 
   // Get all keys from Cloudflare KV (with prefix filtering)
@@ -269,7 +273,7 @@ export const onRequest: PagesFunction = async (context) => {
     context.env.APPWRITE_ENDPOINT,
     context.env.APPWRITE_PROJECT_ID,
     context.env.APPWRITE_API_KEY,
-    context.env.APPWRITE_DATABASE_ID || "p2p_db"
+    context.env.APPWRITE_DATABASE_ID || "p2p_db",
   );
 
   // Use kv just like before...
@@ -311,6 +315,7 @@ If issues occur:
 ## Support
 
 For issues:
+
 - Check Appwrite logs: `docker logs appwrite`
 - Verify API credentials
 - Ensure database and collections exist

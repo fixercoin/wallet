@@ -32,7 +32,7 @@ export function initializeAppwrite(): { client: Client; database: Databases } {
   if (!appwriteClient || !appwriteDatabase) {
     if (!APPWRITE_ENDPOINT || !APPWRITE_PROJECT_ID || !APPWRITE_API_KEY) {
       throw new Error(
-        "Appwrite credentials missing: APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY"
+        "Appwrite credentials missing: APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY",
       );
     }
 

@@ -37,14 +37,14 @@ export function getKVStore(env: PagesEnv): KVStore | AppwriteKVStore {
       env.APPWRITE_ENDPOINT,
       env.APPWRITE_PROJECT_ID,
       env.APPWRITE_API_KEY,
-      env.APPWRITE_DATABASE_ID || "p2p_db"
+      env.APPWRITE_DATABASE_ID || "p2p_db",
     ) as any;
   }
 
   // Fall back to Cloudflare KV
   if (!env.STAKING_KV) {
     throw new Error(
-      "KV namespace is required. Either provide STAKING_KV (Cloudflare) or Appwrite credentials"
+      "KV namespace is required. Either provide STAKING_KV (Cloudflare) or Appwrite credentials",
     );
   }
 

@@ -49,7 +49,8 @@ export const onRequestGet = async ({
       kv = getKVStore(env);
     } catch (error) {
       return jsonResponse(500, {
-        error: "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
+        error:
+          "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
       });
     }
 

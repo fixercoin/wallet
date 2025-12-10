@@ -1,7 +1,7 @@
 /**
  * Appwrite P2P Setup Script
  * Creates database, collections, and attributes for P2P storage
- * 
+ *
  * Usage: npx tsx scripts/setup-appwrite-p2p.ts
  */
 
@@ -69,7 +69,7 @@ async function setupAppwrite() {
         await databases.createCollection(
           DATABASE_ID,
           collection.id,
-          collection.name
+          collection.name,
         );
         console.log(`✅ Created collection: ${collection.id}`);
       } catch (error: any) {
@@ -94,7 +94,7 @@ async function setupAppwrite() {
           255,
           true, // required
           undefined,
-          true // unique
+          true, // unique
         );
         console.log(`✅ Created 'key' attribute for ${collection.id}`);
       } catch (error: any) {
@@ -111,12 +111,15 @@ async function setupAppwrite() {
           "value",
           65536,
           true, // required
-          ""
+          "",
         );
         console.log(`✅ Created 'value' attribute for ${collection.id}`);
       } catch (error: any) {
         if (error?.code !== 409) {
-          console.error(`⚠️  Error creating 'value' attribute:`, error?.message);
+          console.error(
+            `⚠️  Error creating 'value' attribute:`,
+            error?.message,
+          );
         }
       }
     }

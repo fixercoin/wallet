@@ -17,7 +17,10 @@ interface Env {
 
 function applyCors(headers: Headers) {
   headers.set("Access-Control-Allow-Origin", "*");
-  headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS",
+  );
   headers.set("Access-Control-Allow-Headers", "Content-Type");
   headers.set("Vary", "Origin");
   return headers;
@@ -46,7 +49,8 @@ export const onRequestGet = async ({
       kvStore = getKVStore(env);
     } catch (error) {
       return jsonResponse(500, {
-        error: "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
+        error:
+          "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
       });
     }
 
@@ -97,12 +101,21 @@ export const onRequestPost = async ({
       kvStore = getKVStore(env);
     } catch (error) {
       return jsonResponse(500, {
-        error: "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
+        error:
+          "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
       });
     }
 
     const body = await request.json();
-    const { walletAddress, userName, paymentMethod, accountName, accountNumber, solanawWalletAddress, methodId } = body;
+    const {
+      walletAddress,
+      userName,
+      paymentMethod,
+      accountName,
+      accountNumber,
+      solanawWalletAddress,
+      methodId,
+    } = body;
 
     if (!walletAddress) {
       return jsonResponse(400, { error: "Missing wallet address" });
@@ -150,7 +163,8 @@ export const onRequestDelete = async ({
       kvStore = getKVStore(env);
     } catch (error) {
       return jsonResponse(500, {
-        error: "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
+        error:
+          "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
       });
     }
 

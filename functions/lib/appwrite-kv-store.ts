@@ -34,7 +34,7 @@ export class AppwriteKVStore {
     endpoint: string,
     projectId: string,
     apiKey: string,
-    databaseId: string
+    databaseId: string,
   ) {
     this.endpoint = endpoint;
     this.projectId = projectId;
@@ -84,7 +84,7 @@ export class AppwriteKVStore {
         {
           method: "GET",
           headers: this.getHeaders(),
-        }
+        },
       );
 
       if (response.status === 404) {
@@ -95,7 +95,7 @@ export class AppwriteKVStore {
         console.error(
           `Appwrite GET error for key ${key}:`,
           response.status,
-          await response.text()
+          await response.text(),
         );
         return null;
       }
@@ -119,7 +119,7 @@ export class AppwriteKVStore {
         {
           method: "GET",
           headers: this.getHeaders(),
-        }
+        },
       );
 
       const isUpdate = existingResponse.ok;
@@ -141,7 +141,7 @@ export class AppwriteKVStore {
 
       if (!response.ok) {
         throw new Error(
-          `Appwrite ${method} error: ${response.status} ${await response.text()}`
+          `Appwrite ${method} error: ${response.status} ${await response.text()}`,
         );
       }
     } catch (error) {
@@ -160,12 +160,12 @@ export class AppwriteKVStore {
         {
           method: "DELETE",
           headers: this.getHeaders(),
-        }
+        },
       );
 
       if (!response.ok && response.status !== 404) {
         throw new Error(
-          `Appwrite DELETE error: ${response.status} ${await response.text()}`
+          `Appwrite DELETE error: ${response.status} ${await response.text()}`,
         );
       }
     } catch (error) {
@@ -190,14 +190,14 @@ export class AppwriteKVStore {
         {
           method: "GET",
           headers: this.getHeaders(),
-        }
+        },
       );
 
       if (!response.ok) {
         console.error(
           `Appwrite LIST error:`,
           response.status,
-          await response.text()
+          await response.text(),
         );
         return { keys: [] };
       }
@@ -229,7 +229,7 @@ export class AppwriteKVStore {
     stakeIds.push(stake.id);
     await this.put(
       `stakes:wallet:${stake.walletAddress}`,
-      JSON.stringify(stakeIds)
+      JSON.stringify(stakeIds),
     );
     await this.put(`stakes:${stake.id}`, JSON.stringify(stake));
     return stake;
@@ -257,7 +257,7 @@ export class AppwriteKVStore {
     rewardIds.push(reward.id);
     await this.put(
       `rewards:wallet:${reward.walletAddress}`,
-      JSON.stringify(rewardIds)
+      JSON.stringify(rewardIds),
     );
     await this.put(`rewards:${reward.id}`, JSON.stringify(reward));
     return reward;
@@ -271,7 +271,7 @@ export class AppwriteKVStore {
   }
 
   async getPaymentMethodsByWallet(
-    walletAddress: string
+    walletAddress: string,
   ): Promise<PaymentMethod[]> {
     const json = await this.get(`payment_methods:wallet:${walletAddress}`);
     const methodIds = json ? JSON.parse(json) : [];
@@ -292,11 +292,10 @@ export class AppwriteKVStore {
 
   async savePaymentMethod(
     method: Omit<PaymentMethod, "id" | "createdAt" | "updatedAt">,
-    methodId?: string
+    methodId?: string,
   ): Promise<PaymentMethod> {
     const id =
-      methodId ||
-      `pm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      methodId || `pm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const now = Date.now();
     const existing = methodId ? await this.getPaymentMethod(methodId) : null;
 
@@ -309,30 +308,35 @@ export class AppwriteKVStore {
 
     await this.put(`payment_methods:${id}`, JSON.stringify(paymentMethod));
 
-    const methodIds = await this.getPaymentMethodIdsForWallet(method.walletAddress);
+    const methodIds = await this.getPaymentMethodIdsForWallet(
+      method.walletAddress,
+    );
     if (!methodIds.includes(id)) {
       methodIds.push(id);
       await this.put(
         `payment_methods:wallet:${method.walletAddress}`,
-        JSON.stringify(methodIds)
+        JSON.stringify(methodIds),
       );
     }
 
     return paymentMethod;
   }
 
-  async deletePaymentMethod(methodId: string, walletAddress: string): Promise<void> {
+  async deletePaymentMethod(
+    methodId: string,
+    walletAddress: string,
+  ): Promise<void> {
     await this.delete(`payment_methods:${methodId}`);
     const methodIds = await this.getPaymentMethodIdsForWallet(walletAddress);
     const filtered = methodIds.filter((id: string) => id !== methodId);
     await this.put(
       `payment_methods:wallet:${walletAddress}`,
-      JSON.stringify(filtered)
+      JSON.stringify(filtered),
     );
   }
 
   private async getPaymentMethodIdsForWallet(
-    walletAddress: string
+    walletAddress: string,
   ): Promise<string[]> {
     const json = await this.get(`payment_methods:wallet:${walletAddress}`);
     return json ? JSON.parse(json) : [];
@@ -360,7 +364,7 @@ export class AppwriteKVStore {
     order: Omit<P2POrder, "id" | "createdAt" | "updatedAt"> & {
       [key: string]: any;
     },
-    orderId?: string
+    orderId?: string,
   ): Promise<P2POrder> {
     const id =
       orderId ||
@@ -382,7 +386,7 @@ export class AppwriteKVStore {
       orderIds.push(id);
       await this.put(
         `orders:wallet:${order.walletAddress}`,
-        JSON.stringify(orderIds)
+        JSON.stringify(orderIds),
       );
     }
 
@@ -393,15 +397,12 @@ export class AppwriteKVStore {
     await this.delete(`orders:${orderId}`);
     const orderIds = await this.getOrderIdsForWallet(walletAddress);
     const filtered = orderIds.filter((id: string) => id !== orderId);
-    await this.put(
-      `orders:wallet:${walletAddress}`,
-      JSON.stringify(filtered)
-    );
+    await this.put(`orders:wallet:${walletAddress}`, JSON.stringify(filtered));
   }
 
   async updateOrderStatus(
     orderId: string,
-    status: "PENDING" | "COMPLETED" | "CANCELLED"
+    status: "PENDING" | "COMPLETED" | "CANCELLED",
   ): Promise<P2POrder | null> {
     const order = await this.getOrder(orderId);
     if (!order) throw new Error("Order not found");
@@ -432,7 +433,7 @@ export class AppwriteKVStore {
   }
 
   async getNotificationsByWallet(
-    walletAddress: string
+    walletAddress: string,
   ): Promise<OrderNotification[]> {
     const json = await this.get(`notifications:wallet:${walletAddress}`);
     const notifIds = json ? JSON.parse(json) : [];
@@ -447,7 +448,7 @@ export class AppwriteKVStore {
   }
 
   async getNotification(
-    notificationId: string
+    notificationId: string,
   ): Promise<OrderNotification | null> {
     const json = await this.get(`notifications:${notificationId}`);
     return json ? JSON.parse(json) : null;
@@ -455,7 +456,7 @@ export class AppwriteKVStore {
 
   async saveNotification(
     notification: Omit<OrderNotification, "id" | "createdAt">,
-    notificationId?: string
+    notificationId?: string,
   ): Promise<OrderNotification> {
     const id =
       notificationId ||
@@ -471,13 +472,13 @@ export class AppwriteKVStore {
     await this.put(`notifications:${id}`, JSON.stringify(orderNotification));
 
     const notifIds = await this.getNotificationIdsForWallet(
-      notification.recipientWallet
+      notification.recipientWallet,
     );
     if (!notifIds.includes(id)) {
       notifIds.push(id);
       await this.put(
         `notifications:wallet:${notification.recipientWallet}`,
-        JSON.stringify(notifIds)
+        JSON.stringify(notifIds),
       );
     }
 
@@ -493,7 +494,7 @@ export class AppwriteKVStore {
   }
 
   async getBroadcastNotifications(
-    type: "sellers" | "buyers"
+    type: "sellers" | "buyers",
   ): Promise<OrderNotification[]> {
     const key = `notifications:broadcast:${type}`;
     const json = await this.get(key);
@@ -503,7 +504,7 @@ export class AppwriteKVStore {
   }
 
   private async getNotificationIdsForWallet(
-    walletAddress: string
+    walletAddress: string,
   ): Promise<string[]> {
     const json = await this.get(`notifications:wallet:${walletAddress}`);
     return json ? JSON.parse(json) : [];
@@ -511,7 +512,7 @@ export class AppwriteKVStore {
 
   async saveEscrow(
     escrow: Omit<Escrow, "id" | "createdAt" | "updatedAt">,
-    escrowId?: string
+    escrowId?: string,
   ): Promise<Escrow> {
     const id =
       escrowId ||
@@ -533,7 +534,7 @@ export class AppwriteKVStore {
       escrowIds.push(id);
       await this.put(
         `escrow:order:${escrow.orderId}`,
-        JSON.stringify(escrowIds)
+        JSON.stringify(escrowIds),
       );
     }
 
@@ -565,7 +566,7 @@ export class AppwriteKVStore {
 
   async updateEscrowStatus(
     escrowId: string,
-    status: "LOCKED" | "RELEASED" | "REFUNDED" | "DISPUTED"
+    status: "LOCKED" | "RELEASED" | "REFUNDED" | "DISPUTED",
   ): Promise<Escrow | null> {
     const escrow = await this.getEscrow(escrowId);
     if (!escrow) throw new Error("Escrow not found");
@@ -582,7 +583,7 @@ export class AppwriteKVStore {
   }
 
   async createDispute(
-    dispute: Omit<Dispute, "id" | "createdAt" | "updatedAt">
+    dispute: Omit<Dispute, "id" | "createdAt" | "updatedAt">,
   ): Promise<Dispute> {
     const id = `dispute_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const now = Date.now();
@@ -629,7 +630,7 @@ export class AppwriteKVStore {
   async resolveDispute(
     disputeId: string,
     resolution: "RELEASE_TO_SELLER" | "REFUND_TO_BUYER" | "SPLIT",
-    resolvedBy: string
+    resolvedBy: string,
   ): Promise<Dispute | null> {
     const dispute = await this.getDispute(disputeId);
     if (!dispute) throw new Error("Dispute not found");

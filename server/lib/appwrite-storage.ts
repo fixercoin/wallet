@@ -73,7 +73,7 @@ export class AppwriteKVStorage implements KVStorageBackend {
       const document = await this.database.getDocument(
         this.databaseId,
         collection,
-        docId
+        docId,
       );
 
       return document.value || null;
@@ -96,7 +96,7 @@ export class AppwriteKVStorage implements KVStorageBackend {
         doc = await this.database.getDocument(
           this.databaseId,
           collection,
-          docId
+          docId,
         );
       } catch {
         doc = null;
@@ -104,20 +104,15 @@ export class AppwriteKVStorage implements KVStorageBackend {
 
       if (doc) {
         // Update existing document
-        await this.database.updateDocument(
-          this.databaseId,
-          collection,
-          docId,
-          { value }
-        );
+        await this.database.updateDocument(this.databaseId, collection, docId, {
+          value,
+        });
       } else {
         // Create new document
-        await this.database.createDocument(
-          this.databaseId,
-          collection,
-          docId,
-          { value, key }
-        );
+        await this.database.createDocument(this.databaseId, collection, docId, {
+          value,
+          key,
+        });
       }
     } catch (error) {
       console.error(`Error putting key ${key} to Appwrite:`, error);
@@ -157,11 +152,13 @@ export class AppwriteKVStorage implements KVStorageBackend {
       const result = await this.database.listDocuments(
         this.databaseId,
         collection,
-        queries
+        queries,
       );
 
       return {
-        keys: result.documents.map((doc: any) => ({ name: doc.key || doc.$id })),
+        keys: result.documents.map((doc: any) => ({
+          name: doc.key || doc.$id,
+        })),
         total: result.total,
       };
     } catch (error) {

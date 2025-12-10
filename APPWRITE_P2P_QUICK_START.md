@@ -7,6 +7,7 @@
 ### 1. Get Appwrite Credentials
 
 **Option A: Self-Hosted**
+
 ```bash
 docker run -d \
   -h localhost \
@@ -36,6 +37,7 @@ Go to https://cloud.appwrite.io and create a project
 ### 3. Create Collections
 
 Run the setup script:
+
 ```bash
 export APPWRITE_ENDPOINT="https://your-appwrite-instance.com/v1"
 export APPWRITE_PROJECT_ID="your_project_id"
@@ -115,12 +117,12 @@ Zero data loss. That's it.
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| "Storage not configured" | Check environment variables are set |
-| "Collection not found" | Run setup script again |
-| Timeout errors | Verify Appwrite instance is accessible |
-| Still using Cloudflare KV | Remove `APPWRITE_*` env vars to test |
+| Issue                     | Solution                               |
+| ------------------------- | -------------------------------------- |
+| "Storage not configured"  | Check environment variables are set    |
+| "Collection not found"    | Run setup script again                 |
+| Timeout errors            | Verify Appwrite instance is accessible |
+| Still using Cloudflare KV | Remove `APPWRITE_*` env vars to test   |
 
 ## Next: Data Migration (Optional)
 

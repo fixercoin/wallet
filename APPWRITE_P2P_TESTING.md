@@ -22,6 +22,7 @@ npx tsx scripts/setup-appwrite-p2p.ts
 ```
 
 Expected output:
+
 ```
 🔧 Setting up Appwrite P2P Storage...
 
@@ -52,6 +53,7 @@ Expected output:
 ### 1. Test P2P Orders API
 
 #### Create an Order
+
 ```bash
 curl -X POST http://localhost:8080/api/p2p/orders \
   -H "Content-Type: application/json" \
@@ -66,6 +68,7 @@ curl -X POST http://localhost:8080/api/p2p/orders \
 ```
 
 Expected response:
+
 ```json
 {
   "success": true,
@@ -85,11 +88,13 @@ Expected response:
 ```
 
 #### Retrieve Orders for Wallet
+
 ```bash
 curl http://localhost:8080/api/p2p/orders?wallet=test_wallet_123
 ```
 
 Expected response:
+
 ```json
 {
   "success": true,
@@ -113,6 +118,7 @@ Expected response:
 ### 2. Test Payment Methods API
 
 #### Add Payment Method
+
 ```bash
 curl -X POST http://localhost:8080/api/p2p/payment-methods \
   -H "Content-Type: application/json" \
@@ -127,6 +133,7 @@ curl -X POST http://localhost:8080/api/p2p/payment-methods \
 ```
 
 Expected response:
+
 ```json
 {
   "success": true,
@@ -144,6 +151,7 @@ Expected response:
 ```
 
 #### Retrieve Payment Methods
+
 ```bash
 curl http://localhost:8080/api/p2p/payment-methods?wallet=test_wallet_123
 ```
@@ -151,6 +159,7 @@ curl http://localhost:8080/api/p2p/payment-methods?wallet=test_wallet_123
 ### 3. Test Notifications API
 
 #### Create Notification
+
 ```bash
 curl -X POST http://localhost:8080/api/p2p/notifications \
   -H "Content-Type: application/json" \
@@ -170,6 +179,7 @@ curl -X POST http://localhost:8080/api/p2p/notifications \
 ```
 
 #### Retrieve Notifications
+
 ```bash
 curl http://localhost:8080/api/p2p/notifications?wallet=test_wallet_123
 ```
@@ -177,6 +187,7 @@ curl http://localhost:8080/api/p2p/notifications?wallet=test_wallet_123
 ### 4. Test Escrow API
 
 #### Lock Escrow
+
 ```bash
 curl -X POST http://localhost:8080/api/p2p/escrow \
   -H "Content-Type: application/json" \
@@ -191,6 +202,7 @@ curl -X POST http://localhost:8080/api/p2p/escrow \
 ```
 
 #### Release Escrow
+
 ```bash
 curl -X PUT http://localhost:8080/api/p2p/escrow \
   -H "Content-Type: application/json" \
@@ -203,6 +215,7 @@ curl -X PUT http://localhost:8080/api/p2p/escrow \
 ### 5. Test Disputes API
 
 #### Create Dispute
+
 ```bash
 curl -X POST http://localhost:8080/api/p2p/disputes \
   -H "Content-Type: application/json" \
@@ -216,6 +229,7 @@ curl -X POST http://localhost:8080/api/p2p/disputes \
 ```
 
 #### Resolve Dispute
+
 ```bash
 curl -X PUT http://localhost:8080/api/p2p/disputes \
   -H "Content-Type: application/json" \
@@ -282,7 +296,7 @@ async function runTests() {
       status: "PENDING",
       createdAt: Date.now(),
       updatedAt: Date.now(),
-    })
+    }),
   );
   console.log("✅ Order created");
 
@@ -303,7 +317,7 @@ async function runTests() {
       accountName: "John Doe",
       accountNumber: "3001234567890",
       createdAt: Date.now(),
-    })
+    }),
   );
   console.log("✅ Payment method created");
 
@@ -320,7 +334,7 @@ async function runTests() {
       message: "New order",
       read: false,
       createdAt: Date.now(),
-    })
+    }),
   );
   console.log("✅ Notification created");
 
@@ -336,6 +350,7 @@ runTests().catch(console.error);
 ```
 
 Run with:
+
 ```bash
 npx tsx test-appwrite-migration.ts
 ```
@@ -343,6 +358,7 @@ npx tsx test-appwrite-migration.ts
 ## Validation Checklist
 
 ### Data Persistence
+
 - [ ] Orders persist after creation
 - [ ] Payment methods are retrievable
 - [ ] Notifications are stored correctly
@@ -350,6 +366,7 @@ npx tsx test-appwrite-migration.ts
 - [ ] Disputes maintain consistency
 
 ### API Functionality
+
 - [ ] All P2P endpoints respond with correct status codes
 - [ ] Error messages are descriptive
 - [ ] CORS headers are present
@@ -357,6 +374,7 @@ npx tsx test-appwrite-migration.ts
 - [ ] Response format is consistent
 
 ### Storage Backend
+
 - [ ] Appwrite connection established
 - [ ] Collections created successfully
 - [ ] Data stored in Appwrite database
@@ -364,6 +382,7 @@ npx tsx test-appwrite-migration.ts
 - [ ] Fallback to Cloudflare KV works (if credentials present)
 
 ### Performance
+
 - [ ] Order retrieval is fast (< 200ms)
 - [ ] Payment method operations complete quickly
 - [ ] Notifications load without delay
@@ -371,6 +390,7 @@ npx tsx test-appwrite-migration.ts
 - [ ] No timeout errors
 
 ### Security
+
 - [ ] API key is not exposed in logs
 - [ ] Invalid credentials rejected properly
 - [ ] CORS correctly restricts access
@@ -382,7 +402,7 @@ npx tsx test-appwrite-migration.ts
 If migration fails:
 
 1. **Keep Appwrite environment variables unchanged**
-2. **Remove APPWRITE_* variables** from environment
+2. **Remove APPWRITE\_\* variables** from environment
 3. **System automatically falls back to Cloudflare KV**
 4. **No data loss** - both systems can coexist
 5. **Troubleshoot and retry**
@@ -390,7 +410,9 @@ If migration fails:
 ## Common Issues and Solutions
 
 ### Issue: "Storage not configured"
+
 **Solution**: Verify Appwrite credentials are set:
+
 ```bash
 echo $APPWRITE_ENDPOINT
 echo $APPWRITE_PROJECT_ID
@@ -398,23 +420,29 @@ echo $APPWRITE_API_KEY
 ```
 
 ### Issue: "Collection not found"
+
 **Solution**: Run setup script again:
+
 ```bash
 npx tsx scripts/setup-appwrite-p2p.ts
 ```
 
 ### Issue: Timeout errors
+
 **Solution**: Check Appwrite instance connectivity:
+
 ```bash
 curl https://your-appwrite-endpoint.com/v1/health
 ```
 
 ### Issue: Mixed data sources
+
 **Solution**: Ensure all endpoints use the same storage. Check if Appwrite credentials are globally set.
 
 ## Success Criteria
 
 Migration is successful when:
+
 1. ✅ All P2P CRUD operations work via Express
 2. ✅ All P2P CRUD operations work via Cloudflare Functions
 3. ✅ Data persists in Appwrite database
@@ -425,6 +453,7 @@ Migration is successful when:
 ## Performance Benchmarks
 
 Expected latencies:
+
 - Create order: < 100ms
 - Retrieve order: < 50ms
 - List orders: < 200ms
@@ -432,6 +461,7 @@ Expected latencies:
 - Create notification: < 80ms
 
 If latencies exceed these, check:
+
 - Network connectivity to Appwrite
 - Database query optimization
 - Collection indexing

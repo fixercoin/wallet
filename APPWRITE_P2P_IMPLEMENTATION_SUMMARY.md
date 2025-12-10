@@ -9,6 +9,7 @@ Successfully migrated P2P storage functions from Cloudflare KV to Appwrite datab
 ### 1. New Files Created
 
 #### Configuration
+
 - **`server/lib/appwrite-config.ts`** - Appwrite initialization and collection definitions
   - Exports database client and collection IDs
   - Manages credentials from environment variables
@@ -19,6 +20,7 @@ Successfully migrated P2P storage functions from Cloudflare KV to Appwrite datab
   - Handles document CRUD operations
 
 #### Cloudflare Functions
+
 - **`functions/lib/appwrite-kv-store.ts`** - Appwrite KVStore implementation
   - Complete KVStore API compatible with existing code
   - All P2P methods (orders, payments, notifications, etc.)
@@ -30,6 +32,7 @@ Successfully migrated P2P storage functions from Cloudflare KV to Appwrite datab
   - Maintains backwards compatibility
 
 #### Scripts & Documentation
+
 - **`scripts/setup-appwrite-p2p.ts`** - Appwrite setup automation
   - Creates database and collections
   - Configures attributes
@@ -43,6 +46,7 @@ Successfully migrated P2P storage functions from Cloudflare KV to Appwrite datab
 ### 2. Modified Files
 
 #### Express KV Storage
+
 - **`server/lib/kv-storage.ts`**
   - Added `AppwriteKVStorage` class support
   - Updated `createAutoStorage()` to detect Appwrite first
@@ -51,6 +55,7 @@ Successfully migrated P2P storage functions from Cloudflare KV to Appwrite datab
 #### Cloudflare Functions (P2P endpoints)
 
 Updated headers and initialization in:
+
 - **`functions/api/p2p/orders.ts`**
   - Uses `getKVStore()` factory instead of direct instantiation
   - Supports both Appwrite and Cloudflare KV
@@ -89,17 +94,20 @@ p2p_db/
 ```
 
 Each collection has:
+
 - `key` (string, unique, 255 chars) - Document identifier
 - `value` (string, 65536 chars) - JSON data storage
 
 ## How It Works
 
 ### Priority Order
+
 1. **Appwrite** (if APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY set)
 2. **Cloudflare KV** (if STAKING_KV or Cloudflare credentials present)
 3. **File-based** (development fallback)
 
 ### Key Mapping
+
 Cloudflare KV keys automatically mapped to Appwrite collections:
 
 ```
@@ -114,6 +122,7 @@ p2p_merchant_stats_* → p2p_merchant_stats
 ```
 
 ### Data Format
+
 All data stored as JSON strings in `value` field:
 
 ```javascript
@@ -147,12 +156,13 @@ CLOUDFLARE_API_TOKEN=your_token
 ## Migration Steps
 
 1. **Setup Appwrite instance**
+
    ```bash
    npm run setup-appwrite-p2p
    ```
 
 2. **Configure environment variables**
-   - Set APPWRITE_* variables in deployment
+   - Set APPWRITE\_\* variables in deployment
 
 3. **Deploy Express server**
    - Automatically uses Appwrite if credentials present
@@ -166,6 +176,7 @@ CLOUDFLARE_API_TOKEN=your_token
 ## Backwards Compatibility
 
 ✅ **Fully backwards compatible**
+
 - Existing Cloudflare KV storage continues to work
 - Can run both systems side-by-side during testing
 - Easy rollback by removing Appwrite credentials
@@ -173,21 +184,22 @@ CLOUDFLARE_API_TOKEN=your_token
 
 ## Data Persistence
 
-| Operation | Before | After |
-|-----------|--------|-------|
-| Create Order | KV | Appwrite OR KV |
-| Get Order | KV | Appwrite OR KV |
-| Update Order | KV | Appwrite OR KV |
-| Delete Order | KV | Appwrite OR KV |
-| List Orders | KV Scan | Appwrite Query |
-| Payment Methods | KV | Appwrite OR KV |
-| Notifications | KV | Appwrite OR KV |
-| Escrow | KV | Appwrite OR KV |
-| Disputes | KV | Appwrite OR KV |
+| Operation       | Before  | After          |
+| --------------- | ------- | -------------- |
+| Create Order    | KV      | Appwrite OR KV |
+| Get Order       | KV      | Appwrite OR KV |
+| Update Order    | KV      | Appwrite OR KV |
+| Delete Order    | KV      | Appwrite OR KV |
+| List Orders     | KV Scan | Appwrite Query |
+| Payment Methods | KV      | Appwrite OR KV |
+| Notifications   | KV      | Appwrite OR KV |
+| Escrow          | KV      | Appwrite OR KV |
+| Disputes        | KV      | Appwrite OR KV |
 
 ## Performance Considerations
 
 ### Advantages of Appwrite
+
 - ✅ Unlimited storage (vs KV limits)
 - ✅ Better for large datasets
 - ✅ Database querying capabilities
@@ -195,11 +207,13 @@ CLOUDFLARE_API_TOKEN=your_token
 - ✅ Replication and backup options
 
 ### Latency
+
 - Expected: < 100ms per operation
 - Comparable to Cloudflare KV
 - Depends on Appwrite instance location
 
 ### Scalability
+
 - Appwrite handles millions of documents
 - No storage size limitations
 - Suitable for production scale
@@ -207,6 +221,7 @@ CLOUDFLARE_API_TOKEN=your_token
 ## Supported P2P Operations
 
 ### Orders
+
 - ✅ Create order
 - ✅ Get order by ID
 - ✅ List user orders
@@ -214,18 +229,21 @@ CLOUDFLARE_API_TOKEN=your_token
 - ✅ Delete order
 
 ### Payment Methods
+
 - ✅ Add payment method
 - ✅ List wallet payment methods
 - ✅ Get payment method
 - ✅ Delete payment method
 
 ### Notifications
+
 - ✅ Create notification
 - ✅ List notifications
 - ✅ Mark as read
 - ✅ Get broadcast notifications
 
 ### Escrow
+
 - ✅ Create escrow
 - ✅ Lock funds
 - ✅ Release funds
@@ -233,6 +251,7 @@ CLOUDFLARE_API_TOKEN=your_token
 - ✅ Mark disputed
 
 ### Disputes
+
 - ✅ Create dispute
 - ✅ Get dispute
 - ✅ List all disputes
@@ -240,6 +259,7 @@ CLOUDFLARE_API_TOKEN=your_token
 - ✅ Resolve dispute
 
 ### Reputation (Merchant Stats)
+
 - ✅ Track merchant statistics
 - ✅ Trade history
 - ✅ Verification status
@@ -284,17 +304,20 @@ curl -X POST http://localhost:8080/api/p2p/orders \
 ## Support & Troubleshooting
 
 ### Verify Appwrite Connection
+
 ```bash
 curl https://your-appwrite-endpoint.com/v1/health
 ```
 
 ### Check Logs
+
 - Express: `console.log` output
 - Cloudflare: Workers dashboard
 - Appwrite: Dashboard logs
 
 ### Revert to Cloudflare KV
-1. Remove APPWRITE_* environment variables
+
+1. Remove APPWRITE\_\* environment variables
 2. System automatically falls back to KV
 3. No data loss - both systems independent
 
@@ -311,6 +334,7 @@ curl https://your-appwrite-endpoint.com/v1/health
 ## Summary
 
 The P2P to Appwrite migration is:
+
 - ✅ **Complete** - All P2P functions updated
 - ✅ **Non-breaking** - Fully backwards compatible
 - ✅ **Tested** - Comprehensive testing guide provided

@@ -237,14 +237,29 @@ export function CryptoSentDialog() {
                       {pkrAmount.toFixed(2)} PKR
                     </span>
                   </div>
-                  <div className="border-t border-gray-300/20 pt-3 mt-3 flex justify-between items-center">
-                    <span className="text-white/70">Recipient:</span>
-                    <span
-                      className="text-xs font-mono text-white/90 max-w-[150px] truncate"
-                      title={buyerWalletAddress}
-                    >
-                      {buyerWalletAddress}
-                    </span>
+                  <div className="border-t border-gray-300/20 pt-3 mt-3">
+                    <div className="flex justify-between items-start gap-2">
+                      <span className="text-white/70">Recipient:</span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="text-xs font-mono text-white/90 truncate max-w-[120px]"
+                          title={buyerWalletAddress}
+                        >
+                          {buyerWalletAddress}
+                        </span>
+                        <button
+                          onClick={handleCopyBuyerAddress}
+                          className="p-1 hover:bg-gray-700/50 rounded transition-colors flex-shrink-0"
+                          title="Copy wallet address"
+                        >
+                          {copiedAddress ? (
+                            <Check className="w-3 h-3 text-green-400" />
+                          ) : (
+                            <Copy className="w-3 h-3 text-white/70 hover:text-white" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

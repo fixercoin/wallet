@@ -26,6 +26,11 @@ export default function WaitingForSellerResponse() {
   const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
   const [orderTimestamp, setOrderTimestamp] = useState<number | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(280);
+  const [messages, setMessages] = useState<TradeMessage[]>([]);
+  const [messageInput, setMessageInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const previousMessageCountRef = useRef(0);
 
   // Load order from state or storage
   useEffect(() => {

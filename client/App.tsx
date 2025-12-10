@@ -113,6 +113,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "next-themes";
 import { initStorageMonitoring } from "@/lib/storage-monitor";
 import { usePushNotifications } from "@/lib/services/push-notifications";
+import { syncAllOrdersFromLocalStorage } from "@/lib/p2p-order-api";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
@@ -285,6 +286,19 @@ function App() {
     initPushNotifications().catch((error) => {
       console.warn("Failed to initialize push notifications:", error);
     });
+
+    // Sync any orders from localStorage to KV storage on app startup
+    syncAllOrdersFromLocalStorage()
+      .then((result) => {
+        if (result.synced > 0) {
+          console.log(
+            `[App Init] Synced ${result.synced}/${result.total} orders from localStorage to KV`,
+          );
+        }
+      })
+      .catch((error) => {
+        console.warn("Failed to sync orders from localStorage:", error);
+      });
   }, [initPushNotifications]);
 
   return (

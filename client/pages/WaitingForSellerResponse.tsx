@@ -295,6 +295,44 @@ export default function WaitingForSellerResponse() {
           </CardContent>
         </Card>
 
+        {/* Seller Actions Notifications */}
+        {(order.sellerPaymentReceived || order.sellerTransferInitiated) && (
+          <Card className="bg-green-600/20 border border-green-500/30 mb-6">
+            <CardContent className="p-4">
+              <div className="space-y-2">
+                {order.sellerPaymentReceived && (
+                  <div className="flex items-start gap-3">
+                    <span className="text-green-400 font-bold text-lg">✓</span>
+                    <div>
+                      <p className="text-sm font-semibold text-green-300">
+                        Seller Confirmed Payment Received
+                      </p>
+                      <p className="text-xs text-green-200/70">
+                        The seller has confirmed receiving your payment. They
+                        are preparing to send your crypto.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {order.sellerTransferInitiated && (
+                  <div className="flex items-start gap-3">
+                    <span className="text-green-400 font-bold text-lg">✓</span>
+                    <div>
+                      <p className="text-sm font-semibold text-green-300">
+                        Crypto Transfer Started
+                      </p>
+                      <p className="text-xs text-green-200/70">
+                        The seller has sent your crypto to your wallet. Please
+                        check your wallet for the incoming transaction.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Order Details */}
         <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30 mb-6">
           <CardContent className="p-4">

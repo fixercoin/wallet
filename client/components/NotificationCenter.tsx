@@ -16,6 +16,7 @@ export function NotificationCenter() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const previousUnreadCountRef = useRef(0);
+  const processedNotificationsRef = useRef<Set<string>>(new Set());
   const { openBuyerWalletDialog, openCryptoReceivedDialog } = useP2POrderFlow();
 
   // Play bell sound when new notifications arrive
@@ -25,6 +26,36 @@ export function NotificationCenter() {
     }
     previousUnreadCountRef.current = unreadCount;
   }, [unreadCount]);
+
+  // Automatically open dialog for critical notifications
+  useEffect(() => {
+    const criticalNotifications = notifications.filter(
+      (n) =>
+        (n.type === "transfer_initiated" ||
+          n.type === "seller_payment_received") &&
+        !processedNotificationsRef.current.has(n.id),
+    );
+
+    if (criticalNotifications.length > 0) {
+      const notification = criticalNotifications[0];
+      processedNotificationsRef.current.add(notification.id);
+
+      if (
+        notification.type === "transfer_initiated" &&
+        notification.fullOrder
+      ) {
+        openCryptoReceivedDialog(notification.fullOrder);
+      } else if (
+        notification.type === "seller_payment_received" &&
+        notification.fullOrder
+      ) {
+        openBuyerWalletDialog(
+          notification.fullOrder,
+          notification.fullOrder.wallet_address || "",
+        );
+      }
+    }
+  }, [notifications, openCryptoReceivedDialog, openBuyerWalletDialog]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {

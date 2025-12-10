@@ -316,6 +316,17 @@ export default function WaitingForSellerResponse() {
             >
               {formatTimeRemaining(timeRemaining)}
             </div>
+            <button
+              onClick={() => setIsMinimized(!isMinimized)}
+              className="p-2 rounded-lg hover:bg-gray-900/50 transition-colors text-gray-300 hover:text-white"
+              aria-label={isMinimized ? "Maximize" : "Minimize"}
+            >
+              {isMinimized ? (
+                <Plus className="w-6 h-6" />
+              ) : (
+                <Minus className="w-6 h-6" />
+              )}
+            </button>
           </div>
         </div>
       </div>

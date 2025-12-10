@@ -79,7 +79,8 @@ export async function createOrderFromOffer(
         : 0);
   const pricePKRPerQuote = tradeDetails?.price || offer.pricePKRPerQuote || 280;
 
-  const orderId = `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  // Use offer ID if provided, otherwise generate new one
+  const orderId = offer.id || `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   console.log(`[P2P Order Creation] Creating new order:`, {
     orderId,

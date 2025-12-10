@@ -51,7 +51,9 @@ export function useOrderNotifications() {
         );
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch notifications: ${response.status}`);
+          console.warn(`Failed to fetch notifications: ${response.status}`);
+          setLoading(false);
+          return;
         }
 
         const data = await response.json();
@@ -67,7 +69,7 @@ export function useOrderNotifications() {
         ).length;
         setUnreadCount(unread);
       } catch (error) {
-        console.error("Error fetching notifications:", error);
+        console.warn("Error fetching notifications:", error);
       } finally {
         setLoading(false);
       }

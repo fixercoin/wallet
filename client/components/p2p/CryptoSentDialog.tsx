@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Copy, Check, Loader } from "lucide-react";
+import { Copy, Check, Loader, Minus } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -30,6 +30,7 @@ export function CryptoSentDialog() {
   const [buyerOrder, setBuyerOrder] = useState<P2POrder | null>(null);
   const [loadingBuyerOrder, setLoadingBuyerOrder] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [minimized, setMinimized] = useState(false);
 
   const isOpen = activeDialog === "crypto_sent_confirmation";
 
@@ -139,17 +140,27 @@ export function CryptoSentDialog() {
       onOpenChange={(open) => !open && setActiveDialog(null)}
     >
       <DialogContent className="w-full max-w-sm bg-[#1a2847] border border-gray-300/30">
-        <DialogHeader>
-          <DialogTitle className="text-white uppercase">
-            Send Crypto to Buyer
-          </DialogTitle>
-          <DialogDescription className="text-white/70 uppercase text-xs">
-            Transfer crypto to the buyer's wallet address
-          </DialogDescription>
+        <DialogHeader className="flex flex-row items-start justify-between">
+          <div className="flex-1">
+            <DialogTitle className="text-white uppercase">
+              Send Crypto to Buyer
+            </DialogTitle>
+            <DialogDescription className="text-white/70 uppercase text-xs">
+              Transfer crypto to the buyer's wallet address
+            </DialogDescription>
+          </div>
+          <button
+            onClick={() => setMinimized(!minimized)}
+            className="p-1 rounded hover:bg-gray-700/50 transition-colors flex-shrink-0"
+            title={minimized ? "Maximize" : "Minimize"}
+          >
+            <Minus className="w-5 h-5 text-white/70 hover:text-white" />
+          </button>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {sent ? (
+        {!minimized && (
+          <div className="space-y-4">
+            {sent ? (
             <>
               {/* Success State */}
               <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50 text-center">
@@ -344,7 +355,8 @@ export function CryptoSentDialog() {
               </div>
             </>
           )}
-        </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

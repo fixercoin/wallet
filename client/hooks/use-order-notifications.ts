@@ -27,6 +27,7 @@ export interface OrderNotification {
     amountTokens: number;
     amountPKR: number;
   };
+  fullOrder?: any;
   read: boolean;
   createdAt: number;
 }

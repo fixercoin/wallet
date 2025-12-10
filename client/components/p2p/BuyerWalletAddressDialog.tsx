@@ -78,6 +78,11 @@ export function BuyerWalletAddressDialog() {
 
     setRejecting(true);
     try {
+      const pkrAmount =
+        typeof currentOrder.pkr_amount === "number"
+          ? currentOrder.pkr_amount
+          : parseFloat(currentOrder.pkr_amount as any) || 0;
+
       // Send notification to buyer that order was rejected
       await createNotification(
         buyerWalletAddress,
@@ -86,9 +91,9 @@ export function BuyerWalletAddressDialog() {
         currentOrder.id,
         `Your order has been rejected. No payment required.`,
         {
-          token: currentOrder.token,
-          amountTokens: parseFloat(currentOrder.token_amount),
-          amountPKR: currentOrder.pkr_amount,
+          token: currentOrder.token || "USDT",
+          amountTokens: parseFloat(currentOrder.token_amount) || 0,
+          amountPKR: pkrAmount,
         },
       );
 

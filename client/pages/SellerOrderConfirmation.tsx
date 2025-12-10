@@ -678,7 +678,7 @@ export default function SellerOrderConfirmation() {
                   to complete the transaction securely.
                 </div>
               </div>
-            </Card>
+            </div>
 
             {/* Buyer Received Asset Button (When Seller Transferred) */}
             {sellerTransferInitiated && !buyerCryptoReceived && (

@@ -296,3 +296,76 @@ export async function updateOrderInBothStorages(
 
   return kvOrder;
 }
+
+/**
+ * Sync all orders from localStorage to KV storage
+ * Useful for recovering orders that failed to sync during creation
+ */
+export async function syncAllOrdersFromLocalStorage(): Promise<{
+  synced: number;
+  failed: number;
+  total: number;
+}> {
+  const results = { synced: 0, failed: 0, total: 0 };
+
+  try {
+    const ordersJson = localStorage.getItem("p2p_orders") || "[]";
+    const orders = JSON.parse(ordersJson) as CreatedOrder[];
+    results.total = orders.length;
+
+    if (orders.length === 0) {
+      console.log("[P2P Order API] No orders to sync from localStorage");
+      return results;
+    }
+
+    console.log(`[P2P Order API] Starting sync of ${orders.length} orders from localStorage to KV...`);
+
+    for (const order of orders) {
+      try {
+        const response = await fetch(API_BASE, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: order.id,
+            type: order.type,
+            offerId: order.offerId,
+            walletAddress: order.type === "BUY" ? order.buyerWallet : order.sellerWallet,
+            buyerWallet: order.buyerWallet,
+            sellerWallet: order.sellerWallet,
+            token: order.token,
+            amountTokens: order.amountTokens,
+            amountPKR: order.amountPKR,
+            pricePKRPerQuote: order.pricePKRPerQuote,
+            payment_method: order.payment_method,
+            sellerPaymentMethod: order.sellerPaymentMethod,
+            status: order.status,
+            createdAt: order.createdAt,
+            roomId: order.roomId,
+            buyerPaymentConfirmed: order.buyerPaymentConfirmed,
+            sellerPaymentReceived: order.sellerPaymentReceived,
+            sellerTransferInitiated: order.sellerTransferInitiated,
+            buyerCryptoReceived: order.buyerCryptoReceived,
+          }),
+        });
+
+        if (response.ok) {
+          results.synced++;
+          console.log(`[P2P Order API] ✅ Synced order: ${order.id}`);
+        } else {
+          results.failed++;
+          const errorData = await response.json().catch(() => ({}));
+          console.warn(`[P2P Order API] Failed to sync order ${order.id}: ${errorData.error || "Unknown error"}`);
+        }
+      } catch (error) {
+        results.failed++;
+        console.error(`[P2P Order API] Error syncing order ${order.id}:`, error);
+      }
+    }
+
+    console.log(`[P2P Order API] Sync complete: ${results.synced}/${results.total} synced, ${results.failed} failed`);
+    return results;
+  } catch (error) {
+    console.error("[P2P Order API] Failed to sync orders from localStorage:", error);
+    return results;
+  }
+}

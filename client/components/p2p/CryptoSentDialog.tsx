@@ -114,11 +114,18 @@ export function CryptoSentDialog() {
 
   if (!isOpen || !buyerWalletAddress || !currentOrder) return null;
 
-  const pkrAmount =
-    typeof currentOrder.pkr_amount === "number"
-      ? currentOrder.pkr_amount
-      : parseFloat(currentOrder.pkr_amount as any) || 0;
-  const tokenAmount = parseFloat(currentOrder.token_amount) || 0;
+  // Calculate amounts with proper fallbacks
+  const calculateAmount = (value: any): number => {
+    if (typeof value === "number") return value;
+    if (typeof value === "string") {
+      const parsed = parseFloat(value);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  };
+
+  const tokenAmount = calculateAmount(currentOrder.token_amount);
+  const pkrAmount = calculateAmount(currentOrder.pkr_amount);
 
   return (
     <Dialog

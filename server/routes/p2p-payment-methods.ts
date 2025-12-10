@@ -131,14 +131,22 @@ export const handleSavePaymentMethod: RequestHandler = async (req, res) => {
     paymentMethods.set(id, method);
 
     // Save to KV storage (persistent) for order creation checks
-    const existingMethods = await getWalletPaymentMethods(walletAddress);
-    const methodIndex = existingMethods.findIndex((m) => m.id === id);
-    if (methodIndex >= 0) {
-      existingMethods[methodIndex] = method;
-    } else {
-      existingMethods.push(method);
+    try {
+      const existingMethods = await getWalletPaymentMethods(walletAddress);
+      const methodIndex = existingMethods.findIndex((m) => m.id === id);
+      if (methodIndex >= 0) {
+        existingMethods[methodIndex] = method;
+      } else {
+        existingMethods.push(method);
+      }
+      await saveWalletPaymentMethods(walletAddress, existingMethods);
+    } catch (kvError) {
+      console.warn(
+        "[Payment Methods] Warning: Could not save to persistent KV storage, using in-memory only:",
+        kvError instanceof Error ? kvError.message : String(kvError),
+      );
+      // Continue anyway - the in-memory store will work for this session
     }
-    await saveWalletPaymentMethods(walletAddress, existingMethods);
 
     return res.json({
       data: method,

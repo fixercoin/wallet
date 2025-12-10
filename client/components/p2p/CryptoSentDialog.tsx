@@ -64,6 +64,13 @@ export function CryptoSentDialog() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleCopyBuyerAddress = () => {
+    navigator.clipboard.writeText(buyerWalletAddress);
+    setCopiedAddress(true);
+    toast.success("Buyer wallet address copied");
+    setTimeout(() => setCopiedAddress(false), 2000);
+  };
+
   const handleIHaveSentCrypto = async () => {
     if (!currentOrder || !wallet) return;
 

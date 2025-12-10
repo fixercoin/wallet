@@ -215,14 +215,6 @@ export function NotificationCenter() {
                           });
                           return;
                         }
-
-                        // For other notifications, navigate to order-complete
-                        navigate("/order-complete", {
-                          state: {
-                            orderId: notification.orderId,
-                            openChat: true,
-                          },
-                        });
                       }}
                     >
                       <div className="flex gap-3">

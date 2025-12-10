@@ -6,6 +6,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "@/contexts/WalletContext";
 import { playNotificationSound } from "@/lib/services/notification-sound";
+import { useP2POrderFlow } from "@/contexts/P2POrderFlowContext";
+import { syncOrderFromStorage } from "@/lib/p2p-order-api";
+import type { P2POrder } from "@/lib/p2p-api";
 
 export function NotificationCenter() {
   const { notifications, unreadCount, markAsRead } = useOrderNotifications();

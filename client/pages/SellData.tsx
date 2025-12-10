@@ -170,6 +170,7 @@ export default function SellData() {
             sellerWallet: createdOrder.sellerWallet,
             price: exchangeRate,
           },
+          false, // Don't send push notification to the seller who created the order
         );
       } catch (notificationError) {
         console.warn("Failed to send notification:", notificationError);

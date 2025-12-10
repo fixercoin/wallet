@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Send, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,7 +18,8 @@ import type { TradeMessage } from "@/lib/p2p-api";
 
 export default function SellerOrderConfirmation() {
   const navigate = useNavigate();
-  const { orderId } = useParams<{ orderId: string }>();
+  const location = useLocation();
+  const orderId = (location.state as any)?.orderId;
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();
 

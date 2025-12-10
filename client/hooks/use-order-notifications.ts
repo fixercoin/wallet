@@ -57,6 +57,8 @@ export function useOrderNotifications() {
         const data = await response.json();
 
         // Filter out notifications where the user is the sender (self-created)
+        // This ensures buyers don't receive notifications for orders they created,
+        // and sellers don't receive notifications for orders they created
         const filteredNotifications = (data.data || []).filter(
           (n: OrderNotification) => n.senderWallet !== wallet.publicKey,
         );
@@ -99,6 +101,7 @@ export function useOrderNotifications() {
         amountTokens: number;
         amountPKR: number;
       },
+      sendPushNotification: boolean = true,
     ) => {
       if (!wallet) {
         console.error("Wallet not connected");
@@ -124,11 +127,14 @@ export function useOrderNotifications() {
           throw new Error(`Failed to create notification: ${response.status}`);
         }
 
-        await pushNotificationService.sendOrderNotification(
-          type,
-          message,
-          orderData,
-        );
+        // Only send push notifications to other users, not to the user creating the notification
+        if (sendPushNotification) {
+          await pushNotificationService.sendOrderNotification(
+            type,
+            message,
+            orderData,
+          );
+        }
 
         console.log(`Notification created for ${recipientWallet}`);
       } catch (error) {

@@ -109,11 +109,16 @@ export function BuyerWalletAddressDialog() {
 
   if (!isOpen || !buyerWalletAddress || !currentOrder) return null;
 
+  // Handle both CreatedOrder and P2POrder field names
   const pkrAmount =
-    typeof currentOrder.pkr_amount === "number"
+    (currentOrder.amountPKR as any) ||
+    (typeof currentOrder.pkr_amount === "number"
       ? currentOrder.pkr_amount
-      : parseFloat(currentOrder.pkr_amount as any) || 0;
-  const tokenAmount = parseFloat(currentOrder.token_amount) || 0;
+      : parseFloat(currentOrder.pkr_amount as any) || 0);
+
+  const tokenAmount =
+    (currentOrder.amountTokens as any) ||
+    parseFloat(currentOrder.token_amount as any) || 0;
 
   return (
     <Dialog

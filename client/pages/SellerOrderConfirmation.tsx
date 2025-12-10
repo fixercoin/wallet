@@ -43,15 +43,15 @@ export default function SellerOrderConfirmation() {
   useEffect(() => {
     const loadOrder = async () => {
       if (!orderId) {
-        console.warn("[SellerOrderConfirmation] No orderId provided in location state");
+        console.warn(
+          "[SellerOrderConfirmation] No orderId provided in location state",
+        );
         setLoading(false);
         return;
       }
 
       try {
-        console.log(
-          `[SellerOrderConfirmation] Loading order: ${orderId}`,
-        );
+        console.log(`[SellerOrderConfirmation] Loading order: ${orderId}`);
         const loadedOrder = await syncOrderFromStorage(orderId);
         if (loadedOrder) {
           console.log(

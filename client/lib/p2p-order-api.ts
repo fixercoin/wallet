@@ -77,7 +77,9 @@ export async function getOrderFromAPI(
       return orders[0] as CreatedOrder;
     }
 
-    console.warn(`[P2P Order API] ⚠️ No orders returned from KV for: ${orderId}`);
+    console.warn(
+      `[P2P Order API] ⚠️ No orders returned from KV for: ${orderId}`,
+    );
     return null;
   } catch (error) {
     console.error(

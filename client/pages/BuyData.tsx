@@ -154,6 +154,7 @@ export default function BuyData() {
             buyerWallet: createdOrder.buyerWallet,
             price: exchangeRate,
           },
+          false, // Don't send push notification to the buyer who created the order
         );
       } catch (notificationError) {
         console.warn("Failed to send notification:", notificationError);

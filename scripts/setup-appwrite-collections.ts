@@ -101,8 +101,7 @@ async function setupCollections() {
             collection.id,
             "value",
             65536,
-            true, // required
-            "",
+            false, // not required
           );
           console.log(`✅ Created 'value' attribute for ${collection.id}`);
         } catch (error: any) {

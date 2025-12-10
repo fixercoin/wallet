@@ -465,71 +465,7 @@ export default function SellerOrderConfirmation() {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleCompleteOrder = async () => {
-    if (!order || !wallet?.publicKey) return;
-
-    setSubmitting(true);
-    try {
-      // Update order to mark seller has completed
-      const updatedOrder = await updateOrderInBothStorages(order.id, {
-        sellerTransferInitiated: true,
-      });
-
-      if (updatedOrder) {
-        setOrder(updatedOrder);
-      }
-      setCompletionStatus("COMPLETED");
-
-      // Send message to chat (create room if it doesn't exist)
-      let roomId = order.roomId;
-      if (!roomId && order.buyerWallet && wallet.publicKey) {
-        try {
-          const { createTradeRoom } = await import("@/lib/p2p-api");
-          const room = await createTradeRoom({
-            buyer_wallet: order.buyerWallet,
-            seller_wallet: wallet.publicKey,
-            order_id: order.id,
-          });
-          roomId = room.id;
-          // Update order with new room ID
-          await updateOrderInBothStorages(order.id, { roomId });
-        } catch (roomError) {
-          console.warn("Failed to create trade room:", roomError);
-        }
-      }
-
-      if (roomId) {
-        await addTradeMessage({
-          room_id: roomId,
-          sender_wallet: wallet.publicKey,
-          message: "✅ I have completed order",
-        });
-      }
-
-      // Notify buyer
-      await createNotification(
-        order.buyerWallet,
-        "order_completed_by_seller",
-        order.type,
-        order.id,
-        "Seller has completed order - waiting for your confirmation",
-        {
-          token: order.token,
-          amountTokens: order.amountTokens,
-          amountPKR: order.amountPKR,
-        },
-      );
-
-      toast.success("Order marked as completed");
-    } catch (error) {
-      console.error("Error completing order:", error);
-      toast.error("Failed to complete order");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  }
 
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !order?.roomId || !wallet?.publicKey) return;

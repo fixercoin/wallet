@@ -27,14 +27,14 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       toast({
-        title: "Address Copied",
-        description: "Wallet address copied to clipboard",
+        title: "ADDRESS COPIED",
+        description: "WALLET ADDRESS COPIED TO CLIPBOARD",
       });
     } else {
       toast({
-        title: "Copy Failed",
+        title: "COPY FAILED",
         description:
-          "Could not copy address. Please copy it manually from the input field.",
+          "COULD NOT COPY ADDRESS. PLEASE COPY IT MANUALLY FROM THE INPUT FIELD.",
         variant: "destructive",
       });
     }
@@ -44,20 +44,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col items-center">
       <div className="w-full relative z-20">
         <div className="border-0 bg-transparent">
-          <div className="p-6 space-y-6 text-gray-900">
-            <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onBack}
-                className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
-                aria-label="Back"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div className="font-medium text-sm">DEPOSIT YOUR ASSET</div>
-            </div>
-
+          <div className="pt-24 px-6 pb-6 space-y-6 text-gray-900">
             {/* QR Code */}
             <div className="text-center space-y-4">
               <div className="inline-block bg-white p-3 rounded-lg">
@@ -77,13 +64,13 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
             {/* Address Section */}
             <div className="space-y-2">
               <h3 className="text-sm font-medium text-gray-900">
-                Your Address
+                YOUR ADDRESS
               </h3>
               <div className="flex gap-2">
                 <Input
-                  value={wallet.publicKey}
+                  value={wallet.publicKey.toUpperCase()}
                   readOnly
-                  className="font-mono text-sm bg-transparent text-gray-900 placeholder:text-gray-400 border border-gray-300/30 rounded-lg"
+                  className="font-mono text-sm bg-transparent text-gray-900 placeholder:text-gray-400 border border-gray-300/30 rounded-lg uppercase"
                 />
                 <Button
                   variant="outline"
@@ -99,6 +86,15 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
                 </Button>
               </div>
             </div>
+
+            {/* Green Back Button */}
+            <Button
+              onClick={onBack}
+              className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              BACK
+            </Button>
           </div>
         </div>
       </div>

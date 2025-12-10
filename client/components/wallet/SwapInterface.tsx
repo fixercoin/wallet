@@ -1051,31 +1051,33 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               </div>
             )}
 
-            <Button
-              onClick={executeSwap}
-              disabled={!amount || isLoading || isQuoteExpired()}
-              className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              title={
-                isQuoteExpired()
-                  ? "Quote expired - please get a new quote"
-                  : isQuoteWarning()
-                    ? `Quote expiring in ${getQuoteTimeRemaining()}s`
-                    : ""
-              }
-            >
-              {isLoading
-                ? "Processing..."
-                : isQuoteExpired()
-                  ? "CONVERT YOUR TOKENS"
-                  : "Swap (Smart Route)"}
-            </Button>
+            <div className="space-y-3">
+              <Button
+                onClick={executeSwap}
+                disabled={!amount || isLoading || isQuoteExpired()}
+                className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={
+                  isQuoteExpired()
+                    ? "Quote expired - please get a new quote"
+                    : isQuoteWarning()
+                      ? `Quote expiring in ${getQuoteTimeRemaining()}s`
+                      : ""
+                }
+              >
+                {isLoading
+                  ? "Processing..."
+                  : isQuoteExpired()
+                    ? "CONVERT YOUR TOKENS"
+                    : "Swap (Smart Route)"}
+              </Button>
 
-            <Button
-              onClick={onBack}
-              className="w-full bg-[#22c55e] hover:bg-[#1ea853] text-white uppercase font-semibold py-3 rounded-lg transition-all duration-200 mt-8"
-            >
-              Back
-            </Button>
+              <Button
+                onClick={onBack}
+                className="w-full bg-[#22c55e] hover:bg-[#1ea853] text-white uppercase font-semibold py-3 rounded-lg transition-all duration-200"
+              >
+                Back
+              </Button>
+            </div>
           </div>
 
           <SuccessDialog

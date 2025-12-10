@@ -135,6 +135,36 @@ export default function WaitingForSellerResponse() {
     return () => clearInterval(timerInterval);
   }, [orderTimestamp, order]);
 
+  // Load messages
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!order?.roomId) return;
+
+      try {
+        const msgs = await listTradeMessages(order.roomId);
+        setMessages(Array.isArray(msgs) ? msgs : []);
+      } catch (error) {
+        console.error("Failed to load messages:", error);
+      }
+    };
+
+    loadMessages();
+
+    // Poll for new messages every 2 seconds
+    const interval = setInterval(loadMessages, 2000);
+    return () => clearInterval(interval);
+  }, [order?.roomId]);
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    if (messages.length > previousMessageCountRef.current) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+    previousMessageCountRef.current = messages.length;
+  }, [messages]);
+
   const formatTimeRemaining = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;

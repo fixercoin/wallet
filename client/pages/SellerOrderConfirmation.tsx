@@ -42,11 +42,21 @@ export default function SellerOrderConfirmation() {
   // Load order
   useEffect(() => {
     const loadOrder = async () => {
-      if (!orderId) return;
+      if (!orderId) {
+        console.warn("[SellerOrderConfirmation] No orderId provided in location state");
+        setLoading(false);
+        return;
+      }
 
       try {
+        console.log(
+          `[SellerOrderConfirmation] Loading order: ${orderId}`,
+        );
         const loadedOrder = await syncOrderFromStorage(orderId);
         if (loadedOrder) {
+          console.log(
+            `[SellerOrderConfirmation] ✅ Order loaded successfully: ${orderId}`,
+          );
           setOrder(loadedOrder);
           setOrderStatus(
             (loadedOrder.status as "PENDING" | "ACCEPTED" | "REJECTED") ||
@@ -58,9 +68,14 @@ export default function SellerOrderConfirmation() {
           } else if (loadedOrder.sellerTransferInitiated) {
             setCompletionStatus("COMPLETED");
           }
+        } else {
+          console.error(
+            `[SellerOrderConfirmation] ❌ Failed to load order (not found in KV or localStorage): ${orderId}`,
+          );
+          toast.error("Order not found. It may have expired or been deleted.");
         }
       } catch (error) {
-        console.error("Error loading order:", error);
+        console.error("[SellerOrderConfirmation] Error loading order:", error);
         toast.error("Failed to load order");
       } finally {
         setLoading(false);

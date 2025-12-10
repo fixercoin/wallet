@@ -57,8 +57,6 @@ export const onRequestGet = async ({
     const escrowId = url.searchParams.get("id");
     const orderId = url.searchParams.get("orderId");
 
-    const kvStore = new KVStore(env.STAKING_KV);
-
     if (escrowId) {
       const escrow = await kvStore.getEscrow(escrowId);
       if (!escrow) {

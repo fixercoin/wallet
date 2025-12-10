@@ -903,7 +903,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <div className="w-full relative z-0">
         <div className="border-0 bg-transparent">
           <div className="space-y-6 p-6 relative">
-            <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
+            <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-12 pb-2">
               <Button
                 variant="ghost"
                 size="icon"

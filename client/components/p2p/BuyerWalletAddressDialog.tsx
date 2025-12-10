@@ -131,66 +131,33 @@ export function BuyerWalletAddressDialog() {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Buyer Order Summary */}
+          {/* Buyer Order Summary - Simplified */}
           <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
             <div className="text-xs text-white/70 uppercase mb-3 font-semibold">
-              Buyer Order Summary
+              Order Details
             </div>
-            <div className="space-y-3">
-              {/* Order ID */}
-              <div className="flex justify-between items-start">
-                <span className="text-xs text-white/60">Order ID:</span>
-                <span className="text-sm font-mono text-white/90 truncate ml-2">
-                  {currentOrder.id}
+            <div className="space-y-2 text-sm text-white">
+              <div className="flex justify-between">
+                <span className="text-white/70">Token:</span>
+                <span className="font-semibold">{currentOrder.token || "USDT"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/70">Amount:</span>
+                <span className="font-semibold">
+                  {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
                 </span>
               </div>
-
-              {/* Token & Amount */}
-              <div className="border-t border-gray-300/10 pt-3">
-                <div className="flex justify-between">
-                  <span className="text-xs text-white/60">Token:</span>
-                  <span className="text-sm font-semibold text-white">
-                    {currentOrder.token || "USDT"}
-                  </span>
-                </div>
-                <div className="flex justify-between mt-2">
-                  <span className="text-xs text-white/60">Quantity:</span>
-                  <span className="text-sm font-semibold text-white">
-                    {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
-                  </span>
-                </div>
+              <div className="flex justify-between">
+                <span className="text-white/70">Price:</span>
+                <span className="font-semibold text-green-400">
+                  {pkrAmount.toFixed(2)} PKR
+                </span>
               </div>
-
-              {/* Price & Payment Method */}
-              <div className="border-t border-gray-300/10 pt-3">
-                <div className="flex justify-between">
-                  <span className="text-xs text-white/60">Price:</span>
-                  <span className="text-sm font-semibold text-green-400">
-                    {pkrAmount.toFixed(2)} PKR
-                  </span>
-                </div>
-                <div className="flex justify-between mt-2">
-                  <span className="text-xs text-white/60">Payment:</span>
-                  <span className="text-sm font-semibold text-white capitalize">
-                    {currentOrder.payment_method || "Unknown"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Order Type & Status */}
-              <div className="border-t border-gray-300/10 pt-3">
-                <div className="flex justify-between">
-                  <span className="text-xs text-white/60">Order Type:</span>
-                  <span className="text-sm font-semibold uppercase px-2 py-1 rounded bg-blue-500/20 text-blue-300">
-                    {currentOrder.type === "buy" ? "Buying" : "Selling"}
-                  </span>
-                </div>
-                <div className="flex justify-between mt-2">
-                  <span className="text-xs text-white/60">Status:</span>
-                  <span className="text-sm font-semibold uppercase px-2 py-1 rounded bg-purple-500/20 text-purple-300">
-                    {currentOrder.status || "Active"}
-                  </span>
-                </div>
+              <div className="flex justify-between">
+                <span className="text-white/70">Payment Method:</span>
+                <span className="font-semibold capitalize">
+                  {currentOrder.payment_method || "Unknown"}
+                </span>
               </div>
             </div>
           </div>
@@ -218,20 +185,8 @@ export function BuyerWalletAddressDialog() {
             </div>
           </div>
 
-          {/* Instructions */}
-          <div className="p-4 rounded-lg bg-yellow-600/20 border border-yellow-500/50">
-            <div className="text-xs font-semibold text-yellow-300 mb-2 uppercase">
-              Important
-            </div>
-            <p className="text-xs text-yellow-200/80">
-              Before confirming, ensure you have received the payment from the
-              buyer. You will be expected to transfer the crypto to this wallet
-              address after confirmation.
-            </p>
-          </div>
-
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-2">
             <Button
               onClick={handleReject}
               disabled={rejecting}

@@ -273,7 +273,9 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   className={`uppercase bg-[#0f1729] border border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 ${errors.accountName ? "border-red-500" : ""}`}
                 />
                 {errors.accountName && (
-                  <p className="text-xs text-red-500 mt-1">{errors.accountName}</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.accountName}
+                  </p>
                 )}
               </div>
 
@@ -288,7 +290,9 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   className={`bg-[#0f1729] border border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 ${errors.accountNumber ? "border-red-500" : ""}`}
                 />
                 {errors.accountNumber && (
-                  <p className="text-xs text-red-500 mt-1">{errors.accountNumber}</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.accountNumber}
+                  </p>
                 )}
               </div>
 
@@ -303,7 +307,9 @@ export const PaymentMethodDialog: React.FC<PaymentMethodDialogProps> = ({
                   className={`uppercase bg-[#0f1729] border border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 ${errors.solanawWalletAddress ? "border-red-500" : ""}`}
                 />
                 {errors.solanawWalletAddress && (
-                  <p className="text-xs text-red-500 mt-1">{errors.solanawWalletAddress}</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.solanawWalletAddress}
+                  </p>
                 )}
               </div>
             </>

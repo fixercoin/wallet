@@ -5,6 +5,7 @@
 
 import { KVStore } from "./kv-utils";
 import { AppwriteKVStore } from "./appwrite-kv-store";
+import { BackendlessKVStore } from "./backendless-kv-store";
 
 export interface KVNamespace {
   get(key: string): Promise<string | null>;
@@ -19,20 +20,37 @@ interface PagesEnv {
   APPWRITE_PROJECT_ID?: string;
   APPWRITE_API_KEY?: string;
   APPWRITE_DATABASE_ID?: string;
+  BACKENDLESS_APP_ID?: string;
+  BACKENDLESS_API_KEY?: string;
+  BACKENDLESS_URL?: string;
 }
 
 /**
  * Get KV Store instance based on available credentials
- * Priority: Appwrite > Cloudflare KV > throws error
+ * Priority: Backendless > Appwrite > Cloudflare KV > throws error
  */
-export function getKVStore(env: PagesEnv): KVStore | AppwriteKVStore {
-  // Check for Appwrite credentials first (preferred for P2P)
+export function getKVStore(
+  env: PagesEnv,
+): KVStore | AppwriteKVStore | BackendlessKVStore {
+  // Check for Backendless credentials first (preferred for P2P)
+  if (env.BACKENDLESS_APP_ID && env.BACKENDLESS_API_KEY) {
+    console.log("[KV Store Factory] Using Backendless backend (P2P optimized)");
+    return new BackendlessKVStore(
+      env.BACKENDLESS_APP_ID,
+      env.BACKENDLESS_API_KEY,
+      env.BACKENDLESS_URL || "https://api.backendless.com",
+    ) as any;
+  }
+
+  // Check for Appwrite credentials (legacy support)
   if (
     env.APPWRITE_ENDPOINT &&
     env.APPWRITE_PROJECT_ID &&
     env.APPWRITE_API_KEY
   ) {
-    console.log("[KV Store Factory] Using Appwrite backend (P2P optimized)");
+    console.log(
+      "[KV Store Factory] Using Appwrite backend (legacy P2P support)",
+    );
     return new AppwriteKVStore(
       env.APPWRITE_ENDPOINT,
       env.APPWRITE_PROJECT_ID,
@@ -44,7 +62,7 @@ export function getKVStore(env: PagesEnv): KVStore | AppwriteKVStore {
   // Fall back to Cloudflare KV
   if (!env.STAKING_KV) {
     throw new Error(
-      "KV namespace is required. Either provide STAKING_KV (Cloudflare) or Appwrite credentials",
+      "KV namespace is required. Either provide STAKING_KV (Cloudflare), Backendless, or Appwrite credentials",
     );
   }
 
@@ -55,6 +73,8 @@ export function getKVStore(env: PagesEnv): KVStore | AppwriteKVStore {
 /**
  * Initialize KV store for P2P operations
  */
-export function initializeP2PStorage(env: PagesEnv): KVStore | AppwriteKVStore {
+export function initializeP2PStorage(
+  env: PagesEnv,
+): KVStore | AppwriteKVStore | BackendlessKVStore {
   return getKVStore(env);
 }

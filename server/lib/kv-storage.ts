@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import AppwriteKVStorage from "./appwrite-storage";
+import { BackendlessKVStorage } from "./backendless-storage";
 
 /**
  * KV Storage adapter for Express server
@@ -281,15 +282,51 @@ export class KVStorage {
     return new KVStorage(new AppwriteKVStorage());
   }
 
+  static createBackendlessStorage(
+    appId: string,
+    apiKey: string,
+    url?: string,
+  ): KVStorage {
+    return new KVStorage(new BackendlessKVStorage(appId, apiKey, url));
+  }
+
   static createAutoStorage(): KVStorage {
-    // Check if all Appwrite credentials are present
+    // Check if all Backendless credentials are present (preferred)
+    const backendlessAppId = process.env.BACKENDLESS_APP_ID;
+    const backendlessApiKey = process.env.BACKENDLESS_API_KEY;
+    const backendlessUrl = process.env.BACKENDLESS_URL;
+
+    if (backendlessAppId && backendlessApiKey) {
+      console.log(
+        "[KVStorage] Using Backendless storage backend (P2P optimized)",
+      );
+      try {
+        return new KVStorage(
+          new BackendlessKVStorage(
+            backendlessAppId,
+            backendlessApiKey,
+            backendlessUrl,
+          ),
+        );
+      } catch (error) {
+        console.warn(
+          "[KVStorage] Backendless initialization failed, falling back to file-based storage:",
+          error instanceof Error ? error.message : String(error),
+        );
+        return new KVStorage(new FileKVStorage());
+      }
+    }
+
+    // Check if all Appwrite credentials are present (legacy)
     const appwriteEndpoint = process.env.APPWRITE_ENDPOINT;
     const appwriteProjectId = process.env.APPWRITE_PROJECT_ID;
     const appwriteApiKey = process.env.APPWRITE_API_KEY;
 
     // Only use Appwrite if ALL credentials are provided and non-empty
     if (appwriteEndpoint && appwriteProjectId && appwriteApiKey) {
-      console.log("[KVStorage] Using Appwrite storage backend (P2P optimized)");
+      console.log(
+        "[KVStorage] Using Appwrite storage backend (legacy P2P support)",
+      );
       try {
         return new KVStorage(new AppwriteKVStorage());
       } catch (error) {

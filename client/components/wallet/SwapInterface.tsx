@@ -867,20 +867,6 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <div className="w-full">
         <div className="rounded-none border border-[#e6f6ec]/20 bg-transparent overflow-hidden">
           <div className="space-y-6 p-6">
-            <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-12 pb-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onBack}
-                className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
-                aria-label="Back"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <h3 className="text-lg font-semibold text-white uppercase">
-                FIXORIUM TRADE
-              </h3>
-            </div>
             <p className="text-gray-600 text-center">
               No wallet detected. Please set up or import a wallet to use the
               swap feature.

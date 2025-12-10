@@ -331,6 +331,7 @@ export default function WaitingForSellerResponse() {
         </div>
       </div>
 
+      {!isMinimized && (
       <div className="max-w-2xl mx-auto px-4 py-6">
         {/* Waiting Message */}
         <Card className="bg-[#0f1520]/50 border border-blue-500/30 mb-6">
@@ -590,6 +591,7 @@ export default function WaitingForSellerResponse() {
           Cancel Order
         </Button>
       </div>
+      )}
 
       {/* Bottom Navigation */}
       <P2PBottomNavigation

@@ -322,19 +322,21 @@ function App() {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
-          <AppWithPasswordPrompt>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <LanguageProvider>
-                <CurrencyProvider>
-                  <BrowserRouter>
-                    <AppContent />
-                  </BrowserRouter>
-                </CurrencyProvider>
-              </LanguageProvider>
-            </TooltipProvider>
-          </AppWithPasswordPrompt>
+          <P2POrderFlowProvider>
+            <AppWithPasswordPrompt>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <LanguageProvider>
+                  <CurrencyProvider>
+                    <BrowserRouter>
+                      <AppContent />
+                    </BrowserRouter>
+                  </CurrencyProvider>
+                </LanguageProvider>
+              </TooltipProvider>
+            </AppWithPasswordPrompt>
+          </P2POrderFlowProvider>
         </WalletProvider>
       </QueryClientProvider>
     </ThemeProvider>

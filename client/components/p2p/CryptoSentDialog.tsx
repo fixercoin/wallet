@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Copy, Check } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Copy, Check, Loader } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -14,12 +14,18 @@ import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import { useWallet } from "@/contexts/WalletContext";
 
 export function CryptoSentDialog() {
-  const { activeDialog, buyerWalletAddress, currentOrder, setActiveDialog } =
-    useP2POrderFlow();
+  const {
+    activeDialog,
+    buyerWalletAddress,
+    currentOrder,
+    setActiveDialog,
+    openCryptoReceivedDialog,
+  } = useP2POrderFlow();
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const isOpen = activeDialog === "crypto_sent_confirmation";
 

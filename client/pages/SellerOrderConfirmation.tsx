@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Send, Check, X } from "lucide-react";
+import { ArrowLeft, Send, Check, X, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useWallet } from "@/contexts/WalletContext";
@@ -36,6 +36,11 @@ export default function SellerOrderConfirmation() {
   const [completionStatus, setCompletionStatus] = useState<
     "PENDING" | "COMPLETED" | "BUYER_RECEIVED"
   >("PENDING");
+  const [buyerPaymentConfirmed, setBuyerPaymentConfirmed] = useState(false);
+  const [sellerPaymentReceived, setSellerPaymentReceived] = useState(false);
+  const [sellerTransferInitiated, setSellerTransferInitiated] = useState(false);
+  const [buyerCryptoReceived, setBuyerCryptoReceived] = useState(false);
+  const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
 

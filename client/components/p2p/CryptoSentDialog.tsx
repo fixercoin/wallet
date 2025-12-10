@@ -85,8 +85,13 @@ export function CryptoSentDialog() {
 
     setSending(true);
     try {
-      const pkrAmount = calculateAmount(currentOrder.pkr_amount);
-      const tokenAmount = calculateAmount(currentOrder.token_amount);
+      // Support both field name formats from server/client
+      const pkrAmount =
+        calculateAmount(currentOrder.amountPKR) ||
+        calculateAmount(currentOrder.pkr_amount);
+      const tokenAmount =
+        calculateAmount(currentOrder.amountTokens) ||
+        calculateAmount(currentOrder.token_amount);
 
       // Send notification to buyer that crypto has been sent
       await createNotification(

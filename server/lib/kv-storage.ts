@@ -1,9 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
+import AppwriteKVStorage from "./appwrite-storage";
 
 /**
  * KV Storage adapter for Express server
- * Supports both file-based storage (development) and Cloudflare KV (production)
+ * Supports file-based storage (development), Cloudflare KV, and Appwrite (production)
  */
 
 interface KVStorageBackend {
@@ -276,8 +277,22 @@ export class KVStorage {
     );
   }
 
+  static createAppwriteStorage(): KVStorage {
+    return new KVStorage(new AppwriteKVStorage());
+  }
+
   static createAutoStorage(): KVStorage {
-    // Try to auto-detect Cloudflare KV credentials from environment
+    // Try to auto-detect Appwrite credentials first (preferred for P2P)
+    const appwriteEndpoint = process.env.APPWRITE_ENDPOINT;
+    const appwriteProjectId = process.env.APPWRITE_PROJECT_ID;
+    const appwriteApiKey = process.env.APPWRITE_API_KEY;
+
+    if (appwriteEndpoint && appwriteProjectId && appwriteApiKey) {
+      console.log("[KVStorage] Using Appwrite storage backend (P2P optimized)");
+      return new KVStorage(new AppwriteKVStorage());
+    }
+
+    // Try to auto-detect Cloudflare KV credentials
     const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
     const namespaceId = process.env.CLOUDFLARE_NAMESPACE_ID;
     const apiToken = process.env.CLOUDFLARE_API_TOKEN;

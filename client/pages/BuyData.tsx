@@ -192,6 +192,8 @@ export default function BuyData() {
     amountPKR,
     navigate,
     createNotification,
+    openSellerPaymentDialog,
+    paymentMethods,
   ]);
 
   const handlePKRChange = (value: string) => {

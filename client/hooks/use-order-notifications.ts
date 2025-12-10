@@ -57,6 +57,8 @@ export function useOrderNotifications() {
         const data = await response.json();
 
         // Filter out notifications where the user is the sender (self-created)
+        // This ensures buyers don't receive notifications for orders they created,
+        // and sellers don't receive notifications for orders they created
         const filteredNotifications = (data.data || []).filter(
           (n: OrderNotification) => n.senderWallet !== wallet.publicKey,
         );

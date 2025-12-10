@@ -509,9 +509,7 @@ export default function BuyData() {
       <Dialog open={flowStep === "seller_payment"}>
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-white">
-              MAKE PAYMENT
-            </DialogTitle>
+            <DialogTitle className="text-white">MAKE PAYMENT</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">

@@ -125,7 +125,9 @@ export function useOrderNotifications() {
         });
 
         if (!response.ok) {
-          console.warn(`Failed to create notification: ${response.status} - notifications are non-critical`);
+          console.warn(
+            `Failed to create notification: ${response.status} - notifications are non-critical`,
+          );
           // Don't throw - notifications are optional for order flow
           return;
         }

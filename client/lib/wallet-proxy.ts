@@ -7,10 +7,6 @@ import { wordlist } from "@scure/bip39/wordlists/english.js";
 import * as nacl from "tweetnacl";
 import { assertValidMnemonic, normalizeMnemonicInput } from "@/lib/mnemonic";
 import { deriveEd25519Path } from "@/lib/solana-derivation";
-import {
-  getWalletBalance as getSolanaBalance,
-  getTokenAccounts as getSolanaTokenAccounts,
-} from "@/lib/services/solana-rpc";
 
 export interface WalletData {
   publicKey: string;
@@ -40,6 +36,7 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     symbol: "SOL",
     name: "Solana",
     decimals: 9,
+    balance: 0,
     logoURI:
       "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
   },
@@ -49,32 +46,46 @@ export const DEFAULT_TOKENS: TokenInfo[] = [
     symbol: "USDC",
     name: "USD Coin",
     decimals: 6,
+    balance: 0,
     logoURI:
-      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+      "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2F69833acc5e0c464c82791c745fdc8f9a?format=webp&width=800",
   },
   {
     // USDT (Tether USD on Solana)
     mint: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
     symbol: "USDT",
-    name: "Tether USD",
+    name: "USDT TETHER",
     decimals: 6,
+    balance: 0,
     logoURI:
-      "https://cdn.builder.io/api/v1/image/assets%2F559a5e19be114c9d8427d6683b845144%2Fc2ea69828dbc4a90b2deed99c2291802?format=webp&width=800",
+      "https://cdn.builder.io/api/v1/image/assets%2F21d46b908e134d9783b898bbea7e6c3d%2F672cb65517fe4c02b396825d21cef757?format=webp&width=800",
   },
   {
     mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
     symbol: "FIXERCOIN",
     name: "FIXERCOIN",
     decimals: 6,
-    logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
+    balance: 0,
+    logoURI:
+      "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2F66c5cbe0ef78435eab9dfe4b45b5ba0d?format=webp&width=800",
   },
   {
     mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
     symbol: "LOCKER",
     name: "LOCKER",
     decimals: 6,
+    balance: 0,
     logoURI:
-      "https://i.postimg.cc/J7p1FPbm/IMG-20250425-004450-removebg-preview-modified-2-6.png",
+      "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2Fb8e7b3fa19fe464c8362834eaf1367eb?format=webp&width=800",
+  },
+  {
+    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+    symbol: "FXM",
+    name: "Fixorium",
+    decimals: 6,
+    balance: 0,
+    logoURI:
+      "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2Fef8e21a960894d1b9408732e737a9d1f?format=webp&width=800",
   },
 ];
 
@@ -115,16 +126,71 @@ export const recoverWallet = (mnemonicInput: string): WalletData => {
 };
 
 export const getBalance = async (publicKey: string): Promise<number> => {
-  // Use direct Solana RPC call with public endpoints
-  // No backend proxy needed
   try {
     console.log(`Fetching balance for: ${publicKey}`);
-    const balance = await getSolanaBalance(publicKey);
-    console.log(`✅ Balance fetched: ${balance} SOL`);
-    return balance;
+
+    // Use server endpoint for balance fetching
+    // This avoids CORS issues and ensures reliability
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+    try {
+      const response = await fetch(
+        `/api/wallet/balance?publicKey=${encodeURIComponent(publicKey)}`,
+        { signal: controller.signal },
+      );
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(
+          `Balance endpoint returned ${response.status}:`,
+          errorText,
+        );
+        throw new Error(`Server returned ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log(`Raw balance response:`, data);
+
+      // Check for API error in response
+      if (data.error) {
+        console.error(`Balance API error:`, data.error, data.details);
+        throw new Error(
+          `API error: ${data.error}${data.details ? ` - ${data.details}` : ""}`,
+        );
+      }
+
+      const balance =
+        data.balance !== undefined
+          ? data.balance
+          : data.balanceLamports !== undefined
+            ? data.balanceLamports / 1_000_000_000
+            : 0;
+
+      if (typeof balance !== "number" || !isFinite(balance)) {
+        console.error(`Invalid balance value: ${balance}`, data);
+        throw new Error(`Invalid balance type: ${typeof balance}`);
+      }
+
+      if (balance < 0) {
+        console.error(`Negative balance value: ${balance}`, data);
+        throw new Error(`Negative balance: ${balance}`);
+      }
+
+      console.log(
+        `✅ Balance fetched: ${balance} SOL (source: ${data.source || "unknown"})`,
+      );
+      return balance;
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      throw fetchError;
+    }
   } catch (error) {
     console.error("Failed to fetch balance:", error);
-    return 0;
+    // Re-throw error so WalletContext can use cached balance fallback
+    throw error;
   }
 };
 
@@ -132,33 +198,140 @@ export const getTokenAccounts = async (
   publicKey: string,
 ): Promise<TokenInfo[]> => {
   try {
-    console.log(`Fetching token accounts via Solana RPC for: ${publicKey}`);
+    console.log(`Fetching token accounts via server API for: ${publicKey}`);
 
-    const tokenAccounts = await getSolanaTokenAccounts(publicKey);
+    // Use RPC-based token fetching (free endpoints with Alchemy fallback)
+    console.log("[TokenAccounts] Fetching token accounts via RPC endpoint...");
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-    // Merge with default tokens to ensure all known tokens are included
-    const allTokens = [...DEFAULT_TOKENS];
-
-    // Update balances for tokens we found on-chain
-    tokenAccounts.forEach((tokenAccount) => {
-      const existingTokenIndex = allTokens.findIndex(
-        (t) => t.mint === tokenAccount.mint,
+    try {
+      const response = await fetch(
+        `/api/wallet/token-accounts?publicKey=${encodeURIComponent(publicKey)}`,
+        { signal: controller.signal },
       );
-      if (existingTokenIndex >= 0) {
-        allTokens[existingTokenIndex] = {
-          ...allTokens[existingTokenIndex],
-          balance: tokenAccount.balance,
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+
+      const data = await response.json();
+      const tokenAccounts = data.tokens || [];
+      const isUsingFallback =
+        data.warning && data.warning.includes("unavailable");
+
+      console.log(`[TokenAccounts] RPC response:`, {
+        publicKey,
+        tokenCount: tokenAccounts.length,
+        firstToken: tokenAccounts[0],
+        solTokenBalance: tokenAccounts.find((t) => t.symbol === "SOL")?.balance,
+      });
+
+      if (isUsingFallback) {
+        console.warn(
+          `[TokenAccounts] Server returned fallback data:`,
+          data.warning,
+        );
+      }
+
+      // Enrich tokens with logos from DEFAULT_TOKENS
+      const logoMap = new Map(DEFAULT_TOKENS.map((t) => [t.mint, t.logoURI]));
+      const allTokens = tokenAccounts.map((token) => {
+        // Ensure SOL has proper metadata
+        const isSol =
+          token.mint === "So11111111111111111111111111111111111111112" ||
+          token.symbol === "SOL";
+        return {
+          ...token,
+          symbol: isSol ? "SOL" : token.symbol,
+          name: isSol ? "Solana" : token.name,
+          decimals: isSol ? 9 : token.decimals,
+          logoURI:
+            token.logoURI ||
+            logoMap.get(token.mint) ||
+            (isSol
+              ? "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png"
+              : undefined),
+        };
+      });
+
+      // Log FXM and special tokens for debugging
+      const fxmToken = allTokens.find((t) => t.symbol === "FXM");
+      if (fxmToken) {
+        console.log(
+          `[TokenAccounts] FXM token found (RPC): balance=${fxmToken.balance}, decimals=${fxmToken.decimals}`,
+        );
+      }
+
+      // Ensure SOL is present with proper balance and metadata
+      const solMint = "So11111111111111111111111111111111111111112";
+      const solLogoURI =
+        "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png";
+
+      const solIndex = allTokens.findIndex(
+        (t) => t.mint === solMint || t.symbol === "SOL",
+      );
+
+      if (solIndex >= 0) {
+        // Ensure SOL has correct metadata and valid balance
+        const solBalance = allTokens[solIndex].balance;
+        if (
+          typeof solBalance !== "number" ||
+          !isFinite(solBalance) ||
+          solBalance < 0
+        ) {
+          console.warn(
+            `[TokenAccounts] SOL balance is invalid: ${solBalance}, resetting to 0`,
+          );
+          allTokens[solIndex].balance = 0;
+        }
+        // Ensure SOL has correct metadata
+        allTokens[solIndex] = {
+          ...allTokens[solIndex],
+          mint: solMint,
+          symbol: "SOL",
+          name: "Solana",
+          decimals: 9,
+          logoURI: allTokens[solIndex].logoURI || solLogoURI,
         };
       } else {
-        allTokens.push(tokenAccount);
+        // If SOL not found from RPC, add it with 0 balance (will be fetched later)
+        allTokens.unshift({
+          mint: solMint,
+          symbol: "SOL",
+          name: "Solana",
+          decimals: 9,
+          balance: 0,
+          logoURI: solLogoURI,
+        });
       }
-    });
 
-    console.log(`✅ Solana RPC successful: ${allTokens.length} tokens`);
-    return allTokens;
+      console.log(
+        `✅ Token accounts loaded from RPC: ${allTokens.length} tokens (SOL balance: ${
+          allTokens.find((t) => t.symbol === "SOL")?.balance ?? "not found"
+        })`,
+      );
+      return allTokens;
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      throw fetchError;
+    }
   } catch (error) {
-    console.error("Solana RPC failed for token accounts:", error);
-    return DEFAULT_TOKENS.map((token) => ({ ...token, balance: 0 }));
+    console.error("Failed to fetch token accounts:", error);
+    // Return at least SOL on error
+    return [
+      {
+        mint: "So11111111111111111111111111111111111111112",
+        symbol: "SOL",
+        name: "Solana",
+        decimals: 9,
+        balance: 0,
+        logoURI:
+          "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+      },
+    ];
   }
 };
 

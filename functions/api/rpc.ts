@@ -5,8 +5,10 @@ export const config = {
 const DEFAULT_SOLANA_RPC = "https://solana.publicnode.com";
 const FALLBACK_RPC_ENDPOINTS = [
   "https://solana.publicnode.com",
+  "https://api.solflare.com",
   "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
+  "https://api.marinade.finance/rpc",
 ];
 
 const PUMPFUN_API_BASE = "https://pump.fun/api";
@@ -863,59 +865,175 @@ async function handleSolPrice(): Promise<Response> {
 }
 
 async function handleTokenPrice(url: URL): Promise<Response> {
-  const mint = url.searchParams.get("mint");
-  const tokenSymbol = url.searchParams.get("symbol") || "FIXERCOIN";
+  const TOKEN_MINTS: Record<string, string> = {
+    SOL: "So11111111111111111111111111111111111111112",
+    USDC: "EPjFWdd5Au7BXRSpJfDw3gEPrwwAau4vTNihtQ5go5Q",
+    USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
+    FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+    LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+    FXM: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+  };
+
+  const FALLBACK_PRICES: Record<string, number> = {
+    USDC: 1.0,
+    USDT: 1.0,
+    FIXERCOIN: 0.00008139,
+    SOL: 149.38,
+    LOCKER: 0.00001112,
+    FXM: 0.000003567,
+  };
+
+  const PKR_CONVERSION = 291.9; // 1 USD = ~291.90 PKR
+
+  let mint = url.searchParams.get("mint");
+  let token = url.searchParams.get("token")?.toUpperCase();
+  let tokenSymbol = url.searchParams.get("symbol")?.toUpperCase() || token;
+
+  // Resolve token to mint
+  if (!mint && token && TOKEN_MINTS[token]) {
+    mint = TOKEN_MINTS[token];
+    tokenSymbol = token;
+  } else if (!mint && tokenSymbol && TOKEN_MINTS[tokenSymbol]) {
+    mint = TOKEN_MINTS[tokenSymbol];
+  }
 
   if (!mint && !tokenSymbol) {
     return new Response(
       JSON.stringify({
-        error: "mint or symbol parameter required",
+        error: "mint, token, or symbol parameter required",
       }),
       { status: 400, headers: CORS_HEADERS },
     );
   }
 
+  tokenSymbol = tokenSymbol || "UNKNOWN";
+
   try {
-    const fetchMint = mint || "So11111111111111111111111111111111111111112";
+    // For stablecoins, return hardcoded price immediately
+    if (tokenSymbol === "USDC" || tokenSymbol === "USDT") {
+      const priceUsd = 1.0;
+      const priceInPKR = priceUsd * PKR_CONVERSION;
+      return new Response(
+        JSON.stringify({
+          token: tokenSymbol,
+          mint,
+          rate: priceInPKR,
+          priceInPKR,
+          priceUsd,
+          source: "stablecoin",
+          timestamp: new Date().toISOString(),
+        }),
+        { headers: CORS_HEADERS },
+      );
+    }
+
+    const fetchMint = mint || TOKEN_MINTS.SOL;
     const response = await timeoutFetch(
       `${JUPITER_PRICE_BASE}/price?ids=${fetchMint}`,
       {
         method: "GET",
         headers: browserHeaders(),
       },
+      10000,
     );
 
     if (!response.ok) {
+      // Return fallback price if API fails
+      const fallbackPrice = FALLBACK_PRICES[tokenSymbol];
+      if (fallbackPrice !== undefined) {
+        const priceInPKR = fallbackPrice * PKR_CONVERSION;
+        return new Response(
+          JSON.stringify({
+            token: tokenSymbol,
+            mint: fetchMint,
+            rate: priceInPKR,
+            priceInPKR,
+            priceUsd: fallbackPrice,
+            source: "fallback",
+            timestamp: new Date().toISOString(),
+          }),
+          { headers: CORS_HEADERS },
+        );
+      }
+
       return new Response(
-        JSON.stringify({ error: "Failed to fetch token price" }),
-        { status: response.status, headers: CORS_HEADERS },
+        JSON.stringify({
+          error: "Failed to fetch token price",
+          token: tokenSymbol,
+        }),
+        { status: 502, headers: CORS_HEADERS },
       );
     }
 
     const data = await response.json();
     const price = data?.data?.[fetchMint]?.price ?? null;
 
-    if (price === null) {
+    if (price === null || price === undefined) {
+      // Return fallback price
+      const fallbackPrice = FALLBACK_PRICES[tokenSymbol];
+      if (fallbackPrice !== undefined) {
+        const priceInPKR = fallbackPrice * PKR_CONVERSION;
+        return new Response(
+          JSON.stringify({
+            token: tokenSymbol,
+            mint: fetchMint,
+            rate: priceInPKR,
+            priceInPKR,
+            priceUsd: fallbackPrice,
+            source: "fallback",
+            timestamp: new Date().toISOString(),
+          }),
+          { headers: CORS_HEADERS },
+        );
+      }
+
       return new Response(
-        JSON.stringify({ error: "Token price not available" }),
+        JSON.stringify({
+          error: "Token price not available",
+          token: tokenSymbol,
+        }),
         { status: 502, headers: CORS_HEADERS },
       );
     }
 
+    const priceInPKR = price * PKR_CONVERSION;
     return new Response(
       JSON.stringify({
         token: tokenSymbol,
         mint: fetchMint,
+        rate: priceInPKR,
+        priceInPKR,
         priceUsd: price,
+        source: "jupiter",
         timestamp: new Date().toISOString(),
       }),
       { headers: CORS_HEADERS },
     );
   } catch (e: any) {
+    // Return fallback on error
+    const fallbackPrice = FALLBACK_PRICES[tokenSymbol];
+    if (fallbackPrice !== undefined) {
+      const priceInPKR = fallbackPrice * PKR_CONVERSION;
+      return new Response(
+        JSON.stringify({
+          token: tokenSymbol,
+          mint: mint || TOKEN_MINTS[tokenSymbol],
+          rate: priceInPKR,
+          priceInPKR,
+          priceUsd: fallbackPrice,
+          source: "fallback",
+          error: "API failed, using fallback",
+          timestamp: new Date().toISOString(),
+        }),
+        { headers: CORS_HEADERS },
+      );
+    }
+
     return new Response(
       JSON.stringify({
         error: "Failed to fetch token price",
         details: String(e?.message || e),
+        token: tokenSymbol,
       }),
       { status: 502, headers: CORS_HEADERS },
     );

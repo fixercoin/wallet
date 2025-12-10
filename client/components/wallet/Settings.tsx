@@ -14,6 +14,7 @@ import {
   EyeOff,
   Twitter,
   Send,
+  Headphones,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
@@ -23,9 +24,14 @@ import bs58 from "bs58";
 interface SettingsProps {
   onBack: () => void;
   onOpenSetup?: () => void;
+  onDocumentation?: () => void;
 }
 
-export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
+export const Settings: React.FC<SettingsProps> = ({
+  onBack,
+  onOpenSetup,
+  onDocumentation,
+}) => {
   const { wallet, wallets, logout, selectWallet } = useWallet();
   const { toast } = useToast();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -340,12 +346,13 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                 </CardContent>
               </Card>
 
+              {/* Documentation Card */}
               {/* Helpline Card */}
               <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-[hsl(var(--foreground))]">
-                      HELPLINE 24/7
+                      CONTACT
                     </span>
                     <div className="flex items-center gap-3">
                       <a
@@ -366,6 +373,15 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       >
                         <Send className="h-5 w-5" />
                       </a>
+                      {onDocumentation && (
+                        <button
+                          onClick={onDocumentation}
+                          className="p-2 hover:bg-white/10 rounded-md transition-colors text-gray-600 hover:text-gray-900"
+                          aria-label="Documentation"
+                        >
+                          <Headphones className="h-5 w-5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </CardContent>

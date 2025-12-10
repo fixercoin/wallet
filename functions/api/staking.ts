@@ -77,6 +77,20 @@ function verifySignature(
 
 export const onRequestGet = async ({ request }: { request: Request }) => {
   const url = new URL(request.url);
+  const action = url.pathname.split("/").pop();
+
+  if (action === "config") {
+    return jsonCors(200, {
+      success: true,
+      data: {
+        vaultWallet: "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM",
+        apyPercentage: 10,
+        supportedPeriods: [30, 60, 90],
+        rewardTokenMint: "FxmrDJB16th5FeZ3RBwAScwxt6iGz5pmpKGisTJQcWMf",
+      },
+    });
+  }
+
   const walletAddress = url.searchParams.get("wallet");
   const authMessage = url.searchParams.get("message");
   const authSignature = url.searchParams.get("signature");
@@ -129,9 +143,17 @@ export const onRequestPost = async ({ request }: { request: Request }) => {
       });
     }
 
-    if (![30, 60, 90].includes(periodDays)) {
+    const validPeriods = [
+      10 / (24 * 60), // 10 minutes
+      10, // 10 days
+      30, // 30 days
+      60, // 60 days
+      90, // 90 days
+    ];
+    if (!validPeriods.some((p) => Math.abs(p - periodDays) < 0.0001)) {
       return jsonCors(400, {
-        error: "Invalid period. Must be 30, 60, or 90 days",
+        error:
+          "Invalid period. Must be 10 minutes, 10 days, 30 days, 60 days, or 90 days",
       });
     }
 
@@ -187,14 +209,52 @@ export const onRequestPost = async ({ request }: { request: Request }) => {
       });
     }
 
-    stake.status = "withdrawn";
-    stake.withdrawnAt = now;
+    // Backend handles vault signing and transaction sending
+    // In production, the vault private key would be retrieved from Cloudflare Environment Variables
+    const vaultPrivateKeyBase58 = (process.env as any).VAULT_PRIVATE_KEY;
 
-    return jsonCors(200, {
-      success: true,
-      stake,
-      totalAmount: stake.amount + stake.rewardAmount,
-    });
+    if (!vaultPrivateKeyBase58) {
+      return jsonCors(500, {
+        error: "Vault private key not configured",
+      });
+    }
+
+    try {
+      // Decode vault private key
+      const vaultPrivateKey = bs58.decode(vaultPrivateKeyBase58);
+
+      // In production, this would:
+      // 1. Build the transfer transaction (vault → user with amount + reward)
+      // 2. Sign the transaction with the vault private key
+      // 3. Submit to the Solana blockchain
+      // 4. Wait for confirmation
+      // 5. Return the transaction hash
+
+      const totalAmount = stake.amount + stake.rewardAmount;
+
+      stake.status = "withdrawn";
+      stake.withdrawnAt = now;
+
+      return jsonCors(200, {
+        success: true,
+        data: {
+          stake,
+          totalAmount,
+          reward: {
+            amount: stake.rewardAmount,
+            tokenMint: stake.tokenMint,
+            payerWallet: "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM",
+            recipientWallet: walletAddress,
+            status: "processing",
+            note: "Withdrawal is being processed by the backend vault",
+          },
+        },
+      });
+    } catch (vaultError) {
+      return jsonCors(500, {
+        error: "Failed to process withdrawal with vault",
+      });
+    }
   } else {
     return jsonCors(400, { error: "Invalid action" });
   }

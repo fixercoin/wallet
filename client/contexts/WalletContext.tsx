@@ -16,23 +16,22 @@ import {
 import { ensureFixoriumProvider } from "@/lib/fixorium-provider";
 import type { FixoriumWalletProvider } from "@/lib/fixorium-provider";
 import { solPriceService } from "@/lib/services/sol-price";
+import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { birdeyeAPI } from "@/lib/services/birdeye";
+import { jupiterAPI } from "@/lib/services/jupiter";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
 import { lockerPriceService } from "@/lib/services/locker-price";
 import { fxmPriceService } from "@/lib/services/fxm-price";
-import { getTokenBalanceForMint } from "@/lib/services/solana-rpc";
 import { getTokenPriceBySol } from "@/lib/services/derived-price";
 import { Connection } from "@solana/web3.js";
 import { connection as globalConnection } from "@/lib/wallet";
 import {
   savePricesToCache,
-  getCachedPrices,
   saveBalanceToCache,
   getCachedBalance,
   saveTokensToCache,
   getCachedTokens,
-  isCacheFresh,
-  CACHE_VALIDITY_PRICES,
+  clearDashboardTokenCache,
 } from "@/lib/services/offline-cache";
 import {
   isEncryptedWalletStorage,
@@ -43,6 +42,14 @@ import {
   getWalletPassword,
   isPasswordAvailable,
 } from "@/lib/wallet-password";
+import {
+  getStorageItem,
+  setStorageItem,
+  removeStorageItem,
+  hasValidWalletData,
+  clearAllWalletData,
+  getStorageDiagnostics,
+} from "@/lib/wallet-persistence";
 
 interface WalletContextType {
   wallet: WalletData | null; // active
@@ -64,6 +71,7 @@ interface WalletContextType {
   logout: () => void;
   updateWalletLabel: (publicKey: string, label: string) => void;
   unlockWithPassword: (password: string) => Promise<boolean>;
+  updateTokenBalance: (tokenMint: string, newBalance: number) => void;
   connection?: Connection | null;
 }
 
@@ -75,7 +83,6 @@ interface WalletProviderProps {
 
 const WALLETS_STORAGE_KEY = "solana_wallet_accounts";
 const LEGACY_WALLET_KEY = "solana_wallet_data";
-const HIDDEN_TOKENS_KEY = "hidden_tokens";
 const ACTIVE_WALLET_KEY = "solana_active_wallet";
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
@@ -92,6 +99,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const encryptedWalletsRef = useRef<any[]>([]);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const providerRef = useRef<FixoriumWalletProvider | null>(null);
+  const hasInitializedRef = useRef<boolean>(false);
 
   // Ensure Fixorium provider is available and wired once on mount
   useEffect(() => {
@@ -109,105 +117,202 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
   // Load wallets from localStorage on mount (migrate legacy if necessary)
   useEffect(() => {
-    try {
-      const legacy = localStorage.getItem(LEGACY_WALLET_KEY);
-      if (legacy) {
-        const parsed = JSON.parse(legacy) as any;
-        // try to coerce secretKey
-        if (parsed && parsed.secretKey) {
-          try {
-            if (Array.isArray(parsed.secretKey)) {
-              parsed.secretKey = Uint8Array.from(parsed.secretKey);
-            } else if (typeof parsed.secretKey === "object") {
-              const vals = Object.values(parsed.secretKey).filter(
-                (v) => typeof v === "number",
-              ) as number[];
-              if (vals.length > 0) parsed.secretKey = Uint8Array.from(vals);
-            } else if (typeof parsed.secretKey === "string") {
-              try {
-                const bin = atob(parsed.secretKey);
-                const out = new Uint8Array(bin.length);
-                for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-                parsed.secretKey = out;
-              } catch {}
-            }
-          } catch (e) {
-            console.warn("Failed to coerce legacy secretKey:", e);
-          }
-        }
-        const single = parsed as WalletData;
-        setWallets([single]);
-        setActivePublicKey(single.publicKey);
-        // migrate into new key
-        try {
-          const copy: any = { ...single } as any;
-          if (copy.secretKey instanceof Uint8Array)
-            copy.secretKey = Array.from(copy.secretKey as Uint8Array);
-          localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify([copy]));
-          localStorage.removeItem(LEGACY_WALLET_KEY);
-        } catch (e) {
-          console.warn("Failed to migrate legacy wallet to accounts key:", e);
-        }
-        setIsInitialized(true);
-        return;
-      }
+    const performInitialization = async () => {
+      try {
+        console.log("[WalletContext] Starting initialization...");
+        console.log(
+          "[WalletContext] Storage diagnostics:",
+          getStorageDiagnostics(),
+        );
 
-      const stored = localStorage.getItem(WALLETS_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as any[];
+        // Clear stale dashboard token cache to ensure fresh data on app load
+        clearDashboardTokenCache();
 
-        // Check if wallets are encrypted
-        const firstWallet = parsed?.[0];
-        if (firstWallet && isEncryptedWalletStorage(firstWallet)) {
-          // Wallets are encrypted - store them and wait for password unlock
+        // Check legacy wallet first
+        const legacy = getStorageItem(LEGACY_WALLET_KEY);
+        if (legacy) {
           console.log(
-            "[WalletContext] Encrypted wallets detected, awaiting password",
+            "[WalletContext] Found legacy wallet, migrating to new format...",
           );
-          encryptedWalletsRef.current = parsed;
-          setRequiresPassword(true);
+          const parsed = JSON.parse(legacy) as any;
+          // try to coerce secretKey
+          if (parsed && parsed.secretKey) {
+            try {
+              if (Array.isArray(parsed.secretKey)) {
+                parsed.secretKey = Uint8Array.from(parsed.secretKey);
+              } else if (typeof parsed.secretKey === "object") {
+                const vals = Object.values(parsed.secretKey).filter(
+                  (v) => typeof v === "number",
+                ) as number[];
+                if (vals.length > 0) parsed.secretKey = Uint8Array.from(vals);
+              } else if (typeof parsed.secretKey === "string") {
+                try {
+                  const bin = atob(parsed.secretKey);
+                  const out = new Uint8Array(bin.length);
+                  for (let i = 0; i < bin.length; i++)
+                    out[i] = bin.charCodeAt(i);
+                  parsed.secretKey = out;
+                } catch {}
+              }
+            } catch (e) {
+              console.warn("Failed to coerce legacy secretKey:", e);
+            }
+          }
+          const single = parsed as WalletData;
+          setWallets([single]);
+          setActivePublicKey(single.publicKey);
+          // migrate into new key
+          try {
+            const copy: any = { ...single } as any;
+            if (copy.secretKey instanceof Uint8Array)
+              copy.secretKey = Array.from(copy.secretKey as Uint8Array);
+            setStorageItem(WALLETS_STORAGE_KEY, JSON.stringify([copy]));
+            removeStorageItem(LEGACY_WALLET_KEY);
+            console.log(
+              "[WalletContext] ✅ Legacy wallet migrated successfully",
+            );
+          } catch (e) {
+            console.warn("Failed to migrate legacy wallet to accounts key:", e);
+          }
+          hasInitializedRef.current = true;
           setIsInitialized(true);
           return;
         }
 
-        // Load wallets as plaintext
-        const coerced: WalletData[] = (parsed || []).map((p) => {
-          const obj = { ...p } as any;
-          if (obj.secretKey && Array.isArray(obj.secretKey)) {
-            obj.secretKey = Uint8Array.from(obj.secretKey);
-          } else if (obj.secretKey && typeof obj.secretKey === "object") {
-            const vals = Object.values(obj.secretKey).filter(
-              (v) => typeof v === "number",
-            ) as number[];
-            if (vals.length > 0) obj.secretKey = Uint8Array.from(vals);
-          }
-          return obj as WalletData;
-        });
-        setWallets(coerced);
+        // Try to load wallets using new persistence utilities
+        const stored = getStorageItem(WALLETS_STORAGE_KEY);
+        if (stored) {
+          console.log("[WalletContext] Found stored wallets, parsing...");
+          const parsed = JSON.parse(stored) as any[];
 
-        // Restore active wallet from localStorage
-        if (coerced.length > 0) {
-          const savedActiveKey = localStorage.getItem(ACTIVE_WALLET_KEY);
+          // Validate that parsed is an array
+          if (!Array.isArray(parsed) || parsed.length === 0) {
+            console.warn(
+              "[WalletContext] Invalid stored wallets format or empty array",
+            );
+            hasInitializedRef.current = true;
+            setIsInitialized(true);
+            return;
+          }
+
+          // Check if wallets are encrypted
+          const firstWallet = parsed?.[0];
+          if (firstWallet && isEncryptedWalletStorage(firstWallet)) {
+            // Wallets are encrypted - store them and wait for password unlock
+            console.log(
+              "[WalletContext] Encrypted wallets detected, awaiting password",
+            );
+            encryptedWalletsRef.current = parsed;
+            setRequiresPassword(true);
+            hasInitializedRef.current = true;
+            setIsInitialized(true);
+            return;
+          }
+
+          // Load wallets as plaintext
+          const coerced: WalletData[] = [];
+          for (const p of parsed) {
+            try {
+              const obj = { ...p } as any;
+              if (obj.secretKey && Array.isArray(obj.secretKey)) {
+                obj.secretKey = Uint8Array.from(obj.secretKey);
+              } else if (obj.secretKey && typeof obj.secretKey === "object") {
+                const vals = Object.values(obj.secretKey).filter(
+                  (v) => typeof v === "number",
+                ) as number[];
+                if (vals.length > 0) {
+                  obj.secretKey = Uint8Array.from(vals);
+                } else {
+                  console.warn(
+                    `[WalletContext] Could not parse secretKey for wallet ${obj.publicKey}`,
+                  );
+                  continue;
+                }
+              } else {
+                console.warn(
+                  `[WalletContext] No valid secretKey found for wallet ${obj.publicKey}`,
+                );
+                continue;
+              }
+
+              // Validate publicKey exists
+              if (!obj.publicKey || typeof obj.publicKey !== "string") {
+                console.warn("[WalletContext] Invalid publicKey in wallet");
+                continue;
+              }
+
+              coerced.push(obj as WalletData);
+            } catch (e) {
+              console.warn(
+                "[WalletContext] Failed to parse individual wallet:",
+                e,
+              );
+              continue;
+            }
+          }
+
+          if (coerced.length === 0) {
+            console.warn(
+              "[WalletContext] No valid wallets found after parsing. Clearing storage.",
+            );
+            clearAllWalletData();
+            hasInitializedRef.current = true;
+            setIsInitialized(true);
+            return;
+          }
+
+          console.log(
+            `[WalletContext] ✅ Loaded ${coerced.length} valid wallet(s) from storage`,
+          );
+          setWallets(coerced);
+
+          // Restore active wallet from storage
+          const savedActiveKey = getStorageItem(ACTIVE_WALLET_KEY);
           const activeWallet = savedActiveKey
             ? coerced.find((w) => w.publicKey === savedActiveKey)
             : coerced[0];
+
           if (activeWallet) {
+            console.log(
+              `[WalletContext] ✅ Setting active wallet: ${activeWallet.publicKey}`,
+            );
             setActivePublicKey(activeWallet.publicKey);
+          } else if (coerced.length > 0) {
+            console.log(
+              `[WalletContext] Saved active wallet not found, using first wallet`,
+            );
+            setActivePublicKey(coerced[0].publicKey);
           }
+        } else {
+          console.log(
+            "[WalletContext] No wallets found in storage (new user or storage unavailable)",
+          );
         }
+
+        hasInitializedRef.current = true;
+        setIsInitialized(true);
+      } catch (error) {
+        console.error("Error loading wallets from storage:", error);
+        clearAllWalletData();
+        hasInitializedRef.current = true;
+        setIsInitialized(true);
       }
-      setIsInitialized(true);
-    } catch (error) {
-      console.error("Error loading wallets from storage:", error);
-      localStorage.removeItem(WALLETS_STORAGE_KEY);
-      setIsInitialized(true);
-    }
+    };
+
+    performInitialization();
   }, []);
 
-  // Persist wallets whenever they change
+  // Persist wallets whenever they change (but not before initial load)
   useEffect(() => {
+    // Don't persist until we've finished initial load from localStorage
+    if (!hasInitializedRef.current) {
+      return;
+    }
+
     try {
       if (wallets.length === 0) {
-        localStorage.removeItem(WALLETS_STORAGE_KEY);
+        removeStorageItem(WALLETS_STORAGE_KEY);
+        console.log("[WalletContext] Wallets cleared from storage");
         return;
       }
 
@@ -218,21 +323,38 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           copy.secretKey = Array.from(copy.secretKey as Uint8Array);
         return copy;
       });
-      localStorage.setItem(WALLETS_STORAGE_KEY, JSON.stringify(toStore));
-      console.log("[WalletContext] Wallets saved as plaintext");
+
+      const success = setStorageItem(
+        WALLETS_STORAGE_KEY,
+        JSON.stringify(toStore),
+      );
+      if (!success) {
+        console.warn(
+          "[WalletContext] ⚠️ Failed to persist wallets to any storage",
+        );
+      }
     } catch (e) {
       console.error("Failed to persist wallets:", e);
     }
   }, [wallets]);
 
-  // Persist active wallet selection whenever it changes
+  // Persist active wallet selection whenever it changes (but not before initial load)
   useEffect(() => {
+    // Don't persist until we've finished initial load from localStorage
+    if (!hasInitializedRef.current) {
+      return;
+    }
+
     try {
       if (activePublicKey) {
-        localStorage.setItem(ACTIVE_WALLET_KEY, activePublicKey);
-        console.log(`[WalletContext] Active wallet saved: ${activePublicKey}`);
+        const success = setStorageItem(ACTIVE_WALLET_KEY, activePublicKey);
+        if (!success) {
+          console.warn(
+            `[WalletContext] ⚠️ Failed to persist active wallet to any storage`,
+          );
+        }
       } else {
-        localStorage.removeItem(ACTIVE_WALLET_KEY);
+        removeStorageItem(ACTIVE_WALLET_KEY);
       }
     } catch (e) {
       console.error("Failed to persist active wallet:", e);
@@ -362,22 +484,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     // Trigger immediate refresh
     const doRefresh = async () => {
       try {
-        // Try to load cached data first for faster initial display
-        const cachedTokens = getCachedTokens(wallet.publicKey);
-        if (cachedTokens && cachedTokens.length > 0) {
-          console.log("[WalletContext] Loading cached tokens on wallet switch");
-          setTokens(cachedTokens);
-          setIsUsingCache(true);
-        }
-
-        const cachedBalance = getCachedBalance(wallet.publicKey);
-        if (cachedBalance !== null) {
-          console.log(
-            "[WalletContext] Loading cached balance on wallet switch",
-          );
-          setBalance(cachedBalance);
-          balanceRef.current = cachedBalance;
-        }
+        // Skip loading cached tokens/balances - always fetch fresh data from APIs
+        // This prevents stale cached data from showing after deployment
+        setIsUsingCache(false);
 
         // Then fetch fresh data
         await refreshBalance();
@@ -397,10 +506,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     // Setup periodic refresh every 5 seconds (adaptive based on visibility)
     const setupRefreshInterval = () => {
-      // Use 5s interval when tab is visible for more responsive updates
-      // Longer interval (30s) when tab is hidden to conserve battery on mobile
-      const interval =
-        document.hidden || document.visibilityState === "hidden" ? 30000 : 5000;
+      // Auto-refresh dashboard every 30 seconds for live price updates
+      const interval = 30000;
 
       refreshIntervalRef.current = setInterval(async () => {
         try {
@@ -415,12 +522,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     setupRefreshInterval();
 
-    // Handle visibility changes to adjust polling frequency
+    // No longer adjust polling based on visibility - use fixed 30-second interval
     const handleVisibilityChange = () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-      setupRefreshInterval();
+      // Visibility changes no longer trigger interval reconfiguration
+      // Dashboard will refresh every 30 seconds consistently
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -437,10 +542,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
   const setWallet = (newWallet: WalletData | null) => {
     if (!newWallet) {
+      console.log("[WalletContext] Clearing wallet and logout");
       setActivePublicKey(null);
       setBalance(0);
       balanceRef.current = 0;
       setTokens(DEFAULT_TOKENS);
+      clearAllWalletData();
       return;
     }
 
@@ -455,25 +562,84 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     // If wallet already exists in list, just set active
     const exists = wallets.find((w) => w.publicKey === walletToAdd.publicKey);
     if (exists) {
+      console.log(
+        `[WalletContext] Wallet ${walletToAdd.publicKey} already exists, setting as active`,
+      );
       setActivePublicKey(walletToAdd.publicKey);
+      // Ensure active wallet is saved to storage
+      try {
+        setStorageItem(ACTIVE_WALLET_KEY, walletToAdd.publicKey);
+        console.log(
+          `[WalletContext] ✅ Active wallet saved: ${walletToAdd.publicKey}`,
+        );
+      } catch (e) {
+        console.warn("Failed to save active wallet to storage:", e);
+      }
       return;
     }
 
     // Add and set active
-    setWallets((prev) => [walletToAdd, ...prev]);
+    const updatedWallets = [walletToAdd, ...wallets];
+    console.log(
+      `[WalletContext] Adding new wallet and setting as active: ${walletToAdd.publicKey}`,
+    );
+    setWallets(updatedWallets);
     setActivePublicKey(walletToAdd.publicKey);
+
+    // Immediately save to storage to ensure persistence
+    try {
+      const toStore = updatedWallets.map((w) => {
+        const copy: any = { ...w } as any;
+        if (copy.secretKey instanceof Uint8Array) {
+          copy.secretKey = Array.from(copy.secretKey as Uint8Array);
+        }
+        return copy;
+      });
+
+      const walletsSuccess = setStorageItem(
+        WALLETS_STORAGE_KEY,
+        JSON.stringify(toStore),
+      );
+      const activeSuccess = setStorageItem(
+        ACTIVE_WALLET_KEY,
+        walletToAdd.publicKey,
+      );
+
+      if (walletsSuccess && activeSuccess) {
+        console.log(
+          "[WalletContext] ✅ Wallet successfully saved to persistent storage:",
+          walletToAdd.publicKey,
+        );
+      } else {
+        console.warn(
+          "[WalletContext] ⚠️ Partial save: wallets=" +
+            walletsSuccess +
+            ", active=" +
+            activeSuccess,
+        );
+      }
+    } catch (e) {
+      console.error("[WalletContext] ❌ Failed to save wallet:", e);
+    }
   };
 
   const addWallet = (newWallet: WalletData) => {
     // Ensure secretKey is properly formatted
     const walletToAdd = ensureWalletSecretKey(newWallet) || newWallet;
 
-    // Avoid duplicates
-    setWallets((prev) => {
-      const exists = prev.find((w) => w.publicKey === walletToAdd.publicKey);
-      if (exists) return prev;
-      return [walletToAdd, ...prev];
-    });
+    // Check if wallet already exists
+    const exists = wallets.find((w) => w.publicKey === walletToAdd.publicKey);
+
+    let updatedWallets = wallets;
+    if (!exists) {
+      updatedWallets = [walletToAdd, ...wallets];
+      setWallets(updatedWallets);
+      console.log(`[WalletContext] New wallet added: ${walletToAdd.publicKey}`);
+    } else {
+      console.log(
+        `[WalletContext] Wallet already exists, just setting as active: ${walletToAdd.publicKey}`,
+      );
+    }
 
     // Reset displayed balances to avoid flash of previous wallet
     setBalance(0);
@@ -481,6 +647,42 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     setTokens(DEFAULT_TOKENS);
 
     setActivePublicKey(walletToAdd.publicKey);
+
+    // Immediately save to storage
+    try {
+      const toStore = updatedWallets.map((w) => {
+        const copy: any = { ...w } as any;
+        if (copy.secretKey instanceof Uint8Array) {
+          copy.secretKey = Array.from(copy.secretKey as Uint8Array);
+        }
+        return copy;
+      });
+
+      const walletsSuccess = setStorageItem(
+        WALLETS_STORAGE_KEY,
+        JSON.stringify(toStore),
+      );
+      const activeSuccess = setStorageItem(
+        ACTIVE_WALLET_KEY,
+        walletToAdd.publicKey,
+      );
+
+      if (walletsSuccess && activeSuccess) {
+        console.log(
+          "[WalletContext] ✅ Wallet added and saved to persistent storage:",
+          walletToAdd.publicKey,
+        );
+      } else {
+        console.warn(
+          "[WalletContext] ⚠️ Partial save: wallets=" +
+            walletsSuccess +
+            ", active=" +
+            activeSuccess,
+        );
+      }
+    } catch (e) {
+      console.error("[WalletContext] ❌ Failed to save wallet:", e);
+    }
   };
 
   const selectWallet = (publicKey: string) => {
@@ -544,37 +746,53 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const refreshBalance = async () => {
     if (!wallet) return;
 
-    setIsLoading(true);
+    // No loading state for balance - use fallback/cache silently
     setError(null);
     setIsUsingCache(false);
 
     try {
       const newBalance = await getBalance(wallet.publicKey);
-      if (typeof newBalance === "number" && !isNaN(newBalance)) {
+      if (
+        typeof newBalance === "number" &&
+        !isNaN(newBalance) &&
+        isFinite(newBalance) &&
+        newBalance >= 0
+      ) {
         setBalance(newBalance);
         balanceRef.current = newBalance;
         saveBalanceToCache(wallet.publicKey, newBalance);
       } else {
+        console.warn("[WalletContext] Invalid balance value:", newBalance);
         setBalance(0);
         balanceRef.current = 0;
       }
     } catch (error) {
       console.error("Error refreshing balance:", error);
-      setError("Failed to refresh balance");
 
-      // Try to use cached balance as fallback
+      // Try to use cached balance as fallback on network/RPC errors
       const cachedBalance = getCachedBalance(wallet.publicKey);
-      if (cachedBalance !== null) {
-        console.log("[WalletContext] Using cached balance:", cachedBalance);
+      if (
+        cachedBalance !== null &&
+        typeof cachedBalance === "number" &&
+        isFinite(cachedBalance) &&
+        cachedBalance >= 0
+      ) {
+        console.log(
+          "[WalletContext] Using cached SOL balance as fallback:",
+          cachedBalance,
+        );
         setBalance(cachedBalance);
         balanceRef.current = cachedBalance;
         setIsUsingCache(true);
+        setError(null);
       } else {
+        console.warn(
+          "[WalletContext] No valid cached balance available, showing 0",
+        );
         setBalance(0);
         balanceRef.current = 0;
+        setError("Unable to fetch SOL balance. Please check your connection.");
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -589,19 +807,109 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     lockerPriceService.clearCache();
     fxmPriceService.clearCache();
     solPriceService.clearCache();
-    birdeyeAPI.clearCache();
 
     console.log(
       `[WalletContext] Refreshing tokens for wallet: ${wallet.publicKey}`,
     );
     setError(null);
-    setIsLoading(true);
 
     try {
+      // Fetch token accounts (balances) silently - no loading state
       const tokenAccounts = await getTokenAccounts(wallet.publicKey);
-      const customTokens = JSON.parse(
-        localStorage.getItem("custom_tokens") || "[]",
-      ) as TokenInfo[];
+
+      // Check if SOL is already in tokenAccounts (new endpoint returns it with balance)
+      const solFromTokenAccounts = tokenAccounts.find(
+        (t) => t.symbol === "SOL",
+      );
+
+      // Use SOL from tokenAccounts if available and valid (for Cloudflare compatibility)
+      // Otherwise use the balance from the separate refreshBalance() call
+      let solBalance = 0;
+      const tokenAccountsHasValidBalance =
+        solFromTokenAccounts?.balance !== undefined &&
+        typeof solFromTokenAccounts.balance === "number" &&
+        isFinite(solFromTokenAccounts.balance) &&
+        solFromTokenAccounts.balance >= 0;
+
+      if (tokenAccountsHasValidBalance) {
+        solBalance = solFromTokenAccounts.balance;
+        setBalance(solFromTokenAccounts.balance);
+        balanceRef.current = solFromTokenAccounts.balance;
+        console.log(
+          `[WalletContext] Updated SOL balance from tokenAccounts: ${solFromTokenAccounts.balance}`,
+        );
+      } else {
+        // If we don't have a valid balance from tokenAccounts, try to fetch it directly
+        // This ensures SOL balance is always correct, especially on Cloudflare
+        if (
+          typeof balanceRef.current !== "number" ||
+          !isFinite(balanceRef.current) ||
+          balanceRef.current < 0
+        ) {
+          console.log(
+            "[WalletContext] Balance endpoint not yet fetched or invalid, fetching SOL balance directly",
+          );
+          try {
+            const directBalance = await getBalance(wallet.publicKey);
+            if (
+              typeof directBalance === "number" &&
+              isFinite(directBalance) &&
+              directBalance >= 0
+            ) {
+              solBalance = directBalance;
+              setBalance(directBalance);
+              balanceRef.current = directBalance;
+              console.log(
+                `[WalletContext] Fetched SOL balance directly: ${directBalance} SOL`,
+              );
+            } else {
+              console.warn(
+                "[WalletContext] Direct balance fetch returned invalid value:",
+                directBalance,
+              );
+              solBalance = 0;
+            }
+          } catch (err) {
+            console.error(
+              "[WalletContext] Failed to fetch SOL balance directly:",
+              err,
+            );
+            solBalance = 0;
+          }
+        } else {
+          // Use cached balance from earlier refreshBalance() call
+          solBalance =
+            typeof balanceRef.current === "number" &&
+            isFinite(balanceRef.current) &&
+            balanceRef.current >= 0
+              ? balanceRef.current
+              : balance || 0;
+          console.log(
+            `[WalletContext] Using SOL balance from balance endpoint: ${solBalance}`,
+          );
+        }
+      }
+
+      console.log(
+        `[WalletContext] Creating allTokens array with SOL balance: ${solBalance} SOL`,
+      );
+
+      // Ensure SOL balance is always valid before creating token list
+      if (
+        typeof solBalance !== "number" ||
+        !isFinite(solBalance) ||
+        solBalance < 0
+      ) {
+        console.warn(
+          `[WalletContext] Invalid SOL balance: ${solBalance}, using cached balance: ${balanceRef.current}`,
+        );
+        solBalance =
+          typeof balanceRef.current === "number" &&
+          isFinite(balanceRef.current) &&
+          balanceRef.current >= 0
+            ? balanceRef.current
+            : 0;
+      }
 
       const allTokens: TokenInfo[] = [
         {
@@ -611,7 +919,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           decimals: 9,
           logoURI:
             "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-          balance: balanceRef.current || balance || 0,
+          balance: solBalance,
         },
       ];
 
@@ -621,94 +929,75 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       });
 
-      customTokens.forEach((customToken) => {
-        const existingTokenIndex = allTokens.findIndex(
-          (t) => t.mint === customToken.mint,
-        );
-        if (existingTokenIndex >= 0) {
-          // Token exists from RPC - merge by preferring RPC data (especially balance, decimals)
-          // but use custom metadata if RPC returned generic "Unknown Token"
-          const rpcToken = allTokens[existingTokenIndex];
-          const isRpcGeneric =
-            rpcToken.symbol === "UNKNOWN" || !rpcToken.symbol;
+      // Always include USDT, FXM, FIXERCOIN, and LOCKER tokens for display (even if user doesn't own them)
+      const usdtMintAddress = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns";
+      const fxmMintAddress = "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump";
+      const fixercoinMintAddress =
+        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
+      const lockerMintAddress = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
 
-          allTokens[existingTokenIndex] = {
-            ...rpcToken,
-            // Override with custom metadata if RPC returned generic data
-            ...(isRpcGeneric && {
-              symbol: customToken.symbol,
-              name: customToken.name,
-              logoURI: customToken.logoURI,
-            }),
-            // Always use custom logoURI if available (user-added logo takes priority)
-            ...(customToken.logoURI && { logoURI: customToken.logoURI }),
-            // Always keep the RPC balance and decimals
-            balance: rpcToken.balance,
-            decimals: rpcToken.decimals,
-          };
-        } else {
-          // Token doesn't exist from RPC - add it with balance 0 for now
-          // Will be updated below with actual balance fetch
-          allTokens.push({ ...customToken, balance: 0 });
-        }
-      });
-
-      // Fetch balances for custom tokens that weren't found in RPC results
-      const customTokenMintSet = new Set(customTokens.map((t) => t.mint));
-      const customTokensWithZeroBalance = allTokens.filter(
-        (token) =>
-          customTokenMintSet.has(token.mint) &&
-          (token.balance === 0 || token.balance === undefined),
-      );
-
-      // Fetch missing balances in parallel
-      if (customTokensWithZeroBalance.length > 0) {
-        console.log(
-          `[WalletContext] Fetching balances for ${customTokensWithZeroBalance.length} custom tokens with zero balance...`,
-        );
-
-        const balanceFetchPromises = customTokensWithZeroBalance.map(
-          async (token) => {
-            try {
-              const balance = await getTokenBalanceForMint(
-                wallet.publicKey,
-                token.mint,
-              );
-              return {
-                mint: token.mint,
-                balance: balance ?? 0,
-              };
-            } catch (error) {
-              console.warn(
-                `[WalletContext] Failed to fetch balance for ${token.mint}:`,
-                error,
-              );
-              return {
-                mint: token.mint,
-                balance: 0,
-              };
-            }
-          },
-        );
-
-        const fetchedBalances = await Promise.all(balanceFetchPromises);
-
-        // Update allTokens with fetched balances
-        fetchedBalances.forEach(({ mint, balance }) => {
-          const tokenIndex = allTokens.findIndex((t) => t.mint === mint);
-          if (tokenIndex >= 0) {
-            allTokens[tokenIndex] = {
-              ...allTokens[tokenIndex],
-              balance,
-            };
-            console.log(
-              `[WalletContext] ✅ Updated balance for ${mint}: ${balance}`,
-            );
-          }
+      const hasUSDT = allTokens.some((t) => t.mint === usdtMintAddress);
+      if (!hasUSDT) {
+        allTokens.push({
+          mint: usdtMintAddress,
+          symbol: "USDT",
+          name: "USDT TETHER",
+          decimals: 6,
+          balance: 0,
+          logoURI:
+            "https://cdn.builder.io/api/v1/image/assets%2F21d46b908e134d9783b898bbea7e6c3d%2F672cb65517fe4c02b396825d21cef757?format=webp&width=800",
         });
       }
 
-      // Price fetching logic
+      const hasFXM = allTokens.some((t) => t.mint === fxmMintAddress);
+      if (!hasFXM) {
+        allTokens.push({
+          mint: fxmMintAddress,
+          symbol: "FXM",
+          name: "Fixorium",
+          decimals: 6,
+          balance: 0,
+          logoURI:
+            "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2Fef8e21a960894d1b9408732e737a9d1f?format=webp&width=800",
+        });
+      }
+
+      const hasFixercoin = allTokens.some(
+        (t) => t.mint === fixercoinMintAddress,
+      );
+      if (!hasFixercoin) {
+        allTokens.push({
+          mint: fixercoinMintAddress,
+          symbol: "FIXERCOIN",
+          name: "FIXERCOIN",
+          decimals: 6,
+          balance: 0,
+          logoURI:
+            "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2F66c5cbe0ef78435eab9dfe4b45b5ba0d?format=webp&width=800",
+        });
+      }
+
+      const hasLocker = allTokens.some((t) => t.mint === lockerMintAddress);
+      if (!hasLocker) {
+        allTokens.push({
+          mint: lockerMintAddress,
+          symbol: "LOCKER",
+          name: "LOCKER",
+          decimals: 6,
+          balance: 0,
+          logoURI:
+            "https://cdn.builder.io/api/v1/image/assets%2F488bbf32d1ea45139ee8cec42e427393%2Fb8e7b3fa19fe464c8362834eaf1367eb?format=webp&width=800",
+        });
+      }
+
+      console.log(
+        `[WalletContext] allTokens created with ${allTokens.length} tokens, SOL balance: ${
+          allTokens[0]?.balance || "MISSING"
+        } SOL`,
+      );
+
+      // Price fetching logic - show loader only during price fetch
+      setIsLoading(true);
       let prices: Record<string, number> = {};
       let priceSource = "fallback";
       let changeMap: Record<string, number> = {};
@@ -717,26 +1006,108 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       try {
         const tokenMints = allTokens.map((token) => token.mint);
 
-        // Fetch prices from Birdeye API (via proxy)
+        // Fetch prices from Birdeye API (primary source with free tier)
         try {
+          const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
           const allMintsToFetch = Array.from(
-            new Set(tokenMints.filter(Boolean)),
+            new Set(tokenMints.filter((mint) => mint && mint !== lockerMint)),
           );
 
           if (allMintsToFetch.length > 0) {
+            console.log(
+              `[WalletContext] Fetching prices from Birdeye for ${allMintsToFetch.length} tokens`,
+            );
             const birdeyeTokens =
               await birdeyeAPI.getTokensByMints(allMintsToFetch);
             const birdeyePrices = birdeyeAPI.getTokenPrices(birdeyeTokens);
             prices = { ...prices, ...birdeyePrices };
 
             birdeyeTokens.forEach((token) => {
-              if (token.address && token.priceChange?.h24) {
+              if (
+                token.address &&
+                token.priceChange?.h24 &&
+                isFinite(token.priceChange.h24)
+              ) {
                 changeMap[token.address] = token.priceChange.h24;
               }
             });
+
+            console.log(
+              `[WalletContext] ✅ Birdeye: Got ${Object.keys(birdeyePrices).length} prices`,
+            );
           }
         } catch (e) {
-          console.warn("Birdeye fetch failed:", e);
+          console.warn("[WalletContext] Birdeye fetch failed:", e);
+        }
+
+        // Fetch prices from DexScreener API (fallback/complementary source)
+        // Exclude LOCKER since it has no price data on DexScreener (causes 503 errors)
+        try {
+          const lockerMint = "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump";
+          const allMintsToFetch = Array.from(
+            new Set(tokenMints.filter((mint) => mint && mint !== lockerMint)),
+          );
+
+          if (allMintsToFetch.length > 0) {
+            console.log(
+              `[WalletContext] Fetching prices from DexScreener for ${allMintsToFetch.length} tokens`,
+            );
+            const dexTokens =
+              await dexscreenerAPI.getTokensByMints(allMintsToFetch);
+            const dexPrices = dexscreenerAPI.getTokenPrices(dexTokens);
+
+            // Only use DexScreener prices for tokens missing from Birdeye
+            Object.entries(dexPrices).forEach(([mint, price]) => {
+              if (!prices[mint] || !isFinite(prices[mint])) {
+                prices[mint] = price;
+              }
+            });
+
+            dexTokens.forEach((token) => {
+              const baseMint = token.baseToken?.address;
+              if (
+                baseMint &&
+                token.priceChange?.h24 &&
+                (!changeMap[baseMint] || !isFinite(changeMap[baseMint]))
+              ) {
+                changeMap[baseMint] = token.priceChange.h24;
+              }
+            });
+
+            console.log(
+              `[WalletContext] ✅ DexScreener: Got ${Object.keys(dexPrices).length} prices`,
+            );
+          }
+        } catch (e) {
+          console.warn("[WalletContext] DexScreener fetch failed:", e);
+        }
+
+        // Fetch prices from Jupiter API (free tier fallback for any remaining tokens)
+        try {
+          const missingMints = tokenMints.filter(
+            (mint) => mint && (!prices[mint] || !isFinite(prices[mint])),
+          );
+
+          if (missingMints.length > 0) {
+            console.log(
+              `[WalletContext] Fetching prices from Jupiter for ${missingMints.length} tokens`,
+            );
+            const jupiterPrices =
+              await jupiterAPI.getPricesByMints(missingMints);
+
+            // Only use Jupiter prices for tokens still missing
+            Object.entries(jupiterPrices).forEach(([mint, price]) => {
+              if (!prices[mint] || !isFinite(prices[mint])) {
+                prices[mint] = price;
+              }
+            });
+
+            console.log(
+              `[WalletContext] ✅ Jupiter: Got ${Object.keys(jupiterPrices).length} prices`,
+            );
+          }
+        } catch (e) {
+          console.warn("[WalletContext] Jupiter fetch failed:", e);
         }
 
         // Ensure stablecoins (USDC, USDT) always have a valid price and neutral change if still missing
@@ -760,10 +1131,26 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         const fxmMint = "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump";
 
         try {
-          const [fixercoinData, lockerData, fxmData] = await Promise.all([
+          // Fetch special token prices with timeout to prevent hanging
+          const specialTokensPromise = Promise.all([
             fixercoinPriceService.getFixercoinPrice(),
             lockerPriceService.getLockerPrice(),
             fxmPriceService.getFXMPrice(),
+          ]);
+
+          // Timeout after 15 seconds - use what we have by then
+          const timeoutPromise = new Promise<[any, any, any]>((resolve) =>
+            setTimeout(() => {
+              console.warn(
+                "[WalletContext] Price fetching timeout after 15s, using partial results with fallbacks",
+              );
+              resolve([null, null, null]);
+            }, 15000),
+          );
+
+          const [fixercoinData, lockerData, fxmData] = await Promise.race([
+            specialTokensPromise,
+            timeoutPromise,
           ]);
 
           if (
@@ -795,9 +1182,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             );
           } else {
             console.warn(
-              `[WalletContext] ⚠️ LOCKER price fetch resulted in invalid price:`,
-              lockerData,
+              `[WalletContext] ⚠️ LOCKER price fetch resulted in invalid price, using hardcoded fallback`,
             );
+            // Use hardcoded fallback for LOCKER - no price data on DexScreener
+            prices[lockerMint] = 0.000001;
+            changeMap[lockerMint] = 0;
           }
 
           if (fxmData && fxmData.price > 0 && isFinite(fxmData.price)) {
@@ -808,12 +1197,23 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             );
           } else {
             console.warn(
-              `[WalletContext] ⚠️ FXM price fetch resulted in invalid price:`,
-              fxmData,
+              `[WalletContext] ⚠️ FXM price fetch resulted in invalid price, using hardcoded fallback`,
             );
+            // Use hardcoded fallback for FXM if fetch fails
+            prices[fxmMint] = 0.00000001;
+            changeMap[fxmMint] = 0;
           }
         } catch (e) {
           console.warn("❌ Failed to fetch FIXERCOIN/LOCKER/FXM prices:", e);
+          // Ensure all special tokens have at least hardcoded prices on error
+          if (!prices[lockerMint]) {
+            prices[lockerMint] = 0.000001;
+            changeMap[lockerMint] = 0;
+          }
+          if (!prices[fxmMint]) {
+            prices[fxmMint] = 0.00000001;
+            changeMap[fxmMint] = 0;
+          }
         }
 
         // Ensure SOL price is always present - if birdeye didn't return it, fetch from dedicated endpoint
@@ -882,15 +1282,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
       }
 
-      // Load hidden tokens list
-      const hiddenTokens = JSON.parse(
-        localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
-      ) as string[];
-
-      // Filter out hidden tokens from allTokens
-      const visibleTokens = allTokens.filter(
-        (token) => !hiddenTokens.includes(token.mint),
-      );
+      // Use all tokens (removed localStorage-based hidden tokens filtering)
+      const visibleTokens = allTokens;
 
       // Calculate SOL-based prices for tokens without valid prices
       const tokensNeedingPrices = visibleTokens.filter((token) => {
@@ -981,27 +1374,24 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       console.log(
         `[Wallet] Price source: ${priceSource} | SOL price: $${prices["So11111111111111111111111111111111111111112"] || "FALLBACK"}`,
       );
+
+      const solTokenInEnhanced = enhancedTokens.find((t) => t.symbol === "SOL");
+      console.log(`[WalletContext] About to set tokens in state. SOL token:`, {
+        symbol: solTokenInEnhanced?.symbol,
+        balance: solTokenInEnhanced?.balance,
+        price: solTokenInEnhanced?.price,
+        mint: solTokenInEnhanced?.mint,
+      });
+
       setTokens(enhancedTokens);
       setIsUsingCache(false);
 
-      // Save tokens and prices to cache for offline support
-      try {
-        const cachedPrices: Record<string, any> = {};
-        Object.entries(prices).forEach(([mint, price]) => {
-          cachedPrices[mint] = {
-            price,
-            priceChange24h: changeMap[mint],
-            timestamp: Date.now(),
-          };
-        });
-        savePricesToCache(cachedPrices);
-        saveTokensToCache(wallet.publicKey, enhancedTokens);
-      } catch (cacheError) {
-        console.warn(
-          "[WalletContext] Failed to save to offline cache:",
-          cacheError,
-        );
-      }
+      console.log(
+        `[WalletContext] Tokens set in state. Total ${enhancedTokens.length} tokens`,
+      );
+
+      // Skip saving tokens to cache to ensure fresh data always loaded
+      // Price cache is kept for fallback support in error scenarios
     } catch (error) {
       console.error("Error refreshing tokens:", error);
 
@@ -1027,7 +1417,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         setError(
           `Failed to fetch tokens: ${error instanceof Error ? error.message : String(error)}`,
         );
-        // Show only basic token info without prices until they can be fetched
+        // Keep all tokens visible even if price fetching fails
+        // Set balances to 0 for non-SOL tokens if we don't have data, but preserve token info
         const fallbackTokens: TokenInfo[] = [
           {
             mint: "So11111111111111111111111111111111111111112",
@@ -1036,12 +1427,44 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
             decimals: 9,
             logoURI:
               "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-            balance: balance || 0,
+            balance:
+              typeof balanceRef.current === "number"
+                ? balanceRef.current
+                : balance || 0,
+          },
+          {
+            mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+            symbol: "USDC",
+            name: "USD Coin",
+            decimals: 6,
+            logoURI:
+              "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+            balance: 0,
+          },
+          {
+            mint: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
+            symbol: "FIXERCOIN",
+            name: "FIXERCOIN",
+            decimals: 6,
+            logoURI: "https://i.postimg.cc/htfMF9dD/6x2D7UQ.png",
+            balance: 0,
+          },
+          {
+            mint: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+            symbol: "LOCKER",
+            name: "LOCKER",
+            decimals: 6,
+            logoURI:
+              "https://i.postimg.cc/J7p1FPbm/IMG-20250425-004450-removebg-preview-modified-2-6.png",
+            balance: 0,
           },
         ];
 
         setTokens(fallbackTokens);
         setIsUsingCache(false);
+        console.log(
+          "[WalletContext] Showing fallback tokens with zero balances while prices are unavailable",
+        );
       }
     } finally {
       setIsLoading(false);
@@ -1055,51 +1478,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       return [...currentTokens, token];
     });
 
-    const customTokens = JSON.parse(
-      localStorage.getItem("custom_tokens") || "[]",
-    );
-    const newCustomTokens = [
-      ...customTokens.filter((t: TokenInfo) => t.mint !== token.mint),
-      token,
-    ];
-    localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
-
-    // If token was previously hidden, remove it from hidden tokens to ensure it becomes visible
-    try {
-      const hiddenTokens = JSON.parse(
-        localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
-      ) as string[];
-      const filtered = hiddenTokens.filter((m) => m !== token.mint);
-      if (filtered.length !== hiddenTokens.length) {
-        localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify(filtered));
-      }
-    } catch (e) {
-      // ignore
-    }
-
     if (wallet) refreshTokens();
   };
 
   const removeToken = (tokenMint: string) => {
-    // Remove from custom tokens if it exists there
-    const customTokens = JSON.parse(
-      localStorage.getItem("custom_tokens") || "[]",
-    ) as TokenInfo[];
-    const newCustomTokens = customTokens.filter(
-      (t: TokenInfo) => t.mint !== tokenMint,
-    );
-    localStorage.setItem("custom_tokens", JSON.stringify(newCustomTokens));
-
-    // Add to hidden tokens list to permanently hide it
-    const hiddenTokens = JSON.parse(
-      localStorage.getItem(HIDDEN_TOKENS_KEY) || "[]",
-    ) as string[];
-    if (!hiddenTokens.includes(tokenMint)) {
-      hiddenTokens.push(tokenMint);
-      localStorage.setItem(HIDDEN_TOKENS_KEY, JSON.stringify(hiddenTokens));
-    }
-
-    // Update state immediately
     setTokens((currentTokens) =>
       currentTokens.filter((t) => t.mint !== tokenMint),
     );
@@ -1151,6 +1533,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   };
 
+  const updateTokenBalance = (tokenMint: string, newBalance: number) => {
+    setTokens((currentTokens) => {
+      const updatedTokens = currentTokens.map((token) =>
+        token.mint === tokenMint ? { ...token, balance: newBalance } : token,
+      );
+
+      // Skip saving tokens to cache to ensure fresh data always loaded
+
+      return updatedTokens;
+    });
+  };
+
   const value: WalletContextType = {
     wallet: ensureWalletSecretKey(wallet),
     wallets,
@@ -1171,6 +1565,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     logout,
     updateWalletLabel,
     unlockWithPassword,
+    updateTokenBalance,
     connection: globalConnection,
   };
 

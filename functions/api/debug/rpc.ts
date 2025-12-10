@@ -3,9 +3,11 @@ export const config = {
 };
 
 const RPC_ENDPOINTS = [
-  "https://api.mainnet-beta.solana.com",
   "https://solana.publicnode.com",
+  "https://api.solflare.com",
   "https://rpc.ankr.com/solana",
+  "https://api.mainnet-beta.solana.com",
+  "https://api.marinade.finance/rpc",
 ];
 
 interface RpcHealth {
@@ -128,4 +130,5 @@ async function handler(request: Request): Promise<Response> {
   }
 }
 
-export default handler;
+export const onRequest = async (request: Request): Promise<Response> =>
+  handler(request);

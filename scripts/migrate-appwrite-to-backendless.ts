@@ -16,7 +16,8 @@ const APPWRITE_DATABASE_ID = process.env.APPWRITE_DATABASE_ID || "p2p_db";
 // Backendless Configuration
 const BACKENDLESS_APP_ID = process.env.BACKENDLESS_APP_ID || "";
 const BACKENDLESS_API_KEY = process.env.BACKENDLESS_API_KEY || "";
-const BACKENDLESS_URL = process.env.BACKENDLESS_URL || "https://api.backendless.com";
+const BACKENDLESS_URL =
+  process.env.BACKENDLESS_URL || "https://api.backendless.com";
 
 // Collection to Table mappings
 const COLLECTION_TABLE_MAP = {
@@ -159,9 +160,7 @@ async function migrateCollection(
     }
   }
 
-  console.log(
-    `   ✓ Completed: ${totalRecords} records processed`,
-  );
+  console.log(`   ✓ Completed: ${totalRecords} records processed`);
   return totalRecords;
 }
 
@@ -177,7 +176,9 @@ async function validateBackendlessSetup(): Promise<boolean> {
 
     if (!response.ok) {
       if (response.status === 404 || response.status === 400) {
-        console.warn("⚠️  Tables not found in Backendless. They will be created on first insert.");
+        console.warn(
+          "⚠️  Tables not found in Backendless. They will be created on first insert.",
+        );
         return true;
       }
       throw new Error(`HTTP ${response.status}`);
@@ -194,7 +195,9 @@ async function runMigration() {
   console.clear();
   console.log("╔════════════════════════════════════════════════════════════╗");
   console.log("║     APPWRITE → BACKENDLESS P2P DATA MIGRATION TOOL        ║");
-  console.log("╚════════════════════════════════════════════════════════════╝\n");
+  console.log(
+    "╚════════════════════════════════════════════════════════════╝\n",
+  );
 
   // Validate environment
   console.log("🔍 Validating configuration...");
@@ -263,19 +266,25 @@ async function runMigration() {
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
   // Print summary
-  console.log("\n╔════════════════════════════════════════════════════════════╗");
+  console.log(
+    "\n╔════════════════════════════════════════════════════════════╗",
+  );
   console.log("║                   MIGRATION SUMMARY                        ║");
   console.log("╠════════════════════════════════════════════════════════════╣");
-  console.log(`║ Collections Processed: ${String(stats.totalCollections).padEnd(45)}║`);
-  console.log(`║ Total Records Migrated: ${String(stats.totalRecords).padEnd(43)}║`);
+  console.log(
+    `║ Collections Processed: ${String(stats.totalCollections).padEnd(45)}║`,
+  );
+  console.log(
+    `║ Total Records Migrated: ${String(stats.totalRecords).padEnd(43)}║`,
+  );
   console.log(
     `║ Successful: ${String(`${stats.successfulRecords} ✓`).padEnd(56)}║`,
   );
-  console.log(
-    `║ Failed: ${String(`${stats.failedRecords} ✗`).padEnd(59)}║`,
-  );
+  console.log(`║ Failed: ${String(`${stats.failedRecords} ✗`).padEnd(59)}║`);
   console.log(`║ Duration: ${String(`${duration}s`).padEnd(57)}║`);
-  console.log("╚════════════════════════════════════════════════════════════╝\n");
+  console.log(
+    "╚════════════════════════════════════════════════════════════╝\n",
+  );
 
   if (stats.failedRecords > 0) {
     console.log("⚠️  Failed Records:");

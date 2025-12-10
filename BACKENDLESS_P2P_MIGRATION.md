@@ -78,6 +78,7 @@ npx tsx scripts/migrate-appwrite-to-backendless.ts
 ```
 
 **Required environment variables for migration:**
+
 - `APPWRITE_ENDPOINT` - Your Appwrite endpoint
 - `APPWRITE_PROJECT_ID` - Your Appwrite project ID
 - `APPWRITE_API_KEY` - Your Appwrite API key
@@ -86,6 +87,7 @@ npx tsx scripts/migrate-appwrite-to-backendless.ts
 - `BACKENDLESS_API_KEY` - Your Backendless REST API key
 
 The script will:
+
 - Connect to Appwrite and fetch all P2P collections
 - Process records in batches of 25
 - Migrate each record to Backendless
@@ -95,6 +97,7 @@ The script will:
 ### Step 3: Verify Migration
 
 Check the migration summary output:
+
 - All records successfully migrated
 - No errors reported
 - Data accessible in Backendless dashboard
@@ -141,6 +144,7 @@ p2p:rooms:123                 (chat room)
 ### Record Schema
 
 Each record in Backendless will have:
+
 - `objectId` - Unique identifier (matches Appwrite $id)
 - `key` - Composite key for grouping
 - `value` - Serialized JSON data
@@ -174,6 +178,7 @@ If you need to rollback to Appwrite:
 ### Tables Not Created
 
 Backendless creates tables on first insert. If tables don't appear:
+
 1. Verify application ID is correct
 2. Check REST API key permissions
 3. Monitor Backendless dashboard for creation events
@@ -209,6 +214,7 @@ Backendless REST API
 ### P2P Operations
 
 All P2P operations transparently use Backendless:
+
 - Order creation/updates
 - Payment method storage
 - Notification delivery
@@ -237,9 +243,10 @@ All P2P operations transparently use Backendless:
 ## Support
 
 For issues with:
+
 - **Backendless**: Visit https://backendless.com/docs/
 - **Migration script**: Check error messages in console output
-- **P2P functionality**: Review /api/p2p/* endpoints
+- **P2P functionality**: Review /api/p2p/\* endpoints
 
 ## References
 

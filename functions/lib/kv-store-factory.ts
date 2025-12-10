@@ -29,7 +29,9 @@ interface PagesEnv {
  * Get KV Store instance based on available credentials
  * Priority: Backendless > Appwrite > Cloudflare KV > throws error
  */
-export function getKVStore(env: PagesEnv): KVStore | AppwriteKVStore | BackendlessKVStore {
+export function getKVStore(
+  env: PagesEnv,
+): KVStore | AppwriteKVStore | BackendlessKVStore {
   // Check for Backendless credentials first (preferred for P2P)
   if (env.BACKENDLESS_APP_ID && env.BACKENDLESS_API_KEY) {
     console.log("[KV Store Factory] Using Backendless backend (P2P optimized)");
@@ -46,7 +48,9 @@ export function getKVStore(env: PagesEnv): KVStore | AppwriteKVStore | Backendle
     env.APPWRITE_PROJECT_ID &&
     env.APPWRITE_API_KEY
   ) {
-    console.log("[KV Store Factory] Using Appwrite backend (legacy P2P support)");
+    console.log(
+      "[KV Store Factory] Using Appwrite backend (legacy P2P support)",
+    );
     return new AppwriteKVStore(
       env.APPWRITE_ENDPOINT,
       env.APPWRITE_PROJECT_ID,
@@ -69,6 +73,8 @@ export function getKVStore(env: PagesEnv): KVStore | AppwriteKVStore | Backendle
 /**
  * Initialize KV store for P2P operations
  */
-export function initializeP2PStorage(env: PagesEnv): KVStore | AppwriteKVStore | BackendlessKVStore {
+export function initializeP2PStorage(
+  env: PagesEnv,
+): KVStore | AppwriteKVStore | BackendlessKVStore {
   return getKVStore(env);
 }

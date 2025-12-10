@@ -287,9 +287,7 @@ export class KVStorage {
     apiKey: string,
     url?: string,
   ): KVStorage {
-    return new KVStorage(
-      new BackendlessKVStorage(appId, apiKey, url),
-    );
+    return new KVStorage(new BackendlessKVStorage(appId, apiKey, url));
   }
 
   static createAutoStorage(): KVStorage {
@@ -299,7 +297,9 @@ export class KVStorage {
     const backendlessUrl = process.env.BACKENDLESS_URL;
 
     if (backendlessAppId && backendlessApiKey) {
-      console.log("[KVStorage] Using Backendless storage backend (P2P optimized)");
+      console.log(
+        "[KVStorage] Using Backendless storage backend (P2P optimized)",
+      );
       try {
         return new KVStorage(
           new BackendlessKVStorage(
@@ -324,7 +324,9 @@ export class KVStorage {
 
     // Only use Appwrite if ALL credentials are provided and non-empty
     if (appwriteEndpoint && appwriteProjectId && appwriteApiKey) {
-      console.log("[KVStorage] Using Appwrite storage backend (legacy P2P support)");
+      console.log(
+        "[KVStorage] Using Appwrite storage backend (legacy P2P support)",
+      );
       try {
         return new KVStorage(new AppwriteKVStorage());
       } catch (error) {

@@ -31,7 +31,11 @@ export class BackendlessKVStore {
   private apiKey: string;
   private url: string;
 
-  constructor(appId: string, apiKey: string, url: string = "https://api.backendless.com") {
+  constructor(
+    appId: string,
+    apiKey: string,
+    url: string = "https://api.backendless.com",
+  ) {
     this.appId = appId;
     this.apiKey = apiKey;
     this.url = url;

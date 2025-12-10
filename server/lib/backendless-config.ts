@@ -5,7 +5,8 @@
 
 const BACKENDLESS_APP_ID = process.env.BACKENDLESS_APP_ID || "";
 const BACKENDLESS_API_KEY = process.env.BACKENDLESS_API_KEY || "";
-const BACKENDLESS_URL = process.env.BACKENDLESS_URL || "https://api.backendless.com";
+const BACKENDLESS_URL =
+  process.env.BACKENDLESS_URL || "https://api.backendless.com";
 
 export const BACKENDLESS_TABLES = {
   ORDERS: "p2p_orders",

@@ -3,10 +3,7 @@
  * Provides KV-like interface using Backendless REST API
  */
 
-import {
-  getBackendlessConfig,
-  BACKENDLESS_TABLES,
-} from "./backendless-config";
+import { getBackendlessConfig, BACKENDLESS_TABLES } from "./backendless-config";
 
 interface KVStorageBackend {
   get(key: string): Promise<string | null>;
@@ -178,10 +175,7 @@ export class BackendlessKVStorage implements KVStorageBackend {
     }
   }
 
-  async list(options?: {
-    prefix?: string;
-    limit?: number;
-  }): Promise<any> {
+  async list(options?: { prefix?: string; limit?: number }): Promise<any> {
     try {
       const { table } = this.parseKey(options?.prefix || "orders");
       const limit = Math.min(options?.limit || 25, 100);

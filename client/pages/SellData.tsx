@@ -143,11 +143,11 @@ export default function SellData() {
         await createOrderInAPI(createdOrder);
         console.log(`[SellData] Order ${createdOrder.id} persisted to server`);
       } catch (apiError) {
-        console.error(
-          "[SellData] Failed to persist order to server:",
-          apiError,
+        console.error("[SellData] Failed to persist order to server:", apiError);
+        toast.error(
+          "Failed to create order - could not save to server. Please try again.",
         );
-        toast.warning("Order created locally but failed to sync to server");
+        throw new Error("Order creation failed - server sync error");
       }
 
       toast.success("Order created successfully!");

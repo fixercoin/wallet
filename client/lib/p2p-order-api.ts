@@ -9,7 +9,7 @@ import type { CreatedOrder } from "./p2p-order-creation";
 const API_BASE = "/api/p2p/orders";
 
 /**
- * Get order from server KV storage
+ * Get order from server KV storage with localStorage fallback
  */
 export async function getOrderFromAPI(
   orderId: string,
@@ -22,7 +22,31 @@ export async function getOrderFromAPI(
 
     if (!response.ok) {
       if (response.status === 404) {
-        console.warn(`[P2P Order API] Order not found: ${orderId}`);
+        console.warn(`[P2P Order API] Order not found in KV: ${orderId}, checking localStorage...`);
+
+        // Try to recover from localStorage and sync to KV
+        try {
+          const ordersJson = localStorage.getItem("p2p_orders") || "[]";
+          const orders = JSON.parse(ordersJson);
+          const order = orders.find((o: CreatedOrder) => o.id === orderId);
+
+          if (order) {
+            console.warn(`[P2P Order API] ✅ Found order in localStorage: ${orderId}, syncing to KV...`);
+            // Attempt to sync to KV for future lookups
+            try {
+              await createOrderInAPI(order);
+              console.log(`[P2P Order API] ✅ Successfully synced order to KV: ${orderId}`);
+            } catch (syncError) {
+              console.warn(`[P2P Order API] Failed to sync to KV (non-critical): ${syncError instanceof Error ? syncError.message : String(syncError)}`);
+              // Still return the order even if sync fails
+            }
+            return order;
+          }
+        } catch (localError) {
+          console.warn(`[P2P Order API] localStorage fallback error: ${localError instanceof Error ? localError.message : String(localError)}`);
+        }
+
+        console.error(`[P2P Order API] Order not found anywhere: ${orderId}`);
         return null;
       }
       const errorText = await response.text();
@@ -46,6 +70,20 @@ export async function getOrderFromAPI(
     console.error(
       `[P2P Order API] Error fetching order: ${error instanceof Error ? error.message : String(error)}`,
     );
+
+    // Final fallback: try localStorage
+    try {
+      const ordersJson = localStorage.getItem("p2p_orders") || "[]";
+      const orders = JSON.parse(ordersJson);
+      const order = orders.find((o: CreatedOrder) => o.id === orderId);
+      if (order) {
+        console.warn(`[P2P Order API] Retrieved from localStorage due to network error: ${orderId}`);
+        return order;
+      }
+    } catch (e) {
+      // Ignore localStorage errors
+    }
+
     return null;
   }
 }

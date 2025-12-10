@@ -171,7 +171,6 @@ export const onRequestPut = async ({
       });
     }
 
-    const kvStore = new KVStore(env.STAKING_KV);
     const updated = await kvStore.updateEscrowStatus(escrowId, status);
 
     return jsonResponse(200, {

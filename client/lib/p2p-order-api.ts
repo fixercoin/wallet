@@ -22,7 +22,9 @@ export async function getOrderFromAPI(
 
     if (!response.ok) {
       if (response.status === 404) {
-        console.warn(`[P2P Order API] Order not found in KV: ${orderId}, checking localStorage...`);
+        console.warn(
+          `[P2P Order API] Order not found in KV: ${orderId}, checking localStorage...`,
+        );
 
         // Try to recover from localStorage and sync to KV
         try {
@@ -31,19 +33,27 @@ export async function getOrderFromAPI(
           const order = orders.find((o: CreatedOrder) => o.id === orderId);
 
           if (order) {
-            console.warn(`[P2P Order API] ✅ Found order in localStorage: ${orderId}, syncing to KV...`);
+            console.warn(
+              `[P2P Order API] ✅ Found order in localStorage: ${orderId}, syncing to KV...`,
+            );
             // Attempt to sync to KV for future lookups
             try {
               await createOrderInAPI(order);
-              console.log(`[P2P Order API] ✅ Successfully synced order to KV: ${orderId}`);
+              console.log(
+                `[P2P Order API] ✅ Successfully synced order to KV: ${orderId}`,
+              );
             } catch (syncError) {
-              console.warn(`[P2P Order API] Failed to sync to KV (non-critical): ${syncError instanceof Error ? syncError.message : String(syncError)}`);
+              console.warn(
+                `[P2P Order API] Failed to sync to KV (non-critical): ${syncError instanceof Error ? syncError.message : String(syncError)}`,
+              );
               // Still return the order even if sync fails
             }
             return order;
           }
         } catch (localError) {
-          console.warn(`[P2P Order API] localStorage fallback error: ${localError instanceof Error ? localError.message : String(localError)}`);
+          console.warn(
+            `[P2P Order API] localStorage fallback error: ${localError instanceof Error ? localError.message : String(localError)}`,
+          );
         }
 
         console.error(`[P2P Order API] Order not found anywhere: ${orderId}`);
@@ -77,7 +87,9 @@ export async function getOrderFromAPI(
       const orders = JSON.parse(ordersJson);
       const order = orders.find((o: CreatedOrder) => o.id === orderId);
       if (order) {
-        console.warn(`[P2P Order API] Retrieved from localStorage due to network error: ${orderId}`);
+        console.warn(
+          `[P2P Order API] Retrieved from localStorage due to network error: ${orderId}`,
+        );
         return order;
       }
     } catch (e) {
@@ -121,7 +133,9 @@ export async function createOrderInAPI(
     try {
       const ordersJson = localStorage.getItem("p2p_orders") || "[]";
       const orders = JSON.parse(ordersJson);
-      const existingIndex = orders.findIndex((o: CreatedOrder) => o.id === order.id);
+      const existingIndex = orders.findIndex(
+        (o: CreatedOrder) => o.id === order.id,
+      );
 
       if (existingIndex >= 0) {
         orders[existingIndex] = order;
@@ -130,9 +144,13 @@ export async function createOrderInAPI(
       }
 
       localStorage.setItem("p2p_orders", JSON.stringify(orders));
-      console.log(`[P2P Order API] ✅ Backed up order to localStorage: ${order.id}`);
+      console.log(
+        `[P2P Order API] ✅ Backed up order to localStorage: ${order.id}`,
+      );
     } catch (localError) {
-      console.warn(`[P2P Order API] Failed to backup to localStorage: ${localError instanceof Error ? localError.message : String(localError)}`);
+      console.warn(
+        `[P2P Order API] Failed to backup to localStorage: ${localError instanceof Error ? localError.message : String(localError)}`,
+      );
       // Continue anyway - KV save is still attempted
     }
 
@@ -318,7 +336,9 @@ export async function syncAllOrdersFromLocalStorage(): Promise<{
       return results;
     }
 
-    console.log(`[P2P Order API] Starting sync of ${orders.length} orders from localStorage to KV...`);
+    console.log(
+      `[P2P Order API] Starting sync of ${orders.length} orders from localStorage to KV...`,
+    );
 
     for (const order of orders) {
       try {
@@ -329,7 +349,8 @@ export async function syncAllOrdersFromLocalStorage(): Promise<{
             id: order.id,
             type: order.type,
             offerId: order.offerId,
-            walletAddress: order.type === "BUY" ? order.buyerWallet : order.sellerWallet,
+            walletAddress:
+              order.type === "BUY" ? order.buyerWallet : order.sellerWallet,
             buyerWallet: order.buyerWallet,
             sellerWallet: order.sellerWallet,
             token: order.token,
@@ -354,18 +375,28 @@ export async function syncAllOrdersFromLocalStorage(): Promise<{
         } else {
           results.failed++;
           const errorData = await response.json().catch(() => ({}));
-          console.warn(`[P2P Order API] Failed to sync order ${order.id}: ${errorData.error || "Unknown error"}`);
+          console.warn(
+            `[P2P Order API] Failed to sync order ${order.id}: ${errorData.error || "Unknown error"}`,
+          );
         }
       } catch (error) {
         results.failed++;
-        console.error(`[P2P Order API] Error syncing order ${order.id}:`, error);
+        console.error(
+          `[P2P Order API] Error syncing order ${order.id}:`,
+          error,
+        );
       }
     }
 
-    console.log(`[P2P Order API] Sync complete: ${results.synced}/${results.total} synced, ${results.failed} failed`);
+    console.log(
+      `[P2P Order API] Sync complete: ${results.synced}/${results.total} synced, ${results.failed} failed`,
+    );
     return results;
   } catch (error) {
-    console.error("[P2P Order API] Failed to sync orders from localStorage:", error);
+    console.error(
+      "[P2P Order API] Failed to sync orders from localStorage:",
+      error,
+    );
     return results;
   }
 }

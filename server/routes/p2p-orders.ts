@@ -196,7 +196,9 @@ async function deleteOrderById(
 /**
  * Helper to get a specific order by ID with better logging
  */
-async function getOrderByIdWithLogging(orderId: string): Promise<P2POrder | null> {
+async function getOrderByIdWithLogging(
+  orderId: string,
+): Promise<P2POrder | null> {
   try {
     const order = await getOrderById(orderId);
     if (!order) {
@@ -415,7 +417,7 @@ export const handleGetP2POrder: RequestHandler = async (req, res) => {
     if (!orderId || typeof orderId !== "string") {
       return res.status(400).json({
         error: "Invalid order ID",
-        details: "Order ID must be a non-empty string"
+        details: "Order ID must be a non-empty string",
       });
     }
 
@@ -427,8 +429,9 @@ export const handleGetP2POrder: RequestHandler = async (req, res) => {
       return res.status(404).json({
         error: "Order not found",
         orderId,
-        details: "Order does not exist in KV storage. Check that the order was created successfully and synced to the server.",
-        hint: "Call /api/p2p/orders with wallet parameter to list all orders for a wallet"
+        details:
+          "Order does not exist in KV storage. Check that the order was created successfully and synced to the server.",
+        hint: "Call /api/p2p/orders with wallet parameter to list all orders for a wallet",
       });
     }
 
@@ -436,13 +439,13 @@ export const handleGetP2POrder: RequestHandler = async (req, res) => {
     res.json({
       success: true,
       orders: [order],
-      order
+      order,
     });
   } catch (error) {
     console.error("Get P2P order error:", error);
     res.status(500).json({
       error: "Failed to get order",
-      details: error instanceof Error ? error.message : String(error)
+      details: error instanceof Error ? error.message : String(error),
     });
   }
 };

@@ -766,7 +766,7 @@ export async function createServer(): Promise<express.Application> {
     if (!orderId) {
       return res.status(400).json({
         error: "Missing orderId parameter",
-        usage: "/api/p2p/orders/debug/check-health?orderId=<order-id>"
+        usage: "/api/p2p/orders/debug/check-health?orderId=<order-id>",
       });
     }
 
@@ -776,8 +776,9 @@ export async function createServer(): Promise<express.Application> {
       diagnostics: {
         orderId,
         hint: "If you get 'Order not found', the order may be stuck in localStorage. Try calling the client's syncAllOrdersFromLocalStorage() function.",
-        recovery: "The client automatically syncs orders from localStorage to KV when requested. Check browser console logs for details."
-      }
+        recovery:
+          "The client automatically syncs orders from localStorage to KV when requested. Check browser console logs for details.",
+      },
     });
   });
 

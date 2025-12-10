@@ -196,9 +196,17 @@ export const handleDeletePaymentMethod: RequestHandler = async (req, res) => {
     paymentMethods.delete(id);
 
     // Delete from KV storage
-    const existingMethods = await getWalletPaymentMethods(walletAddress);
-    const filtered = existingMethods.filter((m) => m.id !== id);
-    await saveWalletPaymentMethods(walletAddress, filtered);
+    try {
+      const existingMethods = await getWalletPaymentMethods(walletAddress);
+      const filtered = existingMethods.filter((m) => m.id !== id);
+      await saveWalletPaymentMethods(walletAddress, filtered);
+    } catch (kvError) {
+      console.warn(
+        "[Payment Methods] Warning: Could not delete from KV storage:",
+        kvError instanceof Error ? kvError.message : String(kvError),
+      );
+      // Continue anyway - deleted from in-memory store
+    }
 
     return res.json({
       message: "Payment method deleted successfully",

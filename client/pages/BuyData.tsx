@@ -35,7 +35,8 @@ export default function BuyData() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();
-  const isCreatingOrderRef = useRef(false); // Prevent multiple simultaneous order creations
+  const { openSellerPaymentDialog } = useP2POrderFlow();
+  const isCreatingOrderRef = useRef(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined

@@ -197,7 +197,10 @@ export function CryptoSentDialog() {
                   </div>
                   <div className="border-t border-gray-300/20 pt-3 mt-3 flex justify-between items-center">
                     <span className="text-white/70">Recipient:</span>
-                    <span className="text-xs font-mono text-white/90 max-w-[150px] truncate" title={buyerWalletAddress}>
+                    <span
+                      className="text-xs font-mono text-white/90 max-w-[150px] truncate"
+                      title={buyerWalletAddress}
+                    >
                       {buyerWalletAddress}
                     </span>
                   </div>

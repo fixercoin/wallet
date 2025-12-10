@@ -249,7 +249,8 @@ export default function WaitingForBuyerResponse() {
                         Buyer Confirmed Payment Sent
                       </p>
                       <p className="text-xs text-green-200/70">
-                        The buyer has sent their payment. You can now transfer the crypto to their wallet.
+                        The buyer has sent their payment. You can now transfer
+                        the crypto to their wallet.
                       </p>
                     </div>
                   </div>
@@ -262,7 +263,8 @@ export default function WaitingForBuyerResponse() {
                         Buyer Confirmed Crypto Received
                       </p>
                       <p className="text-xs text-green-200/70">
-                        The buyer has confirmed receiving the crypto. The order is now complete!
+                        The buyer has confirmed receiving the crypto. The order
+                        is now complete!
                       </p>
                     </div>
                   </div>

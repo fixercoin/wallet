@@ -31,7 +31,8 @@ export function NotificationCenter() {
   useEffect(() => {
     const criticalNotifications = notifications.filter(
       (n) =>
-        (n.type === "transfer_initiated" || n.type === "seller_payment_received") &&
+        (n.type === "transfer_initiated" ||
+          n.type === "seller_payment_received") &&
         !processedNotificationsRef.current.has(n.id),
     );
 
@@ -39,9 +40,15 @@ export function NotificationCenter() {
       const notification = criticalNotifications[0];
       processedNotificationsRef.current.add(notification.id);
 
-      if (notification.type === "transfer_initiated" && notification.fullOrder) {
+      if (
+        notification.type === "transfer_initiated" &&
+        notification.fullOrder
+      ) {
         openCryptoReceivedDialog(notification.fullOrder);
-      } else if (notification.type === "seller_payment_received" && notification.fullOrder) {
+      } else if (
+        notification.type === "seller_payment_received" &&
+        notification.fullOrder
+      ) {
         openBuyerWalletDialog(
           notification.fullOrder,
           notification.fullOrder.wallet_address || "",

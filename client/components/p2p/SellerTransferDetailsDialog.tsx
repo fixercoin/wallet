@@ -249,7 +249,9 @@ export function SellerTransferDetailsDialog() {
             </Button>
             <Button
               onClick={handleSendCrypto}
-              disabled={confirming || !sendAmount.trim() || !walletAddress.trim()}
+              disabled={
+                confirming || !sendAmount.trim() || !walletAddress.trim()
+              }
               className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {confirming ? "Processing..." : "I Have Sent Crypto"}

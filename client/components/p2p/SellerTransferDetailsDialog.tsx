@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Copy, Check, Loader } from "lucide-react";
+import { Copy, Check, Loader, Minus } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -31,6 +31,7 @@ export function SellerTransferDetailsDialog() {
   const [sendAmount, setSendAmount] = useState("");
   const [walletAddress, setWalletAddress] = useState(buyerWalletAddress);
   const [confirming, setConfirming] = useState(false);
+  const [minimized, setMinimized] = useState(false);
 
   // Fetch seller's USDT balance
   useEffect(() => {
@@ -119,17 +120,27 @@ export function SellerTransferDetailsDialog() {
       onOpenChange={(open) => !open && setActiveDialog(null)}
     >
       <DialogContent className="w-full max-w-sm bg-[#1a2847] border border-gray-300/30">
-        <DialogHeader>
-          <DialogTitle className="text-white uppercase">
-            Send Crypto to Buyer
-          </DialogTitle>
-          <DialogDescription className="text-white/70 uppercase text-xs">
-            Verify details and prepare transfer
-          </DialogDescription>
+        <DialogHeader className="flex flex-row items-start justify-between">
+          <div className="flex-1">
+            <DialogTitle className="text-white uppercase">
+              Send Crypto to Buyer
+            </DialogTitle>
+            <DialogDescription className="text-white/70 uppercase text-xs">
+              Verify details and prepare transfer
+            </DialogDescription>
+          </div>
+          <button
+            onClick={() => setMinimized(!minimized)}
+            className="p-1 rounded hover:bg-gray-700/50 transition-colors flex-shrink-0"
+            title={minimized ? "Maximize" : "Minimize"}
+          >
+            <Minus className="w-5 h-5 text-white/70 hover:text-white" />
+          </button>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Order Summary */}
+        {!minimized && (
+          <div className="space-y-4">
+            {/* Order Summary */}
           <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
             <div className="text-xs text-white/70 uppercase mb-3 font-semibold">
               Order Summary
@@ -258,6 +269,7 @@ export function SellerTransferDetailsDialog() {
             </Button>
           </div>
         </div>
+        )}
       </DialogContent>
     </Dialog>
   );

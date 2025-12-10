@@ -70,7 +70,10 @@ export function CryptoReceivedDialog() {
   const tokenAmount = parseFloat(currentOrder.token_amount) || 0;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && setActiveDialog(null)}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => !open && setActiveDialog(null)}
+    >
       <DialogContent className="w-full max-w-sm bg-[#1a2847] border border-gray-300/30">
         <DialogHeader>
           <DialogTitle className="text-white uppercase flex items-center gap-2">
@@ -102,7 +105,9 @@ export function CryptoReceivedDialog() {
             <div className="space-y-3 text-sm text-white">
               <div className="flex justify-between">
                 <span>Token:</span>
-                <span className="font-semibold">{currentOrder.token || "USDT"}</span>
+                <span className="font-semibold">
+                  {currentOrder.token || "USDT"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Amount Received:</span>
@@ -127,10 +132,12 @@ export function CryptoReceivedDialog() {
             <ol className="text-xs text-blue-200/80 space-y-2 list-decimal list-inside">
               <li>Check your wallet to confirm the crypto arrived</li>
               <li>
-                If you see the {currentOrder.token || "USDT"} in your wallet, click
-                "I Have Received" below
+                If you see the {currentOrder.token || "USDT"} in your wallet,
+                click "I Have Received" below
               </li>
-              <li>The order will be completed and the seller will be notified</li>
+              <li>
+                The order will be completed and the seller will be notified
+              </li>
             </ol>
           </div>
 

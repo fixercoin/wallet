@@ -14,12 +14,8 @@ import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import { useWallet } from "@/contexts/WalletContext";
 
 export function CryptoSentDialog() {
-  const {
-    activeDialog,
-    buyerWalletAddress,
-    currentOrder,
-    setActiveDialog,
-  } = useP2POrderFlow();
+  const { activeDialog, buyerWalletAddress, currentOrder, setActiveDialog } =
+    useP2POrderFlow();
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();
   const [copied, setCopied] = useState(false);
@@ -78,7 +74,10 @@ export function CryptoSentDialog() {
   const tokenAmount = parseFloat(currentOrder.token_amount) || 0;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && setActiveDialog(null)}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => !open && setActiveDialog(null)}
+    >
       <DialogContent className="w-full max-w-sm bg-[#1a2847] border border-gray-300/30">
         <DialogHeader>
           <DialogTitle className="text-white uppercase">
@@ -98,7 +97,9 @@ export function CryptoSentDialog() {
             <div className="space-y-2 text-sm text-white">
               <div className="flex justify-between">
                 <span>Token:</span>
-                <span className="font-semibold">{currentOrder.token || "USDT"}</span>
+                <span className="font-semibold">
+                  {currentOrder.token || "USDT"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Amount to Send:</span>
@@ -152,7 +153,9 @@ export function CryptoSentDialog() {
                 </span>
               </li>
               <li>Paste the address and confirm the transaction</li>
-              <li>Click "I Have Sent Crypto" after the transaction is complete</li>
+              <li>
+                Click "I Have Sent Crypto" after the transaction is complete
+              </li>
             </ol>
           </div>
 

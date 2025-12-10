@@ -44,9 +44,8 @@ export interface P2POrderFlowContextType {
   resetFlow: () => void;
 }
 
-export const P2POrderFlowContext = createContext<P2POrderFlowContextType | null>(
-  null,
-);
+export const P2POrderFlowContext =
+  createContext<P2POrderFlowContextType | null>(null);
 
 export function P2POrderFlowProvider({
   children,
@@ -128,9 +127,7 @@ export function P2POrderFlowProvider({
 export function useP2POrderFlow() {
   const context = React.useContext(P2POrderFlowContext);
   if (!context) {
-    throw new Error(
-      "useP2POrderFlow must be used within P2POrderFlowProvider",
-    );
+    throw new Error("useP2POrderFlow must be used within P2POrderFlowProvider");
   }
   return context;
 }

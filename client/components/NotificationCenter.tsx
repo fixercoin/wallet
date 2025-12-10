@@ -16,8 +16,7 @@ export function NotificationCenter() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const previousUnreadCountRef = useRef(0);
-  const { openBuyerWalletDialog, openCryptoReceivedDialog } =
-    useP2POrderFlow();
+  const { openBuyerWalletDialog, openCryptoReceivedDialog } = useP2POrderFlow();
 
   // Play bell sound when new notifications arrive
   useEffect(() => {
@@ -153,17 +152,11 @@ export function NotificationCenter() {
                             notification.orderId,
                           );
                         } catch (error) {
-                          console.error(
-                            "Failed to load order:",
-                            error,
-                          );
+                          console.error("Failed to load order:", error);
                         }
 
                         // Handle new buy order - seller receives notification
-                        if (
-                          notification.type === "new_buy_order" &&
-                          order
-                        ) {
+                        if (notification.type === "new_buy_order" && order) {
                           // Open buyer wallet dialog for seller
                           // Get buyer wallet from the loaded order
                           const buyerWallet =

@@ -116,7 +116,10 @@ export function BuyerWalletAddressDialog() {
   const tokenAmount = parseFloat(currentOrder.token_amount) || 0;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && setActiveDialog(null)}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => !open && setActiveDialog(null)}
+    >
       <DialogContent className="w-full max-w-sm bg-[#1a2847] border border-gray-300/30">
         <DialogHeader>
           <DialogTitle className="text-white uppercase">
@@ -136,7 +139,9 @@ export function BuyerWalletAddressDialog() {
             <div className="space-y-2 text-sm text-white">
               <div className="flex justify-between">
                 <span>Token:</span>
-                <span className="font-semibold">{currentOrder.token || "USDT"}</span>
+                <span className="font-semibold">
+                  {currentOrder.token || "USDT"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Amount:</span>

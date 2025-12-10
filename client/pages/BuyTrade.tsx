@@ -832,11 +832,11 @@ export default function BuyTrade() {
                     <>
                       <div className="p-3 rounded-lg bg-[#0f1520]/50 border border-[#FF7A5C]/30 space-y-2">
                         <div className="text-xs font-semibold text-white/70">
-                          Seller Payment Details
+                          MAKE PAYMENT
                         </div>
                         <div>
                           <div className="text-xs text-white/60">
-                            Account Name
+                            ACCOUNT NAME
                           </div>
                           <div className="text-sm font-medium text-white">
                             {sellerInfo.accountName}
@@ -844,7 +844,7 @@ export default function BuyTrade() {
                         </div>
                         <div>
                           <div className="text-xs text-white/60">
-                            Account Number
+                            ACCOUNT NUMBER
                           </div>
                           <div className="text-sm font-medium text-white">
                             {sellerInfo.accountNumber}
@@ -852,7 +852,7 @@ export default function BuyTrade() {
                         </div>
                         <div>
                           <div className="text-xs text-white/60">
-                            Payment Method
+                            PAYMENT METHOD
                           </div>
                           <div className="text-sm font-medium text-white">
                             {sellerInfo.paymentMethod}

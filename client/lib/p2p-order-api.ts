@@ -165,7 +165,7 @@ export async function createOrderInAPI(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        id: order.id,
+        orderId: order.id,
         type: order.type,
         offerId: order.offerId,
         walletAddress:

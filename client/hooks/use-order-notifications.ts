@@ -51,7 +51,9 @@ export function useOrderNotifications() {
         );
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch notifications: ${response.status}`);
+          console.warn(`Failed to fetch notifications: ${response.status}`);
+          setLoading(false);
+          return;
         }
 
         const data = await response.json();
@@ -67,7 +69,7 @@ export function useOrderNotifications() {
         ).length;
         setUnreadCount(unread);
       } catch (error) {
-        console.error("Error fetching notifications:", error);
+        console.warn("Error fetching notifications:", error);
       } finally {
         setLoading(false);
       }
@@ -102,7 +104,7 @@ export function useOrderNotifications() {
       fullOrder?: any,
     ) => {
       if (!wallet) {
-        console.error("Wallet not connected");
+        console.warn("Wallet not connected - skipping notification");
         return;
       }
 
@@ -123,20 +125,30 @@ export function useOrderNotifications() {
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to create notification: ${response.status}`);
+          console.warn(
+            `Failed to create notification: ${response.status} - notifications are non-critical`,
+          );
+          // Don't throw - notifications are optional for order flow
+          return;
         }
 
         if (sendPushNotification) {
-          await pushNotificationService.sendOrderNotification(
-            type,
-            message,
-            orderData,
-          );
+          try {
+            await pushNotificationService.sendOrderNotification(
+              type,
+              message,
+              orderData,
+            );
+          } catch (pushError) {
+            console.warn("Failed to send push notification:", pushError);
+            // Non-critical error
+          }
         }
 
         console.log(`Notification created for ${recipientWallet}`);
       } catch (error) {
-        console.error("Error creating notification:", error);
+        console.warn("Error creating notification:", error);
+        // Non-critical - don't disrupt order flow
       }
     },
     [wallet],

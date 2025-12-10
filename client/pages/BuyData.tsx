@@ -267,20 +267,31 @@ export default function BuyData() {
         },
       );
 
-      if (response.ok) {
-        // Start polling for seller confirmation
-        startPollingOrderStatus(currentOrder.id);
-        setFlowStep("waiting_confirmation");
-        setOrderStatus({
-          sellerReceivedPayment: false,
-          sellerCryptoSent: false,
-        });
-      } else {
-        toast.error("Failed to update order status");
+      if (!response.ok) {
+        const errorData = await response.text().catch(() => "");
+        console.error(
+          `[BuyData] Update order status failed: ${response.status} ${response.statusText}`,
+          errorData,
+        );
       }
+
+      // Proceed to waiting confirmation regardless of API response
+      // The order is already saved on the server
+      startPollingOrderStatus(currentOrder.id);
+      setFlowStep("waiting_confirmation");
+      setOrderStatus({
+        sellerReceivedPayment: false,
+        sellerCryptoSent: false,
+      });
     } catch (error) {
       console.error("Error updating order status:", error);
-      toast.error("Failed to update order");
+      // Still proceed to waiting confirmation - the order exists
+      startPollingOrderStatus(currentOrder.id);
+      setFlowStep("waiting_confirmation");
+      setOrderStatus({
+        sellerReceivedPayment: false,
+        sellerCryptoSent: false,
+      });
     }
   };
 

@@ -1,12 +1,17 @@
 /**
  * GET/POST /api/p2p/payment-methods
- * Manage payment methods for P2P trading using Cloudflare KV
+ * Manage payment methods for P2P trading using Cloudflare KV or Appwrite
  */
 
 import { KVStore } from "../../lib/kv-utils";
+import { getKVStore } from "../../lib/kv-store-factory";
 
 interface Env {
-  STAKING_KV: any;
+  STAKING_KV?: any;
+  APPWRITE_ENDPOINT?: string;
+  APPWRITE_PROJECT_ID?: string;
+  APPWRITE_API_KEY?: string;
+  APPWRITE_DATABASE_ID?: string;
   [key: string]: any;
 }
 
@@ -36,9 +41,12 @@ export const onRequestGet = async ({
   env: Env;
 }) => {
   try {
-    if (!env.STAKING_KV) {
+    let kvStore: any;
+    try {
+      kvStore = getKVStore(env);
+    } catch (error) {
       return jsonResponse(500, {
-        error: "KV storage not configured",
+        error: "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
       });
     }
 
@@ -49,8 +57,6 @@ export const onRequestGet = async ({
     if (!walletAddress) {
       return jsonResponse(400, { error: "Missing wallet address" });
     }
-
-    const kvStore = new KVStore(env.STAKING_KV);
 
     if (methodId) {
       // Get single payment method

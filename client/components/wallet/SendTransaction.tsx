@@ -868,7 +868,7 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
       <div className="flex flex-col relative z-20 pt-4">
         <div className="w-full">
           <div className="border-0 bg-transparent">
-            <div className="space-y-6 px-6 pt-24 pb-4">
+            <div className="space-y-6 px-6 pt-18 pb-4">
               {step === "form" ? (
                 <>
                   <div className="space-y-2">

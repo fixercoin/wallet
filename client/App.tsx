@@ -222,7 +222,7 @@ function AppRoutes() {
         element={<SellerOrderConfirmation />}
       />
       <Route
-        path="/buyer-order-confirmation/:orderId"
+        path="/buyer-order-confirmation"
         element={<BuyerOrderConfirmation />}
       />
       <Route path="/order-complete" element={<OrderComplete />} />

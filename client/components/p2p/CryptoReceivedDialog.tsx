@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Minus } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -21,6 +21,7 @@ export function CryptoReceivedDialog() {
   const [confirming, setConfirming] = useState(false);
 
   const isOpen = activeDialog === "crypto_received_confirmation";
+  const [minimized, setMinimized] = useState(false);
 
   const handleIHaveReceived = async () => {
     if (!currentOrder || !wallet) return;
@@ -90,18 +91,28 @@ export function CryptoReceivedDialog() {
       onOpenChange={(open) => !open && setActiveDialog(null)}
     >
       <DialogContent className="w-full max-w-sm bg-[#1a2847] border border-gray-300/30">
-        <DialogHeader>
-          <DialogTitle className="text-white uppercase flex items-center gap-2">
-            <CheckCircle2 className="w-6 h-6 text-green-500" />
-            You Have Received Crypto
-          </DialogTitle>
-          <DialogDescription className="text-white/70 uppercase text-xs">
-            Confirm receipt to complete the order
-          </DialogDescription>
+        <DialogHeader className="flex flex-row items-start justify-between">
+          <div className="flex-1">
+            <DialogTitle className="text-white uppercase flex items-center gap-2">
+              <CheckCircle2 className="w-6 h-6 text-green-500" />
+              You Have Received Crypto
+            </DialogTitle>
+            <DialogDescription className="text-white/70 uppercase text-xs">
+              Confirm receipt to complete the order
+            </DialogDescription>
+          </div>
+          <button
+            onClick={() => setMinimized(!minimized)}
+            className="p-1 rounded hover:bg-gray-700/50 transition-colors flex-shrink-0"
+            title={minimized ? "Maximize" : "Minimize"}
+          >
+            <Minus className="w-5 h-5 text-white/70 hover:text-white" />
+          </button>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Success Message */}
+        {!minimized && (
+          <div className="space-y-4">
+            {/* Success Message */}
           <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50 text-center">
             <div className="text-sm font-semibold text-green-300 mb-2">
               🎉 Order In Progress
@@ -191,6 +202,7 @@ export function CryptoReceivedDialog() {
             </Button>
           </div>
         </div>
+        )}
       </DialogContent>
     </Dialog>
   );

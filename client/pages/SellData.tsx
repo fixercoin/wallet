@@ -386,11 +386,14 @@ export default function SellData() {
             <label className="block text-xs font-semibold text-white/80 uppercase mb-2">
               Token
             </label>
-            <Select value={selectedToken} onValueChange={(value) => {
-              setSelectedToken(value as "USDT" | "FIXERCOIN");
-              setAmountPKR("");
-              setAmountTokens("");
-            }}>
+            <Select
+              value={selectedToken}
+              onValueChange={(value) => {
+                setSelectedToken(value as "USDT" | "FIXERCOIN");
+                setAmountPKR("");
+                setAmountTokens("");
+              }}
+            >
               <SelectTrigger className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold focus:ring-[#FF7A5C]/50">
                 <SelectValue />
               </SelectTrigger>
@@ -447,7 +450,8 @@ export default function SellData() {
                 Summary
               </div>
               <div className="text-sm text-white/90">
-                {amountTokens} {selectedToken} = {parseFloat(amountPKR).toFixed(2)} PKR
+                {amountTokens} {selectedToken} ={" "}
+                {parseFloat(amountPKR).toFixed(2)} PKR
               </div>
             </div>
           )}
@@ -551,11 +555,12 @@ export default function SellData() {
 
               {!orderStatus.buyerPaymentSent ? (
                 <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
-                <p className="text-sm text-blue-300">
-                  Waiting for buyer to send {parseFloat(amountPKR).toFixed(2)}{" "}
-                  PKR for {parseFloat(amountTokens).toFixed(6)} {selectedToken}...
-                </p>
-              </div>
+                  <p className="text-sm text-blue-300">
+                    Waiting for buyer to send {parseFloat(amountPKR).toFixed(2)}{" "}
+                    PKR for {parseFloat(amountTokens).toFixed(6)}{" "}
+                    {selectedToken}...
+                  </p>
+                </div>
               ) : (
                 <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
                   <div className="flex items-center gap-2">
@@ -657,15 +662,15 @@ export default function SellData() {
 
             <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
               <p className="text-sm text-green-300">
-                Send {parseFloat(amountTokens).toFixed(6)} {selectedToken} to buyer's
-                wallet
+                Send {parseFloat(amountTokens).toFixed(6)} {selectedToken} to
+                buyer's wallet
               </p>
             </div>
 
             <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
               <p className="text-sm text-blue-300">
-                Transaction: {parseFloat(amountTokens).toFixed(6)} {selectedToken} ←→{" "}
-                {parseFloat(amountPKR).toFixed(2)} PKR
+                Transaction: {parseFloat(amountTokens).toFixed(6)}{" "}
+                {selectedToken} ←→ {parseFloat(amountPKR).toFixed(2)} PKR
               </p>
             </div>
 
@@ -710,7 +715,8 @@ export default function SellData() {
               </p>
               <p className="text-white/70 text-sm">
                 You have successfully sent {parseFloat(amountTokens).toFixed(6)}{" "}
-                {selectedToken} and received {parseFloat(amountPKR).toFixed(2)} PKR
+                {selectedToken} and received {parseFloat(amountPKR).toFixed(2)}{" "}
+                PKR
               </p>
             </div>
 

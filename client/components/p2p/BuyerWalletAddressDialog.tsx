@@ -166,36 +166,36 @@ export function BuyerWalletAddressDialog() {
           <div className="space-y-4">
             {/* Buyer Order Summary - Simplified */}
             <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
-            <div className="text-xs text-white/70 uppercase mb-3 font-semibold">
-              Order Details
+              <div className="text-xs text-white/70 uppercase mb-3 font-semibold">
+                Order Details
+              </div>
+              <div className="space-y-2 text-sm text-white">
+                <div className="flex justify-between">
+                  <span className="text-white/70">Token:</span>
+                  <span className="font-semibold">
+                    {currentOrder.token || "USDT"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/70">Amount:</span>
+                  <span className="font-semibold">
+                    {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/70">Price:</span>
+                  <span className="font-semibold text-green-400">
+                    {pkrAmount.toFixed(2)} PKR
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/70">Payment Method:</span>
+                  <span className="font-semibold capitalize">
+                    {currentOrder.payment_method || "Unknown"}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="space-y-2 text-sm text-white">
-              <div className="flex justify-between">
-                <span className="text-white/70">Token:</span>
-                <span className="font-semibold">
-                  {currentOrder.token || "USDT"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-white/70">Amount:</span>
-                <span className="font-semibold">
-                  {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-white/70">Price:</span>
-                <span className="font-semibold text-green-400">
-                  {pkrAmount.toFixed(2)} PKR
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-white/70">Payment Method:</span>
-                <span className="font-semibold capitalize">
-                  {currentOrder.payment_method || "Unknown"}
-                </span>
-              </div>
-            </div>
-          </div>
 
             {/* Wallet Address */}
             <div className="space-y-2">
@@ -222,21 +222,21 @@ export function BuyerWalletAddressDialog() {
 
             {/* Action Buttons */}
             <div className="flex gap-3 pt-2">
-            <Button
-              onClick={handleReject}
-              disabled={rejecting}
-              variant="outline"
-              className="flex-1 border border-red-500/50 text-red-400 hover:bg-red-500/10"
-            >
-              {rejecting ? "Rejecting..." : "Reject"}
-            </Button>
-            <Button
-              onClick={handleIHaveReceived}
-              disabled={confirming}
-              className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {confirming ? "Confirming..." : "I Have Received"}
-            </Button>
+              <Button
+                onClick={handleReject}
+                disabled={rejecting}
+                variant="outline"
+                className="flex-1 border border-red-500/50 text-red-400 hover:bg-red-500/10"
+              >
+                {rejecting ? "Rejecting..." : "Reject"}
+              </Button>
+              <Button
+                onClick={handleIHaveReceived}
+                disabled={confirming}
+                className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {confirming ? "Confirming..." : "I Have Received"}
+              </Button>
             </div>
           </div>
         )}

@@ -161,200 +161,200 @@ export function CryptoSentDialog() {
         {!minimized && (
           <div className="space-y-4">
             {sent ? (
-            <>
-              {/* Success State */}
-              <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50 text-center">
-                <div className="text-sm font-semibold text-green-300 mb-2">
-                  ✓ Transfer Confirmed
+              <>
+                {/* Success State */}
+                <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50 text-center">
+                  <div className="text-sm font-semibold text-green-300 mb-2">
+                    ✓ Transfer Confirmed
+                  </div>
+                  <p className="text-xs text-green-200/80">
+                    The buyer has been notified that crypto is on the way.
+                  </p>
                 </div>
-                <p className="text-xs text-green-200/80">
-                  The buyer has been notified that crypto is on the way.
-                </p>
-              </div>
 
-              {/* Order Summary */}
-              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
-                <div className="text-xs text-white/70 uppercase mb-3">
-                  Transaction Summary
-                </div>
-                <div className="space-y-3 text-sm text-white">
-                  <div className="flex justify-between">
-                    <span>Token Sent:</span>
-                    <span className="font-semibold text-green-400">
-                      {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
-                    </span>
+                {/* Order Summary */}
+                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
+                  <div className="text-xs text-white/70 uppercase mb-3">
+                    Transaction Summary
                   </div>
-                  <div className="flex justify-between">
-                    <span>Recipient:</span>
-                    <span className="text-xs font-mono text-white/70 truncate">
-                      {buyerWalletAddress.slice(0, 10)}...
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Order Value:</span>
-                    <span className="font-semibold">
-                      {pkrAmount.toFixed(2)} PKR
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Waiting for Buyer */}
-              <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
-                <div className="flex items-center gap-2 mb-2">
-                  <Loader className="w-4 h-4 text-blue-400 animate-spin" />
-                  <div className="text-xs font-semibold text-blue-300 uppercase">
-                    Waiting for Buyer Confirmation
-                  </div>
-                </div>
-                <p className="text-xs text-blue-200/80">
-                  The buyer will need to confirm they received the crypto. This
-                  will complete your order.
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
-                <Button
-                  onClick={() => {
-                    setSent(false);
-                    setActiveDialog(null);
-                  }}
-                  variant="outline"
-                  className="flex-1 border border-gray-300/30 text-gray-300 hover:bg-gray-300/10"
-                >
-                  Close
-                </Button>
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Pre-Send State - Simplified */}
-              {/* Seller Order Summary */}
-              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
-                <div className="text-xs text-white/70 uppercase mb-3 font-semibold">
-                  Seller Order Summary
-                </div>
-                <div className="space-y-3 text-sm text-white">
-                  <div className="flex justify-between items-center">
-                    <span className="text-white/70">Token:</span>
-                    <span className="font-semibold">
-                      {currentOrder.token || "USDT"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-white/70">Amount to Send:</span>
-                    <span className="font-semibold text-green-400">
-                      {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-white/70">Order Value:</span>
-                    <span className="font-semibold">
-                      {pkrAmount.toFixed(2)} PKR
-                    </span>
-                  </div>
-                  <div className="border-t border-gray-300/20 pt-3 mt-3">
-                    <div className="flex justify-between items-start gap-2">
-                      <span className="text-white/70">Recipient:</span>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="text-xs font-mono text-white/90 truncate max-w-[120px]"
-                          title={buyerWalletAddress}
-                        >
-                          {buyerWalletAddress}
-                        </span>
-                        <button
-                          onClick={handleCopyBuyerAddress}
-                          className="p-1 hover:bg-gray-700/50 rounded transition-colors flex-shrink-0"
-                          title="Copy wallet address"
-                        >
-                          {copiedAddress ? (
-                            <Check className="w-3 h-3 text-green-400" />
-                          ) : (
-                            <Copy className="w-3 h-3 text-white/70 hover:text-white" />
-                          )}
-                        </button>
-                      </div>
+                  <div className="space-y-3 text-sm text-white">
+                    <div className="flex justify-between">
+                      <span>Token Sent:</span>
+                      <span className="font-semibold text-green-400">
+                        {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Recipient:</span>
+                      <span className="text-xs font-mono text-white/70 truncate">
+                        {buyerWalletAddress.slice(0, 10)}...
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Order Value:</span>
+                      <span className="font-semibold">
+                        {pkrAmount.toFixed(2)} PKR
+                      </span>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Buyer Order Details */}
-              {loadingBuyerOrder ? (
-                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 flex items-center justify-center gap-2">
-                  <Loader className="w-4 h-4 text-blue-400 animate-spin" />
-                  <span className="text-xs text-white/70">
-                    Loading buyer order details...
-                  </span>
+                {/* Waiting for Buyer */}
+                <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Loader className="w-4 h-4 text-blue-400 animate-spin" />
+                    <div className="text-xs font-semibold text-blue-300 uppercase">
+                      Waiting for Buyer Confirmation
+                    </div>
+                  </div>
+                  <p className="text-xs text-blue-200/80">
+                    The buyer will need to confirm they received the crypto.
+                    This will complete your order.
+                  </p>
                 </div>
-              ) : buyerOrder ? (
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    onClick={() => {
+                      setSent(false);
+                      setActiveDialog(null);
+                    }}
+                    variant="outline"
+                    className="flex-1 border border-gray-300/30 text-gray-300 hover:bg-gray-300/10"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Pre-Send State - Simplified */}
+                {/* Seller Order Summary */}
                 <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
                   <div className="text-xs text-white/70 uppercase mb-3 font-semibold">
-                    Buyer Order Details
+                    Seller Order Summary
                   </div>
                   <div className="space-y-3 text-sm text-white">
                     <div className="flex justify-between items-center">
                       <span className="text-white/70">Token:</span>
                       <span className="font-semibold">
-                        {buyerOrder.token || "USDT"}
+                        {currentOrder.token || "USDT"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/70">Buyer Wallet:</span>
-                      <span
-                        className="text-xs font-mono text-white/70 truncate max-w-[150px]"
-                        title={buyerOrder.walletAddress || ""}
-                      >
-                        {buyerOrder.walletAddress?.slice(0, 10)}...
+                      <span className="text-white/70">Amount to Send:</span>
+                      <span className="font-semibold text-green-400">
+                        {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/70">Order Status:</span>
-                      <span
-                        className={`text-xs font-semibold ${
-                          buyerOrder.status === "MATCHED"
-                            ? "text-blue-400"
-                            : buyerOrder.status === "completed"
-                              ? "text-green-400"
-                              : "text-yellow-400"
-                        }`}
-                      >
-                        {buyerOrder.status}
+                      <span className="text-white/70">Order Value:</span>
+                      <span className="font-semibold">
+                        {pkrAmount.toFixed(2)} PKR
                       </span>
                     </div>
-                    {buyerOrder.payment_method && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/70">Payment Method:</span>
-                        <span className="text-xs font-semibold">
-                          {buyerOrder.payment_method}
-                        </span>
+                    <div className="border-t border-gray-300/20 pt-3 mt-3">
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="text-white/70">Recipient:</span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="text-xs font-mono text-white/90 truncate max-w-[120px]"
+                            title={buyerWalletAddress}
+                          >
+                            {buyerWalletAddress}
+                          </span>
+                          <button
+                            onClick={handleCopyBuyerAddress}
+                            className="p-1 hover:bg-gray-700/50 rounded transition-colors flex-shrink-0"
+                            title="Copy wallet address"
+                          >
+                            {copiedAddress ? (
+                              <Check className="w-3 h-3 text-green-400" />
+                            ) : (
+                              <Copy className="w-3 h-3 text-white/70 hover:text-white" />
+                            )}
+                          </button>
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
-              ) : null}
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-2">
-                <Button
-                  onClick={() => setActiveDialog(null)}
-                  variant="outline"
-                  className="flex-1 border border-gray-300/30 text-gray-300 hover:bg-gray-300/10"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleIHaveSentCrypto}
-                  disabled={sending}
-                  className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {sending ? "Notifying..." : "I Have Sent Crypto"}
-                </Button>
-              </div>
-            </>
-          )}
+                {/* Buyer Order Details */}
+                {loadingBuyerOrder ? (
+                  <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 flex items-center justify-center gap-2">
+                    <Loader className="w-4 h-4 text-blue-400 animate-spin" />
+                    <span className="text-xs text-white/70">
+                      Loading buyer order details...
+                    </span>
+                  </div>
+                ) : buyerOrder ? (
+                  <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
+                    <div className="text-xs text-white/70 uppercase mb-3 font-semibold">
+                      Buyer Order Details
+                    </div>
+                    <div className="space-y-3 text-sm text-white">
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/70">Token:</span>
+                        <span className="font-semibold">
+                          {buyerOrder.token || "USDT"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/70">Buyer Wallet:</span>
+                        <span
+                          className="text-xs font-mono text-white/70 truncate max-w-[150px]"
+                          title={buyerOrder.walletAddress || ""}
+                        >
+                          {buyerOrder.walletAddress?.slice(0, 10)}...
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/70">Order Status:</span>
+                        <span
+                          className={`text-xs font-semibold ${
+                            buyerOrder.status === "MATCHED"
+                              ? "text-blue-400"
+                              : buyerOrder.status === "completed"
+                                ? "text-green-400"
+                                : "text-yellow-400"
+                          }`}
+                        >
+                          {buyerOrder.status}
+                        </span>
+                      </div>
+                      {buyerOrder.payment_method && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-white/70">Payment Method:</span>
+                          <span className="text-xs font-semibold">
+                            {buyerOrder.payment_method}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    onClick={() => setActiveDialog(null)}
+                    variant="outline"
+                    className="flex-1 border border-gray-300/30 text-gray-300 hover:bg-gray-300/10"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleIHaveSentCrypto}
+                    disabled={sending}
+                    className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {sending ? "Notifying..." : "I Have Sent Crypto"}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </DialogContent>

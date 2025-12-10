@@ -29,6 +29,7 @@ export function CryptoSentDialog() {
   const [sent, setSent] = useState(false);
   const [buyerOrder, setBuyerOrder] = useState<P2POrder | null>(null);
   const [loadingBuyerOrder, setLoadingBuyerOrder] = useState(false);
+  const [copiedAddress, setCopiedAddress] = useState(false);
 
   const isOpen = activeDialog === "crypto_sent_confirmation";
 

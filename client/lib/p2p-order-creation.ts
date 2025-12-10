@@ -233,15 +233,22 @@ export function updateOrderInStorage(
     const orders = JSON.parse(ordersJson);
     const index = orders.findIndex((o: CreatedOrder) => o.id === orderId);
 
-    if (index === -1) return null;
+    if (index === -1) {
+      console.warn(`[P2P Order Storage] Order not found for update: ${orderId}`);
+      return null;
+    }
 
     const updatedOrder = { ...orders[index], ...updates };
     orders[index] = updatedOrder;
     localStorage.setItem("p2p_orders", JSON.stringify(orders));
 
+    console.log(`[P2P Order Storage] ✅ Order updated in localStorage: ${orderId}`, {
+      updates: Object.keys(updates),
+    });
+
     return updatedOrder;
   } catch (error) {
-    console.error("Failed to update order:", error);
+    console.error(`[P2P Order Storage] Failed to update order ${orderId}:`, error);
     return null;
   }
 }

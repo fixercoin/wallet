@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Clock, X } from "lucide-react";
+import { ArrowLeft, Clock, X, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useWallet } from "@/contexts/WalletContext";
@@ -10,9 +10,10 @@ import {
   syncOrderFromStorage,
   updateOrderInBothStorages,
 } from "@/lib/p2p-order-api";
-import { addTradeMessage } from "@/lib/p2p-api";
+import { addTradeMessage, listTradeMessages } from "@/lib/p2p-api";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import type { CreatedOrder } from "@/lib/p2p-order-creation";
+import type { TradeMessage } from "@/lib/p2p-api";
 
 export default function WaitingForSellerResponse() {
   const navigate = useNavigate();

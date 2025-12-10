@@ -6,7 +6,7 @@ import React, {
   useRef,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Check, Copy } from "lucide-react";
+import { ArrowLeft, Loader2, Check, Copy, Minus } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,7 @@ export default function BuyData() {
   const [amountPKR, setAmountPKR] = useState("");
   const [amountTokens, setAmountTokens] = useState("");
   const [loading, setLoading] = useState(false);
+  const [minimizedDialogs, setMinimizedDialogs] = useState<Record<string, boolean>>({});
 
   // P2P Dialog Flow State
   const [flowStep, setFlowStep] = useState<BuyFlowStep>("form");
@@ -333,6 +334,13 @@ export default function BuyData() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard");
+  };
+
+  const toggleMinimize = (dialogName: string) => {
+    setMinimizedDialogs((prev) => ({
+      ...prev,
+      [dialogName]: !prev[dialogName],
+    }));
   };
 
   if (!wallet) {
@@ -655,13 +663,20 @@ export default function BuyData() {
       {/* Buyer Wallet Address Dialog */}
       <Dialog open={flowStep === "buyer_wallet"}>
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-white">
+          <DialogHeader className="flex flex-row items-start justify-between">
+            <DialogTitle className="text-white flex-1">
               Your Wallet Address
             </DialogTitle>
+            <button
+              onClick={() => toggleMinimize("buyer_wallet")}
+              className="p-1 rounded hover:bg-gray-700/50 transition-colors flex-shrink-0"
+              title={minimizedDialogs["buyer_wallet"] ? "Maximize" : "Minimize"}
+            >
+              <Minus className="w-5 h-5 text-white/70 hover:text-white" />
+            </button>
           </DialogHeader>
 
-          {currentOrder && wallet && (
+          {!minimizedDialogs["buyer_wallet"] && currentOrder && wallet && (
             <div className="space-y-4">
               <p className="text-sm text-white/70">
                 Seller is sending your crypto to this address:
@@ -706,7 +721,7 @@ export default function BuyData() {
                 I've Received Crypto
               </Button>
             </div>
-          )}
+            )}
         </DialogContent>
       </Dialog>
 

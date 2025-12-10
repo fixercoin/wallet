@@ -72,7 +72,7 @@ export function BuyerWalletAddressDialog() {
       );
 
       toast.success("Payment confirmed! You can now send the crypto.");
-      setActiveDialog("crypto_sent_confirmation");
+      setActiveDialog("seller_transfer_details");
     } catch (error) {
       console.error("Error confirming payment:", error);
       toast.error("Failed to confirm payment");

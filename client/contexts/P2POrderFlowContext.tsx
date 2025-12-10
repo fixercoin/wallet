@@ -9,6 +9,7 @@ export interface PaymentDetails {
 export type DialogType =
   | "seller_payment_method"
   | "buyer_wallet_address"
+  | "seller_transfer_details"
   | "crypto_sent_confirmation"
   | "crypto_received_confirmation"
   | null;

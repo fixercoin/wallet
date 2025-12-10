@@ -154,6 +154,7 @@ import { useLocation } from "react-router-dom";
 import { P2POrderFlowProvider } from "@/contexts/P2POrderFlowContext";
 import { SellerPaymentMethodDialog } from "@/components/p2p/SellerPaymentMethodDialog";
 import { BuyerWalletAddressDialog } from "@/components/p2p/BuyerWalletAddressDialog";
+import { SellerTransferDetailsDialog } from "@/components/p2p/SellerTransferDetailsDialog";
 import { CryptoSentDialog } from "@/components/p2p/CryptoSentDialog";
 import { CryptoReceivedDialog } from "@/components/p2p/CryptoReceivedDialog";
 
@@ -205,6 +206,7 @@ function P2POrderFlowDialogs() {
     <>
       <SellerPaymentMethodDialog />
       <BuyerWalletAddressDialog />
+      <SellerTransferDetailsDialog />
       <CryptoSentDialog />
       <CryptoReceivedDialog />
     </>

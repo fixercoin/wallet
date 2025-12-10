@@ -31,6 +31,7 @@ export default function WaitingForSellerResponse() {
   const [sending, setSending] = useState(false);
   const [confirmingReceipt, setConfirmingReceipt] = useState(false);
   const [buyerCryptoReceived, setBuyerCryptoReceived] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
 

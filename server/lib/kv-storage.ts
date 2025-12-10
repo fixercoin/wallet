@@ -282,14 +282,24 @@ export class KVStorage {
   }
 
   static createAutoStorage(): KVStorage {
-    // Try to auto-detect Appwrite credentials first (preferred for P2P)
+    // Check if all Appwrite credentials are present
     const appwriteEndpoint = process.env.APPWRITE_ENDPOINT;
     const appwriteProjectId = process.env.APPWRITE_PROJECT_ID;
     const appwriteApiKey = process.env.APPWRITE_API_KEY;
 
+    // Only use Appwrite if ALL credentials are provided and non-empty
     if (appwriteEndpoint && appwriteProjectId && appwriteApiKey) {
       console.log("[KVStorage] Using Appwrite storage backend (P2P optimized)");
-      return new KVStorage(new AppwriteKVStorage());
+      try {
+        return new KVStorage(new AppwriteKVStorage());
+      } catch (error) {
+        console.warn(
+          "[KVStorage] Appwrite initialization failed, falling back to file-based storage:",
+          error instanceof Error ? error.message : String(error),
+        );
+        // Fall back to file storage if Appwrite fails
+        return new KVStorage(new FileKVStorage());
+      }
     }
 
     // Try to auto-detect Cloudflare KV credentials
@@ -299,9 +309,18 @@ export class KVStorage {
 
     if (accountId && namespaceId && apiToken) {
       console.log("[KVStorage] Using Cloudflare KV storage backend");
-      return new KVStorage(
-        new CloudflareKVStorage(accountId, namespaceId, apiToken),
-      );
+      try {
+        return new KVStorage(
+          new CloudflareKVStorage(accountId, namespaceId, apiToken),
+        );
+      } catch (error) {
+        console.warn(
+          "[KVStorage] Cloudflare KV initialization failed, falling back to file-based storage:",
+          error instanceof Error ? error.message : String(error),
+        );
+        // Fall back to file storage if Cloudflare KV fails
+        return new KVStorage(new FileKVStorage());
+      }
     }
 
     // Fall back to file-based storage in development

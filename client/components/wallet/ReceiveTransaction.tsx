@@ -44,7 +44,7 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col items-center">
       <div className="w-full relative z-20">
         <div className="border-0 bg-transparent">
-          <div className="pt-12 px-6 pb-6 space-y-6 text-gray-900">
+          <div className="pt-24 px-6 pb-6 space-y-6 text-gray-900">
             {/* QR Code */}
             <div className="text-center space-y-4">
               <div className="inline-block bg-white p-3 rounded-lg">

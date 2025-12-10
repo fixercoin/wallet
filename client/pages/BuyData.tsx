@@ -125,12 +125,37 @@ export default function BuyData() {
       );
 
       // First, persist the order to server before sending notification (prevents race condition)
+      let orderPersistedToKV = false;
       try {
         await createOrderInAPI(createdOrder);
         console.log(`[BuyData] Order ${createdOrder.id} persisted to server`);
+        orderPersistedToKV = true;
       } catch (apiError) {
         console.error("[BuyData] Failed to persist order to server:", apiError);
         toast.warning("Order created locally but failed to sync to server");
+      }
+
+      // Verify order is in KV before sending notification (extra safety check)
+      if (orderPersistedToKV) {
+        try {
+          const response = await fetch(
+            `/api/p2p/orders/${encodeURIComponent(createdOrder.id)}`,
+          );
+          if (!response.ok) {
+            console.warn(
+              `[BuyData] Order verification failed: ${response.status}, retrying...`,
+            );
+            // Retry once more
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            await createOrderInAPI(createdOrder);
+          } else {
+            console.log(
+              `[BuyData] ✅ Order ${createdOrder.id} verified in KV storage`,
+            );
+          }
+        } catch (verifyError) {
+          console.warn("[BuyData] Failed to verify order in KV:", verifyError);
+        }
       }
 
       toast.success("Order created successfully!");

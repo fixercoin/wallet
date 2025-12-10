@@ -113,6 +113,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "next-themes";
 import { initStorageMonitoring } from "@/lib/storage-monitor";
 import { usePushNotifications } from "@/lib/services/push-notifications";
+import { syncAllOrdersFromLocalStorage } from "@/lib/p2p-order-api";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";

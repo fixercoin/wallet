@@ -1,7 +1,7 @@
 /**
  * Appwrite P2P Setup Script (v2 - for newer Appwrite versions)
  * Creates database and collections for P2P storage
- * 
+ *
  * Usage: npx tsx scripts/setup-appwrite-p2p-v2.ts
  */
 
@@ -100,9 +100,14 @@ async function setupAppwrite() {
           console.log(`✅ Created 'key' attribute for ${collection.id}`);
         } catch (error: any) {
           if (error?.code !== 409) {
-            console.warn(`⚠️  Could not create 'key' attribute:`, error?.message);
+            console.warn(
+              `⚠️  Could not create 'key' attribute:`,
+              error?.message,
+            );
           } else {
-            console.log(`⏭️  'key' attribute already exists for ${collection.id}`);
+            console.log(
+              `⏭️  'key' attribute already exists for ${collection.id}`,
+            );
           }
         }
 
@@ -119,13 +124,21 @@ async function setupAppwrite() {
           console.log(`✅ Created 'value' attribute for ${collection.id}`);
         } catch (error: any) {
           if (error?.code !== 409) {
-            console.warn(`⚠️  Could not create 'value' attribute:`, error?.message);
+            console.warn(
+              `⚠️  Could not create 'value' attribute:`,
+              error?.message,
+            );
           } else {
-            console.log(`⏭️  'value' attribute already exists for ${collection.id}`);
+            console.log(
+              `⏭️  'value' attribute already exists for ${collection.id}`,
+            );
           }
         }
       } catch (error: any) {
-        console.error(`⚠️  Error setting up attributes for ${collection.id}:`, error?.message);
+        console.error(
+          `⚠️  Error setting up attributes for ${collection.id}:`,
+          error?.message,
+        );
       }
     }
 

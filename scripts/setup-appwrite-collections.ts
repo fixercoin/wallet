@@ -1,7 +1,7 @@
 /**
  * Appwrite P2P Collections Setup Script
  * Creates collections in an existing database
- * 
+ *
  * Usage: npx tsx scripts/setup-appwrite-collections.ts
  */
 
@@ -88,9 +88,14 @@ async function setupCollections() {
           console.log(`✅ Created 'key' attribute for ${collection.id}`);
         } catch (error: any) {
           if (error?.code === 409) {
-            console.log(`⏭️  'key' attribute already exists for ${collection.id}`);
+            console.log(
+              `⏭️  'key' attribute already exists for ${collection.id}`,
+            );
           } else {
-            console.warn(`⚠️  Could not create 'key' attribute:`, error?.message);
+            console.warn(
+              `⚠️  Could not create 'key' attribute:`,
+              error?.message,
+            );
           }
         }
 
@@ -106,13 +111,21 @@ async function setupCollections() {
           console.log(`✅ Created 'value' attribute for ${collection.id}`);
         } catch (error: any) {
           if (error?.code === 409) {
-            console.log(`⏭️  'value' attribute already exists for ${collection.id}`);
+            console.log(
+              `⏭️  'value' attribute already exists for ${collection.id}`,
+            );
           } else {
-            console.warn(`⚠️  Could not create 'value' attribute:`, error?.message);
+            console.warn(
+              `⚠️  Could not create 'value' attribute:`,
+              error?.message,
+            );
           }
         }
       } catch (error: any) {
-        console.error(`⚠️  Error setting up attributes for ${collection.id}:`, error?.message);
+        console.error(
+          `⚠️  Error setting up attributes for ${collection.id}:`,
+          error?.message,
+        );
       }
     }
 

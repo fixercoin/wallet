@@ -90,10 +90,13 @@ export default function WaitingForSellerResponse() {
         const updatedOrder = await syncOrderFromStorage(order.id);
         if (updatedOrder) {
           setOrder(updatedOrder);
+          setBuyerCryptoReceived(updatedOrder.buyerCryptoReceived ?? false);
           // If seller has responded (status changed), navigate to appropriate page
           if (updatedOrder.status === "REJECTED") {
             toast.error("Seller rejected your order");
             setTimeout(() => navigate("/"), 2000);
+          } else if (updatedOrder.status === "COMPLETED") {
+            // Stay on this page if order is completed - don't navigate
           } else if (
             updatedOrder.status === "ACCEPTED" ||
             updatedOrder.sellerPaymentReceived

@@ -122,7 +122,7 @@ export function CryptoReceivedDialog() {
             <ol className="text-xs text-blue-200/80 space-y-2 list-decimal list-inside">
               <li>Check your wallet to confirm the crypto arrived</li>
               <li>
-                If you see the {currentOrder.token} in your wallet, click
+                If you see the {currentOrder.token || "USDT"} in your wallet, click
                 "I Have Received" below
               </li>
               <li>The order will be completed and the seller will be notified</li>

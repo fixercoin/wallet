@@ -198,10 +198,10 @@ export function CryptoSentDialog() {
           ) : (
             <>
               {/* Pre-Send State - Simplified */}
-              {/* Order Summary */}
+              {/* Seller Order Summary */}
               <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
                 <div className="text-xs text-white/70 uppercase mb-3 font-semibold">
-                  Order Summary
+                  Seller Order Summary
                 </div>
                 <div className="space-y-3 text-sm text-white">
                   <div className="flex justify-between items-center">
@@ -233,6 +233,54 @@ export function CryptoSentDialog() {
                   </div>
                 </div>
               </div>
+
+              {/* Buyer Order Details */}
+              {loadingBuyerOrder ? (
+                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 flex items-center justify-center gap-2">
+                  <Loader className="w-4 h-4 text-blue-400 animate-spin" />
+                  <span className="text-xs text-white/70">
+                    Loading buyer order details...
+                  </span>
+                </div>
+              ) : buyerOrder ? (
+                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
+                  <div className="text-xs text-white/70 uppercase mb-3 font-semibold">
+                    Buyer Order Details
+                  </div>
+                  <div className="space-y-3 text-sm text-white">
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/70">Token:</span>
+                      <span className="font-semibold">
+                        {buyerOrder.token || "USDT"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/70">Buyer Wallet:</span>
+                      <span className="text-xs font-mono text-white/70 truncate max-w-[150px]" title={buyerOrder.walletAddress || ""}>
+                        {buyerOrder.walletAddress?.slice(0, 10)}...
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/70">Order Status:</span>
+                      <span className={`text-xs font-semibold ${
+                        buyerOrder.status === "MATCHED" ? "text-blue-400" :
+                        buyerOrder.status === "completed" ? "text-green-400" :
+                        "text-yellow-400"
+                      }`}>
+                        {buyerOrder.status}
+                      </span>
+                    </div>
+                    {buyerOrder.payment_method && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/70">Payment Method:</span>
+                        <span className="text-xs font-semibold">
+                          {buyerOrder.payment_method}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : null}
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-2">

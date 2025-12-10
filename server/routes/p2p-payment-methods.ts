@@ -61,8 +61,17 @@ export const handleGetPaymentMethods: RequestHandler = async (req, res) => {
 
     if (walletAddress) {
       // Fetch from KV storage (persistent)
-      const methods = await getWalletPaymentMethods(walletAddress);
-      return res.json({ data: methods });
+      try {
+        const methods = await getWalletPaymentMethods(walletAddress);
+        return res.json({ data: methods });
+      } catch (kvError) {
+        console.warn(
+          "[Payment Methods] Warning: Could not fetch from KV storage:",
+          kvError instanceof Error ? kvError.message : String(kvError),
+        );
+        // Return empty list as fallback
+        return res.json({ data: [] });
+      }
     }
 
     return res.status(400).json({

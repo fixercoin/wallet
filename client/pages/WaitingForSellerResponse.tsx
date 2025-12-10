@@ -195,6 +195,28 @@ export default function WaitingForSellerResponse() {
     }
   };
 
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() || !order?.roomId || !wallet?.publicKey) return;
+
+    const text = messageInput;
+    setMessageInput("");
+    setSending(true);
+
+    try {
+      await addTradeMessage({
+        room_id: order.roomId,
+        sender_wallet: wallet.publicKey,
+        message: text,
+      });
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      setMessageInput(text);
+      toast.error("Failed to send message");
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (!wallet) {
     return (
       <div className="w-full min-h-screen pb-24 bg-gradient-to-t from-[#1a1a1a] to-[#1a1a1a]/95">

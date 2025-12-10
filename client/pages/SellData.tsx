@@ -24,13 +24,14 @@ interface PaymentMethod {
   accountNumber: string;
 }
 
-type SellFlowStep = "form" | "buyer_wallet" | "confirm_payment" | "complete";
+type SellFlowStep = "form" | "buyer_wallet_waiting" | "confirm_payment" | "crypto_sent" | "complete";
 
 export default function SellData() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();
   const isCreatingOrderRef = useRef(false);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
@@ -46,8 +47,10 @@ export default function SellData() {
   const [flowStep, setFlowStep] = useState<SellFlowStep>("form");
   const [currentOrder, setCurrentOrder] = useState<P2POrder | null>(null);
   const [buyerWalletAddress, setBuyerWalletAddress] = useState("");
-  const [paymentReceived, setPaymentReceived] = useState(false);
-  const [cryptoSent, setCryptoSent] = useState(false);
+  const [orderStatus, setOrderStatus] = useState<{
+    buyerPaymentSent?: boolean;
+    sellerCryptoSent?: boolean;
+  }>({});
 
   // Fetch exchange rate on mount
   useEffect(() => {
@@ -86,6 +89,47 @@ export default function SellData() {
   useEffect(() => {
     fetchPaymentMethods();
   }, [wallet?.publicKey, showPaymentDialog, fetchPaymentMethods]);
+
+  // Polling for order status updates
+  const startPollingOrderStatus = useCallback(
+    (orderId: string) => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+
+      pollingIntervalRef.current = setInterval(async () => {
+        try {
+          const response = await fetch(
+            `/api/p2p/orders/${encodeURIComponent(orderId)}/status`,
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setOrderStatus({
+              buyerPaymentSent: data.buyerPaymentSent,
+              sellerCryptoSent: data.sellerCryptoSent,
+            });
+
+            // If buyer sent payment and we're waiting, move to confirm dialog
+            if (data.buyerPaymentSent && flowStep === "buyer_wallet_waiting") {
+              setFlowStep("confirm_payment");
+            }
+          }
+        } catch (error) {
+          console.error("Polling error:", error);
+        }
+      }, 2000); // Poll every 2 seconds
+    },
+    [flowStep],
+  );
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
 
   const handleTokensChange = (value: string) => {
     setAmountTokens(value);
@@ -177,12 +221,14 @@ export default function SellData() {
         console.warn("Failed to send notification:", notificationError);
       }
 
-      // Generate a random buyer wallet for demo (in real scenario, this would come from matching)
-      const demoBuyerWallet = `buyer_${Math.random().toString(36).substr(2, 9)}SOL`;
+      // Generate a random buyer wallet for demo
+      const demoBuyerWallet = `buyer_${Math.random().toString(36).substr(2, 9)}`;
       setBuyerWalletAddress(demoBuyerWallet);
 
-      // Move to buyer wallet dialog
-      setFlowStep("buyer_wallet");
+      // Start polling for buyer payment
+      startPollingOrderStatus(createdOrder.id);
+      setFlowStep("buyer_wallet_waiting");
+      setOrderStatus({ buyerPaymentSent: false, sellerCryptoSent: false });
       setLoading(false);
     } catch (error) {
       console.error("Error creating order:", error);
@@ -193,35 +239,80 @@ export default function SellData() {
     }
   };
 
-  const handlePaymentReceived = () => {
-    setPaymentReceived(true);
-    setFlowStep("confirm_payment");
+  const handlePaymentReceived = async () => {
+    if (!currentOrder) return;
+
+    try {
+      // Update order status: seller received payment
+      const response = await fetch(
+        `/api/p2p/orders/${encodeURIComponent(currentOrder.id)}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sellerReceivedPayment: true }),
+        },
+      );
+
+      if (response.ok) {
+        setFlowStep("crypto_sent");
+      } else {
+        toast.error("Failed to update order status");
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      toast.error("Failed to update order");
+    }
   };
 
-  const handleCryptoSent = () => {
-    setCryptoSent(true);
-    setFlowStep("complete");
+  const handleCryptoSent = async () => {
+    if (!currentOrder) return;
+
+    try {
+      // Update order status: seller sent crypto
+      const response = await fetch(
+        `/api/p2p/orders/${encodeURIComponent(currentOrder.id)}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sellerCryptoSent: true }),
+        },
+      );
+
+      if (response.ok) {
+        setFlowStep("complete");
+      } else {
+        toast.error("Failed to update order status");
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      toast.error("Failed to update order");
+    }
   };
 
   const handleCompleteTransaction = () => {
     toast.success("Transaction completed successfully!");
+    // Clean up polling
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
     // Reset flow
     setFlowStep("form");
     setCurrentOrder(null);
     setBuyerWalletAddress("");
-    setPaymentReceived(false);
-    setCryptoSent(false);
+    setOrderStatus({});
     setAmountTokens("");
     setAmountPKR("");
     navigate("/");
   };
 
   const handleCancelFlow = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
     setFlowStep("form");
     setCurrentOrder(null);
     setBuyerWalletAddress("");
-    setPaymentReceived(false);
-    setCryptoSent(false);
+    setOrderStatus({});
   };
 
   const copyToClipboard = (text: string) => {
@@ -384,24 +475,25 @@ export default function SellData() {
         }}
       />
 
-      {/* Buyer Wallet Address Dialog */}
-      <Dialog open={flowStep === "buyer_wallet"}>
+      {/* Waiting for Buyer Payment Dialog */}
+      <Dialog open={flowStep === "buyer_wallet_waiting"}>
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-white">Buyer Wallet Address</DialogTitle>
+            <DialogTitle className="text-white">Waiting for Buyer Payment</DialogTitle>
           </DialogHeader>
 
           {currentOrder && buyerWalletAddress && (
             <div className="space-y-4">
-              <p className="text-sm text-white/70">
-                Send {parseFloat(amountTokens).toFixed(6)} USDT to this wallet
-                address:
+              <div className="flex justify-center">
+                <Loader2 className="w-10 h-10 text-[#FF7A5C] animate-spin" />
+              </div>
+
+              <p className="text-sm text-white/70 text-center">
+                Buyer's wallet address to receive {parseFloat(amountTokens).toFixed(6)} USDT:
               </p>
 
               <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 break-all">
-                <p className="text-xs text-white/70 uppercase mb-2">
-                  Buyer Wallet
-                </p>
+                <p className="text-xs text-white/70 uppercase mb-2">Buyer Wallet</p>
                 <p className="text-white/90 text-xs font-mono">
                   {buyerWalletAddress}
                 </p>
@@ -414,28 +506,30 @@ export default function SellData() {
                 </button>
               </div>
 
-              <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
-                <p className="text-sm text-blue-300">
-                  Waiting for buyer to send {parseFloat(amountPKR).toFixed(2)}{" "}
-                  PKR...
-                </p>
-              </div>
+              {!orderStatus.buyerPaymentSent ? (
+                <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
+                  <p className="text-sm text-blue-300">
+                    Waiting for buyer to send {parseFloat(amountPKR).toFixed(2)} PKR...
+                  </p>
+                </div>
+              ) : (
+                <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
+                  <div className="flex items-center gap-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <p className="text-sm text-green-300">
+                      Buyer sent {parseFloat(amountPKR).toFixed(2)} PKR!
+                    </p>
+                  </div>
+                </div>
+              )}
 
-              <div className="flex gap-3 pt-4">
-                <Button
-                  onClick={handleCancelFlow}
-                  variant="outline"
-                  className="flex-1 border border-gray-300/30 text-gray-300"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handlePaymentReceived}
-                  className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
-                >
-                  I've Received Payment
-                </Button>
-              </div>
+              <Button
+                onClick={handleCancelFlow}
+                variant="outline"
+                className="w-full border border-gray-300/30 text-gray-300"
+              >
+                Cancel
+              </Button>
             </div>
           )}
         </DialogContent>
@@ -445,13 +539,13 @@ export default function SellData() {
       <Dialog open={flowStep === "confirm_payment"}>
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-white">Confirm Payment</DialogTitle>
+            <DialogTitle className="text-white">Confirm Payment Received</DialogTitle>
           </DialogHeader>
 
           {paymentMethods.length > 0 && (
             <div className="space-y-4">
               <p className="text-sm text-white/70">
-                Payment received from buyer. Ready to send crypto?
+                Buyer has sent {parseFloat(amountPKR).toFixed(2)} PKR. Ready to send crypto?
               </p>
 
               <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
@@ -491,14 +585,58 @@ export default function SellData() {
                   Cancel
                 </Button>
                 <Button
-                  onClick={handleCryptoSent}
+                  onClick={handlePaymentReceived}
                   className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
                 >
-                  I've Sent Crypto
+                  I've Received
                 </Button>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Crypto Sent Dialog */}
+      <Dialog open={flowStep === "crypto_sent"}>
+        <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white">Send Crypto</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <p className="text-sm text-white/70">
+              Payment verified. Ready to send the crypto?
+            </p>
+
+            <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
+              <p className="text-sm text-green-300">
+                Send {parseFloat(amountTokens).toFixed(6)} USDT to buyer's wallet
+              </p>
+            </div>
+
+            <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
+              <p className="text-sm text-blue-300">
+                Transaction: {parseFloat(amountTokens).toFixed(6)} USDT ←→{" "}
+                {parseFloat(amountPKR).toFixed(2)} PKR
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                onClick={handleCancelFlow}
+                variant="outline"
+                className="flex-1 border border-gray-300/30 text-gray-300"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCryptoSent}
+                className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] text-white"
+              >
+                I've Sent Assets
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

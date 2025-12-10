@@ -759,6 +759,29 @@ export async function createServer(): Promise<express.Application> {
   app.put("/api/p2p/orders/:orderId", handleUpdateP2POrder);
   app.delete("/api/p2p/orders/:orderId", handleDeleteP2POrder);
 
+  // P2P Orders diagnostics endpoint - helps debug missing orders
+  app.get("/api/p2p/orders/debug/check-health", (req, res) => {
+    const orderId = req.query.orderId as string;
+
+    if (!orderId) {
+      return res.status(400).json({
+        error: "Missing orderId parameter",
+        usage: "/api/p2p/orders/debug/check-health?orderId=<order-id>",
+      });
+    }
+
+    res.json({
+      status: "ok",
+      message: "Use GET /api/p2p/orders/:orderId to check if an order exists",
+      diagnostics: {
+        orderId,
+        hint: "If you get 'Order not found', the order may be stuck in localStorage. Try calling the client's syncAllOrdersFromLocalStorage() function.",
+        recovery:
+          "The client automatically syncs orders from localStorage to KV when requested. Check browser console logs for details.",
+      },
+    });
+  });
+
   // P2P Order Matching routes (Smart matching engine)
   app.get("/api/p2p/matches", handleGetMatches); // Get matches for an order
   app.post("/api/p2p/matches", handleCreateMatch); // Create a matched pair

@@ -81,6 +81,15 @@ export async function createOrderFromOffer(
 
   const orderId = `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+  console.log(`[P2P Order Creation] Creating new order:`, {
+    orderId,
+    offerCreatorWallet,
+    currentUserWallet,
+    orderType,
+    token: offer.token,
+    timestamp: new Date().toISOString(),
+  });
+
   // Determine buyer and seller based on order type
   let buyerWallet: string;
   let sellerWallet: string;
@@ -137,12 +146,16 @@ export async function createOrderFromOffer(
     sellerWallet.trim()
   ) {
     try {
+      console.log(
+        `[P2P Order Creation] Creating trade room for order ${orderId}`,
+      );
       const room = await createTradeRoom({
         buyer_wallet: buyerWallet,
         seller_wallet: sellerWallet,
         order_id: orderId,
       });
       roomId = room.id;
+      console.log(`[P2P Order Creation] ✅ Trade room created: ${roomId}`);
 
       // Add initial message
       await addTradeMessage({
@@ -151,7 +164,10 @@ export async function createOrderFromOffer(
         message: `Order created: ${orderType} order for ${amountTokens} ${offer.token}`,
       });
     } catch (error) {
-      console.error("Failed to create trade room:", error);
+      console.error(
+        `[P2P Order Creation] Failed to create trade room for ${orderId}:`,
+        error,
+      );
     }
   }
 
@@ -179,9 +195,22 @@ export async function createOrderFromOffer(
     const orders = JSON.parse(ordersJson);
     orders.push(order);
     localStorage.setItem("p2p_orders", JSON.stringify(orders));
+    console.log(
+      `[P2P Order Creation] ✅ Order stored in localStorage: ${orderId}`,
+    );
   } catch (error) {
-    console.error("Failed to store order:", error);
+    console.error(
+      `[P2P Order Creation] Failed to store order in localStorage: ${orderId}`,
+      error,
+    );
   }
+
+  console.log(`[P2P Order Creation] ✅ Order created successfully:`, {
+    orderId,
+    status: order.status,
+    roomId,
+    timestamp: new Date().toISOString(),
+  });
 
   return order;
 }
@@ -190,9 +219,21 @@ export function getOrderFromStorage(orderId: string): CreatedOrder | null {
   try {
     const ordersJson = localStorage.getItem("p2p_orders") || "[]";
     const orders = JSON.parse(ordersJson);
-    return orders.find((o: CreatedOrder) => o.id === orderId) || null;
+    const order = orders.find((o: CreatedOrder) => o.id === orderId) || null;
+
+    if (order) {
+      console.log(
+        `[P2P Order Storage] ✅ Found order in localStorage: ${orderId}`,
+      );
+    } else {
+      console.warn(
+        `[P2P Order Storage] Order not found in localStorage: ${orderId}. Total orders in storage: ${orders.length}`,
+      );
+    }
+
+    return order;
   } catch (error) {
-    console.error("Failed to get order from storage:", error);
+    console.error(`[P2P Order Storage] Failed to get order ${orderId}:`, error);
     return null;
   }
 }
@@ -206,15 +247,30 @@ export function updateOrderInStorage(
     const orders = JSON.parse(ordersJson);
     const index = orders.findIndex((o: CreatedOrder) => o.id === orderId);
 
-    if (index === -1) return null;
+    if (index === -1) {
+      console.warn(
+        `[P2P Order Storage] Order not found for update: ${orderId}`,
+      );
+      return null;
+    }
 
     const updatedOrder = { ...orders[index], ...updates };
     orders[index] = updatedOrder;
     localStorage.setItem("p2p_orders", JSON.stringify(orders));
 
+    console.log(
+      `[P2P Order Storage] ✅ Order updated in localStorage: ${orderId}`,
+      {
+        updates: Object.keys(updates),
+      },
+    );
+
     return updatedOrder;
   } catch (error) {
-    console.error("Failed to update order:", error);
+    console.error(
+      `[P2P Order Storage] Failed to update order ${orderId}:`,
+      error,
+    );
     return null;
   }
 }

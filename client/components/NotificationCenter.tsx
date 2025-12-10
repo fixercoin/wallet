@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Bell, X, CheckCircle } from "lucide-react";
+import { User, Store, X, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import { ScrollArea } from "@/components/ui/scroll-area";

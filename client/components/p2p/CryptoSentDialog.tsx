@@ -101,104 +101,177 @@ export function CryptoSentDialog() {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Order Summary */}
-          <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
-            <div className="text-xs text-white/70 uppercase mb-2">
-              Order Summary
-            </div>
-            <div className="space-y-2 text-sm text-white">
-              <div className="flex justify-between">
-                <span>Token:</span>
-                <span className="font-semibold">
-                  {currentOrder.token || "USDT"}
-                </span>
+          {sent ? (
+            <>
+              {/* Success State */}
+              <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50 text-center">
+                <div className="text-sm font-semibold text-green-300 mb-2">
+                  ✓ Transfer Confirmed
+                </div>
+                <p className="text-xs text-green-200/80">
+                  The buyer has been notified that crypto is on the way.
+                </p>
               </div>
-              <div className="flex justify-between">
-                <span>Amount to Send:</span>
-                <span className="font-semibold text-green-400">
-                  {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
-                </span>
+
+              {/* Order Summary */}
+              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
+                <div className="text-xs text-white/70 uppercase mb-3">
+                  Transaction Summary
+                </div>
+                <div className="space-y-3 text-sm text-white">
+                  <div className="flex justify-between">
+                    <span>Token Sent:</span>
+                    <span className="font-semibold text-green-400">
+                      {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Recipient:</span>
+                    <span className="text-xs font-mono text-white/70 truncate">
+                      {buyerWalletAddress.slice(0, 10)}...
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Order Value:</span>
+                    <span className="font-semibold">
+                      {pkrAmount.toFixed(2)} PKR
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span>Price:</span>
-                <span className="font-semibold">
-                  {pkrAmount.toFixed(2)} PKR
-                </span>
+
+              {/* Waiting for Buyer */}
+              <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <Loader className="w-4 h-4 text-blue-400 animate-spin" />
+                  <div className="text-xs font-semibold text-blue-300 uppercase">
+                    Waiting for Buyer Confirmation
+                  </div>
+                </div>
+                <p className="text-xs text-blue-200/80">
+                  The buyer will need to confirm they received the crypto. This
+                  will complete your order.
+                </p>
               </div>
-            </div>
-          </div>
 
-          {/* Buyer Wallet Address */}
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold text-white/80 uppercase">
-              Buyer's Wallet Address
-            </label>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-mono text-sm break-all">
-                {buyerWalletAddress}
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={() => {
+                    setSent(false);
+                    setActiveDialog(null);
+                  }}
+                  variant="outline"
+                  className="flex-1 border border-gray-300/30 text-gray-300 hover:bg-gray-300/10"
+                >
+                  Close
+                </Button>
               </div>
-              <button
-                onClick={handleCopyWallet}
-                className="p-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 hover:bg-[#1a2540]/70 transition-colors flex-shrink-0"
-                title="Copy wallet address"
-              >
-                {copied ? (
-                  <Check className="w-5 h-5 text-green-500" />
-                ) : (
-                  <Copy className="w-5 h-5 text-white/70" />
-                )}
-              </button>
-            </div>
-          </div>
+            </>
+          ) : (
+            <>
+              {/* Pre-Send State */}
+              {/* Order Summary */}
+              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
+                <div className="text-xs text-white/70 uppercase mb-2">
+                  Order Summary
+                </div>
+                <div className="space-y-2 text-sm text-white">
+                  <div className="flex justify-between">
+                    <span>Token:</span>
+                    <span className="font-semibold">
+                      {currentOrder.token || "USDT"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Amount to Send:</span>
+                    <span className="font-semibold text-green-400">
+                      {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Price:</span>
+                    <span className="font-semibold">
+                      {pkrAmount.toFixed(2)} PKR
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-          {/* Instructions */}
-          <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
-            <div className="text-xs font-semibold text-blue-300 mb-2 uppercase">
-              Instructions
-            </div>
-            <ol className="text-xs text-blue-200/80 space-y-2 list-decimal list-inside">
-              <li>Copy the wallet address above</li>
-              <li>
-                Go to your crypto wallet and send{" "}
-                <span className="font-semibold">
-                  {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
-                </span>
-              </li>
-              <li>Paste the address and confirm the transaction</li>
-              <li>
-                Click "I Have Sent Crypto" after the transaction is complete
-              </li>
-            </ol>
-          </div>
+              {/* Buyer Wallet Address */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-white/80 uppercase">
+                  Buyer's Wallet Address
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-mono text-sm break-all">
+                    {buyerWalletAddress}
+                  </div>
+                  <button
+                    onClick={handleCopyWallet}
+                    className="p-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 hover:bg-[#1a2540]/70 transition-colors flex-shrink-0"
+                    title="Copy wallet address"
+                  >
+                    {copied ? (
+                      <Check className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <Copy className="w-5 h-5 text-white/70" />
+                    )}
+                  </button>
+                </div>
+              </div>
 
-          {/* Warning */}
-          <div className="p-4 rounded-lg bg-red-600/20 border border-red-500/50">
-            <div className="text-xs font-semibold text-red-300 mb-1 uppercase">
-              ⚠️ Important
-            </div>
-            <p className="text-xs text-red-200/80">
-              Make sure the wallet address is correct before sending. Crypto
-              transfers cannot be reversed.
-            </p>
-          </div>
+              {/* Instructions */}
+              <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
+                <div className="text-xs font-semibold text-blue-300 mb-2 uppercase">
+                  Instructions
+                </div>
+                <ol className="text-xs text-blue-200/80 space-y-2 list-decimal list-inside">
+                  <li>Copy the wallet address above</li>
+                  <li>
+                    Go to your crypto wallet and send{" "}
+                    <span className="font-semibold">
+                      {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
+                    </span>
+                  </li>
+                  <li>Paste the address and confirm the transaction</li>
+                  <li>
+                    Click "I Have Sent Crypto" after the transaction is
+                    complete
+                  </li>
+                </ol>
+              </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
-            <Button
-              onClick={() => setActiveDialog(null)}
-              variant="outline"
-              className="flex-1 border border-gray-300/30 text-gray-300 hover:bg-gray-300/10"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleIHaveSentCrypto}
-              disabled={sending}
-              className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {sending ? "Notifying..." : "I Have Sent Crypto"}
-            </Button>
-          </div>
+              {/* Warning */}
+              <div className="p-4 rounded-lg bg-red-600/20 border border-red-500/50">
+                <div className="text-xs font-semibold text-red-300 mb-1 uppercase">
+                  ⚠️ Important
+                </div>
+                <p className="text-xs text-red-200/80">
+                  Make sure the wallet address is correct before sending. Crypto
+                  transfers cannot be reversed.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={() => setActiveDialog(null)}
+                  variant="outline"
+                  className="flex-1 border border-gray-300/30 text-gray-300 hover:bg-gray-300/10"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleIHaveSentCrypto}
+                  disabled={sending}
+                  className="flex-1 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {sending ? "Notifying..." : "I Have Sent Crypto"}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

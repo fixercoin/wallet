@@ -1066,7 +1066,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {isLoading
                 ? "Processing..."
                 : isQuoteExpired()
-                  ? "Quote Expired - Get New Quote"
+                  ? "CONVERT YOUR TOKENS"
                   : "Swap (Smart Route)"}
             </Button>
 

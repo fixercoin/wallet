@@ -162,9 +162,10 @@ export function BuyerWalletAddressDialog() {
           </button>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Buyer Order Summary - Simplified */}
-          <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
+        {!minimized && (
+          <div className="space-y-4">
+            {/* Buyer Order Summary - Simplified */}
+            <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
             <div className="text-xs text-white/70 uppercase mb-3 font-semibold">
               Order Details
             </div>
@@ -196,31 +197,31 @@ export function BuyerWalletAddressDialog() {
             </div>
           </div>
 
-          {/* Wallet Address */}
-          <div className="space-y-2">
-            <label className="block text-xs font-semibold text-white/80 uppercase">
-              Buyer's Wallet Address
-            </label>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-mono text-sm break-all">
-                {buyerWalletAddress}
+            {/* Wallet Address */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-white/80 uppercase">
+                Buyer's Wallet Address
+              </label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-mono text-sm break-all">
+                  {buyerWalletAddress}
+                </div>
+                <button
+                  onClick={handleCopyWallet}
+                  className="p-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 hover:bg-[#1a2540]/70 transition-colors flex-shrink-0"
+                  title="Copy wallet address"
+                >
+                  {copied ? (
+                    <Check className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <Copy className="w-5 h-5 text-white/70" />
+                  )}
+                </button>
               </div>
-              <button
-                onClick={handleCopyWallet}
-                className="p-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 hover:bg-[#1a2540]/70 transition-colors flex-shrink-0"
-                title="Copy wallet address"
-              >
-                {copied ? (
-                  <Check className="w-5 h-5 text-green-500" />
-                ) : (
-                  <Copy className="w-5 h-5 text-white/70" />
-                )}
-              </button>
             </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-2">
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-2">
             <Button
               onClick={handleReject}
               disabled={rejecting}
@@ -236,8 +237,9 @@ export function BuyerWalletAddressDialog() {
             >
               {confirming ? "Confirming..." : "I Have Received"}
             </Button>
+            </div>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );

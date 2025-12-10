@@ -27,19 +27,15 @@ interface PagesEnv {
 
 /**
  * Get KV Store instance based on available credentials
- * Priority: Backendless > Appwrite > Cloudflare KV > throws error
+ * Priority: Cloudflare KV > Appwrite > Backendless
  */
 export function getKVStore(
   env: PagesEnv,
 ): KVStore | AppwriteKVStore | BackendlessKVStore {
-  // Check for Backendless credentials first (preferred for P2P)
-  if (env.BACKENDLESS_APP_ID && env.BACKENDLESS_API_KEY) {
-    console.log("[KV Store Factory] Using Backendless backend (P2P optimized)");
-    return new BackendlessKVStore(
-      env.BACKENDLESS_APP_ID,
-      env.BACKENDLESS_API_KEY,
-      env.BACKENDLESS_URL || "https://api.backendless.com",
-    ) as any;
+  // Prioritize Cloudflare KV (primary storage backend)
+  if (env.STAKING_KV) {
+    console.log("[KV Store Factory] Using Cloudflare KV backend");
+    return new KVStore(env.STAKING_KV);
   }
 
   // Check for Appwrite credentials (legacy support)
@@ -59,15 +55,19 @@ export function getKVStore(
     ) as any;
   }
 
-  // Fall back to Cloudflare KV
-  if (!env.STAKING_KV) {
-    throw new Error(
-      "KV namespace is required. Either provide STAKING_KV (Cloudflare), Backendless, or Appwrite credentials",
-    );
+  // Fall back to Backendless if available
+  if (env.BACKENDLESS_APP_ID && env.BACKENDLESS_API_KEY) {
+    console.log("[KV Store Factory] Using Backendless backend (fallback)");
+    return new BackendlessKVStore(
+      env.BACKENDLESS_APP_ID,
+      env.BACKENDLESS_API_KEY,
+      env.BACKENDLESS_URL || "https://api.backendless.com",
+    ) as any;
   }
 
-  console.log("[KV Store Factory] Using Cloudflare KV backend");
-  return new KVStore(env.STAKING_KV);
+  throw new Error(
+    "KV namespace is required. Either provide STAKING_KV (Cloudflare), Appwrite, or Backendless credentials",
+  );
 }
 
 /**

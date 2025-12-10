@@ -1,17 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Send, Check, X } from "lucide-react";
+import { ArrowLeft, Send, Check, X, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
-import { SystemAccountDisplay } from "@/components/p2p/SystemAccountDisplay";
 import {
   syncOrderFromStorage,
   updateOrderInBothStorages,
 } from "@/lib/p2p-order-api";
-import { addTradeMessage, listTradeMessages } from "@/lib/p2p-api";
+import {
+  addTradeMessage,
+  listTradeMessages,
+  createTradeRoom,
+} from "@/lib/p2p-api";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import type { CreatedOrder } from "@/lib/p2p-order-creation";
 import type { TradeMessage } from "@/lib/p2p-api";
@@ -33,11 +36,25 @@ export default function SellerOrderConfirmation() {
   const [orderStatus, setOrderStatus] = useState<
     "PENDING" | "ACCEPTED" | "REJECTED"
   >("PENDING");
-  const [completionStatus, setCompletionStatus] = useState<
-    "PENDING" | "COMPLETED" | "BUYER_RECEIVED"
-  >("PENDING");
+  const [sellerTransferInitiated, setSellerTransferInitiated] = useState(false);
+  const [buyerCryptoReceived, setBuyerCryptoReceived] = useState(false);
+  const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
+
+  const isBuyer = wallet?.publicKey === order?.buyerWallet;
+
+  const shortenAddress = (addr: string, chars = 6): string => {
+    if (!addr) return "";
+    return `${addr.slice(0, chars)}...${addr.slice(-chars)}`;
+  };
+
+  const handleCopy = (value: string, label: string) => {
+    navigator.clipboard.writeText(value);
+    setCopiedValue(value);
+    toast.success(`${label} copied!`);
+    setTimeout(() => setCopiedValue(null), 2000);
+  };
 
   // Load order
   useEffect(() => {
@@ -62,15 +79,13 @@ export default function SellerOrderConfirmation() {
             (loadedOrder.status as "PENDING" | "ACCEPTED" | "REJECTED") ||
               "PENDING",
           );
-          // Determine completion status based on confirmation flags
-          if (loadedOrder.buyerCryptoReceived) {
-            setCompletionStatus("BUYER_RECEIVED");
-          } else if (loadedOrder.sellerTransferInitiated) {
-            setCompletionStatus("COMPLETED");
-          }
+          setSellerTransferInitiated(
+            loadedOrder.sellerTransferInitiated ?? false,
+          );
+          setBuyerCryptoReceived(loadedOrder.buyerCryptoReceived ?? false);
         } else {
           console.error(
-            `[SellerOrderConfirmation] ❌ Failed to load order (not found in KV or localStorage): ${orderId}`,
+            `[SellerOrderConfirmation] ❌ Failed to load order (not found): ${orderId}`,
           );
           toast.error("Order not found. It may have expired or been deleted.");
         }
@@ -84,6 +99,29 @@ export default function SellerOrderConfirmation() {
 
     loadOrder();
   }, [orderId]);
+
+  // Poll for order updates
+  useEffect(() => {
+    if (!order?.id) return;
+
+    const pollOrderStatus = async () => {
+      try {
+        const updatedOrder = await syncOrderFromStorage(order.id);
+        if (updatedOrder) {
+          setOrder(updatedOrder);
+          setSellerTransferInitiated(
+            updatedOrder.sellerTransferInitiated ?? false,
+          );
+          setBuyerCryptoReceived(updatedOrder.buyerCryptoReceived ?? false);
+        }
+      } catch (error) {
+        console.error("Failed to poll order status:", error);
+      }
+    };
+
+    const interval = setInterval(pollOrderStatus, 1000);
+    return () => clearInterval(interval);
+  }, [order?.id]);
 
   // Fetch exchange rate
   useEffect(() => {
@@ -123,30 +161,6 @@ export default function SellerOrderConfirmation() {
     return () => clearInterval(interval);
   }, [order?.roomId]);
 
-  // Poll for order updates
-  useEffect(() => {
-    if (!order?.id) return;
-
-    const pollOrderStatus = async () => {
-      try {
-        const updatedOrder = await syncOrderFromStorage(order.id);
-        if (updatedOrder) {
-          setOrder(updatedOrder);
-          if (updatedOrder.buyerCryptoReceived) {
-            setCompletionStatus("BUYER_RECEIVED");
-          } else if (updatedOrder.sellerTransferInitiated) {
-            setCompletionStatus("COMPLETED");
-          }
-        }
-      } catch (error) {
-        console.error("Failed to poll order status:", error);
-      }
-    };
-
-    const interval = setInterval(pollOrderStatus, 1000);
-    return () => clearInterval(interval);
-  }, [order?.id]);
-
   // Scroll to bottom on new messages
   useEffect(() => {
     if (messages.length > previousMessageCountRef.current) {
@@ -157,20 +171,15 @@ export default function SellerOrderConfirmation() {
     previousMessageCountRef.current = messages.length;
   }, [messages]);
 
-  const shortenAddress = (addr: string, chars = 6): string => {
-    if (!addr) return "";
-    return `${addr.slice(0, chars)}...${addr.slice(-chars)}`;
-  };
-
   const handleAcceptOrder = async () => {
     if (!order || !wallet?.publicKey) return;
 
     setSubmitting(true);
     try {
-      // Update order status to ACCEPTED and set seller wallet (for generic buy orders)
+      // Update order status to ACCEPTED
       const updatedOrder = await updateOrderInBothStorages(order.id, {
         status: "ACCEPTED",
-        sellerWallet: wallet.publicKey, // Record which seller accepted this order
+        sellerWallet: wallet.publicKey,
       });
 
       if (updatedOrder) {
@@ -178,18 +187,16 @@ export default function SellerOrderConfirmation() {
       }
       setOrderStatus("ACCEPTED");
 
-      // Send message to chat (create room if it doesn't exist)
+      // Create trade room if it doesn't exist
       let roomId = order.roomId;
       if (!roomId && order.buyerWallet && wallet.publicKey) {
         try {
-          const { createTradeRoom } = await import("@/lib/p2p-api");
           const room = await createTradeRoom({
             buyer_wallet: order.buyerWallet,
             seller_wallet: wallet.publicKey,
             order_id: order.id,
           });
           roomId = room.id;
-          // Update order with new room ID
           await updateOrderInBothStorages(order.id, { roomId });
         } catch (roomError) {
           console.warn("Failed to create trade room:", roomError);
@@ -232,10 +239,9 @@ export default function SellerOrderConfirmation() {
 
     setSubmitting(true);
     try {
-      // Update order status to REJECTED and set seller wallet
       const updatedOrder = await updateOrderInBothStorages(order.id, {
         status: "REJECTED",
-        sellerWallet: wallet.publicKey, // Record which seller rejected this order
+        sellerWallet: wallet.publicKey,
       });
 
       if (updatedOrder) {
@@ -243,7 +249,6 @@ export default function SellerOrderConfirmation() {
       }
       setOrderStatus("REJECTED");
 
-      // Send message to chat if room exists
       if (order.roomId) {
         await addTradeMessage({
           room_id: order.roomId,
@@ -252,7 +257,6 @@ export default function SellerOrderConfirmation() {
         });
       }
 
-      // Notify buyer
       await createNotification(
         order.buyerWallet,
         "order_rejected",
@@ -276,54 +280,30 @@ export default function SellerOrderConfirmation() {
     }
   };
 
-  const handleCompleteOrder = async () => {
+  const handleSellerTransferAsset = async () => {
     if (!order || !wallet?.publicKey) return;
 
     setSubmitting(true);
     try {
-      // Update order to mark seller has completed
-      const updatedOrder = await updateOrderInBothStorages(order.id, {
+      setSellerTransferInitiated(true);
+      await updateOrderInBothStorages(order.id, {
         sellerTransferInitiated: true,
       });
 
-      if (updatedOrder) {
-        setOrder(updatedOrder);
-      }
-      setCompletionStatus("COMPLETED");
-
-      // Send message to chat (create room if it doesn't exist)
-      let roomId = order.roomId;
-      if (!roomId && order.buyerWallet && wallet.publicKey) {
-        try {
-          const { createTradeRoom } = await import("@/lib/p2p-api");
-          const room = await createTradeRoom({
-            buyer_wallet: order.buyerWallet,
-            seller_wallet: wallet.publicKey,
-            order_id: order.id,
-          });
-          roomId = room.id;
-          // Update order with new room ID
-          await updateOrderInBothStorages(order.id, { roomId });
-        } catch (roomError) {
-          console.warn("Failed to create trade room:", roomError);
-        }
-      }
-
-      if (roomId) {
+      if (order.roomId) {
         await addTradeMessage({
-          room_id: roomId,
+          room_id: order.roomId,
           sender_wallet: wallet.publicKey,
-          message: "✅ I have completed order",
+          message: "✅ I have transferred the crypto asset",
         });
       }
 
-      // Notify buyer
       await createNotification(
         order.buyerWallet,
-        "order_completed_by_seller",
+        "transfer_initiated",
         order.type,
         order.id,
-        "Seller has completed order - waiting for your confirmation",
+        `Seller has transferred ${order.amountTokens.toFixed(2)} ${order.token}`,
         {
           token: order.token,
           amountTokens: order.amountTokens,
@@ -331,10 +311,55 @@ export default function SellerOrderConfirmation() {
         },
       );
 
-      toast.success("Order marked as completed");
+      toast.success(
+        "Asset transfer initiated! Waiting for buyer confirmation...",
+      );
     } catch (error) {
-      console.error("Error completing order:", error);
-      toast.error("Failed to complete order");
+      console.error("Error transferring asset:", error);
+      toast.error("Failed to transfer asset");
+      setSellerTransferInitiated(false);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBuyerReceivedAsset = async () => {
+    if (!order || !wallet?.publicKey) return;
+
+    setSubmitting(true);
+    try {
+      setBuyerCryptoReceived(true);
+      await updateOrderInBothStorages(order.id, {
+        buyerCryptoReceived: true,
+        status: "COMPLETED",
+      });
+
+      if (order.roomId) {
+        await addTradeMessage({
+          room_id: order.roomId,
+          sender_wallet: wallet.publicKey,
+          message: "✅ I have received the crypto asset",
+        });
+      }
+
+      await createNotification(
+        order.sellerWallet,
+        "crypto_received",
+        order.type,
+        order.id,
+        "Buyer confirmed receiving the crypto",
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+
+      toast.success("Order completed successfully!");
+    } catch (error) {
+      console.error("Error confirming receipt:", error);
+      toast.error("Failed to confirm receipt");
+      setBuyerCryptoReceived(false);
     } finally {
       setSubmitting(false);
     }
@@ -401,21 +426,8 @@ export default function SellerOrderConfirmation() {
             <ArrowLeft className="w-6 h-6" />
           </button>
           <h1 className="text-white font-bold text-lg uppercase flex-1 ml-4">
-            ORDER CONFIRMATION
+            {isBuyer ? "Payment Confirmation" : "Order Confirmation"}
           </h1>
-          <div className="flex items-center gap-3">
-            <div
-              className={`text-sm font-bold px-3 py-1 rounded-lg uppercase ${
-                orderStatus === "REJECTED"
-                  ? "bg-red-600/40 text-red-400"
-                  : orderStatus === "ACCEPTED"
-                    ? "bg-green-600/40 text-green-400"
-                    : "bg-yellow-600/40 text-yellow-400"
-              }`}
-            >
-              {orderStatus}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -472,198 +484,307 @@ export default function SellerOrderConfirmation() {
 
               <div>
                 <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                  Status
+                  Type
                 </div>
                 <div className="text-xs font-semibold uppercase">
-                  {orderStatus === "REJECTED" ? (
-                    <span className="text-red-400">Rejected</span>
-                  ) : orderStatus === "ACCEPTED" ? (
-                    <span className="text-green-400">Accepted</span>
-                  ) : (
-                    <span className="text-yellow-400">Pending</span>
+                  <span
+                    className={
+                      order.type === "BUY" ? "text-blue-400" : "text-purple-400"
+                    }
+                  >
+                    {order.type}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* =============== SELLER VIEW =============== */}
+        {!isBuyer && (
+          <>
+            {/* Buyer Full Payment Details */}
+            <Card className="bg-[#0f1520]/50 border border-green-500/30 mb-6">
+              <CardContent className="p-4">
+                <h2 className="text-lg font-bold text-white mb-4 uppercase">
+                  Buyer Payment Details
+                </h2>
+                <div className="space-y-4">
+                  {/* Buyer Wallet */}
+                  <div>
+                    <div className="text-xs text-white/70 font-semibold uppercase mb-2">
+                      Buyer Wallet Address
+                    </div>
+                    <div className="flex items-center gap-2 p-3 bg-[#1a2540]/50 rounded-lg border border-green-500/20">
+                      <div className="text-xs text-white/90 font-mono break-all flex-1">
+                        {order.buyerWallet}
+                      </div>
+                      <button
+                        onClick={() =>
+                          handleCopy(order.buyerWallet, "Buyer wallet address")
+                        }
+                        className="p-2 hover:bg-white/10 rounded transition-colors flex-shrink-0"
+                      >
+                        {copiedValue === order.buyerWallet ? (
+                          <Check className="w-4 h-4 text-green-400" />
+                        ) : (
+                          <Copy className="w-4 h-4 text-green-400" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Buyer Payment Method */}
+                  {order.buyerPaymentMethod && (
+                    <>
+                      <div className="border-t border-green-500/20 pt-4">
+                        <div className="text-xs text-white/70 font-semibold uppercase mb-2">
+                          Buyer Payment Account Name
+                        </div>
+                        <div className="p-3 bg-[#1a2540]/50 rounded-lg border border-green-500/20">
+                          <div className="text-sm text-white/90">
+                            {order.buyerPaymentMethod.accountName}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs text-white/70 font-semibold uppercase mb-2">
+                          Buyer Payment Account Number
+                        </div>
+                        <div className="flex items-center gap-2 p-3 bg-[#1a2540]/50 rounded-lg border border-green-500/20">
+                          <div className="text-xs text-white/90 font-mono break-all flex-1">
+                            {order.buyerPaymentMethod.accountNumber}
+                          </div>
+                          <button
+                            onClick={() =>
+                              handleCopy(
+                                order.buyerPaymentMethod.accountNumber,
+                                "Account number",
+                              )
+                            }
+                            className="p-2 hover:bg-white/10 rounded transition-colors flex-shrink-0"
+                          >
+                            {copiedValue ===
+                            order.buyerPaymentMethod.accountNumber ? (
+                              <Check className="w-4 h-4 text-green-400" />
+                            ) : (
+                              <Copy className="w-4 h-4 text-green-400" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Accept/Reject Buttons (Pending) */}
+            {orderStatus === "PENDING" && (
+              <div className="flex gap-3 mb-6">
+                <Button
+                  onClick={handleRejectOrder}
+                  disabled={submitting}
+                  className="flex-1 px-4 py-3 bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 text-red-400 uppercase text-sm font-semibold transition-colors"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Reject Order
+                </Button>
+                <Button
+                  onClick={handleAcceptOrder}
+                  disabled={submitting}
+                  className="flex-1 px-4 py-3 bg-green-600/20 border border-green-500/50 hover:bg-green-600/30 text-green-400 uppercase text-sm font-semibold transition-colors"
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  Accept Order
+                </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            )}
 
-        {/* Transfer Instructions */}
-        <Card className="bg-[#0f1520]/50 border border-green-500/30 mb-6">
-          <CardContent className="p-4">
-            <h2 className="text-lg font-bold text-white mb-4 uppercase">
-              Transfer Instructions
-            </h2>
-            <div className="space-y-4">
-              <SystemAccountDisplay type="seller" />
-
-              <div className="border-t border-green-500/20 pt-3 mt-3">
-                <div className="text-xs text-white/70 font-semibold uppercase mb-3">
-                  Buyer Details
-                </div>
-
-                <div>
-                  <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                    Buyer Wallet Address
-                  </div>
-                  <div className="text-xs text-white/90 font-mono break-all">
-                    {order.buyerWallet}
-                  </div>
-                </div>
-
-                {order.sellerPaymentMethod && (
-                  <>
-                    <div className="mt-3">
-                      <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                        Buyer Payment Account Name
-                      </div>
-                      <div className="text-sm text-white/90">
-                        {order.sellerPaymentMethod.accountName}
-                      </div>
-                    </div>
-                    <div className="mt-3">
-                      <div className="text-xs text-white/70 font-semibold uppercase mb-1">
-                        Buyer Payment Account Number
-                      </div>
-                      <div className="text-sm text-white/90 font-mono">
-                        {order.sellerPaymentMethod.accountNumber}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Messages Chat */}
-        <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30 mb-6">
-          <CardContent className="p-4 flex flex-col h-full min-h-[300px]">
-            <h2 className="text-lg font-bold text-white mb-4 uppercase">
-              Messages
-            </h2>
-
-            {/* Messages Container */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-4 p-3 bg-[#1a2540]/30 rounded-lg border border-white/5">
-              {messages.length === 0 ? (
-                <div className="text-center text-white/60 text-xs py-8">
-                  No messages yet. Send a message to start chatting!
-                </div>
-              ) : (
-                messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`text-xs p-3 rounded-lg ${
-                      msg.sender_wallet === wallet.publicKey
-                        ? "bg-[#FF7A5C]/20 text-white/90 ml-4"
-                        : "bg-[#1a2540]/50 text-white/70 mr-4"
-                    }`}
-                  >
-                    <div className="font-semibold text-white/80 uppercase text-xs mb-1">
-                      {msg.sender_wallet === order.buyerWallet
-                        ? "BUYER"
-                        : "YOU"}
-                    </div>
-                    <div className="break-words">{msg.message}</div>
-                    <div className="text-xs text-white/50 mt-2">
-                      {new Date(msg.created_at).toLocaleTimeString()}
-                    </div>
-                  </div>
-                ))
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Message Input */}
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40 text-sm"
-                placeholder="Type a message..."
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === "Enter" && !sending) {
-                    handleSendMessage();
-                  }
-                }}
-              />
+            {/* Transfer Asset Button (After Accepting) */}
+            {orderStatus === "ACCEPTED" && !sellerTransferInitiated && (
               <Button
-                onClick={handleSendMessage}
-                disabled={!messageInput.trim() || sending}
-                className="px-3 py-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white disabled:opacity-50"
+                onClick={handleSellerTransferAsset}
+                disabled={submitting}
+                className="w-full px-4 py-3 bg-blue-600/20 border border-blue-500/50 hover:bg-blue-600/30 text-blue-400 uppercase text-sm font-semibold transition-colors mb-6"
               >
-                <Send className="h-4 w-4" />
+                <Check className="w-4 h-4 mr-2" />I Have Transferred Asset
               </Button>
+            )}
+
+            {/* Transfer Initiated Status */}
+            {sellerTransferInitiated && (
+              <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50 mb-6">
+                <p className="text-blue-400 font-semibold uppercase flex items-center gap-2">
+                  <Check className="w-5 h-5" />
+                  Asset Transferred
+                </p>
+                <p className="text-blue-300/80 text-xs mt-1">
+                  Waiting for buyer to confirm receipt
+                </p>
+              </div>
+            )}
+
+            {/* Completed Status */}
+            {buyerCryptoReceived && (
+              <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50 mb-6">
+                <p className="text-green-400 font-semibold uppercase flex items-center gap-2">
+                  <Check className="w-5 h-5" />
+                  Order Complete
+                </p>
+                <p className="text-green-300/80 text-xs mt-1">
+                  Buyer confirmed receiving asset
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* =============== BUYER VIEW =============== */}
+        {isBuyer && (
+          <>
+            {/* Send Crypto To System Wallet - Transparent */}
+            <div className="bg-transparent border border-green-500/30 rounded-lg p-4 mb-6">
+              <h2 className="text-lg font-bold text-white mb-4 uppercase">
+                Send Crypto To System Wallet
+              </h2>
+              <div className="space-y-3">
+                <div>
+                  <div className="text-xs text-white/70 font-semibold uppercase mb-2">
+                    Solana Wallet Address
+                  </div>
+                  <div className="flex items-center gap-2 p-3 bg-[#0f1520]/50 rounded-lg border border-green-500/20">
+                    <div className="text-xs text-white/90 font-mono break-all flex-1">
+                      7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw
+                    </div>
+                    <button
+                      onClick={() =>
+                        handleCopy(
+                          "7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw",
+                          "Wallet address",
+                        )
+                      }
+                      className="p-2 hover:bg-white/10 rounded transition-colors flex-shrink-0"
+                    >
+                      {copiedValue ===
+                      "7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw" ? (
+                        <Check className="w-4 h-4 text-green-400" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-green-400" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div className="text-xs text-green-400/80 mt-3">
+                  ✓ This is the official system wallet. Send your crypto here to
+                  complete the transaction securely.
+                </div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Action Buttons */}
-        {orderStatus === "PENDING" && (
-          <div className="flex gap-3 mb-6">
-            <Button
-              onClick={handleRejectOrder}
-              disabled={submitting}
-              className="flex-1 px-4 py-3 bg-red-600/20 border border-red-500/50 hover:bg-red-600/30 text-red-400 uppercase text-sm font-semibold transition-colors"
-            >
-              <X className="w-4 h-4 mr-2" />
-              Reject Order
-            </Button>
-            <Button
-              onClick={handleAcceptOrder}
-              disabled={submitting}
-              className="flex-1 px-4 py-3 bg-green-600/20 border border-green-500/50 hover:bg-green-600/30 text-green-400 uppercase text-sm font-semibold transition-colors"
-            >
-              <Check className="w-4 h-4 mr-2" />
-              Accept Order
-            </Button>
-          </div>
+            {/* Buyer Received Asset Button (When Seller Transferred) */}
+            {sellerTransferInitiated && !buyerCryptoReceived && (
+              <Button
+                onClick={handleBuyerReceivedAsset}
+                disabled={submitting}
+                className="w-full px-4 py-3 bg-green-600/20 border border-green-500/50 hover:bg-green-600/30 text-green-400 uppercase text-sm font-semibold transition-colors mb-6"
+              >
+                <Check className="w-4 h-4 mr-2" />I Have Received Asset
+              </Button>
+            )}
+
+            {/* Status Messages */}
+            {sellerTransferInitiated && !buyerCryptoReceived && (
+              <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50 mb-6">
+                <p className="text-blue-400 font-semibold uppercase flex items-center gap-2">
+                  <Check className="w-5 h-5" />
+                  Asset Transfer Initiated
+                </p>
+                <p className="text-blue-300/80 text-xs mt-1">
+                  Seller has transferred your crypto. Confirm receipt when you
+                  have received it.
+                </p>
+              </div>
+            )}
+
+            {buyerCryptoReceived && (
+              <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50 mb-6">
+                <p className="text-green-400 font-semibold uppercase flex items-center gap-2">
+                  <Check className="w-5 h-5" />
+                  Order Complete
+                </p>
+                <p className="text-green-300/80 text-xs mt-1">
+                  You confirmed receiving the asset. Transaction completed!
+                </p>
+              </div>
+            )}
+          </>
         )}
 
-        {/* Complete Order Button (shown after acceptance) */}
-        {orderStatus === "ACCEPTED" && completionStatus === "PENDING" && (
-          <Button
-            onClick={handleCompleteOrder}
-            disabled={submitting}
-            className="w-full px-4 py-3 bg-blue-600/20 border border-blue-500/50 hover:bg-blue-600/30 text-blue-400 uppercase text-sm font-semibold transition-colors mb-6"
-          >
-            <Check className="w-4 h-4 mr-2" />I Have Completed Order
-          </Button>
-        )}
+        {/* Chat Section (For Both Buyer and Seller) */}
+        {order.roomId && (
+          <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30 mb-6">
+            <CardContent className="p-4 flex flex-col h-full min-h-[300px]">
+              <h2 className="text-lg font-bold text-white mb-4 uppercase">
+                Chat with {isBuyer ? "Seller" : "Buyer"}
+              </h2>
 
-        {/* Status Messages */}
-        {orderStatus === "REJECTED" && (
-          <div className="p-4 rounded-lg bg-red-600/20 border border-red-500/50">
-            <p className="text-red-400 font-semibold uppercase">
-              Order Rejected
-            </p>
-            <p className="text-red-300/80 text-xs mt-1">
-              This order has been rejected
-            </p>
-          </div>
-        )}
+              {/* Messages Container */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-4 p-3 bg-[#1a2540]/30 rounded-lg border border-white/5">
+                {messages.length === 0 ? (
+                  <div className="text-center text-white/60 text-xs py-8">
+                    No messages yet. Start chatting!
+                  </div>
+                ) : (
+                  messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`text-xs p-3 rounded-lg ${
+                        msg.sender_wallet === wallet?.publicKey
+                          ? "bg-[#FF7A5C]/20 text-white/90 ml-4"
+                          : "bg-[#1a2540]/50 text-white/70 mr-4"
+                      }`}
+                    >
+                      <div className="font-semibold text-white/80 uppercase text-xs mb-1">
+                        {msg.sender_wallet === order.buyerWallet
+                          ? "BUYER"
+                          : "SELLER"}
+                      </div>
+                      <div className="break-words">{msg.message}</div>
+                      <div className="text-xs text-white/50 mt-2">
+                        {new Date(msg.created_at).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </div>
 
-        {completionStatus === "COMPLETED" && (
-          <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
-            <p className="text-blue-400 font-semibold uppercase">
-              Order Completed by Seller
-            </p>
-            <p className="text-blue-300/80 text-xs mt-1">
-              Waiting for buyer to confirm receipt
-            </p>
-          </div>
-        )}
-
-        {completionStatus === "BUYER_RECEIVED" && (
-          <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
-            <p className="text-green-400 font-semibold uppercase">
-              ✓ Order Complete
-            </p>
-            <p className="text-green-300/80 text-xs mt-1">
-              Buyer has confirmed receipt
-            </p>
-          </div>
+              {/* Message Input */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  className="flex-1 px-3 py-2 rounded-lg bg-[#1a2540]/50 border border-[#FF7A5C]/30 text-white placeholder-white/40 text-sm"
+                  placeholder="Type a message..."
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter" && !sending) {
+                      handleSendMessage();
+                    }
+                  }}
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!messageInput.trim() || sending}
+                  className="px-3 py-2 bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white disabled:opacity-50"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
 

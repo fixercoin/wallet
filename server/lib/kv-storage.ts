@@ -291,33 +291,28 @@ export class KVStorage {
   }
 
   static createAutoStorage(): KVStorage {
-    // Check if all Backendless credentials are present (preferred)
-    const backendlessAppId = process.env.BACKENDLESS_APP_ID;
-    const backendlessApiKey = process.env.BACKENDLESS_API_KEY;
-    const backendlessUrl = process.env.BACKENDLESS_URL;
+    // Try to auto-detect Cloudflare KV credentials first (primary)
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    const namespaceId = process.env.CLOUDFLARE_NAMESPACE_ID;
+    const apiToken = process.env.CLOUDFLARE_API_TOKEN;
 
-    if (backendlessAppId && backendlessApiKey) {
-      console.log(
-        "[KVStorage] Using Backendless storage backend (P2P optimized)",
-      );
+    if (accountId && namespaceId && apiToken) {
+      console.log("[KVStorage] Using Cloudflare KV storage backend");
       try {
         return new KVStorage(
-          new BackendlessKVStorage(
-            backendlessAppId,
-            backendlessApiKey,
-            backendlessUrl,
-          ),
+          new CloudflareKVStorage(accountId, namespaceId, apiToken),
         );
       } catch (error) {
         console.warn(
-          "[KVStorage] Backendless initialization failed, falling back to file-based storage:",
+          "[KVStorage] Cloudflare KV initialization failed, falling back to file-based storage:",
           error instanceof Error ? error.message : String(error),
         );
+        // Fall back to file storage if Cloudflare KV fails
         return new KVStorage(new FileKVStorage());
       }
     }
 
-    // Check if all Appwrite credentials are present (legacy)
+    // Check if all Appwrite credentials are present (legacy support)
     const appwriteEndpoint = process.env.APPWRITE_ENDPOINT;
     const appwriteProjectId = process.env.APPWRITE_PROJECT_ID;
     const appwriteApiKey = process.env.APPWRITE_API_KEY;
@@ -339,23 +334,26 @@ export class KVStorage {
       }
     }
 
-    // Try to auto-detect Cloudflare KV credentials
-    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-    const namespaceId = process.env.CLOUDFLARE_NAMESPACE_ID;
-    const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+    // Check if all Backendless credentials are present (fallback)
+    const backendlessAppId = process.env.BACKENDLESS_APP_ID;
+    const backendlessApiKey = process.env.BACKENDLESS_API_KEY;
+    const backendlessUrl = process.env.BACKENDLESS_URL;
 
-    if (accountId && namespaceId && apiToken) {
-      console.log("[KVStorage] Using Cloudflare KV storage backend");
+    if (backendlessAppId && backendlessApiKey) {
+      console.log("[KVStorage] Using Backendless storage backend (fallback)");
       try {
         return new KVStorage(
-          new CloudflareKVStorage(accountId, namespaceId, apiToken),
+          new BackendlessKVStorage(
+            backendlessAppId,
+            backendlessApiKey,
+            backendlessUrl,
+          ),
         );
       } catch (error) {
         console.warn(
-          "[KVStorage] Cloudflare KV initialization failed, falling back to file-based storage:",
+          "[KVStorage] Backendless initialization failed, falling back to file-based storage:",
           error instanceof Error ? error.message : String(error),
         );
-        // Fall back to file storage if Cloudflare KV fails
         return new KVStorage(new FileKVStorage());
       }
     }

@@ -160,6 +160,11 @@ import SellerOrderConfirmation from "./pages/SellerOrderConfirmation";
 import BuyerOrderConfirmation from "./pages/BuyerOrderConfirmation";
 import OrderComplete from "./pages/OrderComplete";
 import { useLocation } from "react-router-dom";
+import { P2POrderFlowProvider } from "@/contexts/P2POrderFlowContext";
+import { SellerPaymentMethodDialog } from "@/components/p2p/SellerPaymentMethodDialog";
+import { BuyerWalletAddressDialog } from "@/components/p2p/BuyerWalletAddressDialog";
+import { CryptoSentDialog } from "@/components/p2p/CryptoSentDialog";
+import { CryptoReceivedDialog } from "@/components/p2p/CryptoReceivedDialog";
 
 const queryClient = new QueryClient();
 

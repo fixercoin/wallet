@@ -193,6 +193,24 @@ async function deleteOrderById(
   await saveOrderIdsForWallet(walletAddress, filtered);
 }
 
+/**
+ * Helper to get a specific order by ID with better logging
+ */
+async function getOrderByIdWithLogging(orderId: string): Promise<P2POrder | null> {
+  try {
+    const order = await getOrderById(orderId);
+    if (!order) {
+      console.warn(`[P2P Orders] Order not found in KV: ${orderId}`);
+    } else {
+      console.log(`[P2P Orders] Found order: ${orderId}`);
+    }
+    return order;
+  } catch (error) {
+    console.error(`[P2P Orders] Error fetching order ${orderId}:`, error);
+    return null;
+  }
+}
+
 // P2P Orders endpoints
 export const handleListP2POrders: RequestHandler = async (req, res) => {
   try {

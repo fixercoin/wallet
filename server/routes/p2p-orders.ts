@@ -724,3 +724,80 @@ export const handleConfirmPayment: RequestHandler = async (req, res) => {
     res.status(500).json({ error: "Failed to confirm payment" });
   }
 };
+
+// NEW: Get order status for polling (real-time P2P flow)
+export const handleGetOrderStatus: RequestHandler = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    if (!orderId) {
+      return res.status(400).json({ error: "Missing orderId" });
+    }
+
+    const order = await getOrderById(orderId);
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    res.json({
+      orderId: order.id,
+      status: order.status,
+      buyerPaymentSent: (order as any).buyerPaymentSent || false,
+      sellerReceivedPayment: (order as any).sellerReceivedPayment || false,
+      sellerCryptoSent: (order as any).sellerCryptoSent || false,
+      buyerReceivedCrypto: (order as any).buyerReceivedCrypto || false,
+      updatedAt: order.updatedAt || order.updated_at || Date.now(),
+    });
+  } catch (error) {
+    console.error("Get order status error:", error);
+    res.status(500).json({ error: "Failed to get order status" });
+  }
+};
+
+// NEW: Update order status for real-time P2P flow
+export const handleUpdateOrderStatus: RequestHandler = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const {
+      buyerPaymentSent,
+      sellerReceivedPayment,
+      sellerCryptoSent,
+      buyerReceivedCrypto,
+    } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({ error: "Missing orderId" });
+    }
+
+    const order = await getOrderById(orderId);
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // Update order status fields
+    if (buyerPaymentSent !== undefined) (order as any).buyerPaymentSent = buyerPaymentSent;
+    if (sellerReceivedPayment !== undefined)
+      (order as any).sellerReceivedPayment = sellerReceivedPayment;
+    if (sellerCryptoSent !== undefined) (order as any).sellerCryptoSent = sellerCryptoSent;
+    if (buyerReceivedCrypto !== undefined)
+      (order as any).buyerReceivedCrypto = buyerReceivedCrypto;
+
+    order.updatedAt = Date.now();
+    order.updated_at = Date.now();
+
+    await saveOrder(order);
+
+    res.json({
+      orderId: order.id,
+      status: order.status,
+      buyerPaymentSent: (order as any).buyerPaymentSent || false,
+      sellerReceivedPayment: (order as any).sellerReceivedPayment || false,
+      sellerCryptoSent: (order as any).sellerCryptoSent || false,
+      buyerReceivedCrypto: (order as any).buyerReceivedCrypto || false,
+      updatedAt: order.updatedAt || order.updated_at || Date.now(),
+    });
+  } catch (error) {
+    console.error("Update order status error:", error);
+    res.status(500).json({ error: "Failed to update order status" });
+  }
+};

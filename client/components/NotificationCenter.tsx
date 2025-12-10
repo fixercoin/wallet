@@ -165,10 +165,12 @@ export function NotificationCenter() {
                           order
                         ) {
                           // Open buyer wallet dialog for seller
-                          openBuyerWalletDialog(
-                            order,
-                            notification.recipientWallet,
-                          );
+                          // Get buyer wallet from the loaded order
+                          const buyerWallet =
+                            order.creator_wallet ||
+                            notification.senderWallet ||
+                            "";
+                          openBuyerWalletDialog(order, buyerWallet);
                           return;
                         }
 

@@ -39,17 +39,23 @@ export function CryptoSentDialog() {
 
     setSending(true);
     try {
+      const pkrAmount =
+        typeof currentOrder.pkr_amount === "number"
+          ? currentOrder.pkr_amount
+          : parseFloat(currentOrder.pkr_amount as any) || 0;
+      const tokenAmount = parseFloat(currentOrder.token_amount) || 0;
+
       // Send notification to buyer that crypto has been sent
       await createNotification(
         buyerWalletAddress,
         "transfer_initiated",
         "BUY",
         currentOrder.id,
-        `Crypto transfer initiated! Your ${parseFloat(currentOrder.token_amount).toFixed(6)} ${currentOrder.token} is being sent to your wallet. Please wait for confirmation.`,
+        `Crypto transfer initiated! Your ${tokenAmount.toFixed(6)} ${currentOrder.token || "USDT"} is being sent to your wallet. Please wait for confirmation.`,
         {
-          token: currentOrder.token,
-          amountTokens: parseFloat(currentOrder.token_amount),
-          amountPKR: currentOrder.pkr_amount,
+          token: currentOrder.token || "USDT",
+          amountTokens: tokenAmount,
+          amountPKR: pkrAmount,
         },
       );
 

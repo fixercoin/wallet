@@ -867,7 +867,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <div className="w-full">
         <div className="rounded-none border border-[#e6f6ec]/20 bg-transparent overflow-hidden">
           <div className="space-y-6 p-6">
-            <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
+            <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-12 pb-2">
               <Button
                 variant="ghost"
                 size="icon"

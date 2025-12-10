@@ -16,6 +16,8 @@ export function NotificationCenter() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
   const previousUnreadCountRef = useRef(0);
+  const { openBuyerWalletDialog, openCryptoReceivedDialog } =
+    useP2POrderFlow();
 
   // Play bell sound when new notifications arrive
   useEffect(() => {

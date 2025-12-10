@@ -775,10 +775,12 @@ export const handleUpdateOrderStatus: RequestHandler = async (req, res) => {
     }
 
     // Update order status fields
-    if (buyerPaymentSent !== undefined) (order as any).buyerPaymentSent = buyerPaymentSent;
+    if (buyerPaymentSent !== undefined)
+      (order as any).buyerPaymentSent = buyerPaymentSent;
     if (sellerReceivedPayment !== undefined)
       (order as any).sellerReceivedPayment = sellerReceivedPayment;
-    if (sellerCryptoSent !== undefined) (order as any).sellerCryptoSent = sellerCryptoSent;
+    if (sellerCryptoSent !== undefined)
+      (order as any).sellerCryptoSent = sellerCryptoSent;
     if (buyerReceivedCrypto !== undefined)
       (order as any).buyerReceivedCrypto = buyerReceivedCrypto;
 

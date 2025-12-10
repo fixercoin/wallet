@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Check, Copy } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
@@ -25,7 +31,12 @@ interface PaymentMethod {
   accountNumber: string;
 }
 
-type BuyFlowStep = "form" | "seller_payment" | "waiting_confirmation" | "buyer_wallet" | "complete";
+type BuyFlowStep =
+  | "form"
+  | "seller_payment"
+  | "waiting_confirmation"
+  | "buyer_wallet"
+  | "complete";
 
 export default function BuyData() {
   const navigate = useNavigate();
@@ -110,7 +121,10 @@ export default function BuyData() {
             });
 
             // If seller received payment and we're in waiting state, show next dialog
-            if (data.sellerReceivedPayment && flowStep === "waiting_confirmation") {
+            if (
+              data.sellerReceivedPayment &&
+              flowStep === "waiting_confirmation"
+            ) {
               setFlowStep("buyer_wallet");
             }
 
@@ -205,7 +219,8 @@ export default function BuyData() {
       setCurrentOrder(createdOrder);
 
       try {
-        const recipientWallet = createdOrder.sellerWallet || "BROADCAST_SELLERS";
+        const recipientWallet =
+          createdOrder.sellerWallet || "BROADCAST_SELLERS";
         await createNotification(
           recipientWallet,
           "new_buy_order",
@@ -256,7 +271,10 @@ export default function BuyData() {
         // Start polling for seller confirmation
         startPollingOrderStatus(currentOrder.id);
         setFlowStep("waiting_confirmation");
-        setOrderStatus({ sellerReceivedPayment: false, sellerCryptoSent: false });
+        setOrderStatus({
+          sellerReceivedPayment: false,
+          sellerCryptoSent: false,
+        });
       } else {
         toast.error("Failed to update order status");
       }
@@ -383,7 +401,9 @@ export default function BuyData() {
           {/* Calculation Preview */}
           {amountTokens && amountPKR && (
             <div className="p-3 rounded-lg bg-[#1a2540]/30 border border-[#FF7A5C]/20">
-              <div className="text-xs text-white/70 uppercase mb-2">Summary</div>
+              <div className="text-xs text-white/70 uppercase mb-2">
+                Summary
+              </div>
               <div className="text-sm text-white/90">
                 {amountTokens} USDT = {parseFloat(amountPKR).toFixed(2)} PKR
               </div>
@@ -478,7 +498,9 @@ export default function BuyData() {
       <Dialog open={flowStep === "seller_payment"}>
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-white">Seller Payment Details</DialogTitle>
+            <DialogTitle className="text-white">
+              Seller Payment Details
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -487,18 +509,14 @@ export default function BuyData() {
                 <p className="text-xs text-white/70 uppercase mb-1">
                   Account Title
                 </p>
-                <p className="text-white font-semibold">
-                  Niazi
-                </p>
+                <p className="text-white font-semibold">Niazi</p>
               </div>
 
               <div className="border-t border-gray-300/10 pt-3">
                 <p className="text-xs text-white/70 uppercase mb-1">
                   Account Name
                 </p>
-                <p className="text-white font-semibold">
-                  Ameer Nawaz Khan
-                </p>
+                <p className="text-white font-semibold">Ameer Nawaz Khan</p>
               </div>
 
               <div className="border-t border-gray-300/10 pt-3">
@@ -506,13 +524,9 @@ export default function BuyData() {
                   Account Number
                 </p>
                 <div className="flex items-center justify-between">
-                  <p className="text-white font-semibold">
-                    03107044833
-                  </p>
+                  <p className="text-white font-semibold">03107044833</p>
                   <button
-                    onClick={() =>
-                      copyToClipboard("03107044833")
-                    }
+                    onClick={() => copyToClipboard("03107044833")}
                     className="text-[#FF7A5C] hover:text-[#FF6B4D]"
                   >
                     <Copy className="w-4 h-4" />
@@ -524,16 +538,14 @@ export default function BuyData() {
                 <p className="text-xs text-white/70 uppercase mb-1">
                   Payment Method
                 </p>
-                <p className="text-white font-semibold">
-                  Easypaisa
-                </p>
+                <p className="text-white font-semibold">Easypaisa</p>
               </div>
             </div>
 
             <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
               <p className="text-sm text-green-300">
-                Send {parseFloat(amountPKR).toFixed(2)} PKR to the above
-                account for {parseFloat(amountTokens).toFixed(6)} USDT
+                Send {parseFloat(amountPKR).toFixed(2)} PKR to the above account
+                for {parseFloat(amountTokens).toFixed(6)} USDT
               </p>
             </div>
 
@@ -610,7 +622,9 @@ export default function BuyData() {
       <Dialog open={flowStep === "buyer_wallet"}>
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-white">Your Wallet Address</DialogTitle>
+            <DialogTitle className="text-white">
+              Your Wallet Address
+            </DialogTitle>
           </DialogHeader>
 
           {currentOrder && wallet && (
@@ -646,7 +660,8 @@ export default function BuyData() {
 
               <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
                 <p className="text-sm text-blue-300">
-                  Waiting for {parseFloat(amountTokens).toFixed(6)} USDT to arrive...
+                  Waiting for {parseFloat(amountTokens).toFixed(6)} USDT to
+                  arrive...
                 </p>
               </div>
 
@@ -665,7 +680,9 @@ export default function BuyData() {
       <Dialog open={flowStep === "complete"}>
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-white">Transaction Complete</DialogTitle>
+            <DialogTitle className="text-white">
+              Transaction Complete
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -680,8 +697,9 @@ export default function BuyData() {
                 Transaction Completed Successfully!
               </p>
               <p className="text-white/70 text-sm">
-                You have successfully received {parseFloat(amountTokens).toFixed(6)}{" "}
-                USDT for {parseFloat(amountPKR).toFixed(2)} PKR
+                You have successfully received{" "}
+                {parseFloat(amountTokens).toFixed(6)} USDT for{" "}
+                {parseFloat(amountPKR).toFixed(2)} PKR
               </p>
             </div>
 

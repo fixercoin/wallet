@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Check, Copy } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
@@ -24,7 +30,12 @@ interface PaymentMethod {
   accountNumber: string;
 }
 
-type SellFlowStep = "form" | "buyer_wallet_waiting" | "confirm_payment" | "crypto_sent" | "complete";
+type SellFlowStep =
+  | "form"
+  | "buyer_wallet_waiting"
+  | "confirm_payment"
+  | "crypto_sent"
+  | "complete";
 
 export default function SellData() {
   const navigate = useNavigate();
@@ -407,7 +418,9 @@ export default function SellData() {
           {/* Calculation Preview */}
           {amountTokens && amountPKR && (
             <div className="p-3 rounded-lg bg-[#1a2540]/30 border border-[#FF7A5C]/20">
-              <div className="text-xs text-white/70 uppercase mb-2">Summary</div>
+              <div className="text-xs text-white/70 uppercase mb-2">
+                Summary
+              </div>
               <div className="text-sm text-white/90">
                 {amountTokens} USDT = {parseFloat(amountPKR).toFixed(2)} PKR
               </div>
@@ -479,7 +492,9 @@ export default function SellData() {
       <Dialog open={flowStep === "buyer_wallet_waiting"}>
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-white">Waiting for Buyer Payment</DialogTitle>
+            <DialogTitle className="text-white">
+              Waiting for Buyer Payment
+            </DialogTitle>
           </DialogHeader>
 
           {currentOrder && buyerWalletAddress && (
@@ -489,11 +504,14 @@ export default function SellData() {
               </div>
 
               <p className="text-sm text-white/70 text-center">
-                Buyer's wallet address to receive {parseFloat(amountTokens).toFixed(6)} USDT:
+                Buyer's wallet address to receive{" "}
+                {parseFloat(amountTokens).toFixed(6)} USDT:
               </p>
 
               <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 break-all">
-                <p className="text-xs text-white/70 uppercase mb-2">Buyer Wallet</p>
+                <p className="text-xs text-white/70 uppercase mb-2">
+                  Buyer Wallet
+                </p>
                 <p className="text-white/90 text-xs font-mono">
                   {buyerWalletAddress}
                 </p>
@@ -509,7 +527,8 @@ export default function SellData() {
               {!orderStatus.buyerPaymentSent ? (
                 <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
                   <p className="text-sm text-blue-300">
-                    Waiting for buyer to send {parseFloat(amountPKR).toFixed(2)} PKR...
+                    Waiting for buyer to send {parseFloat(amountPKR).toFixed(2)}{" "}
+                    PKR...
                   </p>
                 </div>
               ) : (
@@ -539,13 +558,16 @@ export default function SellData() {
       <Dialog open={flowStep === "confirm_payment"}>
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-white">Confirm Payment Received</DialogTitle>
+            <DialogTitle className="text-white">
+              Confirm Payment Received
+            </DialogTitle>
           </DialogHeader>
 
           {paymentMethods.length > 0 && (
             <div className="space-y-4">
               <p className="text-sm text-white/70">
-                Buyer has sent {parseFloat(amountPKR).toFixed(2)} PKR. Ready to send crypto?
+                Buyer has sent {parseFloat(amountPKR).toFixed(2)} PKR. Ready to
+                send crypto?
               </p>
 
               <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
@@ -610,7 +632,8 @@ export default function SellData() {
 
             <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
               <p className="text-sm text-green-300">
-                Send {parseFloat(amountTokens).toFixed(6)} USDT to buyer's wallet
+                Send {parseFloat(amountTokens).toFixed(6)} USDT to buyer's
+                wallet
               </p>
             </div>
 
@@ -644,7 +667,9 @@ export default function SellData() {
       <Dialog open={flowStep === "complete"}>
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-white">Transaction Complete</DialogTitle>
+            <DialogTitle className="text-white">
+              Transaction Complete
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">

@@ -206,6 +206,7 @@ function P2POrderFlowDialogs() {
     <>
       <SellerPaymentMethodDialog />
       <BuyerWalletAddressDialog />
+      <SellerTransferDetailsDialog />
       <CryptoSentDialog />
       <CryptoReceivedDialog />
     </>

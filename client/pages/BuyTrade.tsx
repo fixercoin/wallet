@@ -832,7 +832,7 @@ export default function BuyTrade() {
                     <>
                       <div className="p-3 rounded-lg bg-[#0f1520]/50 border border-[#FF7A5C]/30 space-y-2">
                         <div className="text-xs font-semibold text-white/70">
-                          Seller Payment Details
+                          Make Payment
                         </div>
                         <div>
                           <div className="text-xs text-white/60">

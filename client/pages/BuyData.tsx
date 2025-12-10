@@ -499,7 +499,7 @@ export default function BuyData() {
         <DialogContent className="bg-[#1a2847] border border-gray-300/30 max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-white">
-              Seller Payment Details
+              Make Payment
             </DialogTitle>
           </DialogHeader>
 

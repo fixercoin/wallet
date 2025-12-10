@@ -46,7 +46,6 @@ export function useOrderNotifications() {
       setLoading(true);
       try {
         const query = unreadOnly ? "&unread=true" : "";
-        // Fetch direct notifications + broadcast notifications but filter out self-created ones
         const response = await fetch(
           `/api/p2p/notifications?wallet=${encodeURIComponent(wallet.publicKey)}&includeBroadcast=true${query}`,
         );
@@ -57,9 +56,6 @@ export function useOrderNotifications() {
 
         const data = await response.json();
 
-        // Filter out notifications where the user is the sender (self-created)
-        // This ensures buyers don't receive notifications for orders they created,
-        // and sellers don't receive notifications for orders they created
         const filteredNotifications = (data.data || []).filter(
           (n: OrderNotification) => n.senderWallet !== wallet.publicKey,
         );
@@ -103,6 +99,7 @@ export function useOrderNotifications() {
         amountPKR: number;
       },
       sendPushNotification: boolean = true,
+      fullOrder?: any,
     ) => {
       if (!wallet) {
         console.error("Wallet not connected");
@@ -121,6 +118,7 @@ export function useOrderNotifications() {
             message,
             orderId,
             orderData,
+            fullOrder,
           }),
         });
 
@@ -128,7 +126,6 @@ export function useOrderNotifications() {
           throw new Error(`Failed to create notification: ${response.status}`);
         }
 
-        // Only send push notifications to other users, not to the user creating the notification
         if (sendPushNotification) {
           await pushNotificationService.sendOrderNotification(
             type,

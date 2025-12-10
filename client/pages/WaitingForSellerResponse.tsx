@@ -29,6 +29,8 @@ export default function WaitingForSellerResponse() {
   const [messages, setMessages] = useState<TradeMessage[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [confirmingReceipt, setConfirmingReceipt] = useState(false);
+  const [buyerCryptoReceived, setBuyerCryptoReceived] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
 

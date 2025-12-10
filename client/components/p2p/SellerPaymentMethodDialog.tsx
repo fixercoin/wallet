@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Minus } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -20,6 +20,7 @@ export function SellerPaymentMethodDialog() {
   const { createNotification } = useOrderNotifications();
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [notifying, setNotifying] = useState(false);
+  const [minimized, setMinimized] = useState(false);
 
   const isOpen = activeDialog === "seller_payment_method";
 
@@ -92,17 +93,27 @@ export function SellerPaymentMethodDialog() {
       onOpenChange={(open) => !open && setActiveDialog(null)}
     >
       <DialogContent className="w-full max-w-sm bg-[#1a2847] border border-gray-300/30">
-        <DialogHeader>
-          <DialogTitle className="text-white uppercase">
-            Seller Payment Method
-          </DialogTitle>
-          <DialogDescription className="text-white/70 uppercase text-xs">
-            Share your payment details with the seller
-          </DialogDescription>
+        <DialogHeader className="flex flex-row items-start justify-between">
+          <div className="flex-1">
+            <DialogTitle className="text-white uppercase">
+              Seller Payment Method
+            </DialogTitle>
+            <DialogDescription className="text-white/70 uppercase text-xs">
+              Share your payment details with the seller
+            </DialogDescription>
+          </div>
+          <button
+            onClick={() => setMinimized(!minimized)}
+            className="p-1 rounded hover:bg-gray-700/50 transition-colors flex-shrink-0"
+            title={minimized ? "Maximize" : "Minimize"}
+          >
+            <Minus className="w-5 h-5 text-white/70 hover:text-white" />
+          </button>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Order Summary */}
+        {!minimized && (
+          <div className="space-y-4">
+            {/* Order Summary */}
           <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
             <div className="text-xs text-white/70 uppercase mb-2">
               Order Summary
@@ -218,6 +229,7 @@ export function SellerPaymentMethodDialog() {
             </Button>
           </div>
         </div>
+        )}
       </DialogContent>
     </Dialog>
   );

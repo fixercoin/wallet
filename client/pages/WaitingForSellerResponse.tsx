@@ -377,6 +377,32 @@ export default function WaitingForSellerResponse() {
           </Card>
         )}
 
+        {/* Buyer Confirm Receipt Button */}
+        {order.sellerTransferInitiated && !buyerCryptoReceived && (
+          <Button
+            onClick={handleBuyerReceivedAsset}
+            disabled={confirmingReceipt}
+            className="w-full px-4 py-3 bg-green-600/20 border border-green-500/50 hover:bg-green-600/30 text-green-400 uppercase text-sm font-semibold transition-colors mb-6"
+          >
+            {confirmingReceipt ? "Confirming..." : "I Have Received Crypto"}
+          </Button>
+        )}
+
+        {/* Order Completed Status */}
+        {buyerCryptoReceived && (
+          <Card className="bg-green-600/20 border border-green-500/30 mb-6">
+            <CardContent className="p-4">
+              <p className="text-green-400 font-semibold uppercase flex items-center gap-2">
+                <span className="text-lg">✓</span>
+                Order Complete
+              </p>
+              <p className="text-green-300/80 text-xs mt-2">
+                You confirmed receiving the asset. Transaction completed!
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Order Details */}
         <Card className="bg-[#0f1520]/50 border border-[#FF7A5C]/30 mb-6">
           <CardContent className="p-4">

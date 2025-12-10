@@ -148,17 +148,8 @@ import { NotificationCenter } from "@/components/NotificationCenter";
 import DocumentationPage from "./pages/DocumentationPage";
 import BuyTrade from "./pages/BuyTrade";
 import TokenSearchPage from "./pages/TokenSearchPage";
-import P2PActiveOrders from "./pages/P2PActiveOrders";
-import BuyOrder from "./pages/BuyOrder";
-import SellOrder from "./pages/SellOrder";
 import BuyData from "./pages/BuyData";
 import SellData from "./pages/SellData";
-import AdminDisputes from "./pages/AdminDisputes";
-import WaitingForSellerResponse from "./pages/WaitingForSellerResponse";
-import WaitingForBuyerResponse from "./pages/WaitingForBuyerResponse";
-import SellerOrderConfirmation from "./pages/SellerOrderConfirmation";
-import BuyerOrderConfirmation from "./pages/BuyerOrderConfirmation";
-import OrderComplete from "./pages/OrderComplete";
 import { useLocation } from "react-router-dom";
 import { P2POrderFlowProvider } from "@/contexts/P2POrderFlowContext";
 import { SellerPaymentMethodDialog } from "@/components/p2p/SellerPaymentMethodDialog";
@@ -176,15 +167,8 @@ function AppRoutes() {
       <Route path="/select" element={<Select />} />
       <Route path="/sell-now" element={<SellNow />} />
       <Route path="/buy-crypto" element={<BuyCrypto />} />
-      <Route path="/buy-order" element={<BuyOrder />} />
       <Route path="/buydata" element={<BuyData />} />
-      <Route path="/sell-order" element={<SellOrder />} />
       <Route path="/selldata" element={<SellData />} />
-      <Route path="/buynote" element={<BuyNote />} />
-      <Route path="/sellnote" element={<SellNote />} />
-      <Route path="/verify-sell" element={<VerifySell />} />
-      <Route path="/orders/:status" element={<OrdersList />} />
-      <Route path="/order/:orderId" element={<OrderDetail />} />
       <Route path="/fixorium/add" element={<FixoriumAdd />} />
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />
@@ -210,28 +194,6 @@ function AppRoutes() {
         path="/documentation"
         element={<DocumentationPage onBack={() => window.history.back()} />}
       />
-      <Route path="/p2p/buy-active-orders" element={<P2PActiveOrders />} />
-      <Route path="/p2p/sell-active-orders" element={<P2PActiveOrders />} />
-      <Route path="/p2p/active-orders" element={<P2PActiveOrders />} />
-      <Route path="/p2p/admin-disputes" element={<AdminDisputes />} />
-      <Route path="/express/buy-trade" element={<BuyTrade />} />
-      <Route
-        path="/waiting-for-seller-response"
-        element={<WaitingForSellerResponse />}
-      />
-      <Route
-        path="/waiting-for-buyer-response"
-        element={<WaitingForBuyerResponse />}
-      />
-      <Route
-        path="/seller-order-confirmation"
-        element={<SellerOrderConfirmation />}
-      />
-      <Route
-        path="/buyer-order-confirmation"
-        element={<BuyerOrderConfirmation />}
-      />
-      <Route path="/order-complete" element={<OrderComplete />} />
       <Route path="/search" element={<TokenSearchPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -255,30 +217,7 @@ function AppContent() {
   // Check if current route is a P2P page
   const isP2PPage = () => {
     const path = location.pathname;
-    const p2pRoutes = [
-      "/p2p",
-      "/p2p/buy-active-orders",
-      "/p2p/sell-active-orders",
-      "/p2p/admin-disputes",
-      "/express/buy-trade",
-      "/sell-now",
-      "/buynote",
-      "/sellnote",
-      "/verify-sell",
-      "/waiting-for-seller-response",
-      "/waiting-for-buyer-response",
-      "/seller-order-confirmation",
-      "/buyer-order-confirmation",
-      "/order-complete",
-      "/orders/",
-      "/order/",
-      "/buy-order",
-      "/buydata",
-      "/sell-order",
-      "/selldata",
-    ];
-
-    return p2pRoutes.some((route) => path.startsWith(route));
+    return path.startsWith("/buydata") || path.startsWith("/selldata");
   };
 
   return (

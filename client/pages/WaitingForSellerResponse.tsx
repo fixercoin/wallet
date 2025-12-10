@@ -197,6 +197,48 @@ export default function WaitingForSellerResponse() {
     }
   };
 
+  const handleBuyerReceivedAsset = async () => {
+    if (!order || !wallet?.publicKey) return;
+
+    setConfirmingReceipt(true);
+    try {
+      setBuyerCryptoReceived(true);
+      await updateOrderInBothStorages(order.id, {
+        buyerCryptoReceived: true,
+        status: "COMPLETED",
+      });
+
+      if (order.roomId) {
+        await addTradeMessage({
+          room_id: order.roomId,
+          sender_wallet: wallet.publicKey,
+          message: "✅ I have received the crypto asset",
+        });
+      }
+
+      await createNotification(
+        order.sellerWallet || "",
+        "crypto_received",
+        order.type,
+        order.id,
+        "Buyer confirmed receiving the crypto",
+        {
+          token: order.token,
+          amountTokens: order.amountTokens,
+          amountPKR: order.amountPKR,
+        },
+      );
+
+      toast.success("Order completed successfully!");
+    } catch (error) {
+      console.error("Error confirming receipt:", error);
+      toast.error("Failed to confirm receipt");
+      setBuyerCryptoReceived(false);
+    } finally {
+      setConfirmingReceipt(false);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !order?.roomId || !wallet?.publicKey) return;
 

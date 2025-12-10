@@ -10,6 +10,13 @@ import { ArrowLeft, Loader2, Check, Copy } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { P2PBottomNavigation } from "@/components/P2PBottomNavigation";
 import { PaymentMethodDialog } from "@/components/wallet/PaymentMethodDialog";
 import { PaymentMethodInfoCard } from "@/components/wallet/PaymentMethodInfoCard";
@@ -49,6 +56,9 @@ export default function BuyData() {
   const [editingPaymentMethodId, setEditingPaymentMethodId] = useState<
     string | undefined
   >();
+  const [selectedToken, setSelectedToken] = useState<"USDT" | "FIXERCOIN">(
+    "USDT",
+  );
   const [exchangeRate, setExchangeRate] = useState<number>(280);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [amountPKR, setAmountPKR] = useState("");
@@ -63,11 +73,12 @@ export default function BuyData() {
     sellerCryptoSent?: boolean;
   }>({});
 
-  // Fetch exchange rate on mount
+  // Fetch exchange rate based on selected token
   useEffect(() => {
     const fetchRate = async () => {
       try {
-        const response = await fetch("/api/token/price?token=USDT");
+        const tokenParam = selectedToken === "USDT" ? "USDT" : "FIXERCOIN";
+        const response = await fetch(`/api/token/price?token=${tokenParam}`);
         if (!response.ok) throw new Error("Failed to fetch rate");
         const data = await response.json();
         const rate = data.rate || data.priceInPKR || 280;
@@ -79,7 +90,7 @@ export default function BuyData() {
     };
 
     fetchRate();
-  }, []);
+  }, [selectedToken]);
 
   // Fetch payment methods
   const fetchPaymentMethods = useCallback(async () => {
@@ -190,7 +201,7 @@ export default function BuyData() {
           id: `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           type: "BUY",
           sellerWallet: "",
-          token: "USDT",
+          token: selectedToken,
           pricePKRPerQuote: exchangeRate,
           minAmountTokens: 0,
           maxAmountTokens: Infinity,
@@ -200,7 +211,7 @@ export default function BuyData() {
         wallet.publicKey,
         "BUY",
         {
-          token: "USDT",
+          token: selectedToken,
           amountTokens: parseFloat(amountTokens),
           amountPKR: parseFloat(amountPKR),
           price: exchangeRate,
@@ -226,9 +237,9 @@ export default function BuyData() {
           "new_buy_order",
           "BUY",
           createdOrder.id,
-          `New buy order: ${parseFloat(amountTokens).toFixed(2)} USDT for ${parseFloat(amountPKR).toFixed(2)} PKR`,
+          `New buy order: ${parseFloat(amountTokens).toFixed(2)} ${selectedToken} for ${parseFloat(amountPKR).toFixed(2)} PKR`,
           {
-            token: createdOrder.token,
+            token: selectedToken,
             amountTokens: parseFloat(amountTokens),
             amountPKR: parseFloat(amountPKR),
             orderId: createdOrder.id,
@@ -363,14 +374,28 @@ export default function BuyData() {
             </p>
           </div>
 
-          {/* Token Display */}
+          {/* Token Selection Dropdown */}
           <div>
             <label className="block text-xs font-semibold text-white/80 uppercase mb-2">
               Token
             </label>
-            <div className="px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold">
-              USDT
-            </div>
+            <Select value={selectedToken} onValueChange={(value) => {
+              setSelectedToken(value as "USDT" | "FIXERCOIN");
+              setAmountPKR("");
+              setAmountTokens("");
+            }}>
+              <SelectTrigger className="w-full px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold focus:ring-[#FF7A5C]/50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a2847] border border-gray-300/20">
+                <SelectItem value="USDT" className="text-white">
+                  USDT
+                </SelectItem>
+                <SelectItem value="FIXERCOIN" className="text-white">
+                  FIXERCOIN
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Price Display */}
@@ -379,7 +404,7 @@ export default function BuyData() {
               Price
             </label>
             <div className="px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold">
-              1 USDT = {exchangeRate.toFixed(2)} PKR
+              1 {selectedToken} = {exchangeRate.toFixed(2)} PKR
             </div>
           </div>
 
@@ -398,14 +423,14 @@ export default function BuyData() {
             />
           </div>
 
-          {/* Estimated USDT */}
+          {/* Estimated Token */}
           <div>
             <label className="block text-xs font-semibold text-white/80 uppercase mb-2">
-              Estimated USDT
+              Estimated {selectedToken}
             </label>
             <div className="px-4 py-3 rounded-lg bg-[#1a2540]/50 border border-gray-300/20 text-white/90 font-semibold">
               {amountTokens ? parseFloat(amountTokens).toFixed(6) : "0.000000"}{" "}
-              USDT
+              {selectedToken}
             </div>
           </div>
 
@@ -416,7 +441,7 @@ export default function BuyData() {
                 Summary
               </div>
               <div className="text-sm text-white/90">
-                {amountTokens} USDT = {parseFloat(amountPKR).toFixed(2)} PKR
+                {amountTokens} {selectedToken} = {parseFloat(amountPKR).toFixed(2)} PKR
               </div>
             </div>
           )}
@@ -554,7 +579,7 @@ export default function BuyData() {
             <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
               <p className="text-sm text-green-300">
                 SEND {parseFloat(amountPKR).toFixed(2)} PKR TO THE ABOVE ACCOUNT
-                FOR {parseFloat(amountTokens).toFixed(6)} USDT
+                FOR {parseFloat(amountTokens).toFixed(6)} {selectedToken}
               </p>
             </div>
 
@@ -602,7 +627,7 @@ export default function BuyData() {
               <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
                 <p className="text-sm text-blue-300">
                   Transaction: {parseFloat(amountPKR).toFixed(2)} PKR →{" "}
-                  {parseFloat(amountTokens).toFixed(6)} USDT
+                  {parseFloat(amountTokens).toFixed(6)} {selectedToken}
                 </p>
               </div>
             ) : (
@@ -669,7 +694,7 @@ export default function BuyData() {
 
               <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
                 <p className="text-sm text-blue-300">
-                  Waiting for {parseFloat(amountTokens).toFixed(6)} USDT to
+                  Waiting for {parseFloat(amountTokens).toFixed(6)} {selectedToken} to
                   arrive...
                 </p>
               </div>
@@ -707,7 +732,7 @@ export default function BuyData() {
               </p>
               <p className="text-white/70 text-sm">
                 You have successfully received{" "}
-                {parseFloat(amountTokens).toFixed(6)} USDT for{" "}
+                {parseFloat(amountTokens).toFixed(6)} {selectedToken} for{" "}
                 {parseFloat(amountPKR).toFixed(2)} PKR
               </p>
             </div>

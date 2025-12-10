@@ -96,9 +96,12 @@ export const onRequestPost = async ({
   env: Env;
 }) => {
   try {
-    if (!env.STAKING_KV) {
+    let kvStore: any;
+    try {
+      kvStore = getKVStore(env);
+    } catch (error) {
       return jsonResponse(500, {
-        error: "KV storage not configured",
+        error: "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
       });
     }
 
@@ -110,8 +113,6 @@ export const onRequestPost = async ({
         error: "Missing required fields",
       });
     }
-
-    const kvStore = new KVStore(env.STAKING_KV);
 
     const dispute = await kvStore.createDispute({
       escrowId,
@@ -147,9 +148,12 @@ export const onRequestPut = async ({
   env: Env;
 }) => {
   try {
-    if (!env.STAKING_KV) {
+    let kvStore: any;
+    try {
+      kvStore = getKVStore(env);
+    } catch (error) {
       return jsonResponse(500, {
-        error: "KV storage not configured",
+        error: "Storage not configured. Provide either STAKING_KV or Appwrite credentials",
       });
     }
 
@@ -169,8 +173,6 @@ export const onRequestPut = async ({
         error: "Invalid resolution type",
       });
     }
-
-    const kvStore = new KVStore(env.STAKING_KV);
     const dispute = await kvStore.getDispute(disputeId);
 
     if (!dispute) {

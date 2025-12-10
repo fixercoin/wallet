@@ -131,29 +131,66 @@ export function BuyerWalletAddressDialog() {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Order Summary */}
+          {/* Buyer Order Summary */}
           <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
-            <div className="text-xs text-white/70 uppercase mb-2">
-              Order Summary
+            <div className="text-xs text-white/70 uppercase mb-3 font-semibold">
+              Buyer Order Summary
             </div>
-            <div className="space-y-2 text-sm text-white">
-              <div className="flex justify-between">
-                <span>Token:</span>
-                <span className="font-semibold">
-                  {currentOrder.token || "USDT"}
+            <div className="space-y-3">
+              {/* Order ID */}
+              <div className="flex justify-between items-start">
+                <span className="text-xs text-white/60">Order ID:</span>
+                <span className="text-sm font-mono text-white/90 truncate ml-2">
+                  {currentOrder.id}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span>Amount:</span>
-                <span className="font-semibold">
-                  {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
-                </span>
+
+              {/* Token & Amount */}
+              <div className="border-t border-gray-300/10 pt-3">
+                <div className="flex justify-between">
+                  <span className="text-xs text-white/60">Token:</span>
+                  <span className="text-sm font-semibold text-white">
+                    {currentOrder.token || "USDT"}
+                  </span>
+                </div>
+                <div className="flex justify-between mt-2">
+                  <span className="text-xs text-white/60">Quantity:</span>
+                  <span className="text-sm font-semibold text-white">
+                    {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span>Price:</span>
-                <span className="font-semibold">
-                  {pkrAmount.toFixed(2)} PKR
-                </span>
+
+              {/* Price & Payment Method */}
+              <div className="border-t border-gray-300/10 pt-3">
+                <div className="flex justify-between">
+                  <span className="text-xs text-white/60">Price:</span>
+                  <span className="text-sm font-semibold text-green-400">
+                    {pkrAmount.toFixed(2)} PKR
+                  </span>
+                </div>
+                <div className="flex justify-between mt-2">
+                  <span className="text-xs text-white/60">Payment:</span>
+                  <span className="text-sm font-semibold text-white capitalize">
+                    {currentOrder.payment_method || "Unknown"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Order Type & Status */}
+              <div className="border-t border-gray-300/10 pt-3">
+                <div className="flex justify-between">
+                  <span className="text-xs text-white/60">Order Type:</span>
+                  <span className="text-sm font-semibold uppercase px-2 py-1 rounded bg-blue-500/20 text-blue-300">
+                    {currentOrder.type === "buy" ? "Buying" : "Selling"}
+                  </span>
+                </div>
+                <div className="flex justify-between mt-2">
+                  <span className="text-xs text-white/60">Status:</span>
+                  <span className="text-sm font-semibold uppercase px-2 py-1 rounded bg-purple-500/20 text-purple-300">
+                    {currentOrder.status || "Active"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

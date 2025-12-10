@@ -44,6 +44,20 @@ export default function SellerOrderConfirmation() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
 
+  const isBuyer = wallet?.publicKey === order?.buyerWallet;
+
+  const shortenAddress = (addr: string, chars = 6): string => {
+    if (!addr) return "";
+    return `${addr.slice(0, chars)}...${addr.slice(-chars)}`;
+  };
+
+  const handleCopy = (value: string, label: string) => {
+    navigator.clipboard.writeText(value);
+    setCopiedValue(value);
+    toast.success(`${label} copied!`);
+    setTimeout(() => setCopiedValue(null), 2000);
+  };
+
   // Load order
   useEffect(() => {
     const loadOrder = async () => {
@@ -67,6 +81,13 @@ export default function SellerOrderConfirmation() {
             (loadedOrder.status as "PENDING" | "ACCEPTED" | "REJECTED") ||
               "PENDING",
           );
+          // Restore confirmation states from stored order
+          setBuyerPaymentConfirmed(loadedOrder.buyerPaymentConfirmed ?? false);
+          setSellerPaymentReceived(loadedOrder.sellerPaymentReceived ?? false);
+          setSellerTransferInitiated(
+            loadedOrder.sellerTransferInitiated ?? false,
+          );
+          setBuyerCryptoReceived(loadedOrder.buyerCryptoReceived ?? false);
           // Determine completion status based on confirmation flags
           if (loadedOrder.buyerCryptoReceived) {
             setCompletionStatus("BUYER_RECEIVED");
@@ -89,6 +110,36 @@ export default function SellerOrderConfirmation() {
 
     loadOrder();
   }, [orderId]);
+
+  // Poll for order updates
+  useEffect(() => {
+    if (!order?.id) return;
+
+    const pollOrderStatus = async () => {
+      try {
+        const updatedOrder = await syncOrderFromStorage(order.id);
+        if (updatedOrder) {
+          setOrder(updatedOrder);
+          setBuyerPaymentConfirmed(updatedOrder.buyerPaymentConfirmed ?? false);
+          setSellerPaymentReceived(updatedOrder.sellerPaymentReceived ?? false);
+          setSellerTransferInitiated(
+            updatedOrder.sellerTransferInitiated ?? false,
+          );
+          setBuyerCryptoReceived(updatedOrder.buyerCryptoReceived ?? false);
+          if (updatedOrder.buyerCryptoReceived) {
+            setCompletionStatus("BUYER_RECEIVED");
+          } else if (updatedOrder.sellerTransferInitiated) {
+            setCompletionStatus("COMPLETED");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to poll order status:", error);
+      }
+    };
+
+    const interval = setInterval(pollOrderStatus, 1000);
+    return () => clearInterval(interval);
+  }, [order?.id]);
 
   // Fetch exchange rate
   useEffect(() => {

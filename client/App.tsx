@@ -286,6 +286,19 @@ function App() {
     initPushNotifications().catch((error) => {
       console.warn("Failed to initialize push notifications:", error);
     });
+
+    // Sync any orders from localStorage to KV storage on app startup
+    syncAllOrdersFromLocalStorage()
+      .then((result) => {
+        if (result.synced > 0) {
+          console.log(
+            `[App Init] Synced ${result.synced}/${result.total} orders from localStorage to KV`,
+          );
+        }
+      })
+      .catch((error) => {
+        console.warn("Failed to sync orders from localStorage:", error);
+      });
   }, [initPushNotifications]);
 
   return (

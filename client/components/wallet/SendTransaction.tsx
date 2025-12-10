@@ -1015,20 +1015,22 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     />
                   </div>
 
-                  <Button
-                    onClick={handleContinue}
-                    className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase rounded-lg"
-                    disabled={!recipient || !amount}
-                  >
-                    Continue
-                  </Button>
-                  <Button
-                    onClick={onBack}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 rounded-lg transition-colors uppercase"
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back
-                  </Button>
+                  <div className="space-y-3">
+                    <Button
+                      onClick={handleContinue}
+                      className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase rounded-lg"
+                      disabled={!recipient || !amount}
+                    >
+                      Continue
+                    </Button>
+                    <Button
+                      onClick={onBack}
+                      className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 rounded-lg transition-colors uppercase"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Back
+                    </Button>
+                  </div>
                 </>
               ) : (
                 <>

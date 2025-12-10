@@ -186,19 +186,25 @@ export async function createOrderInAPI(
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error(
-        `[P2P Order API] Failed to create order in KV: ${response.status} - ${errorData.error}`,
+        `[P2P Order API] ❌ Failed to create order in KV: ${response.status} - ${errorData.error || "Unknown error"}`,
       );
-      // Return the order anyway since it's backed up in localStorage
-      return order;
+      throw new Error(
+        `Failed to save order to server: ${response.status} ${errorData.error || ""}`,
+      );
     }
 
     const data = await response.json();
-    console.log(`[P2P Order API] ✅ Order created in KV: ${order.id}`);
+    console.log(
+      `[P2P Order API] ✅ Order created in KV: ${order.id} (Response: ${data.order ? "with order object" : "confirmed"})`,
+    );
     return data.order as CreatedOrder;
   } catch (error) {
-    console.error("Error creating order in API:", error);
-    // Order is backed up in localStorage, so return it anyway
-    return order;
+    console.error(
+      `[P2P Order API] ❌ Error creating order in API:`,
+      error instanceof Error ? error.message : String(error),
+    );
+    // Re-throw the error so the caller knows the KV save failed
+    throw error;
   }
 }
 

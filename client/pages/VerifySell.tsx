@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
+import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +47,7 @@ export default function VerifySell() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { wallet } = useWallet();
+  const { createNotification } = useOrderNotifications();
 
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
@@ -286,6 +288,19 @@ export default function VerifySell() {
       saveChatMessage(message);
       setChatLog((prev) => [...prev, message]);
       setSellerConfirmed(true);
+
+      await createNotification(
+        selectedOrder.buyerWallet,
+        "transfer_initiated",
+        "SELL",
+        selectedOrder.id,
+        `Seller completed transfer of ${selectedOrder.amountTokens.toFixed(6)} ${selectedOrder.token}`,
+        {
+          token: selectedOrder.token,
+          amountTokens: selectedOrder.amountTokens,
+          amountPKR: selectedOrder.amountPKR,
+        },
+      );
 
       toast({
         title: "Transfer Complete",
@@ -528,7 +543,9 @@ export default function VerifySell() {
               <Separator className="bg-[#FF7A5C]/20" />
 
               <div className="space-y-3">
-                <div className="text-xs font-semibold text-white/70">Chat with Buyer</div>
+                <div className="text-xs font-semibold text-white/70">
+                  Chat with Buyer
+                </div>
                 <div className="max-h-48 overflow-y-auto custom-scrollbar space-y-2 p-3 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
                   {chatLog.length === 0 ? (
                     <div className="text-xs text-white/60 text-center py-4">
@@ -545,7 +562,9 @@ export default function VerifySell() {
                         }`}
                       >
                         <div className="font-semibold text-white/80">
-                          {msg.senderRole === "buyer" ? "🛒 Buyer" : "🏪 Seller"}
+                          {msg.senderRole === "buyer"
+                            ? "🛒 Buyer"
+                            : "🏪 Seller"}
                         </div>
                         <div>{msg.text}</div>
                         {msg.metadata?.attachmentDataUrl && (
@@ -570,9 +589,7 @@ export default function VerifySell() {
                     placeholder="Type message..."
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
-                    onKeyPress={(e) =>
-                      e.key === "Enter" && handleSendMessage()
-                    }
+                    onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                   />
                   <input
                     id="attach-input-verify"

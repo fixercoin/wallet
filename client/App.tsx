@@ -184,6 +184,7 @@ function AppRoutes() {
       <Route path="/fiat/deposit" element={<FiatDeposit />} />
       <Route path="/fiat/withdraw" element={<FiatWithdraw />} />
       <Route path="/fiat/exchange" element={<FiatExchange />} />
+      <Route path="/fiat/payment" element={<FiatPayment />} />
       <Route path="/fiat/transactions" element={<FiatTransactions />} />
       <Route path="/fiat/admin" element={<FiatAdmin />} />
       <Route

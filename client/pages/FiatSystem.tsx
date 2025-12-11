@@ -519,7 +519,6 @@ function FiatWithdraw({
         return;
       }
 
-      updatePaymentMethodLastUsed(paymentMethod.id);
       toast.success(
         `Successfully withdrawn ${amount} ${currency} to ID: ${paymentMethod.userId}`,
       );

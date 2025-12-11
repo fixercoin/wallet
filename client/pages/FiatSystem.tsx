@@ -194,7 +194,7 @@ export default function FiatSystem() {
                       <div className="grid grid-cols-3 gap-3 pt-6">
                         <Button
                           onClick={() => setActiveTab("deposit")}
-                          className="flex flex-col items-center justify-center py-8 rounded-xl font-bold uppercase text-sm bg-transparent border-2 border-green-500 text-green-400 hover:bg-green-500/10 transition-all duration-300"
+                          className="flex flex-col items-center justify-center py-8 rounded-xl font-bold uppercase text-sm bg-transparent border border-green-500 text-green-400 hover:bg-green-500/10 transition-all duration-300"
                         >
                           <Plus className="h-6 w-6 mb-1" />
                           DEPOSIT

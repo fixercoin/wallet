@@ -1,12 +1,14 @@
 import { RequestHandler } from "express";
 import { getKVStorage } from "../lib/kv-storage";
 
-// Admin wallet addresses (hardcoded)
-const ADMIN_WALLETS = [
-  "admin1WalletAddress",
-  "admin2WalletAddress",
-  // Add more admin wallets as needed
-];
+// Admin wallet addresses (from environment or hardcoded defaults)
+const ADMIN_WALLETS = process.env.FIAT_ADMIN_WALLETS
+  ? process.env.FIAT_ADMIN_WALLETS.split(",").map((w) => w.trim())
+  : [
+      "admin1WalletAddress",
+      "admin2WalletAddress",
+      // Add more admin wallets as needed
+    ];
 
 // Transaction types
 export enum TransactionType {

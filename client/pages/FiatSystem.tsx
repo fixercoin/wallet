@@ -126,18 +126,6 @@ export default function FiatSystem() {
       <div className="w-full max-w-lg mx-auto px-4 py-4 relative z-20">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <Button
-            onClick={() => navigate(-1)}
-            variant="ghost"
-            size="sm"
-            className="text-gray-400 hover:text-white"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            BACK
-          </Button>
-          <h1 className="text-2xl font-bold text-white uppercase">
-            FIAT SYSTEM
-          </h1>
           {wallet && ADMIN_WALLETS.includes(wallet) && (
             <Button
               onClick={() => navigate("/fiat/admin")}

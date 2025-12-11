@@ -46,11 +46,11 @@ export function PaymentMethodSetup({
 
     setLoading(true);
     try {
-      const method = savePaymentMethod(wallet, formData);
+      const method = await savePaymentMethod(wallet, formData);
       setSavedMethod(method);
       onMethodSaved?.(method);
       toast.success("Payment method saved successfully!");
-      
+
       setFormData({
         name: "",
         idCard: "",
@@ -58,7 +58,13 @@ export function PaymentMethodSetup({
         walletAddress: "",
       });
     } catch (error) {
-      toast.error("Failed to save payment method");
+      const errorMsg =
+        error instanceof Error ? error.message : "Failed to save payment method";
+      if (errorMsg.includes("ID already registered")) {
+        toast.error("ID already registered");
+      } else {
+        toast.error(errorMsg);
+      }
       console.error(error);
     } finally {
       setLoading(false);
@@ -82,7 +88,7 @@ export function PaymentMethodSetup({
               </div>
             </div>
 
-            <h3 className="text-xl font-bold text-center text-green-100 mb-6">
+            <h3 className="text-xl font-bold text-center text-green-100 mb-6 uppercase">
               PAYMENT METHOD SAVED
             </h3>
 
@@ -131,7 +137,7 @@ export function PaymentMethodSetup({
 
             <Button
               onClick={() => setSavedMethod(null)}
-              className="w-full mt-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-2 rounded-lg"
+              className="w-full mt-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-2 rounded-lg uppercase"
             >
               Add Another Method
             </Button>

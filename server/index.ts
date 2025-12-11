@@ -101,6 +101,15 @@ import {
   handleListMatches,
   handleCancelMatch,
 } from "./routes/p2p-matching";
+import {
+  handleGetBalance,
+  handleDeposit,
+  handleWithdraw,
+  handleExchange,
+  handleGetPriceRatio,
+  handleUpdatePriceRatio,
+  handleGetTransactions,
+} from "./routes/fiat-system";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();
@@ -819,6 +828,15 @@ export async function createServer(): Promise<express.Application> {
   app.post("/api/p2p/notifications", handleCreateNotification);
   app.put("/api/p2p/notifications", handleMarkNotificationAsRead);
   app.delete("/api/p2p/notifications", handleDeleteNotification);
+
+  // Fiat System routes (USDT/PKR deposit, withdraw, exchange)
+  app.get("/api/fiat/balance", handleGetBalance);
+  app.post("/api/fiat/deposit", handleDeposit);
+  app.post("/api/fiat/withdraw", handleWithdraw);
+  app.post("/api/fiat/exchange", handleExchange);
+  app.get("/api/fiat/price-ratio", handleGetPriceRatio);
+  app.put("/api/fiat/price-ratio", handleUpdatePriceRatio);
+  app.get("/api/fiat/transactions", handleGetTransactions);
 
   // Health check
   app.get("/health", (req, res) => {

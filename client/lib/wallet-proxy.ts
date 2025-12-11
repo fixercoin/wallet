@@ -132,12 +132,12 @@ export const getBalance = async (publicKey: string): Promise<number> => {
     // Use server endpoint for balance fetching
     // This avoids CORS issues and ensures reliability
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for Cloudflare Functions
 
     try {
       const response = await fetch(
         `/api/wallet/balance?publicKey=${encodeURIComponent(publicKey)}`,
-        { signal: controller.signal },
+        { signal: controller.signal, cache: "no-store" },
       );
 
       clearTimeout(timeoutId);
@@ -203,12 +203,12 @@ export const getTokenAccounts = async (
     // Use RPC-based token fetching (free endpoints with Alchemy fallback)
     console.log("[TokenAccounts] Fetching token accounts via RPC endpoint...");
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for Cloudflare Functions
 
     try {
       const response = await fetch(
         `/api/wallet/token-accounts?publicKey=${encodeURIComponent(publicKey)}`,
-        { signal: controller.signal },
+        { signal: controller.signal, cache: "no-store" },
       );
 
       clearTimeout(timeoutId);

@@ -213,65 +213,6 @@ export default function FiatSystem() {
             </Card>
           )}
 
-          {/* PAYMENT TAB */}
-          <div className="mt-6 animate-in fade-in duration-300">
-            <div className="space-y-4">
-              {paymentMethod ? (
-                <>
-                  <Card className="bg-gradient-to-br from-green-600/20 to-emerald-700/10 border-green-500/20 rounded-2xl shadow-xl">
-                    <CardContent className="pt-6">
-                      <div className="text-center mb-6">
-                        <p className="text-green-300 text-sm font-bold uppercase mb-2">
-                          Active Payment Method
-                        </p>
-                        <h3 className="text-3xl font-bold text-white font-mono">
-                          {paymentMethod.userId}
-                        </h3>
-                      </div>
-
-                      <div className="bg-gray-800/50 rounded-xl p-4 space-y-3 border border-gray-700/30">
-                        <div className="text-left">
-                          <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
-                            METHOD
-                          </p>
-                          <p className="text-white font-semibold">
-                            {paymentMethod.name}
-                          </p>
-                        </div>
-                        <div className="text-left">
-                          <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
-                            WALLET
-                          </p>
-                          <p className="text-white font-mono text-sm break-all">
-                            {paymentMethod.walletAddress}
-                          </p>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-gray-400 text-center mt-4">
-                        Use this ID to receive fiat and crypto transfers
-                      </p>
-
-                      <Button
-                        onClick={() => setPaymentMethod(null)}
-                        className="w-full mt-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold py-2 rounded-lg uppercase"
-                      >
-                        Add New Method
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </>
-              ) : (
-                <PaymentMethodSetup
-                  wallet={wallet}
-                  onMethodSaved={(method) => {
-                    setPaymentMethod(method);
-                    toast.success("Payment method created successfully!");
-                  }}
-                />
-              )}
-            </div>
-          </div>
         </div>
       </div>
     </div>

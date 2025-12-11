@@ -28,6 +28,11 @@ export function CryptoReceivedDialog() {
 
     setConfirming(true);
     try {
+      // Validate order ID exists
+      if (!currentOrder.id) {
+        throw new Error("Order ID is missing. Cannot update order status.");
+      }
+
       // Support both field name formats from server/client
       const pkrAmount =
         typeof currentOrder.amountPKR === "number"
@@ -54,7 +59,10 @@ export function CryptoReceivedDialog() {
       );
 
       if (!updateResponse.ok) {
-        throw new Error("Failed to update order status");
+        const errorData = await updateResponse.json().catch(() => ({}));
+        const errorMessage = errorData?.error || "Failed to update order status";
+        const statusCode = updateResponse.status;
+        throw new Error(`${errorMessage} (Status: ${statusCode})`);
       }
 
       // Send final notification to seller confirming crypto was received
@@ -81,8 +89,9 @@ export function CryptoReceivedDialog() {
         resetFlow();
       }, 500);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       console.error("Error completing order:", error);
-      toast.error("Failed to complete order");
+      toast.error(`Failed to complete order: ${errorMessage}`);
     } finally {
       setConfirming(false);
     }

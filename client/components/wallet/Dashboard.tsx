@@ -28,11 +28,6 @@ import {
   Search as SearchIcon,
   Headphones,
 } from "lucide-react";
-import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
-import {
-  getPaymentReceivedNotifications,
-  saveNotification,
-} from "@/lib/p2p-chat";
 import { useWallet } from "@/contexts/WalletContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
@@ -53,7 +48,6 @@ import { FlyingPrizeBox } from "./FlyingPrizeBox";
 import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
-import { getUnreadNotifications } from "@/lib/p2p-chat";
 import { Zap } from "lucide-react";
 
 interface DashboardProps {
@@ -69,7 +63,6 @@ interface DashboardProps {
   onLock: () => void;
   onBurn: () => void;
   onStakeTokens?: () => void;
-  onP2PTrade?: () => void;
 }
 
 const QUEST_TASKS = [
@@ -115,7 +108,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onLock,
   onBurn,
   onStakeTokens,
-  onP2PTrade,
 }) => {
   const {
     wallet,

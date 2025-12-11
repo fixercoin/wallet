@@ -543,7 +543,9 @@ export default function VerifySell() {
               <Separator className="bg-[#FF7A5C]/20" />
 
               <div className="space-y-3">
-                <div className="text-xs font-semibold text-white/70">Chat with Buyer</div>
+                <div className="text-xs font-semibold text-white/70">
+                  Chat with Buyer
+                </div>
                 <div className="max-h-48 overflow-y-auto custom-scrollbar space-y-2 p-3 bg-[#0f1520]/50 rounded-lg border border-[#FF7A5C]/20">
                   {chatLog.length === 0 ? (
                     <div className="text-xs text-white/60 text-center py-4">
@@ -560,7 +562,9 @@ export default function VerifySell() {
                         }`}
                       >
                         <div className="font-semibold text-white/80">
-                          {msg.senderRole === "buyer" ? "🛒 Buyer" : "🏪 Seller"}
+                          {msg.senderRole === "buyer"
+                            ? "🛒 Buyer"
+                            : "🏪 Seller"}
                         </div>
                         <div>{msg.text}</div>
                         {msg.metadata?.attachmentDataUrl && (
@@ -585,9 +589,7 @@ export default function VerifySell() {
                     placeholder="Type message..."
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
-                    onKeyPress={(e) =>
-                      e.key === "Enter" && handleSendMessage()
-                    }
+                    onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                   />
                   <input
                     id="attach-input-verify"

@@ -20,6 +20,7 @@ export function BuyerWalletAddressDialog() {
     currentOrder,
     setActiveDialog,
     setSellerConfirmed,
+    openCryptoSentDialog,
   } = useP2POrderFlow();
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();

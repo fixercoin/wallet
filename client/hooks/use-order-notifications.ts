@@ -154,6 +154,37 @@ export function useOrderNotifications() {
     [wallet],
   );
 
+  const deleteNotification = useCallback(
+    async (notificationId: string) => {
+      if (!wallet) return;
+
+      try {
+        const response = await fetch(
+          `/api/p2p/notifications?wallet=${encodeURIComponent(wallet.publicKey)}&notificationId=${encodeURIComponent(notificationId)}`,
+          {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ notificationId }),
+          },
+        );
+
+        if (!response.ok) {
+          console.warn(
+            `Failed to delete notification: ${response.status}`,
+          );
+          return;
+        }
+
+        setNotifications((prev) =>
+          prev.filter((n) => n.id !== notificationId),
+        );
+      } catch (error) {
+        console.warn("Error deleting notification:", error);
+      }
+    },
+    [wallet],
+  );
+
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
       const response = await fetch("/api/p2p/notifications", {
@@ -210,12 +241,40 @@ export function useOrderNotifications() {
     return () => clearInterval(interval);
   }, [wallet, fetchNotifications]);
 
+  useEffect(() => {
+    if (notifications.length === 0) return;
+
+    const now = Date.now();
+    const TEN_MINUTES = 10 * 60 * 1000;
+
+    const timers = notifications.map((notification) => {
+      const age = now - notification.createdAt;
+      const timeUntilDelete = Math.max(0, TEN_MINUTES - age);
+
+      if (timeUntilDelete === 0) {
+        deleteNotification(notification.id);
+        return null;
+      }
+
+      return setTimeout(() => {
+        deleteNotification(notification.id);
+      }, timeUntilDelete);
+    });
+
+    return () => {
+      timers.forEach((timer) => {
+        if (timer) clearTimeout(timer);
+      });
+    };
+  }, [notifications, deleteNotification]);
+
   return {
     notifications,
     unreadCount,
     loading,
     fetchNotifications,
     createNotification,
+    deleteNotification,
     markAsRead,
     showNotificationToast,
   };

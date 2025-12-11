@@ -223,12 +223,9 @@ function P2POrderFlowDialogs() {
 function AppContent() {
   const location = useLocation();
 
-  // Check if current route is a P2P transaction page (not setup)
+  // Check if current route is a P2P page
   const isP2PPage = () => {
     const path = location.pathname;
-    // Exclude P2P setup pages from P2P flow dialogs
-    if (path.startsWith("/p2p/setup")) return false;
-
     return (
       path.startsWith("/buydata") ||
       path.startsWith("/selldata") ||

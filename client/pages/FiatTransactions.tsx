@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Download } from "lucide-react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 
 export interface Transaction {
@@ -22,19 +22,19 @@ export interface Transaction {
 
 export default function FiatTransactions() {
   const navigate = useNavigate();
-  const { publicKey } = useWallet();
+  const { wallet } = useWallet();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "deposit" | "withdraw" | "exchange">("all");
 
   useEffect(() => {
     const fetchTransactions = async () => {
-      if (!publicKey) return;
+      if (!wallet) return;
 
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/fiat/transactions?wallet=${publicKey.toString()}`,
+          `/api/fiat/transactions?wallet=${wallet}`,
         );
         const data = await response.json();
         setTransactions(data.transactions || []);
@@ -47,9 +47,9 @@ export default function FiatTransactions() {
     };
 
     fetchTransactions();
-  }, [publicKey]);
+  }, [wallet]);
 
-  if (!publicKey) {
+  if (!wallet) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#1f1f1f] to-[#2a2a2a] text-white flex items-center justify-center">
         <Card className="w-full max-w-lg mx-4">

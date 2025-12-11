@@ -435,6 +435,14 @@ export const handleGetP2POrder: RequestHandler = async (req, res) => {
       });
     }
 
+    console.log(`[P2P Orders] Returning order ${orderId} with fields:`, {
+      id: order.id,
+      status: order.status,
+      sellerTransferInitiated: order.sellerTransferInitiated,
+      buyerCryptoReceived: order.buyerCryptoReceived,
+      sellerPaymentReceived: order.sellerPaymentReceived,
+    });
+
     // Return in consistent format with list endpoint
     res.json({
       success: true,

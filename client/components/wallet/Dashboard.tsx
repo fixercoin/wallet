@@ -1150,12 +1150,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               "****"
                             )}
                           </div>
-                          <Button
-                            onClick={onP2PTrade || onReceive}
-                            className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-5 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
-                          >
-                            P2P EXPRESS
-                          </Button>
                         </div>
                         <div
                           className={`text-xs ${isPositive ? "text-green-400" : "text-red-400"}`}

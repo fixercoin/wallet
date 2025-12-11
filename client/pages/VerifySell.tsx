@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/contexts/WalletContext";
+import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import {
   Dialog,
   DialogContent,

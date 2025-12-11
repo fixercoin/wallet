@@ -1,0 +1,346 @@
+/* P2P-specific styles - keep isolated from wallet dashboard */
+
+@layer base {
+  /* P2P page styling for dark grey theme and mobile fullscreen */
+  .express-p2p-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    background: hsl(var(--background)) !important;
+  }
+
+  .express-p2p-page p,
+  .express-p2p-page span,
+  .express-p2p-page a,
+  .express-p2p-page li,
+  .express-p2p-page label,
+  .express-p2p-page small,
+  .express-p2p-page strong,
+  .express-p2p-page em,
+  .express-p2p-page h1,
+  .express-p2p-page h2,
+  .express-p2p-page h3,
+  .express-p2p-page h4,
+  .express-p2p-page h5,
+  .express-p2p-page h6,
+  .express-p2p-page input,
+  .express-p2p-page textarea,
+  .express-p2p-page select,
+  .express-p2p-page div {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Light-theme override for express-p2p pages (white background with dark text) */
+  .express-p2p-page.light-theme p,
+  .express-p2p-page.light-theme span,
+  .express-p2p-page.light-theme a,
+  .express-p2p-page.light-theme li,
+  .express-p2p-page.light-theme label,
+  .express-p2p-page.light-theme small,
+  .express-p2p-page.light-theme strong,
+  .express-p2p-page.light-theme em,
+  .express-p2p-page.light-theme h1,
+  .express-p2p-page.light-theme h2,
+  .express-p2p-page.light-theme h3,
+  .express-p2p-page.light-theme h4,
+  .express-p2p-page.light-theme h5,
+  .express-p2p-page.light-theme h6,
+  .express-p2p-page.light-theme input,
+  .express-p2p-page.light-theme textarea,
+  .express-p2p-page.light-theme select,
+  .express-p2p-page.light-theme div,
+  .express-p2p-page.light-theme svg {
+    color: hsl(var(--foreground)) !important;
+    fill: currentColor !important;
+  }
+
+  /* Decorative bottom wave for light theme (SVG is added in markup) - HIDDEN */
+  .express-p2p-page .bottom-wave {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 220px;
+    pointer-events: none;
+    display: none !important;
+  }
+
+  /* Hide all wavy/decorative SVG elements */
+  svg.wave,
+  svg[class*="wave"],
+  .wave-container,
+  [class*="wavy"],
+  [class*="bottom-wave"],
+  [class*="top-wave"] {
+    display: none !important;
+  }
+
+  /* Dropdown menu text override */
+  [role="menu"] p,
+  [role="menu"] span,
+  [role="menu"] a,
+  [role="menu"] li,
+  [role="menu"] label,
+  [role="menu"] small,
+  [role="menu"] strong,
+  [role="menu"] em,
+  [role="menu"] h1,
+  [role="menu"] h2,
+  [role="menu"] h3,
+  [role="menu"] h4,
+  [role="menu"] h5,
+  [role="menu"] h6 {
+    color: white !important;
+  }
+
+  /* Select listbox text override */
+  [role="listbox"] p,
+  [role="listbox"] span,
+  [role="listbox"] a,
+  [role="listbox"] li,
+  [role="listbox"] label,
+  [role="listbox"] small,
+  [role="listbox"] strong,
+  [role="listbox"] em,
+  [role="listbox"] h1,
+  [role="listbox"] h2,
+  [role="listbox"] h3,
+  [role="listbox"] h4,
+  [role="listbox"] h5,
+  [role="listbox"] h6,
+  [role="option"] p,
+  [role="option"] span,
+  [role="option"] a,
+  [role="option"] li,
+  [role="option"] label,
+  [role="option"] small,
+  [role="option"] strong,
+  [role="option"] em {
+    color: white !important;
+  }
+
+  /* Remove white borders and lines from express-p2p-page */
+  .express-p2p-page .border-white,
+  .express-p2p-page [class*="border-white"] {
+    border-color: transparent !important;
+  }
+}
+
+@layer components {
+  /* Card containers should match page background */
+  .express-p2p-page [class*="mt-6"][class*="rounded-lg"],
+  .express-p2p-page [class*="rounded-2xl"][class*="border-\["] {
+    background: hsl(var(--background)) !important;
+    border-color: hsl(var(--border)) !important;
+    background-image: none !important;
+  }
+
+  /* Keep action buttons styling unchanged */
+  .express-p2p-page [class*="gap-3"][class*="mt-10"] button {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+    border-color: #22c55e !important;
+    color: white !important;
+  }
+
+  .express-p2p-page [class*="gap-3"][class*="mt-10"] button:hover {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+  }
+
+  /* Settings page: force pure dark page theme and hide decorative gradients */
+  .dark-settings .bg-gradient-to-br,
+  .dark-settings .rounded-lg.p-6,
+  .dark-settings .rounded-2xl.p-6,
+  .dark-settings .express-p2p-page > div {
+    background: hsl(var(--background)) !important;
+    border-color: hsl(var(--border)) !important;
+    color: hsl(var(--foreground)) !important;
+    background-image: none !important;
+  }
+
+  /* Hide the decorative absolute gradient blobs only inside settings */
+  .dark-settings .absolute[class*="bg-gradient-to-br"],
+  .dark-settings .absolute[class*="bg-[#"] {
+    display: none !important;
+  }
+
+  /* Global override: any rounded gradient card becomes page background */
+  [class*="rounded-lg"][class*="bg-gradient-to-br"],
+  [class*="rounded-2xl"][class*="bg-gradient-to-br"] {
+    background: hsl(var(--background)) !important;
+    border-color: hsl(var(--border)) !important;
+    background-image: none !important;
+  }
+
+  /* Override translucent black cards to match page background within express pages */
+  .express-p2p-page [class*="bg-black/20"] {
+    background: hsl(var(--background)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+
+  /* Branded Express P2P badge */
+  .express-p2p-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .express-p2p-badge {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #374151;
+    box-shadow:
+      0 12px 30px rgba(0, 0, 0, 0.3),
+      inset 0 2px 8px rgba(255, 255, 255, 0.06);
+    color: #e8eaed;
+    text-align: center;
+    padding: 0.5rem;
+    border: 1px solid #4b5563;
+  }
+
+  .express-p2p-official {
+    font-size: 24px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+  }
+
+  .express-p2p-title {
+    font-size: 12px;
+    margin-top: 6px;
+    text-transform: uppercase;
+    opacity: 0.95;
+    font-weight: 600;
+  }
+
+  .express-p2p-currencies {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .p2p-currency {
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #111827;
+    font-weight: 700;
+    font-size: 13px;
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.06);
+  }
+
+  .p2p-token {
+    width: 48px;
+    height: 48px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+
+  .p2p-token img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .p2p-token.pkr,
+  .p2p-token.sol,
+  .p2p-token.usdc,
+  .p2p-token.fixer {
+    background: transparent;
+  }
+
+  /* Subtle reveal animation */
+  .express-p2p-brand {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  .express-detecting-text {
+    text-transform: uppercase;
+    letter-spacing: 0.35em;
+    animation: none;
+  }
+
+  /* From Uiverse.io by mrhyddenn */
+  .cardbox-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card_box {
+    width: 400px;
+    height: 400px;
+    border-radius: 20px;
+    background: #374151;
+    position: relative;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.55);
+    cursor: pointer;
+    transition: all 0.3s;
+    padding: 20px;
+    border: 1px solid #4b5563;
+  }
+
+  .card_box:hover {
+    transform: scale(0.9);
+  }
+
+  .card_box span {
+    position: absolute;
+    overflow: hidden;
+    width: 150px;
+    height: 150px;
+    top: -10px;
+    left: -10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card_box span::before {
+    content: "Premium";
+    position: absolute;
+    width: 150%;
+    height: 40px;
+    background-image: linear-gradient(
+      45deg,
+      #ff6547 0%,
+      #ffb144 51%,
+      #ff7053 100%
+    );
+    transform: rotate(-45deg) translateY(-20px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.23);
+  }
+
+  .card_box span::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    bottom: 0;
+    left: 0;
+    height: 10px;
+    z-index: -1;
+    box-shadow: 140px -140px #cc3f47;
+    background-image: linear-gradient(
+      45deg,
+      #ff512f 0%,
+      #f09819 51%,
+      #ff512f 100%
+    );
+  }
+}

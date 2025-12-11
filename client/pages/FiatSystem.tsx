@@ -108,7 +108,20 @@ export default function FiatSystem() {
           <h1 className="text-2xl font-bold text-white uppercase">
             FIAT SYSTEM
           </h1>
-          <div className="w-10" />
+          {publicKey && ADMIN_WALLETS.includes(publicKey.toString()) && (
+            <Button
+              onClick={() => navigate("/fiat/admin")}
+              variant="ghost"
+              size="sm"
+              className="text-gray-400 hover:text-yellow-400"
+              title="Admin Panel"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+          )}
+          {publicKey && !ADMIN_WALLETS.includes(publicKey.toString()) && (
+            <div className="w-10" />
+          )}
         </div>
 
         {/* Balance Card */}

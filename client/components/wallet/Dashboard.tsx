@@ -745,7 +745,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 max-h-screen overflow-y-auto">
           <div className="bg-gradient-to-br from-[#064e3b] to-[#052e16] rounded-2xl border border-[#22c55e]/40 shadow-2xl max-w-md w-full p-6 animate-fade-in my-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-white">fixercoin quest</h2>
+              <h2 className="text-2xl font-bold text-white">FIXERCOIN QUEST</h2>
               <button
                 onClick={() => setShowQuestModal(false)}
                 className="p-1 hover:bg-white/10 rounded-lg transition-colors"
@@ -771,22 +771,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               {/* How it works */}
               <div className="bg-white/5 rounded-lg p-3 border border-[#22c55e]/20">
-                <h3 className="text-sm font-bold text-white mb-3">
-                  How It Works
+                <h3 className="text-sm font-bold text-white mb-3 uppercase">
+                  HOW IT WORKS
                 </h3>
-                <div className="space-y-2 text-xs text-gray-300">
-                  <p>✅ Connect your Fixorium Wallet</p>
-                  <p>✅ Join the quest challenge</p>
-                  <p>✅ Complete simple tasks</p>
-                  <p>✅ Earn points for each task</p>
-                  <p>✅ Win random rewards</p>
+                <div className="space-y-2 text-xs text-gray-300 uppercase">
+                  <p>✅ CONNECT YOUR FIXORIUM WALLET</p>
+                  <p>✅ JOIN THE QUEST CHALLENGE</p>
+                  <p>✅ COMPLETE SIMPLE TASKS</p>
+                  <p>✅ EARN POINTS FOR EACH TASK</p>
+                  <p>✅ WIN RANDOM REWARDS</p>
                 </div>
               </div>
 
               {/* Complete Tasks */}
               <div className="bg-white/5 rounded-lg p-3 border border-[#a855f7]/20">
-                <h3 className="text-sm font-bold text-white mb-3">
-                  Complete Tasks
+                <h3 className="text-sm font-bold text-white mb-3 uppercase">
+                  COMPLETE TASKS
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
                   {QUEST_TASKS.map((t) => (
@@ -826,16 +826,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               (t as any).href as string,
                             )
                           }
-                          className="text-[#22c55e] hover:underline text-[11px] font-semibold"
+                          className="text-[#22c55e] hover:underline text-[11px] font-semibold uppercase"
                         >
-                          Open
+                          OPEN
                         </button>
                       ) : t.type === "share" ? (
                         <button
                           onClick={shareOnX}
-                          className="text-[#22c55e] hover:underline text-[11px] font-semibold"
+                          className="text-[#22c55e] hover:underline text-[11px] font-semibold uppercase"
                         >
-                          Share
+                          SHARE
                         </button>
                       ) : null}
                     </div>
@@ -845,8 +845,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               {/* Rewards */}
               <div className="bg-white/5 rounded-lg p-3 border border-[#22c55e]/20">
-                <h3 className="text-sm font-bold text-white mb-3">
-                  🎁 Rewards
+                <h3 className="text-sm font-bold text-white mb-3 uppercase">
+                  🎁 REWARDS
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
                   <p>🪙 {REWARD_PER_TASK} FIXERCOIN per task</p>

@@ -2,13 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Send,
-  Plus,
-  ArrowRightLeft,
-  History,
-  Settings,
-} from "lucide-react";
+import { Send, Plus, ArrowRightLeft, History, Settings } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 
 const ADMIN_WALLETS = ["7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw"];
@@ -62,15 +56,11 @@ export default function FiatSystem() {
     }
   };
 
-
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       if (wallet) {
-        await Promise.all([
-          fetchBalance(),
-          fetchPriceRatio(),
-        ]);
+        await Promise.all([fetchBalance(), fetchPriceRatio()]);
       }
       setLoading(false);
     };
@@ -209,7 +199,6 @@ export default function FiatSystem() {
               </CardContent>
             </Card>
           )}
-
         </div>
       </div>
     </div>

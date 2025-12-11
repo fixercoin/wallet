@@ -185,7 +185,9 @@ export default function FiatExchange() {
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       onClick={() => setExchangeMode("USDT-FIAT")}
-                      variant={exchangeMode === "USDT-FIAT" ? "default" : "outline"}
+                      variant={
+                        exchangeMode === "USDT-FIAT" ? "default" : "outline"
+                      }
                       className={`uppercase font-bold py-2 rounded-lg transition-all ${
                         exchangeMode === "USDT-FIAT"
                           ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
@@ -196,7 +198,9 @@ export default function FiatExchange() {
                     </Button>
                     <Button
                       onClick={() => setExchangeMode("FIAT-USDT")}
-                      variant={exchangeMode === "FIAT-USDT" ? "default" : "outline"}
+                      variant={
+                        exchangeMode === "FIAT-USDT" ? "default" : "outline"
+                      }
                       className={`uppercase font-bold py-2 rounded-lg transition-all ${
                         exchangeMode === "FIAT-USDT"
                           ? "bg-gradient-to-r from-pink-600 to-pink-700 text-white"
@@ -282,10 +286,12 @@ export default function FiatExchange() {
                           <span className="font-semibold text-green-300">
                             ≈{" "}
                             {fromCurrency === "USDT"
-                              ? (parseFloat(amount) * priceRatio.usdtToPkr).toFixed(0)
-                              : (parseFloat(amount) / priceRatio.usdtToPkr).toFixed(
-                                  2,
-                                )}{" "}
+                              ? (
+                                  parseFloat(amount) * priceRatio.usdtToPkr
+                                ).toFixed(0)
+                              : (
+                                  parseFloat(amount) / priceRatio.usdtToPkr
+                                ).toFixed(2)}{" "}
                             {toCurrency}
                           </span>
                         </div>

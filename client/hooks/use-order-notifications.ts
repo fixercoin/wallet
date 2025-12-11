@@ -127,9 +127,7 @@ export function useOrderNotifications() {
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           const errorMessage = errorData.error || `HTTP ${response.status}`;
-          throw new Error(
-            `Failed to create notification: ${errorMessage}`,
-          );
+          throw new Error(`Failed to create notification: ${errorMessage}`);
         }
 
         if (sendPushNotification) {
@@ -169,15 +167,11 @@ export function useOrderNotifications() {
         );
 
         if (!response.ok) {
-          console.warn(
-            `Failed to delete notification: ${response.status}`,
-          );
+          console.warn(`Failed to delete notification: ${response.status}`);
           return;
         }
 
-        setNotifications((prev) =>
-          prev.filter((n) => n.id !== notificationId),
-        );
+        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
       } catch (error) {
         console.warn("Error deleting notification:", error);
       }

@@ -369,14 +369,14 @@ function FiatWithdraw({
   balance: UserBalance | null;
   onRefresh: () => void;
 }) {
-  const { publicKey } = useWallet();
+  const { wallet } = useWallet();
   const [currency, setCurrency] = useState("USDT");
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [loading, setLoading] = useState(false);
 
   const handleWithdraw = async () => {
-    if (!publicKey || !amount) {
+    if (!wallet || !amount) {
       toast.error("Please enter an amount");
       return;
     }
@@ -394,7 +394,7 @@ function FiatWithdraw({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          wallet: publicKey.toString(),
+          wallet,
           currency,
           amount: parseFloat(amount),
           paymentMethod,
@@ -496,7 +496,7 @@ function FiatExchange({
   priceRatio: PriceRatio | null;
   onRefresh: () => void;
 }) {
-  const { publicKey } = useWallet();
+  const { wallet } = useWallet();
   const [fromCurrency, setFromCurrency] = useState("USDT");
   const [toAmount, setToAmount] = useState("");
   const [loading, setLoading] = useState(false);
@@ -504,7 +504,7 @@ function FiatExchange({
   const toCurrency = fromCurrency === "USDT" ? "PKR" : "USDT";
 
   const handleExchange = async () => {
-    if (!publicKey || !toAmount) {
+    if (!wallet || !toAmount) {
       toast.error("Please enter an amount");
       return;
     }
@@ -515,7 +515,7 @@ function FiatExchange({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          wallet: publicKey.toString(),
+          wallet,
           fromCurrency,
           toAmount: parseFloat(toAmount),
         }),

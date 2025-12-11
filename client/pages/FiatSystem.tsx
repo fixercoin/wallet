@@ -388,7 +388,6 @@ function FiatDeposit({
       );
       setAmount("");
       onRefresh();
-      await fetchPaymentMethods();
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.error("Deposit error:", errorMsg);

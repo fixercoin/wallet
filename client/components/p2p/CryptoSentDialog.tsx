@@ -123,20 +123,28 @@ export function CryptoSentDialog() {
       }
 
       // Send notification to buyer that crypto has been sent
-      await createNotification(
-        buyerWalletAddress,
-        "transfer_initiated",
-        "BUY",
-        currentOrder.id,
-        `Crypto transfer initiated! Your ${tokenAmount.toFixed(6)} ${currentOrder.token || "USDT"} is being sent to your wallet. Please wait for confirmation.`,
-        {
-          token: currentOrder.token || "USDT",
-          amountTokens: tokenAmount,
-          amountPKR: pkrAmount,
-        },
-        true,
-        currentOrder,
-      );
+      try {
+        await createNotification(
+          buyerWalletAddress,
+          "transfer_initiated",
+          "BUY",
+          currentOrder.id,
+          `Crypto transfer initiated! Your ${tokenAmount.toFixed(6)} ${currentOrder.token || "USDT"} is being sent to your wallet. Please wait for confirmation.`,
+          {
+            token: currentOrder.token || "USDT",
+            amountTokens: tokenAmount,
+            amountPKR: pkrAmount,
+          },
+          true,
+          currentOrder,
+        );
+      } catch (notificationError) {
+        console.warn(
+          "Failed to send notification to buyer (continuing anyway):",
+          notificationError,
+        );
+        // Continue with the order even if notification fails
+      }
 
       toast.success(
         "Crypto transfer initiated! Waiting for buyer confirmation...",
@@ -145,8 +153,8 @@ export function CryptoSentDialog() {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
-      console.error("Error notifying buyer:", error);
-      toast.error(`Failed to notify buyer: ${errorMessage}`);
+      console.error("Error in crypto transfer:", error);
+      toast.error(`Failed to complete transfer: ${errorMessage}`);
     } finally {
       setConfirming(false);
     }

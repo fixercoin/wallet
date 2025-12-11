@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { User, Store, X, CheckCircle } from "lucide-react";
+import { X, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -179,10 +179,10 @@ export function NotificationCenter() {
       {/* Buyer Messages Button */}
       <button
         onClick={() => setIsOpen(isOpen === "buyer" ? null : "buyer")}
-        className="relative p-2 rounded-lg hover:bg-gray-900 transition-colors"
+        className="relative px-3 py-2 rounded-lg hover:bg-gray-900 transition-colors text-white font-medium text-sm uppercase"
         aria-label="Buyer Messages"
       >
-        <User className="w-6 h-6 text-white" />
+        Buyer
         {buyerUnreadCount > 0 && (
           <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-blue-600 rounded-full">
             {buyerUnreadCount > 9 ? "9+" : buyerUnreadCount}
@@ -193,10 +193,10 @@ export function NotificationCenter() {
       {/* Seller Messages Button */}
       <button
         onClick={() => setIsOpen(isOpen === "seller" ? null : "seller")}
-        className="relative p-2 rounded-lg hover:bg-gray-900 transition-colors"
+        className="relative px-3 py-2 rounded-lg hover:bg-gray-900 transition-colors text-white font-medium text-sm uppercase"
         aria-label="Seller Messages"
       >
-        <Store className="w-6 h-6 text-white" />
+        Seller
         {sellerUnreadCount > 0 && (
           <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-purple-600 rounded-full">
             {sellerUnreadCount > 9 ? "9+" : sellerUnreadCount}

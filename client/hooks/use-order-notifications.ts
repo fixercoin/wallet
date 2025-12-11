@@ -125,11 +125,9 @@ export function useOrderNotifications() {
         });
 
         if (!response.ok) {
-          console.warn(
-            `Failed to create notification: ${response.status} - notifications are non-critical`,
-          );
-          // Don't throw - notifications are optional for order flow
-          return;
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error || `HTTP ${response.status}`;
+          throw new Error(`Failed to create notification: ${errorMessage}`);
         }
 
         if (sendPushNotification) {
@@ -147,8 +145,35 @@ export function useOrderNotifications() {
 
         console.log(`Notification created for ${recipientWallet}`);
       } catch (error) {
-        console.warn("Error creating notification:", error);
-        // Non-critical - don't disrupt order flow
+        console.error("Error creating notification:", error);
+        throw error;
+      }
+    },
+    [wallet],
+  );
+
+  const deleteNotification = useCallback(
+    async (notificationId: string) => {
+      if (!wallet) return;
+
+      try {
+        const response = await fetch(
+          `/api/p2p/notifications?wallet=${encodeURIComponent(wallet.publicKey)}&notificationId=${encodeURIComponent(notificationId)}`,
+          {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ notificationId }),
+          },
+        );
+
+        if (!response.ok) {
+          console.warn(`Failed to delete notification: ${response.status}`);
+          return;
+        }
+
+        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+      } catch (error) {
+        console.warn("Error deleting notification:", error);
       }
     },
     [wallet],
@@ -210,12 +235,40 @@ export function useOrderNotifications() {
     return () => clearInterval(interval);
   }, [wallet, fetchNotifications]);
 
+  useEffect(() => {
+    if (notifications.length === 0) return;
+
+    const now = Date.now();
+    const TEN_MINUTES = 10 * 60 * 1000;
+
+    const timers = notifications.map((notification) => {
+      const age = now - notification.createdAt;
+      const timeUntilDelete = Math.max(0, TEN_MINUTES - age);
+
+      if (timeUntilDelete === 0) {
+        deleteNotification(notification.id);
+        return null;
+      }
+
+      return setTimeout(() => {
+        deleteNotification(notification.id);
+      }, timeUntilDelete);
+    });
+
+    return () => {
+      timers.forEach((timer) => {
+        if (timer) clearTimeout(timer);
+      });
+    };
+  }, [notifications, deleteNotification]);
+
   return {
     notifications,
     unreadCount,
     loading,
     fetchNotifications,
     createNotification,
+    deleteNotification,
     markAsRead,
     showNotificationToast,
   };

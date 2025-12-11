@@ -59,35 +59,43 @@ export function NotificationCenter() {
     previousUnreadCountRef.current = unreadCount;
   }, [unreadCount]);
 
-  // Automatically open dialog for critical notifications
+  // Automatically open dialog for critical notifications (only once per notification)
   useEffect(() => {
     const criticalNotifications = notifications.filter(
       (n) =>
         (n.type === "transfer_initiated" ||
           n.type === "seller_payment_received") &&
+        !n.read &&
         !processedNotificationsRef.current.has(n.id),
     );
 
-    if (criticalNotifications.length > 0) {
+    // Only auto-open if user hasn't already interacted with the notification center
+    // This prevents double-opening when user clicks notification manually
+    if (criticalNotifications.length > 0 && !isOpen) {
       const notification = criticalNotifications[0];
       processedNotificationsRef.current.add(notification.id);
 
-      if (
-        notification.type === "transfer_initiated" &&
-        notification.fullOrder
-      ) {
-        openCryptoReceivedDialog(notification.fullOrder);
-      } else if (
-        notification.type === "seller_payment_received" &&
-        notification.fullOrder
-      ) {
-        openBuyerWalletDialog(
-          notification.fullOrder,
-          notification.fullOrder.wallet_address || "",
-        );
-      }
+      // Add a small delay to ensure notification is fully stored
+      const timeoutId = setTimeout(() => {
+        if (
+          notification.type === "transfer_initiated" &&
+          notification.fullOrder
+        ) {
+          openCryptoReceivedDialog(notification.fullOrder);
+        } else if (
+          notification.type === "seller_payment_received" &&
+          notification.fullOrder
+        ) {
+          openBuyerWalletDialog(
+            notification.fullOrder,
+            notification.fullOrder.wallet_address || "",
+          );
+        }
+      }, 500);
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [notifications, openCryptoReceivedDialog, openBuyerWalletDialog]);
+  }, [notifications, openCryptoReceivedDialog, openBuyerWalletDialog, isOpen]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {

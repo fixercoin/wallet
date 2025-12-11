@@ -292,51 +292,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
   }, [refreshBalance, refreshTokens]);
 
-  // Monitor unread notifications
-  useEffect(() => {
-    if (!wallet) return;
 
-    const updateUnreadCount = () => {
-      const unread = getUnreadNotifications(wallet.publicKey);
-      setUnreadCount(unread.length);
-    };
-
-    updateUnreadCount();
-    // Check for updates every 2 seconds
-    const interval = setInterval(updateUnreadCount, 2000);
-
-    // Also listen for storage changes
-    const handleStorageChange = () => {
-      updateUnreadCount();
-    };
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, [wallet]);
-
-  // Check for pending payment verifications if admin
-  useEffect(() => {
-    if (
-      wallet?.publicKey &&
-      ADMIN_WALLET &&
-      String(wallet.publicKey).toLowerCase() ===
-        String(ADMIN_WALLET).toLowerCase()
-    ) {
-      const notifications = getPaymentReceivedNotifications(wallet.publicKey);
-      setPendingOrdersCount(notifications.length);
-
-      // Poll for updates every 5 seconds
-      const interval = setInterval(() => {
-        const updated = getPaymentReceivedNotifications(wallet.publicKey);
-        setPendingOrdersCount(updated.length);
-      }, 5000);
-
-      return () => clearInterval(interval);
-    }
-  }, [wallet?.publicKey]);
 
   // Periodically check Express P2P service health (require consecutive failures before marking down)
   const healthFailureRef = useRef(0);

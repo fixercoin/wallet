@@ -567,22 +567,24 @@ class JupiterAPI {
 
     try {
       const ids = uniqueMints.map((m) => encodeURIComponent(m)).join(",");
-      const url = `https://api.jup.ag/price?ids=${ids}`;
+      // Route through server to avoid direct CORS/auth issues with Jupiter API
+      const url = `/api/jupiter/price?ids=${ids}`;
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
       try {
         const response = await fetch(url, {
           signal: controller.signal,
           headers: { Accept: "application/json" },
+          cache: "no-store",
         });
 
         clearTimeout(timeoutId);
 
         if (!response.ok) {
           console.warn(
-            `[Jupiter Price] Request failed with status ${response.status}`,
+            `[Jupiter Price] Server request failed with status ${response.status}`,
           );
           return prices;
         }

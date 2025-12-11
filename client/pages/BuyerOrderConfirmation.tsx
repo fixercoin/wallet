@@ -530,9 +530,9 @@ export default function BuyerOrderConfirmation() {
           </div>
         )}
 
-        {/* Confirm Receipt Button (shown after seller accepts) */}
-        {orderStatus === "ACCEPTED" &&
-          completionStatus === "SELLER_COMPLETED" && (
+        {/* Confirm Receipt Button (shown after seller transfers) */}
+        {completionStatus === "SELLER_COMPLETED" &&
+          completionStatus !== "COMPLETED" && (
             <Button
               onClick={handleConfirmReceived}
               disabled={submitting}

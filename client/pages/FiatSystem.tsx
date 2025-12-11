@@ -257,7 +257,7 @@ export default function FiatSystem() {
 
 // Deposit Component
 function FiatDeposit({ onRefresh }: { onRefresh: () => void }) {
-  const { publicKey } = useWallet();
+  const { wallet } = useWallet();
   const [currency, setCurrency] = useState("USDT");
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("bank_transfer");

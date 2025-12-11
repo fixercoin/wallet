@@ -150,6 +150,7 @@ import BuyTrade from "./pages/BuyTrade";
 import TokenSearchPage from "./pages/TokenSearchPage";
 import BuyData from "./pages/BuyData";
 import SellData from "./pages/SellData";
+import Market from "./pages/Market";
 import BuyerOrderConfirmation from "./pages/BuyerOrderConfirmation";
 import { useLocation } from "react-router-dom";
 import { P2POrderFlowProvider } from "@/contexts/P2POrderFlowContext";
@@ -171,6 +172,7 @@ function AppRoutes() {
       <Route path="/buy-crypto" element={<BuyCrypto />} />
       <Route path="/buydata" element={<BuyData />} />
       <Route path="/selldata" element={<SellData />} />
+      <Route path="/marketplace" element={<Market />} />
       <Route
         path="/buyer-order-confirmation"
         element={<BuyerOrderConfirmation />}

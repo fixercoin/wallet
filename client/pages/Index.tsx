@@ -234,7 +234,6 @@ export default function Index() {
           onLock={() => navigateToScreen("lock")}
           onBurn={() => navigateToScreen("burn")}
           onStakeTokens={() => navigateToScreen("stake-tokens")}
-          onP2PTrade={() => navigate("/buydata")}
         />
       );
   }

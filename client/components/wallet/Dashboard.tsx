@@ -28,11 +28,6 @@ import {
   Search as SearchIcon,
   Headphones,
 } from "lucide-react";
-import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
-import {
-  getPaymentReceivedNotifications,
-  saveNotification,
-} from "@/lib/p2p-chat";
 import { useWallet } from "@/contexts/WalletContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
@@ -53,7 +48,6 @@ import { FlyingPrizeBox } from "./FlyingPrizeBox";
 import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
-import { getUnreadNotifications } from "@/lib/p2p-chat";
 import { Zap } from "lucide-react";
 
 interface DashboardProps {
@@ -69,7 +63,6 @@ interface DashboardProps {
   onLock: () => void;
   onBurn: () => void;
   onStakeTokens?: () => void;
-  onP2PTrade?: () => void;
 }
 
 const QUEST_TASKS = [
@@ -115,7 +108,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onLock,
   onBurn,
   onStakeTokens,
-  onP2PTrade,
 }) => {
   const {
     wallet,
@@ -133,11 +125,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
-  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const { isStaking } = useStakingTokens(wallet?.publicKey || null);
   const [showHelpChat, setShowHelpChat] = useState(false);
   const [chatMessages, setChatMessages] = useState<
@@ -301,52 +291,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
       clearInterval(id);
     };
   }, [refreshBalance, refreshTokens]);
-
-  // Monitor unread notifications
-  useEffect(() => {
-    if (!wallet) return;
-
-    const updateUnreadCount = () => {
-      const unread = getUnreadNotifications(wallet.publicKey);
-      setUnreadCount(unread.length);
-    };
-
-    updateUnreadCount();
-    // Check for updates every 2 seconds
-    const interval = setInterval(updateUnreadCount, 2000);
-
-    // Also listen for storage changes
-    const handleStorageChange = () => {
-      updateUnreadCount();
-    };
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, [wallet]);
-
-  // Check for pending payment verifications if admin
-  useEffect(() => {
-    if (
-      wallet?.publicKey &&
-      ADMIN_WALLET &&
-      String(wallet.publicKey).toLowerCase() ===
-        String(ADMIN_WALLET).toLowerCase()
-    ) {
-      const notifications = getPaymentReceivedNotifications(wallet.publicKey);
-      setPendingOrdersCount(notifications.length);
-
-      // Poll for updates every 5 seconds
-      const interval = setInterval(() => {
-        const updated = getPaymentReceivedNotifications(wallet.publicKey);
-        setPendingOrdersCount(updated.length);
-      }, 5000);
-
-      return () => clearInterval(interval);
-    }
-  }, [wallet?.publicKey]);
 
   // Periodically check Express P2P service health (require consecutive failures before marking down)
   const healthFailureRef = useRef(0);
@@ -799,7 +743,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 max-h-screen overflow-y-auto">
           <div className="bg-gradient-to-br from-[#064e3b] to-[#052e16] rounded-2xl border border-[#22c55e]/40 shadow-2xl max-w-md w-full p-6 animate-fade-in my-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-white">fixercoin quest</h2>
+              <h2 className="text-2xl font-bold text-white">FIXERCOIN QUEST</h2>
               <button
                 onClick={() => setShowQuestModal(false)}
                 className="p-1 hover:bg-white/10 rounded-lg transition-colors"
@@ -812,35 +756,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Tagline */}
               <div className="text-center">
                 <p className="text-sm font-semibold text-[#22c55e] uppercase tracking-wider">
-                  🚀 Grow. Earn. Win.
+                  🚀 GROW. EARN. WIN.
                 </p>
               </div>
 
               {/* About */}
-              <p className="text-xs text-gray-300 leading-relaxed">
-                A community challenge inside the Fixorium Wallet. Complete
-                simple tasks, earn rewards, and join random prize draws 🎁🎉 all
-                directly from your wallet.
+              <p className="text-xs text-gray-300 leading-relaxed uppercase">
+                A COMMUNITY CHALLENGE INSIDE THE FIXORIUM WALLET. COMPLETE
+                SIMPLE TASKS, EARN REWARDS, AND JOIN RANDOM PRIZE DRAWS 🎁🎉 ALL
+                DIRECTLY FROM YOUR WALLET.
               </p>
 
               {/* How it works */}
               <div className="bg-white/5 rounded-lg p-3 border border-[#22c55e]/20">
-                <h3 className="text-sm font-bold text-white mb-3">
-                  How It Works
+                <h3 className="text-sm font-bold text-white mb-3 uppercase">
+                  HOW IT WORKS
                 </h3>
-                <div className="space-y-2 text-xs text-gray-300">
-                  <p>✅ Connect your Fixorium Wallet</p>
-                  <p>✅ Join the quest challenge</p>
-                  <p>✅ Complete simple tasks</p>
-                  <p>✅ Earn points for each task</p>
-                  <p>✅ Win random rewards</p>
+                <div className="space-y-2 text-xs text-gray-300 uppercase">
+                  <p>✅ CONNECT YOUR FIXORIUM WALLET</p>
+                  <p>✅ JOIN THE QUEST CHALLENGE</p>
+                  <p>✅ COMPLETE SIMPLE TASKS</p>
+                  <p>✅ EARN POINTS FOR EACH TASK</p>
+                  <p>✅ WIN RANDOM REWARDS</p>
                 </div>
               </div>
 
               {/* Complete Tasks */}
               <div className="bg-white/5 rounded-lg p-3 border border-[#a855f7]/20">
-                <h3 className="text-sm font-bold text-white mb-3">
-                  Complete Tasks
+                <h3 className="text-sm font-bold text-white mb-3 uppercase">
+                  COMPLETE TASKS
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
                   {QUEST_TASKS.map((t) => (
@@ -880,16 +824,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               (t as any).href as string,
                             )
                           }
-                          className="text-[#22c55e] hover:underline text-[11px] font-semibold"
+                          className="text-[#22c55e] hover:underline text-[11px] font-semibold uppercase"
                         >
-                          Open
+                          OPEN
                         </button>
                       ) : t.type === "share" ? (
                         <button
                           onClick={shareOnX}
-                          className="text-[#22c55e] hover:underline text-[11px] font-semibold"
+                          className="text-[#22c55e] hover:underline text-[11px] font-semibold uppercase"
                         >
-                          Share
+                          SHARE
                         </button>
                       ) : null}
                     </div>
@@ -899,25 +843,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               {/* Rewards */}
               <div className="bg-white/5 rounded-lg p-3 border border-[#22c55e]/20">
-                <h3 className="text-sm font-bold text-white mb-3">
-                  🎁 Rewards
+                <h3 className="text-sm font-bold text-white mb-3 uppercase">
+                  🎁 REWARDS
                 </h3>
-                <div className="space-y-2 text-xs text-gray-300">
-                  <p>🪙 {REWARD_PER_TASK} FIXERCOIN per task</p>
-                  <p>🖼️ NFTs and airdrops</p>
-                  <p>🌟 Early access to wallet updates</p>
-                  <p>👑 Premium features for top participants</p>
+                <div className="space-y-2 text-xs text-gray-300 uppercase">
+                  <p>🪙 {REWARD_PER_TASK} FIXERCOIN PER TASK</p>
+                  <p>🖼️ NFTS AND AIRDROPS</p>
+                  <p>🌟 EARLY ACCESS TO WALLET UPDATES</p>
+                  <p>👑 PREMIUM FEATURES FOR TOP PARTICIPANTS</p>
                 </div>
               </div>
 
               {/* Progress Bar */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-white">
-                    Progress
+                  <span className="text-xs font-semibold text-white uppercase">
+                    PROGRESS
                   </span>
-                  <span className="text-xs text-gray-400">
-                    {tasksDone}/{tasksTotal} tasks
+                  <span className="text-xs text-gray-400 uppercase">
+                    {tasksDone}/{tasksTotal} TASKS
                   </span>
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-2 border border-[#ffffff66]/20">
@@ -926,8 +870,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     style={{ width: `${progressPct}%` }}
                   ></div>
                 </div>
-                <div className="mt-2 text-[11px] text-gray-300">
-                  Earned:{" "}
+                <div className="mt-2 text-[11px] text-gray-300 uppercase">
+                  EARNED:{" "}
                   <span className="text-white font-semibold">
                     {earnedTokens} FIXERCOIN
                   </span>
@@ -937,18 +881,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Action Buttons */}
               <div className="flex flex-col gap-2 pt-2">
                 <Button
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#9333ea] hover:to-[#16a34a] text-white shadow-lg"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#9333ea] hover:to-[#16a34a] text-white shadow-lg uppercase"
                   onClick={() => completeNextTask()}
                 >
-                  Complete Task
+                  COMPLETE TASK
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#064e3b]/50 text-white hover:bg-[#a855f7]/10"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#064e3b]/50 text-white hover:bg-[#a855f7]/10 uppercase"
                   disabled={!canClaim}
                   onClick={handleClaimReward}
                 >
-                  Claim Reward
+                  CLAIM REWARD
                 </Button>
               </div>
             </div>
@@ -1144,13 +1088,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               {showBalance ? displayValue : "****"}
                             </div>
                             <Button
-                              onClick={onP2PTrade || onReceive}
-                              className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-5 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
+                              onClick={() => navigate("/marketplace")}
+                              className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-4 py-2 rounded-sm whitespace-nowrap h-auto transition-colors uppercase"
                             >
-                              P2P EXPRESS
+                              MARKET PLACE
                             </Button>
                           </div>
-                          <div className="text-xs text-gray-600">
+                          <div className="text-xs text-green-400">
                             TODAY PNL +/- 0.000 - 0.00 %
                           </div>
                         </div>
@@ -1211,15 +1155,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             )}
                           </div>
                           <Button
-                            onClick={onP2PTrade || onReceive}
-                            className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-5 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
+                            onClick={() => navigate("/marketplace")}
+                            className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-4 py-2 rounded-sm whitespace-nowrap h-auto transition-colors uppercase"
                           >
-                            P2P EXPRESS
+                            MARKET PLACE
                           </Button>
                         </div>
-                        <div
-                          className={`text-xs ${isPositive ? "text-green-400" : "text-red-400"}`}
-                        >
+                        <div className="text-xs text-green-400">
                           TODAY PNL {isPositive ? "+" : ""}
                           {showBalance
                             ? totalChange24h.toFixed(3)
@@ -1294,10 +1236,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex flex-col gap-2 flex-1">
                     <div className="text-xs font-semibold text-[#22c55e] uppercase tracking-widest">
-                      🎁 Fixercoin Quest
+                      🎁 FIXERCOIN QUEST
                     </div>
                     <div className="text-sm font-bold text-white">
-                      Earn {earnedTokens} FIXERCOIN
+                      EARN {earnedTokens} FIXERCOIN
                     </div>
                     <div className="w-full bg-white/10 rounded-full h-1.5 border border-[#22c55e]/20">
                       <div
@@ -1305,8 +1247,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         style={{ width: `${progressPct}%` }}
                       ></div>
                     </div>
-                    <div className="text-xs text-gray-400">
-                      {tasksDone}/{tasksTotal} tasks completed
+                    <div className="text-xs text-gray-400 uppercase">
+                      {tasksDone}/{tasksTotal} TASKS COMPLETED
                     </div>
                   </div>
                   <Button
@@ -1314,9 +1256,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       e.stopPropagation();
                       setShowQuestModal(true);
                     }}
-                    className="bg-[#22c55e] hover:bg-[#16a34a] text-gray-900 font-bold text-xs px-4 py-2 rounded-md whitespace-nowrap h-auto transition-colors"
+                    className="bg-[#22c55e] hover:bg-[#16a34a] text-gray-900 font-bold text-xs px-4 py-2 rounded-md whitespace-nowrap h-auto transition-colors uppercase"
                   >
-                    View Quest
+                    VIEW QUEST
                   </Button>
                 </div>
               </div>
@@ -1325,24 +1267,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Tokens List */}
-        {wallet?.publicKey === ADMIN_WALLET && pendingOrdersCount > 0 && (
-          <div className="mb-4 flex gap-2">
-            <Button
-              onClick={() => navigate("/verify-sell")}
-              className="h-12 w-16 rounded-xl font-bold border-0 bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white shadow-lg flex items-center justify-center text-lg relative"
-              aria-label={`${pendingOrdersCount} pending orders`}
-            >
-              <span className="relative">
-                {pendingOrdersCount}
-                {pendingOrdersCount > 0 && (
-                  <span className="absolute -top-1 -right-3 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse">
-                    !
-                  </span>
-                )}
-              </span>
-            </Button>
-          </div>
-        )}
 
         <style>{`
           @keyframes blink {

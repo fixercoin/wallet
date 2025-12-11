@@ -177,7 +177,7 @@ class DexscreenerAPI {
         console.warn(
           `[DexScreener] Request timeout after 15s for ${toFetch.length} mints`,
         );
-        controller.abort();
+        controller.abort("Request timeout after 15 seconds");
       }, 15000);
       try {
         const url = `${this.baseUrl}/tokens?mints=${mintString}`;
@@ -185,6 +185,10 @@ class DexscreenerAPI {
           `[DexScreener] Requesting: ${url} (${toFetch.length} mints)`,
         );
         const response = await fetch(url, { signal: controller.signal });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
 
         if (response.ok) {
           try {
@@ -281,10 +285,10 @@ class DexscreenerAPI {
       }
     }
 
-    // If fetch failed, try to serve stale cached data instead of failing completely
+    // If fetch failed, try to serve stale cached data or return empty array to allow fallbacks
     if (fetchFailed && toFetch.length > 0) {
-      console.log(
-        `[DexScreener] ⚠️ Fetch failed (${lastError}), trying stale cache for ${toFetch.length} tokens`,
+      console.warn(
+        `[DexScreener] ❌ Fetch failed (${lastError}), trying stale cache for ${toFetch.length} tokens`,
       );
       toFetch.forEach((mint) => {
         const stale = DexscreenerAPI.tokenCache.get(mint);
@@ -295,6 +299,19 @@ class DexscreenerAPI {
           fetchedTokens.push(stale.token);
         }
       });
+
+      // If we still don't have results for what was requested, throw error so client retries
+      const gotMints = new Set(
+        fetchedTokens
+          .flatMap((t) => [t.baseToken?.address, t.quoteToken?.address])
+          .filter(Boolean) as string[],
+      );
+      const stillMissing = toFetch.filter((m) => !gotMints.has(m));
+      if (stillMissing.length > 0) {
+        throw new Error(
+          `DexScreener API failed and no cache available for ${stillMissing.join(", ")}: ${lastError}`,
+        );
+      }
     }
 
     // Update cache with fetched results (only if we got meaningful data)
@@ -342,6 +359,32 @@ class DexscreenerAPI {
 
   async getTokenByMint(mint: string): Promise<DexscreenerToken | null> {
     const tokens = await this.getTokensByMints([mint]);
+
+    // If not found and it's FXM, try searching by symbol as fallback
+    if (
+      tokens.length === 0 &&
+      mint === "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump"
+    ) {
+      console.log(
+        `[DexScreener] FXM mint not found in batch, trying symbol search...`,
+      );
+      const searchResults = await this.searchTokens("FXM");
+      if (searchResults.length > 0) {
+        // Filter for Solana FXM tokens
+        const solanaFXM = searchResults.find(
+          (t) =>
+            (t.baseToken?.symbol === "FXM" || t.quoteToken?.symbol === "FXM") &&
+            t.chainId === "solana",
+        );
+        if (solanaFXM) {
+          console.log(
+            `[DexScreener] ✅ Found FXM via symbol search: ${solanaFXM.baseToken?.address}`,
+          );
+          return solanaFXM;
+        }
+      }
+    }
+
     return tokens.length > 0 ? tokens[0] : null;
   }
 

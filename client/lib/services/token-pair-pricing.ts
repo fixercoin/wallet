@@ -34,6 +34,12 @@ const TOKEN_CONFIGS: Record<
     name: "LOCKER",
     pairAddress: undefined,
   },
+  FXM: {
+    mint: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
+    symbol: "FXM",
+    name: "FXM",
+    pairAddress: undefined,
+  },
 };
 
 const SOL_MINT = "So11111111111111111111111111111111111111112";
@@ -43,6 +49,7 @@ const USDT_MINT = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns";
 const FALLBACK_PRICES: Record<string, number> = {
   FIXERCOIN: 0.00008139, // Real-time market price
   LOCKER: 0.00001112, // Real-time market price
+  FXM: 0.000003567, // Real-time market price
 };
 
 class TokenPairPricingService {
@@ -50,15 +57,21 @@ class TokenPairPricingService {
     string,
     { data: PairPricingData; expiresAt: number }
   >();
-  private readonly CACHE_DURATION = 60000; // 1 minute
+  private readonly CACHE_DURATION = 250; // 250ms - ensures live price updates every 250ms for real-time display
 
   /**
    * Get SOL price in USD from reliable dedicated service
    */
   private async getSolPrice(): Promise<number> {
     try {
-      // Use dedicated SOL price service which has better error handling and fallbacks
-      const solPriceData = await solPriceService.getSolPrice();
+      // Use dedicated SOL price service which has better error handling and fallbacks (with timeout)
+      const solPriceData = await Promise.race([
+        solPriceService.getSolPrice(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("SOL price fetch timeout")), 10000),
+        ),
+      ] as const);
+
       if (
         solPriceData &&
         solPriceData.price > 0 &&
@@ -71,14 +84,23 @@ class TokenPairPricingService {
       }
     } catch (error) {
       console.warn(
-        "[TokenPairPricing] Error fetching SOL price from service:",
-        error,
+        "[TokenPairPricing] Error/timeout fetching SOL price from service:",
+        error instanceof Error ? error.message : error,
       );
     }
 
-    // Fallback 1: Try DexScreener as backup
+    // Fallback 1: Try DexScreener as backup (with timeout)
     try {
-      const solToken = await dexscreenerAPI.getTokenByMint(SOL_MINT);
+      const solToken = await Promise.race([
+        dexscreenerAPI.getTokenByMint(SOL_MINT),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("DexScreener SOL fetch timeout")),
+            8000,
+          ),
+        ),
+      ] as const);
+
       if (solToken && solToken.priceUsd) {
         const price = parseFloat(solToken.priceUsd);
         if (isFinite(price) && price > 0) {
@@ -90,8 +112,8 @@ class TokenPairPricingService {
       }
     } catch (error) {
       console.warn(
-        "[TokenPairPricing] Error fetching SOL price from DexScreener:",
-        error,
+        "[TokenPairPricing] Error/timeout fetching SOL price from DexScreener:",
+        error instanceof Error ? error.message : error,
       );
     }
 
@@ -101,53 +123,87 @@ class TokenPairPricingService {
   }
 
   /**
-   * Get the SOL pair price (how many tokens per 1 SOL)
+   * Get the SOL pair price (how many SOL needed to buy 1 token) with timeout
    */
   private async getSolPairPrice(tokenMint: string): Promise<number | null> {
     try {
-      // Fetch token data with all trading pairs
-      const tokenData = await dexscreenerAPI.getTokenByMint(tokenMint);
+      // Fetch token data with timeout
+      const tokenData = await Promise.race([
+        dexscreenerAPI.getTokenByMint(tokenMint),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("DexScreener getTokenByMint timeout")),
+            12000,
+          ),
+        ),
+      ] as const);
 
       if (!tokenData) {
         console.warn(`No trading data found for ${tokenMint}`);
         return null;
       }
 
-      // Look for a pair that quotes in SOL
-      // Get the price in USD, then calculate against SOL
-      if (tokenData.priceUsd) {
-        // priceUsd is the direct price
-        // But we want to find the SOL pair specifically
-        // DexScreener returns priceUsd which is already in USD
-        // To get SOL/TOKEN ratio, we can derive it from liquidity or look at pairs
-        const priceUsd = parseFloat(tokenData.priceUsd);
+      // Use priceNative which is the price in SOL (the native pair token on Solana)
+      // priceNative = how many SOL you need to buy 1 token
+      if (tokenData.priceNative) {
+        const priceInSol = parseFloat(tokenData.priceNative);
 
-        // Get SOL price
-        const solPrice = await this.getSolPrice();
-
-        // Calculate how many tokens per 1 SOL
-        // If token is $0.001 and SOL is $176, then 1 SOL = 176,000 tokens
-        if (
-          priceUsd > 0 &&
-          isFinite(priceUsd) &&
-          solPrice > 0 &&
-          isFinite(solPrice)
-        ) {
-          const tokensPerSol = solPrice / priceUsd;
+        if (priceInSol > 0 && isFinite(priceInSol)) {
           console.log(
-            `${tokenMint}: 1 SOL = ${tokensPerSol.toFixed(2)} tokens`,
+            `${tokenMint}: priceNative=${priceInSol.toFixed(8)} SOL (1 token = ${priceInSol.toFixed(8)} SOL)`,
           );
-          return tokensPerSol;
+          return priceInSol; // Return the SOL price directly
         } else {
-          console.warn(
-            `Invalid price data for ${tokenMint}: priceUsd=${priceUsd}, solPrice=${solPrice}`,
-          );
+          console.warn(`Invalid priceNative for ${tokenMint}: ${priceInSol}`);
         }
       }
 
       return null;
     } catch (error) {
-      console.warn(`Error getting SOL pair price for ${tokenMint}:`, error);
+      console.warn(
+        `Error/timeout getting SOL pair price for ${tokenMint}:`,
+        error instanceof Error ? error.message : error,
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Get direct USD price from DexScreener for tokens without reliable SOL pair (with timeout)
+   */
+  private async getDirectUsdPrice(tokenMint: string): Promise<number | null> {
+    try {
+      // Fetch token data with timeout
+      const tokenData = await Promise.race([
+        dexscreenerAPI.getTokenByMint(tokenMint),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("DexScreener getDirectUsdPrice timeout")),
+            12000,
+          ),
+        ),
+      ] as const);
+
+      if (!tokenData) {
+        return null;
+      }
+
+      if (tokenData.priceUsd) {
+        const priceUsd = parseFloat(tokenData.priceUsd);
+        if (priceUsd > 0 && isFinite(priceUsd)) {
+          console.log(
+            `${tokenMint}: Got direct USD price from DexScreener: $${priceUsd.toFixed(8)}`,
+          );
+          return priceUsd;
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.warn(
+        `Error/timeout getting direct USD price for ${tokenMint}:`,
+        error instanceof Error ? error.message : error,
+      );
       return null;
     }
   }
@@ -175,28 +231,85 @@ class TokenPairPricingService {
       // Get SOL price in USD
       const solPrice = await this.getSolPrice();
 
-      // Get the SOL/TOKEN pair ratio
-      const tokensPerSol = await this.getSolPairPrice(config.mint);
+      // Get the SOL pair price (how many SOL to buy 1 token)
+      let priceInSol = await this.getSolPairPrice(config.mint);
 
-      if (!tokensPerSol || tokensPerSol <= 0) {
+      // If no SOL pair found, try direct USD price from DexScreener
+      if (!priceInSol || priceInSol <= 0) {
         console.warn(
-          `Could not determine SOL pair for ${symbol}, using fallback`,
+          `Could not determine SOL pair for ${symbol}, trying direct USD price...`,
         );
-        return this.getFallbackPriceData(symbol, solPrice);
+        const directUsdPrice = await this.getDirectUsdPrice(config.mint);
+
+        if (directUsdPrice && directUsdPrice > 0 && isFinite(directUsdPrice)) {
+          // Use direct USD price, fetching additional metadata from DexScreener
+          const tokenData = await dexscreenerAPI.getTokenByMint(config.mint);
+
+          const priceData: PairPricingData = {
+            tokenAddress: config.mint,
+            tokenSymbol: symbol,
+            solPrice,
+            pairRatio: solPrice / directUsdPrice, // How many tokens per 1 SOL
+            derivedPrice: directUsdPrice,
+            priceChange24h: tokenData?.priceChange?.h24 || 0,
+            volume24h: tokenData?.volume?.h24 || 0,
+            liquidity: tokenData?.liquidity?.usd || 0,
+            lastUpdated: new Date(),
+          };
+
+          // Cache the result
+          this.cache.set(config.mint, {
+            data: priceData,
+            expiresAt: Date.now() + this.CACHE_DURATION,
+          });
+
+          console.log(
+            `${symbol} direct USD price: $${priceData.derivedPrice.toFixed(8)}`,
+          );
+
+          return priceData;
+        }
+
+        console.warn(
+          `Could not determine price (SOL pair or USD price) for ${symbol} - API unavailable`,
+        );
+        return null;
       }
 
-      // Calculate token price in USD
-      const derivedPrice = solPrice / tokensPerSol;
+      // Calculate token price in USD by multiplying SOL price by the SOL ratio
+      // derivedPrice = (how many SOL per token) * (SOL price in USD)
+      const derivedPrice = priceInSol * solPrice;
 
-      // Fetch additional metadata from DexScreener
-      const tokenData = await dexscreenerAPI.getTokenByMint(config.mint);
+      if (derivedPrice <= 0) {
+        console.warn(`Invalid derived price for ${symbol}: ${derivedPrice}`);
+        return null;
+      }
+
+      // Fetch additional metadata from DexScreener (with timeout)
+      let tokenData = null;
+      try {
+        tokenData = await Promise.race([
+          dexscreenerAPI.getTokenByMint(config.mint),
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error("DexScreener metadata fetch timeout")),
+              10000,
+            ),
+          ),
+        ] as const);
+      } catch (error) {
+        console.warn(
+          `[TokenPairPricing] Timeout fetching metadata for ${config.mint}`,
+        );
+        // Continue without metadata - we already have the price
+      }
 
       const priceData: PairPricingData = {
         tokenAddress: config.mint,
         tokenSymbol: symbol,
         solPrice,
-        pairRatio: tokensPerSol,
-        derivedPrice: derivedPrice > 0 ? derivedPrice : FALLBACK_PRICES[symbol],
+        pairRatio: 1 / priceInSol, // How many tokens per 1 SOL
+        derivedPrice: derivedPrice,
         priceChange24h: tokenData?.priceChange?.h24 || 0,
         volume24h: tokenData?.volume?.h24 || 0,
         liquidity: tokenData?.liquidity?.usd || 0,
@@ -210,52 +323,30 @@ class TokenPairPricingService {
       });
 
       console.log(
-        `${symbol} derived price: $${priceData.derivedPrice.toFixed(8)} (1 SOL = ${tokensPerSol.toFixed(2)} ${symbol})`,
+        `${symbol} derived price: $${priceData.derivedPrice.toFixed(8)} (1 ${symbol} = ${priceInSol.toFixed(8)} SOL, SOL = $${solPrice.toFixed(2)})`,
       );
 
       return priceData;
     } catch (error) {
       console.error(`Error calculating derived price for ${symbol}:`, error);
-      const solPrice = await this.getSolPrice();
-      return this.getFallbackPriceData(symbol, solPrice);
+      return null;
     }
   }
 
   /**
-   * Get both FIXERCOIN and LOCKER prices
+   * Get FIXERCOIN, LOCKER, and FXM prices
    */
   async getAllDerivedPrices(): Promise<Record<string, PairPricingData | null>> {
-    const [fixercoinData, lockerData] = await Promise.all([
+    const [fixercoinData, lockerData, fxmData] = await Promise.all([
       this.getDerivedPrice("FIXERCOIN"),
       this.getDerivedPrice("LOCKER"),
+      this.getDerivedPrice("FXM"),
     ]);
 
     return {
       FIXERCOIN: fixercoinData,
       LOCKER: lockerData,
-    };
-  }
-
-  /**
-   * Get fallback price data when API fails
-   */
-  private async getFallbackPriceData(
-    symbol: string,
-    solPrice: number,
-  ): Promise<PairPricingData> {
-    const config = TOKEN_CONFIGS[symbol];
-    const fallbackPrice = FALLBACK_PRICES[symbol] || 0.000001;
-
-    return {
-      tokenAddress: config.mint,
-      tokenSymbol: symbol,
-      solPrice,
-      pairRatio: solPrice / fallbackPrice,
-      derivedPrice: fallbackPrice,
-      priceChange24h: 0,
-      volume24h: 0,
-      liquidity: 0,
-      lastUpdated: new Date(),
+      FXM: fxmData,
     };
   }
 

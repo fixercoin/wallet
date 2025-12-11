@@ -1,11 +1,13 @@
 const RPC_ENDPOINTS = [
-  // Prefer provided Helius RPC key
-  "https://mainnet.helius-rpc.com/?api-key=48e91c19-c676-4c4a-a0dd-a9b4f258d151",
-  // Public fallbacks
+  process.env.SOLANA_RPC_URL,
+  // Public fallbacks (in order of reliability)
+  "https://api.mainnet-beta.solflare.network",
   "https://solana.publicnode.com",
+  "https://api.solflare.com",
   "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
-];
+  "https://api.marinade.finance/rpc",
+].filter(Boolean) as string[];
 
 function cors(h: Headers = new Headers()) {
   h.set("Access-Control-Allow-Origin", "*");

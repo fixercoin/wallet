@@ -4,7 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Copy, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Copy, ArrowLeft, Loader } from "lucide-react";
+import { BouncingDotsLoader } from "@/components/ui/bouncing-dots-loader";
 import {
   generateWallet,
   recoverWallet,
@@ -13,6 +14,7 @@ import {
 } from "@/lib/wallet";
 import { assertValidMnemonic, normalizeMnemonicInput } from "@/lib/mnemonic";
 import { prefetchWalletAddressData } from "@/lib/services/address-setup";
+import { fetchSolBalance, displaySolBalance } from "@/lib/services/sol-balance";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -57,6 +59,10 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
   const [privateKeyInput, setPrivateKeyInput] = useState<string>("");
   const [showPrivateKeyInput, setShowPrivateKeyInput] = useState(false);
 
+  // SOL balance state
+  const [solBalance, setSolBalance] = useState<number | null>(null);
+  const [isFetchingBalance, setIsFetchingBalance] = useState(false);
+
   const normalizedRecoveryPhrase = normalizeMnemonicInput(recoveryPhrase);
   const recoveryWordCount = normalizedRecoveryPhrase
     ? normalizedRecoveryPhrase.split(" ").length
@@ -84,8 +90,23 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
       setIsLoading(true);
       setError(null);
 
-      // Set the wallet
+      // Set the wallet - this updates context and triggers localStorage save
       setWallet(wallet);
+
+      // Fetch SOL balance from backend API endpoint
+      setIsFetchingBalance(true);
+      try {
+        const balance = await fetchSolBalance(wallet.publicKey);
+        setSolBalance(balance);
+        console.log(
+          `[WalletSetup] SOL balance fetched: ${displaySolBalance(balance)}`,
+        );
+      } catch (balanceErr) {
+        console.error("[WalletSetup] Failed to fetch balance:", balanceErr);
+        setSolBalance(0);
+      } finally {
+        setIsFetchingBalance(false);
+      }
 
       // Prefetch address data via RPC providers
       void prefetchWalletAddressData(wallet.publicKey).catch(() => undefined);
@@ -180,8 +201,8 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           />
         </svg>
 
-        <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
-          <div className="w-full md:max-w-lg mx-auto bg-transparent overflow-hidden">
+        <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10">
+          <div className="w-full bg-transparent overflow-hidden px-4 sm:px-6">
             <div className="space-y-6">
               <div className="flex items-center justify-center pb-2">
                 <img
@@ -191,11 +212,17 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 />
               </div>
 
+              <div className="text-center px-4">
+                <p className="text-sm font-semibold text-gray-100 leading-relaxed">
+                  YOUR SECURE SOLANA WALLET. CREATE OR IMPORT TO START.
+                </p>
+              </div>
+
               <div className="space-y-4">
                 <Button
                   onClick={handleCreateWallet}
                   disabled={isLoading}
-                  className="w-full h-12 rounded-[2px] font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
+                  className="w-full h-12 rounded-lg font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
                 >
                   CREATE NEW WALLET
                 </Button>
@@ -250,11 +277,14 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           />
         </svg>
 
-        <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10 p-4">
-          <div className="relative w-full md:max-w-lg mx-auto bg-transparent overflow-hidden">
+        <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10">
+          <div className="relative w-full bg-transparent overflow-hidden px-4 sm:px-6">
             {isLoading && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
-                <div className="text-white">Importing wallet...</div>
+                <BouncingDotsLoader
+                  text="Importing wallet"
+                  dotColor="#22c55e"
+                />
               </div>
             )}
 
@@ -301,13 +331,7 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                       className="w-full h-32 p-4 bg-[#1a1a1a] rounded-none border border-[#333] text-white placeholder:text-gray-500 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#22c55e]/30"
                     />
                     <p className="text-xs text-gray-400">
-                      Derivation Path (Solana default) →
-                      <span className="ml-2 font-mono text-[11px] text-gray-300">
-                        m/44&apos;/501&apos;/0&apos;/0&apos;
-                      </span>
-                      <span className="ml-1 text-gray-400">
-                        (compatible with Phantom and other Solana wallets)
-                      </span>
+                      IMPORT ANY SOLANA BASE WALLET
                     </p>
                   </div>
                 ) : (
@@ -398,8 +422,8 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
           />
         </svg>
 
-        <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10 p-4">
-          <div className="relative w-full md:max-w-lg mx-auto bg-transparent overflow-hidden">
+        <div className="w-full min-h-screen flex flex-col items-center justify-center relative z-10">
+          <div className="relative w-full bg-transparent overflow-hidden px-4 sm:px-6">
             {isLoading && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30">
                 <div className="text-white">Creating wallet...</div>
@@ -483,13 +507,38 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ onComplete }) => {
                 PHRASES, OR DIGITAL ASSETS.
               </p>
 
-              <div>
-                <Button
-                  onClick={handleConfirmWallet}
-                  className="w-full h-12 rounded-[2px] font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all"
-                >
-                  Create Wallet
-                </Button>
+              <div className="space-y-4">
+                <div>
+                  <Button
+                    onClick={handleConfirmWallet}
+                    disabled={isLoading}
+                    className="w-full h-12 rounded-[2px] font-semibold bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white shadow-lg hover:shadow-2xl transition-all disabled:opacity-50"
+                  >
+                    {isLoading ? "Setting up wallet..." : "Create Wallet"}
+                  </Button>
+                </div>
+
+                {isFetchingBalance && (
+                  <div className="flex items-center justify-center gap-2 p-3 bg-[#1a1a1a] rounded-lg border border-[#333]">
+                    <Loader className="h-4 w-4 animate-spin text-[#22c55e]" />
+                    <span className="text-sm text-gray-300">
+                      Fetching SOL balance...
+                    </span>
+                  </div>
+                )}
+
+                {solBalance !== null && !isFetchingBalance && (
+                  <div className="p-4 bg-gradient-to-r from-[#064e3b]/50 to-[#052e16]/50 rounded-lg border border-[#22c55e]/30">
+                    <p className="text-xs text-gray-400 mb-1">SOL BALANCE</p>
+                    <p className="text-2xl font-bold text-[#22c55e]">
+                      {displaySolBalance(solBalance, 9)}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Your wallet is ready to use! You now have a Solana address
+                      to receive funds.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

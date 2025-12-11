@@ -1,67 +1,9 @@
 import { RequestHandler } from "express";
+import { Connection, PublicKey } from "@solana/web3.js";
+import bs58 from "bs58";
 
-const RPC_ENDPOINTS = [
-  process.env.SOLANA_RPC_URL || "",
-  process.env.HELIUS_RPC_URL || "",
-  "https://solana.publicnode.com",
-  "https://api.mainnet-beta.solana.com",
-].filter(Boolean);
-
-async function callSolanaRpc(
-  method: string,
-  params: any[],
-  endpoint?: string,
-): Promise<any> {
-  const endpoints = endpoint ? [endpoint] : RPC_ENDPOINTS;
-  let lastError: Error | null = null;
-
-  for (const rpcUrl of endpoints) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-      const response = await fetch(rpcUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method,
-          params,
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        if (response.status === 429 || response.status === 403) {
-          lastError = new Error(
-            `HTTP ${response.status} - trying next endpoint`,
-          );
-          continue;
-        }
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.error) {
-        lastError = new Error(
-          `RPC error (${data.error.code}): ${data.error.message}`,
-        );
-        continue;
-      }
-
-      return data.result;
-    } catch (e: any) {
-      lastError = e instanceof Error ? e : new Error(String(e));
-      continue;
-    }
-  }
-
-  throw lastError || new Error("All RPC endpoints failed");
-}
+const RPC_URL = "https://api.mainnet-beta.solflare.network";
+const connection = new Connection(RPC_URL, "confirmed");
 
 /**
  * POST /api/solana-send
@@ -82,7 +24,6 @@ export const handleSolanaSend: RequestHandler = async (req, res) => {
       });
     }
 
-    // Decode base64 to bytes
     let txBuffer: Buffer;
     try {
       txBuffer = Buffer.from(signedBase64, "base64");
@@ -102,10 +43,12 @@ export const handleSolanaSend: RequestHandler = async (req, res) => {
     console.log(`[Solana Send] Sending transaction (${txBuffer.length} bytes)`);
 
     try {
-      const signature = await callSolanaRpc("sendTransaction", [
-        signedBase64,
-        { skipPreflight: false, preflightCommitment: "processed" },
-      ]);
+      const txBase58 = bs58.encode(txBuffer);
+
+      const signature = await connection.sendRawTransaction(txBuffer, {
+        skipPreflight: false,
+        preflightCommitment: "processed",
+      });
 
       console.log(`[Solana Send] ✅ Transaction sent: ${signature}`);
 
@@ -115,9 +58,8 @@ export const handleSolanaSend: RequestHandler = async (req, res) => {
         signature,
       });
     } catch (rpcError: any) {
-      console.error(`[Solana Send] RPC error:`, rpcError.message);
+      console.error(`[Solana Send] Error:`, rpcError.message);
 
-      // Map common RPC errors to helpful messages
       const errorMsg = rpcError.message || "";
       let userMessage = "Failed to send transaction";
 
@@ -165,7 +107,6 @@ export const handleSolanaSimulate: RequestHandler = async (req, res) => {
       });
     }
 
-    // Decode base64 to bytes
     let txBuffer: Buffer;
     try {
       txBuffer = Buffer.from(signedBase64, "base64");
@@ -187,14 +128,14 @@ export const handleSolanaSimulate: RequestHandler = async (req, res) => {
     );
 
     try {
-      const result = await callSolanaRpc("simulateTransaction", [
-        signedBase64,
-        { signers: [], commitment: "processed" },
-      ]);
+      const result = await connection.simulateTransaction({
+        transaction: txBuffer,
+        signers: [],
+        commitment: "processed",
+      });
 
       console.log(`[Solana Simulate] ✅ Simulation complete`);
 
-      // Check for errors in simulation
       if (result?.err) {
         const errorMsg = JSON.stringify(result.err);
         console.warn(`[Solana Simulate] Transaction would fail:`, errorMsg);
@@ -207,11 +148,9 @@ export const handleSolanaSimulate: RequestHandler = async (req, res) => {
         });
       }
 
-      // Extract useful info from simulation
       const unitsConsumed = result?.unitsConsumed || 0;
       const logs = result?.logs || [];
 
-      // Check for specific issues in logs
       let insufficientLamports = false;
       if (logs.some((log: string) => log.includes("insufficient lamports"))) {
         insufficientLamports = true;
@@ -226,16 +165,15 @@ export const handleSolanaSimulate: RequestHandler = async (req, res) => {
         ...(insufficientLamports && {
           insufficientLamports: {
             message: "Insufficient SOL for transaction fees and rent",
-            diffSol: 0.001, // Rough estimate, could calculate precisely from logs
+            diffSol: 0.001,
           },
         }),
       });
     } catch (rpcError: any) {
-      console.error(`[Solana Simulate] RPC error:`, rpcError.message);
+      console.error(`[Solana Simulate] Error:`, rpcError.message);
 
       const errorMsg = rpcError.message || "";
 
-      // Some RPC errors during simulation are expected (transaction would fail)
       if (errorMsg.includes("Transaction simulation failed")) {
         return res.status(400).json({
           success: false,

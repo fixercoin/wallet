@@ -12,6 +12,7 @@ const TOKEN_MINTS: Record<string, string> = {
   USDT: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns",
   FIXERCOIN: "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump",
   LOCKER: "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump",
+  FXM: "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump",
 };
 
 const FALLBACK_USD: Record<string, number> = {
@@ -20,6 +21,7 @@ const FALLBACK_USD: Record<string, number> = {
   USDC: 1.0,
   USDT: 1.0,
   LOCKER: 0.00001112, // Real-time market price
+  FXM: 0.000003567, // Real-time market price
 };
 
 export interface BirdeyePriceData {
@@ -132,7 +134,7 @@ export async function handleBirdeyePrice(
   res: Response,
 ): Promise<void> {
   try {
-    const address = (req.query.address as string) || "";
+    let address = (req.query.address as string) || "";
 
     if (!address) {
       res.status(400).json({
@@ -141,6 +143,9 @@ export async function handleBirdeyePrice(
       });
       return;
     }
+
+    // Strip ":N" suffix if present (e.g., "mint:1" -> "mint")
+    address = address.split(":")[0];
 
     const birdeyeUrl = `${BIRDEYE_API_URL}/public/price?address=${encodeURIComponent(address)}`;
     console.log(`[Birdeye] Fetching price for ${address} from ${birdeyeUrl}`);

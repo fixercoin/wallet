@@ -4,9 +4,7 @@ import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { TokenInfo } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
-import { TokenQuickInfoCard } from "./token-detail/TokenQuickInfoCard";
-import { birdeyeAPI } from "@/lib/services/birdeye";
-import { BuySellLine } from "./token-detail/BuySellLine";
+import { TokenDetailsPanel } from "./token-detail/TokenDetailsPanel";
 
 interface TokenDetailProps {
   tokenMint: string;
@@ -27,9 +25,6 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
 }) => {
   const { tokens, refreshTokens } = useWallet();
   const { toast } = useToast();
-  const [priceData, setPriceData] = useState<
-    { time: string; price: number; volume: number }[]
-  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [enhancedToken, setEnhancedToken] = useState<TokenInfo | null>(null);
 
@@ -42,59 +37,10 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
     }
   }, [token]);
 
-  // Load live price data from Birdeye for this token
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const birdeye = await birdeyeAPI.getTokenByMint(tokenMint);
-        const price = birdeye?.priceUsd
-          ? parseFloat(String(birdeye.priceUsd))
-          : null;
-        const change = birdeye?.priceChange?.h24 ?? 0;
-        const base = price || 0;
-        const data = Array.from({ length: 24 }, (_, i) => {
-          // create simple intraday points around the base price using change to simulate trend
-          const factor =
-            1 +
-            ((Math.sin((i / 24) * Math.PI * 2) * 0.5 + 0.5) *
-              (change / 100 || 0)) /
-              2;
-          return {
-            time: `${i}:00`,
-            price: parseFloat((base * factor).toFixed(8)),
-            volume: birdeye?.volume?.h24 || Math.random() * 100000,
-          };
-        });
-        if (mounted) setPriceData(data);
-      } catch (e) {
-        if (mounted) setPriceData([]);
-      }
-    };
-    load();
-    return () => {
-      mounted = false;
-    };
-  }, [tokenMint]);
-
   const handleRefresh = async () => {
     setIsLoading(true);
     try {
       await refreshTokens();
-      // reload prices
-      const birdeye = await birdeyeAPI
-        .getTokenByMint(tokenMint)
-        .catch(() => null);
-      if (birdeye?.priceUsd) {
-        const base = parseFloat(String(birdeye.priceUsd));
-        const data = Array.from({ length: 24 }, (_, i) => ({
-          time: `${i}:00`,
-          price: base,
-          volume: birdeye.volume?.h24 || 0,
-        }));
-        setPriceData(data);
-      }
-
       toast({
         title: "Refreshed",
         description: "Token data updated",
@@ -127,10 +73,11 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
   const displayToken = enhancedToken || token;
 
   return (
-    <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground relative overflow-hidden">
-      <div className="w-full md:max-w-lg mx-auto px-4 py-6 relative z-20">
-        <div className="mt-6 mb-1 rounded-lg p-6 border border-gray-300/30 bg-transparent relative overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3">
+    <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground relative overflow-hidden flex flex-col">
+      <div className="w-full md:max-w-lg mx-auto relative z-20 flex-1 flex flex-col">
+        {/* Header Section - With padding */}
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
@@ -155,37 +102,21 @@ export const TokenDetail: React.FC<TokenDetailProps> = ({
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
+        </div>
 
-          {/* Token Quick Info Card */}
-          <div className="px-4 py-3">
-            <TokenQuickInfoCard token={displayToken} />
-          </div>
+        {/* Token Details Section - Scrollable */}
+        <div className="px-4 py-4 flex-1 flex flex-col overflow-hidden">
+          <TokenDetailsPanel token={displayToken} tokenMint={tokenMint} />
+        </div>
 
-          {/* Chart and actions */}
-          <div className="px-4 pb-4 space-y-3">
-            <div className="rounded-lg overflow-hidden border-0 bg-transparent">
-              <div className="px-3 pt-3 text-sm font-medium text-foreground">
-                Buys vs Sells (5m �� 24h)
-              </div>
-              <div className="p-3">
-                <BuySellLine mint={tokenMint} priceData={priceData} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                onClick={() => onBuy(tokenMint)}
-                className="h-10 font-semibold rounded-[2px] bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
-              >
-                BUY
-              </Button>
-              <Button
-                onClick={() => onSell(tokenMint)}
-                className="h-10 font-semibold rounded-[2px] bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
-              >
-                SELL
-              </Button>
-            </div>
-          </div>
+        {/* QUICK BUY Button - Fixed at bottom with padding */}
+        <div className="px-4 py-4 border-t border-gray-800">
+          <Button
+            onClick={() => onBuy(tokenMint)}
+            className="w-full h-10 font-semibold rounded-[2px] bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#16a34a] hover:to-[#15803d] text-white"
+          >
+            QUICK BUY
+          </Button>
         </div>
       </div>
     </div>

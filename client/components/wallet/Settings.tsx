@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   ArrowLeft,
@@ -13,45 +12,32 @@ import {
   Key,
   Eye,
   EyeOff,
-  Lock,
-  ExternalLink,
+  Twitter,
+  Send,
+  Headphones,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { shortenAddress, copyToClipboard } from "@/lib/wallet";
 import { useToast } from "@/hooks/use-toast";
-import {
-  setWalletPassword,
-  doesWalletRequirePassword,
-  markWalletAsPasswordProtected,
-  encryptStoredWalletsIfNeeded,
-} from "@/lib/wallet-password";
 import bs58 from "bs58";
 
 interface SettingsProps {
   onBack: () => void;
   onOpenSetup?: () => void;
+  onDocumentation?: () => void;
 }
 
-export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
+export const Settings: React.FC<SettingsProps> = ({
+  onBack,
+  onOpenSetup,
+  onDocumentation,
+}) => {
   const { wallet, wallets, logout, selectWallet } = useWallet();
   const { toast } = useToast();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(false);
   const [recoveryPhrase, setRecoveryPhrase] = useState("");
   const [showPrivateKey, setShowPrivateKey] = useState(false);
-  const [passwordEnabled, setPasswordEnabled] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [showPasswordField, setShowPasswordField] = useState(false);
-
-  React.useEffect(() => {
-    const checkPassword = async () => {
-      const hasPassword = await doesWalletRequirePassword();
-      setPasswordEnabled(hasPassword);
-    };
-    checkPassword();
-  }, []);
 
   if (wallets.length === 0) {
     return (
@@ -176,65 +162,15 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
     onBack();
   };
 
-  const handleSetPassword = async () => {
-    if (!newPassword) {
-      toast({
-        title: "Error",
-        description: "Please enter a password",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      await setWalletPassword(newPassword);
-      markWalletAsPasswordProtected();
-      encryptStoredWalletsIfNeeded();
-      setPasswordEnabled(true);
-      setNewPassword("");
-      setConfirmPassword("");
-      setShowPasswordForm(false);
-      toast({
-        title: "Success",
-        description:
-          "Password set successfully. You will be prompted for it when you open the app.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to set password",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground relative overflow-hidden">
       {/* Decorative curved accent background elements */}
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-25 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl bg-[#22c55e] pointer-events-none" />
 
-      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-4 py-6 relative z-20">
+      <div className="w-full relative z-20">
         <div>
-          <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden -mx-4 sm:mx-0">
+          <div className="mt-6 mb-1 p-6 border-0 bg-transparent relative mx-0">
             <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
               <Button
                 variant="ghost"
@@ -247,8 +183,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
               </Button>
               <div className="font-medium text-sm text-gray-900">ACCOUNTS</div>
             </div>
-            <div className="space-y-3 md:space-y-6 -mx-6 md:mx-0">
-              <Card className="w-full bg-transparent rounded-[2px]">
+            <div className="space-y-3 md:space-y-6 px-4 sm:px-6">
+              <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between p-4 rounded-none transition-colors">
                     <div className="min-w-0 w-full">
@@ -270,7 +206,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                               description: "Switched to selected account",
                             });
                           }}
-                          className="flex-1 bg-transparent text-[hsl(var(--foreground))] p-2 pr-6 rounded-none font-mono"
+                          className="flex-1 bg-transparent text-[hsl(var(--foreground))] p-2 pr-6 rounded-md font-mono"
                         >
                           {wallets.map((w) => (
                             <option
@@ -287,104 +223,9 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   </div>
                 </CardContent>
               </Card>
-              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
-
-              {/* Password Card */}
-              <Card className="w-full bg-transparent rounded-[2px]">
-                <CardContent className="p-0">
-                  <button
-                    onClick={() => setShowPasswordForm(!showPasswordForm)}
-                    className="w-full flex items-center justify-between p-4 rounded-none transition-colors hover:bg-white/5"
-                  >
-                    <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">
-                      <Lock className="h-5 w-5" />
-                      <span className="font-medium">
-                        {passwordEnabled ? "PASSWORD ENABLED" : "SET PASSWORD"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {passwordEnabled && (
-                        <span className="text-xs bg-green-500/20 text-green-600 px-2 py-1 rounded-none">
-                          Active
-                        </span>
-                      )}
-                      <Eye className="h-4 w-4 text-gray-600" />
-                    </div>
-                  </button>
-                  {showPasswordForm && (
-                    <div className="px-4 pb-4 space-y-3">
-                      <div>
-                        <label className="text-xs text-gray-600 font-semibold uppercase block mb-2">
-                          Password
-                        </label>
-                        <Input
-                          type={showPasswordField ? "text" : "password"}
-                          placeholder="Enter password"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className="bg-white/5 text-gray-900 rounded-[2px]"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-600 font-semibold uppercase block mb-2">
-                          Confirm Password
-                        </label>
-                        <Input
-                          type={showPasswordField ? "text" : "password"}
-                          placeholder="Confirm password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="bg-white/5 text-gray-900 rounded-[2px]"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="showPassword"
-                          checked={showPasswordField}
-                          onChange={(e) =>
-                            setShowPasswordField(e.target.checked)
-                          }
-                          className="w-4 h-4 rounded-[2px]"
-                        />
-                        <label
-                          htmlFor="showPassword"
-                          className="text-xs text-gray-600"
-                        >
-                          Show password
-                        </label>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={handleSetPassword}
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-[2px]"
-                        >
-                          Set Password
-                        </Button>
-                        <Button
-                          onClick={() => setShowPasswordForm(false)}
-                          variant="outline"
-                          className="flex-1 bg-transparent text-gray-900 rounded-[2px]"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  {passwordEnabled && !showPasswordForm && (
-                    <div className="px-4 pb-4">
-                      <p className="text-xs text-green-600">
-                        Password protection is active. You will be prompted for
-                        your password when you open the app.
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Recovery Phrase Card */}
-              <Card className="w-full bg-transparent rounded-[2px]">
+              <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {
@@ -416,7 +257,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             e.stopPropagation();
                             handleCopyRecoveryPhrase();
                           }}
-                          className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-[2px]"
+                          className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-md"
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -433,7 +274,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       <Textarea
                         value={recoveryPhrase}
                         readOnly
-                        className="bg-white/5 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-[2px]"
+                        className="bg-white/5 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-md"
                       />
                     </div>
                   )}
@@ -448,10 +289,9 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                   )}
                 </CardContent>
               </Card>
-              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               {/* Private Key Card */}
-              <Card className="w-full bg-transparent rounded-[2px]">
+              <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
                 <CardContent className="p-0">
                   <button
                     onClick={() => {
@@ -482,7 +322,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                             e.stopPropagation();
                             handleCopyPrivateKey();
                           }}
-                          className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-[2px]"
+                          className="h-8 px-2 bg-white/10 hover:bg-white/20 text-gray-900 rounded-md"
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -499,50 +339,63 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       <Textarea
                         value={privateKeyBase58}
                         readOnly
-                        className="bg-white/5 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-[2px]"
+                        className="bg-white/5 text-gray-900 font-mono text-sm resize-none min-h-[120px] rounded-md"
                       />
                     </div>
                   )}
                 </CardContent>
               </Card>
-              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
-              {/* DApp Connected Card */}
-              <Card className="w-full bg-transparent rounded-[2px]">
-                <CardContent className="p-0">
-                  <div className="w-full flex items-center justify-between p-4 rounded-none">
-                    <div className="flex items-center gap-2 text-[hsl(var(--foreground))]">
-                      <ExternalLink className="h-5 w-5" />
-                      <span className="font-medium">DAPP CONNECTIONS</span>
-                    </div>
-                    <div className="flex items-center gap-2">
+              {/* Documentation Card */}
+              {/* Helpline Card */}
+              <Card className="w-full bg-transparent rounded-lg border border-gray-300/30">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-[hsl(var(--foreground))]">
+                      CONTACT
+                    </span>
+                    <div className="flex items-center gap-3">
                       <a
-                        href="/dapps"
-                        className="text-xs text-gray-700 hover:underline"
+                        href="https://twitter.com/fixorium"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-white/10 rounded-md transition-colors text-gray-600 hover:text-gray-900"
+                        aria-label="Twitter"
                       >
-                        Manage
+                        <Twitter className="h-5 w-5" />
                       </a>
-                    </div>
-                  </div>
-                  <div className="px-4 pb-4">
-                    <div className="text-xs text-[hsl(var(--muted-foreground))]">
-                      Shows dapps this wallet has connected to. Manage
-                      connections on the DApps page.
+                      <a
+                        href="https://t.me/fixorium"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-white/10 rounded-md transition-colors text-gray-600 hover:text-gray-900"
+                        aria-label="Telegram"
+                      >
+                        <Send className="h-5 w-5" />
+                      </a>
+                      {onDocumentation && (
+                        <button
+                          onClick={onDocumentation}
+                          className="p-2 hover:bg-white/10 rounded-md transition-colors text-gray-600 hover:text-gray-900"
+                          aria-label="Documentation"
+                        >
+                          <Headphones className="h-5 w-5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              <div className="mx-4 sm:mx-0 border-b border-gray-300/30" />
 
               <section>
                 <div className="mb-2 text-[hsl(var(--foreground))] font-medium"></div>
                 <div className="space-y-3">
-                  <div className="px-4 sm:px-0">
-                    <div className="flex flex-col sm:flex-row justify-center items-center gap-3 w-full">
+                  <div className="px-0 sm:px-4">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full">
                       <Button
                         onClick={handleLogout}
                         variant="default"
-                        className="w-full sm:w-40 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-[2px]"
+                        className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
                       >
                         <LogOut className="h-4 w-4" />
                         Logout
@@ -551,7 +404,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                       <Button
                         onClick={handleDeleteAccount}
                         variant="default"
-                        className={`w-full sm:w-40 flex items-center justify-center gap-2 rounded-[2px] ${
+                        className={`flex-1 flex items-center justify-center gap-2 rounded-lg ${
                           confirmDelete
                             ? "bg-green-700 hover:bg-green-800 text-white"
                             : "bg-green-600 hover:bg-green-700 text-white"
@@ -573,7 +426,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenSetup }) => {
                         variant="ghost"
                         size="sm"
                         onClick={() => setConfirmDelete(false)}
-                        className="mt-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-[2px]"
+                        className="mt-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md"
                       >
                         Cancel
                       </Button>

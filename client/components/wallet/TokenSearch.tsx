@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { dexscreenerAPI, DexscreenerToken } from "@/lib/services/dexscreener";
+import { KNOWN_TOKENS } from "@/lib/services/solana-rpc";
 import { useNavigate } from "react-router-dom";
 import { Search as SearchIcon, Loader2 } from "lucide-react";
 
@@ -57,6 +58,37 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
           (t) => (t.chainId || "").toLowerCase() === "solana",
         );
 
+        // If no results from DexScreener, check KNOWN_TOKENS
+        if (filtered.length === 0) {
+          const knownMatches = Object.values(KNOWN_TOKENS).filter(
+            (token) =>
+              token.symbol.toLowerCase().includes(q.toLowerCase()) ||
+              token.name.toLowerCase().includes(q.toLowerCase()) ||
+              token.mint.toLowerCase().includes(q.toLowerCase()),
+          );
+
+          // Convert KNOWN_TOKENS to DexscreenerToken format for display
+          const convertedKnown = knownMatches.map(
+            (token) =>
+              ({
+                chainId: "solana",
+                pairAddress: token.mint,
+                baseToken: {
+                  address: token.mint,
+                  symbol: token.symbol,
+                  name: token.name,
+                },
+                quoteToken: { address: "", symbol: "", name: "" },
+                priceUsd: "0",
+                info: {
+                  imageUrl: token.logoURI,
+                },
+              }) as any,
+          );
+
+          filtered.push(...convertedKnown);
+        }
+
         if (!cancelled) {
           setResults(filtered);
           setOpen(filtered.length > 0);
@@ -105,7 +137,7 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Use Name or Address"
+          placeholder="Search tokens..."
           className={
             inputClassName
               ? `pl-9 ${inputClassName}`
@@ -119,7 +151,7 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
       </div>
 
       {open && results.length > 0 && (
-        <div className="mt-2 max-h-72 overflow-auto rounded-none border border-[#22c55e]/30 bg-gray-800 backdrop-blur-sm shadow-lg">
+        <div className="mt-2 max-h-72 overflow-auto rounded-md border border-[#22c55e]/30 bg-gray-800 backdrop-blur-sm shadow-lg">
           {results.slice(0, 20).map((r) => {
             const mint = r.baseToken?.address || r.quoteToken?.address;
             const img = r.info?.imageUrl;
@@ -162,11 +194,13 @@ export const TokenSearch: React.FC<TokenSearchProps> = ({
                     </div>
                   )}
                 </div>
-                {r.priceUsd ? (
-                  <div className="ml-auto text-xs text-gray-300">
-                    ${Number(r.priceUsd).toFixed(6)}
-                  </div>
-                ) : null}
+                <div className="ml-auto">
+                  {r.priceUsd ? (
+                    <div className="text-xs text-gray-300">
+                      ${Number(r.priceUsd).toFixed(6)}
+                    </div>
+                  ) : null}
+                </div>
               </button>
             );
           })}

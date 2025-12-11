@@ -385,7 +385,7 @@ export default function WalletHistory() {
                     return (
                       <li
                         key={t.id || t.txid || t.signature || idx}
-                        className="p-3 rounded-none border border-gray-300/30"
+                        className="p-3 rounded-lg border border-gray-300/30"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex flex-col gap-2">

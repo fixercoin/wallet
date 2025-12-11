@@ -1,0 +1,144 @@
+/**
+ * Appwrite P2P Collections Setup Script
+ * Creates collections in an existing database
+ *
+ * Usage: npx tsx scripts/setup-appwrite-collections.ts
+ */
+
+import { Client, Databases, ID } from "node-appwrite";
+
+const APPWRITE_ENDPOINT = process.env.APPWRITE_ENDPOINT || "";
+const APPWRITE_PROJECT_ID = process.env.APPWRITE_PROJECT_ID || "";
+const APPWRITE_API_KEY = process.env.APPWRITE_API_KEY || "";
+const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || "693976130028ac2f4d94";
+
+interface Collection {
+  id: string;
+  name: string;
+}
+
+const COLLECTIONS: Collection[] = [
+  { id: "p2p_orders", name: "P2P Orders" },
+  { id: "p2p_payment_methods", name: "Payment Methods" },
+  { id: "p2p_notifications", name: "Notifications" },
+  { id: "p2p_escrow", name: "Escrow" },
+  { id: "p2p_disputes", name: "Disputes" },
+  { id: "p2p_matches", name: "Matches" },
+  { id: "p2p_rooms", name: "Trade Rooms" },
+  { id: "p2p_messages", name: "Messages" },
+  { id: "p2p_merchant_stats", name: "Merchant Stats" },
+];
+
+async function setupCollections() {
+  // Validate environment
+  if (!APPWRITE_ENDPOINT || !APPWRITE_PROJECT_ID || !APPWRITE_API_KEY) {
+    console.error("❌ Missing Appwrite credentials:");
+    console.error(`   APPWRITE_ENDPOINT: ${APPWRITE_ENDPOINT ? "✓" : "✗"}`);
+    console.error(`   APPWRITE_PROJECT_ID: ${APPWRITE_PROJECT_ID ? "✓" : "✗"}`);
+    console.error(`   APPWRITE_API_KEY: ${APPWRITE_API_KEY ? "✓" : "✗"}`);
+    process.exit(1);
+  }
+
+  const client = new Client()
+    .setEndpoint(APPWRITE_ENDPOINT)
+    .setProject(APPWRITE_PROJECT_ID)
+    .setKey(APPWRITE_API_KEY);
+
+  const databases = new Databases(client);
+
+  try {
+    console.log("🔧 Setting up Appwrite P2P Collections...\n");
+    console.log(`📦 Using existing database: ${DATABASE_ID}\n`);
+
+    // Step 1: Create Collections
+    console.log("📋 Creating collections...");
+    for (const collection of COLLECTIONS) {
+      try {
+        await databases.createCollection(
+          DATABASE_ID,
+          collection.id,
+          collection.name,
+        );
+        console.log(`✅ Created collection: ${collection.id}`);
+      } catch (error: any) {
+        if (error?.code === 409) {
+          console.log(`⏭️  Collection already exists: ${collection.id}`);
+        } else {
+          console.error(`❌ Error creating ${collection.id}:`, error?.message);
+          throw error;
+        }
+      }
+    }
+
+    // Step 2: Create Attributes
+    console.log("\n🏷️  Creating attributes...");
+    for (const collection of COLLECTIONS) {
+      try {
+        // Create 'key' attribute (unique identifier)
+        try {
+          await databases.createStringAttribute(
+            DATABASE_ID,
+            collection.id,
+            "key",
+            255,
+            true, // required
+            undefined,
+            true, // unique
+          );
+          console.log(`✅ Created 'key' attribute for ${collection.id}`);
+        } catch (error: any) {
+          if (error?.code === 409) {
+            console.log(
+              `⏭️  'key' attribute already exists for ${collection.id}`,
+            );
+          } else {
+            console.warn(
+              `⚠️  Could not create 'key' attribute:`,
+              error?.message,
+            );
+          }
+        }
+
+        // Create 'value' attribute (JSON data storage)
+        try {
+          await databases.createStringAttribute(
+            DATABASE_ID,
+            collection.id,
+            "value",
+            65536,
+            false, // not required
+          );
+          console.log(`✅ Created 'value' attribute for ${collection.id}`);
+        } catch (error: any) {
+          if (error?.code === 409) {
+            console.log(
+              `⏭️  'value' attribute already exists for ${collection.id}`,
+            );
+          } else {
+            console.warn(
+              `⚠️  Could not create 'value' attribute:`,
+              error?.message,
+            );
+          }
+        }
+      } catch (error: any) {
+        console.error(
+          `⚠️  Error setting up attributes for ${collection.id}:`,
+          error?.message,
+        );
+      }
+    }
+
+    console.log("\n✨ Setup complete!\n");
+    console.log("📝 Environment variables configured:");
+    console.log(`   APPWRITE_ENDPOINT=${APPWRITE_ENDPOINT}`);
+    console.log(`   APPWRITE_PROJECT_ID=${APPWRITE_PROJECT_ID}`);
+    console.log(`   APPWRITE_DATABASE_ID=${DATABASE_ID}`);
+    console.log("\n✅ Your Appwrite P2P system is ready to use!");
+  } catch (error: any) {
+    console.error("❌ Setup failed:", error?.message || error);
+    process.exit(1);
+  }
+}
+
+setupCollections();

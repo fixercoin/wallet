@@ -49,8 +49,8 @@ export const ReceiveTransaction: React.FC<ReceiveTransactionProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-      <div className="max-w-md mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="w-full">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6 pt-4">
           <Button

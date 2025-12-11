@@ -1,15 +1,13 @@
 const RPC_ENDPOINTS = [
   process.env.SOLANA_RPC_URL || "",
   process.env.ALCHEMY_RPC_URL || "",
-  process.env.HELIUS_RPC_URL || "",
   process.env.MORALIS_RPC_URL || "",
-  process.env.HELIUS_API_KEY
-    ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
-    : "",
+  "https://api.mainnet-beta.solflare.network",
   "https://solana.publicnode.com",
+  "https://api.solflare.com",
   "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
-  "https://solana-rpc.publicnode.com",
+  "https://api.marinade.finance/rpc",
 ].filter(Boolean);
 
 const rateLimitedEndpoints = new Map();

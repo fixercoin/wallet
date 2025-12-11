@@ -9,20 +9,24 @@ import {
   Send,
   Download,
   RefreshCw,
+  RotateCw,
   Copy,
   ArrowUpRight,
   ArrowDownLeft,
+  ArrowRightLeft,
   TrendingUp,
   Settings,
   Bot,
   Plus,
   Menu,
   Gift,
-  Flame,
-  Lock,
+  Unlock,
   Bell,
   X,
   Clock,
+  Coins,
+  Search as SearchIcon,
+  Headphones,
 } from "lucide-react";
 import { ADMIN_WALLET, API_BASE } from "@/lib/p2p";
 import {
@@ -32,7 +36,9 @@ import {
 import { useWallet } from "@/contexts/WalletContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { shortenAddress, copyToClipboard, TokenInfo } from "@/lib/wallet";
+import { formatAmountCompact } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useStakingTokens } from "@/hooks/use-staking-tokens";
 import { AddTokenDialog } from "./AddTokenDialog";
 import { TokenBadge } from "./TokenBadge";
 import {
@@ -42,6 +48,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
+import { FlyingPrizeBox } from "./FlyingPrizeBox";
+import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
+import bs58 from "bs58";
+import nacl from "tweetnacl";
+import { getUnreadNotifications } from "@/lib/p2p-chat";
+import { Zap } from "lucide-react";
 
 interface DashboardProps {
   onSend: () => void;
@@ -55,14 +68,9 @@ interface DashboardProps {
   onAccounts?: () => void;
   onLock: () => void;
   onBurn: () => void;
+  onStakeTokens?: () => void;
+  onP2PTrade?: () => void;
 }
-
-import { useNavigate } from "react-router-dom";
-import { FlyingPrizeBox } from "./FlyingPrizeBox";
-import { resolveApiUrl, fetchWithFallback } from "@/lib/api-client";
-import bs58 from "bs58";
-import nacl from "tweetnacl";
-import { TokenSearch } from "./TokenSearch";
 
 const QUEST_TASKS = [
   {
@@ -106,24 +114,36 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onAccounts,
   onLock,
   onBurn,
+  onStakeTokens,
+  onP2PTrade,
 }) => {
   const {
     wallet,
     balance,
     tokens,
     isLoading,
+    isUsingCache,
     refreshBalance,
     refreshTokens,
     addCustomToken,
     removeToken,
   } = useWallet();
+
   const { toast } = useToast();
   const [showBalance, setShowBalance] = useState(true);
   const [showAddTokenDialog, setShowAddTokenDialog] = useState(false);
   const [showQuestModal, setShowQuestModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
   const [isServiceDown, setIsServiceDown] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const { isStaking } = useStakingTokens(wallet?.publicKey || null);
+  const [showHelpChat, setShowHelpChat] = useState(false);
+  const [chatMessages, setChatMessages] = useState<
+    Array<{ role: "user" | "bot"; content: string }>
+  >([]);
+  const [chatInput, setChatInput] = useState("");
 
   // Quest state (per-wallet, persisted locally)
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
@@ -214,6 +234,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       const msg = `fixercoin-quest-claim:${wallet.publicKey}:${tasksDone}:${Date.now()}`;
       const bytes = new TextEncoder().encode(msg);
       const sig = nacl.sign.detached(bytes, wallet.secretKey);
+
       const body = {
         recipient: wallet.publicKey,
         tasks: Array.from(completedTasks),
@@ -221,15 +242,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
         authMessage: msg,
         authSignature: bs58.encode(sig),
       };
+
       const res = await fetch(resolveApiUrl("/api/quest-claim"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+
       if (!res.ok) {
         const err = await res.text().catch(() => "");
         throw new Error(err || `Claim failed (${res.status})`);
       }
+
       const j = await res.json().catch(() => ({}) as any);
       toast({
         title: "Claimed",
@@ -238,7 +262,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
       setShowQuestModal(false);
     } catch (e) {
       const m = e instanceof Error ? e.message : String(e);
-      toast({ title: "Claim failed", description: m, variant: "destructive" });
+      toast({
+        title: "Claim failed",
+        description: m,
+        variant: "destructive",
+      });
     }
   };
 
@@ -251,22 +279,53 @@ export const Dashboard: React.FC<DashboardProps> = ({
       if (running) return;
       running = true;
       try {
-        await refreshBalance();
-        await new Promise((r) => setTimeout(r, 300));
-        await refreshTokens();
+        if (!cancelled) await refreshBalance();
+        if (!cancelled) await new Promise((r) => setTimeout(r, 300));
+        if (!cancelled) await refreshTokens();
       } catch (err) {
+        // Silently ignore AbortError and other errors during refresh
+        // They're already logged by the service layer
+        if (!(err instanceof Error && err.name === "AbortError")) {
+          console.debug("[Dashboard] Refresh error:", err);
+        }
       } finally {
-        running = false;
+        if (!cancelled) {
+          running = false;
+        }
       }
     };
 
     const id = window.setInterval(tick, 60000); // Auto-refresh every 1 minute
-
     return () => {
       cancelled = true;
       clearInterval(id);
     };
   }, [refreshBalance, refreshTokens]);
+
+  // Monitor unread notifications
+  useEffect(() => {
+    if (!wallet) return;
+
+    const updateUnreadCount = () => {
+      const unread = getUnreadNotifications(wallet.publicKey);
+      setUnreadCount(unread.length);
+    };
+
+    updateUnreadCount();
+    // Check for updates every 2 seconds
+    const interval = setInterval(updateUnreadCount, 2000);
+
+    // Also listen for storage changes
+    const handleStorageChange = () => {
+      updateUnreadCount();
+    };
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [wallet]);
 
   // Check for pending payment verifications if admin
   useEffect(() => {
@@ -299,6 +358,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       try {
         const controller = new AbortController();
         const to = setTimeout(() => controller.abort(), 4000);
+
         // Health check via reliable ping endpoint
         const res = await fetchWithFallback("/api/ping", {
           method: "GET",
@@ -333,6 +393,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const id = setInterval(() => {
       if (!stopped) void check();
     }, 10000);
+
     return () => {
       stopped = true;
       clearInterval(id);
@@ -387,14 +448,83 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const handleRefresh = async () => {
-    await refreshBalance();
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    await refreshTokens();
+    if (isRefreshing) return;
+    try {
+      setIsRefreshing(true);
+      await refreshBalance();
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await refreshTokens();
+      toast({
+        title: "Refreshed",
+        description: "Balance and tokens updated",
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh Failed",
+        description: "Could not refresh data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
-    toast({
-      title: "Refreshed",
-      description: "Balance and tokens updated",
-    });
+  const getBotResponse = (question: string): string => {
+    const q = question.toLowerCase().trim();
+
+    if (q.includes("withdraw") || q.includes("send")) {
+      return 'To withdraw funds, click the "WITHDRAW" button in the balance card. You can transfer your crypto to another wallet address. Make sure to verify the recipient address before confirming.';
+    }
+    if (q.includes("deposit") || q.includes("receive")) {
+      return 'To deposit funds, click the "DEPOSIT" button in the balance card. You\'ll get your wallet address to share with others for receiving crypto. Anyone can send funds to this address.';
+    }
+    if (q.includes("convert") || q.includes("swap")) {
+      return 'Use the "CONVERT" button to swap between different tokens. You can exchange one cryptocurrency for another at the current market rate. The conversion happens instantly using Jupiter DEX.';
+    }
+    if (q.includes("lock") || q.includes("lock up")) {
+      return 'The "LOCK UP" button allows you to lock your tokens for a specific period. Locked tokens earn rewards and cannot be transferred until the lock period expires. This is useful for staking and earning interest.';
+    }
+    if (q.includes("limit order") || q.includes("bot")) {
+      return 'The "LIMIT ORDER" button lets you set automated trading orders. You can set buy/sell orders at specific prices that execute automatically when the market reaches those prices.';
+    }
+    if (q.includes("burn") || q.includes("burning")) {
+      return 'The "BURNING" button allows you to permanently remove tokens from circulation. Burned tokens are sent to a zero address and cannot be recovered. This is often done to reduce token supply.';
+    }
+    if (q.includes("quest") || q.includes("earn")) {
+      return 'Complete quests to earn FIXERCOIN rewards! Click "View Quest" on the quest card to see available tasks. Complete tasks like following social media, joining communities, and sharing updates. Each completed task earns you 50 FIXERCOIN.';
+    }
+    if (q.includes("portfolio") || q.includes("balance")) {
+      return "Your portfolio shows the total value of all your holdings in USD. It includes all tokens and their current market values. Your balance updates automatically or you can click the refresh button to update manually.";
+    }
+    if (q.includes("token") || q.includes("add token")) {
+      return "Click on any token to view details, or search for tokens using the search button. To add a custom token, use the add token dialog. Make sure you have the correct contract address.";
+    }
+    if (q.includes("transaction") || q.includes("history")) {
+      return 'Click the wallet menu (three dots) in the top-left of the balance card and select "WALLET HISTORY" to see all your past transactions. You can view details of each transaction and its status.';
+    }
+    if (q.includes("settings")) {
+      return "Click the settings icon (gear) in the top-right to access wallet preferences. You can manage security settings, export your seed phrase, and configure wallet options.";
+    }
+    if (q.includes("help") || q.includes("how")) {
+      return "I'm here to help! Ask me about any wallet function like withdraw, deposit, convert, lock, quest, portfolio, or any other feature. What would you like to know?";
+    }
+
+    return "I can help you with wallet functions! Ask me about: withdraw, deposit, convert, lock up, limit orders, burning, quests, portfolio, tokens, transaction history, or settings.";
+  };
+
+  const handleSendMessage = () => {
+    if (!chatInput.trim()) return;
+
+    const newMessages = [
+      ...chatMessages,
+      { role: "user" as const, content: chatInput },
+    ];
+
+    const botResponse = getBotResponse(chatInput);
+    newMessages.push({ role: "bot" as const, content: botResponse });
+
+    setChatMessages(newMessages);
+    setChatInput("");
   };
 
   const handleTokenCardClick = (token: TokenInfo) => {
@@ -405,7 +535,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
     amount: number | undefined,
     symbol?: string,
   ): string => {
-    if (!amount || isNaN(amount)) return "0.00";
+    if (amount === undefined || amount === null || isNaN(amount)) {
+      if (symbol === "SOL") return "0.000000";
+      if (symbol === "FXM") return "0.000000";
+      if (symbol === "FIXERCOIN" || symbol === "LOCKER") return "0.00";
+      return "0.00";
+    }
+    // SOL always show exactly 6 decimal places
+    if (symbol === "SOL") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 6,
+        maximumFractionDigits: 6,
+      });
+    }
+    // FXM shows up to 6 decimal places for precision with small amounts
+    if (symbol === "FXM") {
+      return amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 6,
+      });
+    }
     // FIXERCOIN and LOCKER always show exactly 2 decimal places
     if (symbol === "FIXERCOIN" || symbol === "LOCKER") {
       return amount.toLocaleString(undefined, {
@@ -422,17 +571,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const formatUSD = (
     amount: number | undefined,
     price: number | undefined,
+    symbol?: string,
   ): string => {
-    if (!amount || !price || isNaN(amount) || isNaN(price)) return "$0.00";
+    if (!amount || !price || isNaN(amount) || isNaN(price)) return "$ 0.000";
+
     const usdValue = amount * price;
-    return `$${usdValue.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+
+    // Token cards use $ 0.000 format (dollar sign, space, 3 decimal places)
+    return `$ ${usdValue.toLocaleString(undefined, {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
     })}`;
   };
 
   const formatTokenPriceDisplay = (price?: number): string => {
-    if (typeof price !== "number" || !isFinite(price)) return "0.00000000";
+    if (typeof price !== "number" || !isFinite(price)) return "0.000000";
+    if (price === 0) return "0.000000";
     if (price >= 1) return price.toFixed(2);
     if (price >= 0.01) return price.toFixed(4);
     if (price >= 0.0001) return price.toFixed(6);
@@ -479,15 +633,44 @@ export const Dashboard: React.FC<DashboardProps> = ({
   // Currency formatting from context
   const { formatCurrency } = useCurrency();
 
-  // Get SOL token data from tokens list
+  const SOL_WRAPPED_MINT = "So11111111111111111111111111111111111111112";
+
+  // Get SOL token data from tokens list (case-insensitive symbol match + wrapped SOL mint fallback)
   const getSolToken = () => {
-    return tokens.find((token) => token.symbol === "SOL");
+    return tokens.find((token) => {
+      if (!token) return false;
+      const sym = (token.symbol || "").toString().toUpperCase();
+      if (sym === "SOL") return true;
+      if (token.mint === SOL_WRAPPED_MINT) return true;
+      return false;
+    });
   };
 
-  // Get SOL price from tokens or fetch it
+  // Get SOL price from tokens (try several possible fields)
   const getSolPrice = (): number | undefined => {
     const solToken = getSolToken();
-    return solToken?.price;
+    if (!solToken) return undefined;
+    if (typeof solToken.price === "number" && isFinite(solToken.price))
+      return solToken.price;
+
+    // common alternative price fields providers may use
+    const alt =
+      (solToken as any).priceUsd ??
+      (solToken as any).usdPrice ??
+      (solToken as any).price_usd;
+    if (typeof alt === "number" && isFinite(alt)) return alt;
+
+    return undefined;
+  };
+
+  // Check if any tokens with balance are still loading prices
+  const areTokenPricesLoading = (): boolean => {
+    return tokens.some(
+      (token) =>
+        typeof token.balance === "number" &&
+        token.balance > 0 &&
+        token.price === undefined,
+    );
   };
 
   // Calculate total portfolio value including all tokens (USD)
@@ -546,21 +729,39 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const sortedTokens = useMemo(() => {
-    const priority = ["SOL", "USDC", "FIXERCOIN", "LOCKER"];
-    const arr = [...tokens].filter((t) => t.symbol !== "USDT");
+    const priority = ["SOL", "USDT", "FIXERCOIN", "FXM", "LOCKER"];
+    const arr = [...tokens];
+
+    const solToken = arr.find((t) => t.symbol === "SOL");
+    if (solToken) {
+      console.log(`[Dashboard] SOL token found in tokens array:`, {
+        symbol: solToken.symbol,
+        balance: solToken.balance,
+        price: solToken.price,
+        mint: solToken.mint,
+      });
+    } else {
+      console.warn("[Dashboard] SOL token NOT found in tokens array");
+      console.log(
+        "[Dashboard] Available tokens:",
+        tokens.map((t) => t.symbol),
+      );
+    }
+
     arr.sort((a, b) => {
       const aSym = (a.symbol || "").toUpperCase();
       const bSym = (b.symbol || "").toUpperCase();
-
       const aIdx = priority.indexOf(aSym);
       const bIdx = priority.indexOf(bSym);
-
       if (aIdx >= 0 && bIdx >= 0) return aIdx - bIdx;
       if (aIdx >= 0) return -1;
       if (bIdx >= 0) return 1;
-
       return aSym.localeCompare(bSym);
     });
+
+    console.log(
+      `[Dashboard] sortedTokens ready: ${arr.length} tokens, first token: ${arr[0]?.symbol} (balance: ${arr[0]?.balance})`,
+    );
     return arr;
   }, [tokens]);
 
@@ -568,8 +769,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div
-      className="express-p2p-page min-h-screen text-gray-100 relative overflow-hidden"
-      style={{ backgroundColor: "#1f1f1f" }}
+      className="express-p2p-page min-h-screen text-gray-900 relative overflow-y-auto"
+      style={{ backgroundColor: "#f3f4f6" }}
     >
       {/* Decorative bottom green wave (SVG) */}
       <svg
@@ -618,7 +819,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* About */}
               <p className="text-xs text-gray-300 leading-relaxed">
                 A community challenge inside the Fixorium Wallet. Complete
-                simple tasks, earn rewards, and join random prize draws — all
+                simple tasks, earn rewards, and join random prize draws 🎁🎉 all
                 directly from your wallet.
               </p>
 
@@ -647,14 +848,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       key={t.id}
                       className="flex items-center justify-between gap-2"
                     >
-                      <label className="flex items-start gap-2 cursor-pointer select-none">
+                      <label
+                        className={`flex items-start gap-2 select-none ${completedTasks.has(t.id) ? "cursor-pointer" : "cursor-not-allowed"}`}
+                      >
                         <input
                           type="checkbox"
                           className="mt-0.5 accent-[#22c55e]"
                           checked={completedTasks.has(t.id)}
-                          onChange={() => toggleTask(t.id)}
+                          onChange={() => {
+                            if (completedTasks.has(t.id)) {
+                              toggleTask(t.id);
+                            }
+                          }}
+                          disabled={!completedTasks.has(t.id)}
                         />
-                        <span>{t.label}</span>
+                        <span
+                          className={
+                            completedTasks.has(t.id)
+                              ? "text-gray-300"
+                              : "text-gray-500"
+                          }
+                        >
+                          {t.label}
+                        </span>
                       </label>
                       {t.type === "link" ? (
                         <button
@@ -684,12 +900,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Rewards */}
               <div className="bg-white/5 rounded-lg p-3 border border-[#22c55e]/20">
                 <h3 className="text-sm font-bold text-white mb-3">
-                  �� Rewards
+                  🎁 Rewards
                 </h3>
                 <div className="space-y-2 text-xs text-gray-300">
-                  <p>���� {REWARD_PER_TASK} FIXERCOIN per task</p>
+                  <p>🪙 {REWARD_PER_TASK} FIXERCOIN per task</p>
                   <p>🖼️ NFTs and airdrops</p>
-                  <p>���� Early access to wallet updates</p>
+                  <p>🌟 Early access to wallet updates</p>
                   <p>👑 Premium features for top participants</p>
                 </div>
               </div>
@@ -740,189 +956,371 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       )}
 
+      {/* Help Chat Modal */}
+      {showHelpChat && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-end z-50 p-4">
+          <div className="bg-gray-900 rounded-2xl border border-[#22c55e]/40 shadow-2xl w-full max-w-sm h-[600px] flex flex-col animate-fade-in">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-[#22c55e]/20">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Headphones className="h-5 w-5 text-[#22c55e]" />
+                Wallet Assistant
+              </h2>
+              <button
+                onClick={() => setShowHelpChat(false)}
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+              {chatMessages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-xs px-4 py-2 rounded-lg text-sm ${
+                      msg.role === "user"
+                        ? "bg-[#22c55e] text-gray-900 font-medium"
+                        : "bg-gray-800 text-gray-300 border border-[#22c55e]/30"
+                    }`}
+                  >
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Input */}
+            <div className="border-t border-[#22c55e]/20 p-4 flex gap-2">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    handleSendMessage();
+                  }
+                }}
+                placeholder="Ask a question..."
+                className="flex-1 bg-gray-800 border border-[#22c55e]/30 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#22c55e]/60"
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!chatInput.trim()}
+                className="bg-[#22c55e] hover:bg-[#16a34a] text-gray-900 font-bold text-xs px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Send
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2 relative z-20">
         {/* Balance Section */}
         <div className="w-full mt-2 mb-1 rounded-none sm:rounded-lg p-4 sm:p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              {/* Action buttons */}
+          <img
+            src="https://cdn.builder.io/api/v1/image/assets%2F544a1f0862d54740bb19cea328eb3490%2F144647ed9eb7478cac472b3cb771e9ae?format=webp&width=800"
+            alt="Balance card background"
+            className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
+            style={{ backgroundColor: "#1f1f1f" }}
+          />
+
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-2 gap-2">
+              {/* Dropdown menu - moved to left */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-transparent z-20"
+                    aria-label="Wallet menu"
+                  >
+                    <Menu className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem
+                    onSelect={() => onAccounts?.()}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Wallet className="h-4 w-4" />
+                    <span>MY WALLET</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={onAirdrop}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Gift className="h-4 w-4" />
+                    <span>AIRDROP</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => navigate("/wallet/history")}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <Clock className="h-4 w-4" />
+                    <span>WALLET HISTORY</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <div className="flex items-center gap-2 ml-auto">
+                {/* Help Chat button */}
+                <Button
+                  onClick={() => {
+                    setShowHelpChat(true);
+                    if (chatMessages.length === 0) {
+                      setChatMessages([
+                        {
+                          role: "bot",
+                          content:
+                            "Hello! I'm here to help you with your wallet. Ask me about any feature or function. What would you like to know?",
+                        },
+                      ]);
+                    }
+                  }}
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-[#22c55e] ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                  aria-label="Help and support chat"
+                  title="Ask me anything about wallet features"
+                >
+                  <Headphones className="h-4 w-4" />
+                </Button>
+
+                {/* Search button */}
+                <Button
+                  onClick={() => navigate("/search")}
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-[#22c55e] ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                  aria-label="Search tokens"
+                  title="Search tokens"
+                >
+                  <SearchIcon className="h-4 w-4" />
+                </Button>
+
+                {/* Settings button */}
+                <Button
+                  onClick={onSettings}
+                  size="sm"
+                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
+                  aria-label="Settings"
+                  title="Settings"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-3 mt-8">
+              <div className="text-left">
+                <div className="text-xs font-semibold text-gray-700 tracking-widest">
+                  MY BALANCE
+                </div>
+              </div>
+
+              {wallet
+                ? (() => {
+                    const total = getTotalPortfolioValue();
+                    const hasAnyBalance =
+                      tokens.some(
+                        (t) => typeof t.balance === "number" && t.balance > 0,
+                      ) ||
+                      (typeof balance === "number" && balance > 0);
+
+                    if (!hasAnyBalance) {
+                      // If prices are still loading, show loading indicator
+                      // Otherwise show 0.000 USD
+                      const displayValue = `0.000 $`;
+                      return (
+                        <div className="space-y-2 w-full">
+                          <div className="flex items-center justify-between gap-4 w-full">
+                            <div className="text-3xl text-gray-900 leading-tight">
+                              {showBalance ? displayValue : "****"}
+                            </div>
+                            <Button
+                              onClick={onP2PTrade || onReceive}
+                              className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-5 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
+                            >
+                              P2P EXPRESS
+                            </Button>
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            TODAY PNL +/- 0.000 - 0.00 %
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    let totalChange24h = 0;
+                    let hasValidPriceChange = false;
+
+                    tokens.forEach((token) => {
+                      if (
+                        typeof token.balance === "number" &&
+                        typeof token.price === "number" &&
+                        typeof token.priceChange24h === "number" &&
+                        isFinite(token.balance) &&
+                        isFinite(token.price) &&
+                        isFinite(token.priceChange24h) &&
+                        token.balance > 0 &&
+                        token.price > 0
+                      ) {
+                        const currentValue = token.balance * token.price;
+                        const previousPrice =
+                          token.price / (1 + token.priceChange24h / 100);
+                        const previousValue = token.balance * previousPrice;
+                        const change = currentValue - previousValue;
+                        totalChange24h += change;
+                        hasValidPriceChange = true;
+                      }
+                    });
+
+                    const change24hPercent = hasValidPriceChange
+                      ? (totalChange24h / (total - totalChange24h)) * 100
+                      : 0;
+                    const isPositive = totalChange24h >= 0;
+                    const isLoadingPrices = areTokenPricesLoading();
+
+                    return (
+                      <div className="space-y-2 w-full">
+                        <div className="flex items-center justify-between gap-4 w-full">
+                          <div className="text-3xl text-gray-900 leading-tight">
+                            {showBalance ? (
+                              <>
+                                <span
+                                  style={{
+                                    fontVariantNumeric: "tabular-nums",
+                                    fontFamily: "Arial",
+                                  }}
+                                >
+                                  {total.toLocaleString(undefined, {
+                                    minimumFractionDigits: 3,
+                                    maximumFractionDigits: 3,
+                                  })}
+                                </span>
+                                {" $"}
+                              </>
+                            ) : (
+                              "****"
+                            )}
+                          </div>
+                          <Button
+                            onClick={onP2PTrade || onReceive}
+                            className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-5 py-2.5 rounded-sm whitespace-nowrap h-auto transition-colors"
+                          >
+                            P2P EXPRESS
+                          </Button>
+                        </div>
+                        <div
+                          className={`text-xs ${isPositive ? "text-green-400" : "text-red-400"}`}
+                        >
+                          TODAY PNL {isPositive ? "+" : ""}
+                          {showBalance
+                            ? totalChange24h.toFixed(3)
+                            : "0.000"} -{" "}
+                          {showBalance
+                            ? Math.abs(change24hPercent).toFixed(2)
+                            : "0.00"}{" "}
+                          %
+                        </div>
+                      </div>
+                    );
+                  })()
+                : "Connect wallet to see balance"}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-around gap-2 sm:gap-3 mt-6 w-full px-0">
               <Button
-                onClick={onSettings}
-                size="sm"
-                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
-                aria-label="Settings"
-                title="Settings"
+                onClick={onSend}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
-                <Settings className="h-4 w-4" />
+                <Send className="h-8 w-8 text-[#22c55e]" />
+                <span>WITHDRAW</span>
+              </Button>
+              <Button
+                onClick={onReceive}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <Download className="h-8 w-8 text-[#22c55e]" />
+                <span>DEPOSIT</span>
+              </Button>
+              <Button
+                onClick={onSwap}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-md font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <ArrowRightLeft className="h-8 w-8 text-[#22c55e]" />
+                <span>CONVERT</span>
+              </Button>
+            </div>
+
+            {/* Additional Action Buttons: TRADE, BURN, LOCK */}
+            <div className="flex items-center justify-around gap-2 sm:gap-3 mt-3 w-full px-0">
+              <Button
+                onClick={onAutoBot}
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
+              >
+                <ArrowRightLeft className="h-8 w-8 text-[#22c55e]" />
+                <span>LIMIT ORDER</span>
               </Button>
               <Button
                 onClick={onBurn}
-                size="sm"
-                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
-                aria-label="Burn"
-                title="Burn"
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
-                <Flame className="h-4 w-4" />
+                <Zap className="h-8 w-8 text-[#22c55e]" />
+                <span>BURNING</span>
               </Button>
               <Button
                 onClick={onLock}
-                size="sm"
-                className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-gray-400 hover:text-white ring-0 focus-visible:ring-0 border border-transparent z-20 transition-colors"
-                aria-label="Lock"
-                title="Lock"
+                className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-sm font-bold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
               >
-                <Lock className="h-4 w-4" />
+                <Unlock className="h-8 w-8 text-[#22c55e]" />
+                <span>LOCK UP</span>
               </Button>
             </div>
-            {/* Dropdown menu - moved to right */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-md bg-transparent hover:bg-white/5 text-white ring-0 focus-visible:ring-0 border border-transparent z-20"
-                  aria-label="Wallet menu"
-                >
-                  <Menu className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onSelect={() => onAccounts?.()}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <Wallet className="h-4 w-4" />
-                  <span>MY-WALLET</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
 
-          {/* Token Search - Under Sign Line */}
-          <div className="w-full mb-4 px-0">
-            <TokenSearch
-              className="w-full"
-              inputClassName="bg-[#2a2a2a] text-white placeholder:text-gray-400 border border-[#22c55e]/30 focus-visible:ring-0 rounded-[2.5px]"
-            />
-          </div>
-
-          <div className="text-center space-y-2 mt-8">
-            {wallet
-              ? (() => {
-                  const total = getTotalPortfolioValue();
-                  const hasAnyBalance =
-                    tokens.some(
-                      (t) => typeof t.balance === "number" && t.balance > 0,
-                    ) ||
-                    (typeof balance === "number" && balance > 0);
-                  if (!hasAnyBalance) {
-                    // Show USD when zero, hide PKR to avoid showing 0.00 Pkr
-                    const usdZero = `0.000 $`;
-                    return (
-                      <>
-                        <div className="text-3xl font-medium text-gray-900 leading-tight">
-                          {showBalance ? `${usdZero}` : "****"}
-                        </div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          {showBalance ? `+ 0.00 (0.00%)` : "24h: ****"}
-                        </div>
-                      </>
-                    );
-                  }
-
-                  let totalChange24h = 0;
-                  let hasValidPriceChange = false;
-                  tokens.forEach((token) => {
-                    if (
-                      typeof token.balance === "number" &&
-                      typeof token.price === "number" &&
-                      typeof token.priceChange24h === "number" &&
-                      isFinite(token.balance) &&
-                      isFinite(token.price) &&
-                      isFinite(token.priceChange24h) &&
-                      token.balance > 0 &&
-                      token.price > 0
-                    ) {
-                      const currentValue = token.balance * token.price;
-                      const previousPrice =
-                        token.price / (1 + token.priceChange24h / 100);
-                      const previousValue = token.balance * previousPrice;
-                      const change = currentValue - previousValue;
-                      totalChange24h += change;
-                      hasValidPriceChange = true;
-                    }
-                  });
-
-                  const change24hPercent = hasValidPriceChange
-                    ? (totalChange24h / (total - totalChange24h)) * 100
-                    : 0;
-                  const isPositive = totalChange24h >= 0;
-
-                  return (
-                    <>
-                      <div className="text-3xl font-medium text-gray-900 leading-tight">
-                        {showBalance
-                          ? `${total.toLocaleString(undefined, {
-                              minimumFractionDigits: 3,
-                              maximumFractionDigits: 3,
-                            })} $`
-                          : "****"}
-                      </div>
-                      {showBalance ? (
-                        <div
-                          className={`text-xs mt-1 ${isPositive ? "text-green-400" : "text-red-400"}`}
-                        >
-                          <span className="font-medium">
-                            {isPositive ? "+" : "-"}{" "}
-                            {Math.abs(totalChange24h).toLocaleString(
-                              undefined,
-                              {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
-                              },
-                            )}
-                          </span>
-                          <span className="ml-1">
-                            (
-                            {Math.abs(
-                              isFinite(change24hPercent) ? change24hPercent : 0,
-                            ).toFixed(2)}
-                            %)
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="text-xs text-gray-400 mt-1">****</div>
-                      )}
-                    </>
-                  );
-                })()
-              : "Connect wallet to see balance"}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-around gap-2 sm:gap-3 mt-6 w-full px-0">
-            <Button
-              onClick={onSend}
-              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-[2.75px] font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
-            >
-              <Send className="h-8 w-8 text-[#22c55e]" />
-              <span>SEND</span>
-            </Button>
-
-            <Button
-              onClick={onReceive}
-              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-[2.75px] font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
-            >
-              <Download className="h-8 w-8 text-[#22c55e]" />
-              <span>RECEIVE</span>
-            </Button>
-
-            <Button
-              onClick={onSwap}
-              className="flex flex-col items-center justify-center gap-2 flex-1 h-auto py-4 px-2 rounded-[2.75px] font-semibold text-xs bg-transparent hover:bg-[#22c55e]/10 border border-[#22c55e]/40 text-white transition-colors"
-            >
-              <TrendingUp className="h-8 w-8 text-[#22c55e]" />
-              <span>SWAP</span>
-            </Button>
+            {/* Quest Reward Card */}
+            <div className="w-full mt-4">
+              <div
+                className="w-full bg-gradient-to-br from-[#1a3a2a] to-[#0f2818] rounded-md border border-[#22c55e]/40 p-4 cursor-pointer hover:bg-[#22c55e]/10 transition-colors"
+                onClick={() => setShowQuestModal(true)}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col gap-2 flex-1">
+                    <div className="text-xs font-semibold text-[#22c55e] uppercase tracking-widest">
+                      🎁 Fixercoin Quest
+                    </div>
+                    <div className="text-sm font-bold text-white">
+                      Earn {earnedTokens} FIXERCOIN
+                    </div>
+                    <div className="w-full bg-white/10 rounded-full h-1.5 border border-[#22c55e]/20">
+                      <div
+                        className="bg-gradient-to-r from-[#34d399] to-[#22c55e] h-1.5 rounded-full"
+                        style={{ width: `${progressPct}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {tasksDone}/{tasksTotal} tasks completed
+                    </div>
+                  </div>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowQuestModal(true);
+                    }}
+                    className="bg-[#22c55e] hover:bg-[#16a34a] text-gray-900 font-bold text-xs px-4 py-2 rounded-md whitespace-nowrap h-auto transition-colors"
+                  >
+                    View Quest
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -946,61 +1344,103 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         )}
 
-        <div className="w-full space-y-0">
+        <style>{`
+          @keyframes blink {
+            0%, 100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: 0.3;
+            }
+          }
+          .token-price-blink {
+            animation: blink 1.2s ease-in-out infinite;
+          }
+        `}</style>
+
+        <div className="w-full space-y-2">
           {sortedTokens.map((token, index) => {
-            const percentChange =
-              typeof token.priceChange24h === "number" &&
-              isFinite(token.priceChange24h)
-                ? token.priceChange24h
-                : null;
-            const isPositive = (percentChange ?? 0) >= 0;
+            const tokenBalance =
+              typeof token.balance === "number" &&
+              typeof token.price === "number" &&
+              isFinite(token.balance) &&
+              isFinite(token.price)
+                ? token.balance * token.price
+                : 0;
 
             return (
-              <div key={token.mint} className="w-full">
-                <Card className="w-full bg-transparent rounded-none sm:rounded-[2px] border-0">
+              <div key={token.mint} className="w-full px-4">
+                <Card className="w-full bg-transparent rounded-md border border-[#22c55e]/40 hover:bg-[#22c55e]/10 transition-colors">
                   <CardContent className="w-full p-0">
                     <div
-                      className="w-full flex items-center justify-between px-4 py-3 rounded-none sm:rounded-[2px] hover:bg-[#f0fff4]/40 cursor-pointer transition-colors gap-2 sm:gap-3"
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-md cursor-pointer gap-4"
                       onClick={() => handleTokenCardClick(token)}
                     >
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Avatar className="h-8 w-8 flex-shrink-0">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <Avatar className="h-10 w-10 flex-shrink-0">
                           <AvatarImage src={token.logoURI} alt={token.symbol} />
                           <AvatarFallback className="bg-gradient-to-br from-orange-500 to-yellow-600 text-white font-bold text-xs">
                             {token.symbol.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="font-semibold text-white text-xs whitespace-nowrap">
-                          {token.symbol}/USDT
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-3 sm:gap-4 ml-auto flex-shrink-0">
-                        <div>
-                          <p className="text-xs font-semibold text-white whitespace-nowrap">
-                            {formatBalance(token.balance || 0, token.symbol)}
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-semibold text-white truncate uppercase">
+                              {token.name}
+                            </p>
+                            {isStaking(token.mint) && (
+                              <span className="text-xs font-semibold text-yellow-500 whitespace-nowrap">
+                                STAKING
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs font-semibold text-white truncate">
+                            {formatBalance(token.balance, token.symbol)}
                           </p>
                         </div>
+                      </div>
 
-                        {percentChange !== null && (
-                          <Button
-                            className={`h-6 px-2 rounded-[2px] font-semibold text-xs flex-shrink-0 whitespace-nowrap ${
-                              isPositive
-                                ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
-                                : "bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30"
-                            }`}
-                          >
-                            {isPositive ? "+" : ""}
-                            {percentChange.toFixed(2)}%
-                          </Button>
-                        )}
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <div
+                          className={`text-xs whitespace-nowrap ${
+                            tokenBalance > 0 ? "font-semibold" : ""
+                          }`}
+                        >
+                          {typeof token.price === "number" &&
+                          isFinite(token.price) ? (
+                            <span style={{ color: "#ffffff" }}>
+                              {formatUSD(
+                                token.balance,
+                                token.price,
+                                token.symbol,
+                              )}
+                            </span>
+                          ) : null}
+                        </div>
+                        <div
+                          className={`text-xs whitespace-nowrap ${
+                            typeof token.priceChange24h === "number" &&
+                            isFinite(token.priceChange24h)
+                              ? token.priceChange24h >= 0
+                                ? "text-green-400"
+                                : "text-red-400"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          {typeof token.priceChange24h === "number" &&
+                          isFinite(token.priceChange24h) ? (
+                            <>
+                              {token.priceChange24h >= 0 ? "+" : ""}
+                              {token.priceChange24h.toFixed(2)}%
+                            </>
+                          ) : (
+                            <span className="text-gray-500">-</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-                {index < sortedTokens.length - 1 && (
-                  <Separator className="bg-[#14532d]/30" />
-                )}
               </div>
             );
           })}

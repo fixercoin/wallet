@@ -300,6 +300,33 @@ export default function SellData() {
       );
 
       if (response.ok) {
+        // Send notification to buyer with seller's order summary
+        try {
+          await createNotification(
+            buyerWalletAddress,
+            "transfer_initiated",
+            "SELL",
+            currentOrder.id,
+            `Crypto transfer initiated! Seller has sent ${parseFloat(amountTokens).toFixed(6)} ${selectedToken} to your wallet.`,
+            {
+              token: selectedToken,
+              amountTokens: parseFloat(amountTokens),
+              amountPKR: parseFloat(amountPKR),
+              sellerWallet: wallet?.publicKey || "",
+              paymentMethods: paymentMethods,
+              orderDetails: {
+                token: selectedToken,
+                amount: parseFloat(amountTokens),
+                price: parseFloat(amountPKR),
+              },
+            },
+            false,
+            currentOrder,
+          );
+        } catch (notificationError) {
+          console.warn("Failed to send transfer notification to buyer:", notificationError);
+        }
+
         setFlowStep("complete");
       } else {
         toast.error("Failed to update order status");

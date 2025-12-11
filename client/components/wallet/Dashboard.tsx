@@ -859,11 +859,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Progress Bar */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-white">
-                    Progress
+                  <span className="text-xs font-semibold text-white uppercase">
+                    PROGRESS
                   </span>
-                  <span className="text-xs text-gray-400">
-                    {tasksDone}/{tasksTotal} tasks
+                  <span className="text-xs text-gray-400 uppercase">
+                    {tasksDone}/{tasksTotal} TASKS
                   </span>
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-2 border border-[#ffffff66]/20">
@@ -872,8 +872,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     style={{ width: `${progressPct}%` }}
                   ></div>
                 </div>
-                <div className="mt-2 text-[11px] text-gray-300">
-                  Earned:{" "}
+                <div className="mt-2 text-[11px] text-gray-300 uppercase">
+                  EARNED:{" "}
                   <span className="text-white font-semibold">
                     {earnedTokens} FIXERCOIN
                   </span>
@@ -883,18 +883,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Action Buttons */}
               <div className="flex flex-col gap-2 pt-2">
                 <Button
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#9333ea] hover:to-[#16a34a] text-white shadow-lg"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#34d399] to-[#22c55e] hover:from-[#9333ea] hover:to-[#16a34a] text-white shadow-lg uppercase"
                   onClick={() => completeNextTask()}
                 >
-                  Complete Task
+                  COMPLETE TASK
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#064e3b]/50 text-white hover:bg-[#a855f7]/10"
+                  className="w-full h-10 rounded-xl font-semibold text-sm bg-[#064e3b]/50 text-white hover:bg-[#a855f7]/10 uppercase"
                   disabled={!canClaim}
                   onClick={handleClaimReward}
                 >
-                  Claim Reward
+                  CLAIM REWARD
                 </Button>
               </div>
             </div>

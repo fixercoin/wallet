@@ -554,8 +554,19 @@ export default function BuyerOrderConfirmation() {
           )}
 
         {/* Status Messages */}
+        {orderStatus === "PENDING" && (
+          <div className="p-4 rounded-lg bg-yellow-600/20 border border-yellow-500/50 mb-6">
+            <p className="text-yellow-400 font-semibold uppercase">
+              Waiting for Seller Response
+            </p>
+            <p className="text-yellow-300/80 text-xs mt-1">
+              The seller has not yet accepted your order
+            </p>
+          </div>
+        )}
+
         {orderStatus === "REJECTED" && (
-          <div className="p-4 rounded-lg bg-red-600/20 border border-red-500/50">
+          <div className="p-4 rounded-lg bg-red-600/20 border border-red-500/50 mb-6">
             <p className="text-red-400 font-semibold uppercase">
               Order Rejected
             </p>
@@ -565,19 +576,33 @@ export default function BuyerOrderConfirmation() {
           </div>
         )}
 
+        {orderStatus === "ACCEPTED" && completionStatus === "PENDING" && (
+          <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50 mb-6">
+            <p className="text-green-400 font-semibold uppercase">
+              Order Accepted
+            </p>
+            <p className="text-green-300/80 text-xs mt-1">
+              The seller has accepted your order and is preparing the crypto
+              transfer
+            </p>
+          </div>
+        )}
+
         {completionStatus === "SELLER_COMPLETED" && (
-          <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
-            <p className="text-blue-400 font-semibold uppercase">
-              Seller Completed - Waiting for Your Confirmation
+          <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50 mb-6">
+            <p className="text-blue-400 font-semibold uppercase flex items-center gap-2">
+              <Check className="w-5 h-5" />
+              Seller Transferred Crypto
             </p>
             <p className="text-blue-300/80 text-xs mt-1">
-              Confirm receipt to complete the order
+              Check your wallet for the incoming crypto. Confirm receipt when
+              you see it.
             </p>
           </div>
         )}
 
         {completionStatus === "COMPLETED" && (
-          <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
+          <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50 mb-6">
             <p className="text-green-400 font-semibold uppercase">
               ✓ Order Complete
             </p>

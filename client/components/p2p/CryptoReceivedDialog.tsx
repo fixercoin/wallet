@@ -60,7 +60,8 @@ export function CryptoReceivedDialog() {
 
       if (!updateResponse.ok) {
         const errorData = await updateResponse.json().catch(() => ({}));
-        const errorMessage = errorData?.error || "Failed to update order status";
+        const errorMessage =
+          errorData?.error || "Failed to update order status";
         const statusCode = updateResponse.status;
         throw new Error(`${errorMessage} (Status: ${statusCode})`);
       }
@@ -89,7 +90,8 @@ export function CryptoReceivedDialog() {
         resetFlow();
       }, 500);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       console.error("Error completing order:", error);
       toast.error(`Failed to complete order: ${errorMessage}`);
     } finally {

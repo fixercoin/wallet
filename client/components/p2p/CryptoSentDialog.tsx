@@ -65,7 +65,8 @@ export function CryptoSentDialog() {
 
       if (!updateResponse.ok) {
         const errorData = await updateResponse.json().catch(() => ({}));
-        const errorMessage = errorData?.error || "Failed to update order status";
+        const errorMessage =
+          errorData?.error || "Failed to update order status";
         const statusCode = updateResponse.status;
         throw new Error(`${errorMessage} (Status: ${statusCode})`);
       }
@@ -91,7 +92,8 @@ export function CryptoSentDialog() {
       );
       setWaitingForVerification(true);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       console.error("Error notifying buyer:", error);
       toast.error(`Failed to notify buyer: ${errorMessage}`);
     } finally {

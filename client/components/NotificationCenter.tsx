@@ -264,11 +264,10 @@ export function NotificationCenter() {
                           return;
                         }
 
-                        // For new sell orders, navigate to buyer order confirmation page
-                        if (notification.type === "new_sell_order") {
-                          navigate("/buyer-order-confirmation", {
-                            state: { orderId: notification.orderId },
-                          });
+                        // For new sell orders, open crypto received dialog to show order confirmation
+                        if (notification.type === "new_sell_order" && order) {
+                          // Open crypto received dialog to show seller's order summary
+                          openCryptoReceivedDialog(order);
                           return;
                         }
                       }}

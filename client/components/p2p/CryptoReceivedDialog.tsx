@@ -150,6 +150,55 @@ export function CryptoReceivedDialog() {
               </div>
             </div>
 
+            {/* Seller Details */}
+            {currentOrder.creator_wallet && (
+              <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
+                <div className="text-xs text-white/70 uppercase mb-3 font-semibold">
+                  Seller Details
+                </div>
+                <div className="space-y-3 text-sm text-white">
+                  <div>
+                    <p className="text-xs text-white/70 uppercase mb-1">
+                      Seller Wallet
+                    </p>
+                    <p className="text-xs font-mono text-white/90 break-all">
+                      {currentOrder.creator_wallet}
+                    </p>
+                  </div>
+                  {currentOrder.paymentMethod && (
+                    <div className="border-t border-gray-300/20 pt-3">
+                      <p className="text-xs text-white/70 uppercase mb-1">
+                        Payment Method
+                      </p>
+                      <p className="text-xs text-white/90">
+                        {currentOrder.paymentMethod}
+                      </p>
+                    </div>
+                  )}
+                  {currentOrder.accountNumber && (
+                    <div className="border-t border-gray-300/20 pt-3">
+                      <p className="text-xs text-white/70 uppercase mb-1">
+                        Account Number
+                      </p>
+                      <p className="text-xs font-mono text-white/90">
+                        {currentOrder.accountNumber}
+                      </p>
+                    </div>
+                  )}
+                  {currentOrder.accountName && (
+                    <div className="border-t border-gray-300/20 pt-3">
+                      <p className="text-xs text-white/70 uppercase mb-1">
+                        Account Name
+                      </p>
+                      <p className="text-xs text-white/90">
+                        {currentOrder.accountName}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Confirmation Instructions */}
             <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
               <div className="text-xs font-semibold text-blue-300 mb-2 uppercase">

@@ -150,6 +150,7 @@ import BuyTrade from "./pages/BuyTrade";
 import TokenSearchPage from "./pages/TokenSearchPage";
 import BuyData from "./pages/BuyData";
 import SellData from "./pages/SellData";
+import BuyerOrderConfirmation from "./pages/BuyerOrderConfirmation";
 import { useLocation } from "react-router-dom";
 import { P2POrderFlowProvider } from "@/contexts/P2POrderFlowContext";
 import { SellerPaymentMethodDialog } from "@/components/p2p/SellerPaymentMethodDialog";
@@ -170,6 +171,10 @@ function AppRoutes() {
       <Route path="/buy-crypto" element={<BuyCrypto />} />
       <Route path="/buydata" element={<BuyData />} />
       <Route path="/selldata" element={<SellData />} />
+      <Route
+        path="/buyer-order-confirmation"
+        element={<BuyerOrderConfirmation />}
+      />
       <Route path="/fixorium/add" element={<FixoriumAdd />} />
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />

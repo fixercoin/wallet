@@ -243,9 +243,8 @@ export default function SellData() {
         console.warn("Failed to send notification:", notificationError);
       }
 
-      // Generate a random buyer wallet for demo
-      const demoBuyerWallet = `buyer_${Math.random().toString(36).substr(2, 9)}`;
-      setBuyerWalletAddress(demoBuyerWallet);
+      // Use the fixed buyer wallet address
+      setBuyerWalletAddress("7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw");
 
       // Start polling for buyer payment
       startPollingOrderStatus(createdOrder.id);
@@ -301,6 +300,45 @@ export default function SellData() {
       );
 
       if (response.ok) {
+        // Create updated order with payment details
+        const orderWithDetails = {
+          ...currentOrder,
+          creator_wallet: wallet?.publicKey || "",
+          paymentMethod: paymentMethods[0]?.id || "N/A",
+          accountName: paymentMethods[0]?.accountName || "",
+          accountNumber: paymentMethods[0]?.accountNumber || "",
+        };
+
+        // Send notification to buyer with seller's order summary
+        try {
+          await createNotification(
+            buyerWalletAddress,
+            "transfer_initiated",
+            "SELL",
+            currentOrder.id,
+            `Crypto transfer initiated! Seller has sent ${parseFloat(amountTokens).toFixed(6)} ${selectedToken} to your wallet.`,
+            {
+              token: selectedToken,
+              amountTokens: parseFloat(amountTokens),
+              amountPKR: parseFloat(amountPKR),
+              sellerWallet: wallet?.publicKey || "",
+              paymentMethods: paymentMethods,
+              orderDetails: {
+                token: selectedToken,
+                amount: parseFloat(amountTokens),
+                price: parseFloat(amountPKR),
+              },
+            },
+            false,
+            orderWithDetails,
+          );
+        } catch (notificationError) {
+          console.warn(
+            "Failed to send transfer notification to buyer:",
+            notificationError,
+          );
+        }
+
         setFlowStep("complete");
       } else {
         toast.error("Failed to update order status");

@@ -15,11 +15,7 @@ import {
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { PaymentMethodSetup } from "@/components/ui/PaymentMethodSetup";
-import {
-  getLatestPaymentMethod,
-  updatePaymentMethodLastUsed,
-  PaymentMethod,
-} from "@/lib/payment-utils";
+import { getPaymentMethods, PaymentMethod } from "@/lib/payment-utils";
 
 const ADMIN_WALLETS = ["7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw"];
 

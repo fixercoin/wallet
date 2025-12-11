@@ -37,6 +37,10 @@ export interface P2POrderFlowContextType {
   buyerConfirmed: boolean;
   setBuyerConfirmed: (confirmed: boolean) => void;
 
+  // Chat state
+  isChatOpen: boolean;
+  setIsChatOpen: (open: boolean) => void;
+
   // Helper functions
   openSellerPaymentDialog: (order: P2POrder, details: PaymentDetails) => void;
   openBuyerWalletDialog: (order: P2POrder, buyerWallet: string) => void;

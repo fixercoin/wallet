@@ -101,6 +101,7 @@ export function P2POrderFlowProvider({
     setBuyerWalletAddress("");
     setSellerConfirmed(false);
     setBuyerConfirmed(false);
+    setIsChatOpen(false);
   }, []);
 
   const value: P2POrderFlowContextType = {
@@ -116,6 +117,8 @@ export function P2POrderFlowProvider({
     setSellerConfirmed,
     buyerConfirmed,
     setBuyerConfirmed,
+    isChatOpen,
+    setIsChatOpen,
     openSellerPaymentDialog,
     openBuyerWalletDialog,
     openCryptoSentDialog,

@@ -673,7 +673,6 @@ function FiatExchange({
         return;
       }
 
-      updatePaymentMethodLastUsed(paymentMethod.id);
       const toCurrency = exchangeMode === "USDT-FIAT" ? "PKR" : "USDT";
       toast.success(
         `Successfully exchanged ${numAmount} ${fromCurrency} to ${toCurrency}`,

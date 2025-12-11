@@ -37,6 +37,10 @@ export interface P2POrderFlowContextType {
   buyerConfirmed: boolean;
   setBuyerConfirmed: (confirmed: boolean) => void;
 
+  // Chat state
+  isChatOpen: boolean;
+  setIsChatOpen: (open: boolean) => void;
+
   // Helper functions
   openSellerPaymentDialog: (order: P2POrder, details: PaymentDetails) => void;
   openBuyerWalletDialog: (order: P2POrder, buyerWallet: string) => void;
@@ -60,6 +64,7 @@ export function P2POrderFlowProvider({
   const [buyerWalletAddress, setBuyerWalletAddress] = useState("");
   const [sellerConfirmed, setSellerConfirmed] = useState(false);
   const [buyerConfirmed, setBuyerConfirmed] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const openSellerPaymentDialog = useCallback(
     (order: P2POrder, details: PaymentDetails) => {
@@ -96,6 +101,7 @@ export function P2POrderFlowProvider({
     setBuyerWalletAddress("");
     setSellerConfirmed(false);
     setBuyerConfirmed(false);
+    setIsChatOpen(false);
   }, []);
 
   const value: P2POrderFlowContextType = {
@@ -111,6 +117,8 @@ export function P2POrderFlowProvider({
     setSellerConfirmed,
     buyerConfirmed,
     setBuyerConfirmed,
+    isChatOpen,
+    setIsChatOpen,
     openSellerPaymentDialog,
     openBuyerWalletDialog,
     openCryptoSentDialog,

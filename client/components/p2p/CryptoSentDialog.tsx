@@ -51,6 +51,59 @@ export function CryptoSentDialog() {
         calculateAmount(currentOrder.amountTokens) ||
         calculateAmount(currentOrder.token_amount);
 
+      // First, ensure the order exists on the server
+      // Try to fetch the order from the server
+      let orderExists = false;
+      try {
+        const checkResponse = await fetch(
+          `/api/p2p/orders/${currentOrder.id}`,
+        );
+        orderExists = checkResponse.ok;
+      } catch {
+        orderExists = false;
+      }
+
+      // If order doesn't exist on server, try to create it first
+      if (!orderExists) {
+        console.warn(
+          `[CryptoSent] Order ${currentOrder.id} not found on server, attempting to sync...`,
+        );
+        try {
+          const createResponse = await fetch("/api/p2p/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: currentOrder.id,
+              type: currentOrder.type,
+              walletAddress:
+                currentOrder.walletAddress || currentOrder.creator_wallet,
+              token: currentOrder.token,
+              amountTokens: currentOrder.amountTokens,
+              amountPKR: currentOrder.amountPKR,
+              status: currentOrder.status || "PENDING",
+              payment_method: currentOrder.payment_method,
+              accountName: currentOrder.accountName,
+              accountNumber: currentOrder.accountNumber,
+              buyerWallet: buyerWalletAddress,
+            }),
+          });
+
+          if (!createResponse.ok) {
+            console.warn(
+              `[CryptoSent] Failed to sync order to server: ${createResponse.status}`,
+            );
+          } else {
+            console.log(
+              `[CryptoSent] Successfully synced order ${currentOrder.id} to server`,
+            );
+          }
+        } catch (syncError) {
+          console.warn(
+            `[CryptoSent] Error syncing order: ${syncError instanceof Error ? syncError.message : String(syncError)}`,
+          );
+        }
+      }
+
       // Update order status to mark crypto as sent
       const updateResponse = await fetch(
         `/api/p2p/orders/${currentOrder.id}/status`,

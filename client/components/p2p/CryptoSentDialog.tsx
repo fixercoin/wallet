@@ -63,13 +63,8 @@ export function CryptoSentDialog() {
         currentOrder,
       );
 
-      toast.success("Crypto transfer initiated!");
+      toast.success("Crypto transfer initiated! Waiting for buyer confirmation...");
       setWaitingForVerification(true);
-
-      // Simulate waiting for buyer verification (in real app, this would be polling/websocket)
-      setTimeout(() => {
-        setVerificationComplete(true);
-      }, 5000);
     } catch (error) {
       console.error("Error notifying buyer:", error);
       toast.error("Failed to notify buyer");

@@ -40,7 +40,9 @@ export default function FiatSystem() {
   const [priceRatio, setPriceRatio] = useState<PriceRatio | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("home");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
+    null,
+  );
 
   const fetchBalance = async () => {
     if (!wallet) return;
@@ -156,114 +158,132 @@ export default function FiatSystem() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Main Dashboard - Balance Card */}
           <div className="space-y-6">
-              {/* Total Balance Card */}
-              {balance && (
-                <Card className="bg-gradient-to-br from-blue-600/20 via-purple-600/10 to-transparent border-purple-500/20 rounded-2xl shadow-2xl overflow-hidden">
-                  <CardContent className="pt-8 pb-6 px-6">
-                    <div className="text-center space-y-4">
-                      {/* Total Balance Section */}
-                      <div>
-                        <p className="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-2">
-                          TOTAL BALANCE
-                        </p>
-                        <div className="text-5xl font-bold text-white mb-3">
-                          {balance.usdt.toFixed(2)} $
-                        </div>
-                        <div className="text-lg text-gray-300 font-semibold">
-                          {balance.usdt.toFixed(2)} $ - {(balance.pkr || 0).toFixed(2)} PKR
-                        </div>
+            {/* Total Balance Card */}
+            {balance && (
+              <Card className="bg-gradient-to-br from-blue-600/20 via-purple-600/10 to-transparent border-purple-500/20 rounded-2xl shadow-2xl overflow-hidden">
+                <CardContent className="pt-8 pb-6 px-6">
+                  <div className="text-center space-y-4">
+                    {/* Total Balance Section */}
+                    <div>
+                      <p className="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-2">
+                        TOTAL BALANCE
+                      </p>
+                      <div className="text-5xl font-bold text-white mb-3">
+                        {balance.usdt.toFixed(2)} $
                       </div>
-
-                      {/* Three Main Buttons */}
-                      <div className="grid grid-cols-3 gap-3 pt-6">
-                        <Button
-                          onClick={() => setActiveTab("deposit")}
-                          className="flex flex-col items-center justify-center py-8 rounded-xl font-bold uppercase text-sm bg-transparent border border-green-500 text-green-400 hover:bg-green-500/10 transition-all duration-300"
-                        >
-                          <Plus className="h-6 w-6 mb-1" />
-                          DEPOSIT
-                        </Button>
-
-                        <Button
-                          onClick={() => setActiveTab("withdraw")}
-                          className="flex flex-col items-center justify-center py-8 rounded-xl font-bold uppercase text-sm bg-transparent border border-red-500 text-red-400 hover:bg-red-500/10 transition-all duration-300"
-                        >
-                          <Send className="h-6 w-6 mb-1" />
-                          WITHDRAW
-                        </Button>
-
-                        <Button
-                          onClick={() => setActiveTab("exchange")}
-                          className="flex flex-col items-center justify-center py-8 rounded-xl font-bold uppercase text-sm bg-transparent border border-purple-500 text-purple-400 hover:bg-purple-500/10 transition-all duration-300"
-                        >
-                          <ArrowRightLeft className="h-6 w-6 mb-1" />
-                          EXCHANGE
-                        </Button>
+                      <div className="text-lg text-gray-300 font-semibold">
+                        {balance.usdt.toFixed(2)} $ -{" "}
+                        {(balance.pkr || 0).toFixed(2)} PKR
                       </div>
+                    </div>
 
-                      {/* Token Image - 300x300px */}
-                      <div className="flex justify-center py-4">
-                        <div className="w-72 h-72 bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 rounded-2xl shadow-2xl flex items-center justify-center border border-white/10 overflow-hidden">
-                          <img
-                            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3ClinearGradient id='grad'%3E%3Cstop offset='0%25' style='stop-color:%23a78bfa;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%236366f1;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='100' cy='100' r='95' fill='url(%23grad)'/%3E%3Ctext x='50%25' y='50%25' font-size='80' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='central' font-family='Arial'%3E%24%3C/text%3E%3C/svg%3E"
-                            alt="Token Icon"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Payment Method Button */}
+                    {/* Three Main Buttons */}
+                    <div className="grid grid-cols-3 gap-3 pt-6">
                       <Button
-                        onClick={() => setActiveTab("payment")}
-                        className="w-full bg-gradient-to-r from-purple-600 via-purple-500 to-pink-600 hover:from-purple-700 hover:via-purple-600 hover:to-pink-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-purple-500/20 transition-all duration-300 uppercase"
+                        onClick={() => setActiveTab("deposit")}
+                        className="flex flex-col items-center justify-center py-8 rounded-xl font-bold uppercase text-sm bg-transparent border border-green-500 text-green-400 hover:bg-green-500/10 transition-all duration-300"
                       >
-                        PAYMENT METHOD
+                        <Plus className="h-6 w-6 mb-1" />
+                        DEPOSIT
                       </Button>
 
-                      {/* Exchange Rate */}
-                      {priceRatio && (
-                        <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/30 mt-4">
-                          <p className="text-xs text-gray-400 mb-1 uppercase font-semibold">EXCHANGE RATE</p>
-                          <p className="text-lg font-bold text-gray-200">
-                            1 USDT = {priceRatio.usdtToPkr.toFixed(2)} PKR
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Transaction History Button */}
                       <Button
-                        onClick={() => navigate("/fiat/transactions")}
-                        className="w-full mt-4 bg-gradient-to-r from-gray-700/50 to-gray-800/50 hover:from-gray-600/60 hover:to-gray-700/60 text-gray-100 font-semibold py-3 rounded-xl border border-gray-600/30 backdrop-blur transition-all duration-300 uppercase"
+                        onClick={() => setActiveTab("withdraw")}
+                        className="flex flex-col items-center justify-center py-8 rounded-xl font-bold uppercase text-sm bg-transparent border border-red-500 text-red-400 hover:bg-red-500/10 transition-all duration-300"
                       >
-                        <History className="h-5 w-5 mr-2" />
-                        Transaction History
+                        <Send className="h-6 w-6 mb-1" />
+                        WITHDRAW
+                      </Button>
+
+                      <Button
+                        onClick={() => setActiveTab("exchange")}
+                        className="flex flex-col items-center justify-center py-8 rounded-xl font-bold uppercase text-sm bg-transparent border border-purple-500 text-purple-400 hover:bg-purple-500/10 transition-all duration-300"
+                      >
+                        <ArrowRightLeft className="h-6 w-6 mb-1" />
+                        EXCHANGE
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+
+                    {/* Token Image - 300x300px */}
+                    <div className="flex justify-center py-4">
+                      <div className="w-72 h-72 bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 rounded-2xl shadow-2xl flex items-center justify-center border border-white/10 overflow-hidden">
+                        <img
+                          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3ClinearGradient id='grad'%3E%3Cstop offset='0%25' style='stop-color:%23a78bfa;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%236366f1;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='100' cy='100' r='95' fill='url(%23grad)'/%3E%3Ctext x='50%25' y='50%25' font-size='80' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='central' font-family='Arial'%3E%24%3C/text%3E%3C/svg%3E"
+                          alt="Token Icon"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Payment Method Button */}
+                    <Button
+                      onClick={() => setActiveTab("payment")}
+                      className="w-full bg-gradient-to-r from-purple-600 via-purple-500 to-pink-600 hover:from-purple-700 hover:via-purple-600 hover:to-pink-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-purple-500/20 transition-all duration-300 uppercase"
+                    >
+                      PAYMENT METHOD
+                    </Button>
+
+                    {/* Exchange Rate */}
+                    {priceRatio && (
+                      <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/30 mt-4">
+                        <p className="text-xs text-gray-400 mb-1 uppercase font-semibold">
+                          EXCHANGE RATE
+                        </p>
+                        <p className="text-lg font-bold text-gray-200">
+                          1 USDT = {priceRatio.usdtToPkr.toFixed(2)} PKR
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Transaction History Button */}
+                    <Button
+                      onClick={() => navigate("/fiat/transactions")}
+                      className="w-full mt-4 bg-gradient-to-r from-gray-700/50 to-gray-800/50 hover:from-gray-600/60 hover:to-gray-700/60 text-gray-100 font-semibold py-3 rounded-xl border border-gray-600/30 backdrop-blur transition-all duration-300 uppercase"
+                    >
+                      <History className="h-5 w-5 mr-2" />
+                      Transaction History
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
 
           {/* PAYMENT TAB */}
-          <TabsContent value="payment" className="mt-6 animate-in fade-in duration-300">
+          <TabsContent
+            value="payment"
+            className="mt-6 animate-in fade-in duration-300"
+          >
             <div className="space-y-4">
               {paymentMethod ? (
                 <>
                   <Card className="bg-gradient-to-br from-green-600/20 to-emerald-700/10 border-green-500/20 rounded-2xl shadow-xl">
                     <CardContent className="pt-6">
                       <div className="text-center mb-6">
-                        <p className="text-green-300 text-sm font-bold uppercase mb-2">Active Payment Method</p>
-                        <h3 className="text-3xl font-bold text-white font-mono">{paymentMethod.userId}</h3>
+                        <p className="text-green-300 text-sm font-bold uppercase mb-2">
+                          Active Payment Method
+                        </p>
+                        <h3 className="text-3xl font-bold text-white font-mono">
+                          {paymentMethod.userId}
+                        </h3>
                       </div>
 
                       <div className="bg-gray-800/50 rounded-xl p-4 space-y-3 border border-gray-700/30">
                         <div className="text-left">
-                          <p className="text-xs text-gray-400 uppercase font-semibold mb-1">METHOD</p>
-                          <p className="text-white font-semibold">{paymentMethod.name}</p>
+                          <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
+                            METHOD
+                          </p>
+                          <p className="text-white font-semibold">
+                            {paymentMethod.name}
+                          </p>
                         </div>
                         <div className="text-left">
-                          <p className="text-xs text-gray-400 uppercase font-semibold mb-1">WALLET</p>
-                          <p className="text-white font-mono text-sm break-all">{paymentMethod.walletAddress}</p>
+                          <p className="text-xs text-gray-400 uppercase font-semibold mb-1">
+                            WALLET
+                          </p>
+                          <p className="text-white font-mono text-sm break-all">
+                            {paymentMethod.walletAddress}
+                          </p>
                         </div>
                       </div>
 
@@ -294,7 +314,10 @@ export default function FiatSystem() {
 
           {/* DEPOSIT TAB */}
           <TabsContent value="deposit" className="mt-6">
-            <FiatDeposit onRefresh={() => fetchBalance()} paymentMethod={paymentMethod} />
+            <FiatDeposit
+              onRefresh={() => fetchBalance()}
+              paymentMethod={paymentMethod}
+            />
           </TabsContent>
 
           {/* WITHDRAW TAB */}
@@ -392,7 +415,9 @@ function FiatDeposit({
     <div className="space-y-4 animate-in fade-in duration-300">
       <div className="bg-gradient-to-br from-green-600/20 to-emerald-700/10 rounded-2xl p-6 border border-green-500/20 backdrop-blur-xl shadow-xl">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-bold text-green-100 uppercase">Deposit Funds</h3>
+          <h3 className="text-2xl font-bold text-green-100 uppercase">
+            Deposit Funds
+          </h3>
           <div className="w-12 h-12 bg-green-500/30 rounded-xl flex items-center justify-center border border-green-500/30">
             <Plus className="h-6 w-6 text-green-300" />
           </div>
@@ -400,8 +425,12 @@ function FiatDeposit({
 
         {paymentMethod && (
           <div className="bg-gray-800/50 rounded-lg p-3 mb-4 border border-gray-700/30">
-            <p className="text-xs text-gray-400 font-semibold mb-1 uppercase">DEPOSIT TO ID</p>
-            <p className="text-lg font-bold text-green-300 font-mono">{paymentMethod.userId}</p>
+            <p className="text-xs text-gray-400 font-semibold mb-1 uppercase">
+              DEPOSIT TO ID
+            </p>
+            <p className="text-lg font-bold text-green-300 font-mono">
+              {paymentMethod.userId}
+            </p>
           </div>
         )}
 
@@ -528,7 +557,9 @@ function FiatWithdraw({
     <div className="space-y-4 animate-in fade-in duration-300">
       <div className="bg-gradient-to-br from-red-600/20 to-orange-700/10 rounded-2xl p-6 border border-red-500/20 backdrop-blur-xl shadow-xl">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-bold text-red-100 uppercase">Withdraw Funds</h3>
+          <h3 className="text-2xl font-bold text-red-100 uppercase">
+            Withdraw Funds
+          </h3>
           <div className="w-12 h-12 bg-red-500/30 rounded-xl flex items-center justify-center border border-red-500/30">
             <Send className="h-6 w-6 text-red-300" />
           </div>
@@ -536,8 +567,12 @@ function FiatWithdraw({
 
         {paymentMethod && (
           <div className="bg-gray-800/50 rounded-lg p-3 mb-4 border border-gray-700/30">
-            <p className="text-xs text-gray-400 font-semibold mb-1 uppercase">WITHDRAW TO ID</p>
-            <p className="text-lg font-bold text-red-300 font-mono">{paymentMethod.userId}</p>
+            <p className="text-xs text-gray-400 font-semibold mb-1 uppercase">
+              WITHDRAW TO ID
+            </p>
+            <p className="text-lg font-bold text-red-300 font-mono">
+              {paymentMethod.userId}
+            </p>
           </div>
         )}
 
@@ -557,7 +592,9 @@ function FiatWithdraw({
           </div>
 
           <div className="bg-gray-800/30 rounded-xl p-3 border border-gray-700/30">
-            <p className="text-xs font-semibold text-gray-400 mb-1 uppercase">AVAILABLE BALANCE</p>
+            <p className="text-xs font-semibold text-gray-400 mb-1 uppercase">
+              AVAILABLE BALANCE
+            </p>
             <p className="text-lg font-bold text-gray-100">
               {currency === "USDT" ? "$" : "₨"}
               {currency === "USDT"
@@ -681,8 +718,7 @@ function FiatExchange({
 
   const fromCurrency = exchangeMode === "USDT-FIAT" ? "USDT" : "PKR";
   const toCurrency = exchangeMode === "USDT-FIAT" ? "PKR" : "USDT";
-  const currentBalance =
-    fromCurrency === "USDT" ? balance?.usdt : balance?.pkr;
+  const currentBalance = fromCurrency === "USDT" ? balance?.usdt : balance?.pkr;
 
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
@@ -768,8 +804,12 @@ function FiatExchange({
 
           {paymentMethod && (
             <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/30">
-              <p className="text-xs text-gray-400 font-semibold mb-1 uppercase">Exchange via ID</p>
-              <p className="text-lg font-bold text-purple-300 font-mono">{paymentMethod.userId}</p>
+              <p className="text-xs text-gray-400 font-semibold mb-1 uppercase">
+                Exchange via ID
+              </p>
+              <p className="text-lg font-bold text-purple-300 font-mono">
+                {paymentMethod.userId}
+              </p>
             </div>
           )}
 
@@ -777,7 +817,9 @@ function FiatExchange({
             <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/30 rounded-xl p-4 border border-gray-700/30 backdrop-blur">
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-400 uppercase font-semibold">Exchange Rate</span>
+                  <span className="text-gray-400 uppercase font-semibold">
+                    Exchange Rate
+                  </span>
                   <span className="font-semibold text-gray-200">
                     1 {fromCurrency} ={" "}
                     {fromCurrency === "USDT"
@@ -787,12 +829,16 @@ function FiatExchange({
                   </span>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-gray-700/30">
-                  <span className="text-gray-400 uppercase font-semibold">You will receive</span>
+                  <span className="text-gray-400 uppercase font-semibold">
+                    You will receive
+                  </span>
                   <span className="font-semibold text-green-300">
                     ≈{" "}
                     {fromCurrency === "USDT"
                       ? (parseFloat(amount) * priceRatio.usdtToPkr).toFixed(0)
-                      : (parseFloat(amount) / priceRatio.usdtToPkr).toFixed(2)}{" "}
+                      : (parseFloat(amount) / priceRatio.usdtToPkr).toFixed(
+                          2,
+                        )}{" "}
                     {toCurrency}
                   </span>
                 </div>

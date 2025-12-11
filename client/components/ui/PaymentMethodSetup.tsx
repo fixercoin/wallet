@@ -39,7 +39,12 @@ export function PaymentMethodSetup({
   };
 
   const handleSaveMethod = async () => {
-    if (!formData.name || !formData.idCard || !formData.password || !formData.walletAddress) {
+    if (
+      !formData.name ||
+      !formData.idCard ||
+      !formData.password ||
+      !formData.walletAddress
+    ) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -59,7 +64,9 @@ export function PaymentMethodSetup({
       });
     } catch (error) {
       const errorMsg =
-        error instanceof Error ? error.message : "Failed to save payment method";
+        error instanceof Error
+          ? error.message
+          : "Failed to save payment method";
       if (errorMsg.includes("ID already registered")) {
         toast.error("ID already registered");
       } else {
@@ -105,9 +112,7 @@ export function PaymentMethodSetup({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() =>
-                    copyToClipboard(savedMethod.userId, "userId")
-                  }
+                  onClick={() => copyToClipboard(savedMethod.userId, "userId")}
                   className={
                     copiedField === "userId"
                       ? "border-green-500/50 text-green-300"
@@ -121,7 +126,8 @@ export function PaymentMethodSetup({
 
               <div className="pt-3 border-t border-gray-700/30 space-y-2 text-sm">
                 <p className="text-gray-300">
-                  <span className="text-gray-400 font-semibold">Method:</span> {savedMethod.name}
+                  <span className="text-gray-400 font-semibold">Method:</span>{" "}
+                  {savedMethod.name}
                 </p>
                 <p className="text-gray-300">
                   <span className="text-gray-400 font-semibold">Wallet:</span>{" "}

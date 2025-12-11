@@ -21,7 +21,6 @@ export function CryptoSentDialog() {
   const { createNotification } = useOrderNotifications();
   const [confirming, setConfirming] = useState(false);
   const [waitingForVerification, setWaitingForVerification] = useState(false);
-  const [verificationComplete, setVerificationComplete] = useState(false);
   const [minimized, setMinimized] = useState(false);
 
   const isOpen = activeDialog === "crypto_sent_confirmation";

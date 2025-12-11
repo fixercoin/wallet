@@ -24,7 +24,7 @@ export interface PriceRatio {
 
 export default function FiatAdmin() {
   const navigate = useNavigate();
-  const { wallet } = useWallet();
+  const { wallet, publicKey } = useWallet();
   const [priceRatio, setPriceRatio] = useState<PriceRatio | null>(null);
   const [newRatio, setNewRatio] = useState("");
   const [loading, setLoading] = useState(true);

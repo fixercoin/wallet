@@ -41,6 +41,22 @@ export function CryptoReceivedDialog() {
           ? currentOrder.amountTokens
           : parseFloat(currentOrder.token_amount) || 0;
 
+      // Update order status to mark crypto as received
+      const updateResponse = await fetch(
+        `/api/p2p/orders/${currentOrder.id}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            buyerReceivedCrypto: true,
+          }),
+        },
+      );
+
+      if (!updateResponse.ok) {
+        throw new Error("Failed to update order status");
+      }
+
       // Send final notification to seller confirming crypto was received
       await createNotification(
         currentOrder.creator_wallet || "",
@@ -53,6 +69,8 @@ export function CryptoReceivedDialog() {
           amountTokens: tokenAmount,
           amountPKR: pkrAmount,
         },
+        true,
+        currentOrder,
       );
 
       toast.success("Order completed successfully!");

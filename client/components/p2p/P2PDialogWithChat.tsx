@@ -7,10 +7,7 @@ interface P2PDialogWithChatProps {
   order?: P2POrder | null;
 }
 
-export function P2PDialogWithChat({
-  children,
-  order,
-}: P2PDialogWithChatProps) {
+export function P2PDialogWithChat({ children, order }: P2PDialogWithChatProps) {
   return (
     <div className="flex flex-col gap-4 w-full">
       {/* Dialog Content Row */}

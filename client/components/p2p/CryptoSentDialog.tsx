@@ -233,7 +233,8 @@ export function CryptoSentDialog() {
                       <div className="flex justify-between text-green-300">
                         <span>Amount Sent:</span>
                         <span className="font-semibold">
-                          {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
+                          {tokenAmount.toFixed(6)}{" "}
+                          {currentOrder.token || "USDT"}
                         </span>
                       </div>
                       <div className="flex justify-between text-green-300">
@@ -273,7 +274,8 @@ export function CryptoSentDialog() {
                       <div className="flex justify-between items-center">
                         <span className="text-white/70">Amount to Send:</span>
                         <span className="font-semibold text-green-400">
-                          {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
+                          {tokenAmount.toFixed(6)}{" "}
+                          {currentOrder.token || "USDT"}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">

@@ -57,7 +57,8 @@ export function P2POrderChat({ order, className }: P2POrderChatProps) {
             Order Chat
           </h3>
           <p className="text-xs text-white/60">
-            {userRole} • {order.token || "Token"} - {order.amountPKR?.toFixed(2) || "0.00"} PKR
+            {userRole} • {order.token || "Token"} -{" "}
+            {order.amountPKR?.toFixed(2) || "0.00"} PKR
           </p>
         </div>
         <div className="text-xs text-white/40 px-2 py-1 rounded bg-white/5">
@@ -78,7 +79,9 @@ export function P2POrderChat({ order, className }: P2POrderChatProps) {
           <div className="flex items-center justify-center h-full text-white/40 text-xs text-center">
             <div>
               <p className="mb-1">No messages yet</p>
-              <p className="text-white/30">Start a conversation with the other party</p>
+              <p className="text-white/30">
+                Start a conversation with the other party
+              </p>
             </div>
           </div>
         ) : (
@@ -87,7 +90,10 @@ export function P2POrderChat({ order, className }: P2POrderChatProps) {
             return (
               <div
                 key={message.id}
-                className={cn("flex gap-2", isCurrentUser && "flex-row-reverse")}
+                className={cn(
+                  "flex gap-2",
+                  isCurrentUser && "flex-row-reverse",
+                )}
               >
                 <div
                   className={cn(

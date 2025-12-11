@@ -594,33 +594,47 @@ function FiatExchange({
       return;
     }
 
+    const numAmount = parseFloat(toAmount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+
     setLoading(true);
     try {
+      console.log("[Exchange] Sending request:", { wallet, fromCurrency, toAmount: numAmount, toCurrency });
+
       const response = await fetch("/api/fiat/exchange", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           wallet,
           fromCurrency,
-          toAmount: parseFloat(toAmount),
+          toAmount: numAmount,
         }),
       });
 
       const data = await response.json();
+      console.log("[Exchange] Response:", { status: response.status, data });
 
       if (!response.ok) {
-        toast.error(data.error || "Exchange failed");
+        const errorMsg = data.error || data.details || "Exchange failed";
+        toast.error(errorMsg);
         return;
       }
 
+      const exchangedAmount = data.transaction?.fromAmount || numAmount;
+      const receivedAmount = data.transaction?.toAmount || numAmount;
+
       toast.success(
-        `Exchanged ${data.transaction.fromAmount} ${fromCurrency} for ${data.transaction.toAmount} ${toCurrency}`,
+        `Successfully exchanged ${exchangedAmount.toFixed(2)} ${fromCurrency} for ${receivedAmount.toFixed(2)} ${toCurrency}`,
       );
       setToAmount("");
       onRefresh();
     } catch (error) {
-      console.error("Exchange error:", error);
-      toast.error("Failed to process exchange");
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error("Exchange error:", errorMsg);
+      toast.error(`Failed to process exchange: ${errorMsg}`);
     } finally {
       setLoading(false);
     }

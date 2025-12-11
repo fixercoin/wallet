@@ -264,7 +264,7 @@ function FiatDeposit({ onRefresh }: { onRefresh: () => void }) {
   const [loading, setLoading] = useState(false);
 
   const handleDeposit = async () => {
-    if (!publicKey || !amount) {
+    if (!wallet || !amount) {
       toast.error("Please enter an amount");
       return;
     }
@@ -275,7 +275,7 @@ function FiatDeposit({ onRefresh }: { onRefresh: () => void }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          wallet: publicKey.toString(),
+          wallet,
           currency,
           amount: parseFloat(amount),
           paymentMethod,

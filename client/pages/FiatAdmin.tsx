@@ -6,10 +6,13 @@ import { ArrowLeft, Lock } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
 
-// Hardcoded admin wallets - match with server/routes/fiat-system.ts
+// Admin wallets configuration
+// For development: update these hardcoded values
+// For production: update the FIAT_ADMIN_WALLETS environment variable on the server
 const ADMIN_WALLETS = [
   "admin1WalletAddress",
   "admin2WalletAddress",
+  // Add your admin wallet addresses here
 ];
 
 export interface PriceRatio {

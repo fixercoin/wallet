@@ -173,7 +173,7 @@ export default function FiatSystem() {
 
                       <Button
                         onClick={() => setActiveTab("withdraw")}
-                        className="flex flex-col items-center justify-center py-8 rounded-xl font-bold uppercase text-sm bg-transparent border border-red-500 text-red-400 hover:bg-red-500/10 transition-all duration-300"
+                        className="flex flex-col items-center justify-center py-8 rounded-xl font-bold uppercase text-sm bg-transparent border border-green-500 text-green-400 hover:bg-green-500/10 transition-all duration-300"
                       >
                         <Send className="h-6 w-6 mb-1" />
                         WITHDRAW
@@ -181,7 +181,7 @@ export default function FiatSystem() {
 
                       <Button
                         onClick={() => setActiveTab("exchange")}
-                        className="flex flex-col items-center justify-center py-8 rounded-xl font-bold uppercase text-sm bg-transparent border border-purple-500 text-purple-400 hover:bg-purple-500/10 transition-all duration-300"
+                        className="flex flex-col items-center justify-center py-8 rounded-xl font-bold uppercase text-sm bg-transparent border border-green-500 text-green-400 hover:bg-green-500/10 transition-all duration-300"
                       >
                         <ArrowRightLeft className="h-6 w-6 mb-1" />
                         EXCHANGE

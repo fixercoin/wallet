@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Copy, Check, Loader, Minus } from "lucide-react";
+import { Check, Loader, Minus } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -20,57 +20,15 @@ export function CryptoSentDialog() {
     buyerWalletAddress,
     currentOrder,
     setActiveDialog,
-    openCryptoReceivedDialog,
   } = useP2POrderFlow();
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();
-  const [copied, setCopied] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [buyerOrder, setBuyerOrder] = useState<P2POrder | null>(null);
-  const [loadingBuyerOrder, setLoadingBuyerOrder] = useState(false);
-  const [copiedAddress, setCopiedAddress] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [waitingForVerification, setWaitingForVerification] = useState(false);
+  const [verificationComplete, setVerificationComplete] = useState(false);
   const [minimized, setMinimized] = useState(false);
 
   const isOpen = activeDialog === "crypto_sent_confirmation";
-
-  // Fetch buyer order details when dialog opens
-  useEffect(() => {
-    if (isOpen && currentOrder && currentOrder.matchedWith) {
-      setLoadingBuyerOrder(true);
-      fetch(`/api/p2p/orders/${currentOrder.matchedWith}`)
-        .then((res) => {
-          if (!res.ok) throw new Error("Failed to fetch buyer order");
-          return res.json();
-        })
-        .then((data) => {
-          const order = data.order || data.orders?.[0];
-          if (order) {
-            setBuyerOrder(order);
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching buyer order:", error);
-        })
-        .finally(() => {
-          setLoadingBuyerOrder(false);
-        });
-    }
-  }, [isOpen, currentOrder]);
-
-  const handleCopyWallet = () => {
-    navigator.clipboard.writeText(buyerWalletAddress);
-    setCopied(true);
-    toast.success("Wallet address copied");
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleCopyBuyerAddress = () => {
-    navigator.clipboard.writeText(buyerWalletAddress);
-    setCopiedAddress(true);
-    toast.success("Buyer wallet address copied");
-    setTimeout(() => setCopiedAddress(false), 2000);
-  };
 
   const calculateAmount = (value: any): number => {
     if (typeof value === "number") return value;
@@ -81,12 +39,11 @@ export function CryptoSentDialog() {
     return 0;
   };
 
-  const handleIHaveSentCrypto = async () => {
+  const handleCompleteTransfer = async () => {
     if (!currentOrder || !wallet) return;
 
-    setSending(true);
+    setConfirming(true);
     try {
-      // Support both field name formats from server/client
       const pkrAmount =
         calculateAmount(currentOrder.amountPKR) ||
         calculateAmount(currentOrder.pkr_amount);
@@ -108,19 +65,18 @@ export function CryptoSentDialog() {
         },
       );
 
-      toast.success("Crypto transfer confirmed!");
-      setSent(true);
+      toast.success("Crypto transfer initiated!");
+      setWaitingForVerification(true);
 
-      // After 2 seconds, transition to show buyer the receive confirmation dialog
+      // Simulate waiting for buyer verification (in real app, this would be polling/websocket)
       setTimeout(() => {
-        openCryptoReceivedDialog(currentOrder);
-        setActiveDialog("crypto_received_confirmation");
-      }, 2000);
+        setVerificationComplete(true);
+      }, 5000);
     } catch (error) {
       console.error("Error notifying buyer:", error);
       toast.error("Failed to notify buyer");
     } finally {
-      setSending(false);
+      setConfirming(false);
     }
   };
 

@@ -107,67 +107,7 @@ export function CryptoSentDialog() {
 
         {!minimized && (
           <div className="space-y-4">
-            {verificationComplete ? (
-              <>
-                {/* Success State */}
-                <div className="flex justify-center py-4">
-                  <div className="w-16 h-16 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center">
-                    <Check className="w-8 h-8 text-green-500" />
-                  </div>
-                </div>
-
-                <div className="text-center space-y-2">
-                  <p className="text-white font-semibold uppercase">
-                    Transfer Successful
-                  </p>
-                  <p className="text-white/70 text-sm">
-                    {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"} has
-                    been successfully sent to the buyer.
-                  </p>
-                </div>
-
-                {/* Transaction Summary */}
-                <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
-                  <div className="text-xs text-white/70 uppercase mb-3 font-semibold">
-                    Transaction Summary
-                  </div>
-                  <div className="space-y-3 text-sm text-white">
-                    <div className="flex justify-between">
-                      <span className="text-white/70">Token:</span>
-                      <span className="font-semibold">
-                        {currentOrder.token || "USDT"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-white/70">Amount Sent:</span>
-                      <span className="font-semibold text-green-400">
-                        {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-white/70">Order Value:</span>
-                      <span className="font-semibold">
-                        {pkrAmount.toFixed(2)} PKR
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    onClick={() => {
-                      setActiveDialog(null);
-                      setWaitingForVerification(false);
-                      setVerificationComplete(false);
-                    }}
-                    className="w-full bg-gradient-to-r from-[#FF7A5C] to-[#FF5A8C] hover:from-[#FF6B4D] hover:to-[#FF4D7D] text-white"
-                  >
-                    Done
-                  </Button>
-                </div>
-              </>
-            ) : waitingForVerification ? (
+            {waitingForVerification ? (
               <>
                 {/* Waiting State */}
                 <div className="flex justify-center py-6">

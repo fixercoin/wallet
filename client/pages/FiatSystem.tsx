@@ -600,66 +600,78 @@ function FiatExchange({
   const currentBalance = fromCurrency === "USDT" ? balance?.usdt : balance?.pkr;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Exchange Currency</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="p-3 bg-gray-800/50 rounded-lg">
-          <p className="text-xs text-gray-400 mb-1">From</p>
-          <p className="text-lg font-semibold text-white">{fromCurrency}</p>
-          <p className="text-xs text-gray-400 mt-2">
-            Available: {fromCurrency === "USDT" ? "$" : "₨"}
-            {fromCurrency === "USDT"
-              ? (currentBalance?.toFixed(2) ?? "0.00")
-              : (currentBalance?.toLocaleString("en-PK", {
-                  maximumFractionDigits: 2,
-                }) ?? "0.00")}
-          </p>
-        </div>
-
-        <div className="p-3 bg-gray-800/50 rounded-lg">
-          <p className="text-xs text-gray-400 mb-1">To</p>
-          <p className="text-lg font-semibold text-white">{toCurrency}</p>
-          <label className="block text-sm font-medium mb-2 mt-3">Amount</label>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={toAmount}
-            onChange={(e) => setToAmount(e.target.value)}
-            placeholder={`Enter ${toCurrency} amount`}
-            className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500"
-          />
-        </div>
-
-        {priceRatio && toAmount && priceRatio.usdtToPkr && (
-          <div className="text-xs text-gray-400">
-            <p>
-              Exchange Rate: 1 {fromCurrency} ={" "}
-              {fromCurrency === "USDT"
-                ? priceRatio.usdtToPkr
-                : (1 / priceRatio.usdtToPkr).toFixed(4)}{" "}
-              {toCurrency}
-            </p>
-            {fromCurrency === "USDT" && (
-              <p className="mt-1">
-                You will receive ≈{" "}
-                {(parseFloat(toAmount) / priceRatio.usdtToPkr).toFixed(2)}{" "}
-                {fromCurrency}
-              </p>
-            )}
+    <div className="space-y-4 animate-in fade-in duration-300">
+      <div className="bg-gradient-to-br from-purple-600/20 to-pink-700/10 rounded-2xl p-6 border border-purple-500/20 backdrop-blur-xl shadow-xl">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-bold text-purple-100">Exchange Currency</h3>
+          <div className="w-12 h-12 bg-purple-500/30 rounded-xl flex items-center justify-center border border-purple-500/30">
+            <ArrowRightLeft className="h-6 w-6 text-purple-300" />
           </div>
-        )}
+        </div>
 
-        <Button
-          onClick={handleExchange}
-          disabled={loading || !toAmount}
-          className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-2 rounded-lg disabled:opacity-50"
-        >
-          {loading ? "Processing..." : "Exchange"}
-        </Button>
-      </CardContent>
-    </Card>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-xl p-4 border border-blue-500/30 backdrop-blur">
+              <p className="text-blue-300/70 text-xs font-semibold uppercase tracking-wider mb-2">From</p>
+              <p className="text-xl font-bold text-blue-100 mb-2">{fromCurrency}</p>
+              <p className="text-xs text-blue-300/60">
+                Available: {fromCurrency === "USDT" ? "$" : "₨"}
+                {fromCurrency === "USDT"
+                  ? (currentBalance?.toFixed(2) ?? "0.00")
+                  : (currentBalance?.toLocaleString("en-PK", {
+                      maximumFractionDigits: 0,
+                    }) ?? "0.00")}
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-pink-500/20 to-pink-600/10 rounded-xl p-4 border border-pink-500/30 backdrop-blur">
+              <p className="text-pink-300/70 text-xs font-semibold uppercase tracking-wider mb-2">To</p>
+              <p className="text-xl font-bold text-pink-100 mb-2">{toCurrency}</p>
+              <p className="text-xs text-pink-300/60">Receive amount</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-2">Enter Amount</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={toAmount}
+              onChange={(e) => setToAmount(e.target.value)}
+              placeholder={`Enter ${fromCurrency} amount`}
+              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 backdrop-blur rounded-xl text-white placeholder-gray-500 font-medium focus:outline-none focus:border-purple-500/50 transition-colors"
+            />
+          </div>
+
+          {priceRatio && toAmount && priceRatio.usdtToPkr && (
+            <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/30 rounded-xl p-4 border border-gray-700/30 backdrop-blur">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Exchange Rate</span>
+                  <span className="font-semibold text-gray-200">1 {fromCurrency} = {fromCurrency === "USDT"
+                    ? priceRatio.usdtToPkr.toFixed(2)
+                    : (1 / priceRatio.usdtToPkr).toFixed(4)} {toCurrency}</span>
+                </div>
+                {fromCurrency === "USDT" && (
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-700/30">
+                    <span className="text-gray-400">You will receive</span>
+                    <span className="font-semibold text-green-300">≈ {(parseFloat(toAmount) / priceRatio.usdtToPkr).toFixed(0)} {toCurrency}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <Button
+            onClick={handleExchange}
+            disabled={loading || !toAmount}
+            className="w-full bg-gradient-to-r from-purple-600 via-purple-500 to-pink-600 hover:from-purple-700 hover:via-purple-600 hover:to-pink-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-purple-500/20 disabled:opacity-50 transition-all duration-300 mt-2"
+          >
+            {loading ? "Processing..." : "Confirm Exchange"}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

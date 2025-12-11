@@ -150,6 +150,7 @@ import BuyTrade from "./pages/BuyTrade";
 import TokenSearchPage from "./pages/TokenSearchPage";
 import BuyData from "./pages/BuyData";
 import SellData from "./pages/SellData";
+import BuyerOrderConfirmation from "./pages/BuyerOrderConfirmation";
 import { useLocation } from "react-router-dom";
 import { P2POrderFlowProvider } from "@/contexts/P2POrderFlowContext";
 import { SellerPaymentMethodDialog } from "@/components/p2p/SellerPaymentMethodDialog";

@@ -786,14 +786,33 @@ export const handleUpdateOrderStatus: RequestHandler = async (req, res) => {
       buyerReceivedCrypto,
     } = req.body;
 
+    console.log(`[P2P Orders] Updating status for order ${orderId}:`, {
+      buyerPaymentSent,
+      sellerReceivedPayment,
+      sellerCryptoSent,
+      buyerReceivedCrypto,
+    });
+
     if (!orderId) {
-      return res.status(400).json({ error: "Missing orderId" });
+      return res.status(400).json({
+        error: "Missing orderId",
+        received: { orderId, params: req.params },
+      });
     }
 
     const order = await getOrderById(orderId);
     if (!order) {
-      return res.status(404).json({ error: "Order not found" });
+      console.error(
+        `[P2P Orders] Order not found for status update: ${orderId}`,
+      );
+      return res.status(404).json({
+        error: "Order not found",
+        orderId,
+        hint: "The order does not exist in KV storage. Check that the order was created successfully.",
+      });
     }
+
+    console.log(`[P2P Orders] Found order ${orderId}, updating fields...`);
 
     // Update order status fields
     if (buyerPaymentSent !== undefined)
@@ -810,6 +829,10 @@ export const handleUpdateOrderStatus: RequestHandler = async (req, res) => {
 
     await saveOrder(order);
 
+    console.log(
+      `[P2P Orders] ✅ Successfully updated order status for ${orderId}`,
+    );
+
     res.json({
       orderId: order.id,
       status: order.status,
@@ -821,6 +844,9 @@ export const handleUpdateOrderStatus: RequestHandler = async (req, res) => {
     });
   } catch (error) {
     console.error("Update order status error:", error);
-    res.status(500).json({ error: "Failed to update order status" });
+    res.status(500).json({
+      error: "Failed to update order status",
+      details: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 };

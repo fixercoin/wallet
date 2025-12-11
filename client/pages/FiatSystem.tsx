@@ -315,32 +315,43 @@ function FiatDeposit({ onRefresh }: { onRefresh: () => void }) {
       return;
     }
 
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+
     setLoading(true);
     try {
+      console.log("[Deposit] Sending request:", { wallet, currency, amount: numAmount, paymentMethod });
+
       const response = await fetch("/api/fiat/deposit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           wallet,
           currency,
-          amount: parseFloat(amount),
+          amount: numAmount,
           paymentMethod,
         }),
       });
 
       const data = await response.json();
+      console.log("[Deposit] Response:", { status: response.status, data });
 
       if (!response.ok) {
-        toast.error(data.error || "Deposit failed");
+        const errorMsg = data.error || data.details || "Deposit failed";
+        toast.error(errorMsg);
         return;
       }
 
-      toast.success(`Deposited ${amount} ${currency}`);
+      toast.success(`Successfully deposited ${amount} ${currency}`);
       setAmount("");
       onRefresh();
     } catch (error) {
-      console.error("Deposit error:", error);
-      toast.error("Failed to process deposit");
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error("Deposit error:", errorMsg);
+      toast.error(`Failed to process deposit: ${errorMsg}`);
     } finally {
       setLoading(false);
     }

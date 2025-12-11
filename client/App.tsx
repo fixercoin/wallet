@@ -152,10 +152,8 @@ import BuyData from "./pages/BuyData";
 import SellData from "./pages/SellData";
 import Market from "./pages/Market";
 import BuyerOrderConfirmation from "./pages/BuyerOrderConfirmation";
-import P2PSetup from "./pages/P2PSetup";
 import { useLocation } from "react-router-dom";
 import { P2POrderFlowProvider } from "@/contexts/P2POrderFlowContext";
-import { P2PSetupProvider } from "@/contexts/P2PSetupContext";
 import { SellerPaymentMethodDialog } from "@/components/p2p/SellerPaymentMethodDialog";
 import { BuyerWalletAddressDialog } from "@/components/p2p/BuyerWalletAddressDialog";
 import { SellerTransferDetailsDialog } from "@/components/p2p/SellerTransferDetailsDialog";
@@ -205,7 +203,6 @@ function AppRoutes() {
         element={<DocumentationPage onBack={() => window.history.back()} />}
       />
       <Route path="/search" element={<TokenSearchPage />} />
-      <Route path="/p2p/setup" element={<P2PSetup />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -292,21 +289,19 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
           <P2POrderFlowProvider>
-            <P2PSetupProvider>
-              <AppWithPasswordPrompt>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <LanguageProvider>
-                    <CurrencyProvider>
-                      <BrowserRouter>
-                        <AppContent />
-                      </BrowserRouter>
-                    </CurrencyProvider>
-                  </LanguageProvider>
-                </TooltipProvider>
-              </AppWithPasswordPrompt>
-            </P2PSetupProvider>
+            <AppWithPasswordPrompt>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <LanguageProvider>
+                  <CurrencyProvider>
+                    <BrowserRouter>
+                      <AppContent />
+                    </BrowserRouter>
+                  </CurrencyProvider>
+                </LanguageProvider>
+              </TooltipProvider>
+            </AppWithPasswordPrompt>
           </P2POrderFlowProvider>
         </WalletProvider>
       </QueryClientProvider>

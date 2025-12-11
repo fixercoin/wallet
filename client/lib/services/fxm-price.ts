@@ -174,7 +174,7 @@ class FXMPriceService {
       );
 
       const fallbackData: FXMPriceData = {
-        price: 0.00000001,
+        price: 0.0000043,
         priceChange24h: 0,
         volume24h: 0,
         liquidity: 0,

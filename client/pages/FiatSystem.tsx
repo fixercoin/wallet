@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Send, Plus, ArrowRightLeft, History, Settings } from "lucide-react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 
 // Admin wallets - keep in sync with FiatAdmin.tsx
@@ -28,18 +28,18 @@ export interface PriceRatio {
 
 export default function FiatSystem() {
   const navigate = useNavigate();
-  const { publicKey } = useWallet();
+  const { wallet, publicKey } = useWallet();
   const [balance, setBalance] = useState<UserBalance | null>(null);
   const [priceRatio, setPriceRatio] = useState<PriceRatio | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("balance");
 
   const fetchBalance = async () => {
-    if (!publicKey) return;
+    if (!wallet) return;
 
     try {
       const response = await fetch(
-        `/api/fiat/balance?wallet=${publicKey.toString()}`,
+        `/api/fiat/balance?wallet=${wallet}`,
       );
       const data = await response.json();
       setBalance(data);
@@ -69,9 +69,9 @@ export default function FiatSystem() {
     loadData();
     const interval = setInterval(loadData, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
-  }, [publicKey]);
+  }, [wallet]);
 
-  if (!publicKey) {
+  if (!wallet) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#1f1f1f] to-[#2a2a2a] text-white flex items-center justify-center">
         <Card className="w-full max-w-lg mx-4">
@@ -108,7 +108,7 @@ export default function FiatSystem() {
           <h1 className="text-2xl font-bold text-white uppercase">
             FIAT SYSTEM
           </h1>
-          {publicKey && ADMIN_WALLETS.includes(publicKey.toString()) && (
+          {wallet && ADMIN_WALLETS.includes(wallet) && (
             <Button
               onClick={() => navigate("/fiat/admin")}
               variant="ghost"
@@ -119,7 +119,7 @@ export default function FiatSystem() {
               <Settings className="h-5 w-5" />
             </Button>
           )}
-          {publicKey && !ADMIN_WALLETS.includes(publicKey.toString()) && (
+          {wallet && !ADMIN_WALLETS.includes(wallet) && (
             <div className="w-10" />
           )}
         </div>

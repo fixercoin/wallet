@@ -449,10 +449,10 @@ function FiatWithdraw({
           <p className="text-sm text-gray-400 mb-2">
             Available: {currency === "USDT" ? "$" : "₨"}
             {currency === "USDT"
-              ? balance?.usdt.toFixed(2)
-              : balance?.pkr.toLocaleString("en-PK", {
+              ? (balance?.usdt?.toFixed(2) ?? "0.00")
+              : (balance?.pkr?.toLocaleString("en-PK", {
                   maximumFractionDigits: 2,
-                })}
+                }) ?? "0.00")}
           </p>
           <label className="block text-sm font-medium mb-2">Amount</label>
           <input
@@ -565,10 +565,10 @@ function FiatExchange({
           <p className="text-xs text-gray-400 mt-2">
             Available: {fromCurrency === "USDT" ? "$" : "₨"}
             {fromCurrency === "USDT"
-              ? currentBalance?.toFixed(2)
-              : currentBalance?.toLocaleString("en-PK", {
+              ? (currentBalance?.toFixed(2) ?? "0.00")
+              : (currentBalance?.toLocaleString("en-PK", {
                   maximumFractionDigits: 2,
-                })}
+                }) ?? "0.00")}
           </p>
         </div>
 
@@ -587,7 +587,7 @@ function FiatExchange({
           />
         </div>
 
-        {priceRatio && toAmount && (
+        {priceRatio && toAmount && priceRatio.usdtToPkr && (
           <div className="text-xs text-gray-400">
             <p>
               Exchange Rate: 1 {fromCurrency} ={" "}

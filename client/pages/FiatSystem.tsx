@@ -51,9 +51,48 @@ export default function FiatSystem() {
       }
       const data = await response.json();
       setBalance(data);
+      console.log("[Balance Loaded]", data);
     } catch (error) {
       console.error("Error fetching balance:", error);
       toast.error(`Failed to fetch balance: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
+
+  const handleTestDeposit = async () => {
+    if (!wallet) {
+      toast.error("Please connect your wallet");
+      return;
+    }
+
+    try {
+      console.log("[Test Deposit] Initiating test deposit of $10 USDT");
+
+      const response = await fetch("/api/fiat/deposit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wallet,
+          currency: "USDT",
+          amount: 10,
+          paymentMethod: "test",
+        }),
+      });
+
+      const data = await response.json();
+      console.log("[Test Deposit] Response:", { status: response.status, data });
+
+      if (!response.ok) {
+        toast.error(`Test failed: ${data.error || "Unknown error"}`);
+        return;
+      }
+
+      toast.success("✅ Test deposit successful! $10 USDT added. The system is working!");
+      fetchBalance();
+      fetchPriceRatio();
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error("[Test Deposit] Error:", errorMsg);
+      toast.error(`Test failed: ${errorMsg}`);
     }
   };
 
@@ -180,12 +219,22 @@ export default function FiatSystem() {
             </div>
 
             {priceRatio && (
-              <div className="mt-4 pt-4 border-t border-gray-700/30 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-400">Exchange Rate</p>
-                  <p className="text-sm font-semibold text-gray-300">1 USDT = {priceRatio.usdtToPkr.toFixed(2)} PKR</p>
+              <div className="mt-4 pt-4 border-t border-gray-700/30">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-xs text-gray-400">Exchange Rate</p>
+                    <p className="text-sm font-semibold text-gray-300">1 USDT = {priceRatio.usdtToPkr.toFixed(2)} PKR</p>
+                  </div>
+                  <TrendingUp className="w-4 h-4 text-green-400" />
                 </div>
-                <TrendingUp className="w-4 h-4 text-green-400" />
+                <Button
+                  onClick={() => handleTestDeposit()}
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs border-gray-600/30 text-gray-400 hover:text-gray-300 hover:bg-gray-700/30"
+                >
+                  Test System (Add $10)
+                </Button>
               </div>
             )}
           </div>

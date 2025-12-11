@@ -444,38 +444,49 @@ function FiatWithdraw({
       return;
     }
 
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+
     const currentBalance = currency === "USDT" ? balance?.usdt : balance?.pkr;
-    if (!currentBalance || currentBalance < parseFloat(amount)) {
-      toast.error(`Insufficient ${currency} balance`);
+    if (!currentBalance || currentBalance < numAmount) {
+      toast.error(`Insufficient ${currency} balance. Available: ${currentBalance || 0} ${currency}`);
       return;
     }
 
     setLoading(true);
     try {
+      console.log("[Withdraw] Sending request:", { wallet, currency, amount: numAmount, paymentMethod });
+
       const response = await fetch("/api/fiat/withdraw", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           wallet,
           currency,
-          amount: parseFloat(amount),
+          amount: numAmount,
           paymentMethod,
         }),
       });
 
       const data = await response.json();
+      console.log("[Withdraw] Response:", { status: response.status, data });
 
       if (!response.ok) {
-        toast.error(data.error || "Withdrawal failed");
+        const errorMsg = data.error || data.details || "Withdrawal failed";
+        toast.error(errorMsg);
         return;
       }
 
-      toast.success(`Withdrawn ${amount} ${currency}`);
+      toast.success(`Successfully withdrawn ${amount} ${currency}`);
       setAmount("");
       onRefresh();
     } catch (error) {
-      console.error("Withdrawal error:", error);
-      toast.error("Failed to process withdrawal");
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error("Withdrawal error:", errorMsg);
+      toast.error(`Failed to process withdrawal: ${errorMsg}`);
     } finally {
       setLoading(false);
     }

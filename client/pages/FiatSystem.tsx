@@ -73,7 +73,6 @@ export default function FiatSystem() {
         await Promise.all([
           fetchBalance(),
           fetchPriceRatio(),
-          fetchPaymentMethods(),
         ]);
       }
       setLoading(false);

@@ -11,8 +11,8 @@ import { toast } from "sonner";
 // For development: update these hardcoded values
 // For production: update the FIAT_ADMIN_WALLETS environment variable on the server
 const ADMIN_WALLETS = [
-  "FxmrDJB16th5FeZ3RBwAScwxt6iGz5pmpKGisTJQcWMf", // Default admin wallet - CHANGE THIS
-  // Add your admin wallet addresses here
+  "7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw", // Admin wallet
+  // Add more admin wallet addresses here
 ];
 
 export interface PriceRatio {

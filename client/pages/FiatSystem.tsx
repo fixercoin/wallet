@@ -154,24 +154,8 @@ export default function FiatSystem() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-gradient-to-r from-gray-800/40 to-gray-900/40 border border-gray-700/30 backdrop-blur-xl rounded-xl p-1 gap-1">
-            <TabsTrigger
-              value="home"
-              className="text-xs rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500/30 data-[state=active]:to-purple-500/30 data-[state=active]:border data-[state=active]:border-blue-500/30 transition-all duration-200"
-            >
-              HOME
-            </TabsTrigger>
-            <TabsTrigger
-              value="payment"
-              className="text-xs rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/30 data-[state=active]:to-pink-500/30 data-[state=active]:border data-[state=active]:border-purple-500/30 transition-all duration-200"
-            >
-              PAYMENT
-            </TabsTrigger>
-          </TabsList>
-
-          {/* HOME TAB - Main Dashboard */}
-          <TabsContent value="home" className="mt-6 animate-in fade-in duration-300">
-            <div className="space-y-6">
+          {/* Main Dashboard - Balance Card */}
+          <div className="space-y-6">
               {/* Total Balance Card */}
               {balance && (
                 <Card className="bg-gradient-to-br from-blue-600/20 via-purple-600/10 to-transparent border-purple-500/20 rounded-2xl shadow-2xl overflow-hidden">
@@ -259,7 +243,6 @@ export default function FiatSystem() {
                 </Card>
               )}
             </div>
-          </TabsContent>
 
           {/* PAYMENT TAB */}
           <TabsContent value="payment" className="mt-6 animate-in fade-in duration-300">

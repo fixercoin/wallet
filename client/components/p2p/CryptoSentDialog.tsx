@@ -189,38 +189,47 @@ export function CryptoSentDialog() {
           <div className="space-y-4">
             {waitingForVerification ? (
               <>
-                {/* Waiting State */}
-                <div className="flex justify-center py-6">
-                  <Loader className="w-10 h-10 text-[#FF7A5C] animate-spin" />
+                {/* Success State - Transfer Sent */}
+                <div className="text-center space-y-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 border border-green-500">
+                    <svg
+                      className="w-8 h-8 text-green-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold uppercase text-lg">
+                      Crypto Sent
+                    </p>
+                    <p className="text-white/70 text-sm mt-1">
+                      {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"} has been transferred to the buyer
+                    </p>
+                  </div>
                 </div>
 
-                <div className="text-center space-y-2">
-                  <p className="text-white font-semibold uppercase">
-                    Crypto Transfer Initiated
-                  </p>
-                  <p className="text-white/70 text-sm">
-                    Waiting for the buyer to confirm receipt of the crypto...
-                  </p>
-                </div>
-
-                {/* Transaction Info */}
-                <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
-                  <div className="space-y-2 text-sm text-blue-300">
-                    <div className="flex justify-between">
-                      <span>Sent:</span>
+                {/* Transaction Summary */}
+                <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between text-green-300">
+                      <span>Amount Sent:</span>
                       <span className="font-semibold">
                         {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
                       </span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between text-green-300">
                       <span>Order Value:</span>
                       <span className="font-semibold">
                         {pkrAmount.toFixed(2)} PKR
                       </span>
-                    </div>
-                    <div className="pt-2 border-t border-blue-500/30 mt-2 text-xs text-blue-200">
-                      The buyer will confirm when they receive the crypto in
-                      their wallet.
                     </div>
                   </div>
                 </div>
@@ -231,10 +240,9 @@ export function CryptoSentDialog() {
                     setActiveDialog(null);
                     setWaitingForVerification(false);
                   }}
-                  variant="outline"
-                  className="w-full border border-gray-300/30 text-gray-300 hover:bg-gray-300/10"
+                  className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white"
                 >
-                  Keep Dialog Open
+                  Done
                 </Button>
               </>
             ) : (

@@ -1096,7 +1096,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               MARKET PLACE
                             </Button>
                           </div>
-                          <div className="text-xs text-gray-600">
+                          <div className="text-xs text-green-400">
                             TODAY PNL +/- 0.000 - 0.00 %
                           </div>
                         </div>
@@ -1163,9 +1163,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             MARKET PLACE
                           </Button>
                         </div>
-                        <div
-                          className={`text-xs ${isPositive ? "text-green-400" : "text-red-400"}`}
-                        >
+                        <div className="text-xs text-green-400">
                           TODAY PNL {isPositive ? "+" : ""}
                           {showBalance
                             ? totalChange24h.toFixed(3)

@@ -459,6 +459,8 @@ export const handleUpdateP2POrder: RequestHandler = async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
+    console.log(`[P2P Orders] Updating order ${orderId}:`, req.body);
+
     const updated: any = {
       ...order,
       ...req.body,
@@ -485,7 +487,18 @@ export const handleUpdateP2POrder: RequestHandler = async (req, res) => {
       }),
     };
 
+    console.log(`[P2P Orders] Updated order state:`, {
+      id: updated.id,
+      status: updated.status,
+      sellerTransferInitiated: updated.sellerTransferInitiated,
+      buyerCryptoReceived: updated.buyerCryptoReceived,
+      sellerPaymentReceived: updated.sellerPaymentReceived,
+    });
+
     await saveOrder(updated);
+
+    console.log(`[P2P Orders] ✅ Successfully updated order ${orderId}`);
+
     res.json({ order: updated });
   } catch (error) {
     console.error("Update P2P order error:", error);

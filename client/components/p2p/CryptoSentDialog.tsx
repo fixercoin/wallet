@@ -116,11 +116,10 @@ export function CryptoSentDialog() {
 
                 <div className="text-center space-y-2">
                   <p className="text-white font-semibold uppercase">
-                    Waiting for Buyer Verification
+                    Crypto Transfer Initiated
                   </p>
                   <p className="text-white/70 text-sm">
-                    The buyer is verifying the crypto transfer. This may take a
-                    few moments...
+                    Waiting for the buyer to confirm receipt of the crypto...
                   </p>
                 </div>
 
@@ -128,7 +127,7 @@ export function CryptoSentDialog() {
                 <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-500/50">
                   <div className="space-y-2 text-sm text-blue-300">
                     <div className="flex justify-between">
-                      <span>Sending:</span>
+                      <span>Sent:</span>
                       <span className="font-semibold">
                         {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}
                       </span>
@@ -139,12 +138,18 @@ export function CryptoSentDialog() {
                         {pkrAmount.toFixed(2)} PKR
                       </span>
                     </div>
+                    <div className="pt-2 border-t border-blue-500/30 mt-2 text-xs text-blue-200">
+                      The buyer will confirm when they receive the crypto in their wallet.
+                    </div>
                   </div>
                 </div>
 
                 {/* Close Button */}
                 <Button
-                  onClick={() => setActiveDialog(null)}
+                  onClick={() => {
+                    setActiveDialog(null);
+                    setWaitingForVerification(false);
+                  }}
                   variant="outline"
                   className="w-full border border-gray-300/30 text-gray-300 hover:bg-gray-300/10"
                 >

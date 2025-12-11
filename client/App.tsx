@@ -176,6 +176,9 @@ function AppRoutes() {
       <Route path="/buydata" element={<BuyData />} />
       <Route path="/selldata" element={<SellData />} />
       <Route path="/marketplace" element={<Market />} />
+      <Route path="/fiat" element={<FiatSystem />} />
+      <Route path="/fiat/transactions" element={<FiatTransactions />} />
+      <Route path="/fiat/admin" element={<FiatAdmin />} />
       <Route
         path="/buyer-order-confirmation"
         element={<BuyerOrderConfirmation />}

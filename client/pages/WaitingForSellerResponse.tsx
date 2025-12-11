@@ -90,6 +90,15 @@ export default function WaitingForSellerResponse() {
       try {
         const updatedOrder = await syncOrderFromStorage(order.id);
         if (updatedOrder) {
+          console.log(
+            `[WaitingForSellerResponse] Poll update for order ${order.id}:`,
+            {
+              status: updatedOrder.status,
+              sellerPaymentReceived: updatedOrder.sellerPaymentReceived,
+              sellerTransferInitiated: updatedOrder.sellerTransferInitiated,
+              buyerCryptoReceived: updatedOrder.buyerCryptoReceived,
+            },
+          );
           setOrder(updatedOrder);
           setBuyerCryptoReceived(updatedOrder.buyerCryptoReceived ?? false);
           // If seller has responded (status changed), navigate to appropriate page

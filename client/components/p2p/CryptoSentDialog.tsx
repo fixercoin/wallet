@@ -78,7 +78,9 @@ export function CryptoSentDialog() {
         currentOrder,
       );
 
-      toast.success("Crypto transfer initiated! Waiting for buyer confirmation...");
+      toast.success(
+        "Crypto transfer initiated! Waiting for buyer confirmation...",
+      );
       setWaitingForVerification(true);
     } catch (error) {
       console.error("Error notifying buyer:", error);
@@ -155,7 +157,8 @@ export function CryptoSentDialog() {
                       </span>
                     </div>
                     <div className="pt-2 border-t border-blue-500/30 mt-2 text-xs text-blue-200">
-                      The buyer will confirm when they receive the crypto in their wallet.
+                      The buyer will confirm when they receive the crypto in
+                      their wallet.
                     </div>
                   </div>
                 </div>

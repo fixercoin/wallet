@@ -165,7 +165,7 @@ export default function FiatSystem() {
                     </div>
 
                     {/* Three Main Buttons */}
-                    <div className="grid grid-cols-3 gap-3 pt-6">
+                    <div className="grid grid-cols-3 gap-3 pt-2">
                       <Button
                         onClick={() => setActiveTab("deposit")}
                         className="flex flex-col items-center justify-center py-8 rounded-xl font-bold uppercase text-sm bg-transparent border border-green-500 text-green-400 hover:bg-green-500/10 transition-all duration-300"

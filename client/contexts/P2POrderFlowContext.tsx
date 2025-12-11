@@ -64,6 +64,7 @@ export function P2POrderFlowProvider({
   const [buyerWalletAddress, setBuyerWalletAddress] = useState("");
   const [sellerConfirmed, setSellerConfirmed] = useState(false);
   const [buyerConfirmed, setBuyerConfirmed] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const openSellerPaymentDialog = useCallback(
     (order: P2POrder, details: PaymentDetails) => {

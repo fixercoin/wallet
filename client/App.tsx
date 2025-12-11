@@ -155,6 +155,10 @@ import BuyerOrderConfirmation from "./pages/BuyerOrderConfirmation";
 import { useLocation } from "react-router-dom";
 import { P2POrderFlowProvider } from "@/contexts/P2POrderFlowContext";
 import FiatSystem from "./pages/FiatSystem";
+import FiatDeposit from "./pages/FiatDeposit";
+import FiatWithdraw from "./pages/FiatWithdraw";
+import FiatExchange from "./pages/FiatExchange";
+import FiatPayment from "./pages/FiatPayment";
 import FiatTransactions from "./pages/FiatTransactions";
 import FiatAdmin from "./pages/FiatAdmin";
 import { SellerPaymentMethodDialog } from "@/components/p2p/SellerPaymentMethodDialog";
@@ -177,6 +181,10 @@ function AppRoutes() {
       <Route path="/selldata" element={<SellData />} />
       <Route path="/marketplace" element={<Market />} />
       <Route path="/fiat" element={<FiatSystem />} />
+      <Route path="/fiat/deposit" element={<FiatDeposit />} />
+      <Route path="/fiat/withdraw" element={<FiatWithdraw />} />
+      <Route path="/fiat/exchange" element={<FiatExchange />} />
+      <Route path="/fiat/payment" element={<FiatPayment />} />
       <Route path="/fiat/transactions" element={<FiatTransactions />} />
       <Route path="/fiat/admin" element={<FiatAdmin />} />
       <Route

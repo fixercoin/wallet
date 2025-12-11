@@ -59,6 +59,8 @@ export function CryptoSentDialog() {
           amountTokens: tokenAmount,
           amountPKR: pkrAmount,
         },
+        true,
+        currentOrder,
       );
 
       toast.success("Crypto transfer initiated!");

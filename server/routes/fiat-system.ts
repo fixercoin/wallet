@@ -2,11 +2,12 @@ import { RequestHandler } from "express";
 import { getKVStorage } from "../lib/kv-storage";
 
 // Admin wallet addresses (from environment or hardcoded defaults)
+// Set FIAT_ADMIN_WALLETS environment variable with comma-separated wallet addresses
+// Example: FIAT_ADMIN_WALLETS="wallet1,wallet2,wallet3"
 const ADMIN_WALLETS = process.env.FIAT_ADMIN_WALLETS
   ? process.env.FIAT_ADMIN_WALLETS.split(",").map((w) => w.trim())
   : [
-      "admin1WalletAddress",
-      "admin2WalletAddress",
+      "FxmrDJB16th5FeZ3RBwAScwxt6iGz5pmpKGisTJQcWMf", // Default admin wallet - CHANGE THIS
       // Add more admin wallets as needed
     ];
 

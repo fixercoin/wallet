@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useP2POrderFlow } from "@/contexts/P2POrderFlowContext";
 import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import { useWallet } from "@/contexts/WalletContext";
+import { P2POrderChat } from "./P2POrderChat";
 
 export function BuyerWalletAddressDialog() {
   const {

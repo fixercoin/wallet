@@ -264,11 +264,10 @@ export function NotificationCenter() {
                           return;
                         }
 
-                        // For new sell orders, navigate to buyer order confirmation page
-                        if (notification.type === "new_sell_order") {
-                          navigate("/buyer-order-confirmation", {
-                            state: { orderId: notification.orderId },
-                          });
+                        // For new sell orders, open dialog instead of navigating to page
+                        if (notification.type === "new_sell_order" && order) {
+                          // Open buyer wallet dialog to show order confirmation
+                          openBuyerWalletDialog(order, order.walletAddress || "");
                           return;
                         }
                       }}

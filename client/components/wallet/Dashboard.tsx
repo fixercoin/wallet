@@ -758,15 +758,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {/* Tagline */}
               <div className="text-center">
                 <p className="text-sm font-semibold text-[#22c55e] uppercase tracking-wider">
-                  🚀 Grow. Earn. Win.
+                  🚀 GROW. EARN. WIN.
                 </p>
               </div>
 
               {/* About */}
-              <p className="text-xs text-gray-300 leading-relaxed">
-                A community challenge inside the Fixorium Wallet. Complete
-                simple tasks, earn rewards, and join random prize draws 🎁🎉 all
-                directly from your wallet.
+              <p className="text-xs text-gray-300 leading-relaxed uppercase">
+                A COMMUNITY CHALLENGE INSIDE THE FIXORIUM WALLET. COMPLETE
+                SIMPLE TASKS, EARN REWARDS, AND JOIN RANDOM PRIZE DRAWS 🎁🎉 ALL
+                DIRECTLY FROM YOUR WALLET.
               </p>
 
               {/* How it works */}

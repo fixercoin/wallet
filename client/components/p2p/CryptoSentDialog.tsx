@@ -211,7 +211,8 @@ export function CryptoSentDialog() {
                       Crypto Sent
                     </p>
                     <p className="text-white/70 text-sm mt-1">
-                      {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"} has been transferred to the buyer
+                      {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"}{" "}
+                      has been transferred to the buyer
                     </p>
                   </div>
                 </div>

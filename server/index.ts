@@ -109,6 +109,9 @@ import {
   handleGetPriceRatio,
   handleUpdatePriceRatio,
   handleGetTransactions,
+  handleSavePaymentMethod,
+  handleGetPaymentMethods,
+  handleDeletePaymentMethod,
 } from "./routes/fiat-system";
 
 export async function createServer(): Promise<express.Application> {

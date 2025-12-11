@@ -7,7 +7,7 @@ import { getKVStorage } from "../lib/kv-storage";
 const ADMIN_WALLETS = process.env.FIAT_ADMIN_WALLETS
   ? process.env.FIAT_ADMIN_WALLETS.split(",").map((w) => w.trim())
   : [
-      "FxmrDJB16th5FeZ3RBwAScwxt6iGz5pmpKGisTJQcWMf", // Default admin wallet - CHANGE THIS
+      "7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw", // Admin wallet
       // Add more admin wallets as needed
     ];
 

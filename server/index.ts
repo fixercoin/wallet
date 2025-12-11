@@ -109,6 +109,9 @@ import {
   handleGetPriceRatio,
   handleUpdatePriceRatio,
   handleGetTransactions,
+  handleSavePaymentMethod,
+  handleGetPaymentMethods,
+  handleDeletePaymentMethod,
 } from "./routes/fiat-system";
 
 export async function createServer(): Promise<express.Application> {
@@ -837,6 +840,9 @@ export async function createServer(): Promise<express.Application> {
   app.get("/api/fiat/price-ratio", handleGetPriceRatio);
   app.put("/api/fiat/price-ratio", handleUpdatePriceRatio);
   app.get("/api/fiat/transactions", handleGetTransactions);
+  app.post("/api/fiat/payment-methods", handleSavePaymentMethod);
+  app.get("/api/fiat/payment-methods", handleGetPaymentMethods);
+  app.delete("/api/fiat/payment-methods", handleDeletePaymentMethod);
 
   // Health check
   app.get("/health", (req, res) => {

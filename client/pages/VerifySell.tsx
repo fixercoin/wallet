@@ -289,6 +289,19 @@ export default function VerifySell() {
       setChatLog((prev) => [...prev, message]);
       setSellerConfirmed(true);
 
+      await createNotification(
+        selectedOrder.buyerWallet,
+        "transfer_initiated",
+        "SELL",
+        selectedOrder.id,
+        `Seller completed transfer of ${selectedOrder.amountTokens.toFixed(6)} ${selectedOrder.token}`,
+        {
+          token: selectedOrder.token,
+          amountTokens: selectedOrder.amountTokens,
+          amountPKR: selectedOrder.amountPKR,
+        },
+      );
+
       toast({
         title: "Transfer Complete",
         description: "Waiting for buyer confirmation...",

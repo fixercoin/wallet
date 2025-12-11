@@ -100,27 +100,27 @@ export function NotificationCenter() {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "order_created":
-        return "📦";
+        return "Order";
       case "new_buy_order":
-        return "🛍️";
+        return "Buy Order";
       case "payment_confirmed":
-        return "💰";
+        return "Payment";
       case "seller_payment_received":
-        return "✅";
+        return "Seller";
       case "transfer_initiated":
-        return "🚀";
+        return "Transfer";
       case "crypto_received":
-        return "🎉";
+        return "Received";
       case "order_cancelled":
-        return "❌";
+        return "Cancelled";
       case "order_accepted":
-        return "👍";
+        return "Accepted";
       case "order_rejected":
-        return "👎";
+        return "Rejected";
       case "order_completed_by_seller":
-        return "📋";
+        return "Completed";
       default:
-        return "📢";
+        return "Notice";
     }
   };
 

@@ -3,9 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Send, Plus, ArrowRightLeft, History } from "lucide-react";
+import { ArrowLeft, Send, Plus, ArrowRightLeft, History, Settings } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
+
+// Admin wallets - keep in sync with FiatAdmin.tsx
+const ADMIN_WALLETS = [
+  "FxmrDJB16th5FeZ3RBwAScwxt6iGz5pmpKGisTJQcWMf",
+];
 
 export interface UserBalance {
   wallet: string;

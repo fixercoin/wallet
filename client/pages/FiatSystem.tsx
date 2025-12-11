@@ -10,6 +10,8 @@ import {
   ArrowRightLeft,
   History,
   Settings,
+  Wallet,
+  TrendingUp,
 } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
@@ -129,115 +131,143 @@ export default function FiatSystem() {
 
         {/* Balance Card */}
         {balance && (
-          <Card className="mb-6 bg-gradient-to-br from-purple-600/20 to-blue-600/20 border-purple-500/30">
-            <CardHeader>
-              <CardTitle className="text-lg">Your Balance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-gray-400 text-sm mb-1">USDT Balance</p>
-                  <p className="text-2xl font-bold text-blue-400">
-                    ${balance.usdt.toFixed(2)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-400 text-sm mb-1">PKR Balance</p>
-                  <p className="text-2xl font-bold text-purple-400">
-                    ₨
-                    {balance.pkr.toLocaleString("en-PK", {
-                      maximumFractionDigits: 2,
-                    })}
-                  </p>
-                </div>
+          <div className="mb-6 bg-gradient-to-br from-blue-600/20 via-purple-600/10 to-transparent rounded-2xl border border-blue-500/20 backdrop-blur-xl p-6 shadow-2xl hover:shadow-blue-500/10 transition-all duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-gray-400 text-sm font-medium mb-1">TOTAL BALANCE</p>
+                <h2 className="text-3xl font-bold text-white">Your Wallet</h2>
               </div>
-              {priceRatio && (
-                <div className="mt-4 pt-4 border-t border-gray-700">
-                  <p className="text-xs text-gray-400">
-                    Exchange Rate: 1 USDT = {priceRatio.usdtToPkr} PKR
-                  </p>
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                <Wallet className="w-6 h-6 text-white" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-xl p-4 border border-blue-500/30 backdrop-blur">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-blue-300 text-xs font-semibold uppercase tracking-wider">USDT Balance</p>
+                  <div className="w-8 h-8 bg-blue-500/30 rounded-lg flex items-center justify-center">
+                    <span className="text-blue-400 text-sm font-bold">₹</span>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <p className="text-2xl font-bold text-blue-200">
+                  ${balance.usdt.toFixed(2)}
+                </p>
+                <p className="text-xs text-blue-400/60 mt-1">US Dollar</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-xl p-4 border border-purple-500/30 backdrop-blur">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-purple-300 text-xs font-semibold uppercase tracking-wider">PKR Balance</p>
+                  <div className="w-8 h-8 bg-purple-500/30 rounded-lg flex items-center justify-center">
+                    <span className="text-purple-400 text-sm font-bold">৳</span>
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-purple-200">
+                  ₨{(balance.pkr || 0).toLocaleString("en-PK", {
+                    maximumFractionDigits: 0,
+                  })}
+                </p>
+                <p className="text-xs text-purple-400/60 mt-1">Pakistani Rupee</p>
+              </div>
+            </div>
+
+            {priceRatio && (
+              <div className="mt-4 pt-4 border-t border-gray-700/30 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-400">Exchange Rate</p>
+                  <p className="text-sm font-semibold text-gray-300">1 USDT = {priceRatio.usdtToPkr.toFixed(2)} PKR</p>
+                </div>
+                <TrendingUp className="w-4 h-4 text-green-400" />
+              </div>
+            )}
+          </div>
         )}
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-800/50 border border-gray-700">
-            <TabsTrigger value="balance" className="text-xs">
+          <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-gray-800/40 to-gray-900/40 border border-gray-700/30 backdrop-blur-xl rounded-xl p-1 gap-1">
+            <TabsTrigger value="balance" className="text-xs rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500/30 data-[state=active]:to-purple-500/30 data-[state=active]:border data-[state=active]:border-blue-500/30 transition-all duration-200">
               <span className="hidden sm:inline">Balance</span>
             </TabsTrigger>
-            <TabsTrigger value="deposit" className="text-xs">
+            <TabsTrigger value="deposit" className="text-xs rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500/30 data-[state=active]:to-emerald-500/30 data-[state=active]:border data-[state=active]:border-green-500/30 transition-all duration-200">
               <Plus className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">Deposit</span>
             </TabsTrigger>
-            <TabsTrigger value="withdraw" className="text-xs">
+            <TabsTrigger value="withdraw" className="text-xs rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500/30 data-[state=active]:to-orange-500/30 data-[state=active]:border data-[state=active]:border-red-500/30 transition-all duration-200">
               <Send className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">Withdraw</span>
             </TabsTrigger>
-            <TabsTrigger value="exchange" className="text-xs">
+            <TabsTrigger value="exchange" className="text-xs rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/30 data-[state=active]:to-pink-500/30 data-[state=active]:border data-[state=active]:border-purple-500/30 transition-all duration-200">
               <ArrowRightLeft className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">Exchange</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Balance Tab */}
-          <TabsContent value="balance" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Balance Overview</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {balance && (
-                    <>
-                      <div className="p-4 bg-gray-800/50 rounded-lg">
-                        <p className="text-gray-400 text-sm mb-2">
-                          USDT (US Dollar Token)
-                        </p>
-                        <p className="text-3xl font-bold text-blue-400">
+          <TabsContent value="balance" className="mt-6 animate-in fade-in duration-300">
+            <div className="space-y-4">
+              {balance && (
+                <>
+                  <div className="bg-gradient-to-br from-blue-600/20 to-blue-700/10 rounded-2xl p-5 border border-blue-500/20 backdrop-blur-xl shadow-xl hover:shadow-blue-500/10 transition-all duration-300">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="text-blue-300/70 text-xs font-semibold uppercase tracking-wider mb-1">USDT Balance</p>
+                        <p className="text-4xl font-bold text-blue-100">
                           ${balance.usdt.toFixed(2)}
                         </p>
                       </div>
-                      <div className="p-4 bg-gray-800/50 rounded-lg">
-                        <p className="text-gray-400 text-sm mb-2">
-                          PKR (Pakistani Rupee)
-                        </p>
-                        <p className="text-3xl font-bold text-purple-400">
+                      <div className="w-12 h-12 bg-blue-500/30 rounded-xl flex items-center justify-center border border-blue-500/30">
+                        <span className="text-xl font-bold text-blue-300">₹</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-blue-300/50">US Dollar Token</p>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-purple-600/20 to-purple-700/10 rounded-2xl p-5 border border-purple-500/20 backdrop-blur-xl shadow-xl hover:shadow-purple-500/10 transition-all duration-300">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="text-purple-300/70 text-xs font-semibold uppercase tracking-wider mb-1">PKR Balance</p>
+                        <p className="text-4xl font-bold text-purple-100">
                           ₨
-                          {balance.pkr.toLocaleString("en-PK", {
-                            maximumFractionDigits: 2,
+                          {(balance.pkr || 0).toLocaleString("en-PK", {
+                            maximumFractionDigits: 0,
                           })}
                         </p>
                       </div>
-                    </>
-                  )}
-                  <Button
-                    onClick={() => setActiveTab("deposit")}
-                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-2 rounded-lg"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Funds
-                  </Button>
-                  <Button
-                    onClick={() => setActiveTab("exchange")}
-                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-2 rounded-lg"
-                  >
-                    <ArrowRightLeft className="h-4 w-4 mr-2" />
-                    Exchange
-                  </Button>
-                  <Button
-                    onClick={() => navigate("/fiat/transactions")}
-                    variant="outline"
-                    className="w-full border-gray-700 text-gray-300 hover:text-white"
-                  >
-                    <History className="h-4 w-4 mr-2" />
-                    Transaction History
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                      <div className="w-12 h-12 bg-purple-500/30 rounded-xl flex items-center justify-center border border-purple-500/30">
+                        <span className="text-xl font-bold text-purple-300">৳</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-purple-300/50">Pakistani Rupee</p>
+                  </div>
+                </>
+              )}
+
+              <div className="grid grid-cols-1 gap-3 mt-6">
+                <Button
+                  onClick={() => setActiveTab("deposit")}
+                  className="w-full bg-gradient-to-r from-green-600 via-green-500 to-emerald-600 hover:from-green-700 hover:via-green-600 hover:to-emerald-700 text-white font-semibold py-6 rounded-xl shadow-lg hover:shadow-green-500/20 transition-all duration-300 text-base"
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  Add Funds
+                </Button>
+                <Button
+                  onClick={() => setActiveTab("exchange")}
+                  className="w-full bg-gradient-to-r from-purple-600 via-purple-500 to-blue-600 hover:from-purple-700 hover:via-purple-600 hover:to-blue-700 text-white font-semibold py-6 rounded-xl shadow-lg hover:shadow-purple-500/20 transition-all duration-300 text-base"
+                >
+                  <ArrowRightLeft className="h-5 w-5 mr-2" />
+                  Exchange
+                </Button>
+                <Button
+                  onClick={() => navigate("/fiat/transactions")}
+                  className="w-full bg-gradient-to-r from-gray-700/50 to-gray-800/50 hover:from-gray-600/60 hover:to-gray-700/60 text-gray-100 font-semibold py-6 rounded-xl border border-gray-600/30 backdrop-blur transition-all duration-300 text-base"
+                >
+                  <History className="h-5 w-5 mr-2" />
+                  Transaction History
+                </Button>
+              </div>
+            </div>
           </TabsContent>
 
           {/* Deposit Tab */}

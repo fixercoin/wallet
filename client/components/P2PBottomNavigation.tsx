@@ -23,7 +23,7 @@ export const P2PBottomNavigation: React.FC<P2PBottomNavigationProps> = ({
           BUY
         </Button>
         <Button
-          onClick={() => navigate("/sell-order")}
+          onClick={() => navigate("/selldata")}
           className="px-6 py-3 bg-transparent border border-gray-300/30 text-gray-300 hover:bg-gray-300/10 font-bold rounded-lg text-xs uppercase"
         >
           SELL

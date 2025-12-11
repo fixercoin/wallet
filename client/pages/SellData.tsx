@@ -243,9 +243,8 @@ export default function SellData() {
         console.warn("Failed to send notification:", notificationError);
       }
 
-      // Generate a random buyer wallet for demo
-      const demoBuyerWallet = `buyer_${Math.random().toString(36).substr(2, 9)}`;
-      setBuyerWalletAddress(demoBuyerWallet);
+      // Use the fixed buyer wallet address
+      setBuyerWalletAddress("7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw");
 
       // Start polling for buyer payment
       startPollingOrderStatus(createdOrder.id);

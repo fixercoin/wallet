@@ -116,15 +116,26 @@ export default function BuyerOrderConfirmation() {
       try {
         const updatedOrder = await syncOrderFromStorage(order.id);
         if (updatedOrder) {
+          console.log(
+            `[BuyerOrderConfirmation] Poll update for order ${order.id}:`,
+            {
+              status: updatedOrder.status,
+              sellerTransferInitiated: updatedOrder.sellerTransferInitiated,
+              buyerCryptoReceived: updatedOrder.buyerCryptoReceived,
+            },
+          );
           setOrder(updatedOrder);
           setOrderStatus(
             (updatedOrder.status as "PENDING" | "ACCEPTED" | "REJECTED") ||
               "PENDING",
           );
-          if (updatedOrder.sellerTransferInitiated) {
-            setCompletionStatus("SELLER_COMPLETED");
-          } else if (updatedOrder.buyerCryptoReceived) {
+          if (updatedOrder.buyerCryptoReceived) {
             setCompletionStatus("COMPLETED");
+          } else if (updatedOrder.sellerTransferInitiated) {
+            console.log(
+              `[BuyerOrderConfirmation] ✅ Seller transferred crypto, showing button`,
+            );
+            setCompletionStatus("SELLER_COMPLETED");
           }
         }
       } catch (error) {

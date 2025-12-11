@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 // Admin wallets - keep in sync with FiatAdmin.tsx
 const ADMIN_WALLETS = [
-  "FxmrDJB16th5FeZ3RBwAScwxt6iGz5pmpKGisTJQcWMf",
+  "7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw",
 ];
 
 export interface UserBalance {

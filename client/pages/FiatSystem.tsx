@@ -65,16 +65,6 @@ export default function FiatSystem() {
     }
   };
 
-  const fetchPaymentMethods = async () => {
-    if (!wallet) return;
-
-    try {
-      const { latestMethod } = await getPaymentMethods(wallet);
-      setPaymentMethod(latestMethod);
-    } catch (error) {
-      console.error("Error fetching payment methods:", error);
-    }
-  };
 
   useEffect(() => {
     const loadData = async () => {

@@ -47,6 +47,7 @@ export default function VerifySell() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { wallet } = useWallet();
+  const { createNotification } = useOrderNotifications();
 
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);

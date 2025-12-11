@@ -55,9 +55,7 @@ export function CryptoSentDialog() {
       // Try to fetch the order from the server
       let orderExists = false;
       try {
-        const checkResponse = await fetch(
-          `/api/p2p/orders/${currentOrder.id}`,
-        );
+        const checkResponse = await fetch(`/api/p2p/orders/${currentOrder.id}`);
         orderExists = checkResponse.ok;
       } catch {
         orderExists = false;

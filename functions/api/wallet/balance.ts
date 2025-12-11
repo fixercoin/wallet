@@ -69,7 +69,7 @@ function buildRpcEndpoints(env?: Env): string[] {
 async function fetchWithGetBalance(
   rpcUrl: string,
   walletAddress: string,
-  timeoutMs: number = 8000,
+  timeoutMs: number = 5000,
 ): Promise<number | null> {
   try {
     const controller = new AbortController();
@@ -116,7 +116,7 @@ async function fetchWithGetBalance(
 async function fetchWithGetAccountInfo(
   rpcUrl: string,
   walletAddress: string,
-  timeoutMs: number = 8000,
+  timeoutMs: number = 5000,
 ): Promise<number | null> {
   try {
     const controller = new AbortController();

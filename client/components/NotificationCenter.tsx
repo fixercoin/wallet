@@ -100,27 +100,27 @@ export function NotificationCenter() {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "order_created":
-        return "📦";
+        return "Order";
       case "new_buy_order":
-        return "🛍️";
+        return "Buy Order";
       case "payment_confirmed":
-        return "💰";
+        return "Payment";
       case "seller_payment_received":
-        return "✅";
+        return "Seller";
       case "transfer_initiated":
-        return "🚀";
+        return "Transfer";
       case "crypto_received":
-        return "🎉";
+        return "Received";
       case "order_cancelled":
-        return "❌";
+        return "Cancelled";
       case "order_accepted":
-        return "👍";
+        return "Accepted";
       case "order_rejected":
-        return "👎";
+        return "Rejected";
       case "order_completed_by_seller":
-        return "📋";
+        return "Completed";
       default:
-        return "📢";
+        return "Notice";
     }
   };
 
@@ -281,7 +281,7 @@ export function NotificationCenter() {
                       }}
                     >
                       <div className="flex gap-3">
-                        <div className="text-xl pt-1 flex-shrink-0">
+                        <div className="text-xs font-semibold text-blue-400 pt-0.5 flex-shrink-0 px-2 py-1 rounded bg-blue-500/20">
                           {getNotificationIcon(notification.type)}
                         </div>
                         <div className="flex-1 min-w-0">

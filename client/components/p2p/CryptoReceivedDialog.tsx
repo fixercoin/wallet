@@ -173,15 +173,10 @@ export function CryptoReceivedDialog() {
       <DialogContent className="w-full max-w-sm bg-[#1a2847] border border-gray-300/30">
         <DialogHeader className="flex flex-row items-start justify-between">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <DialogTitle className="text-white uppercase flex items-center gap-2">
-                <CheckCircle2 className="w-6 h-6 text-green-500" />
-                You Have Received Crypto
-              </DialogTitle>
-              <span className="px-2 py-1 text-xs font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-full">
-                BUYER
-              </span>
-            </div>
+            <DialogTitle className="text-white uppercase flex items-center gap-2">
+              <CheckCircle2 className="w-6 h-6 text-green-500" />
+              You Have Received Crypto
+            </DialogTitle>
             <DialogDescription className="text-white/70 uppercase text-xs">
               Confirm receipt to complete the order
             </DialogDescription>
@@ -197,6 +192,13 @@ export function CryptoReceivedDialog() {
 
         {!minimized && (
           <div className="space-y-4">
+            {/* Role Badge */}
+            <div className="flex justify-center mb-2">
+              <span className="px-3 py-1 text-xs font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-full">
+                BUYER
+              </span>
+            </div>
+
             {/* Success Message */}
             <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50 text-center">
               <div className="text-sm font-semibold text-green-300 mb-2">

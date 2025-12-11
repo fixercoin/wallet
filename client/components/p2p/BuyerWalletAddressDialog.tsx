@@ -147,14 +147,9 @@ export function BuyerWalletAddressDialog() {
       <DialogContent className="w-full max-w-sm bg-[#1a2847] border border-gray-300/30">
         <DialogHeader className="flex flex-row items-start justify-between">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <DialogTitle className="text-white uppercase">
-                Buyer Wallet Address
-              </DialogTitle>
-              <span className="px-2 py-1 text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-full">
-                SELLER
-              </span>
-            </div>
+            <DialogTitle className="text-white uppercase">
+              Buyer Wallet Address
+            </DialogTitle>
             <DialogDescription className="text-white/70 uppercase text-xs">
               Confirm payment received or reject the order
             </DialogDescription>
@@ -170,6 +165,13 @@ export function BuyerWalletAddressDialog() {
 
         {!minimized && (
           <div className="space-y-4">
+            {/* Role Badge */}
+            <div className="flex justify-center mb-2">
+              <span className="px-3 py-1 text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-full">
+                SELLER
+              </span>
+            </div>
+
             {/* Buyer Order Summary - Simplified */}
             <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
               <div className="text-xs text-white/70 uppercase mb-3 font-semibold">

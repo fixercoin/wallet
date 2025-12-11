@@ -95,14 +95,9 @@ export function SellerPaymentMethodDialog() {
       <DialogContent className="w-full max-w-sm bg-[#1a2847] border border-gray-300/30">
         <DialogHeader className="flex flex-row items-start justify-between">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <DialogTitle className="text-white uppercase">
-                Seller Payment Method
-              </DialogTitle>
-              <span className="px-2 py-1 text-xs font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-full">
-                BUYER
-              </span>
-            </div>
+            <DialogTitle className="text-white uppercase">
+              Seller Payment Method
+            </DialogTitle>
             <DialogDescription className="text-white/70 uppercase text-xs">
               Share your payment details with the seller
             </DialogDescription>
@@ -118,6 +113,13 @@ export function SellerPaymentMethodDialog() {
 
         {!minimized && (
           <div className="space-y-4">
+            {/* Role Badge */}
+            <div className="flex justify-center mb-2">
+              <span className="px-3 py-1 text-xs font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-full">
+                BUYER
+              </span>
+            </div>
+
             {/* Order Summary */}
             <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
               <div className="text-xs text-white/70 uppercase mb-2">

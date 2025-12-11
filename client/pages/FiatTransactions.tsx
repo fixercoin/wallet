@@ -25,7 +25,9 @@ export default function FiatTransactions() {
   const { wallet } = useWallet();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "deposit" | "withdraw" | "exchange">("all");
+  const [filter, setFilter] = useState<
+    "all" | "deposit" | "withdraw" | "exchange"
+  >("all");
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -33,9 +35,7 @@ export default function FiatTransactions() {
 
       setLoading(true);
       try {
-        const response = await fetch(
-          `/api/fiat/transactions?wallet=${wallet}`,
-        );
+        const response = await fetch(`/api/fiat/transactions?wallet=${wallet}`);
         const data = await response.json();
         setTransactions(data.transactions || []);
       } catch (error) {
@@ -92,10 +92,9 @@ export default function FiatTransactions() {
       tx.status,
     ]);
 
-    const csv = [
-      headers.join(","),
-      ...rows.map((row) => row.join(",")),
-    ].join("\n");
+    const csv = [headers.join(","), ...rows.map((row) => row.join(","))].join(
+      "\n",
+    );
 
     const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
@@ -156,7 +155,9 @@ export default function FiatTransactions() {
         {loading ? (
           <Card>
             <CardContent className="pt-6">
-              <p className="text-center text-gray-400">Loading transactions...</p>
+              <p className="text-center text-gray-400">
+                Loading transactions...
+              </p>
             </CardContent>
           </Card>
         ) : filteredTransactions.length === 0 ? (
@@ -234,7 +235,9 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
                 </>
               )}
             </div>
-            <p className={`text-xs font-semibold capitalize ${getStatusColor(transaction.status)}`}>
+            <p
+              className={`text-xs font-semibold capitalize ${getStatusColor(transaction.status)}`}
+            >
               {transaction.status}
             </p>
           </div>

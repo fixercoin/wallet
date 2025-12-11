@@ -173,9 +173,7 @@ export default function FiatAdmin() {
               <div className="h-2 w-2 rounded-full bg-green-500"></div>
               <p className="text-sm font-medium">Admin Authorized</p>
             </div>
-            <p className="text-xs text-gray-400">
-              {wallet}
-            </p>
+            <p className="text-xs text-gray-400">{wallet}</p>
           </CardContent>
         </Card>
 
@@ -183,7 +181,9 @@ export default function FiatAdmin() {
         {loading ? (
           <Card>
             <CardContent className="pt-6">
-              <p className="text-center text-gray-400">Loading price ratio...</p>
+              <p className="text-center text-gray-400">
+                Loading price ratio...
+              </p>
             </CardContent>
           </Card>
         ) : (
@@ -209,7 +209,8 @@ export default function FiatAdmin() {
                     </div>
                     <div className="pt-3 border-t border-gray-700">
                       <p className="text-xs text-gray-500 mb-1">
-                        Last Updated: {new Date(priceRatio.timestamp).toLocaleString()}
+                        Last Updated:{" "}
+                        {new Date(priceRatio.timestamp).toLocaleString()}
                       </p>
                       <p className="text-xs text-gray-500">
                         Updated By: {priceRatio.updatedBy}
@@ -249,7 +250,9 @@ export default function FiatAdmin() {
                   <div className="p-3 bg-gray-800/50 rounded-lg">
                     <p className="text-sm text-gray-400 mb-2">Preview:</p>
                     <p className="text-sm">
-                      <span className="text-white">1 USDT = {parseFloat(newRatio)} PKR</span>
+                      <span className="text-white">
+                        1 USDT = {parseFloat(newRatio)} PKR
+                      </span>
                     </p>
                     <p className="text-sm">
                       <span className="text-gray-400">
@@ -258,7 +261,13 @@ export default function FiatAdmin() {
                     </p>
                     {newRatio !== priceRatio.usdtToPkr.toString() && (
                       <p className="text-xs text-yellow-400 mt-2">
-                        Change: {((parseFloat(newRatio) - priceRatio.usdtToPkr) / priceRatio.usdtToPkr * 100).toFixed(2)}%
+                        Change:{" "}
+                        {(
+                          ((parseFloat(newRatio) - priceRatio.usdtToPkr) /
+                            priceRatio.usdtToPkr) *
+                          100
+                        ).toFixed(2)}
+                        %
                       </p>
                     )}
                   </div>
@@ -281,17 +290,12 @@ export default function FiatAdmin() {
               </CardHeader>
               <CardContent className="text-xs text-gray-300 space-y-2">
                 <p>
-                  • This panel allows you to manually set the USDT/PKR exchange rate
+                  • This panel allows you to manually set the USDT/PKR exchange
+                  rate
                 </p>
-                <p>
-                  • Changes will be applied immediately to all users
-                </p>
-                <p>
-                  • Keep rates competitive with market conditions
-                </p>
-                <p>
-                  • Only authorized admin wallets can access this panel
-                </p>
+                <p>• Changes will be applied immediately to all users</p>
+                <p>• Keep rates competitive with market conditions</p>
+                <p>• Only authorized admin wallets can access this panel</p>
               </CardContent>
             </Card>
           </>

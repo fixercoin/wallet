@@ -1,11 +1,13 @@
 # Fiat System - USDT/PKR Deposit, Withdraw & Exchange
 
 ## Overview
+
 The Fiat System replaces the Market Place page and provides users with a complete deposit, withdrawal, and exchange system for USDT (US Dollar Token) and PKR (Pakistani Rupee). It features Cloudflare KV storage for persistent balance tracking and an admin panel for manual price ratio adjustments.
 
 ## Features
 
 ### User Features
+
 1. **Deposit** - Add funds in USDT or PKR using various Pakistani payment methods
    - Bank Transfer
    - Easypaisa
@@ -27,6 +29,7 @@ The Fiat System replaces the Market Place page and provides users with a complet
    - Download as CSV
 
 ### Admin Features
+
 1. **Price Ratio Management** - Manually set USDT/PKR exchange rate
    - Only hardcoded admin wallets can access
    - Real-time rate updates for all users
@@ -35,12 +38,14 @@ The Fiat System replaces the Market Place page and provides users with a complet
 ## Architecture
 
 ### Backend
+
 - **Framework**: Express.js (server/routes/fiat-system.ts)
 - **Storage**: Cloudflare KV (persistent, no database required)
 - **Authentication**: Wallet address based
 - **Admin Check**: Hardcoded wallet list
 
 ### Frontend
+
 - **Main Page**: `/fiat` - FiatSystem component with tabs
 - **Transactions**: `/fiat/transactions` - FiatTransactions component
 - **Admin Panel**: `/fiat/admin` - FiatAdmin component (admin only)
@@ -49,17 +54,20 @@ The Fiat System replaces the Market Place page and provides users with a complet
 ### Data Structure
 
 #### User Balance (KV Storage)
+
 ```json
 {
   "wallet": "user_wallet_address",
-  "usdt": 100.50,
-  "pkr": 27700.00,
+  "usdt": 100.5,
+  "pkr": 27700.0,
   "lastUpdated": "2025-01-01T12:00:00Z"
 }
 ```
+
 Key: `balance:{wallet_address}`
 
 #### Transactions (KV Storage)
+
 ```json
 {
   "id": "tx_1234567890_abc123",
@@ -67,27 +75,31 @@ Key: `balance:{wallet_address}`
   "type": "deposit|withdraw|exchange",
   "fromCurrency": "USDT|PKR",
   "toCurrency": "USDT|PKR",
-  "fromAmount": 100.00,
-  "toAmount": 27700.00,
+  "fromAmount": 100.0,
+  "toAmount": 27700.0,
   "timestamp": "2025-01-01T12:00:00Z",
   "status": "completed|pending|failed",
   "paymentMethod": "bank_transfer|easypaisa|etc",
   "notes": "optional notes"
 }
 ```
+
 Keys:
+
 - `transaction:{transaction_id}` - Individual transaction
 - `transactions:{wallet_address}` - List of transaction IDs for user
 
 #### Price Ratio (KV Storage)
+
 ```json
 {
-  "usdtToPkr": 277.50,
+  "usdtToPkr": 277.5,
   "pkrToUsdt": 0.003604,
   "updatedBy": "admin_wallet_address",
   "timestamp": "2025-01-01T12:00:00Z"
 }
 ```
+
 Key: `price_ratio`
 
 ## Setup Instructions
@@ -95,7 +107,9 @@ Key: `price_ratio`
 ### 1. Configure Admin Wallets
 
 #### Server Side
+
 Edit `server/routes/fiat-system.ts`:
+
 ```typescript
 const ADMIN_WALLETS = process.env.FIAT_ADMIN_WALLETS
   ? process.env.FIAT_ADMIN_WALLETS.split(",").map((w) => w.trim())
@@ -107,12 +121,15 @@ const ADMIN_WALLETS = process.env.FIAT_ADMIN_WALLETS
 
 **For Production (Recommended)**:
 Set environment variable on your server:
+
 ```bash
 FIAT_ADMIN_WALLETS="wallet1_address,wallet2_address,wallet3_address"
 ```
 
 #### Client Side
+
 Edit `client/pages/FiatAdmin.tsx`:
+
 ```typescript
 const ADMIN_WALLETS = [
   "YOUR_ADMIN_WALLET_ADDRESS_HERE",
@@ -123,7 +140,9 @@ const ADMIN_WALLETS = [
 **Important**: Keep `ADMIN_WALLETS` in sync between client and server!
 
 ### 2. Set Initial Exchange Rate
+
 The system starts with a default rate of 1 USDT = 277 PKR. To change this:
+
 1. Connect with an admin wallet
 2. Navigate to `/fiat`
 3. Click the settings icon (⚙️) in the header
@@ -131,7 +150,9 @@ The system starts with a default rate of 1 USDT = 277 PKR. To change this:
 5. Click "Update Rate"
 
 ### 3. Verify Cloudflare KV Setup
+
 Ensure you have Cloudflare KV namespace configured in `wrangler.toml`:
+
 ```toml
 [[kv_namespaces]]
 binding = "KV"
@@ -144,6 +165,7 @@ preview_id = "your_kv_namespace_id"
 All endpoints use wallet address as user identifier (no authentication required beyond wallet address).
 
 ### Get User Balance
+
 ```
 GET /api/fiat/balance?wallet=<wallet_address>
 Response:
@@ -156,6 +178,7 @@ Response:
 ```
 
 ### Deposit Funds
+
 ```
 POST /api/fiat/deposit
 Body:
@@ -168,6 +191,7 @@ Body:
 ```
 
 ### Withdraw Funds
+
 ```
 POST /api/fiat/withdraw
 Body:
@@ -180,6 +204,7 @@ Body:
 ```
 
 ### Exchange Currency
+
 ```
 POST /api/fiat/exchange
 Body:
@@ -191,6 +216,7 @@ Body:
 ```
 
 ### Get Current Exchange Rate
+
 ```
 GET /api/fiat/price-ratio
 Response:
@@ -203,6 +229,7 @@ Response:
 ```
 
 ### Update Exchange Rate (Admin Only)
+
 ```
 PUT /api/fiat/price-ratio
 Body:
@@ -213,6 +240,7 @@ Body:
 ```
 
 ### Get User Transactions
+
 ```
 GET /api/fiat/transactions?wallet=<wallet_address>
 Response:
@@ -239,6 +267,7 @@ Response:
 ## Limitations & Future Improvements
 
 ### Current Limitations
+
 - No approval workflow for deposits/withdrawals
 - No transaction fees implemented
 - Exchange rate manually managed (no API integration)
@@ -246,6 +275,7 @@ Response:
 - No payment gateway integration (mock system)
 
 ### Recommended Future Enhancements
+
 1. Payment gateway integration (Stripe, JazCash API, etc.)
 2. KYC/AML verification
 3. Transaction fees/commission system
@@ -258,27 +288,32 @@ Response:
 ## Troubleshooting
 
 ### Admin Panel Not Accessible
+
 - Verify your wallet address is in `ADMIN_WALLETS` on both server and client
 - Check that wallet is connected
 - Try clearing browser cache and reconnecting wallet
 
 ### Balance Not Updating
+
 - Wait 30 seconds (refresh interval)
 - Manually refresh the page
 - Check browser console for API errors
 
 ### Exchange Rate Not Changing
+
 - Ensure connected wallet is an admin wallet
 - Verify PUT request to `/api/fiat/price-ratio` succeeds (check console)
 - Check server logs for Cloudflare KV errors
 
 ### Cloudflare KV Storage Issues
+
 - Verify KV namespace is properly configured
 - Check Cloudflare account has KV enabled
 - Verify `wrangler.toml` has correct namespace ID
 - Test KV connectivity: `curl https://api.cloudflare.com/client/v4/accounts/{account-id}/storage/kv/namespaces`
 
 ## File Structure
+
 ```
 server/
   routes/
@@ -312,4 +347,5 @@ FIAT_SYSTEM_README.md       # This file
 - [ ] All payment methods display correctly
 
 ## Support
+
 For issues or questions, check the API response error messages and server logs for detailed information.

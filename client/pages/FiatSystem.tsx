@@ -3,14 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Send, Plus, ArrowRightLeft, History, Settings } from "lucide-react";
+import {
+  ArrowLeft,
+  Send,
+  Plus,
+  ArrowRightLeft,
+  History,
+  Settings,
+} from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 
 // Admin wallets - keep in sync with FiatAdmin.tsx
-const ADMIN_WALLETS = [
-  "7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw",
-];
+const ADMIN_WALLETS = ["7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw"];
 
 export interface UserBalance {
   wallet: string;
@@ -38,9 +43,7 @@ export default function FiatSystem() {
     if (!wallet) return;
 
     try {
-      const response = await fetch(
-        `/api/fiat/balance?wallet=${wallet}`,
-      );
+      const response = await fetch(`/api/fiat/balance?wallet=${wallet}`);
       const data = await response.json();
       setBalance(data);
     } catch (error) {
@@ -141,7 +144,10 @@ export default function FiatSystem() {
                 <div>
                   <p className="text-gray-400 text-sm mb-1">PKR Balance</p>
                   <p className="text-2xl font-bold text-purple-400">
-                    ₨{balance.pkr.toLocaleString("en-PK", { maximumFractionDigits: 2 })}
+                    ₨
+                    {balance.pkr.toLocaleString("en-PK", {
+                      maximumFractionDigits: 2,
+                    })}
                   </p>
                 </div>
               </div>
@@ -199,7 +205,10 @@ export default function FiatSystem() {
                           PKR (Pakistani Rupee)
                         </p>
                         <p className="text-3xl font-bold text-purple-400">
-                          ₨{balance.pkr.toLocaleString("en-PK", { maximumFractionDigits: 2 })}
+                          ₨
+                          {balance.pkr.toLocaleString("en-PK", {
+                            maximumFractionDigits: 2,
+                          })}
                         </p>
                       </div>
                     </>
@@ -381,8 +390,7 @@ function FiatWithdraw({
       return;
     }
 
-    const currentBalance =
-      currency === "USDT" ? balance?.usdt : balance?.pkr;
+    const currentBalance = currency === "USDT" ? balance?.usdt : balance?.pkr;
     if (!currentBalance || currentBalance < parseFloat(amount)) {
       toast.error(`Insufficient ${currency} balance`);
       return;
@@ -442,7 +450,9 @@ function FiatWithdraw({
             Available: {currency === "USDT" ? "$" : "₨"}
             {currency === "USDT"
               ? balance?.usdt.toFixed(2)
-              : balance?.pkr.toLocaleString("en-PK", { maximumFractionDigits: 2 })}
+              : balance?.pkr.toLocaleString("en-PK", {
+                  maximumFractionDigits: 2,
+                })}
           </p>
           <label className="block text-sm font-medium mb-2">Amount</label>
           <input
@@ -541,8 +551,7 @@ function FiatExchange({
     }
   };
 
-  const currentBalance =
-    fromCurrency === "USDT" ? balance?.usdt : balance?.pkr;
+  const currentBalance = fromCurrency === "USDT" ? balance?.usdt : balance?.pkr;
 
   return (
     <Card>
@@ -557,7 +566,9 @@ function FiatExchange({
             Available: {fromCurrency === "USDT" ? "$" : "₨"}
             {fromCurrency === "USDT"
               ? currentBalance?.toFixed(2)
-              : currentBalance?.toLocaleString("en-PK", { maximumFractionDigits: 2 })}
+              : currentBalance?.toLocaleString("en-PK", {
+                  maximumFractionDigits: 2,
+                })}
           </p>
         </div>
 
@@ -579,11 +590,17 @@ function FiatExchange({
         {priceRatio && toAmount && (
           <div className="text-xs text-gray-400">
             <p>
-              Exchange Rate: 1 {fromCurrency} = {fromCurrency === "USDT" ? priceRatio.usdtToPkr : (1 / priceRatio.usdtToPkr).toFixed(4)} {toCurrency}
+              Exchange Rate: 1 {fromCurrency} ={" "}
+              {fromCurrency === "USDT"
+                ? priceRatio.usdtToPkr
+                : (1 / priceRatio.usdtToPkr).toFixed(4)}{" "}
+              {toCurrency}
             </p>
             {fromCurrency === "USDT" && (
               <p className="mt-1">
-                You will receive ≈ {(parseFloat(toAmount) / priceRatio.usdtToPkr).toFixed(2)} {fromCurrency}
+                You will receive ≈{" "}
+                {(parseFloat(toAmount) / priceRatio.usdtToPkr).toFixed(2)}{" "}
+                {fromCurrency}
               </p>
             )}
           </div>

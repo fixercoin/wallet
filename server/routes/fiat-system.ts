@@ -128,8 +128,7 @@ async function getUserTransactions(wallet: string): Promise<Transaction[]> {
   }
 
   return transactions.sort(
-    (a, b) =>
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
   );
 }
 
@@ -253,8 +252,7 @@ export const handleWithdraw: RequestHandler = async (req, res) => {
     const balance = await getUserBalance(wallet);
 
     // Check sufficient balance
-    const currentBalance =
-      currency === "USDT" ? balance.usdt : balance.pkr;
+    const currentBalance = currency === "USDT" ? balance.usdt : balance.pkr;
 
     if (currentBalance < amount) {
       return res.status(400).json({
@@ -312,8 +310,7 @@ export const handleExchange: RequestHandler = async (req, res) => {
 
     if (!wallet || !fromCurrency || toAmount === undefined) {
       return res.status(400).json({
-        error:
-          "Missing required fields: wallet, fromCurrency, toAmount",
+        error: "Missing required fields: wallet, fromCurrency, toAmount",
       });
     }
 

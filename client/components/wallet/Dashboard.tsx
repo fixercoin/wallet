@@ -1089,6 +1089,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             <div className="text-3xl text-gray-900 leading-tight">
                               {showBalance ? displayValue : "****"}
                             </div>
+                            <Button
+                              onClick={() => navigate("/buy-usdt")}
+                              className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-4 py-2 rounded-sm whitespace-nowrap h-auto transition-colors"
+                            >
+                              BUY USDT
+                            </Button>
                           </div>
                           <div className="text-xs text-gray-600">
                             TODAY PNL +/- 0.000 - 0.00 %
@@ -1150,6 +1156,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               "****"
                             )}
                           </div>
+                          <Button
+                            onClick={() => navigate("/buy-usdt")}
+                            className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-4 py-2 rounded-sm whitespace-nowrap h-auto transition-colors"
+                          >
+                            BUY USDT
+                          </Button>
                         </div>
                         <div
                           className={`text-xs ${isPositive ? "text-green-400" : "text-red-400"}`}

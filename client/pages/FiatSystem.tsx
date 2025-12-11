@@ -186,23 +186,12 @@ export default function FiatSystem() {
                           {balance.usdt.toFixed(2)} $
                         </div>
                         <div className="text-lg text-gray-300 font-semibold">
-                          {balance.usdt.toFixed(2)} $ - {(balance.pkr || 0).toLocaleString("en-PK", { maximumFractionDigits: 0 })} PKR
-                        </div>
-                      </div>
-
-                      {/* Token Image - 300x300px */}
-                      <div className="flex justify-center py-4">
-                        <div className="w-72 h-72 bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 rounded-2xl shadow-2xl flex items-center justify-center border border-white/10 overflow-hidden">
-                          <img
-                            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3ClinearGradient id='grad'%3E%3Cstop offset='0%25' style='stop-color:%23a78bfa;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%236366f1;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='100' cy='100' r='95' fill='url(%23grad)'/%3E%3Ctext x='50%25' y='50%25' font-size='80' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='central' font-family='Arial'%3E%24%3C/text%3E%3C/svg%3E"
-                            alt="Token Icon"
-                            className="w-full h-full object-cover"
-                          />
+                          {balance.usdt.toFixed(2)} $ - {(balance.pkr || 0).toFixed(2)} PKR
                         </div>
                       </div>
 
                       {/* Three Main Buttons */}
-                      <div className="grid grid-cols-3 gap-3 pt-4">
+                      <div className="grid grid-cols-3 gap-3 pt-6">
                         <Button
                           onClick={() => setActiveTab("deposit")}
                           className="flex flex-col items-center justify-center py-8 rounded-xl font-bold uppercase text-sm bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-green-500/30 transition-all duration-300"
@@ -227,6 +216,25 @@ export default function FiatSystem() {
                           EXCHANGE
                         </Button>
                       </div>
+
+                      {/* Token Image - 300x300px */}
+                      <div className="flex justify-center py-4">
+                        <div className="w-72 h-72 bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 rounded-2xl shadow-2xl flex items-center justify-center border border-white/10 overflow-hidden">
+                          <img
+                            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3ClinearGradient id='grad'%3E%3Cstop offset='0%25' style='stop-color:%23a78bfa;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%236366f1;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='100' cy='100' r='95' fill='url(%23grad)'/%3E%3Ctext x='50%25' y='50%25' font-size='80' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='central' font-family='Arial'%3E%24%3C/text%3E%3C/svg%3E"
+                            alt="Token Icon"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Payment Method Button */}
+                      <Button
+                        onClick={() => setActiveTab("payment")}
+                        className="w-full bg-gradient-to-r from-purple-600 via-purple-500 to-pink-600 hover:from-purple-700 hover:via-purple-600 hover:to-pink-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-purple-500/20 transition-all duration-300 uppercase"
+                      >
+                        PAYMENT METHOD
+                      </Button>
 
                       {/* Exchange Rate */}
                       {priceRatio && (

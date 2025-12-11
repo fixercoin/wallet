@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Lock } from "lucide-react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 
 // Admin wallets configuration
@@ -24,7 +24,7 @@ export interface PriceRatio {
 
 export default function FiatAdmin() {
   const navigate = useNavigate();
-  const { publicKey } = useWallet();
+  const { wallet } = useWallet();
   const [priceRatio, setPriceRatio] = useState<PriceRatio | null>(null);
   const [newRatio, setNewRatio] = useState("");
   const [loading, setLoading] = useState(true);
@@ -32,10 +32,10 @@ export default function FiatAdmin() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    if (publicKey) {
-      setIsAdmin(ADMIN_WALLETS.includes(publicKey.toString()));
+    if (wallet) {
+      setIsAdmin(ADMIN_WALLETS.includes(wallet));
     }
-  }, [publicKey]);
+  }, [wallet]);
 
   useEffect(() => {
     const fetchPriceRatio = async () => {
@@ -57,7 +57,7 @@ export default function FiatAdmin() {
   }, []);
 
   const handleUpdateRatio = async () => {
-    if (!publicKey) {
+    if (!wallet) {
       toast.error("Please connect your wallet");
       return;
     }
@@ -73,7 +73,7 @@ export default function FiatAdmin() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          wallet: publicKey.toString(),
+          wallet,
           usdtToPkr: parseFloat(newRatio),
         }),
       });
@@ -96,7 +96,7 @@ export default function FiatAdmin() {
     }
   };
 
-  if (!publicKey) {
+  if (!wallet) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#1f1f1f] to-[#2a2a2a] text-white flex items-center justify-center">
         <Card className="w-full max-w-lg mx-4">
@@ -174,7 +174,7 @@ export default function FiatAdmin() {
               <p className="text-sm font-medium">Admin Authorized</p>
             </div>
             <p className="text-xs text-gray-400">
-              {publicKey.toString()}
+              {wallet}
             </p>
           </CardContent>
         </Card>

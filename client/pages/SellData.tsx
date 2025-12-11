@@ -300,6 +300,15 @@ export default function SellData() {
       );
 
       if (response.ok) {
+        // Create updated order with payment details
+        const orderWithDetails = {
+          ...currentOrder,
+          creator_wallet: wallet?.publicKey || "",
+          paymentMethod: paymentMethods[0]?.id || "N/A",
+          accountName: paymentMethods[0]?.accountName || "",
+          accountNumber: paymentMethods[0]?.accountNumber || "",
+        };
+
         // Send notification to buyer with seller's order summary
         try {
           await createNotification(
@@ -321,7 +330,7 @@ export default function SellData() {
               },
             },
             false,
-            currentOrder,
+            orderWithDetails,
           );
         } catch (notificationError) {
           console.warn("Failed to send transfer notification to buyer:", notificationError);

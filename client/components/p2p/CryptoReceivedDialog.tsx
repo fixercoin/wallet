@@ -192,6 +192,13 @@ export function CryptoReceivedDialog() {
 
         {!minimized && (
           <div className="space-y-4">
+            {/* Role Badge */}
+            <div className="flex justify-center mb-2">
+              <span className="px-3 py-1 text-xs font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-full">
+                BUYER
+              </span>
+            </div>
+
             {/* Success Message */}
             <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50 text-center">
               <div className="text-sm font-semibold text-green-300 mb-2">

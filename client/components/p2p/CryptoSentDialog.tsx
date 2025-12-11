@@ -187,6 +187,13 @@ export function CryptoSentDialog() {
 
         {!minimized && (
           <div className="space-y-4">
+            {/* Role Badge */}
+            <div className="flex justify-center mb-2">
+              <span className="px-3 py-1 text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-full">
+                SELLER
+              </span>
+            </div>
+
             {waitingForVerification ? (
               <>
                 {/* Success State - Transfer Sent */}

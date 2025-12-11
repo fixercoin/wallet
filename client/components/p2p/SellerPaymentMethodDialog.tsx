@@ -113,6 +113,13 @@ export function SellerPaymentMethodDialog() {
 
         {!minimized && (
           <div className="space-y-4">
+            {/* Role Badge */}
+            <div className="flex justify-center mb-2">
+              <span className="px-3 py-1 text-xs font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-full">
+                BUYER
+              </span>
+            </div>
+
             {/* Order Summary */}
             <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
               <div className="text-xs text-white/70 uppercase mb-2">

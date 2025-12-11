@@ -165,6 +165,13 @@ export function BuyerWalletAddressDialog() {
 
         {!minimized && (
           <div className="space-y-4">
+            {/* Role Badge */}
+            <div className="flex justify-center mb-2">
+              <span className="px-3 py-1 text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-full">
+                SELLER
+              </span>
+            </div>
+
             {/* Buyer Order Summary - Simplified */}
             <div className="p-4 rounded-lg bg-[#1a2540]/50 border border-gray-300/20">
               <div className="text-xs text-white/70 uppercase mb-3 font-semibold">

@@ -46,6 +46,22 @@ export function CryptoSentDialog() {
         calculateAmount(currentOrder.amountTokens) ||
         calculateAmount(currentOrder.token_amount);
 
+      // Update order status to mark crypto as sent
+      const updateResponse = await fetch(
+        `/api/p2p/orders/${currentOrder.id}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sellerCryptoSent: true,
+          }),
+        },
+      );
+
+      if (!updateResponse.ok) {
+        throw new Error("Failed to update order status");
+      }
+
       // Send notification to buyer that crypto has been sent
       await createNotification(
         buyerWalletAddress,

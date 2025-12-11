@@ -226,7 +226,21 @@ function AppContent() {
   // Check if current route is a P2P page
   const isP2PPage = () => {
     const path = location.pathname;
-    return path.startsWith("/buydata") || path.startsWith("/selldata");
+    return (
+      path.startsWith("/buydata") ||
+      path.startsWith("/selldata") ||
+      path.startsWith("/p2p") ||
+      path.startsWith("/buy-crypto") ||
+      path.startsWith("/sell-now") ||
+      path.startsWith("/buy-order") ||
+      path.startsWith("/sell-order") ||
+      path.startsWith("/order") ||
+      path.startsWith("/buy-trade") ||
+      path.startsWith("/waiting-for-buyer") ||
+      path.startsWith("/waiting-for-seller") ||
+      path.startsWith("/order-complete") ||
+      path.startsWith("/buyer-order-confirmation")
+    );
   };
 
   return (
@@ -236,7 +250,8 @@ function AppContent() {
           <NotificationCenter />
         </div>
       )}
-      <P2POrderFlowDialogs />
+      {/* Only render P2P dialogs on P2P pages to avoid wallet dashboard interference */}
+      {isP2PPage() && <P2POrderFlowDialogs />}
       <AppRoutes />
     </div>
   );

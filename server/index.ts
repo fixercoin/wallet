@@ -101,6 +101,15 @@ import {
   handleListMatches,
   handleCancelMatch,
 } from "./routes/p2p-matching";
+import {
+  handleGetBalance,
+  handleDeposit,
+  handleWithdraw,
+  handleExchange,
+  handleGetPriceRatio,
+  handleUpdatePriceRatio,
+  handleGetTransactions,
+} from "./routes/fiat-system";
 
 export async function createServer(): Promise<express.Application> {
   const app = express();

@@ -46,21 +46,28 @@ export default function FiatSystem() {
 
     try {
       const response = await fetch(`/api/fiat/balance?wallet=${wallet}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      }
       const data = await response.json();
       setBalance(data);
     } catch (error) {
       console.error("Error fetching balance:", error);
-      toast.error("Failed to fetch balance");
+      toast.error(`Failed to fetch balance: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 
   const fetchPriceRatio = async () => {
     try {
       const response = await fetch("/api/fiat/price-ratio");
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      }
       const data = await response.json();
       setPriceRatio(data);
     } catch (error) {
       console.error("Error fetching price ratio:", error);
+      toast.error(`Failed to fetch exchange rate: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 

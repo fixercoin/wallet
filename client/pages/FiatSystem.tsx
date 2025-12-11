@@ -152,9 +152,6 @@ export default function FiatSystem() {
                   <div className="text-center space-y-4">
                     {/* Total Balance Section */}
                     <div>
-                      <p className="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-2">
-                        TOTAL BALANCE
-                      </p>
                       <div className="text-5xl font-bold text-white mb-3">
                         {balance.usdt.toFixed(2)} $
                       </div>

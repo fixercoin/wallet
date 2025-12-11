@@ -848,11 +848,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <h3 className="text-sm font-bold text-white mb-3 uppercase">
                   🎁 REWARDS
                 </h3>
-                <div className="space-y-2 text-xs text-gray-300">
-                  <p>🪙 {REWARD_PER_TASK} FIXERCOIN per task</p>
-                  <p>🖼️ NFTs and airdrops</p>
-                  <p>🌟 Early access to wallet updates</p>
-                  <p>👑 Premium features for top participants</p>
+                <div className="space-y-2 text-xs text-gray-300 uppercase">
+                  <p>🪙 {REWARD_PER_TASK} FIXERCOIN PER TASK</p>
+                  <p>🖼️ NFTS AND AIRDROPS</p>
+                  <p>🌟 EARLY ACCESS TO WALLET UPDATES</p>
+                  <p>👑 PREMIUM FEATURES FOR TOP PARTICIPANTS</p>
                 </div>
               </div>
 

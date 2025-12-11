@@ -20,7 +20,9 @@ export default function Market() {
             <ArrowLeft className="h-5 w-5 mr-2" />
             BACK
           </Button>
-          <h1 className="text-2xl font-bold text-white uppercase">MARKET PLACE</h1>
+          <h1 className="text-2xl font-bold text-white uppercase">
+            MARKET PLACE
+          </h1>
           <div className="w-10" />
         </div>
 
@@ -49,7 +51,8 @@ export default function Market() {
                   WHAT IS MARKET PLACE?
                 </h3>
                 <p className="text-xs text-gray-700 uppercase">
-                  YOUR GATEWAY TO BUY AND SELL CRYPTO ASSETS. ACCESS THOUSANDS OF TOKENS WITH SECURE TRANSACTIONS ON SOLANA.
+                  YOUR GATEWAY TO BUY AND SELL CRYPTO ASSETS. ACCESS THOUSANDS
+                  OF TOKENS WITH SECURE TRANSACTIONS ON SOLANA.
                 </p>
               </div>
 
@@ -58,7 +61,8 @@ export default function Market() {
                   WHY USE MARKET PLACE?
                 </h3>
                 <p className="text-xs text-gray-700 uppercase">
-                  INSTANT TRADING, COMPETITIVE PRICES, AND SECURE TRANSACTIONS FOR ALL YOUR CRYPTO NEEDS.
+                  INSTANT TRADING, COMPETITIVE PRICES, AND SECURE TRANSACTIONS
+                  FOR ALL YOUR CRYPTO NEEDS.
                 </p>
               </div>
 
@@ -67,7 +71,8 @@ export default function Market() {
                   LOW FEES
                 </h3>
                 <p className="text-xs text-gray-700 uppercase">
-                  TRADE WITH MINIMAL TRANSACTION FEES AND FAST CONFIRMATION TIMES ON THE SOLANA BLOCKCHAIN.
+                  TRADE WITH MINIMAL TRANSACTION FEES AND FAST CONFIRMATION
+                  TIMES ON THE SOLANA BLOCKCHAIN.
                 </p>
               </div>
             </div>
@@ -92,7 +97,9 @@ export default function Market() {
 
         {/* Additional Info Section */}
         <div className="mt-6 bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 border border-gray-700/30">
-          <h3 className="text-sm font-bold text-white mb-3 uppercase">HOW IT WORKS</h3>
+          <h3 className="text-sm font-bold text-white mb-3 uppercase">
+            HOW IT WORKS
+          </h3>
           <div className="space-y-2 text-xs text-gray-300">
             <div className="flex items-start gap-2">
               <span className="text-[#22c55e] font-bold mt-0.5">1</span>
@@ -104,11 +111,15 @@ export default function Market() {
             </div>
             <div className="flex items-start gap-2">
               <span className="text-[#22c55e] font-bold mt-0.5">3</span>
-              <span className="uppercase">ENTER AMOUNT AND COMPLETE TRANSACTION</span>
+              <span className="uppercase">
+                ENTER AMOUNT AND COMPLETE TRANSACTION
+              </span>
             </div>
             <div className="flex items-start gap-2">
               <span className="text-[#22c55e] font-bold mt-0.5">4</span>
-              <span className="uppercase">RECEIVE CRYPTO IN YOUR WALLET INSTANTLY</span>
+              <span className="uppercase">
+                RECEIVE CRYPTO IN YOUR WALLET INSTANTLY
+              </span>
             </div>
           </div>
         </div>

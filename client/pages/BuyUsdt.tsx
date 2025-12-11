@@ -49,7 +49,8 @@ export default function BuyUsdt() {
                   What is USDT?
                 </h3>
                 <p className="text-xs text-gray-700">
-                  USDT (Tether) is a stablecoin pegged to the US Dollar. It's widely used for trading and transfers on the blockchain.
+                  USDT (Tether) is a stablecoin pegged to the US Dollar. It's
+                  widely used for trading and transfers on the blockchain.
                 </p>
               </div>
 
@@ -58,7 +59,8 @@ export default function BuyUsdt() {
                   Why Buy USDT?
                 </h3>
                 <p className="text-xs text-gray-700">
-                  Use USDT to trade any token on the Solana network with stable value protection.
+                  Use USDT to trade any token on the Solana network with stable
+                  value protection.
                 </p>
               </div>
 
@@ -67,7 +69,8 @@ export default function BuyUsdt() {
                   Low Fees
                 </h3>
                 <p className="text-xs text-gray-700">
-                  Buy USDT with minimal transaction fees and fast confirmation times.
+                  Buy USDT with minimal transaction fees and fast confirmation
+                  times.
                 </p>
               </div>
             </div>

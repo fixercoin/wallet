@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Check, Loader, Minus } from "lucide-react";
+import { Loader, Minus } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,

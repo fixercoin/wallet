@@ -36,9 +36,6 @@ export default function FiatSystem() {
   const [balance, setBalance] = useState<UserBalance | null>(null);
   const [priceRatio, setPriceRatio] = useState<PriceRatio | null>(null);
   const [loading, setLoading] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
-    null,
-  );
 
   const fetchBalance = async () => {
     if (!wallet) return;

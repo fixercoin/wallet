@@ -464,71 +464,81 @@ function FiatWithdraw({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Withdraw Funds</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2">Currency</label>
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+    <div className="space-y-4 animate-in fade-in duration-300">
+      <div className="bg-gradient-to-br from-red-600/20 to-orange-700/10 rounded-2xl p-6 border border-red-500/20 backdrop-blur-xl shadow-xl">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-bold text-red-100">Withdraw Funds</h3>
+          <div className="w-12 h-12 bg-red-500/30 rounded-xl flex items-center justify-center border border-red-500/30">
+            <Send className="h-6 w-6 text-red-300" />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-2">Currency</label>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 backdrop-blur rounded-xl text-white font-medium focus:outline-none focus:border-red-500/50 transition-colors"
+            >
+              <option value="USDT">USDT (US Dollar Token)</option>
+              <option value="PKR">PKR (Pakistani Rupee)</option>
+            </select>
+          </div>
+
+          <div className="bg-gray-800/30 rounded-xl p-3 border border-gray-700/30">
+            <p className="text-xs font-semibold text-gray-400 mb-1">AVAILABLE BALANCE</p>
+            <p className="text-lg font-bold text-gray-100">
+              {currency === "USDT" ? "$" : "₨"}
+              {currency === "USDT"
+                ? (balance?.usdt?.toFixed(2) ?? "0.00")
+                : (balance?.pkr?.toLocaleString("en-PK", {
+                    maximumFractionDigits: 0,
+                  }) ?? "0.00")}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-2">Amount to Withdraw</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="Enter amount"
+              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 backdrop-blur rounded-xl text-white placeholder-gray-500 font-medium focus:outline-none focus:border-red-500/50 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-2">
+              Withdrawal Method
+            </label>
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700/50 backdrop-blur rounded-xl text-white font-medium focus:outline-none focus:border-red-500/50 transition-colors"
+            >
+              <option value="bank_transfer">Bank Transfer</option>
+              <option value="easypaisa">Easypaisa</option>
+              <option value="jazzc ash">JazzCash</option>
+              <option value="nayapay">Nayapay</option>
+              <option value="hbl_mobile">HBL Mobile</option>
+              <option value="fawry">Fawry</option>
+            </select>
+          </div>
+
+          <Button
+            onClick={handleWithdraw}
+            disabled={loading || !amount}
+            className="w-full bg-gradient-to-r from-red-600 via-red-500 to-orange-600 hover:from-red-700 hover:via-red-600 hover:to-orange-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-red-500/20 disabled:opacity-50 transition-all duration-300 mt-2"
           >
-            <option value="USDT">USDT (US Dollar Token)</option>
-            <option value="PKR">PKR (Pakistani Rupee)</option>
-          </select>
+            {loading ? "Processing..." : "Withdraw Now"}
+          </Button>
         </div>
-
-        <div>
-          <p className="text-sm text-gray-400 mb-2">
-            Available: {currency === "USDT" ? "$" : "₨"}
-            {currency === "USDT"
-              ? (balance?.usdt?.toFixed(2) ?? "0.00")
-              : (balance?.pkr?.toLocaleString("en-PK", {
-                  maximumFractionDigits: 2,
-                }) ?? "0.00")}
-          </p>
-          <label className="block text-sm font-medium mb-2">Amount</label>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="Enter amount"
-            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Withdrawal Method
-          </label>
-          <select
-            value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value)}
-            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
-          >
-            <option value="bank_transfer">Bank Transfer</option>
-            <option value="easypaisa">Easypaisa</option>
-            <option value="jazzc ash">JazzCash</option>
-            <option value="nayapay">Nayapay</option>
-            <option value="hbl_mobile">HBL Mobile</option>
-            <option value="fawry">Fawry</option>
-          </select>
-        </div>
-
-        <Button
-          onClick={handleWithdraw}
-          disabled={loading || !amount}
-          className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-bold py-2 rounded-lg disabled:opacity-50"
-        >
-          {loading ? "Processing..." : "Withdraw"}
-        </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 

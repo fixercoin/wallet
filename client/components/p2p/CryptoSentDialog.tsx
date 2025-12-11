@@ -15,12 +15,8 @@ import { useWallet } from "@/contexts/WalletContext";
 import type { P2POrder } from "@/lib/p2p-api";
 
 export function CryptoSentDialog() {
-  const {
-    activeDialog,
-    buyerWalletAddress,
-    currentOrder,
-    setActiveDialog,
-  } = useP2POrderFlow();
+  const { activeDialog, buyerWalletAddress, currentOrder, setActiveDialog } =
+    useP2POrderFlow();
   const { wallet } = useWallet();
   const { createNotification } = useOrderNotifications();
   const [confirming, setConfirming] = useState(false);
@@ -129,7 +125,8 @@ export function CryptoSentDialog() {
                     Transfer Successful
                   </p>
                   <p className="text-white/70 text-sm">
-                    {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"} has been successfully sent to the buyer.
+                    {tokenAmount.toFixed(6)} {currentOrder.token || "USDT"} has
+                    been successfully sent to the buyer.
                   </p>
                 </div>
 
@@ -186,7 +183,8 @@ export function CryptoSentDialog() {
                     Waiting for Buyer Verification
                   </p>
                   <p className="text-white/70 text-sm">
-                    The buyer is verifying the crypto transfer. This may take a few moments...
+                    The buyer is verifying the crypto transfer. This may take a
+                    few moments...
                   </p>
                 </div>
 
@@ -249,7 +247,8 @@ export function CryptoSentDialog() {
                 {/* Info Message */}
                 <div className="p-4 rounded-lg bg-green-600/20 border border-green-500/50">
                   <p className="text-sm text-green-300">
-                    Click "Complete Transfer" to send the crypto to the buyer's wallet.
+                    Click "Complete Transfer" to send the crypto to the buyer's
+                    wallet.
                   </p>
                 </div>
 

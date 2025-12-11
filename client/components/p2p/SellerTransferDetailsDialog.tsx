@@ -11,12 +11,8 @@ import { Button } from "@/components/ui/button";
 import { useP2POrderFlow } from "@/contexts/P2POrderFlowContext";
 
 export function SellerTransferDetailsDialog() {
-  const {
-    activeDialog,
-    currentOrder,
-    setActiveDialog,
-    openCryptoSentDialog,
-  } = useP2POrderFlow();
+  const { activeDialog, currentOrder, setActiveDialog, openCryptoSentDialog } =
+    useP2POrderFlow();
 
   const isOpen = activeDialog === "seller_transfer_details";
 

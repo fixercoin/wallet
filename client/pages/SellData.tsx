@@ -333,7 +333,10 @@ export default function SellData() {
             orderWithDetails,
           );
         } catch (notificationError) {
-          console.warn("Failed to send transfer notification to buyer:", notificationError);
+          console.warn(
+            "Failed to send transfer notification to buyer:",
+            notificationError,
+          );
         }
 
         setFlowStep("complete");

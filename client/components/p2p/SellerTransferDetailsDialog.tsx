@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Copy, Check, Loader, Minus } from "lucide-react";
-import { toast } from "sonner";
+import React, { useState } from "react";
+import { Minus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,92 +9,29 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useP2POrderFlow } from "@/contexts/P2POrderFlowContext";
-import { useWallet } from "@/contexts/WalletContext";
 
 export function SellerTransferDetailsDialog() {
   const {
     activeDialog,
-    buyerWalletAddress,
     currentOrder,
     setActiveDialog,
     openCryptoSentDialog,
   } = useP2POrderFlow();
-  const { wallet } = useWallet();
 
   const isOpen = activeDialog === "seller_transfer_details";
 
-  const [copiedWallet, setCopiedWallet] = useState(false);
-  const [copiedAddress, setCopiedAddress] = useState(false);
-  const [usdtBalance, setUsdtBalance] = useState<number | null>(null);
-  const [loadingBalance, setLoadingBalance] = useState(false);
-  const [sendAmount, setSendAmount] = useState("");
-  const [walletAddress, setWalletAddress] = useState(buyerWalletAddress);
   const [confirming, setConfirming] = useState(false);
   const [minimized, setMinimized] = useState(false);
 
-  // Fetch seller's USDT balance
-  useEffect(() => {
-    if (!isOpen || !wallet?.publicKey) return;
-
-    const fetchBalance = async () => {
-      setLoadingBalance(true);
-      try {
-        const response = await fetch(
-          `/api/wallet/balance?wallet=${wallet.publicKey}&token=USDC`,
-        );
-        if (!response.ok) throw new Error("Failed to fetch balance");
-        const data = await response.json();
-        setUsdtBalance(data.balance || 0);
-      } catch (error) {
-        console.error("Error fetching balance:", error);
-        toast.error("Failed to fetch USDT balance");
-      } finally {
-        setLoadingBalance(false);
-      }
-    };
-
-    fetchBalance();
-  }, [isOpen, wallet?.publicKey]);
-
-  const handleCopyBuyerWallet = () => {
-    navigator.clipboard.writeText(buyerWalletAddress);
-    setCopiedWallet(true);
-    toast.success("Buyer wallet copied");
-    setTimeout(() => setCopiedWallet(false), 2000);
-  };
-
-  const handleCopyAddress = () => {
-    navigator.clipboard.writeText(walletAddress);
-    setCopiedAddress(true);
-    toast.success("Wallet address copied");
-    setTimeout(() => setCopiedAddress(false), 2000);
-  };
-
-  const handleSendCrypto = async () => {
-    if (!sendAmount.trim() || !walletAddress.trim()) {
-      toast.error("Please enter amount and wallet address");
-      return;
-    }
-
-    const amount = parseFloat(sendAmount);
-    if (isNaN(amount) || amount <= 0) {
-      toast.error("Please enter a valid amount");
-      return;
-    }
-
-    if (usdtBalance !== null && amount > usdtBalance) {
-      toast.error("Insufficient balance");
-      return;
-    }
+  const handleCompleteTransfer = async () => {
+    if (!currentOrder) return;
 
     setConfirming(true);
     try {
-      openCryptoSentDialog(currentOrder!);
+      openCryptoSentDialog(currentOrder);
       setActiveDialog("crypto_sent_confirmation");
-      toast.success("Proceeding to send crypto...");
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Failed to proceed");
     } finally {
       setConfirming(false);
     }

@@ -125,11 +125,11 @@ export function useOrderNotifications() {
         });
 
         if (!response.ok) {
-          console.warn(
-            `Failed to create notification: ${response.status} - notifications are non-critical`,
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error || `HTTP ${response.status}`;
+          throw new Error(
+            `Failed to create notification: ${errorMessage}`,
           );
-          // Don't throw - notifications are optional for order flow
-          return;
         }
 
         if (sendPushNotification) {
@@ -147,8 +147,8 @@ export function useOrderNotifications() {
 
         console.log(`Notification created for ${recipientWallet}`);
       } catch (error) {
-        console.warn("Error creating notification:", error);
-        // Non-critical - don't disrupt order flow
+        console.error("Error creating notification:", error);
+        throw error;
       }
     },
     [wallet],

@@ -7,11 +7,11 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
 
 // Admin wallets configuration
+// IMPORTANT: Keep this in sync with server/routes/fiat-system.ts ADMIN_WALLETS
 // For development: update these hardcoded values
 // For production: update the FIAT_ADMIN_WALLETS environment variable on the server
 const ADMIN_WALLETS = [
-  "admin1WalletAddress",
-  "admin2WalletAddress",
+  "FxmrDJB16th5FeZ3RBwAScwxt6iGz5pmpKGisTJQcWMf", // Default admin wallet - CHANGE THIS
   // Add your admin wallet addresses here
 ];
 

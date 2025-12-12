@@ -151,44 +151,42 @@ export default function AITradingSignalBot() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1f1f1f] to-[#2a2a2a] text-white">
-      <div className="w-full max-w-4xl mx-auto px-4 py-4 relative z-20">
-        <div className="flex items-center justify-between mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/")}
-            className="hover:bg-gray-700 text-gray-300"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Activity className="w-6 h-6 text-purple-500" />
-            AI Trading Signal Bot
-          </h1>
+      <div className="w-full max-w-5xl mx-auto px-4 py-6 relative z-20">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/")}
+              className="hover:bg-gray-700 text-gray-400 hover:text-white"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-3xl font-bold text-white">Trading Signals</h1>
+          </div>
           <Button
             size="sm"
             onClick={() => refetch()}
             disabled={loading}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-950 border border-red-700 flex items-start gap-2">
+          <div className="mb-6 p-4 rounded-lg bg-red-950/30 border border-red-700/50 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-red-300">Error</p>
-              <p className="text-xs text-red-200">{error}</p>
+            <div className="text-sm">
+              <p className="font-semibold text-red-300">Error loading signals</p>
+              <p className="text-xs text-red-200/70">{error}</p>
             </div>
           </div>
         )}
 
-        <div className="mb-4 flex justify-between items-center text-xs text-gray-400">
-          <span>Last updated: {formatTime(lastUpdate)}</span>
-          <span>Real-time AI Analysis</span>
+        <div className="mb-6 flex justify-between items-center text-xs text-gray-500">
+          <span>Updated {formatTime(lastUpdate)}</span>
+          <span className="text-purple-400">Real-time AI Analysis</span>
         </div>
 
         {loading && signals.length === 0 ? (

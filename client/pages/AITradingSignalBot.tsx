@@ -226,40 +226,6 @@ export default function AITradingSignalBot() {
                 );
               })}
             </div>
-
-            <Card className="border-border/50 bg-card/20 backdrop-blur-sm mt-8">
-              <CardContent className="p-5 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-green-400 text-sm">
-                      Buy Signals
-                    </h4>
-                    <ul className="text-gray-300 space-y-1 text-xs leading-relaxed">
-                      <li>• Price at Support with STRONG_BUY</li>
-                      <li>• RSI below 30 (Oversold)</li>
-                      <li>• Below Buy Entry point</li>
-                    </ul>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-red-400 text-sm">
-                      Sell Signals
-                    </h4>
-                    <ul className="text-gray-300 space-y-1 text-xs leading-relaxed">
-                      <li>• Price at Resistance with STRONG_SELL</li>
-                      <li>• RSI above 70 (Overbought)</li>
-                      <li>• Above Sell Entry point</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="border-t border-border/30 pt-4 text-xs text-gray-400">
-                  <p className="flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-yellow-500" />
-                    <span>Always use stop losses and risk management. Risk only 1-2% per trade.</span>
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
           </>
         )}
       </div>

@@ -107,19 +107,19 @@ async function handler(request: Request): Promise<Response> {
       );
     }
 
-    // Try DexScreener for FIXERCOIN, LOCKER, FXM
-    if (DEXSCREENER_TOKENS.has(token)) {
+    // Try Birdeye for FIXERCOIN, LOCKER, FXM
+    if (BIRDEYE_TOKENS.has(token)) {
       const tokenMint = TOKEN_MINTS[token];
       if (tokenMint) {
-        const dexData = await fetchDexscreenerPrice(tokenMint);
-        if (dexData) {
+        const birdeyeData = await fetchBirdeyePrice(tokenMint);
+        if (birdeyeData) {
           return new Response(
             JSON.stringify({
               token,
               mint: tokenMint,
-              priceUsd: dexData.price,
-              priceChange24h: dexData.priceChange24h,
-              source: "dexscreener",
+              priceUsd: birdeyeData.price,
+              priceChange24h: birdeyeData.priceChange24h,
+              source: "birdeye",
               timestamp: Date.now(),
             }),
             {
@@ -135,7 +135,7 @@ async function handler(request: Request): Promise<Response> {
       }
     }
 
-    // Return fallback price when DexScreener fails
+    // Return fallback price when Birdeye fails
     const fallbackPrice = FALLBACK_PRICES[token] || 0;
     return new Response(
       JSON.stringify({
@@ -164,17 +164,17 @@ async function handler(request: Request): Promise<Response> {
       )?.[0];
 
       if (tokenSymbol) {
-        // Try DexScreener for special tokens
-        if (DEXSCREENER_TOKENS.has(tokenSymbol)) {
-          const dexData = await fetchDexscreenerPrice(mint);
-          if (dexData) {
+        // Try Birdeye for special tokens
+        if (BIRDEYE_TOKENS.has(tokenSymbol)) {
+          const birdeyeData = await fetchBirdeyePrice(mint);
+          if (birdeyeData) {
             return new Response(
               JSON.stringify({
                 token: tokenSymbol,
                 mint,
-                priceUsd: dexData.price,
-                priceChange24h: dexData.priceChange24h,
-                source: "dexscreener",
+                priceUsd: birdeyeData.price,
+                priceChange24h: birdeyeData.priceChange24h,
+                source: "birdeye",
                 timestamp: Date.now(),
               }),
               {

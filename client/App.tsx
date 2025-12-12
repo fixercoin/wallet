@@ -113,7 +113,6 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "next-themes";
 import { initStorageMonitoring } from "@/lib/storage-monitor";
 import { usePushNotifications } from "@/lib/services/push-notifications";
-import { syncAllOrdersFromLocalStorage } from "@/lib/p2p-order-api";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
@@ -152,9 +151,6 @@ import BuyData from "./pages/BuyData";
 import SellData from "./pages/SellData";
 import Market from "./pages/Market";
 import BuyerOrderConfirmation from "./pages/BuyerOrderConfirmation";
-import { useLocation } from "react-router-dom";
-import { P2POrderFlowProvider } from "@/contexts/P2POrderFlowContext";
-import AIPeerToPeer from "./pages/AIPeerToPeer";
 import AITradingSignalBot from "./pages/AITradingSignalBot";
 import FiatDeposit from "./pages/FiatDeposit";
 import FiatWithdraw from "./pages/FiatWithdraw";
@@ -165,11 +161,6 @@ import FiatAdmin from "./pages/FiatAdmin";
 import Info from "./pages/Info";
 import StakePage from "./pages/StakePage";
 import StakeDetailPage from "./pages/StakeDetailPage";
-import { SellerPaymentMethodDialog } from "@/components/p2p/SellerPaymentMethodDialog";
-import { BuyerWalletAddressDialog } from "@/components/p2p/BuyerWalletAddressDialog";
-import { SellerTransferDetailsDialog } from "@/components/p2p/SellerTransferDetailsDialog";
-import { CryptoSentDialog } from "@/components/p2p/CryptoSentDialog";
-import { CryptoReceivedDialog } from "@/components/p2p/CryptoReceivedDialog";
 
 const queryClient = new QueryClient();
 
@@ -229,50 +220,9 @@ function AppRoutes() {
   );
 }
 
-function P2POrderFlowDialogs() {
-  return (
-    <>
-      <SellerPaymentMethodDialog />
-      <BuyerWalletAddressDialog />
-      <SellerTransferDetailsDialog />
-      <CryptoSentDialog />
-      <CryptoReceivedDialog />
-    </>
-  );
-}
-
 function AppContent() {
-  const location = useLocation();
-
-  // Check if current route is a P2P page
-  const isP2PPage = () => {
-    const path = location.pathname;
-    return (
-      path.startsWith("/buydata") ||
-      path.startsWith("/selldata") ||
-      path.startsWith("/p2p") ||
-      path.startsWith("/buy-crypto") ||
-      path.startsWith("/sell-now") ||
-      path.startsWith("/buy-order") ||
-      path.startsWith("/sell-order") ||
-      path.startsWith("/order") ||
-      path.startsWith("/buy-trade") ||
-      path.startsWith("/waiting-for-buyer") ||
-      path.startsWith("/waiting-for-seller") ||
-      path.startsWith("/order-complete") ||
-      path.startsWith("/buyer-order-confirmation")
-    );
-  };
-
   return (
     <div className="min-h-screen pb-4">
-      {isP2PPage() && (
-        <div className="fixed top-4 right-4 z-40">
-          <NotificationCenter />
-        </div>
-      )}
-      {/* Only render P2P dialogs on P2P pages to avoid wallet dashboard interference */}
-      {isP2PPage() && <P2POrderFlowDialogs />}
       <AppRoutes />
     </div>
   );
@@ -287,40 +237,25 @@ function App() {
     initPushNotifications().catch((error) => {
       console.warn("Failed to initialize push notifications:", error);
     });
-
-    // Sync any orders from localStorage to KV storage on app startup
-    syncAllOrdersFromLocalStorage()
-      .then((result) => {
-        if (result.synced > 0) {
-          console.log(
-            `[App Init] Synced ${result.synced}/${result.total} orders from localStorage to KV`,
-          );
-        }
-      })
-      .catch((error) => {
-        console.warn("Failed to sync orders from localStorage:", error);
-      });
   }, [initPushNotifications]);
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
-          <P2POrderFlowProvider>
-            <AppWithPasswordPrompt>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <LanguageProvider>
-                  <CurrencyProvider>
-                    <BrowserRouter>
-                      <AppContent />
-                    </BrowserRouter>
-                  </CurrencyProvider>
-                </LanguageProvider>
-              </TooltipProvider>
-            </AppWithPasswordPrompt>
-          </P2POrderFlowProvider>
+          <AppWithPasswordPrompt>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <LanguageProvider>
+                <CurrencyProvider>
+                  <BrowserRouter>
+                    <AppContent />
+                  </BrowserRouter>
+                </CurrencyProvider>
+              </LanguageProvider>
+            </TooltipProvider>
+          </AppWithPasswordPrompt>
         </WalletProvider>
       </QueryClientProvider>
     </ThemeProvider>

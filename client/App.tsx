@@ -164,7 +164,6 @@ function AppRoutes() {
       <Route path="/swap" element={<SwapPage />} />
       <Route path="/select" element={<Select />} />
       <Route path="/sell-now" element={<SellNow />} />
-      <Route path="/buy-crypto" element={<BuyCrypto />} />
       <Route path="/buydata" element={<BuyData />} />
       <Route path="/selldata" element={<SellData />} />
       <Route path="/marketplace" element={<Market />} />
@@ -172,16 +171,8 @@ function AppRoutes() {
       <Route path="/stake" element={<StakePage />} />
       <Route path="/stake/:mint" element={<StakeDetailPage />} />
       <Route path="/fiat" element={<AITradingSignalBot />} />
-      <Route path="/fiat/deposit" element={<FiatDeposit />} />
       <Route path="/fiat/withdraw" element={<FiatWithdraw />} />
-      <Route path="/fiat/exchange" element={<FiatExchange />} />
-      <Route path="/fiat/payment" element={<FiatPayment />} />
-      <Route path="/fiat/transactions" element={<FiatTransactions />} />
       <Route path="/fiat/admin" element={<FiatAdmin />} />
-      <Route
-        path="/buyer-order-confirmation"
-        element={<BuyerOrderConfirmation />}
-      />
       <Route path="/fixorium/add" element={<FixoriumAdd />} />
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />

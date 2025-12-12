@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Copy } from "lucide-react";
+import { Copy } from "lucide-react";
 import { useState } from "react";
 
 export default function Info() {

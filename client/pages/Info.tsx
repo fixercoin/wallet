@@ -48,7 +48,7 @@ export default function Info() {
 
             {/* Logo and Title */}
             <div className="flex flex-row items-center gap-4 mb-8">
-              <div className="w-24 h-24 rounded-lg flex items-center justify-center border border-purple-500/30 overflow-hidden flex-shrink-0">
+              <div className="w-24 h-24 rounded-lg flex items-center justify-center border border-border overflow-hidden flex-shrink-0">
                 <img
                   src="https://cdn.builder.io/api/v1/image/assets%2F9918a7d4ac0d4f4cb858f57b2eb251de%2Fa25a3a5720954b6b98401743c4c4df16?format=webp&width=800"
                   alt="FixerCoin Logo"
@@ -56,10 +56,10 @@ export default function Info() {
                 />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white uppercase">
+                <h1 className="text-3xl font-bold text-foreground uppercase">
                   {fixerCoinData.name}
                 </h1>
-                <p className="text-lg text-purple-400 uppercase">
+                <p className="text-lg text-accent uppercase">
                   {fixerCoinData.ticker}
                 </p>
               </div>

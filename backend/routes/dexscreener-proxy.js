@@ -29,7 +29,7 @@ const MINT_TO_SEARCH_SYMBOL = {
 
 // Fallback prices for tokens when DexScreener returns nothing
 const FALLBACK_USD = {
-  FIXERCOIN: 0.00005600,
+  FIXERCOIN: 0.000056,
   LOCKER: 0.00001112,
   FXM: 0.000003567,
   USDC: 1.0,

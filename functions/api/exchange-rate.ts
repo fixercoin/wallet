@@ -12,7 +12,7 @@ const TOKEN_MINTS = {
 } as const;
 
 const FALLBACK_RATES: Record<string, number> = {
-  FIXERCOIN: 0.00005600,
+  FIXERCOIN: 0.000056,
   SOL: 149.38,
   USDC: 1.0,
   USDT: 1.0,

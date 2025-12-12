@@ -1352,11 +1352,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
       // Apply hardcoded fallback prices for known tokens that still don't have prices
       const HARDCODED_FALLBACK_PRICES: Record<string, number> = {
-        "So11111111111111111111111111111111111111112": 100, // SOL
-        "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns": 1.0, // USDT
-        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v": 1.0, // USDC
-        "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump": 0.00005600, // FIXERCOIN
-        "EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump": 0.00001112, // LOCKER
+        So11111111111111111111111111111111111111112: 100, // SOL
+        Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns: 1.0, // USDT
+        EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: 1.0, // USDC
+        H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: 0.000056, // FIXERCOIN
+        EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: 0.00001112, // LOCKER
         "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump": 0.000003567, // FXM
       };
 

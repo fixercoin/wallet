@@ -503,7 +503,7 @@ app.get("/api/token/price", async (req, res) => {
     const mintParam = String(req.query.mint || "");
 
     const FALLBACK_USD = {
-      FIXERCOIN: 0.00008139,
+      FIXERCOIN: 0.00005600,
       SOL: 149.38,
       USDC: 1.0,
       USDT: 1.0,

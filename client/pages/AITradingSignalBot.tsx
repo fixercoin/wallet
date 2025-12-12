@@ -60,10 +60,15 @@ const TradeAssetCard = ({
     <Card className={`border ${signalBgColor} bg-card/30 backdrop-blur-sm hover:border-purple-500/50 transition-all`}>
       <CardContent className="p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-white font-bold text-xs">
-              {asset.symbol[0]}
-            </div>
+          <div className="flex items-center gap-3">
+            <img
+              src={asset.logo}
+              alt={asset.symbol}
+              className="w-10 h-10 rounded-full bg-gray-700 object-cover"
+              onError={(e) => {
+                e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23374151'/%3E%3Ctext x='50' y='60' text-anchor='middle' font-size='40' font-weight='bold' fill='white'%3E" + asset.symbol[0] + "%3C/text%3E%3C/svg%3E";
+              }}
+            />
             <div>
               <h3 className="font-bold text-white text-sm">{asset.symbol}</h3>
               <p className="text-xs text-gray-500">{asset.name}</p>

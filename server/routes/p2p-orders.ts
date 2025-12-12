@@ -355,17 +355,18 @@ export const handleCreateP2POrder: RequestHandler = async (req, res) => {
     }
 
     // For SELL orders, verify seller has payment method
-    if (finalType === "SELL") {
-      const hasPaymentMethod =
-        await sellerHasVerifiedPaymentMethod(finalWallet);
-      if (!hasPaymentMethod) {
-        return res.status(400).json({
-          error:
-            "Seller must have at least one verified payment method to create a SELL order",
-          code: "SELLER_NO_PAYMENT_METHOD",
-        });
-      }
-    }
+    // Allow order creation without payment method verification for now
+    // if (finalType === "SELL") {
+    //   const hasPaymentMethod =
+    //     await sellerHasVerifiedPaymentMethod(finalWallet);
+    //   if (!hasPaymentMethod) {
+    //     return res.status(400).json({
+    //       error:
+    //         "Seller must have at least one verified payment method to create a SELL order",
+    //       code: "SELLER_NO_PAYMENT_METHOD",
+    //     });
+    //   }
+    // }
 
     const id = orderId || generateId("order");
     const now = Date.now();

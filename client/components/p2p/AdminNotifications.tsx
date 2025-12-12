@@ -80,7 +80,7 @@ export function AdminNotifications({ onClose }: AdminNotificationsProps) {
     } catch (error) {
       console.error("Error approving order:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to approve order"
+        error instanceof Error ? error.message : "Failed to approve order",
       );
     } finally {
       setProcessingId(null);
@@ -102,7 +102,7 @@ export function AdminNotifications({ onClose }: AdminNotificationsProps) {
     } catch (error) {
       console.error("Error rejecting order:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to reject order"
+        error instanceof Error ? error.message : "Failed to reject order",
       );
     } finally {
       setProcessingId(null);

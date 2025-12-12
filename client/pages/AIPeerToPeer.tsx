@@ -312,7 +312,7 @@ function NewTradeDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tokenPrice, setTokenPrice] = useState<number | null>(null);
 
-  const USDT_RATE = 291.90;
+  const USDT_RATE = 291.9;
 
   useEffect(() => {
     const fetchTokenPrice = async () => {
@@ -334,7 +334,8 @@ function NewTradeDialog({
     fetchTokenPrice();
   }, [token]);
 
-  const convertedAmount = tokenPrice && amount ? parseFloat(amount) * tokenPrice : 0;
+  const convertedAmount =
+    tokenPrice && amount ? parseFloat(amount) * tokenPrice : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -428,8 +429,12 @@ function NewTradeDialog({
               onChange={(e) => setToken(e.target.value)}
               className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
             >
-              <option value="USDT" className="text-gray-800">USDT - TETHER</option>
-              <option value="FIXERCOIN" className="text-gray-800">FIXERCOIN - FIXERCOIN</option>
+              <option value="USDT" className="text-gray-800">
+                USDT - TETHER
+              </option>
+              <option value="FIXERCOIN" className="text-gray-800">
+                FIXERCOIN - FIXERCOIN
+              </option>
             </select>
 
             {/* Amount Field */}
@@ -445,8 +450,13 @@ function NewTradeDialog({
             {/* Conversion Rate Display */}
             {tokenPrice && amount && (
               <div className="bg-gray-800/40 border border-gray-700/40 rounded-lg px-4 py-3 text-sm text-gray-200">
-                {amount} {token} = <span className="font-bold text-green-400">{convertedAmount.toFixed(2)} PKR</span>
-                <span className="text-gray-400 ml-2 text-xs">(1 {token} = {tokenPrice.toFixed(2)} PKR)</span>
+                {amount} {token} ={" "}
+                <span className="font-bold text-green-400">
+                  {convertedAmount.toFixed(2)} PKR
+                </span>
+                <span className="text-gray-400 ml-2 text-xs">
+                  (1 {token} = {tokenPrice.toFixed(2)} PKR)
+                </span>
               </div>
             )}
 
@@ -494,7 +504,9 @@ function NewTradeDialog({
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
             >
-              <option value="easy_paisa" className="text-gray-800">EASYPAISA</option>
+              <option value="easy_paisa" className="text-gray-800">
+                EASYPAISA
+              </option>
             </select>
 
             {/* Action Buttons */}

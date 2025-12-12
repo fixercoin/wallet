@@ -49,7 +49,7 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const USDT_RATE = 291.90;
+  const USDT_RATE = 291.9;
 
   // Fetch token price on mount
   useEffect(() => {
@@ -111,7 +111,10 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
           const order = data.order;
 
           // Check if order was approved
-          if (order.status === "active" && trade.order.status === "pending_approval") {
+          if (
+            order.status === "active" &&
+            trade.order.status === "pending_approval"
+          ) {
             const approvalMsg: ChatMessage = {
               id: `msg-approval-${Date.now()}`,
               sender: "ai",
@@ -122,7 +125,10 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
             setChatMessages((prev) => [...prev, approvalMsg]);
           }
           // Check if order was rejected
-          else if (order.status === "rejected" && trade.order.status === "pending_approval") {
+          else if (
+            order.status === "rejected" &&
+            trade.order.status === "pending_approval"
+          ) {
             const rejectionMsg: ChatMessage = {
               id: `msg-rejection-${Date.now()}`,
               sender: "ai",
@@ -276,7 +282,13 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
               {trade.order.token}
               {tokenPrice && (
                 <span className="text-green-400 ml-1">
-                  ({((trade.order.amountTokens || trade.order.token_amount || 0) * tokenPrice).toFixed(2)} PKR)
+                  (
+                  {(
+                    (trade.order.amountTokens ||
+                      trade.order.token_amount ||
+                      0) * tokenPrice
+                  ).toFixed(2)}{" "}
+                  PKR)
                 </span>
               )}
             </p>
@@ -410,7 +422,9 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
               onClick={() => {
                 const amount = trade.order.amountTokens || 0;
                 const conversionText = getConversionText(amount);
-                setMessageInput(`Can we confirm the price for ${amount} ${trade.order.token}${conversionText} and proceed?`);
+                setMessageInput(
+                  `Can we confirm the price for ${amount} ${trade.order.token}${conversionText} and proceed?`,
+                );
               }}
               variant="outline"
               size="sm"
@@ -422,7 +436,9 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
               onClick={() => {
                 const amount = trade.order.amountTokens || 0;
                 const conversionText = getConversionText(amount);
-                setMessageInput(`I've completed the payment of ${amount} ${trade.order.token}${conversionText}, ready to release?`);
+                setMessageInput(
+                  `I've completed the payment of ${amount} ${trade.order.token}${conversionText}, ready to release?`,
+                );
               }}
               variant="outline"
               size="sm"
@@ -433,7 +449,9 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
             <Button
               onClick={() => {
                 const amount = trade.order.amountTokens || 0;
-                setMessageInput(`I've received the ${amount} ${trade.order.token}`);
+                setMessageInput(
+                  `I've received the ${amount} ${trade.order.token}`,
+                );
               }}
               variant="outline"
               size="sm"
@@ -445,7 +463,9 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
               onClick={() => {
                 const amount = trade.order.amountTokens || 0;
                 const conversionText = getConversionText(amount);
-                setMessageInput(`Let's complete this order of ${amount} ${trade.order.token}${conversionText}`);
+                setMessageInput(
+                  `Let's complete this order of ${amount} ${trade.order.token}${conversionText}`,
+                );
               }}
               variant="outline"
               size="sm"

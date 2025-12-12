@@ -50,7 +50,7 @@ const USDT_MINT = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns";
 
 // Fallback prices if derivation fails - Updated to real-time market prices
 const FALLBACK_PRICES: Record<string, number> = {
-  FIXERCOIN: 0.00008139, // Real-time market price
+  FIXERCOIN: 0.000056, // Real-time market price
   LOCKER: 0.00001112, // Real-time market price
   FXM: 0.000003567, // Real-time market price
 };

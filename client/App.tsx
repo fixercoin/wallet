@@ -120,9 +120,7 @@ import CreateToken from "./pages/CreateToken";
 import TokenListing from "./pages/TokenListing";
 import WalletHistory from "./pages/WalletHistory";
 import NotFound from "./pages/NotFound";
-import BuyCrypto from "./pages/BuyCrypto";
 import TokenSearchDetail from "./pages/TokenSearchDetail";
-import BuyNote from "./pages/BuyNote";
 import SellNote from "./pages/SellNote";
 import VerifySell from "./pages/VerifySell";
 import OrdersList from "./pages/OrdersList";
@@ -146,18 +144,11 @@ import MarketMakerHistory from "./pages/MarketMakerHistory";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import DocumentationPage from "./pages/DocumentationPage";
-import BuyTrade from "./pages/BuyTrade";
 import TokenSearchPage from "./pages/TokenSearchPage";
-import BuyData from "./pages/BuyData";
 import SellData from "./pages/SellData";
 import Market from "./pages/Market";
-import BuyerOrderConfirmation from "./pages/BuyerOrderConfirmation";
 import AITradingSignalBot from "./pages/AITradingSignalBot";
-import FiatDeposit from "./pages/FiatDeposit";
 import FiatWithdraw from "./pages/FiatWithdraw";
-import FiatExchange from "./pages/FiatExchange";
-import FiatPayment from "./pages/FiatPayment";
-import FiatTransactions from "./pages/FiatTransactions";
 import FiatAdmin from "./pages/FiatAdmin";
 import Info from "./pages/Info";
 import StakePage from "./pages/StakePage";
@@ -172,24 +163,14 @@ function AppRoutes() {
       <Route path="/swap" element={<SwapPage />} />
       <Route path="/select" element={<Select />} />
       <Route path="/sell-now" element={<SellNow />} />
-      <Route path="/buy-crypto" element={<BuyCrypto />} />
-      <Route path="/buydata" element={<BuyData />} />
       <Route path="/selldata" element={<SellData />} />
       <Route path="/marketplace" element={<Market />} />
       <Route path="/info" element={<Info />} />
       <Route path="/stake" element={<StakePage />} />
       <Route path="/stake/:mint" element={<StakeDetailPage />} />
       <Route path="/fiat" element={<AITradingSignalBot />} />
-      <Route path="/fiat/deposit" element={<FiatDeposit />} />
       <Route path="/fiat/withdraw" element={<FiatWithdraw />} />
-      <Route path="/fiat/exchange" element={<FiatExchange />} />
-      <Route path="/fiat/payment" element={<FiatPayment />} />
-      <Route path="/fiat/transactions" element={<FiatTransactions />} />
       <Route path="/fiat/admin" element={<FiatAdmin />} />
-      <Route
-        path="/buyer-order-confirmation"
-        element={<BuyerOrderConfirmation />}
-      />
       <Route path="/fixorium/add" element={<FixoriumAdd />} />
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />

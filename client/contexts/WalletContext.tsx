@@ -1350,6 +1350,30 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         });
       }
 
+      // Apply hardcoded fallback prices for known tokens that still don't have prices
+      const HARDCODED_FALLBACK_PRICES: Record<string, number> = {
+        So11111111111111111111111111111111111111112: 100, // SOL
+        Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenEns: 1.0, // USDT
+        EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: 1.0, // USDC
+        H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump: 0.000056, // FIXERCOIN
+        EN1nYrW6375zMPUkpkGyGSEXW8WmAqYu4yhf6xnGpump: 0.00001112, // LOCKER
+        "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump": 0.000003567, // FXM
+      };
+
+      visibleTokens.forEach((token) => {
+        const hasValidPrice =
+          prices[token.mint] &&
+          typeof prices[token.mint] === "number" &&
+          isFinite(prices[token.mint]) &&
+          prices[token.mint] > 0;
+        if (!hasValidPrice && HARDCODED_FALLBACK_PRICES[token.mint]) {
+          prices[token.mint] = HARDCODED_FALLBACK_PRICES[token.mint];
+          console.log(
+            `[WalletContext] Applied fallback price for ${token.symbol}: $${prices[token.mint]}`,
+          );
+        }
+      });
+
       const enhancedTokens = visibleTokens.map((token) => {
         const price = prices[token.mint];
         // Only include price if it's a valid positive number

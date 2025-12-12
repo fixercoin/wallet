@@ -1260,7 +1260,7 @@ async function handleDexscreenerSearch(url: URL): Promise<Response> {
         const resp = await timeoutFetch(
           `${base}/search/?q=${encodeURIComponent(q)}`,
           { method: "GET", headers: browserHeaders() },
-          25000,
+          50000,
         );
 
         if (!resp.ok) {
@@ -1419,7 +1419,7 @@ async function handleTokenPrice(url: URL): Promise<Response> {
   const FALLBACK_PRICES: Record<string, number> = {
     USDC: 1.0,
     USDT: 1.0,
-    FIXERCOIN: 0.00008139,
+    FIXERCOIN: 0.000056,
     SOL: 149.38,
     LOCKER: 0.00001112,
     FXM: 0.000003567,

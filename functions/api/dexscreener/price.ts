@@ -34,7 +34,7 @@ async function handler(request: Request): Promise<Response> {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
+    const timeoutId = setTimeout(() => controller.abort(), 50000);
 
     const response = await fetch(
       `${DEXSCREENER_BASE}/tokens/${encodeURIComponent(mint)}`,

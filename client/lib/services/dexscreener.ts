@@ -300,7 +300,8 @@ class DexscreenerAPI {
         }
       });
 
-      // If we still don't have results for what was requested, throw error so client retries
+      // If we still don't have results for what was requested, just log a warning
+      // The caller will handle missing prices with fallback values (Birdeye, Jupiter, or hardcoded)
       const gotMints = new Set(
         fetchedTokens
           .flatMap((t) => [t.baseToken?.address, t.quoteToken?.address])
@@ -308,8 +309,8 @@ class DexscreenerAPI {
       );
       const stillMissing = toFetch.filter((m) => !gotMints.has(m));
       if (stillMissing.length > 0) {
-        throw new Error(
-          `DexScreener API failed and no cache available for ${stillMissing.join(", ")}: ${lastError}`,
+        console.warn(
+          `[DexScreener] ⚠️ No data available for ${stillMissing.length} tokens (${stillMissing.join(", ")}). Will use fallback prices.`,
         );
       }
     }

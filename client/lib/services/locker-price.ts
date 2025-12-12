@@ -37,85 +37,36 @@ class LockerPriceService {
       }
     }
 
-    // Use retry logic to fetch price using conversion logic
+    // Use retry logic to fetch price from Birdeye
     const priceData = await retryWithExponentialBackoff(
       async () => {
-        console.log(
-          "Fetching fresh LOCKER price using DexScreener conversion logic...",
-        );
+        console.log("Fetching fresh LOCKER price from Birdeye...");
 
         try {
-          // Fetch SOL/LOCKER pair from DexScreener
-          const pairs = await dexscreenerAPI.getTokensByMints([
-            LOCKER_MINT,
-            SOL_MINT,
-          ]);
+          // Fetch LOCKER price from Birdeye
+          const lockerToken = await birdeyeAPI.getTokenByMint(LOCKER_MINT);
 
-          if (!pairs || pairs.length === 0) {
-            throw new Error("Could not fetch LOCKER/SOL pair from DexScreener");
+          if (!lockerToken) {
+            throw new Error("LOCKER not found on Birdeye");
           }
 
-          // Find the pair where LOCKER and SOL interact
-          const lockerPair = pairs.find(
-            (p) =>
-              (p.baseToken?.address === LOCKER_MINT ||
-                p.quoteToken?.address === LOCKER_MINT) &&
-              (p.baseToken?.address === SOL_MINT ||
-                p.quoteToken?.address === SOL_MINT),
-          );
+          const price = lockerToken.priceUsd;
+          const priceChange24h = lockerToken.priceChange?.h24 || 0;
+          const volume24h = lockerToken.volume?.h24 || 0;
 
-          if (!lockerPair) {
+          if (!price || price <= 0) {
             throw new Error(
-              "SOL/LOCKER pair not found on DexScreener - cannot calculate conversion rate",
-            );
-          }
-
-          // Get SOL price in USDT
-          const solPriceData = await solPriceService.getSolPrice();
-          if (!solPriceData || solPriceData.price <= 0) {
-            throw new Error("Could not fetch SOL price in USDT");
-          }
-
-          // Calculate LOCKER price based on conversion logic
-          let lockerPrice: number;
-          let priceChange24h: number = lockerPair.priceChange?.h24 || 0;
-          let volume24h: number = lockerPair.volume?.h24 || 0;
-
-          const priceNative = lockerPair.priceNative
-            ? parseFloat(lockerPair.priceNative)
-            : null;
-
-          if (!priceNative || priceNative <= 0) {
-            throw new Error("Invalid price native value from DexScreener pair");
-          }
-
-          if (lockerPair.baseToken?.address === LOCKER_MINT) {
-            // LOCKER/SOL pair: priceNative is SOL per LOCKER
-            lockerPrice = priceNative * solPriceData.price;
-            console.log(
-              `[LockerPrice] LOCKER/SOL pair: priceNative=${priceNative} SOL/LOCKER, SOL price=${solPriceData.price} USDT, LOCKER price=${lockerPrice} USDT`,
-            );
-          } else {
-            // SOL/LOCKER pair: priceNative is LOCKER per SOL
-            lockerPrice = solPriceData.price / priceNative;
-            console.log(
-              `[LockerPrice] SOL/LOCKER pair: priceNative=${priceNative} LOCKER/SOL, SOL price=${solPriceData.price} USDT, LOCKER price=${lockerPrice} USDT`,
-            );
-          }
-
-          if (!lockerPrice || lockerPrice <= 0) {
-            throw new Error(
-              `Invalid LOCKER price from conversion logic: ${lockerPrice}`,
+              `Invalid LOCKER price from Birdeye: ${price}`,
             );
           }
 
           const priceData: LockerPriceData = {
-            price: lockerPrice,
+            price,
             priceChange24h,
             volume24h,
-            liquidity: lockerPair.liquidity?.usd,
+            liquidity: lockerToken.liquidity?.usd,
             lastUpdated: new Date(),
-            derivationMethod: "DexScreener SOL/LOCKER conversion (live)",
+            derivationMethod: "Birdeye (live)",
           };
 
           this.cachedData = priceData;
@@ -131,52 +82,13 @@ class LockerPriceService {
           });
 
           return priceData;
-        } catch (conversionError) {
-          // If conversion logic fails, fall back to direct LOCKER price from DexScreener
+        } catch (err) {
           console.warn(
-            `[LockerPrice] Conversion logic failed: ${conversionError instanceof Error ? conversionError.message : String(conversionError)}. Falling back to direct DexScreener price...`,
+            `[LockerPrice] Birdeye fetch failed: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
           );
-
-          const tokens = await dexscreenerAPI.getTokensByMints([LOCKER_MINT]);
-
-          if (!tokens || tokens.length === 0) {
-            throw new Error("LOCKER not found on DexScreener for fallback");
-          }
-
-          const token = tokens[0];
-          const price = token.priceUsd ? parseFloat(token.priceUsd) : null;
-          const priceChange24h = token.priceChange?.h24 || 0;
-          const volume24h = token.volume?.h24 || 0;
-          const liquidity = token.liquidity?.usd;
-
-          if (!price || price <= 0) {
-            throw new Error(
-              `Invalid LOCKER price from direct DexScreener fallback: ${price}`,
-            );
-          }
-
-          const fallbackPriceData: LockerPriceData = {
-            price,
-            priceChange24h,
-            volume24h,
-            liquidity,
-            lastUpdated: new Date(),
-            derivationMethod: "DexScreener Direct (fallback)",
-          };
-
-          this.cachedData = fallbackPriceData;
-          this.lastFetchTime = new Date();
-          console.log(
-            `✅ LOCKER price updated (FALLBACK): $${fallbackPriceData.price.toFixed(8)} (24h: ${priceChange24h.toFixed(2)}%) via ${fallbackPriceData.derivationMethod}`,
-          );
-
-          // Save to localStorage for offline support
-          saveServicePrice("LOCKER", {
-            price: fallbackPriceData.price,
-            priceChange24h: fallbackPriceData.priceChange24h,
-          });
-
-          return fallbackPriceData;
+          throw err;
         }
       },
       this.TOKEN_NAME,
@@ -197,7 +109,7 @@ class LockerPriceService {
         volume24h: 0,
         liquidity: 0,
         lastUpdated: new Date(),
-        derivationMethod: "static fallback (DexScreener unavailable)",
+        derivationMethod: "static fallback (Birdeye unavailable)",
         isFallback: true,
       };
       this.cachedData = fallbackData;

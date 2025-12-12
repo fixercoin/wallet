@@ -353,106 +353,71 @@ function NewTradeDialog({
         <CardContent className="pt-7 pb-6 px-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Token Dropdown Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
-                TOKEN
-              </label>
-              <select
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
-              >
-                <option value="USDT">USDT - TETHER</option>
-                <option value="FIXERCOIN">FIXERCOIN - FIXERCOIN</option>
-              </select>
-            </div>
+            <select
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
+            >
+              <option value="USDT" className="text-gray-800">TOKEN - USDT - TETHER</option>
+              <option value="FIXERCOIN" className="text-gray-800">TOKEN - FIXERCOIN - FIXERCOIN</option>
+            </select>
 
             {/* Amount Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
-                AMOUNT ({token})
-              </label>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+              placeholder={`AMOUNT (${token})`}
+              step="0.01"
+            />
+
+            {/* Price Range Fields */}
+            <div className="grid grid-cols-2 gap-4">
               <input
                 type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
                 className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                placeholder="0.00"
+                placeholder="MIN PRICE (PKR)"
+                step="0.01"
+              />
+              <input
+                type="number"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                placeholder="MAX PRICE (PKR)"
                 step="0.01"
               />
             </div>
 
-            {/* Price Range Fields */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
-                  MIN PRICE (PKR)
-                </label>
-                <input
-                  type="number"
-                  value={minPrice}
-                  onChange={(e) => setMinPrice(e.target.value)}
-                  className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  placeholder="0.00"
-                  step="0.01"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
-                  MAX PRICE (PKR)
-                </label>
-                <input
-                  type="number"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
-                  className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  placeholder="0.00"
-                  step="0.01"
-                />
-              </div>
-            </div>
-
             {/* Digital Account Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
-                DIGITAL ACCOUNT
-              </label>
-              <input
-                type="text"
-                value={digitalAccount}
-                onChange={(e) => setDigitalAccount(e.target.value)}
-                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                placeholder="Enter your account number"
-              />
-            </div>
+            <input
+              type="text"
+              value={digitalAccount}
+              onChange={(e) => setDigitalAccount(e.target.value)}
+              className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+              placeholder="DIGITAL ACCOUNT - Enter your account number"
+            />
 
             {/* Account Name Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
-                ACCOUNT NAME
-              </label>
-              <input
-                type="text"
-                value={accountName}
-                onChange={(e) => setAccountName(e.target.value)}
-                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                placeholder="Enter account holder name"
-              />
-            </div>
+            <input
+              type="text"
+              value={accountName}
+              onChange={(e) => setAccountName(e.target.value)}
+              className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+              placeholder="ACCOUNT NAME - Enter account holder name"
+            />
 
             {/* Payment Method Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
-                PAYMENT METHOD
-              </label>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
-              >
-                <option value="easy_paisa">EASY PAISA</option>
-              </select>
-            </div>
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
+            >
+              <option value="easy_paisa" className="text-gray-800">PAYMENT METHOD - EASY PAISA</option>
+            </select>
 
             {/* Action Buttons */}
             <div className="flex gap-3 mt-8 pt-4 border-t border-gray-700/30">

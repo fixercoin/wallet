@@ -462,13 +462,11 @@ export const handleWithdrawStake: RequestHandler = async (req, res) => {
 // GET /api/staking/config - Get staking configuration
 export const handleStakingConfig: RequestHandler = async (req, res) => {
   try {
-    // Get vault wallet from environment or config
-    const vaultWallet = process.env.VAULT_WALLET || REWARD_CONFIG.vaultWallet;
-
     return res.status(200).json({
       success: true,
       data: {
-        vaultWallet,
+        vaultWallet: REWARD_CONFIG.vaultWallet,
+        rewardWallet: REWARD_CONFIG.rewardWallet,
         apyPercentage: REWARD_CONFIG.apyPercentage,
         supportedPeriods: [30, 60, 90],
         rewardTokenMint: REWARD_CONFIG.rewardTokenMint,

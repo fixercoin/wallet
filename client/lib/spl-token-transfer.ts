@@ -104,8 +104,11 @@ export async function sendTokenTransferTransaction(
   // Ensure wallet is connected
   await provider.connect();
 
-  // Send transaction using provider - pass the transaction object directly
-  const signature = await provider.sendTransaction(transaction);
+  // Get the connection we created with a working RPC endpoint
+  const connection = getConnection();
+
+  // Send transaction using provider, passing the working connection
+  const signature = await provider.sendTransaction(transaction, connection);
 
   if (!signature) {
     throw new Error("Failed to get transaction signature");

@@ -63,6 +63,27 @@ class TokenPairPricingService {
   private readonly CACHE_DURATION = 250; // 250ms - ensures live price updates every 250ms for real-time display
 
   /**
+   * Get price directly from Birdeye for tokens like FIXERCOIN, LOCKER, FXM
+   */
+  private async getBirdeyePrice(tokenMint: string): Promise<number | null> {
+    try {
+      const token = await birdeyeAPI.getTokenByMint(tokenMint);
+      if (token && token.priceUsd && isFinite(token.priceUsd) && token.priceUsd > 0) {
+        console.log(
+          `[TokenPairPricing] Birdeye price for ${tokenMint}: $${token.priceUsd.toFixed(8)}`,
+        );
+        return token.priceUsd;
+      }
+    } catch (error) {
+      console.warn(
+        "[TokenPairPricing] Error fetching Birdeye price:",
+        error instanceof Error ? error.message : error,
+      );
+    }
+    return null;
+  }
+
+  /**
    * Get SOL price in USD from reliable dedicated service
    */
   private async getSolPrice(): Promise<number> {

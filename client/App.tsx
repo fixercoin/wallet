@@ -145,7 +145,6 @@ import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import DocumentationPage from "./pages/DocumentationPage";
 import TokenSearchPage from "./pages/TokenSearchPage";
-import BuyData from "./pages/BuyData";
 import SellData from "./pages/SellData";
 import Market from "./pages/Market";
 import AITradingSignalBot from "./pages/AITradingSignalBot";

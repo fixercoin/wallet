@@ -358,8 +358,8 @@ function NewTradeDialog({
               onChange={(e) => setToken(e.target.value)}
               className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
             >
-              <option value="USDT" className="text-gray-800">TOKEN - USDT - TETHER</option>
-              <option value="FIXERCOIN" className="text-gray-800">TOKEN - FIXERCOIN - FIXERCOIN</option>
+              <option value="USDT" className="text-gray-800">USDT - TETHER</option>
+              <option value="FIXERCOIN" className="text-gray-800">FIXERCOIN - FIXERCOIN</option>
             </select>
 
             {/* Amount Field */}
@@ -398,7 +398,7 @@ function NewTradeDialog({
               value={digitalAccount}
               onChange={(e) => setDigitalAccount(e.target.value)}
               className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-              placeholder="DIGITAL ACCOUNT - Enter your account number"
+              placeholder="Digital Account"
             />
 
             {/* Account Name Field */}
@@ -407,7 +407,7 @@ function NewTradeDialog({
               value={accountName}
               onChange={(e) => setAccountName(e.target.value)}
               className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-              placeholder="ACCOUNT NAME - Enter account holder name"
+              placeholder="Account Name"
             />
 
             {/* Payment Method Field */}
@@ -416,7 +416,7 @@ function NewTradeDialog({
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
             >
-              <option value="easy_paisa" className="text-gray-800">PAYMENT METHOD - EASY PAISA</option>
+              <option value="easy_paisa" className="text-gray-800">EASYPAISA</option>
             </select>
 
             {/* Action Buttons */}

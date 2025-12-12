@@ -11,7 +11,7 @@ const TOKEN_MINTS = {
 } as const;
 
 const FALLBACK_RATES: Record<string, number> = {
-  FIXERCOIN: 0.00008139, // Real-time market price
+  FIXERCOIN: 0.00005600, // Real-time market price
   SOL: 149.38, // Real-time market price
   USDC: 1.0, // $1 USDC
   USDT: 1.0, // $1 USDT

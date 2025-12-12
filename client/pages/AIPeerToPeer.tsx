@@ -151,22 +151,37 @@ export default function AIPeerToPeer() {
       <div className="container mx-auto px-4 py-6">
         {/* Action Buttons - Password Protected */}
         {isAdmin || isPasswordAuthenticated ? (
-          <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className="space-y-4 mb-8">
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                onClick={() => handleStartNewTrade("buy")}
+                className="bg-gradient-to-br from-emerald-500 via-green-600 to-green-700 hover:from-emerald-600 hover:via-green-700 hover:to-green-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-14 text-sm"
+                size="lg"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                CREATE BUY ORDER
+              </Button>
+              <Button
+                onClick={() => handleStartNewTrade("sell")}
+                className="bg-gradient-to-br from-violet-500 via-purple-600 to-purple-700 hover:from-violet-600 hover:via-purple-700 hover:to-purple-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-14 text-sm"
+                size="lg"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                CREATE SELL ORDER
+              </Button>
+            </div>
             <Button
-              onClick={() => handleStartNewTrade("buy")}
-              className="bg-gradient-to-br from-emerald-500 via-green-600 to-green-700 hover:from-emerald-600 hover:via-green-700 hover:to-green-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-14 text-sm"
+              onClick={() => setShowAdminNotifications(true)}
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-12"
               size="lg"
             >
-              <Plus className="w-5 h-5 mr-2" />
-              CREATE BUY ORDER
-            </Button>
-            <Button
-              onClick={() => handleStartNewTrade("sell")}
-              className="bg-gradient-to-br from-violet-500 via-purple-600 to-purple-700 hover:from-violet-600 hover:via-purple-700 hover:to-purple-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-14 text-sm"
-              size="lg"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              CREATE SELL ORDER
+              <Bell className="w-5 h-5 mr-2" />
+              ADMIN NOTIFICATIONS
+              {pendingOrdersCount > 0 && (
+                <span className="ml-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                  {pendingOrdersCount}
+                </span>
+              )}
             </Button>
           </div>
         ) : (

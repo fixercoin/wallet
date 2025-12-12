@@ -266,6 +266,31 @@ function NewTradeDialog({
   const [digitalAccount, setDigitalAccount] = useState("");
   const [accountName, setAccountName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tokenPrice, setTokenPrice] = useState<number | null>(null);
+
+  const USDT_RATE = 291.90;
+
+  useEffect(() => {
+    const fetchTokenPrice = async () => {
+      if (token === "USDT") {
+        setTokenPrice(USDT_RATE);
+      } else if (token === "FIXERCOIN") {
+        try {
+          const response = await fetch("/api/token-price?token=FIXERCOIN");
+          if (response.ok) {
+            const data = await response.json();
+            setTokenPrice(data.price || null);
+          }
+        } catch (error) {
+          console.log("Could not fetch FIXERCOIN price");
+          setTokenPrice(null);
+        }
+      }
+    };
+    fetchTokenPrice();
+  }, [token]);
+
+  const convertedAmount = tokenPrice && amount ? parseFloat(amount) * tokenPrice : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

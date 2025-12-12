@@ -33,7 +33,7 @@ export interface RewardDistribution {
 // Constants
 const REWARD_CONFIG = {
   vaultWallet: "5bW3uEyoP1jhXBMswgkB8xZuKUY3hscMaLJcsuzH2LNU",
-  rewardWallet: "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM",
+  rewardWallet: "7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw",
   apyPercentage: 10,
   rewardTokenMint: "FxmrDJB16th5FeZ3RBwAScwxt6iGz5pmpKGisTJQcWMf",
 };

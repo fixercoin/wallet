@@ -908,3 +908,109 @@ export const handleCompleteP2POrder: RequestHandler = async (req, res) => {
     });
   }
 };
+
+// NEW: Approve P2P order (admin)
+export const handleApproveP2POrder: RequestHandler = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    if (!orderId) {
+      return res.status(400).json({
+        error: "Missing orderId",
+      });
+    }
+
+    const order = await getOrderById(orderId);
+    if (!order) {
+      return res.status(404).json({
+        error: "Order not found",
+        orderId,
+      });
+    }
+
+    if (order.status !== "pending_approval") {
+      return res.status(400).json({
+        error: "Order is not pending approval",
+        currentStatus: order.status,
+      });
+    }
+
+    // Update order status to active
+    order.status = "active";
+    order.updatedAt = Date.now();
+    order.updated_at = Date.now();
+
+    await saveOrder(order);
+
+    console.log(`[P2P Orders] ✅ Admin approved order ${orderId}`);
+
+    res.json({
+      orderId: order.id,
+      status: "active",
+      message: "Order approved successfully",
+      approvedAt: Date.now(),
+    });
+  } catch (error) {
+    console.error("Approve order error:", error);
+    res.status(500).json({
+      error: "Failed to approve order",
+      details: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+// NEW: Reject P2P order (admin)
+export const handleRejectP2POrder: RequestHandler = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { autoRejected } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({
+        error: "Missing orderId",
+      });
+    }
+
+    const order = await getOrderById(orderId);
+    if (!order) {
+      return res.status(404).json({
+        error: "Order not found",
+        orderId,
+      });
+    }
+
+    if (order.status !== "pending_approval") {
+      return res.status(400).json({
+        error: "Order is not pending approval",
+        currentStatus: order.status,
+      });
+    }
+
+    // Update order status to rejected
+    order.status = "rejected" as P2POrder["status"];
+    order.updatedAt = Date.now();
+    order.updated_at = Date.now();
+
+    await saveOrder(order);
+
+    const message = autoRejected
+      ? `✅ Order ${orderId} auto-rejected after 10-minute timeout`
+      : `✅ Admin rejected order ${orderId}`;
+
+    console.log(`[P2P Orders] ${message}`);
+
+    res.json({
+      orderId: order.id,
+      status: "rejected",
+      message: "Order rejected",
+      rejectedAt: Date.now(),
+      autoRejected: !!autoRejected,
+    });
+  } catch (error) {
+    console.error("Reject order error:", error);
+    res.status(500).json({
+      error: "Failed to reject order",
+      details: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};

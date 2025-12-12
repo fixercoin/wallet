@@ -103,28 +103,29 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
     const orderType = trade.order.type;
     const token = trade.order.token;
     const amount = trade.order.amountTokens || 0;
+    const conversionText = getConversionText(amount);
 
     // AI suggestions based on conversation context
     const keywords = userMessage.toLowerCase();
 
     if (keywords.includes("price") || keywords.includes("rate")) {
-      return `For this ${orderType} order of ${amount} ${token}, I can help you negotiate the price. What rate would you like to propose to the counterparty?`;
+      return `For this ${orderType} order of ${amount} ${token}${conversionText}, I can help you negotiate the price. What rate would you like to propose to the counterparty?`;
     }
 
     if (keywords.includes("complete") || keywords.includes("done")) {
-      return `To complete this order, both parties need to confirm receipt/payment. Would you like me to send a completion request to the counterparty?`;
+      return `To complete this order of ${amount} ${token}${conversionText}, both parties need to confirm receipt/payment. Would you like me to send a completion request to the counterparty?`;
     }
 
     if (keywords.includes("payment") || keywords.includes("transfer")) {
-      return `For payment details, I can help you share your preferred payment method. What method would you like to use for this transaction?`;
+      return `For payment details on your ${amount} ${token} order${conversionText}, I can help you share your preferred payment method. What method would you like to use for this transaction?`;
     }
 
     if (keywords.includes("confirm")) {
-      return `Great! I'll help you confirm this order. Please ensure all transaction details are correct before we proceed with completion.`;
+      return `Great! I'll help you confirm this order of ${amount} ${token}${conversionText}. Please ensure all transaction details are correct before we proceed with completion.`;
     }
 
     // Default AI response
-    return `I understand you want to ${orderType.toLowerCase()} ${amount} ${token}. ${
+    return `I understand you want to ${orderType.toLowerCase()} ${amount} ${token}${conversionText}. ${
       orderType === "BUY"
         ? "I can help you find sellers and negotiate the best rate."
         : "I can help you reach potential buyers for your tokens."

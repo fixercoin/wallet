@@ -163,6 +163,7 @@ import FiatPayment from "./pages/FiatPayment";
 import FiatTransactions from "./pages/FiatTransactions";
 import FiatAdmin from "./pages/FiatAdmin";
 import Info from "./pages/Info";
+import StakePage from "./pages/StakePage";
 import { SellerPaymentMethodDialog } from "@/components/p2p/SellerPaymentMethodDialog";
 import { BuyerWalletAddressDialog } from "@/components/p2p/BuyerWalletAddressDialog";
 import { SellerTransferDetailsDialog } from "@/components/p2p/SellerTransferDetailsDialog";
@@ -183,6 +184,7 @@ function AppRoutes() {
       <Route path="/selldata" element={<SellData />} />
       <Route path="/marketplace" element={<Market />} />
       <Route path="/info" element={<Info />} />
+      <Route path="/stake" element={<StakePage />} />
       <Route path="/fiat" element={<AITradingSignalBot />} />
       <Route path="/fiat/deposit" element={<FiatDeposit />} />
       <Route path="/fiat/withdraw" element={<FiatWithdraw />} />

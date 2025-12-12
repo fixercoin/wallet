@@ -22,26 +22,28 @@ interface ActiveTrade {
 export default function AIPeerToPeer() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
-  const isAdmin = wallet?.address === ADMIN_WALLET;
+  const isAdmin = wallet?.publicKey === ADMIN_WALLET;
   const [activeTrades, setActiveTrades] = useState<ActiveTrade[]>([]);
   const [selectedTrade, setSelectedTrade] = useState<ActiveTrade | null>(null);
   const [loading, setLoading] = useState(false);
   const [showNewTradeDialog, setShowNewTradeDialog] = useState(false);
   const [tradeType, setTradeType] = useState<"buy" | "sell" | null>(null);
+  const [password, setPassword] = useState("");
+  const [isPasswordAuthenticated, setIsPasswordAuthenticated] = useState(false);
 
   useEffect(() => {
-    if (wallet?.address) {
+    if (wallet?.publicKey) {
       loadActiveTrades();
     }
-  }, [wallet?.address]);
+  }, [wallet?.publicKey]);
 
   const loadActiveTrades = async () => {
-    if (!wallet?.address) return;
+    if (!wallet?.publicKey) return;
 
     try {
       setLoading(true);
       const response = await fetch(
-        `/api/p2p/orders?wallet=${wallet.address}&status=active`,
+        `/api/p2p/orders?wallet=${wallet.publicKey}&status=active`,
       );
       if (!response.ok) throw new Error("Failed to load trades");
 
@@ -50,7 +52,7 @@ export default function AIPeerToPeer() {
         id: order.id || `trade-${Date.now()}`,
         order,
         counterparty:
-          order.creator_wallet === wallet.address
+          order.creator_wallet === wallet.publicKey
             ? order.buyer_wallet || "unknown"
             : order.creator_wallet || "unknown",
         status: "negotiating" as const,
@@ -130,8 +132,8 @@ export default function AIPeerToPeer() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
-        {/* Action Buttons - Admin Only */}
-        {isAdmin ? (
+        {/* Action Buttons - Password Protected */}
+        {isAdmin || isPasswordAuthenticated ? (
           <div className="grid grid-cols-2 gap-4 mb-8">
             <Button
               onClick={() => handleStartNewTrade("buy")}
@@ -151,19 +153,39 @@ export default function AIPeerToPeer() {
             </Button>
           </div>
         ) : (
-          <Card className="border-gray-700/30 bg-gradient-to-br from-amber-900/20 to-gray-900/50 mb-8">
+          <Card className="border-gray-700/30 bg-transparent mb-8">
             <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <Lock className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-semibold text-amber-300 mb-1">
-                    ADMIN ONLY
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    ONLY ADMINISTRATORS CAN CREATE BUY OR SELL ORDERS. YOU CAN
-                    VIEW AND PARTICIPATE IN EXISTING TRADES.
-                  </p>
-                </div>
+              <div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      if (password === "123") {
+                        setIsPasswordAuthenticated(true);
+                        setPassword("");
+                      } else {
+                        toast.error("INCORRECT PASSWORD");
+                      }
+                    }
+                  }}
+                  className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-2 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all mb-3"
+                />
+                <Button
+                  onClick={() => {
+                    if (password === "123") {
+                      setIsPasswordAuthenticated(true);
+                      setPassword("");
+                    } else {
+                      toast.error("INCORRECT PASSWORD");
+                    }
+                  }}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold uppercase h-10 text-sm"
+                >
+                  UNLOCK
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -236,18 +258,32 @@ function NewTradeDialog({
   onClose,
   onSuccess,
 }: NewTradeDialogProps) {
-  const [token, setToken] = useState("SOL");
-  const [amount, setAmount] = useState("");
+  const [token, setToken] = useState("FIXERCOIN");
+  const [amount, setAmount] = useState("0");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
+  const [paymentMethod, setPaymentMethod] = useState("easy_paisa");
+  const [digitalAccount, setDigitalAccount] = useState("");
+  const [accountName, setAccountName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!amount || !minPrice || !maxPrice || !token) {
+    if (
+      !amount ||
+      !minPrice ||
+      !maxPrice ||
+      !token ||
+      !digitalAccount ||
+      !accountName
+    ) {
       toast.error("PLEASE FILL ALL FIELDS");
+      return;
+    }
+
+    if (!wallet?.publicKey) {
+      toast.error("WALLET NOT CONNECTED");
       return;
     }
 
@@ -256,12 +292,16 @@ function NewTradeDialog({
       const orderData = {
         type: tradeType === "buy" ? "BUY" : "SELL",
         token,
-        amount: parseFloat(amount),
-        minPrice: parseFloat(minPrice),
-        maxPrice: parseFloat(maxPrice),
-        paymentMethod,
-        walletAddress: wallet.address,
+        amountTokens: parseFloat(amount),
+        minAmountPKR: parseFloat(minPrice),
+        maxAmountPKR: parseFloat(maxPrice),
+        payment_method: paymentMethod,
+        walletAddress: wallet.publicKey,
+        accountNumber: digitalAccount,
+        accountName: accountName,
       };
+
+      console.log("Submitting order data:", orderData);
 
       const response = await fetch("/api/p2p/orders", {
         method: "POST",
@@ -270,7 +310,8 @@ function NewTradeDialog({
       });
 
       if (!response.ok) {
-        throw new Error("FAILED TO CREATE ORDER");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "FAILED TO CREATE ORDER");
       }
 
       toast.success("ORDER CREATED SUCCESSFULLY!");
@@ -321,10 +362,8 @@ function NewTradeDialog({
                 onChange={(e) => setToken(e.target.value)}
                 className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
               >
-                <option value="">SELECT TOKEN</option>
-                <option value="SOL">SOL - SOLANA</option>
                 <option value="USDT">USDT - TETHER</option>
-                <option value="FIXERCOIN">FIXERCOIN - FIXER</option>
+                <option value="FIXERCOIN">FIXERCOIN - FIXERCOIN</option>
               </select>
             </div>
 
@@ -373,6 +412,34 @@ function NewTradeDialog({
               </div>
             </div>
 
+            {/* Digital Account Field */}
+            <div className="space-y-2">
+              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
+                DIGITAL ACCOUNT
+              </label>
+              <input
+                type="text"
+                value={digitalAccount}
+                onChange={(e) => setDigitalAccount(e.target.value)}
+                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                placeholder="Enter your account number"
+              />
+            </div>
+
+            {/* Account Name Field */}
+            <div className="space-y-2">
+              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
+                ACCOUNT NAME
+              </label>
+              <input
+                type="text"
+                value={accountName}
+                onChange={(e) => setAccountName(e.target.value)}
+                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                placeholder="Enter account holder name"
+              />
+            </div>
+
             {/* Payment Method Field */}
             <div className="space-y-2">
               <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
@@ -383,10 +450,7 @@ function NewTradeDialog({
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
               >
-                <option value="bank_transfer">BANK TRANSFER</option>
-                <option value="mobile_wallet">MOBILE WALLET</option>
-                <option value="cash">CASH IN PERSON</option>
-                <option value="other">OTHER METHOD</option>
+                <option value="easy_paisa">EASY PAISA</option>
               </select>
             </div>
 

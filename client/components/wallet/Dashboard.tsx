@@ -1233,9 +1233,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex flex-col gap-2 flex-1">
-                    <div className="text-xs font-semibold text-[#22c55e] uppercase tracking-widest">
-                      🎁 FIXERCOIN QUEST
-                    </div>
                     <div className="text-sm font-bold text-white">
                       EARN {earnedTokens} FIXERCOIN
                     </div>

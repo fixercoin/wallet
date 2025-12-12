@@ -22,9 +22,11 @@ export interface P2POrder {
     | "PENDING"
     | "active"
     | "pending"
+    | "pending_approval"
     | "completed"
     | "cancelled"
     | "disputed"
+    | "rejected"
     | "EXPIRED";
   online?: boolean;
   created_at?: number;

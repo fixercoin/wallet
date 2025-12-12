@@ -28,6 +28,8 @@ export default function AIPeerToPeer() {
   const [loading, setLoading] = useState(false);
   const [showNewTradeDialog, setShowNewTradeDialog] = useState(false);
   const [tradeType, setTradeType] = useState<"buy" | "sell" | null>(null);
+  const [password, setPassword] = useState("");
+  const [isPasswordAuthenticated, setIsPasswordAuthenticated] = useState(false);
 
   useEffect(() => {
     if (wallet?.address) {

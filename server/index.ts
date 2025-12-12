@@ -777,6 +777,7 @@ export async function createServer(): Promise<express.Application> {
   // P2P Order Status routes (for real-time polling)
   app.get("/api/p2p/orders/:orderId/status", handleGetOrderStatus);
   app.patch("/api/p2p/orders/:orderId/status", handleUpdateOrderStatus);
+  app.post("/api/p2p/orders/:orderId/complete", handleCompleteP2POrder);
 
   // P2P Orders diagnostics endpoint - helps debug missing orders
   app.get("/api/p2p/orders/debug/check-health", (req, res) => {

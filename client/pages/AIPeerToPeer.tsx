@@ -273,6 +273,11 @@ function NewTradeDialog({
       return;
     }
 
+    if (!wallet?.address) {
+      toast.error("WALLET NOT CONNECTED");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const orderData = {
@@ -284,6 +289,8 @@ function NewTradeDialog({
         payment_method: paymentMethod,
         walletAddress: wallet.address,
       };
+
+      console.log("Submitting order data:", orderData);
 
       const response = await fetch("/api/p2p/orders", {
         method: "POST",

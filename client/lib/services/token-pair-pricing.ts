@@ -1,4 +1,4 @@
-import { dexscreenerAPI } from "./dexscreener";
+import { birdeyeAPI } from "./birdeye";
 import { solPriceService } from "./sol-price";
 
 export interface PairPricingData {
@@ -12,6 +12,9 @@ export interface PairPricingData {
   liquidity: number;
   lastUpdated: Date;
 }
+
+// Tokens that should use Birdeye for live pricing
+const BIRDEYE_TOKENS = new Set(["FIXERCOIN", "LOCKER", "FXM"]);
 
 const TOKEN_CONFIGS: Record<
   string,

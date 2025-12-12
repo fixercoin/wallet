@@ -1,6 +1,6 @@
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI } from "@/lib/services/jupiter";
-import { dexscreenerAPI } from "@/lib/services/dexscreener";
+import { birdeyeAPI } from "@/lib/services/birdeye";
 
 export type SupportedToken = "FIXERCOIN" | "LOCKER";
 

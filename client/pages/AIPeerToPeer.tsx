@@ -126,22 +126,22 @@ export default function AIPeerToPeer() {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-8">
           <Button
             onClick={() => handleStartNewTrade("buy")}
-            className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+            className="bg-gradient-to-br from-emerald-500 via-green-600 to-green-700 hover:from-emerald-600 hover:via-green-700 hover:to-green-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-14 text-sm"
             size="lg"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Buy Order
+            <Plus className="w-5 h-5 mr-2" />
+            CREATE BUY ORDER
           </Button>
           <Button
             onClick={() => handleStartNewTrade("sell")}
-            className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
+            className="bg-gradient-to-br from-violet-500 via-purple-600 to-purple-700 hover:from-violet-600 hover:via-purple-700 hover:to-purple-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-14 text-sm"
             size="lg"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Sell Order
+            <Plus className="w-5 h-5 mr-2" />
+            CREATE SELL ORDER
           </Button>
         </div>
 
@@ -261,106 +261,126 @@ function NewTradeDialog({
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md border-gray-700/30 bg-gray-900">
-        <CardContent className="pt-6">
-          <h2 className="text-lg font-bold mb-4">
-            Create {tradeType === "buy" ? "Buy" : "Sell"} Order
-          </h2>
+  const isDarkBg = tradeType === "buy" ? "from-emerald-900/20" : "from-violet-900/20";
+  const isGradient = tradeType === "buy" ? "from-emerald-600 to-green-600" : "from-violet-600 to-purple-600";
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Token</label>
+  return (
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+      <Card className={`w-full max-w-md border border-gray-700/50 bg-gradient-to-br ${isDarkBg} to-gray-900 shadow-2xl`}>
+        {/* Card Header with Gradient */}
+        <div className={`bg-gradient-to-r ${isGradient} px-6 py-5`}>
+          <h2 className="text-2xl font-bold text-white uppercase tracking-wider">
+            {tradeType === "buy" ? "🛒 BUY ORDER" : "📤 SELL ORDER"}
+          </h2>
+          <p className="text-sm text-white/80 mt-1">
+            {tradeType === "buy"
+              ? "PURCHASE CRYPTOCURRENCY AT YOUR DESIRED PRICE"
+              : "SELL YOUR CRYPTOCURRENCY TO INTERESTED BUYERS"}
+          </p>
+        </div>
+
+        <CardContent className="pt-7 pb-6 px-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Token Field */}
+            <div className="space-y-2">
+              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">TOKEN</label>
               <input
                 type="text"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
-                placeholder="e.g., SOL, USDC"
+                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                placeholder="E.G., SOL, USDC"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Amount ({token})
+            {/* Amount Field */}
+            <div className="space-y-2">
+              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
+                AMOUNT ({token})
               </label>
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                 placeholder="0.00"
                 step="0.01"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Min Price (PKR)
+            {/* Price Range Fields */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
+                  MIN PRICE (PKR)
                 </label>
                 <input
                   type="number"
                   value={minPrice}
                   onChange={(e) => setMinPrice(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                  className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                   placeholder="0.00"
                   step="0.01"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Max Price (PKR)
+              <div className="space-y-2">
+                <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
+                  MAX PRICE (PKR)
                 </label>
                 <input
                   type="number"
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                  className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                   placeholder="0.00"
                   step="0.01"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Payment Method
+            {/* Payment Method Field */}
+            <div className="space-y-2">
+              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
+                PAYMENT METHOD
               </label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white text-sm"
+                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
               >
-                <option value="bank_transfer">Bank Transfer</option>
-                <option value="mobile_wallet">Mobile Wallet</option>
-                <option value="cash">Cash in Person</option>
-                <option value="other">Other</option>
+                <option value="bank_transfer">BANK TRANSFER</option>
+                <option value="mobile_wallet">MOBILE WALLET</option>
+                <option value="cash">CASH IN PERSON</option>
+                <option value="other">OTHER METHOD</option>
               </select>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-8 pt-4 border-t border-gray-700/30">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                className="flex-1"
+                className="flex-1 uppercase font-bold text-sm h-11 border-gray-700/60 hover:bg-gray-800/40 transition-all"
               >
-                Cancel
+                CANCEL
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700"
+                className={`flex-1 uppercase font-bold text-sm h-11 text-white transition-all ${
+                  tradeType === "buy"
+                    ? "bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-lg hover:shadow-xl"
+                    : "bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 shadow-lg hover:shadow-xl"
+                }`}
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Creating...
+                    CREATING...
                   </>
                 ) : (
-                  "Create Order"
+                  "CREATE ORDER"
                 )}
               </Button>
             </div>

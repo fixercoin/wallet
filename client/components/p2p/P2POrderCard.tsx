@@ -83,9 +83,11 @@ export function P2POrderCard({
             </div>
 
             {/* Counterparty Info */}
-            <div className="text-xs text-gray-500 truncate">
-              With: {counterparty.slice(0, 8)}...{counterparty.slice(-4)}
-            </div>
+            {counterparty && counterparty !== "unknown" && (
+              <div className="text-xs text-gray-500 truncate">
+                With: {counterparty.slice(0, 8)}...{counterparty.slice(-4)}
+              </div>
+            )}
 
             {/* Payment Method */}
             {order.payment_method && (

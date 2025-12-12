@@ -53,9 +53,70 @@ function calculateReward(amount: number, periodDays: number): number {
   return dailyRate * periodDays;
 }
 
+// In-memory fallback store for staking
+class InMemoryStakingStore {
+  private stakes: Map<string, Stake> = new Map();
+  private stakesByWallet: Map<string, string[]> = new Map();
+  private rewards: Map<string, RewardDistribution> = new Map();
+  private rewardsByWallet: Map<string, string[]> = new Map();
+
+  async getStakesByWallet(walletAddress: string): Promise<Stake[]> {
+    const stakeIds = this.stakesByWallet.get(walletAddress) || [];
+    const stakes: Stake[] = [];
+    for (const stakeId of stakeIds) {
+      const stake = this.stakes.get(stakeId);
+      if (stake) stakes.push(stake);
+    }
+    return stakes;
+  }
+
+  async getStake(stakeId: string): Promise<Stake | null> {
+    return this.stakes.get(stakeId) || null;
+  }
+
+  async createStake(stake: Stake): Promise<Stake> {
+    this.stakes.set(stake.id, stake);
+    const stakeIds = this.stakesByWallet.get(stake.walletAddress) || [];
+    stakeIds.push(stake.id);
+    this.stakesByWallet.set(stake.walletAddress, stakeIds);
+    return stake;
+  }
+
+  async updateStake(stakeId: string, updates: Partial<Stake>): Promise<void> {
+    const stake = this.stakes.get(stakeId);
+    if (!stake) throw new Error("Stake not found");
+    const updated: Stake = { ...stake, ...updates, updatedAt: Date.now() };
+    this.stakes.set(stakeId, updated);
+  }
+
+  async getRewardsByWallet(walletAddress: string): Promise<RewardDistribution[]> {
+    const rewardIds = this.rewardsByWallet.get(walletAddress) || [];
+    const rewards: RewardDistribution[] = [];
+    for (const rewardId of rewardIds) {
+      const reward = this.rewards.get(rewardId);
+      if (reward) rewards.push(reward);
+    }
+    return rewards;
+  }
+
+  async getReward(rewardId: string): Promise<RewardDistribution | null> {
+    return this.rewards.get(rewardId) || null;
+  }
+
+  async recordReward(reward: RewardDistribution): Promise<RewardDistribution> {
+    this.rewards.set(reward.id, reward);
+    const rewardIds = this.rewardsByWallet.get(reward.walletAddress) || [];
+    rewardIds.push(reward.id);
+    this.rewardsByWallet.set(reward.walletAddress, rewardIds);
+    return reward;
+  }
+}
+
 // KV Store wrapper for staking operations
 class StakingKVStore {
-  private kvStorage: KVStorage;
+  private kvStorage?: KVStorage;
+  private fallbackStore: InMemoryStakingStore;
+  private useKV: boolean;
 
   constructor() {
     // Initialize Cloudflare KV for staking using STAKING_KV_PROD namespace
@@ -63,17 +124,31 @@ class StakingKVStore {
     const namespaceId = process.env.STAKING_KV_PROD || process.env.CLOUDFLARE_NAMESPACE_ID;
     const apiToken = process.env.CLOUDFLARE_API_TOKEN;
 
-    if (!accountId || !namespaceId || !apiToken) {
-      throw new Error(
-        "Staking KV configuration missing. Required: CLOUDFLARE_ACCOUNT_ID, STAKING_KV_PROD (or CLOUDFLARE_NAMESPACE_ID), CLOUDFLARE_API_TOKEN",
-      );
-    }
+    this.fallbackStore = new InMemoryStakingStore();
 
-    this.kvStorage = KVStorage.createCloudflareStorage(
-      accountId,
-      namespaceId,
-      apiToken,
-    );
+    // Only use KV if all credentials are present
+    if (accountId && namespaceId && apiToken) {
+      try {
+        this.kvStorage = KVStorage.createCloudflareStorage(
+          accountId,
+          namespaceId,
+          apiToken,
+        );
+        this.useKV = true;
+        console.log("[Staking] Using Cloudflare KV storage");
+      } catch (error) {
+        console.warn(
+          "[Staking] Cloudflare KV initialization failed, using in-memory fallback:",
+          error instanceof Error ? error.message : String(error),
+        );
+        this.useKV = false;
+      }
+    } else {
+      console.warn(
+        "[Staking] Cloudflare KV credentials not configured, using in-memory storage",
+      );
+      this.useKV = false;
+    }
   }
 
   async getStakesByWallet(walletAddress: string): Promise<Stake[]> {

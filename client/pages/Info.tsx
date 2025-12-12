@@ -66,25 +66,25 @@ export default function Info() {
             </div>
 
             {/* Contract Address */}
-            <div className="bg-transparent border border-purple-500/20 rounded-lg p-4 mb-6">
-              <p className="text-[12px] text-gray-400 mb-2 uppercase font-semibold">
+            <div className="bg-card/50 border border-border rounded-lg p-4 mb-6">
+              <p className="text-[12px] text-muted-foreground mb-2 uppercase font-semibold">
                 CONTRACT ADDRESS
               </p>
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[12px] font-mono text-gray-200 break-all uppercase">
+                <p className="text-[12px] font-mono text-foreground break-all uppercase">
                   {fixerCoinData.contractAddress}
                 </p>
                 <Button
                   onClick={copyToClipboard}
                   size="sm"
                   variant="ghost"
-                  className="text-purple-400 hover:text-purple-200 flex-shrink-0"
+                  className="text-accent hover:text-accent/80 flex-shrink-0"
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
               {copied && (
-                <p className="text-[12px] text-green-400 mt-2 uppercase">
+                <p className="text-[12px] text-success-500 mt-2 uppercase">
                   ✓ COPIED
                 </p>
               )}

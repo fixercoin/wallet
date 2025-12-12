@@ -20,45 +20,51 @@ const FALLBACK_PRICES: Record<string, number> = {
   FXM: 0.00000357,
 };
 
-// Tokens that should be fetched from DexScreener (live prices)
-const DEXSCREENER_TOKENS = new Set(["FIXERCOIN", "LOCKER", "FXM"]);
+// Tokens that should be fetched from Birdeye (live prices)
+const BIRDEYE_TOKENS = new Set(["FIXERCOIN", "LOCKER", "FXM"]);
 
-async function fetchDexscreenerPrice(
+const BIRDEYE_API_KEY =
+  process.env.BIRDEYE_API_KEY || "cecae2ad38d7461eaf382f533726d9bb";
+const BIRDEYE_API_URL = "https://public-api.birdeye.so";
+
+async function fetchBirdeyePrice(
   mint: string,
 ): Promise<{ price: number; priceChange24h: number } | null> {
   try {
-    const response = await fetch(
-      `https://api.dexscreener.com/latest/dex/tokens/${mint}`,
-      {
-        headers: { "User-Agent": "Fixercoin-Wallet/1.0" },
+    const url = `${BIRDEYE_API_URL}/public/price?address=${encodeURIComponent(mint)}`;
+    console.log(`[Birdeye] Fetching price for ${mint}`);
+
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+        "X-API-KEY": BIRDEYE_API_KEY,
       },
-    );
+    });
 
     if (!response.ok) {
-      console.warn(`[DexScreener] HTTP ${response.status} for ${mint}`);
+      console.warn(`[Birdeye] HTTP ${response.status} for ${mint}`);
       return null;
     }
 
     const data: any = await response.json();
-    if (!data.pairs || data.pairs.length === 0) {
-      console.warn(`[DexScreener] No pairs found for ${mint}`);
+    if (!data.success || !data.data) {
+      console.warn(`[Birdeye] No price data found for ${mint}`);
       return null;
     }
 
-    const pair = data.pairs[0];
-    const price = pair.priceUsd ? parseFloat(pair.priceUsd) : null;
-    const priceChange24h = pair.priceChange?.h24 || 0;
+    const price = data.data.value;
+    const priceChange24h = data.data.priceChange24h || 0;
 
     if (!price || price <= 0) {
-      console.warn(`[DexScreener] Invalid price for ${mint}: ${price}`);
+      console.warn(`[Birdeye] Invalid price for ${mint}: ${price}`);
       return null;
     }
 
-    console.log(`[DexScreener] ✅ ${mint}: $${price.toFixed(8)}`);
+    console.log(`[Birdeye] ✅ ${mint}: $${price.toFixed(8)}`);
     return { price, priceChange24h };
   } catch (error) {
     console.warn(
-      `[DexScreener] Error fetching ${mint}:`,
+      `[Birdeye] Error fetching ${mint}:`,
       error instanceof Error ? error.message : String(error),
     );
     return null;

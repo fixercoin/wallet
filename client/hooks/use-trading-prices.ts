@@ -30,7 +30,7 @@ const TRADE_ASSETS: TradeAsset[] = [
     symbol: "FIXERCOIN",
     name: "Fixercoin",
     mint: TOKEN_MINTS.FIXERCOIN,
-    logo: "https://raw.githubusercontent.com/solflare-wallet/token-list/main/assets/solana/H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump/logo.png",
+    logo: "https://cdn.builder.io/api/v1/image/assets%2F003c5e4209a24523976f0fa5b9f0cf4e%2Fcda299d053f5450e89468ecb221497ec?format=webp&width=800",
   },
 ];
 

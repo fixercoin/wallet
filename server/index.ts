@@ -46,6 +46,7 @@ import {
   handleDeleteP2POrder,
   handleGetOrderStatus,
   handleUpdateOrderStatus,
+  handleCompleteP2POrder,
 } from "./routes/p2p-orders";
 import {
   handleListOrders,

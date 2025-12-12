@@ -7,6 +7,7 @@ import { PublicKey, Transaction, Connection } from "@solana/web3.js";
 import {
   getAssociatedTokenAddress,
   createTransferInstruction,
+  createAssociatedTokenAccountInstruction,
 } from "@solana/spl-token";
 
 const RPC_ENDPOINTS = [
@@ -38,7 +39,7 @@ export interface TransferParams {
  * Create a transfer instruction for SPL tokens
  */
 async function createTransferInstruction_(params: TransferParams): Promise<{
-  instruction: any;
+  instructions: any[];
   fromATA: PublicKey;
   toATA: PublicKey;
 }> {
@@ -51,16 +52,44 @@ async function createTransferInstruction_(params: TransferParams): Promise<{
   // Convert amount to base units
   const amountInBaseUnits = Math.floor(amount * Math.pow(10, decimals));
 
+  // Check if the destination account exists
+  const conn = getConnection();
+  let instructions: any[] = [];
+
+  try {
+    const accountInfo = await conn.getAccountInfo(toATA);
+    if (!accountInfo) {
+      // Account doesn't exist, create it
+      const createAtaInstruction = createAssociatedTokenAccountInstruction(
+        fromWallet, // payer
+        toATA, // associated token account
+        toWallet, // owner
+        mint, // mint
+      );
+      instructions.push(createAtaInstruction);
+    }
+  } catch (error) {
+    // If we can't check, assume account doesn't exist and create it
+    const createAtaInstruction = createAssociatedTokenAccountInstruction(
+      fromWallet,
+      toATA,
+      toWallet,
+      mint,
+    );
+    instructions.push(createAtaInstruction);
+  }
+
   // Create transfer instruction
-  const instruction = createTransferInstruction(
+  const transferInstruction = createTransferInstruction(
     fromATA,
     toATA,
     fromWallet,
     amountInBaseUnits,
   );
+  instructions.push(transferInstruction);
 
   return {
-    instruction,
+    instructions,
     fromATA,
     toATA,
   };
@@ -78,14 +107,19 @@ export async function buildTokenTransferTransaction(
   // Get recent blockhash
   const { blockhash } = await conn.getLatestBlockhash("confirmed");
 
-  // Create transfer instruction
-  const { instruction } = await createTransferInstruction_(params);
+  // Create transfer instruction(s) - may include ATA creation if needed
+  const { instructions } = await createTransferInstruction_(params);
 
-  // Build transaction
+  // Build transaction with all instructions
   const transaction = new Transaction({
     recentBlockhash: blockhash,
     feePayer: fromWallet,
-  }).add(instruction);
+  });
+
+  // Add all instructions (create ATA + transfer)
+  for (const instruction of instructions) {
+    transaction.add(instruction);
+  }
 
   return transaction;
 }
@@ -104,17 +138,11 @@ export async function sendTokenTransferTransaction(
   // Ensure wallet is connected
   await provider.connect();
 
-  // Serialize transaction to base64
-  const txBuffer = Buffer.from(
-    transaction.serialize({
-      requireAllSignatures: false,
-      verifySignatures: false,
-    }),
-  );
-  const txBase64 = txBuffer.toString("base64");
+  // Get the connection we created with a working RPC endpoint
+  const connection = getConnection();
 
-  // Send transaction using provider
-  const signature = await provider.sendTransaction(txBase64);
+  // Send transaction using provider, passing the working connection
+  const signature = await provider.sendTransaction(transaction, connection);
 
   if (!signature) {
     throw new Error("Failed to get transaction signature");

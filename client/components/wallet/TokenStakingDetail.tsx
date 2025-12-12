@@ -34,12 +34,6 @@ interface PeriodOption {
 }
 
 const STAKE_PERIODS: PeriodOption[] = [
-  {
-    value: "10m",
-    label: "10 MINUTES",
-    displayLabel: "10 MINUTES",
-    days: 10 / 1440,
-  },
   { value: "30d", label: "30 DAYS", displayLabel: "30 DAYS", days: 30 },
   { value: "60d", label: "60 DAYS", displayLabel: "60 DAYS", days: 60 },
   { value: "90d", label: "90 DAYS", displayLabel: "90 DAYS", days: 90 },

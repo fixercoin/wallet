@@ -101,6 +101,48 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
     setChatMessages([welcomeMessage]);
   }, [trade.order.id]);
 
+  // Monitor order approval status
+  useEffect(() => {
+    const checkOrderStatus = async () => {
+      try {
+        const response = await fetch(`/api/p2p/orders/${trade.order.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          const order = data.order;
+
+          // Check if order was approved
+          if (order.status === "active" && trade.order.status === "pending_approval") {
+            const approvalMsg: ChatMessage = {
+              id: `msg-approval-${Date.now()}`,
+              sender: "ai",
+              text: "🎉 Your order has been approved by the admin! You can now start negotiating with buyers/sellers.",
+              timestamp: Date.now(),
+              type: "system",
+            };
+            setChatMessages((prev) => [...prev, approvalMsg]);
+          }
+          // Check if order was rejected
+          else if (order.status === "rejected" && trade.order.status === "pending_approval") {
+            const rejectionMsg: ChatMessage = {
+              id: `msg-rejection-${Date.now()}`,
+              sender: "ai",
+              text: "❌ Your order has been rejected by the admin. Please contact support for more information.",
+              timestamp: Date.now(),
+              type: "system",
+            };
+            setChatMessages((prev) => [...prev, rejectionMsg]);
+          }
+        }
+      } catch (error) {
+        console.log("Error checking order status:", error);
+      }
+    };
+
+    // Check status every 5 seconds
+    const interval = setInterval(checkOrderStatus, 5000);
+    return () => clearInterval(interval);
+  }, [trade.order.id, trade.order.status]);
+
   const generateAIResponse = async (userMessage: string): Promise<string> => {
     // Simulate AI response generation based on order context
     const orderType = trade.order.type;

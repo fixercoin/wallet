@@ -163,11 +163,11 @@ export default function AIPeerToPeer() {
                     placeholder="Enter password"
                     onKeyPress={(e) => {
                       if (e.key === "Enter") {
-                        if (password.length > 0) {
+                        if (password === "123") {
                           setIsPasswordAuthenticated(true);
                           setPassword("");
                         } else {
-                          toast.error("PLEASE ENTER A PASSWORD");
+                          toast.error("INCORRECT PASSWORD");
                         }
                       }
                     }}
@@ -175,11 +175,11 @@ export default function AIPeerToPeer() {
                   />
                   <Button
                     onClick={() => {
-                      if (password.length > 0) {
+                      if (password === "123") {
                         setIsPasswordAuthenticated(true);
                         setPassword("");
                       } else {
-                        toast.error("PLEASE ENTER A PASSWORD");
+                        toast.error("INCORRECT PASSWORD");
                       }
                     }}
                     className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold uppercase h-10 text-sm"

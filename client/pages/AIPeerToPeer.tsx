@@ -2,12 +2,14 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Send, Loader2, Plus } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Plus, Lock } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { AIBotChat } from "@/components/p2p/AIBotChat";
 import { P2POrderCard } from "@/components/p2p/P2POrderCard";
 import type { P2POrder } from "@/lib/p2p-api";
 import { toast } from "sonner";
+
+const ADMIN_WALLET = "7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw";
 
 interface ActiveTrade {
   id: string;
@@ -20,6 +22,7 @@ interface ActiveTrade {
 export default function AIPeerToPeer() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
+  const isAdmin = wallet?.address === ADMIN_WALLET;
   const [activeTrades, setActiveTrades] = useState<ActiveTrade[]>([]);
   const [selectedTrade, setSelectedTrade] = useState<ActiveTrade | null>(null);
   const [loading, setLoading] = useState(false);
@@ -125,25 +128,41 @@ export default function AIPeerToPeer() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <Button
-            onClick={() => handleStartNewTrade("buy")}
-            className="bg-gradient-to-br from-emerald-500 via-green-600 to-green-700 hover:from-emerald-600 hover:via-green-700 hover:to-green-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-14 text-sm"
-            size="lg"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            CREATE BUY ORDER
-          </Button>
-          <Button
-            onClick={() => handleStartNewTrade("sell")}
-            className="bg-gradient-to-br from-violet-500 via-purple-600 to-purple-700 hover:from-violet-600 hover:via-purple-700 hover:to-purple-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-14 text-sm"
-            size="lg"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            CREATE SELL ORDER
-          </Button>
-        </div>
+        {/* Action Buttons - Admin Only */}
+        {isAdmin ? (
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <Button
+              onClick={() => handleStartNewTrade("buy")}
+              className="bg-gradient-to-br from-emerald-500 via-green-600 to-green-700 hover:from-emerald-600 hover:via-green-700 hover:to-green-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-14 text-sm"
+              size="lg"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              CREATE BUY ORDER
+            </Button>
+            <Button
+              onClick={() => handleStartNewTrade("sell")}
+              className="bg-gradient-to-br from-violet-500 via-purple-600 to-purple-700 hover:from-violet-600 hover:via-purple-700 hover:to-purple-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-14 text-sm"
+              size="lg"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              CREATE SELL ORDER
+            </Button>
+          </div>
+        ) : (
+          <Card className="border-gray-700/30 bg-gradient-to-br from-amber-900/20 to-gray-900/50 mb-8">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <Lock className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-300 mb-1">ADMIN ONLY</p>
+                  <p className="text-xs text-gray-400">
+                    Only administrators can create buy or sell orders. You can view and participate in existing trades.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Active Trades Section */}
         <div>

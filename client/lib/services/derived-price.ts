@@ -221,21 +221,21 @@ async function getGenericTokensPerSol(
   tokenDecimals: number,
 ): Promise<number | null> {
   try {
-    // Use DexScreener to get token USD price
-    const dexData = await dexscreenerAPI.getTokenByMint(tokenMint);
-    if (dexData?.priceUsd) {
-      const tokenUsd = parseFloat(dexData.priceUsd);
+    // Try Birdeye first for better pricing data
+    const birdeyeData = await birdeyeAPI.getTokenByMint(tokenMint);
+    if (birdeyeData?.priceUsd) {
+      const tokenUsd = parseFloat(String(birdeyeData.priceUsd));
       if (Number.isFinite(tokenUsd) && tokenUsd > 0) {
         const solUsd = await getSolUsd();
         const tokensPerSol = solUsd / tokenUsd;
         console.log(
-          `1 SOL = ${tokensPerSol.toFixed(2)} tokens (mint=${tokenMint}, from DexScreener)`,
+          `1 SOL = ${tokensPerSol.toFixed(2)} tokens (mint=${tokenMint}, from Birdeye)`,
         );
         return tokensPerSol;
       }
     }
 
-    console.warn(`No price data found for token ${tokenMint} on DexScreener`);
+    console.warn(`No price data found for token ${tokenMint} on Birdeye`);
     return null;
   } catch (error) {
     console.warn(`Error getting tokens per SOL for ${tokenMint}:`, error);

@@ -92,27 +92,27 @@ export default function Info() {
 
             {/* Supply Info */}
             <div className="grid grid-cols-3 gap-3 mb-6">
-              <div className="bg-transparent border border-purple-500/20 rounded-lg p-3 text-center">
-                <p className="text-[12px] text-gray-400 mb-1 uppercase font-semibold">
+              <div className="bg-card/50 border border-border rounded-lg p-3 text-center">
+                <p className="text-[12px] text-muted-foreground mb-1 uppercase font-semibold">
                   TOTAL SUPPLY
                 </p>
-                <p className="text-[12px] font-bold text-white uppercase">
+                <p className="text-[12px] font-bold text-foreground uppercase">
                   {fixerCoinData.totalSupply}
                 </p>
               </div>
-              <div className="bg-transparent border border-purple-500/20 rounded-lg p-3 text-center">
-                <p className="text-[12px] text-gray-400 mb-1 uppercase font-semibold">
+              <div className="bg-card/50 border border-border rounded-lg p-3 text-center">
+                <p className="text-[12px] text-muted-foreground mb-1 uppercase font-semibold">
                   BUY SUPPLY
                 </p>
-                <p className="text-[12px] font-bold text-green-400 uppercase">
+                <p className="text-[12px] font-bold text-wallet-success-500 uppercase">
                   {fixerCoinData.buySupply}
                 </p>
               </div>
-              <div className="bg-transparent border border-purple-500/20 rounded-lg p-3 text-center">
-                <p className="text-[12px] text-gray-400 mb-1 uppercase font-semibold">
+              <div className="bg-card/50 border border-border rounded-lg p-3 text-center">
+                <p className="text-[12px] text-muted-foreground mb-1 uppercase font-semibold">
                   REMAINING
                 </p>
-                <p className="text-[12px] font-bold text-blue-400 uppercase">
+                <p className="text-[12px] font-bold text-wallet-blue-500 uppercase">
                   {fixerCoinData.remainingSupply}
                 </p>
               </div>

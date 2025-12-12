@@ -247,7 +247,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
         </div>
 
         {/* TOKEN CARD */}
-        <Card className="w-full bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg border border-gray-700 mb-6">
+        <Card className="w-full bg-transparent rounded-lg border border-gray-700 mb-6">
           <CardContent className="p-6">
             <div className="flex items-center gap-4 mb-6">
               <Avatar className="h-16 w-16">
@@ -267,7 +267,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
               </div>
             </div>
 
-            <div className="bg-gray-900/50 rounded-lg p-4 mb-4">
+            <div className="bg-transparent rounded-lg p-4 mb-4 border border-gray-700">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-400">AVAILABLE</span>
                 <span className="text-lg font-bold text-white">
@@ -279,7 +279,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
         </Card>
 
         {/* STAKING FORM */}
-        <Card className="w-full bg-gray-900 rounded-lg border border-gray-700 mb-6">
+        <Card className="w-full bg-transparent rounded-lg border border-gray-700 mb-6">
           <CardContent className="p-6">
             <h2 className="text-sm font-semibold text-white mb-4 uppercase">
               NEW STAKE
@@ -300,7 +300,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                 />
                 <Button
                   onClick={handleMaxClick}
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white uppercase"
+                  className="bg-[#22c55e] hover:bg-[#16a34a] text-white uppercase"
                   size="sm"
                 >
                   MAX
@@ -339,7 +339,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
 
             {/* REWARD PREVIEW */}
             {stakeAmount && (
-              <div className="bg-gray-800/50 rounded-lg p-4 mb-6">
+              <div className="bg-transparent rounded-lg p-4 mb-6 border border-gray-700">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-gray-400 uppercase">
@@ -372,7 +372,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                 isStaking ||
                 loading
               }
-              className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold uppercase"
+              className="w-full bg-[#22c55e] hover:bg-[#16a34a] text-white font-semibold uppercase disabled:bg-gray-700 disabled:text-gray-500"
             >
               {isStaking ? "PROCESSING..." : "START STAKING"}
             </Button>

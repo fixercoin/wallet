@@ -269,6 +269,18 @@ export default function AIPeerToPeer() {
             onSuccess={() => {
               handleCloseNewTradeDialog();
               loadActiveTrades();
+              loadPendingOrdersCount();
+            }}
+          />
+        )}
+
+        {/* Admin Notifications Dialog */}
+        {showAdminNotifications && (
+          <AdminNotifications
+            onClose={() => {
+              setShowAdminNotifications(false);
+              loadPendingOrdersCount();
+              loadActiveTrades();
             }}
           />
         )}

@@ -21,12 +21,6 @@ export interface PriceData {
 
 const TRADE_ASSETS: TradeAsset[] = [
   {
-    symbol: "BTC",
-    name: "Bitcoin",
-    mint: "9n4nbM75f5Ui33ZbPYRq59Zq3naLiidCoQRGedbKuQb",
-    logo: "https://raw.githubusercontent.com/solflare-wallet/token-list/main/assets/solana/9n4nbM75f5Ui33ZbPYRq59Zq3naLiidCoQRGedbKuQb/logo.png",
-  },
-  {
     symbol: "SOL",
     name: "Solana",
     mint: TOKEN_MINTS.SOL,
@@ -41,7 +35,6 @@ const TRADE_ASSETS: TradeAsset[] = [
 ];
 
 const FALLBACK_PRICES: Record<string, number> = {
-  BTC: 42500,
   SOL: 165,
   FIXERCOIN: 0.15,
 };

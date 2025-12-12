@@ -163,7 +163,6 @@ function AppRoutes() {
       <Route path="/swap" element={<SwapPage />} />
       <Route path="/select" element={<Select />} />
       <Route path="/sell-now" element={<SellNow />} />
-      <Route path="/buydata" element={<BuyData />} />
       <Route path="/selldata" element={<SellData />} />
       <Route path="/marketplace" element={<Market />} />
       <Route path="/info" element={<Info />} />

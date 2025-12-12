@@ -4,6 +4,7 @@ import { botOrdersStorage, BotOrder, BotSession } from "./bot-orders-storage";
 import { bytesFromBase64, base64FromBytes } from "./bytes";
 
 const SOL_MINT = "So11111111111111111111111111111111111111112";
+const USDC_MINT = "EPjFWaLb3odccVLd7wfL9K3JWuWKq6PPczQkfCW2eKi";
 const FIXERCOIN_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
 
 interface ExecutionResult {
@@ -65,19 +66,31 @@ export async function executeLimitOrder(
     if (order.type === "buy") {
       // For BUY: execute when current price <= target price
       if (currentPrice > order.buyPrice) {
+        console.log(
+          `[MarketMakerExecutor] Buy price condition not met: ${currentPrice} > ${order.buyPrice}`,
+        );
         return {
           success: false,
           error: `Current price ${currentPrice} is above target ${order.buyPrice}`,
         };
       }
+      console.log(
+        `[MarketMakerExecutor] Buy price condition met: ${currentPrice} <= ${order.buyPrice}`,
+      );
     } else {
-      // For SELL: execute when current price >= target price
+      // For SELL: execute when current price >= target sell price
       if (currentPrice < order.targetSellPrice) {
+        console.log(
+          `[MarketMakerExecutor] Sell price condition not met: ${currentPrice} < ${order.targetSellPrice}`,
+        );
         return {
           success: false,
           error: `Current price ${currentPrice} is below target ${order.targetSellPrice}`,
         };
       }
+      console.log(
+        `[MarketMakerExecutor] Sell price condition met: ${currentPrice} >= ${order.targetSellPrice}`,
+      );
     }
 
     if (!wallet) {
@@ -182,11 +195,14 @@ export async function executeLimitOrder(
         };
       }
     } else {
-      // SELL: FIXERCOIN -> SOL
+      // SELL: FIXERCOIN -> SOL or USDC (based on outputToken preference)
       const inputAmount = Math.floor((order.tokenAmount || 0) * 1e6); // Convert to FIXERCOIN units (6 decimals)
+      const outputMint = order.outputToken === "USDC" ? USDC_MINT : SOL_MINT;
+      const outputDecimals = order.outputToken === "USDC" ? 6 : 9;
+
       const quote = await jupiterV6API.getQuote(
         FIXERCOIN_MINT,
-        SOL_MINT,
+        outputMint,
         inputAmount,
         120, // 1.2% slippage
       );
@@ -199,7 +215,8 @@ export async function executeLimitOrder(
       }
 
       const swapTx = await jupiterV6API.createSwap(quote, userPublicKey, {
-        wrapAndUnwrapSol: true,
+        wrapAndUnwrapSol: order.outputToken !== "USDC", // Only wrap/unwrap for SOL
+        useSharedAccounts: order.outputToken === "SOL", // Don't use shared accounts for USDC to ensure account creation
       });
 
       if (!swapTx) {
@@ -212,11 +229,16 @@ export async function executeLimitOrder(
       const signature = await sendSignedTx(swapTx.swapTransaction, keypair);
 
       // Update order with completion info
-      const solAmount = parseInt(quote.outAmount) / Math.pow(10, 9); // SOL has 9 decimals
+      const outputAmount =
+        parseInt(quote.outAmount) / Math.pow(10, outputDecimals);
+      console.log(
+        `[MarketMakerExecutor] Sell order output: ${outputAmount} ${order.outputToken || "SOL"} (quote.outAmount=${quote.outAmount}, decimals=${outputDecimals})`,
+      );
+
       const completed = botOrdersStorage.completeSellOrder(
         session.id,
         order.id,
-        solAmount,
+        outputAmount,
         signature,
       );
 
@@ -230,8 +252,9 @@ export async function executeLimitOrder(
           order: {
             ...order,
             status: "completed",
-            solAmount,
+            outputAmount,
             signature,
+            outputToken: order.outputToken,
           },
         };
       } else {

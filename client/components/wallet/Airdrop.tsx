@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Gift } from "lucide-react";
+import { ArrowLeft, Loader2, Search } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
-import { resolveApiUrl } from "@/lib/api-client";
+import { makeRpcCall } from "@/lib/services/solana-rpc";
 import { Buffer } from "buffer";
 import {
   Transaction,
@@ -24,6 +24,7 @@ import {
 import {
   createTransferCheckedInstruction,
   getAssociatedTokenAddress,
+  createAssociatedTokenAccountInstruction,
 } from "@solana/spl-token";
 import type { TokenInfo } from "@/lib/wallet";
 
@@ -45,6 +46,11 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const [recipientsText, setRecipientsText] = useState<string>("");
   const [amountPerRecipient, setAmountPerRecipient] = useState<string>("1");
   const [isRunning, setIsRunning] = useState(false);
+  const [isFetchingWallets, setIsFetchingWallets] = useState(false);
+  const [isFetchingTokens, setIsFetchingTokens] = useState(false);
+  const [fetchedTokens, setFetchedTokens] = useState<
+    Array<{ mint: string; symbol: string; name?: string; decimals?: number }>
+  >([]);
   const [progress, setProgress] = useState<{
     sent: number;
     total: number;
@@ -58,12 +64,28 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   const [error, setError] = useState<string | null>(null);
 
   const availableTokens = useMemo(() => {
-    const sol = tokens.find((t) => t.symbol === "SOL");
-    const rest = tokens
+    // Combine wallet tokens and fetched tokens, avoiding duplicates
+    const tokenMap = new Map<string, any>();
+
+    // Add wallet tokens first (they have balance info)
+    tokens.forEach((t) => {
+      tokenMap.set(t.mint, t);
+    });
+
+    // Add fetched tokens if not already in wallet
+    fetchedTokens.forEach((t) => {
+      if (!tokenMap.has(t.mint)) {
+        tokenMap.set(t.mint, { ...t, balance: 0 });
+      }
+    });
+
+    const allTokens = Array.from(tokenMap.values());
+    const sol = allTokens.find((t) => t.symbol === "SOL");
+    const rest = allTokens
       .filter((t) => t.symbol !== "SOL")
       .sort((a, b) => (b.balance || 0) - (a.balance || 0));
     return sol ? [sol, ...rest] : rest;
-  }, [tokens]);
+  }, [tokens, fetchedTokens]);
 
   const selectedToken: TokenInfo | undefined = useMemo(
     () => tokens.find((t) => t.mint === selectedMint),
@@ -104,18 +126,13 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   };
 
   const rpcCall = async (method: string, params: any[]): Promise<any> => {
-    const r = await fetch(resolveApiUrl("/api/solana-rpc"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params }),
-    });
-    if (!r.ok) {
-      const t = await r.text().catch(() => "");
-      throw new Error(`RPC ${r.status}: ${t || r.statusText}`);
+    try {
+      const result = await makeRpcCall(method, params);
+      return result;
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      throw new Error(`RPC ${method} failed: ${errorMsg}`);
     }
-    const j = await r.json();
-    if (j.error) throw new Error(j.error.message || "RPC error");
-    return j.result;
   };
 
   const getLatestBlockhashProxy = async (): Promise<string> => {
@@ -128,23 +145,16 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
   };
 
   const postTx = async (b64: string) => {
-    const body = {
-      method: "sendTransaction",
-      params: [b64, { skipPreflight: false, preflightCommitment: "confirmed" }],
-      id: Date.now(),
-    };
-    const resp = await fetch(resolveApiUrl("/api/solana-rpc"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!resp.ok) {
-      const t = await resp.text().catch(() => "");
-      throw new Error(`RPC ${resp.status}: ${t || resp.statusText}`);
+    try {
+      const signature = await makeRpcCall("sendTransaction", [
+        b64,
+        { skipPreflight: false, preflightCommitment: "confirmed" },
+      ]);
+      return signature;
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      throw new Error(`Failed to send transaction: ${errorMsg}`);
     }
-    const j = await resp.json();
-    if (j && j.error) throw new Error(j.error.message || "RPC error");
-    return j.result || j;
   };
 
   const confirmSignatureProxy = async (sig: string) => {
@@ -287,14 +297,18 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
         });
         return;
       }
-      // For token transfers, also check SOL for all batch fees
-      if (typeof balance !== "number" || balance < totalBatchFees) {
+      // For token transfers, check SOL for batch fees + ATA creation costs
+      // Estimate ~0.002 SOL per ATA creation (worst case: all recipients need new ATAs)
+      const estimatedAtaCostSol = recipients.length * 0.002;
+      const totalSolNeeded = totalBatchFees + estimatedAtaCostSol;
+
+      if (typeof balance !== "number" || balance < totalSolNeeded) {
         setError(
-          `Insufficient SOL for batch fees (${totalBatchFees.toFixed(6)} SOL for ${totalBatches} batches)`,
+          `Insufficient SOL (need ${totalSolNeeded.toFixed(6)} SOL for batch fees ${totalBatchFees.toFixed(6)} SOL + ATA creation ~${estimatedAtaCostSol.toFixed(6)} SOL)`,
         );
         toast({
           title: "Insufficient SOL",
-          description: `Need ${totalBatchFees.toFixed(6)} SOL for transaction fees (${totalBatches} batches).`,
+          description: `Need ${totalSolNeeded.toFixed(6)} SOL for transaction fees and ATA creation.`,
           variant: "destructive",
         });
         return;
@@ -425,13 +439,23 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
                 { encoding: "base64" },
               ]);
 
-              // Skip if recipient doesn't have ATA for this token
+              // If recipient doesn't have ATA, create it
               if (!recipientAccountInfo?.value) {
-                console.warn(`Skipping ${r}: no ATA for this token`);
-                continue;
+                console.log(
+                  `Creating ATA for ${r} to receive ${selectedToken?.symbol}`,
+                );
+                // Add instruction to create ATA
+                tx.add(
+                  createAssociatedTokenAccountInstruction(
+                    senderPubkey,
+                    recipientAta,
+                    recipientPubkey,
+                    mint,
+                  ),
+                );
               }
 
-              // Add transfer instruction only if ATA exists
+              // Add transfer instruction
               tx.add(
                 createTransferCheckedInstruction(
                   senderAta,
@@ -542,8 +566,135 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
     }
   };
 
-  const handlePasteSample = () => {
-    // Do not insert placeholder addresses. Provide an empty helper that does nothing.
+  const handleFetchWalletAddresses = async () => {
+    setIsFetchingWallets(true);
+    setRecipientsText("Fetching active wallet addresses with SOL balance...");
+
+    try {
+      const addressesWithSOL: string[] = [];
+      const MIN_SOL_BALANCE = 0.05; // Minimum SOL for ATA rent + buffer
+      const TARGET_ADDRESSES = 20;
+      let checked = 0;
+      let pageIndex = 0;
+      const MAX_PAGES = 5;
+
+      // Keep fetching until we have enough addresses or hit max attempts
+      while (
+        addressesWithSOL.length < TARGET_ADDRESSES &&
+        pageIndex < MAX_PAGES
+      ) {
+        try {
+          // Step 1: Fetch token pair data from DexScreener
+          const dexscreenerUrl = `https://api.dexscreener.com/latest/dex/tokens/${selectedMint}`;
+          const dexResponse = await fetch(dexscreenerUrl);
+
+          if (!dexResponse.ok) {
+            throw new Error(
+              `DexScreener API error: ${dexResponse.status} ${dexResponse.statusText}`,
+            );
+          }
+
+          const dexData = await dexResponse.json();
+          const pairs = dexData?.pairs || [];
+
+          if (pairs.length === 0 && pageIndex === 0) {
+            setRecipientsText("");
+            toast({
+              title: "No trading pairs found",
+              description:
+                "Could not find active trading pairs for this token.",
+              variant: "default",
+            });
+            return;
+          }
+
+          // Step 2: Extract unique wallet addresses from trading pairs
+          const uniqueAddresses = new Set<string>();
+
+          for (const pair of pairs) {
+            if (pair.pairAddress) uniqueAddresses.add(pair.pairAddress);
+            if (pair.maker) uniqueAddresses.add(pair.maker);
+            if (pair.lpCreator) uniqueAddresses.add(pair.lpCreator);
+          }
+
+          let addressArray = Array.from(uniqueAddresses).filter(
+            (addr) => addr && addr.length > 0,
+          );
+
+          // Step 3: Check each address for SOL balance
+          // Continue until we have enough addresses with SOL
+          for (const address of addressArray) {
+            if (addressesWithSOL.length >= TARGET_ADDRESSES) break;
+
+            try {
+              const balanceLamports = await makeRpcCall("getBalance", [
+                address,
+              ]);
+              const sol = (balanceLamports as any) / 1_000_000_000;
+
+              if (sol >= MIN_SOL_BALANCE) {
+                // Only add if not duplicate
+                if (!addressesWithSOL.includes(address)) {
+                  addressesWithSOL.push(address);
+                }
+              }
+              checked++;
+            } catch (err) {
+              console.warn(`Failed to check balance for ${address}:`, err);
+              checked++;
+              continue;
+            }
+
+            // Brief delay to avoid rate limiting
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+
+          pageIndex++;
+        } catch (error) {
+          console.warn(
+            `Error fetching page ${pageIndex}:`,
+            error instanceof Error ? error.message : error,
+          );
+          pageIndex++;
+        }
+      }
+
+      if (addressesWithSOL.length === 0) {
+        setRecipientsText("");
+        toast({
+          title: "No addresses with SOL found",
+          description: `Checked ${checked} addresses but none had sufficient SOL balance for ATA rent.`,
+          variant: "default",
+        });
+        return;
+      }
+
+      // Step 4: Shuffle and return addresses
+      const shuffledAddresses = addressesWithSOL
+        .sort(() => Math.random() - 0.5)
+        .slice(0, TARGET_ADDRESSES);
+
+      const addressesText = shuffledAddresses.join("\n");
+      setRecipientsText(addressesText);
+      toast({
+        title: "Active wallet addresses loaded",
+        description: `Loaded ${shuffledAddresses.length} wallet addresses with SOL balance (checked ${checked} addresses).`,
+      });
+    } catch (error) {
+      console.error("Error fetching wallet addresses:", error);
+      setRecipientsText("");
+      const errorMsg =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      toast({
+        title: "Failed to fetch addresses",
+        description:
+          errorMsg ||
+          "Unable to fetch wallet addresses. Please enter addresses manually.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFetchingWallets(false);
+    }
   };
 
   const formatTime = (seconds: number): string => {
@@ -562,7 +713,7 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-0 blur-3xl bg-gradient-to-br from-[#a855f7] to-[#22c55e] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-0 blur-3xl bg-[#22c55e] pointer-events-none" />
 
-      <div className="w-full md:max-w-lg mx-auto p-4 py-6 relative z-20">
+      <div className="w-full relative z-20">
         <div className="mt-6 mb-1 rounded-lg p-6 border-0 bg-gradient-to-br from-[#ffffff] via-[#f0fff4] to-[#a7f3d0] relative overflow-hidden">
           <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
             <Button
@@ -623,16 +774,28 @@ export const Airdrop: React.FC<AirdropProps> = ({ onBack }) => {
             </div>
 
             <div>
-              <label className="text-sm text-gray-300 uppercase">
-                RECIPIENTS (PASTE ADDRESSES SEPARATED BY NEWLINES, COMMAS OR
-                SEMICOLONS)
-              </label>
-              <textarea
-                className="w-full mt-2 p-2 bg-transparent text-gray-900 rounded-lg h-40 font-mono text-sm border border-gray-400/30 placeholder:text-gray-500"
-                value={recipientsText}
-                onChange={(e) => setRecipientsText(e.target.value)}
-                placeholder="Paste Solana addresses here"
-              />
+              <div className="relative">
+                <textarea
+                  className="w-full mt-2 p-2 pr-10 bg-transparent text-gray-900 rounded-lg h-40 font-mono text-sm border border-gray-400/30 placeholder:text-gray-500"
+                  value={recipientsText}
+                  onChange={(e) => setRecipientsText(e.target.value)}
+                  placeholder="Paste Solana addresses here"
+                />
+                <Button
+                  onClick={handleFetchWalletAddresses}
+                  disabled={isFetchingWallets}
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-3 right-2 h-7 w-7 p-0 rounded hover:bg-[#8b5cf6]/20 text-[#8b5cf6] hover:text-[#a855f7] flex-shrink-0"
+                  title="Fetch Solana wallet addresses"
+                >
+                  {isFetchingWallets ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Search className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
               <div className="flex items-center justify-between mt-2">
                 <div className="text-xs text-[hsl(var(--muted-foreground))]">
                   Valid addresses: {recipients.length}

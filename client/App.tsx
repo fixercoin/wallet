@@ -101,16 +101,19 @@ if (typeof window !== "undefined") {
 
 import "./global.css";
 
+import React, { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
-import { createRoot } from "react-dom/client";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "next-themes";
+import { initStorageMonitoring } from "@/lib/storage-monitor";
+import { usePushNotifications } from "@/lib/services/push-notifications";
+import { syncAllOrdersFromLocalStorage } from "@/lib/p2p-order-api";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
@@ -125,7 +128,6 @@ import VerifySell from "./pages/VerifySell";
 import OrdersList from "./pages/OrdersList";
 import OrderDetail from "./pages/OrderDetail";
 import Select from "./pages/select";
-import BuyNow from "./pages/buy-now";
 import SellNow from "./pages/sell-now";
 import AdminBroadcast from "./pages/AdminBroadcast";
 import SwapPage from "./pages/Swap";
@@ -141,8 +143,33 @@ import SelectCurrencyPage from "./pages/SelectCurrencyPage";
 import BurnTokenPage from "./pages/BurnTokenPage";
 import RunningMarketMaker from "./pages/RunningMarketMaker";
 import MarketMakerHistory from "./pages/MarketMakerHistory";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { AppWithPasswordPrompt } from "@/components/AppWithPasswordPrompt";
+import { NotificationCenter } from "@/components/NotificationCenter";
+import DocumentationPage from "./pages/DocumentationPage";
+import BuyTrade from "./pages/BuyTrade";
+import TokenSearchPage from "./pages/TokenSearchPage";
+import BuyData from "./pages/BuyData";
+import SellData from "./pages/SellData";
+import Market from "./pages/Market";
+import BuyerOrderConfirmation from "./pages/BuyerOrderConfirmation";
+import { useLocation } from "react-router-dom";
+import { P2POrderFlowProvider } from "@/contexts/P2POrderFlowContext";
+import AIPeerToPeer from "./pages/AIPeerToPeer";
+import AITradingSignalBot from "./pages/AITradingSignalBot";
+import FiatDeposit from "./pages/FiatDeposit";
+import FiatWithdraw from "./pages/FiatWithdraw";
+import FiatExchange from "./pages/FiatExchange";
+import FiatPayment from "./pages/FiatPayment";
+import FiatTransactions from "./pages/FiatTransactions";
+import FiatAdmin from "./pages/FiatAdmin";
+import Info from "./pages/Info";
+import StakePage from "./pages/StakePage";
+import StakeDetailPage from "./pages/StakeDetailPage";
+import { SellerPaymentMethodDialog } from "@/components/p2p/SellerPaymentMethodDialog";
+import { BuyerWalletAddressDialog } from "@/components/p2p/BuyerWalletAddressDialog";
+import { SellerTransferDetailsDialog } from "@/components/p2p/SellerTransferDetailsDialog";
+import { CryptoSentDialog } from "@/components/p2p/CryptoSentDialog";
+import { CryptoReceivedDialog } from "@/components/p2p/CryptoReceivedDialog";
 
 const queryClient = new QueryClient();
 
@@ -152,14 +179,25 @@ function AppRoutes() {
       <Route path="/" element={<Index />} />
       <Route path="/swap" element={<SwapPage />} />
       <Route path="/select" element={<Select />} />
-      <Route path="/buy-now" element={<BuyNow />} />
       <Route path="/sell-now" element={<SellNow />} />
       <Route path="/buy-crypto" element={<BuyCrypto />} />
-      <Route path="/buynote" element={<BuyNote />} />
-      <Route path="/sellnote" element={<SellNote />} />
-      <Route path="/verify-sell" element={<VerifySell />} />
-      <Route path="/orders/:status" element={<OrdersList />} />
-      <Route path="/order/:orderId" element={<OrderDetail />} />
+      <Route path="/buydata" element={<BuyData />} />
+      <Route path="/selldata" element={<SellData />} />
+      <Route path="/marketplace" element={<Market />} />
+      <Route path="/info" element={<Info />} />
+      <Route path="/stake" element={<StakePage />} />
+      <Route path="/stake/:mint" element={<StakeDetailPage />} />
+      <Route path="/fiat" element={<AITradingSignalBot />} />
+      <Route path="/fiat/deposit" element={<FiatDeposit />} />
+      <Route path="/fiat/withdraw" element={<FiatWithdraw />} />
+      <Route path="/fiat/exchange" element={<FiatExchange />} />
+      <Route path="/fiat/payment" element={<FiatPayment />} />
+      <Route path="/fiat/transactions" element={<FiatTransactions />} />
+      <Route path="/fiat/admin" element={<FiatAdmin />} />
+      <Route
+        path="/buyer-order-confirmation"
+        element={<BuyerOrderConfirmation />}
+      />
       <Route path="/fixorium/add" element={<FixoriumAdd />} />
       <Route path="/fixorium/create-token" element={<CreateToken />} />
       <Route path="/fixorium/token-listing" element={<TokenListing />} />
@@ -181,41 +219,112 @@ function AppRoutes() {
         element={<RunningMarketMaker />}
       />
       <Route path="/market-maker/history" element={<MarketMakerHistory />} />
+      <Route
+        path="/documentation"
+        element={<DocumentationPage onBack={() => window.history.back()} />}
+      />
+      <Route path="/search" element={<TokenSearchPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
 
+function P2POrderFlowDialogs() {
+  return (
+    <>
+      <SellerPaymentMethodDialog />
+      <BuyerWalletAddressDialog />
+      <SellerTransferDetailsDialog />
+      <CryptoSentDialog />
+      <CryptoReceivedDialog />
+    </>
+  );
+}
+
+function AppContent() {
+  const location = useLocation();
+
+  // Check if current route is a P2P page
+  const isP2PPage = () => {
+    const path = location.pathname;
+    return (
+      path.startsWith("/buydata") ||
+      path.startsWith("/selldata") ||
+      path.startsWith("/p2p") ||
+      path.startsWith("/buy-crypto") ||
+      path.startsWith("/sell-now") ||
+      path.startsWith("/buy-order") ||
+      path.startsWith("/sell-order") ||
+      path.startsWith("/order") ||
+      path.startsWith("/buy-trade") ||
+      path.startsWith("/waiting-for-buyer") ||
+      path.startsWith("/waiting-for-seller") ||
+      path.startsWith("/order-complete") ||
+      path.startsWith("/buyer-order-confirmation")
+    );
+  };
+
+  return (
+    <div className="min-h-screen pb-4">
+      {isP2PPage() && (
+        <div className="fixed top-4 right-4 z-40">
+          <NotificationCenter />
+        </div>
+      )}
+      {/* Only render P2P dialogs on P2P pages to avoid wallet dashboard interference */}
+      {isP2PPage() && <P2POrderFlowDialogs />}
+      <AppRoutes />
+    </div>
+  );
+}
+
 function App() {
+  const { initPushNotifications } = usePushNotifications();
+
+  // Initialize storage monitoring and push notifications on app start
+  useEffect(() => {
+    initStorageMonitoring();
+    initPushNotifications().catch((error) => {
+      console.warn("Failed to initialize push notifications:", error);
+    });
+
+    // Sync any orders from localStorage to KV storage on app startup
+    syncAllOrdersFromLocalStorage()
+      .then((result) => {
+        if (result.synced > 0) {
+          console.log(
+            `[App Init] Synced ${result.synced}/${result.total} orders from localStorage to KV`,
+          );
+        }
+      })
+      .catch((error) => {
+        console.warn("Failed to sync orders from localStorage:", error);
+      });
+  }, [initPushNotifications]);
+
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <WalletProvider>
-          <AppWithPasswordPrompt>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <LanguageProvider>
-                <CurrencyProvider>
-                  <BrowserRouter>
-                    <div className="min-h-screen pb-20">
-                      <AppRoutes />
-                      <BottomNavigation />
-                    </div>
-                  </BrowserRouter>
-                </CurrencyProvider>
-              </LanguageProvider>
-            </TooltipProvider>
-          </AppWithPasswordPrompt>
+          <P2POrderFlowProvider>
+            <AppWithPasswordPrompt>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <LanguageProvider>
+                  <CurrencyProvider>
+                    <BrowserRouter>
+                      <AppContent />
+                    </BrowserRouter>
+                  </CurrencyProvider>
+                </LanguageProvider>
+              </TooltipProvider>
+            </AppWithPasswordPrompt>
+          </P2POrderFlowProvider>
         </WalletProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );
 }
 
-try {
-  createRoot(document.getElementById("root")!).render(<App />);
-} catch (err) {
-  console.error("React render error:", err);
-  throw err;
-}
+export default App;

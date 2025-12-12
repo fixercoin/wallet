@@ -13,7 +13,7 @@ const fetchWithTimeout = (
   options?: RequestInit,
 ): Promise<Response> => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
 
   return fetch(url, { ...options, signal: controller.signal }).finally(() =>
     clearTimeout(timeoutId),
@@ -179,4 +179,6 @@ async function handler(request: Request): Promise<Response> {
   }
 }
 
-export default handler;
+export const onRequest = handler;
+export const onRequestGet = handler;
+export const onRequestPost = handler;

@@ -8,12 +8,13 @@
     "dev:frontend": "vite",
     "dev:backend": "tsx server/node-build.ts",
     "build": "vite build",
+    "build:pages": "vite build",
     "preview": "vite preview",
     "deploy:cloudflare": "wrangler deploy --env production",
     "deploy:pages": "wrangler pages deploy dist"
   },
   "dependencies": {
-    "@noble/hashes": "^1.4.0",
+    "@noble/hashes": "^2.0.1",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
@@ -54,6 +55,7 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^0.545.0",
     "next-themes": "^0.4.6",
+    "node-appwrite": "^21.0.0",
     "process": "^0.11.10",
     "react": "^18.2.0",
     "react-day-picker": "^9.11.0",

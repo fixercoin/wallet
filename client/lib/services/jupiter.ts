@@ -546,6 +546,82 @@ class JupiterAPI {
     const expectedOutput = inputAmount * marketPrice;
     return ((expectedOutput - outputAmount) / expectedOutput) * 100;
   }
+
+  /**
+   * Fetch token prices from Jupiter's free price API
+   * @param mints Array of token mint addresses
+   * @returns Object mapping mint to price in USD
+   */
+  async getPricesByMints(mints: string[]): Promise<Record<string, number>> {
+    const prices: Record<string, number> = {};
+
+    if (!mints || mints.length === 0) {
+      return prices;
+    }
+
+    const uniqueMints = Array.from(new Set(mints.filter((m) => m)));
+
+    if (uniqueMints.length === 0) {
+      return prices;
+    }
+
+    try {
+      const ids = uniqueMints.map((m) => encodeURIComponent(m)).join(",");
+      // Route through server to avoid direct CORS/auth issues with Jupiter API
+      const url = `/api/jupiter/price?ids=${ids}`;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+      try {
+        const response = await fetch(url, {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          console.warn(
+            `[Jupiter Price] Server request failed with status ${response.status}`,
+          );
+          return prices;
+        }
+
+        const data = await response.json();
+
+        if (data?.data && typeof data.data === "object") {
+          Object.entries(data.data).forEach(
+            ([mint, priceData]: [string, any]) => {
+              if (priceData?.price && typeof priceData.price === "string") {
+                const price = parseFloat(priceData.price);
+                if (isFinite(price) && price > 0) {
+                  prices[mint] = price;
+                }
+              }
+            },
+          );
+
+          console.log(
+            `[Jupiter Price] ✅ Got ${Object.keys(prices).length} prices from Jupiter`,
+          );
+        }
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        const errorMsg =
+          fetchError instanceof Error ? fetchError.message : String(fetchError);
+        console.warn(`[Jupiter Price] Network error: ${errorMsg}`);
+      }
+    } catch (error) {
+      console.warn(
+        `[Jupiter Price] Error:`,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+
+    return prices;
+  }
 }
 
 export const jupiterAPI = new JupiterAPI();

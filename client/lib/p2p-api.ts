@@ -10,17 +10,30 @@ export interface P2POrder {
   id: string;
   type: OrderType;
   creator_wallet: string;
+  buyer_wallet?: string;
   token: string;
-  token_amount: string;
-  pkr_amount: number;
-  payment_method: string;
+  token_amount?: string;
+  amountTokens?: number;
+  pkr_amount?: number;
+  amountPKR?: number;
+  minAmountPKR?: number;
+  maxAmountPKR?: number;
+  minAmountTokens?: number;
+  maxAmountTokens?: number;
+  payment_method?: string;
+  paymentMethod?: string;
   status: OrderStatus;
-  online: boolean;
-  created_at: number;
-  updated_at: number;
+  online?: boolean;
+  created_at?: number;
+  createdAt?: number;
+  updated_at?: number;
+  updatedAt?: number;
   account_name?: string;
+  accountName?: string;
   account_number?: string;
+  accountNumber?: string;
   wallet_address?: string;
+  walletAddress?: string;
 }
 
 export interface TradeRoom {
@@ -36,6 +49,10 @@ export interface TradeRoom {
     | "cancelled";
   created_at: number;
   updated_at: number;
+  buyerPaymentConfirmed?: boolean;
+  sellerPaymentConfirmed?: boolean;
+  buyerConfirmedAt?: number;
+  sellerConfirmedAt?: number;
 }
 
 export interface TradeMessage {
@@ -47,7 +64,8 @@ export interface TradeMessage {
   created_at: number;
 }
 
-const API_BASE = (import.meta as any).env?.VITE_P2P_API || window.location.origin;
+const API_BASE =
+  (import.meta as any).env?.VITE_P2P_API || window.location.origin;
 
 // ===== P2P ORDERS =====
 
@@ -179,6 +197,31 @@ export async function updateTradeRoomStatus(
   if (!res.ok) throw new Error(`Failed to update room: ${res.status}`);
   const data = await res.json();
   return data.room;
+}
+
+export async function confirmPayment(
+  roomId: string,
+  walletAddress: string,
+): Promise<{
+  room: TradeRoom;
+  autoReleased: boolean;
+  message: string;
+}> {
+  const res = await fetch(
+    `${API_BASE}/api/p2p/rooms/${encodeURIComponent(roomId)}/confirm-payment`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ walletAddress }),
+    },
+  );
+  if (!res.ok) throw new Error(`Failed to confirm payment: ${res.status}`);
+  const data = await res.json();
+  return {
+    room: data.room,
+    autoReleased: data.autoReleased,
+    message: data.message,
+  };
 }
 
 // ===== TRADE MESSAGES =====

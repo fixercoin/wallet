@@ -777,17 +777,8 @@ export const TokenLock: React.FC<TokenLockProps> = ({ onBack }) => {
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-gray-800 text-gray-900 relative overflow-hidden capitalize">
-      <style>{`
-        @media (max-width: 768px) {
-          .express-p2p-page input,
-          .express-p2p-page select,
-          .express-p2p-page button[class*="border"] {
-            border-width: 2px !important;
-          }
-        }
-      `}</style>
-      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 md:px-4 pt-2 md:pt-6 pb-6 space-y-3 relative z-20">
-        <div className="mt-0 md:mt-6 mb-1 p-6 border-0 bg-transparent relative text-gray-900">
+      <div className="w-full space-y-3 relative z-20">
+        <div className="mt-6 mb-1 p-6 border-0 bg-transparent relative text-gray-900">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"

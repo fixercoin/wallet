@@ -1,6 +1,6 @@
-import { tokenPairPricingService } from "./token-pair-pricing";
-import { birdeyeAPI } from "./birdeye";
-import { pumpFunPriceService } from "./pump-fun-price";
+import { dexscreenerAPI } from "./dexscreener";
+import { solPriceService } from "./sol-price";
+import { retryWithExponentialBackoff } from "./retry-fetch";
 
 export interface FXMPriceData {
   price: number;
@@ -13,145 +13,205 @@ export interface FXMPriceData {
 }
 
 const FXM_MINT = "7Fnx57ztmhdpL1uAGmUY1ziwPG2UDKmG6poB4ibjpump";
+const SOL_MINT = "So11111111111111111111111111111111111111112";
 
 class FXMPriceService {
   private cachedData: FXMPriceData | null = null;
   private lastFetchTime: Date | null = null;
-  private readonly CACHE_DURATION = 250; // 250ms - ensures live price updates every 250ms for real-time display
+  private readonly CACHE_DURATION = 250; // live updates every 250ms
+  private readonly TOKEN_NAME = "FXM";
 
   async getFXMPrice(): Promise<FXMPriceData | null> {
-    try {
-      // Check if we have valid cached data (only from live prices, not fallbacks)
-      if (
-        this.cachedData &&
-        this.lastFetchTime &&
-        this.cachedData.derivationMethod !== "fallback" &&
-        this.cachedData.derivationMethod !== "hardcoded fallback"
-      ) {
-        const timeSinceLastFetch = Date.now() - this.lastFetchTime.getTime();
-        if (timeSinceLastFetch < this.CACHE_DURATION) {
-          console.log("Returning cached FXM price data");
-          return this.cachedData;
-        }
+    // Return cached (only from live source)
+    if (
+      this.cachedData &&
+      this.lastFetchTime &&
+      this.cachedData.derivationMethod !== "fallback" &&
+      this.cachedData.derivationMethod !== "hardcoded fallback"
+    ) {
+      const timeSinceLastFetch = Date.now() - this.lastFetchTime.getTime();
+      if (timeSinceLastFetch < this.CACHE_DURATION) {
+        console.log("Returning cached FXM price data");
+        return this.cachedData;
       }
-
-      console.log(
-        "Fetching fresh FXM price using derived pricing (SOL pair)...",
-      );
-
-      // Try derived pricing based on SOL pair first
-      const pairingData = await tokenPairPricingService.getDerivedPrice("FXM");
-
-      if (
-        pairingData &&
-        pairingData.derivedPrice > 0 &&
-        isFinite(pairingData.derivedPrice)
-      ) {
-        const priceData: FXMPriceData = {
-          price: pairingData.derivedPrice,
-          priceChange24h: pairingData.priceChange24h,
-          volume24h: pairingData.volume24h,
-          liquidity: pairingData.liquidity,
-          lastUpdated: pairingData.lastUpdated,
-          derivationMethod: `derived from SOL pair (1 SOL = ${pairingData.pairRatio.toFixed(0)} FXM)`,
-        };
-
-        this.cachedData = priceData;
-        this.lastFetchTime = new Date();
-        console.log(
-          `✅ FXM price updated: $${priceData.price.toFixed(8)} (${priceData.derivationMethod})`,
-        );
-        return priceData;
-      }
-
-      // Fallback to Birdeye API if SOL pair derivation failed
-      console.log("SOL pair derivation failed for FXM, trying Birdeye API...");
-      const birdeyeToken = await birdeyeAPI.getTokenByMint(FXM_MINT);
-
-      if (
-        birdeyeToken &&
-        birdeyeToken.priceUsd &&
-        isFinite(birdeyeToken.priceUsd) &&
-        birdeyeToken.priceUsd > 0
-      ) {
-        const priceData: FXMPriceData = {
-          price: birdeyeToken.priceUsd,
-          priceChange24h: birdeyeToken.priceChange?.h24 || 0,
-          volume24h: birdeyeToken.volume?.h24 || 0,
-          liquidity: birdeyeToken.liquidity?.usd,
-          lastUpdated: new Date(),
-          derivationMethod: `fetched from Birdeye API`,
-        };
-
-        this.cachedData = priceData;
-        this.lastFetchTime = new Date();
-        console.log(
-          `✅ FXM price updated from Birdeye: $${priceData.price.toFixed(8)}`,
-        );
-        return priceData;
-      }
-
-      // Fallback to Pump.fun API (since FXM is a pump.fun token)
-      console.log("Birdeye failed for FXM, trying Pump.fun API...");
-      const pumpFunPrice = await pumpFunPriceService.getTokenPrice(FXM_MINT);
-
-      if (pumpFunPrice && pumpFunPrice > 0 && isFinite(pumpFunPrice)) {
-        const priceData: FXMPriceData = {
-          price: pumpFunPrice,
-          priceChange24h: 0,
-          volume24h: 0,
-          lastUpdated: new Date(),
-          derivationMethod: `fetched from Pump.fun API (bonding curve price)`,
-        };
-
-        this.cachedData = priceData;
-        this.lastFetchTime = new Date();
-        console.log(
-          `✅ FXM price updated from Pump.fun: $${priceData.price.toFixed(8)}`,
-        );
-        return priceData;
-      }
-
-      console.warn(
-        "Failed to fetch FXM price from all sources - service unavailable",
-      );
-      return null;
-    } catch (error) {
-      console.error("Error fetching FXM price:", error);
-      return null;
     }
-  }
 
-  private getFallbackPrice(): FXMPriceData | null {
-    console.log(
-      "FXM price service unavailable - returning null to show loading state",
+    // Fetch with retry logic
+    const priceData = await retryWithExponentialBackoff(
+      async () => {
+        console.log("Fetching fresh FXM price directly from DexScreener...");
+
+        try {
+          // First, try to fetch FXM directly by mint
+          const tokens = await dexscreenerAPI.getTokensByMints([FXM_MINT]);
+
+          if (!tokens || tokens.length === 0) {
+            throw new Error("FXM not found on DexScreener by mint");
+          }
+
+          const fxmToken = tokens[0];
+          const price = fxmToken.priceUsd
+            ? parseFloat(fxmToken.priceUsd)
+            : null;
+
+          if (!price || !isFinite(price) || price <= 0) {
+            throw new Error(`Invalid FXM price from DexScreener: ${price}`);
+          }
+
+          const result: FXMPriceData = {
+            price,
+            priceChange24h: fxmToken.priceChange?.h24 || 0,
+            volume24h: fxmToken.volume?.h24 || 0,
+            liquidity: fxmToken.liquidity?.usd,
+            lastUpdated: new Date(),
+            derivationMethod: "DexScreener Direct (live)",
+          };
+
+          this.cachedData = result;
+          this.lastFetchTime = new Date();
+
+          console.log(
+            `✅ FXM price updated: $${result.price.toFixed(8)} via ${result.derivationMethod}`,
+          );
+
+          return result;
+        } catch (err) {
+          console.warn(
+            `[FXMPrice] Direct fetch failed: ${
+              err instanceof Error ? err.message : String(err)
+            }. Trying pair-based lookup...`,
+          );
+
+          // Fallback: try to find FXM/SOL pair
+          try {
+            const pairs = await dexscreenerAPI.getTokensByMints([
+              FXM_MINT,
+              SOL_MINT,
+            ]);
+
+            if (!pairs || pairs.length === 0) {
+              throw new Error("Could not fetch FXM/SOL pair from DexScreener");
+            }
+
+            const fxmPair = pairs.find(
+              (p) =>
+                (p.baseToken?.address === FXM_MINT ||
+                  p.quoteToken?.address === FXM_MINT) &&
+                (p.baseToken?.address === SOL_MINT ||
+                  p.quoteToken?.address === SOL_MINT),
+            );
+
+            if (!fxmPair) {
+              throw new Error("SOL/FXM pair not found on DexScreener");
+            }
+
+            const solPriceData = await solPriceService.getSolPrice();
+            if (!solPriceData || solPriceData.price <= 0) {
+              throw new Error("Could not fetch SOL price");
+            }
+
+            const priceNative = fxmPair.priceNative
+              ? parseFloat(fxmPair.priceNative)
+              : null;
+
+            if (!priceNative || !isFinite(priceNative) || priceNative <= 0) {
+              throw new Error("Invalid priceNative value");
+            }
+
+            let fxmPrice: number;
+            if (fxmPair.baseToken?.address === FXM_MINT) {
+              fxmPrice = priceNative * solPriceData.price;
+            } else {
+              fxmPrice = solPriceData.price / priceNative;
+            }
+
+            if (!fxmPrice || !isFinite(fxmPrice) || fxmPrice <= 0) {
+              throw new Error(`Invalid calculated FXM price: ${fxmPrice}`);
+            }
+
+            const result: FXMPriceData = {
+              price: fxmPrice,
+              priceChange24h: fxmPair.priceChange?.h24 || 0,
+              volume24h: fxmPair.volume?.h24 || 0,
+              liquidity: fxmPair.liquidity?.usd,
+              lastUpdated: new Date(),
+              derivationMethod: "DexScreener SOL/FXM conversion (live)",
+            };
+
+            this.cachedData = result;
+            this.lastFetchTime = new Date();
+
+            console.log(
+              `✅ FXM price updated (pair): $${result.price.toFixed(8)} via ${result.derivationMethod}`,
+            );
+
+            return result;
+          } catch (fallbackErr) {
+            console.warn(
+              `[FXMPrice] Pair lookup also failed: ${
+                fallbackErr instanceof Error
+                  ? fallbackErr.message
+                  : String(fallbackErr)
+              }`,
+            );
+            throw fallbackErr;
+          }
+        }
+      },
+      this.TOKEN_NAME,
+      {
+        maxRetries: 2,
+        initialDelayMs: 500,
+        maxDelayMs: 2000,
+        backoffMultiplier: 2,
+        timeoutMs: 8000,
+      },
     );
-    return null;
+
+    if (!priceData) {
+      console.warn(
+        `[${this.TOKEN_NAME}] All price fetch attempts failed. Using static fallback.`,
+      );
+
+      const fallbackData: FXMPriceData = {
+        price: 0.0000043,
+        priceChange24h: 0,
+        volume24h: 0,
+        liquidity: 0,
+        lastUpdated: new Date(),
+        derivationMethod: "static fallback (DexScreener unavailable)",
+        isFallback: true,
+      };
+
+      this.cachedData = fallbackData;
+      this.lastFetchTime = new Date();
+
+      return fallbackData;
+    }
+
+    return priceData;
   }
 
-  // Get just the price number for quick access
   async getPrice(): Promise<number> {
     const data = await this.getFXMPrice();
     return data?.price || 0;
   }
 
-  // Get the price with derivation method info
   async getFXMPriceWithMethod(): Promise<{
     price: number;
     derivationMethod: string;
   }> {
     const data = await this.getFXMPrice();
     return {
-      price: data?.price || 0.000003567,
-      derivationMethod: data?.derivationMethod || "hardcoded fallback",
+      price: data?.price || 0,
+      derivationMethod: data?.derivationMethod || "unavailable",
     };
   }
 
-  // Clear cache to force fresh fetch
   clearCache(): void {
     this.cachedData = null;
     this.lastFetchTime = null;
-    tokenPairPricingService.clearTokenCache("FXM");
+    console.log("[FXMPriceService] Cache cleared");
   }
 }
 

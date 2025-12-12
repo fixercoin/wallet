@@ -1,6 +1,6 @@
 /**
  * Offline Cache Service
- * Stores token prices, balances, and wallet data in localStorage for offline support on mobile
+ * Stores token prices, balances, and wallet data in localStorage for offline support
  */
 
 export interface CachedPrice {
@@ -32,29 +32,26 @@ const BALANCES_KEY = `${CACHE_PREFIX}balances`;
 const TOKENS_KEY = (walletAddress: string) =>
   `${CACHE_PREFIX}tokens_${walletAddress}`;
 const CACHE_TIMESTAMP_KEY = `${CACHE_PREFIX}timestamp`;
+const SERVICE_PRICES_KEY = (serviceName: string) =>
+  `${CACHE_PREFIX}service_price_${serviceName}`;
+const CONNECTION_STATUS_KEY = `${CACHE_PREFIX}connection_status`;
 
 // Cache validity: 5 minutes for prices/balances, 1 hour for token list
 const CACHE_VALIDITY_PRICES = 5 * 60 * 1000; // 5 minutes
 const CACHE_VALIDITY_TOKENS = 60 * 60 * 1000; // 1 hour
+const CACHE_VALIDITY_SERVICE_PRICES = 24 * 60 * 60 * 1000; // 24 hours for service prices
+
+export {
+  CACHE_VALIDITY_PRICES,
+  CACHE_VALIDITY_TOKENS,
+  CACHE_VALIDITY_SERVICE_PRICES,
+};
 
 /**
- * Check if device is mobile
+ * Check if device is mobile - always returns false for desktop-only mode
  */
 function isMobileDevice(): boolean {
-  if (typeof window === "undefined") return false;
-
-  const userAgent =
-    navigator.userAgent || navigator.vendor || (window as any).opera;
-
-  // Check for mobile user agents
-  const mobileRegex =
-    /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
-  const isMobileUA = mobileRegex.test(userAgent.toLowerCase());
-
-  // Also check viewport width (mobile breakpoint is 768px)
-  const isMobileViewport = window.innerWidth < 768;
-
-  return isMobileUA || isMobileViewport;
+  return false;
 }
 
 /**
@@ -63,8 +60,6 @@ function isMobileDevice(): boolean {
 export function savePricesToCache(
   prices: Record<string, CachedPrice>,
 ): boolean {
-  if (!isMobileDevice()) return false;
-
   try {
     localStorage.setItem(PRICES_KEY, JSON.stringify(prices));
     localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
@@ -81,8 +76,6 @@ export function savePricesToCache(
 export function getCachedPrices(
   maxAge?: number,
 ): Record<string, CachedPrice> | null {
-  if (!isMobileDevice()) return null;
-
   try {
     const cached = localStorage.getItem(PRICES_KEY);
     if (!cached) return null;
@@ -114,8 +107,6 @@ export function saveBalanceToCache(
   publicKey: string,
   balance: number,
 ): boolean {
-  if (!isMobileDevice()) return false;
-
   try {
     const balances = getBalancesFromCache() || {};
     balances[publicKey] = {
@@ -139,8 +130,6 @@ export function getCachedBalance(
   publicKey: string,
   maxAge?: number,
 ): number | null {
-  if (!isMobileDevice()) return null;
-
   try {
     const balances = getBalancesFromCache();
     if (!balances || !balances[publicKey]) return null;
@@ -181,8 +170,6 @@ export function saveTokensToCache(
   walletAddress: string,
   tokens: CachedToken[],
 ): boolean {
-  if (!isMobileDevice()) return false;
-
   try {
     const key = TOKENS_KEY(walletAddress);
     localStorage.setItem(key, JSON.stringify(tokens));
@@ -201,8 +188,6 @@ export function getCachedTokens(
   walletAddress: string,
   maxAge?: number,
 ): CachedToken[] | null {
-  if (!isMobileDevice()) return null;
-
   try {
     const key = TOKENS_KEY(walletAddress);
     const cached = localStorage.getItem(key);
@@ -268,8 +253,6 @@ export function mergeTokens(
  * Check if offline (cache-first mode)
  */
 export function isLikelyOffline(): boolean {
-  if (!isMobileDevice()) return false;
-
   // Simple check: if we have cached data and no recent updates, we might be offline
   const cachedPrices = getCachedPrices();
   return cachedPrices !== null;
@@ -279,8 +262,6 @@ export function isLikelyOffline(): boolean {
  * Clear all cached data
  */
 export function clearOfflineCache(): void {
-  if (!isMobileDevice()) return;
-
   try {
     localStorage.removeItem(PRICES_KEY);
     localStorage.removeItem(BALANCES_KEY);
@@ -295,6 +276,31 @@ export function clearOfflineCache(): void {
     });
   } catch (error) {
     console.warn("[OfflineCache] Failed to clear cache:", error);
+  }
+}
+
+/**
+ * Clear dashboard token cache (balances and wallet-specific tokens only)
+ * This ensures fresh data is always fetched on app load after deployment
+ */
+export function clearDashboardTokenCache(): void {
+  try {
+    localStorage.removeItem(BALANCES_KEY);
+    localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+
+    // Clear all wallet-specific token caches
+    const keys = Object.keys(localStorage);
+    keys.forEach((key) => {
+      if (key.startsWith(`${CACHE_PREFIX}tokens_`)) {
+        localStorage.removeItem(key);
+      }
+    });
+    console.log("[OfflineCache] Dashboard token cache cleared");
+  } catch (error) {
+    console.warn(
+      "[OfflineCache] Failed to clear dashboard token cache:",
+      error,
+    );
   }
 }
 
@@ -314,11 +320,95 @@ export function getCacheTimestamp(): number | null {
  * Check if cache is fresh (within validity period)
  */
 export function isCacheFresh(maxAge: number = CACHE_VALIDITY_PRICES): boolean {
-  if (!isMobileDevice()) return false;
-
   const timestamp = getCacheTimestamp();
   if (!timestamp) return false;
 
   const age = Date.now() - timestamp;
   return age <= maxAge;
+}
+
+/**
+ * Save a service price to cache (SOL, FIXERCOIN, etc.)
+ */
+export function saveServicePrice(
+  serviceName: string,
+  priceData: { price: number; priceChange24h?: number },
+): boolean {
+  try {
+    const key = SERVICE_PRICES_KEY(serviceName);
+    const cached = {
+      ...priceData,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(key, JSON.stringify(cached));
+    return true;
+  } catch (error) {
+    console.warn(`[OfflineCache] Failed to save ${serviceName} price:`, error);
+    return false;
+  }
+}
+
+/**
+ * Get cached service price (SOL, FIXERCOIN, etc.)
+ */
+export function getCachedServicePrice(
+  serviceName: string,
+): { price: number; priceChange24h?: number; timestamp: number } | null {
+  try {
+    const key = SERVICE_PRICES_KEY(serviceName);
+    const cached = localStorage.getItem(key);
+    if (!cached) return null;
+
+    const data = JSON.parse(cached);
+
+    // Check if cache is within validity period (24 hours)
+    const age = Date.now() - data.timestamp;
+    if (age > CACHE_VALIDITY_SERVICE_PRICES) {
+      localStorage.removeItem(key);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.warn(`[OfflineCache] Failed to read ${serviceName} price:`, error);
+    return null;
+  }
+}
+
+/**
+ * Check if we're using cached data (offline/unstable connection)
+ */
+export function setConnectionStatus(isStable: boolean): void {
+  try {
+    localStorage.setItem(
+      CONNECTION_STATUS_KEY,
+      JSON.stringify({ isStable, timestamp: Date.now() }),
+    );
+  } catch (error) {
+    console.warn("[OfflineCache] Failed to set connection status:", error);
+  }
+}
+
+/**
+ * Get current connection status
+ */
+export function getConnectionStatus(): {
+  isStable: boolean;
+  isUsingCache: boolean;
+} {
+  try {
+    const cached = localStorage.getItem(CONNECTION_STATUS_KEY);
+    if (!cached) {
+      return { isStable: true, isUsingCache: false };
+    }
+
+    const data = JSON.parse(cached);
+    return {
+      isStable: data.isStable ?? true,
+      isUsingCache: !data.isStable,
+    };
+  } catch (error) {
+    console.warn("[OfflineCache] Failed to read connection status:", error);
+    return { isStable: true, isUsingCache: false };
+  }
 }

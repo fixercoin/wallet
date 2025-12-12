@@ -318,9 +318,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     try {
       // Build token list from TOKEN_MINTS constants + user tokens
-      const tokenMintEntries = Object.entries(TOKEN_MINTS).filter(
-        ([symbol]) => symbol !== "USDT",
-      );
+      const tokenMintEntries = Object.entries(TOKEN_MINTS);
       const standardTokens = tokenMintEntries.map(([symbol, mint]) => ({
         address: mint,
         symbol,
@@ -331,7 +329,7 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       // Add user tokens if available (avoid duplicates with standard tokens)
       const standardMints = new Set(standardTokens.map((t) => t.address));
       const userTokensNotInStandard = (userTokens || []).filter(
-        (ut) => !standardMints.has(ut.mint) && ut.symbol !== "USDT",
+        (ut) => !standardMints.has(ut.mint),
       );
 
       const combinedTokens = [
@@ -866,31 +864,16 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   if (!wallet) {
     return (
-      <div className="w-full max-w-md mx-auto px-4">
+      <div className="w-full">
         <div className="rounded-none border border-[#e6f6ec]/20 bg-transparent overflow-hidden">
-          <div className="space-y-6 p-6">
-            <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onBack}
-                className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
-                aria-label="Back"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <h3 className="text-lg font-semibold text-white uppercase">
-                FIXORIUM TRADE
-              </h3>
-            </div>
+          <div className="space-y-6 p-6 pt-20">
             <p className="text-gray-600 text-center">
               No wallet detected. Please set up or import a wallet to use the
               swap feature.
             </p>
             <Button
               onClick={onBack}
-              variant="outline"
-              className="w-full border border-gray-700 text-gray-900 hover:bg-gray-50 uppercase rounded-lg"
+              className="w-full bg-[#22c55e] hover:bg-[#1ea853] text-white uppercase font-semibold py-3 rounded-lg transition-all duration-200 mt-8"
             >
               Back
             </Button>
@@ -902,33 +885,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col">
-      <style>{`
-        @media (max-width: 768px) {
-          .express-p2p-page input,
-          .express-p2p-page select,
-          .express-p2p-page button[class*="border"] {
-            border-width: 2px !important;
-          }
-        }
-      `}</style>
-      <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 md:px-4 py-6 relative z-0">
+      <div className="w-full relative z-0">
         <div className="border-0 bg-transparent">
-          <div className="space-y-6 p-6 relative">
-            <div className="flex items-center gap-3 -mt-6 -mx-6 px-6 pt-4 pb-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onBack}
-                className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
-                aria-label="Back"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div className="font-semibold text-sm text-white uppercase">
-                FIXORIUM TRADE
-              </div>
-            </div>
-
+          <div className="space-y-6 p-6 pt-20 relative">
             <div className="space-y-2">
               <Label
                 htmlFor="from-token"
@@ -1092,24 +1051,33 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               </div>
             )}
 
-            <Button
-              onClick={executeSwap}
-              disabled={!amount || isLoading || isQuoteExpired()}
-              className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              title={
-                isQuoteExpired()
-                  ? "Quote expired - please get a new quote"
-                  : isQuoteWarning()
-                    ? `Quote expiring in ${getQuoteTimeRemaining()}s`
-                    : ""
-              }
-            >
-              {isLoading
-                ? "Processing..."
-                : isQuoteExpired()
-                  ? "Quote Expired - Get New Quote"
-                  : "Swap (Smart Route)"}
-            </Button>
+            <div className="space-y-3">
+              <Button
+                onClick={executeSwap}
+                disabled={!amount || isLoading || isQuoteExpired()}
+                className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={
+                  isQuoteExpired()
+                    ? "Quote expired - please get a new quote"
+                    : isQuoteWarning()
+                      ? `Quote expiring in ${getQuoteTimeRemaining()}s`
+                      : ""
+                }
+              >
+                {isLoading
+                  ? "Processing..."
+                  : isQuoteExpired()
+                    ? "CONVERT YOUR TOKENS"
+                    : "Swap (Smart Route)"}
+              </Button>
+
+              <Button
+                onClick={onBack}
+                className="w-full bg-[#22c55e] hover:bg-[#1ea853] text-white uppercase font-semibold py-3 rounded-lg transition-all duration-200"
+              >
+                Back
+              </Button>
+            </div>
           </div>
 
           <SuccessDialog

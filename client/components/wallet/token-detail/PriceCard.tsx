@@ -59,7 +59,7 @@ export const PriceCard: React.FC<PriceCardProps> = ({
             >
               {formatCurrency(currentPrice, {
                 from: "USD",
-                minimumFractionDigits: 8,
+                minimumFractionDigits: 2,
               })}
             </h2>
             <div className="flex items-center gap-2 mt-1">

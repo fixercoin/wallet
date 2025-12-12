@@ -1,3 +1,5 @@
+import { retryWithExponentialBackoff } from "./retry-fetch";
+
 export interface SolPriceData {
   price: number;
   price_change_24h: number;
@@ -11,21 +13,10 @@ class SolPriceService {
     timestamp: 0,
   };
 
-  private readonly CACHE_DURATION = 1500; // 1.5 seconds cache - real-time updates
+  private readonly CACHE_DURATION = 1500; // 1.5 seconds in-memory only
 
-  /**
-   * Validate that response is actually JSON
-   */
-  private isJsonResponse(response: Response): boolean {
-    const contentType = response.headers.get("content-type") || "";
-    return contentType.includes("application/json");
-  }
-
-  /**
-   * Fetch SOL price via proxy endpoint
-   */
   async getSolPrice(): Promise<SolPriceData | null> {
-    // Check cache first
+    // Use in-memory short cache only
     if (
       this.cache.data &&
       Date.now() - this.cache.timestamp < this.CACHE_DURATION
@@ -33,112 +24,111 @@ class SolPriceService {
       return this.cache.data;
     }
 
-    try {
-      const response = await fetch("/api/sol/price");
+    const priceData = await retryWithExponentialBackoff(
+      async () => {
+        console.log("[SOL Price] Fetching fresh SOL price...");
 
-      // Try to parse response as JSON regardless of content-type
-      // (server may return errors with wrong content-type)
-      let data: any;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        // If JSON parsing fails and response is not ok, log and use fallback
-        if (!response.ok) {
-          const contentType = response.headers.get("content-type") || "unknown";
-          console.warn(
-            `SOL price API returned ${response.status} with content-type: ${contentType}. Using fallback.`,
-          );
-          throw new Error(`Failed to fetch SOL price: HTTP ${response.status}`);
+        let response: Response;
+        try {
+          response = await fetch("/api/sol/price");
+        } catch (err) {
+          console.error("[SOL Price] Network error:", err);
+          throw err;
         }
-        console.error(
-          "Failed to parse SOL price response as JSON:",
-          parseError,
-        );
-        throw parseError;
-      }
 
-      // Check if response status is ok after successful JSON parse
-      if (!response.ok) {
-        console.warn(
-          `SOL price API returned ${response.status}, but JSON was parsed. Using fallback.`,
-        );
-        throw new Error(`Failed to fetch SOL price: ${response.status}`);
-      }
+        let data: any;
+        try {
+          data = await response.json();
+        } catch (parseErr) {
+          console.error("[SOL Price] JSON parse error:", parseErr);
+          throw parseErr;
+        }
 
-      // Validate data structure
-      if (!data || typeof data !== "object") {
-        console.error("Invalid SOL price response structure:", data);
-        throw new Error("Invalid response structure");
-      }
+        if (!data || typeof data !== "object") {
+          throw new Error("Invalid SOL price response");
+        }
 
-      // Handle both direct price response and nested structure
-      let priceData: SolPriceData;
+        let priceData: SolPriceData;
 
-      if (data.price !== undefined) {
-        // Direct response format from proxy
-        priceData = {
-          price: data.price || 0,
-          price_change_24h: data.price_change_24h ?? data.priceChange24h ?? 0,
-          market_cap: data.market_cap ?? data.marketCap ?? 0,
-          volume_24h: data.volume_24h ?? data.volume24h ?? 0,
+        // Direct proxy format
+        if (data.price !== undefined) {
+          priceData = {
+            price: data.price || 0,
+            price_change_24h: data.price_change_24h ?? 0,
+            market_cap: data.market_cap ?? 0,
+            volume_24h: data.volume_24h ?? 0,
+          };
+        }
+        // Fallback formats
+        else if (data.priceUsd !== undefined) {
+          priceData = {
+            price: data.priceUsd || 0,
+            price_change_24h: data.price_change_24h ?? 0,
+            market_cap: data.market_cap ?? 0,
+            volume_24h: data.volume_24h ?? 0,
+          };
+        } else if (data.solana) {
+          priceData = {
+            price: data.solana.usd || 0,
+            price_change_24h: data.solana.usd_24h_change || 0,
+            market_cap: data.solana.usd_market_cap || 0,
+            volume_24h: data.solana.usd_24h_vol || 0,
+          };
+        } else {
+          console.warn("[SOL Price] Missing price fields");
+          priceData = {
+            price: 0,
+            price_change_24h: 0,
+            market_cap: 0,
+            volume_24h: 0,
+          };
+        }
+
+        if (!isFinite(priceData.price) || priceData.price <= 0) {
+          console.warn("[SOL Price] Invalid price value, using fallback 100");
+          priceData.price = 100;
+        }
+
+        // Save only to memory, no offline cache
+        this.cache = {
+          data: priceData,
+          timestamp: Date.now(),
         };
-      } else if (data.solana) {
-        // CoinGecko response format
-        priceData = {
-          price: data.solana.usd || 0,
-          price_change_24h: data.solana.usd_24h_change || 0,
-          market_cap: data.solana.usd_market_cap || 0,
-          volume_24h: data.solana.usd_24h_vol || 0,
-        };
-      } else {
-        console.warn("SOL price response missing expected fields:", data);
-        throw new Error("Missing price data in response");
-      }
 
-      // Validate price is a valid number
-      if (!isFinite(priceData.price)) {
-        console.warn("SOL price is not a valid number:", priceData.price);
-        throw new Error("Invalid price value");
-      }
+        console.log(`[SOL Price] Updated: $${priceData.price.toFixed(2)}`);
 
-      // Update cache
-      this.cache = {
-        data: priceData,
-        timestamp: Date.now(),
-      };
+        return priceData;
+      },
+      "SOL",
+      {
+        maxRetries: 3,
+        initialDelayMs: 500,
+        maxDelayMs: 2000,
+        backoffMultiplier: 2,
+        timeoutMs: 8000,
+      },
+    );
 
-      return priceData;
-    } catch (error) {
-      console.error("Error fetching SOL price:", error);
+    // If retry returned data, return it
+    if (priceData) return priceData;
 
-      // Return cached price if available
-      if (this.cache.data) {
-        console.log("Returning cached SOL price due to error");
-        return this.cache.data;
-      }
+    // Use last in-memory cache if available
+    if (this.cache.data) return this.cache.data;
 
-      // Fallback to approximate price
-      console.log("Using fallback SOL price ($100)");
-      return {
-        price: 100,
-        price_change_24h: 0,
-        market_cap: 0,
-        volume_24h: 0,
-      };
-    }
+    // Final fallback
+    return {
+      price: 100,
+      price_change_24h: 0,
+      market_cap: 0,
+      volume_24h: 0,
+    };
   }
 
-  /**
-   * Get SOL price with simple number return
-   */
   async getSolPriceSimple(): Promise<number> {
     const data = await this.getSolPrice();
     return data?.price || 100;
   }
 
-  /**
-   * Clear cache (useful for testing or manual refresh)
-   */
   clearCache(): void {
     this.cache = { data: null, timestamp: 0 };
   }

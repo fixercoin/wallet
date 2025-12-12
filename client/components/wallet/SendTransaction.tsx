@@ -124,17 +124,19 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   );
 
   const availableTokens = useMemo(() => {
-    // Show SOL first, then tokens with positive balance; always include FIXERCOIN and USDC
+    // Show SOL first, then tokens with positive balance; always include FIXERCOIN, USDC, and USDT
     const sol = tokens.find((t) => t.symbol === "SOL");
     const rest = tokens
-      .filter((t) => t.symbol !== "SOL" && t.symbol !== "USDT")
+      .filter((t) => t.symbol !== "SOL")
       .filter(
         (t) =>
           (t.balance || 0) > 0 ||
           t.symbol === "FIXERCOIN" ||
           t.symbol === "USDC" ||
+          t.symbol === "USDT" ||
           t.mint === TOKEN_MINTS.FIXERCOIN ||
-          t.mint === TOKEN_MINTS.USDC,
+          t.mint === TOKEN_MINTS.USDC ||
+          t.mint === TOKEN_MINTS.USDT,
       )
       .sort((a, b) => (b.balance || 0) - (a.balance || 0));
     return sol ? [sol, ...rest] : rest;
@@ -634,9 +636,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
         ]);
         const exists = !!ataInfo?.value;
         if (!exists) {
-          const rent = await rpcCall("getMinimumBalanceForRentExemption", [
-            165,
-          ]);
+          const rent = await rpcCall(
+            "getMinimumBalanceForRentExemption",
+            [165],
+          );
           rentLamports = typeof rent === "number" ? rent : rent?.value || 0;
         }
       } catch {}
@@ -815,16 +818,6 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   if (step === "success") {
     return (
       <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4 relative z-0">
-        <style>{`
-          @media (max-width: 768px) {
-            .express-p2p-page input,
-            .express-p2p-page select,
-            .express-p2p-page button[class*="border"],
-            .express-p2p-page [class*="border"] {
-              border-width: 2px !important;
-            }
-          }
-        `}</style>
         <SuccessDialog onContinue={handleNewTransaction} />
       </div>
     );
@@ -833,16 +826,6 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
   if (step === "sending") {
     return (
       <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 flex items-center justify-center p-4 relative z-0">
-        <style>{`
-          @media (max-width: 768px) {
-            .express-p2p-page input,
-            .express-p2p-page select,
-            .express-p2p-page button[class*="border"],
-            .express-p2p-page [class*="border"] {
-              border-width: 2px !important;
-            }
-          }
-        `}</style>
         <div className="text-center space-y-6 max-w-sm">
           <div className="flex justify-center">
             <div className="relative">
@@ -882,31 +865,10 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
 
   return (
     <div className="express-p2p-page light-theme min-h-screen bg-white text-gray-900 relative overflow-hidden flex flex-col">
-      <style>{`
-        @media (max-width: 768px) {
-          .express-p2p-page input,
-          .express-p2p-page select,
-          .express-p2p-page button[class*="border"] {
-            border-width: 2px !important;
-          }
-        }
-      `}</style>
-      <div className="flex-1 flex items-center justify-center relative z-20">
-        <div className="w-full md:max-w-lg lg:max-w-lg px-0 md:px-4 pt-0 md:pt-6 pb-6">
+      <div className="flex flex-col relative z-20 pt-4">
+        <div className="w-full">
           <div className="border-0 bg-transparent">
-            <div className="space-y-6 p-6">
-              <div className="flex items-center gap-3 -mt-4 -mx-6 px-6 pt-4 pb-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onBack}
-                  className="h-8 w-8 p-0 rounded-md bg-transparent hover:bg-gray-100 text-gray-900 focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent transition-colors flex-shrink-0"
-                  aria-label="Back"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div className="font-medium text-sm">SEND {selectedSymbol}</div>
-              </div>
+            <div className="space-y-6 px-6 pt-20 pb-4">
               {step === "form" ? (
                 <>
                   <div className="space-y-2">
@@ -1053,13 +1015,22 @@ export const SendTransaction: React.FC<SendTransactionProps> = ({
                     />
                   </div>
 
-                  <Button
-                    onClick={handleContinue}
-                    className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase rounded-lg"
-                    disabled={!recipient || !amount}
-                  >
-                    Continue
-                  </Button>
+                  <div className="space-y-3">
+                    <Button
+                      onClick={handleContinue}
+                      className="w-full bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#1ea853] hover:to-[#15803d] text-white shadow-lg uppercase rounded-lg"
+                      disabled={!recipient || !amount}
+                    >
+                      Continue
+                    </Button>
+                    <Button
+                      onClick={onBack}
+                      className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 rounded-lg transition-colors uppercase"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Back
+                    </Button>
+                  </div>
                 </>
               ) : (
                 <>

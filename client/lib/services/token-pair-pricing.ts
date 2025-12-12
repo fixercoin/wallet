@@ -64,8 +64,14 @@ class TokenPairPricingService {
    */
   private async getSolPrice(): Promise<number> {
     try {
-      // Use dedicated SOL price service which has better error handling and fallbacks
-      const solPriceData = await solPriceService.getSolPrice();
+      // Use dedicated SOL price service which has better error handling and fallbacks (with timeout)
+      const solPriceData = await Promise.race([
+        solPriceService.getSolPrice(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("SOL price fetch timeout")), 10000),
+        ),
+      ] as const);
+
       if (
         solPriceData &&
         solPriceData.price > 0 &&
@@ -78,14 +84,23 @@ class TokenPairPricingService {
       }
     } catch (error) {
       console.warn(
-        "[TokenPairPricing] Error fetching SOL price from service:",
-        error,
+        "[TokenPairPricing] Error/timeout fetching SOL price from service:",
+        error instanceof Error ? error.message : error,
       );
     }
 
-    // Fallback 1: Try DexScreener as backup
+    // Fallback 1: Try DexScreener as backup (with timeout)
     try {
-      const solToken = await dexscreenerAPI.getTokenByMint(SOL_MINT);
+      const solToken = await Promise.race([
+        dexscreenerAPI.getTokenByMint(SOL_MINT),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("DexScreener SOL fetch timeout")),
+            8000,
+          ),
+        ),
+      ] as const);
+
       if (solToken && solToken.priceUsd) {
         const price = parseFloat(solToken.priceUsd);
         if (isFinite(price) && price > 0) {
@@ -97,8 +112,8 @@ class TokenPairPricingService {
       }
     } catch (error) {
       console.warn(
-        "[TokenPairPricing] Error fetching SOL price from DexScreener:",
-        error,
+        "[TokenPairPricing] Error/timeout fetching SOL price from DexScreener:",
+        error instanceof Error ? error.message : error,
       );
     }
 
@@ -108,12 +123,20 @@ class TokenPairPricingService {
   }
 
   /**
-   * Get the SOL pair price (how many SOL needed to buy 1 token)
+   * Get the SOL pair price (how many SOL needed to buy 1 token) with timeout
    */
   private async getSolPairPrice(tokenMint: string): Promise<number | null> {
     try {
-      // Fetch token data with all trading pairs
-      const tokenData = await dexscreenerAPI.getTokenByMint(tokenMint);
+      // Fetch token data with timeout
+      const tokenData = await Promise.race([
+        dexscreenerAPI.getTokenByMint(tokenMint),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("DexScreener getTokenByMint timeout")),
+            12000,
+          ),
+        ),
+      ] as const);
 
       if (!tokenData) {
         console.warn(`No trading data found for ${tokenMint}`);
@@ -137,17 +160,29 @@ class TokenPairPricingService {
 
       return null;
     } catch (error) {
-      console.warn(`Error getting SOL pair price for ${tokenMint}:`, error);
+      console.warn(
+        `Error/timeout getting SOL pair price for ${tokenMint}:`,
+        error instanceof Error ? error.message : error,
+      );
       return null;
     }
   }
 
   /**
-   * Get direct USD price from DexScreener for tokens without reliable SOL pair
+   * Get direct USD price from DexScreener for tokens without reliable SOL pair (with timeout)
    */
   private async getDirectUsdPrice(tokenMint: string): Promise<number | null> {
     try {
-      const tokenData = await dexscreenerAPI.getTokenByMint(tokenMint);
+      // Fetch token data with timeout
+      const tokenData = await Promise.race([
+        dexscreenerAPI.getTokenByMint(tokenMint),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("DexScreener getDirectUsdPrice timeout")),
+            12000,
+          ),
+        ),
+      ] as const);
 
       if (!tokenData) {
         return null;
@@ -165,7 +200,10 @@ class TokenPairPricingService {
 
       return null;
     } catch (error) {
-      console.warn(`Error getting direct USD price for ${tokenMint}:`, error);
+      console.warn(
+        `Error/timeout getting direct USD price for ${tokenMint}:`,
+        error instanceof Error ? error.message : error,
+      );
       return null;
     }
   }
@@ -233,24 +271,45 @@ class TokenPairPricingService {
         }
 
         console.warn(
-          `Could not determine price (SOL pair or USD price) for ${symbol}, using fallback`,
+          `Could not determine price (SOL pair or USD price) for ${symbol} - API unavailable`,
         );
-        return this.getFallbackPriceData(symbol, solPrice);
+        return null;
       }
 
       // Calculate token price in USD by multiplying SOL price by the SOL ratio
       // derivedPrice = (how many SOL per token) * (SOL price in USD)
       const derivedPrice = priceInSol * solPrice;
 
-      // Fetch additional metadata from DexScreener
-      const tokenData = await dexscreenerAPI.getTokenByMint(config.mint);
+      if (derivedPrice <= 0) {
+        console.warn(`Invalid derived price for ${symbol}: ${derivedPrice}`);
+        return null;
+      }
+
+      // Fetch additional metadata from DexScreener (with timeout)
+      let tokenData = null;
+      try {
+        tokenData = await Promise.race([
+          dexscreenerAPI.getTokenByMint(config.mint),
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error("DexScreener metadata fetch timeout")),
+              10000,
+            ),
+          ),
+        ] as const);
+      } catch (error) {
+        console.warn(
+          `[TokenPairPricing] Timeout fetching metadata for ${config.mint}`,
+        );
+        // Continue without metadata - we already have the price
+      }
 
       const priceData: PairPricingData = {
         tokenAddress: config.mint,
         tokenSymbol: symbol,
         solPrice,
         pairRatio: 1 / priceInSol, // How many tokens per 1 SOL
-        derivedPrice: derivedPrice > 0 ? derivedPrice : FALLBACK_PRICES[symbol],
+        derivedPrice: derivedPrice,
         priceChange24h: tokenData?.priceChange?.h24 || 0,
         volume24h: tokenData?.volume?.h24 || 0,
         liquidity: tokenData?.liquidity?.usd || 0,
@@ -270,8 +329,7 @@ class TokenPairPricingService {
       return priceData;
     } catch (error) {
       console.error(`Error calculating derived price for ${symbol}:`, error);
-      const solPrice = await this.getSolPrice();
-      return this.getFallbackPriceData(symbol, solPrice);
+      return null;
     }
   }
 
@@ -289,29 +347,6 @@ class TokenPairPricingService {
       FIXERCOIN: fixercoinData,
       LOCKER: lockerData,
       FXM: fxmData,
-    };
-  }
-
-  /**
-   * Get fallback price data when API fails
-   */
-  private async getFallbackPriceData(
-    symbol: string,
-    solPrice: number,
-  ): Promise<PairPricingData> {
-    const config = TOKEN_CONFIGS[symbol];
-    const fallbackPrice = FALLBACK_PRICES[symbol] || 0.000001;
-
-    return {
-      tokenAddress: config.mint,
-      tokenSymbol: symbol,
-      solPrice,
-      pairRatio: solPrice / fallbackPrice,
-      derivedPrice: fallbackPrice,
-      priceChange24h: 0,
-      volume24h: 0,
-      liquidity: 0,
-      lastUpdated: new Date(),
     };
   }
 

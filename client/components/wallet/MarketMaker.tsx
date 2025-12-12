@@ -14,10 +14,8 @@ import {
 import { ArrowLeft, Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fixercoinPriceService } from "@/lib/services/fixercoin-price";
-import { dexscreenerAPI } from "@/lib/services/dexscreener";
 import { solPriceService } from "@/lib/services/sol-price";
 import { MarketMakerHistoryCard } from "./MarketMakerHistoryCard";
-import { PriceLoader } from "@/components/ui/price-loader";
 import {
   botOrdersStorage,
   BotSession,
@@ -76,6 +74,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     amount: "",
     total: "0.02",
   });
+  const [sellOutputToken, setSellOutputToken] = useState<"SOL" | "USDC">("SOL");
   const [isLoading, setIsLoading] = useState(false);
   const [livePrice, setLivePrice] = useState<number | null>(null);
   const [solPrice, setSolPrice] = useState<number | null>(null);
@@ -116,13 +115,6 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           const priceData = await fixercoinPriceService.getFixercoinPrice();
           if (priceData && priceData.price > 0) {
             tokenPrice = priceData.price;
-          }
-        } else if (selectedToken === "SOL") {
-          const solToken = await dexscreenerAPI.getTokenByMint(
-            "So11111111111111111111111111111111111111112",
-          );
-          if (solToken && solToken.priceUsd) {
-            tokenPrice = parseFloat(solToken.priceUsd);
           }
         }
 
@@ -209,9 +201,13 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
         // Check buy orders
         for (const order of pendingBuyOrders) {
+          console.log(
+            `[MarketMaker] Checking BUY order: livePrice=${livePrice}, buyPrice=${order.buyPrice}, match=${livePrice <= order.buyPrice}`,
+          );
+
           if (livePrice <= order.buyPrice && !executingOrders.has(order.id)) {
             console.log(
-              `[MarketMaker] Price match for BUY order: ${livePrice} <= ${order.buyPrice}`,
+              `[MarketMaker] Price match for BUY order: ${livePrice} <= ${order.buyPrice}. Executing...`,
             );
             setExecutingOrders((prev) => new Set([...prev, order.id]));
 
@@ -241,21 +237,36 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             } else {
               console.error(
                 "[MarketMaker] Buy order execution failed:",
-                result,
+                result.error,
               );
-              // Don't show error toast for every check - only log
+              // Show error toast for wallet-related errors
+              if (
+                result.error &&
+                (result.error.includes("secretKey") ||
+                  result.error.includes("private key"))
+              ) {
+                toast({
+                  title: "Execution Failed",
+                  description: result.error,
+                  variant: "destructive",
+                });
+              }
             }
           }
         }
 
         // Check sell orders
         for (const order of pendingSellOrders) {
+          console.log(
+            `[MarketMaker] Checking SELL order: livePrice=${livePrice}, targetSellPrice=${order.targetSellPrice}, match=${livePrice >= order.targetSellPrice}`,
+          );
+
           if (
             livePrice >= order.targetSellPrice &&
             !executingOrders.has(order.id)
           ) {
             console.log(
-              `[MarketMaker] Price match for SELL order: ${livePrice} >= ${order.targetSellPrice}`,
+              `[MarketMaker] Price match for SELL order: ${livePrice} >= ${order.targetSellPrice}. Executing...`,
             );
             setExecutingOrders((prev) => new Set([...prev, order.id]));
 
@@ -273,9 +284,14 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             });
 
             if (result.success) {
+              const outputToken = result.order?.outputToken || "SOL";
+              const outputAmount =
+                result.order?.outputToken === "USDC"
+                  ? result.order?.outputAmount?.toFixed(6)
+                  : result.order?.outputAmount?.toFixed(9);
               toast({
                 title: "Sell Order Executed",
-                description: `Successfully sold ${result.order?.tokenAmount?.toFixed(6) || "tokens"} for ${result.order?.solAmount?.toFixed(6) || "SOL"}`,
+                description: `Successfully sold ${result.order?.tokenAmount?.toFixed(6) || "tokens"} for ${outputAmount || "0"} ${outputToken}`,
               });
               // Reload session
               const updatedSession = botOrdersStorage.getCurrentSession();
@@ -285,9 +301,20 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             } else {
               console.error(
                 "[MarketMaker] Sell order execution failed:",
-                result,
+                result.error,
               );
-              // Don't show error toast for every check - only log
+              // Show error toast for wallet-related errors
+              if (
+                result.error &&
+                (result.error.includes("secretKey") ||
+                  result.error.includes("private key"))
+              ) {
+                toast({
+                  title: "Execution Failed",
+                  description: result.error,
+                  variant: "destructive",
+                });
+              }
             }
           }
         }
@@ -355,10 +382,11 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const handleBuyUsdcAmountChange = (value: string) => {
     let estimatedAmount = "0";
 
-    if (livePrice && livePrice > 0) {
-      // Calculate: USDC Amount / Token Price in USD
-      const usdcAmount = parseFloat(value) || 0;
-      const tokenAmount = usdcAmount / livePrice;
+    if (livePrice && livePrice > 0 && solPrice && solPrice > 0) {
+      // Calculate: SOL Amount * SOL Price in USD / Token Price in USD
+      const solAmount = parseFloat(value) || 0;
+      const solValueUsd = solAmount * solPrice;
+      const tokenAmount = solValueUsd / livePrice;
       estimatedAmount = tokenAmount.toFixed(8);
     }
 
@@ -379,11 +407,12 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
   const handleSellAmountChange = (value: string) => {
     let estimatedTotal = "0";
 
-    if (livePrice && livePrice > 0) {
-      // Calculate: Token Amount * Token Price in USD
+    if (livePrice && livePrice > 0 && solPrice && solPrice > 0) {
+      // Calculate: Token Amount * Token Price in USD / SOL Price in USD
       const tokenAmount = parseFloat(value) || 0;
-      const usdcAmount = tokenAmount * livePrice;
-      estimatedTotal = usdcAmount.toFixed(8);
+      const tokenValueUsd = tokenAmount * livePrice;
+      const solAmount = tokenValueUsd / solPrice;
+      estimatedTotal = solAmount.toFixed(8);
     }
 
     setSellOrder({
@@ -392,6 +421,32 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
       total: estimatedTotal,
     });
   };
+
+  // Recalculate estimated amounts when prices update
+  useEffect(() => {
+    if (orderMode === "BUY" && buyOrder.total && livePrice && solPrice) {
+      const solAmount = parseFloat(buyOrder.total) || 0;
+      const solValueUsd = solAmount * solPrice;
+      const tokenAmount = solValueUsd / livePrice;
+      setBuyOrder((prev) => ({
+        ...prev,
+        amount: tokenAmount.toFixed(8),
+      }));
+    } else if (
+      orderMode === "SELL" &&
+      sellOrder.amount &&
+      livePrice &&
+      solPrice
+    ) {
+      const tokenAmount = parseFloat(sellOrder.amount) || 0;
+      const tokenValueUsd = tokenAmount * livePrice;
+      const solAmount = tokenValueUsd / solPrice;
+      setSellOrder((prev) => ({
+        ...prev,
+        total: solAmount.toFixed(8),
+      }));
+    }
+  }, [livePrice, solPrice, orderMode]);
 
   const validateBuyOrder = (): string | null => {
     const price = parseFloat(buyOrder.price);
@@ -402,8 +457,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
     if (isNaN(amount) || amount <= 0)
       return "Buy amount must be greater than 0";
     if (isNaN(total) || total <= 0) return "Buy total is invalid";
-    if (usdcBalance < total)
-      return `Insufficient USDC. Need ${total.toFixed(8)}, have ${usdcBalance.toFixed(8)}`;
+    if (solBalance < total)
+      return `Insufficient SOL. Need ${total.toFixed(8)}, have ${solBalance.toFixed(8)}`;
 
     return null;
   };
@@ -508,6 +563,8 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
           "", // buyOrderId - we'll use empty since this is a direct limit sell
           sellPrice,
           tokenAmount,
+          undefined,
+          sellOutputToken,
         );
 
         if (!newOrder) {
@@ -584,18 +641,9 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
             <Label className="text-gray-700 uppercase text-xs font-semibold">
               TOKEN
             </Label>
-            <Select value={selectedToken} onValueChange={setSelectedToken}>
-              <SelectTrigger className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-gray-900">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(TOKEN_CONFIGS).map(([key, config]) => (
-                  <SelectItem key={key} value={key}>
-                    {config.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-semibold">
+              FIXERCOIN
+            </div>
           </div>
 
           <div className="bg-transparent border border-gray-700 rounded-lg p-3 md:p-4 w-full">
@@ -631,9 +679,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         TARGET LIMIT (FIXERCOIN)
                       </Label>
                       <div className="flex items-center gap-1 text-xs text-gray-400">
-                        {isFetchingPrice ? (
-                          <PriceLoader />
-                        ) : livePrice ? (
+                        {livePrice ? (
                           <>
                             LIVE:{" "}
                             <span className="text-green-400 font-semibold">
@@ -657,7 +703,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
                   <div className="space-y-2">
                     <Label className="text-gray-600 text-xs font-semibold">
-                      USDC AMOUNT
+                      SOL AMOUNT
                     </Label>
                     <Input
                       type="number"
@@ -667,7 +713,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                         handleBuyUsdcAmountChange(e.target.value)
                       }
                       className={`bg-transparent border border-gray-700 text-gray-900 rounded-lg px-4 py-3 font-medium focus:outline-none transition-colors placeholder:text-gray-400 caret-gray-900 focus:border-green-400`}
-                      placeholder="ENTER USDC AMOUNT"
+                      placeholder="ENTER SOL AMOUNT"
                     />
                   </div>
 
@@ -684,7 +730,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
 
                   <div className="space-y-2">
                     <Label className="text-gray-600 text-xs font-semibold">
-                      AVAILABLE USDC
+                      AVAILABLE SOL
                     </Label>
                     <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-medium">
                       <span
@@ -692,7 +738,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                           canAffordCurrent ? "text-green-400" : "text-red-400"
                         }
                       >
-                        {usdcBalance.toFixed(8)}
+                        {solBalance.toFixed(8)}
                       </span>
                     </div>
                   </div>
@@ -747,7 +793,7 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-gray-600 text-xs font-semibold">
-                        ESTIMATED USDC
+                        ESTIMATED SOL
                       </Label>
                     </div>
                     <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-medium">
@@ -767,6 +813,15 @@ export const MarketMaker: React.FC<MarketMakerProps> = ({ onBack }) => {
                       >
                         {tokenBalance.toFixed(8)}
                       </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-gray-600 text-xs font-semibold">
+                      RECEIVE IN
+                    </Label>
+                    <div className="bg-transparent border border-gray-700 rounded-lg px-4 py-3 text-white font-semibold">
+                      SOL
                     </div>
                   </div>
                 </>

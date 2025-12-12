@@ -781,6 +781,10 @@ export async function createServer(): Promise<express.Application> {
   app.patch("/api/p2p/orders/:orderId/status", handleUpdateOrderStatus);
   app.post("/api/p2p/orders/:orderId/complete", handleCompleteP2POrder);
 
+  // P2P Admin approval routes
+  app.post("/api/p2p/orders/:orderId/approve", handleApproveP2POrder);
+  app.post("/api/p2p/orders/:orderId/reject", handleRejectP2POrder);
+
   // P2P Orders diagnostics endpoint - helps debug missing orders
   app.get("/api/p2p/orders/debug/check-health", (req, res) => {
     const orderId = req.query.orderId as string;

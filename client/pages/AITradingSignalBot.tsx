@@ -70,7 +70,9 @@ const TradeAssetCard = ({
             </div>
           </div>
           <div className="text-right">
-            <p className="font-bold text-lg text-white">${price.toFixed(2)}</p>
+            <p className="font-bold text-lg text-white">
+              ${asset.symbol === "FIXERCOIN" ? price.toFixed(8) : price.toFixed(2)}
+            </p>
             <p className={`text-xs font-semibold ${priceChange >= 0 ? "text-green-400" : "text-red-400"}`}>
               {priceChange >= 0 ? "↑" : "↓"} {Math.abs(priceChange).toFixed(2)}%
             </p>

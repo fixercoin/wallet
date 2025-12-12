@@ -156,36 +156,36 @@ export default function AIPeerToPeer() {
           <Card className="border-gray-700/30 bg-transparent mb-8">
             <CardContent className="pt-6">
               <div>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter password"
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        if (password === "123") {
-                          setIsPasswordAuthenticated(true);
-                          setPassword("");
-                        } else {
-                          toast.error("INCORRECT PASSWORD");
-                        }
-                      }
-                    }}
-                    className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-2 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all mb-3"
-                  />
-                  <Button
-                    onClick={() => {
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
                       if (password === "123") {
                         setIsPasswordAuthenticated(true);
                         setPassword("");
                       } else {
                         toast.error("INCORRECT PASSWORD");
                       }
-                    }}
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold uppercase h-10 text-sm"
-                  >
-                    UNLOCK
-                  </Button>
+                    }
+                  }}
+                  className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-2 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all mb-3"
+                />
+                <Button
+                  onClick={() => {
+                    if (password === "123") {
+                      setIsPasswordAuthenticated(true);
+                      setPassword("");
+                    } else {
+                      toast.error("INCORRECT PASSWORD");
+                    }
+                  }}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold uppercase h-10 text-sm"
+                >
+                  UNLOCK
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -270,7 +270,14 @@ function NewTradeDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!amount || !minPrice || !maxPrice || !token || !digitalAccount || !accountName) {
+    if (
+      !amount ||
+      !minPrice ||
+      !maxPrice ||
+      !token ||
+      !digitalAccount ||
+      !accountName
+    ) {
       toast.error("PLEASE FILL ALL FIELDS");
       return;
     }

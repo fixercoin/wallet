@@ -119,17 +119,17 @@ export default function Info() {
             </div>
 
             {/* Trading Platforms */}
-            <div className="bg-transparent border border-purple-500/20 rounded-lg p-4 mb-6">
-              <p className="text-[12px] text-gray-400 mb-3 uppercase font-semibold">
+            <div className="bg-card/50 border border-border rounded-lg p-4 mb-6">
+              <p className="text-[12px] text-muted-foreground mb-3 uppercase font-semibold">
                 TRADING PLATFORMS
               </p>
               <div className="space-y-2">
                 {fixerCoinData.tradingPlatforms.map((platform, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-2 text-[12px] text-gray-200 uppercase"
+                    className="flex items-center gap-2 text-[12px] text-foreground uppercase"
                   >
-                    <span className="w-2 h-2 bg-purple-500 rounded-full" />
+                    <span className="w-2 h-2 bg-primary rounded-full" />
                     {platform}
                   </div>
                 ))}

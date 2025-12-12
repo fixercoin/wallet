@@ -24,7 +24,7 @@ const TRADE_ASSETS: TradeAsset[] = [
     symbol: "SOL",
     name: "Solana",
     mint: TOKEN_MINTS.SOL,
-    logo: "https://raw.githubusercontent.com/solflare-wallet/token-list/main/assets/solana/So11111111111111111111111111111111111111112/logo.png",
+    logo: "https://cdn.builder.io/api/v1/image/assets%2F003c5e4209a24523976f0fa5b9f0cf4e%2F1810ee5b8f6d4bc7b4e6f1df45d4334a?format=webp&width=800",
   },
   {
     symbol: "FIXERCOIN",

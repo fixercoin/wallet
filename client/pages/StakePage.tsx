@@ -5,7 +5,7 @@ export default function StakePage() {
   const navigate = useNavigate();
 
   const handleBack = () => {
-    navigate(-1);
+    navigate("/");
   };
 
   const handleTokenSelect = (tokenMint: string) => {

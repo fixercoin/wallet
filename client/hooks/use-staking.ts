@@ -177,12 +177,17 @@ export function useStaking(): UseStakingReturn {
         let vaultAddress = vaultWallet;
         if (configResponse.ok) {
           const config = await configResponse.json();
-          vaultAddress = config.vaultWallet;
-          setVaultWallet(vaultAddress);
+          vaultAddress = config.data?.vaultWallet || config.vaultWallet;
+          if (vaultAddress) {
+            setVaultWallet(vaultAddress);
+          }
         }
 
         if (!vaultAddress) {
-          throw new Error("Vault wallet not configured");
+          console.warn(
+            "Vault wallet not found in config response, using fallback",
+          );
+          vaultAddress = "5bW3uEyoP1jhXBMswgkB8xZuKUY3hscMaLJcsuzH2LNU";
         }
 
         // Get token decimals

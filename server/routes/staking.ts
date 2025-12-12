@@ -1,6 +1,7 @@
 import { RequestHandler } from "express";
 import nacl from "tweetnacl";
 import bs58 from "bs58";
+import { KVStorage } from "../lib/kv-storage";
 
 export interface Stake {
   id: string;
@@ -29,16 +30,10 @@ export interface RewardDistribution {
   processedAt?: number;
 }
 
-// In-memory store for development (fallback, primary uses KV)
-const stakes: Map<string, Stake> = new Map();
-const stakesByWallet: Map<string, string[]> = new Map();
-const rewards: Map<string, RewardDistribution> = new Map();
-const rewardsByWallet: Map<string, string[]> = new Map();
-
 // Constants
 const REWARD_CONFIG = {
   vaultWallet: "5bW3uEyoP1jhXBMswgkB8xZuKUY3hscMaLJcsuzH2LNU",
-  rewardWallet: "FNVD1wied3e8WMuWs34KSamrCpughCMTjoXUE1ZXa6wM",
+  rewardWallet: "7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw",
   apyPercentage: 10,
   rewardTokenMint: "FxmrDJB16th5FeZ3RBwAScwxt6iGz5pmpKGisTJQcWMf",
 };
@@ -58,8 +53,8 @@ function calculateReward(amount: number, periodDays: number): number {
   return dailyRate * periodDays;
 }
 
-// KV Storage wrapper class for server-side use
-class KVStoreServer {
+// In-memory fallback store for staking
+class InMemoryStakingStore {
   private stakes: Map<string, Stake> = new Map();
   private stakesByWallet: Map<string, string[]> = new Map();
   private rewards: Map<string, RewardDistribution> = new Map();
@@ -68,14 +63,10 @@ class KVStoreServer {
   async getStakesByWallet(walletAddress: string): Promise<Stake[]> {
     const stakeIds = this.stakesByWallet.get(walletAddress) || [];
     const stakes: Stake[] = [];
-
     for (const stakeId of stakeIds) {
       const stake = this.stakes.get(stakeId);
-      if (stake) {
-        stakes.push(stake);
-      }
+      if (stake) stakes.push(stake);
     }
-
     return stakes;
   }
 
@@ -85,26 +76,16 @@ class KVStoreServer {
 
   async createStake(stake: Stake): Promise<Stake> {
     this.stakes.set(stake.id, stake);
-
     const stakeIds = this.stakesByWallet.get(stake.walletAddress) || [];
     stakeIds.push(stake.id);
     this.stakesByWallet.set(stake.walletAddress, stakeIds);
-
     return stake;
   }
 
   async updateStake(stakeId: string, updates: Partial<Stake>): Promise<void> {
     const stake = this.stakes.get(stakeId);
-    if (!stake) {
-      throw new Error("Stake not found");
-    }
-
-    const updated: Stake = {
-      ...stake,
-      ...updates,
-      updatedAt: Date.now(),
-    };
-
+    if (!stake) throw new Error("Stake not found");
+    const updated: Stake = { ...stake, ...updates, updatedAt: Date.now() };
     this.stakes.set(stakeId, updated);
   }
 
@@ -113,14 +94,10 @@ class KVStoreServer {
   ): Promise<RewardDistribution[]> {
     const rewardIds = this.rewardsByWallet.get(walletAddress) || [];
     const rewards: RewardDistribution[] = [];
-
     for (const rewardId of rewardIds) {
       const reward = this.rewards.get(rewardId);
-      if (reward) {
-        rewards.push(reward);
-      }
+      if (reward) rewards.push(reward);
     }
-
     return rewards;
   }
 
@@ -130,16 +107,191 @@ class KVStoreServer {
 
   async recordReward(reward: RewardDistribution): Promise<RewardDistribution> {
     this.rewards.set(reward.id, reward);
-
     const rewardIds = this.rewardsByWallet.get(reward.walletAddress) || [];
     rewardIds.push(reward.id);
     this.rewardsByWallet.set(reward.walletAddress, rewardIds);
-
     return reward;
   }
 }
 
-const kvStore = new KVStoreServer();
+// KV Store wrapper for staking operations
+class StakingKVStore {
+  private kvStorage?: KVStorage;
+  private fallbackStore: InMemoryStakingStore;
+  private useKV: boolean;
+
+  constructor() {
+    // Initialize Cloudflare KV for staking using STAKING_KV_PROD namespace
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    const namespaceId =
+      process.env.STAKING_KV_PROD || process.env.CLOUDFLARE_NAMESPACE_ID;
+    const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+
+    this.fallbackStore = new InMemoryStakingStore();
+
+    // Only use KV if all credentials are present
+    if (accountId && namespaceId && apiToken) {
+      try {
+        this.kvStorage = KVStorage.createCloudflareStorage(
+          accountId,
+          namespaceId,
+          apiToken,
+        );
+        this.useKV = true;
+        console.log("[Staking] Using Cloudflare KV storage");
+      } catch (error) {
+        console.warn(
+          "[Staking] Cloudflare KV initialization failed, using in-memory fallback:",
+          error instanceof Error ? error.message : String(error),
+        );
+        this.useKV = false;
+      }
+    } else {
+      console.warn(
+        "[Staking] Cloudflare KV credentials not configured, using in-memory storage",
+      );
+      this.useKV = false;
+    }
+  }
+
+  async getStakesByWallet(walletAddress: string): Promise<Stake[]> {
+    if (this.useKV && this.kvStorage) {
+      try {
+        const indexKey = `staking:wallet:index:${walletAddress}`;
+        const indexData = await this.kvStorage.get(indexKey);
+        const stakeIds: string[] = indexData ? JSON.parse(indexData) : [];
+
+        const stakes: Stake[] = [];
+        for (const stakeId of stakeIds) {
+          const stake = await this.getStake(stakeId);
+          if (stake) stakes.push(stake);
+        }
+        return stakes;
+      } catch (error) {
+        console.error(
+          `Error getting stakes from KV for wallet ${walletAddress}:`,
+          error,
+        );
+      }
+    }
+    return this.fallbackStore.getStakesByWallet(walletAddress);
+  }
+
+  async getStake(stakeId: string): Promise<Stake | null> {
+    if (this.useKV && this.kvStorage) {
+      try {
+        const key = `staking:stake:${stakeId}`;
+        const data = await this.kvStorage.get(key);
+        return data ? JSON.parse(data) : null;
+      } catch (error) {
+        console.error(`Error getting stake from KV ${stakeId}:`, error);
+      }
+    }
+    return this.fallbackStore.getStake(stakeId);
+  }
+
+  async createStake(stake: Stake): Promise<Stake> {
+    if (this.useKV && this.kvStorage) {
+      try {
+        const stakeKey = `staking:stake:${stake.id}`;
+        await this.kvStorage.put(stakeKey, JSON.stringify(stake));
+
+        const indexKey = `staking:wallet:index:${stake.walletAddress}`;
+        const indexData = await this.kvStorage.get(indexKey);
+        const stakeIds: string[] = indexData ? JSON.parse(indexData) : [];
+        stakeIds.push(stake.id);
+        await this.kvStorage.put(indexKey, JSON.stringify(stakeIds));
+
+        return stake;
+      } catch (error) {
+        console.error(`Error creating stake in KV:`, error);
+      }
+    }
+    return this.fallbackStore.createStake(stake);
+  }
+
+  async updateStake(stakeId: string, updates: Partial<Stake>): Promise<void> {
+    const stake = await this.getStake(stakeId);
+    if (!stake) throw new Error("Stake not found");
+
+    const updated: Stake = {
+      ...stake,
+      ...updates,
+      updatedAt: Date.now(),
+    };
+
+    if (this.useKV && this.kvStorage) {
+      try {
+        const key = `staking:stake:${stakeId}`;
+        await this.kvStorage.put(key, JSON.stringify(updated));
+        return;
+      } catch (error) {
+        console.error(`Error updating stake in KV ${stakeId}:`, error);
+      }
+    }
+    return this.fallbackStore.updateStake(stakeId, updates);
+  }
+
+  async getRewardsByWallet(
+    walletAddress: string,
+  ): Promise<RewardDistribution[]> {
+    if (this.useKV && this.kvStorage) {
+      try {
+        const indexKey = `staking:reward:index:${walletAddress}`;
+        const indexData = await this.kvStorage.get(indexKey);
+        const rewardIds: string[] = indexData ? JSON.parse(indexData) : [];
+
+        const rewards: RewardDistribution[] = [];
+        for (const rewardId of rewardIds) {
+          const reward = await this.getReward(rewardId);
+          if (reward) rewards.push(reward);
+        }
+        return rewards;
+      } catch (error) {
+        console.error(
+          `Error getting rewards from KV for wallet ${walletAddress}:`,
+          error,
+        );
+      }
+    }
+    return this.fallbackStore.getRewardsByWallet(walletAddress);
+  }
+
+  async getReward(rewardId: string): Promise<RewardDistribution | null> {
+    if (this.useKV && this.kvStorage) {
+      try {
+        const key = `staking:reward:${rewardId}`;
+        const data = await this.kvStorage.get(key);
+        return data ? JSON.parse(data) : null;
+      } catch (error) {
+        console.error(`Error getting reward from KV ${rewardId}:`, error);
+      }
+    }
+    return this.fallbackStore.getReward(rewardId);
+  }
+
+  async recordReward(reward: RewardDistribution): Promise<RewardDistribution> {
+    if (this.useKV && this.kvStorage) {
+      try {
+        const rewardKey = `staking:reward:${reward.id}`;
+        await this.kvStorage.put(rewardKey, JSON.stringify(reward));
+
+        const indexKey = `staking:reward:index:${reward.walletAddress}`;
+        const indexData = await this.kvStorage.get(indexKey);
+        const rewardIds: string[] = indexData ? JSON.parse(indexData) : [];
+        rewardIds.push(reward.id);
+        await this.kvStorage.put(indexKey, JSON.stringify(rewardIds));
+
+        return reward;
+      } catch (error) {
+        console.error(`Error recording reward in KV:`, error);
+      }
+    }
+    return this.fallbackStore.recordReward(reward);
+  }
+}
+
+const kvStore = new StakingKVStore();
 
 function verifySignature(
   message: string,
@@ -384,13 +536,11 @@ export const handleWithdrawStake: RequestHandler = async (req, res) => {
 // GET /api/staking/config - Get staking configuration
 export const handleStakingConfig: RequestHandler = async (req, res) => {
   try {
-    // Get vault wallet from environment or config
-    const vaultWallet = process.env.VAULT_WALLET || REWARD_CONFIG.vaultWallet;
-
     return res.status(200).json({
       success: true,
       data: {
-        vaultWallet,
+        vaultWallet: REWARD_CONFIG.vaultWallet,
+        rewardWallet: REWARD_CONFIG.rewardWallet,
         apyPercentage: REWARD_CONFIG.apyPercentage,
         supportedPeriods: [30, 60, 90],
         rewardTokenMint: REWARD_CONFIG.rewardTokenMint,

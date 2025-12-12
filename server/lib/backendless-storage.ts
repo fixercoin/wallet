@@ -66,12 +66,6 @@ export class BackendlessKVStorage implements KVStorageBackend {
       }
     } else if (prefix === "p2p_merchant_stats") {
       table = BACKENDLESS_TABLES.MERCHANT_STATS;
-    } else if (prefix === "staking") {
-      if (parts[1] === "reward") {
-        table = BACKENDLESS_TABLES.REWARDS;
-      } else {
-        table = BACKENDLESS_TABLES.STAKING;
-      }
     }
 
     const recordId = key.replace(/:/g, "_").substring(0, 255);

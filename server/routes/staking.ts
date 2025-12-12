@@ -206,7 +206,18 @@ class StakingKVStore {
   }
 }
 
-const kvStore = new StakingKVStore();
+let kvStore: StakingKVStore;
+
+try {
+  kvStore = new StakingKVStore();
+  console.log("[Staking] Cloudflare KV storage initialized successfully");
+} catch (error) {
+  console.error(
+    "[Staking] Failed to initialize Cloudflare KV storage:",
+    error instanceof Error ? error.message : String(error),
+  );
+  throw error;
+}
 
 function verifySignature(
   message: string,

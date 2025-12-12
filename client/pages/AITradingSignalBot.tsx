@@ -164,7 +164,6 @@ export default function AITradingSignalBot() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-3xl font-bold text-white">Trading Signals</h1>
           </div>
           <Button
             size="sm"

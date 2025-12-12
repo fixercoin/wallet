@@ -232,6 +232,11 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
               {userRole} •{" "}
               {trade.order.amountTokens || trade.order.token_amount || "0"}{" "}
               {trade.order.token}
+              {tokenPrice && (
+                <span className="text-green-400 ml-1">
+                  ({((trade.order.amountTokens || trade.order.token_amount || 0) * tokenPrice).toFixed(2)} PKR)
+                </span>
+              )}
             </p>
           </div>
           <div

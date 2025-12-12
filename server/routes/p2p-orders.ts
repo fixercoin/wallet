@@ -850,3 +850,60 @@ export const handleUpdateOrderStatus: RequestHandler = async (req, res) => {
     });
   }
 };
+
+// NEW: Complete P2P order
+export const handleCompleteP2POrder: RequestHandler = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { walletAddress } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({
+        error: "Missing orderId",
+      });
+    }
+
+    const order = await getOrderById(orderId);
+    if (!order) {
+      console.error(`[P2P Orders] Order not found for completion: ${orderId}`);
+      return res.status(404).json({
+        error: "Order not found",
+        orderId,
+      });
+    }
+
+    // Verify wallet is part of this order
+    const isParticipant =
+      walletAddress === order.creator_wallet ||
+      walletAddress === order.buyer_wallet ||
+      (order.walletAddress && walletAddress === order.walletAddress);
+
+    if (!isParticipant) {
+      return res.status(403).json({
+        error: "You are not a participant in this order",
+      });
+    }
+
+    // Update order status to completed
+    order.status = "completed";
+    order.updatedAt = Date.now();
+    order.updated_at = Date.now();
+
+    await saveOrder(order);
+
+    console.log(`[P2P Orders] ✅ Successfully completed order ${orderId}`);
+
+    res.json({
+      orderId: order.id,
+      status: "completed",
+      message: "Order completed successfully",
+      completedAt: Date.now(),
+    });
+  } catch (error) {
+    console.error("Complete order error:", error);
+    res.status(500).json({
+      error: "Failed to complete order",
+      details: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};

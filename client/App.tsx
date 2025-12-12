@@ -113,6 +113,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "next-themes";
 import { initStorageMonitoring } from "@/lib/storage-monitor";
 import { usePushNotifications } from "@/lib/services/push-notifications";
+import { clearStaleCacheData } from "@/lib/services/offline-cache";
 import Index from "./pages/Index";
 import FixoriumAdd from "./pages/FixoriumAdd";
 import CreateToken from "./pages/CreateToken";
@@ -231,8 +232,11 @@ function AppContent() {
 function App() {
   const { initPushNotifications } = usePushNotifications();
 
-  // Initialize storage monitoring and push notifications on app start
+  // Initialize storage monitoring, clear stale cache, and push notifications on app start
   useEffect(() => {
+    // Clear stale cached data from localStorage
+    clearStaleCacheData();
+
     initStorageMonitoring();
     initPushNotifications().catch((error) => {
       console.warn("Failed to initialize push notifications:", error);

@@ -104,7 +104,7 @@ class FixercoinPriceService {
         `[${this.TOKEN_NAME}] All price fetch attempts failed. Using static fallback price.`,
       );
       const fallbackData: FixercoinPriceData = {
-        price: 0.000000001,
+        price: 0.000056,
         priceChange24h: 0,
         volume24h: 0,
         liquidity: 0,

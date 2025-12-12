@@ -393,9 +393,12 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }, [wallet, userTokens]);
 
   // Track quote age over time
+  const quoteRefreshAttemptedRef = React.useRef(false);
+
   useEffect(() => {
     if (!quote || !quote.quoteTime) {
       setQuoteAge(0);
+      quoteRefreshAttemptedRef.current = false;
       return;
     }
 
@@ -404,7 +407,13 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setQuoteAge(age);
 
       // Auto-refresh quote if it's getting too old (near expiration)
-      if (age > QUOTE_MAX_AGE_MS - 2000 && age < QUOTE_MAX_AGE_MS) {
+      // Only attempt refresh once when approaching expiration to avoid duplicate calls
+      if (
+        age > QUOTE_MAX_AGE_MS - 2000 &&
+        age < QUOTE_MAX_AGE_MS &&
+        !quoteRefreshAttemptedRef.current
+      ) {
+        quoteRefreshAttemptedRef.current = true;
         console.log(
           "[SwapInterface] Quote approaching expiration, refreshing...",
         );
@@ -415,8 +424,9 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     // Update immediately
     updateQuoteAge();
 
-    // Update every 500ms while quote is valid
-    const interval = setInterval(updateQuoteAge, 500);
+    // Update every 1000ms (1 second) instead of 500ms to reduce polling frequency for token price fetching
+    // This aligns with the 15-30 second API call guideline
+    const interval = setInterval(updateQuoteAge, 1000);
     return () => clearInterval(interval);
   }, [quote?.quoteTime]);
 

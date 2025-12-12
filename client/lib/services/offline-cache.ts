@@ -280,6 +280,61 @@ export function clearOfflineCache(): void {
 }
 
 /**
+ * Clear stale cached service prices (older than 1 hour)
+ */
+export function clearStaleCacheData(): void {
+  try {
+    const keys = Object.keys(localStorage);
+    let clearedCount = 0;
+
+    keys.forEach((key) => {
+      // Clear stale service prices
+      if (key.startsWith(`${CACHE_PREFIX}service_price_`)) {
+        const cached = localStorage.getItem(key);
+        if (cached) {
+          try {
+            const data = JSON.parse(cached);
+            const age = Date.now() - (data.timestamp || 0);
+            // Clear if older than 1 hour or if no timestamp
+            if (age > CACHE_VALIDITY_SERVICE_PRICES || !data.timestamp) {
+              localStorage.removeItem(key);
+              clearedCount++;
+              console.log(`[OfflineCache] Cleared stale service price: ${key}`);
+            }
+          } catch {
+            // If parse fails, remove it
+            localStorage.removeItem(key);
+            clearedCount++;
+          }
+        }
+      }
+
+      // Clear stale general prices (older than 5 minutes)
+      if (key === PRICES_KEY) {
+        const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+        if (timestamp) {
+          const age = Date.now() - parseInt(timestamp, 10);
+          if (age > CACHE_VALIDITY_PRICES) {
+            localStorage.removeItem(key);
+            localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+            clearedCount++;
+            console.log(`[OfflineCache] Cleared stale prices cache`);
+          }
+        }
+      }
+    });
+
+    if (clearedCount > 0) {
+      console.log(
+        `[OfflineCache] Successfully cleared ${clearedCount} stale cache entries`,
+      );
+    }
+  } catch (error) {
+    console.warn("[OfflineCache] Failed to clear stale cache:", error);
+  }
+}
+
+/**
  * Clear dashboard token cache (balances and wallet-specific tokens only)
  * This ensures fresh data is always fetched on app load after deployment
  */

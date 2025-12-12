@@ -404,7 +404,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
               return (
                 <Card
                   key={stake.id}
-                  className="w-full bg-gray-900 rounded-lg border border-gray-700"
+                  className="w-full bg-transparent rounded-lg border border-gray-700"
                 >
                   <CardContent className="p-4">
                     <div className="grid grid-cols-2 gap-4 mb-4">
@@ -473,7 +473,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                       disabled={!isWithdrawable}
                       className={`w-full uppercase ${
                         isWithdrawable
-                          ? "bg-green-600 hover:bg-green-700"
+                          ? "bg-[#22c55e] hover:bg-[#16a34a]"
                           : "bg-gray-700 text-gray-500"
                       } text-white font-semibold`}
                     >
@@ -496,7 +496,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
             {completedStakes.map((stake) => (
               <Card
                 key={stake.id}
-                className="w-full bg-gray-900 rounded-lg border border-gray-700"
+                className="w-full bg-transparent rounded-lg border border-gray-700"
               >
                 <CardContent className="p-4">
                   <div className="grid grid-cols-2 gap-4 mb-3">
@@ -547,7 +547,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
                     <Progress value={100} className="h-2" />
                   </div>
 
-                  <div className="bg-gray-800/50 rounded-lg p-3">
+                  <div className="bg-transparent rounded-lg p-3 border border-gray-700">
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-gray-400 uppercase">
                         TOTAL RECEIVED

@@ -32,6 +32,8 @@ export default function AIPeerToPeer() {
   const [tradeType, setTradeType] = useState<"buy" | "sell" | null>(null);
   const [password, setPassword] = useState("");
   const [isPasswordAuthenticated, setIsPasswordAuthenticated] = useState(false);
+  const [showAdminNotifications, setShowAdminNotifications] = useState(false);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
 
   useEffect(() => {
     if (wallet?.publicKey) {

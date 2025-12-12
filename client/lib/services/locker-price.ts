@@ -1,7 +1,10 @@
 import { dexscreenerAPI } from "./dexscreener";
 import { solPriceService } from "./sol-price";
 import { saveServicePrice } from "./offline-cache";
-import { retryWithExponentialBackoff, AGGRESSIVE_RETRY_OPTIONS } from "./retry-fetch";
+import {
+  retryWithExponentialBackoff,
+  AGGRESSIVE_RETRY_OPTIONS,
+} from "./retry-fetch";
 
 export interface LockerPriceData {
   price: number;

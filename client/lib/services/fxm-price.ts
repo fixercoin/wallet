@@ -1,6 +1,9 @@
 import { dexscreenerAPI } from "./dexscreener";
 import { solPriceService } from "./sol-price";
-import { retryWithExponentialBackoff, AGGRESSIVE_RETRY_OPTIONS } from "./retry-fetch";
+import {
+  retryWithExponentialBackoff,
+  AGGRESSIVE_RETRY_OPTIONS,
+} from "./retry-fetch";
 
 export interface FXMPriceData {
   price: number;

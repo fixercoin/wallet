@@ -158,9 +158,6 @@ export default function AIPeerToPeer() {
               <div className="flex items-start gap-3">
                 <Lock className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-blue-300 mb-3">
-                    ENTER PASSWORD TO CREATE ORDERS
-                  </p>
                   <input
                     type="password"
                     value={password}

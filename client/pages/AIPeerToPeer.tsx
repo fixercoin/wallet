@@ -132,8 +132,8 @@ export default function AIPeerToPeer() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
-        {/* Action Buttons - Admin Only */}
-        {isAdmin ? (
+        {/* Action Buttons - Password Protected */}
+        {isAdmin || isPasswordAuthenticated ? (
           <div className="grid grid-cols-2 gap-4 mb-8">
             <Button
               onClick={() => handleStartNewTrade("buy")}
@@ -153,18 +153,44 @@ export default function AIPeerToPeer() {
             </Button>
           </div>
         ) : (
-          <Card className="border-gray-700/30 bg-gradient-to-br from-amber-900/20 to-gray-900/50 mb-8">
+          <Card className="border-gray-700/30 bg-gradient-to-br from-blue-900/20 to-gray-900/50 mb-8">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
-                <Lock className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-semibold text-amber-300 mb-1">
-                    ADMIN ONLY
+                <Lock className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-blue-300 mb-3">
+                    ENTER PASSWORD TO CREATE ORDERS
                   </p>
-                  <p className="text-xs text-gray-400">
-                    ONLY ADMINISTRATORS CAN CREATE BUY OR SELL ORDERS. YOU CAN
-                    VIEW AND PARTICIPATE IN EXISTING TRADES.
-                  </p>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter password"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        if (password.length > 0) {
+                          setIsPasswordAuthenticated(true);
+                          setPassword("");
+                        } else {
+                          toast.error("PLEASE ENTER A PASSWORD");
+                        }
+                      }
+                    }}
+                    className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-2 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all mb-3"
+                  />
+                  <Button
+                    onClick={() => {
+                      if (password.length > 0) {
+                        setIsPasswordAuthenticated(true);
+                        setPassword("");
+                      } else {
+                        toast.error("PLEASE ENTER A PASSWORD");
+                      }
+                    }}
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold uppercase h-10 text-sm"
+                  >
+                    UNLOCK
+                  </Button>
                 </div>
               </div>
             </CardContent>

@@ -154,7 +154,7 @@ import Market from "./pages/Market";
 import BuyerOrderConfirmation from "./pages/BuyerOrderConfirmation";
 import { useLocation } from "react-router-dom";
 import { P2POrderFlowProvider } from "@/contexts/P2POrderFlowContext";
-import FiatSystem from "./pages/FiatSystem";
+import AIPeerToPeer from "./pages/AIPeerToPeer";
 import FiatDeposit from "./pages/FiatDeposit";
 import FiatWithdraw from "./pages/FiatWithdraw";
 import FiatExchange from "./pages/FiatExchange";
@@ -180,7 +180,7 @@ function AppRoutes() {
       <Route path="/buydata" element={<BuyData />} />
       <Route path="/selldata" element={<SellData />} />
       <Route path="/marketplace" element={<Market />} />
-      <Route path="/fiat" element={<FiatSystem />} />
+      <Route path="/fiat" element={<AIPeerToPeer />} />
       <Route path="/fiat/deposit" element={<FiatDeposit />} />
       <Route path="/fiat/withdraw" element={<FiatWithdraw />} />
       <Route path="/fiat/exchange" element={<FiatExchange />} />

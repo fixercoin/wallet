@@ -109,31 +109,20 @@ const TradeAssetCard = ({
         <div className="border-t border-border/50 pt-3 space-y-1.5 text-xs">
           <div className="flex justify-between items-center">
             <span className="text-gray-500">Buy Entry</span>
-            <span className="text-green-400 font-semibold">${signal.buyEntry.toFixed(2)}</span>
+            <span className="text-green-400 font-semibold">
+              ${asset.symbol === "FIXERCOIN" ? signal.buyEntry.toFixed(8) : signal.buyEntry.toFixed(2)}
+            </span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-500">Sell Entry</span>
-            <span className="text-red-400 font-semibold">${signal.sellEntry.toFixed(2)}</span>
+            <span className="text-red-400 font-semibold">
+              ${asset.symbol === "FIXERCOIN" ? signal.sellEntry.toFixed(8) : signal.sellEntry.toFixed(2)}
+            </span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-500">Confidence</span>
             <span className="text-white font-semibold">{(signal.confidence * 100).toFixed(0)}%</span>
           </div>
-        </div>
-
-        <div className="flex gap-2 pt-1">
-          <Button
-            size="sm"
-            className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white text-xs font-semibold rounded-md"
-          >
-            Buy
-          </Button>
-          <Button
-            size="sm"
-            className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white text-xs font-semibold rounded-md"
-          >
-            Sell
-          </Button>
         </div>
       </CardContent>
     </Card>

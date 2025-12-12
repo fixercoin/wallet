@@ -138,15 +138,37 @@ async function getUsdFromServer(token: SupportedToken): Promise<number | null> {
   }
 }
 
+async function getUsdFromBirdeye(
+  token: SupportedToken,
+  mint?: string,
+): Promise<number | null> {
+  try {
+    const lookupMint = mint || TOKEN_MINTS[token];
+    const data = await birdeyeAPI.getTokenByMint(lookupMint);
+    const p = data?.priceUsd ? parseFloat(String(data.priceUsd)) : NaN;
+    return Number.isFinite(p) && p > 0 ? p : null;
+  } catch {
+    return null;
+  }
+}
+
 async function getUsdFromDexscreener(
   token: SupportedToken,
   mint?: string,
 ): Promise<number | null> {
   try {
     const lookupMint = mint || TOKEN_MINTS[token];
-    const data = await dexscreenerAPI.getTokenByMint(lookupMint);
-    const p = data?.priceUsd ? parseFloat(data.priceUsd) : NaN;
-    return Number.isFinite(p) && p > 0 ? p : null;
+    // For FIXERCOIN and LOCKER, try Birdeye first
+    if (token === "FIXERCOIN" || token === "LOCKER") {
+      const birdeyePrice = await getUsdFromBirdeye(token, mint);
+      if (birdeyePrice) {
+        return birdeyePrice;
+      }
+    }
+
+    // Fallback to Birdeye for any token (as secondary option)
+    const birdeyePrice = await getUsdFromBirdeye(token, mint);
+    return birdeyePrice;
   } catch {
     return null;
   }

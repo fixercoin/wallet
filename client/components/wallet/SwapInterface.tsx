@@ -408,7 +408,11 @@ export const SwapInterface: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       // Auto-refresh quote if it's getting too old (near expiration)
       // Only attempt refresh once when approaching expiration to avoid duplicate calls
-      if (age > QUOTE_MAX_AGE_MS - 2000 && age < QUOTE_MAX_AGE_MS && !quoteRefreshAttemptedRef.current) {
+      if (
+        age > QUOTE_MAX_AGE_MS - 2000 &&
+        age < QUOTE_MAX_AGE_MS &&
+        !quoteRefreshAttemptedRef.current
+      ) {
         quoteRefreshAttemptedRef.current = true;
         console.log(
           "[SwapInterface] Quote approaching expiration, refreshing...",

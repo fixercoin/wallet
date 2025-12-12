@@ -609,13 +609,7 @@ export const AutoBot: React.FC<AutoBotProps> = ({ onBack }) => {
       setIsTicking(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    enabled,
-    wallet,
-    tokens,
-    fixerToken?.balance,
-    solToken?.balance,
-  ]);
+  }, [enabled, wallet, tokens, fixerToken?.balance, solToken?.balance]);
 
   // Timer - removed fixerToken?.price from dependencies to prevent timer recreation on price updates
   // The runOnce callback reads current price from context via getCurrentFixerPriceUsd on each execution

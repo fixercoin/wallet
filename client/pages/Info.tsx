@@ -30,9 +30,9 @@ export default function Info() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0e27] via-[#1a1f3a] to-[#0f1429] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="w-full max-w-2xl mx-auto px-4 py-8 relative z-20">
-        <Card className="bg-transparent border border-purple-500/30 rounded-2xl overflow-hidden">
+        <Card className="bg-card border border-border rounded-2xl overflow-hidden">
           <CardContent className="p-8">
             {/* Back Button */}
             <div className="flex justify-start mb-6">

@@ -104,17 +104,8 @@ export async function sendTokenTransferTransaction(
   // Ensure wallet is connected
   await provider.connect();
 
-  // Serialize transaction to base64
-  const txBuffer = Buffer.from(
-    transaction.serialize({
-      requireAllSignatures: false,
-      verifySignatures: false,
-    }),
-  );
-  const txBase64 = txBuffer.toString("base64");
-
-  // Send transaction using provider
-  const signature = await provider.sendTransaction(txBase64);
+  // Send transaction using provider - pass the transaction object directly
+  const signature = await provider.sendTransaction(transaction);
 
   if (!signature) {
     throw new Error("Failed to get transaction signature");

@@ -120,8 +120,8 @@ export default function AIPeerToPeer() {
             <ArrowLeft className="w-6 h-6" />
           </button>
           <div>
-            <h1 className="text-xl font-bold">AI P2P Trading</h1>
-            <p className="text-xs text-gray-400">Chat-based peer-to-peer exchange</p>
+            <h1 className="text-xl font-bold">AI P2P TRADING</h1>
+            <p className="text-xs text-gray-400">CHAT-BASED PEER-TO-PEER EXCHANGE</p>
           </div>
         </div>
       </div>
@@ -156,7 +156,7 @@ export default function AIPeerToPeer() {
                 <div>
                   <p className="text-sm font-semibold text-amber-300 mb-1">ADMIN ONLY</p>
                   <p className="text-xs text-gray-400">
-                    Only administrators can create buy or sell orders. You can view and participate in existing trades.
+                    ONLY ADMINISTRATORS CAN CREATE BUY OR SELL ORDERS. YOU CAN VIEW AND PARTICIPATE IN EXISTING TRADES.
                   </p>
                 </div>
               </div>
@@ -168,7 +168,7 @@ export default function AIPeerToPeer() {
         <div>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-            Active Trades
+            ACTIVE TRADES
           </h2>
 
           {loading ? (
@@ -179,10 +179,10 @@ export default function AIPeerToPeer() {
             <Card className="border-gray-700/30 bg-gray-900/50">
               <CardContent className="pt-6">
                 <p className="text-center text-gray-400 mb-4">
-                  No active trades yet
+                  NO ACTIVE TRADES YET
                 </p>
                 <p className="text-center text-sm text-gray-500 mb-6">
-                  Start a new buy or sell order to begin trading
+                  START A NEW BUY OR SELL ORDER TO BEGIN TRADING
                 </p>
               </CardContent>
             </Card>
@@ -242,7 +242,7 @@ function NewTradeDialog({
     e.preventDefault();
 
     if (!amount || !minPrice || !maxPrice || !token) {
-      toast.error("Please fill all fields");
+      toast.error("PLEASE FILL ALL FIELDS");
       return;
     }
 
@@ -265,15 +265,15 @@ function NewTradeDialog({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create order");
+        throw new Error("FAILED TO CREATE ORDER");
       }
 
-      toast.success("Order created successfully!");
+      toast.success("ORDER CREATED SUCCESSFULLY!");
       onSuccess();
     } catch (error) {
       console.error("Error creating order:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to create order",
+        error instanceof Error ? error.message : "FAILED TO CREATE ORDER",
       );
     } finally {
       setIsSubmitting(false);

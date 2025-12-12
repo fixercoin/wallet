@@ -43,7 +43,7 @@ export default function AIPeerToPeer() {
     try {
       setLoading(true);
       const response = await fetch(
-        `/api/p2p/orders?wallet=${wallet.address}&status=active`,
+        `/api/p2p/orders?wallet=${wallet.publicKey}&status=active`,
       );
       if (!response.ok) throw new Error("Failed to load trades");
 
@@ -52,7 +52,7 @@ export default function AIPeerToPeer() {
         id: order.id || `trade-${Date.now()}`,
         order,
         counterparty:
-          order.creator_wallet === wallet.address
+          order.creator_wallet === wallet.publicKey
             ? order.buyer_wallet || "unknown"
             : order.creator_wallet || "unknown",
         status: "negotiating" as const,
@@ -287,7 +287,7 @@ function NewTradeDialog({
         minAmountPKR: parseFloat(minPrice),
         maxAmountPKR: parseFloat(maxPrice),
         payment_method: paymentMethod,
-        walletAddress: wallet.address,
+        walletAddress: wallet.publicKey,
       };
 
       console.log("Submitting order data:", orderData);

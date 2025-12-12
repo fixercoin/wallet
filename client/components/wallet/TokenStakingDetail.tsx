@@ -207,7 +207,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
 
   if (!wallet) {
     return (
-      <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground p-4">
+      <div className="express-p2p-page dark-settings min-h-screen bg-transparent text-foreground p-4">
         <div className="w-full px-4 mx-auto pt-8">
           <div className="bg-transparent shadow-none rounded-lg p-6">
             <div className="p-8 text-center">
@@ -230,7 +230,7 @@ export const TokenStakingDetail: React.FC<TokenStakingDetailProps> = ({
   }
 
   return (
-    <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground p-4">
+    <div className="express-p2p-page dark-settings min-h-screen bg-transparent text-foreground p-4">
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2">
         {/* HEADER */}
         <div className="flex items-center gap-3 mb-6">

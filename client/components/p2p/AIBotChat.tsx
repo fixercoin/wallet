@@ -45,8 +45,37 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [isLoadingAIResponse, setIsLoadingAIResponse] = useState(false);
+  const [tokenPrice, setTokenPrice] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const USDT_RATE = 291.90;
+
+  // Fetch token price on mount
+  useEffect(() => {
+    const fetchTokenPrice = async () => {
+      if (trade.order.token === "USDT") {
+        setTokenPrice(USDT_RATE);
+      } else if (trade.order.token === "FIXERCOIN") {
+        try {
+          const response = await fetch("/api/token-price?token=FIXERCOIN");
+          if (response.ok) {
+            const data = await response.json();
+            setTokenPrice(data.price || null);
+          }
+        } catch (error) {
+          console.log("Could not fetch FIXERCOIN price");
+        }
+      }
+    };
+    fetchTokenPrice();
+  }, [trade.order.token]);
+
+  const getConversionText = (amount: number): string => {
+    if (!tokenPrice) return "";
+    const pkrAmount = amount * tokenPrice;
+    return ` (${pkrAmount.toFixed(2)} PKR @ 1 ${trade.order.token} = ${tokenPrice.toFixed(2)} PKR)`;
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

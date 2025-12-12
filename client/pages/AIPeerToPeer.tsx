@@ -278,10 +278,10 @@ function NewTradeDialog({
       const orderData = {
         type: tradeType === "buy" ? "BUY" : "SELL",
         token,
-        amount: parseFloat(amount),
-        minPrice: parseFloat(minPrice),
-        maxPrice: parseFloat(maxPrice),
-        paymentMethod,
+        amountTokens: parseFloat(amount),
+        minAmountPKR: parseFloat(minPrice),
+        maxAmountPKR: parseFloat(maxPrice),
+        payment_method: paymentMethod,
         walletAddress: wallet.address,
       };
 
@@ -292,7 +292,8 @@ function NewTradeDialog({
       });
 
       if (!response.ok) {
-        throw new Error("FAILED TO CREATE ORDER");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "FAILED TO CREATE ORDER");
       }
 
       toast.success("ORDER CREATED SUCCESSFULLY!");

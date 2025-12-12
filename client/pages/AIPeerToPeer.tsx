@@ -6,8 +6,10 @@ import { ArrowLeft, Send, Loader2, Plus, Lock } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { AIBotChat } from "@/components/p2p/AIBotChat";
 import { P2POrderCard } from "@/components/p2p/P2POrderCard";
+import { AdminNotifications } from "@/components/p2p/AdminNotifications";
 import type { P2POrder } from "@/lib/p2p-api";
 import { toast } from "sonner";
+import { Bell } from "lucide-react";
 
 const ADMIN_WALLET = "7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw";
 
@@ -30,12 +32,27 @@ export default function AIPeerToPeer() {
   const [tradeType, setTradeType] = useState<"buy" | "sell" | null>(null);
   const [password, setPassword] = useState("");
   const [isPasswordAuthenticated, setIsPasswordAuthenticated] = useState(false);
+  const [showAdminNotifications, setShowAdminNotifications] = useState(false);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
 
   useEffect(() => {
     if (wallet?.publicKey) {
       loadActiveTrades();
+      loadPendingOrdersCount();
     }
   }, [wallet?.publicKey]);
+
+  const loadPendingOrdersCount = async () => {
+    try {
+      const response = await fetch("/api/p2p/orders?status=pending_approval");
+      if (response.ok) {
+        const data = await response.json();
+        setPendingOrdersCount(data.orders?.length || 0);
+      }
+    } catch (error) {
+      console.error("Error loading pending orders count:", error);
+    }
+  };
 
   const loadActiveTrades = async () => {
     if (!wallet?.publicKey) return;
@@ -134,22 +151,37 @@ export default function AIPeerToPeer() {
       <div className="container mx-auto px-4 py-6">
         {/* Action Buttons - Password Protected */}
         {isAdmin || isPasswordAuthenticated ? (
-          <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className="space-y-4 mb-8">
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                onClick={() => handleStartNewTrade("buy")}
+                className="bg-gradient-to-br from-emerald-500 via-green-600 to-green-700 hover:from-emerald-600 hover:via-green-700 hover:to-green-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-14 text-sm"
+                size="lg"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                CREATE BUY ORDER
+              </Button>
+              <Button
+                onClick={() => handleStartNewTrade("sell")}
+                className="bg-gradient-to-br from-violet-500 via-purple-600 to-purple-700 hover:from-violet-600 hover:via-purple-700 hover:to-purple-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-14 text-sm"
+                size="lg"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                CREATE SELL ORDER
+              </Button>
+            </div>
             <Button
-              onClick={() => handleStartNewTrade("buy")}
-              className="bg-gradient-to-br from-emerald-500 via-green-600 to-green-700 hover:from-emerald-600 hover:via-green-700 hover:to-green-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-14 text-sm"
+              onClick={() => setShowAdminNotifications(true)}
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-12"
               size="lg"
             >
-              <Plus className="w-5 h-5 mr-2" />
-              CREATE BUY ORDER
-            </Button>
-            <Button
-              onClick={() => handleStartNewTrade("sell")}
-              className="bg-gradient-to-br from-violet-500 via-purple-600 to-purple-700 hover:from-violet-600 hover:via-purple-700 hover:to-purple-800 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200 uppercase h-14 text-sm"
-              size="lg"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              CREATE SELL ORDER
+              <Bell className="w-5 h-5 mr-2" />
+              ADMIN NOTIFICATIONS
+              {pendingOrdersCount > 0 && (
+                <span className="ml-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                  {pendingOrdersCount}
+                </span>
+              )}
             </Button>
           </div>
         ) : (
@@ -237,6 +269,18 @@ export default function AIPeerToPeer() {
             onSuccess={() => {
               handleCloseNewTradeDialog();
               loadActiveTrades();
+              loadPendingOrdersCount();
+            }}
+          />
+        )}
+
+        {/* Admin Notifications Dialog */}
+        {showAdminNotifications && (
+          <AdminNotifications
+            onClose={() => {
+              setShowAdminNotifications(false);
+              loadPendingOrdersCount();
+              loadActiveTrades();
             }}
           />
         )}
@@ -266,6 +310,32 @@ function NewTradeDialog({
   const [digitalAccount, setDigitalAccount] = useState("");
   const [accountName, setAccountName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tokenPrice, setTokenPrice] = useState<number | null>(null);
+
+  const USDT_RATE = 291.9;
+
+  useEffect(() => {
+    const fetchTokenPrice = async () => {
+      if (token === "USDT") {
+        setTokenPrice(USDT_RATE);
+      } else if (token === "FIXERCOIN") {
+        try {
+          const response = await fetch("/api/token-price?token=FIXERCOIN");
+          if (response.ok) {
+            const data = await response.json();
+            setTokenPrice(data.price || null);
+          }
+        } catch (error) {
+          console.log("Could not fetch FIXERCOIN price");
+          setTokenPrice(null);
+        }
+      }
+    };
+    fetchTokenPrice();
+  }, [token]);
+
+  const convertedAmount =
+    tokenPrice && amount ? parseFloat(amount) * tokenPrice : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -299,6 +369,7 @@ function NewTradeDialog({
         walletAddress: wallet.publicKey,
         accountNumber: digitalAccount,
         accountName: accountName,
+        status: "pending_approval",
       };
 
       console.log("Submitting order data:", orderData);
@@ -353,106 +424,90 @@ function NewTradeDialog({
         <CardContent className="pt-7 pb-6 px-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Token Dropdown Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
-                TOKEN
-              </label>
-              <select
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
-              >
-                <option value="USDT">USDT - TETHER</option>
-                <option value="FIXERCOIN">FIXERCOIN - FIXERCOIN</option>
-              </select>
-            </div>
+            <select
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
+            >
+              <option value="USDT" className="text-gray-800">
+                USDT - TETHER
+              </option>
+              <option value="FIXERCOIN" className="text-gray-800">
+                FIXERCOIN - FIXERCOIN
+              </option>
+            </select>
 
             {/* Amount Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
-                AMOUNT ({token})
-              </label>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+              placeholder={`AMOUNT (${token})`}
+              step="0.01"
+            />
+
+            {/* Conversion Rate Display */}
+            {tokenPrice && amount && (
+              <div className="bg-gray-800/40 border border-gray-700/40 rounded-lg px-4 py-3 text-sm text-gray-200">
+                {amount} {token} ={" "}
+                <span className="font-bold text-green-400">
+                  {convertedAmount.toFixed(2)} PKR
+                </span>
+                <span className="text-gray-400 ml-2 text-xs">
+                  (1 {token} = {tokenPrice.toFixed(2)} PKR)
+                </span>
+              </div>
+            )}
+
+            {/* Price Range Fields */}
+            <div className="grid grid-cols-2 gap-4">
               <input
                 type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
                 className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                placeholder="0.00"
+                placeholder="MIN PRICE (PKR)"
+                step="0.01"
+              />
+              <input
+                type="number"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                placeholder="MAX PRICE (PKR)"
                 step="0.01"
               />
             </div>
 
-            {/* Price Range Fields */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
-                  MIN PRICE (PKR)
-                </label>
-                <input
-                  type="number"
-                  value={minPrice}
-                  onChange={(e) => setMinPrice(e.target.value)}
-                  className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  placeholder="0.00"
-                  step="0.01"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
-                  MAX PRICE (PKR)
-                </label>
-                <input
-                  type="number"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
-                  className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  placeholder="0.00"
-                  step="0.01"
-                />
-              </div>
-            </div>
-
             {/* Digital Account Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
-                DIGITAL ACCOUNT
-              </label>
-              <input
-                type="text"
-                value={digitalAccount}
-                onChange={(e) => setDigitalAccount(e.target.value)}
-                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                placeholder="Enter your account number"
-              />
-            </div>
+            <input
+              type="text"
+              value={digitalAccount}
+              onChange={(e) => setDigitalAccount(e.target.value)}
+              className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+              placeholder="Digital Account"
+            />
 
             {/* Account Name Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
-                ACCOUNT NAME
-              </label>
-              <input
-                type="text"
-                value={accountName}
-                onChange={(e) => setAccountName(e.target.value)}
-                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                placeholder="Enter account holder name"
-              />
-            </div>
+            <input
+              type="text"
+              value={accountName}
+              onChange={(e) => setAccountName(e.target.value)}
+              className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+              placeholder="Account Name"
+            />
 
             {/* Payment Method Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
-                PAYMENT METHOD
-              </label>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
-              >
-                <option value="easy_paisa">EASY PAISA</option>
-              </select>
-            </div>
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
+            >
+              <option value="easy_paisa" className="text-gray-800">
+                EASYPAISA
+              </option>
+            </select>
 
             {/* Action Buttons */}
             <div className="flex gap-3 mt-8 pt-4 border-t border-gray-700/30">

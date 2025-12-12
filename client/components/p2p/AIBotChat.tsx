@@ -45,8 +45,37 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [isLoadingAIResponse, setIsLoadingAIResponse] = useState(false);
+  const [tokenPrice, setTokenPrice] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const USDT_RATE = 291.9;
+
+  // Fetch token price on mount
+  useEffect(() => {
+    const fetchTokenPrice = async () => {
+      if (trade.order.token === "USDT") {
+        setTokenPrice(USDT_RATE);
+      } else if (trade.order.token === "FIXERCOIN") {
+        try {
+          const response = await fetch("/api/token-price?token=FIXERCOIN");
+          if (response.ok) {
+            const data = await response.json();
+            setTokenPrice(data.price || null);
+          }
+        } catch (error) {
+          console.log("Could not fetch FIXERCOIN price");
+        }
+      }
+    };
+    fetchTokenPrice();
+  }, [trade.order.token]);
+
+  const getConversionText = (amount: number): string => {
+    if (!tokenPrice) return "";
+    const pkrAmount = amount * tokenPrice;
+    return ` (${pkrAmount.toFixed(2)} PKR @ 1 ${trade.order.token} = ${tokenPrice.toFixed(2)} PKR)`;
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -58,10 +87,13 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
 
   useEffect(() => {
     // Initialize chat with AI bot welcome message
+    const amount = trade.order.amountTokens || 0;
+    const conversionText = getConversionText(amount);
+
     const welcomeMessage: ChatMessage = {
       id: `msg-welcome-${Date.now()}`,
       sender: "ai",
-      text: `Welcome to AI P2P Trading! I'm your trading assistant. I'll help facilitate this ${trade.order.type === "BUY" ? "buy" : "sell"} order for ${trade.order.token}. You can start negotiating with the counterparty, and I'll provide suggestions and help with order completion.`,
+      text: `Welcome to AI P2P Trading! I'm your trading assistant. I'll help facilitate this ${trade.order.type === "BUY" ? "buy" : "sell"} order for ${amount} ${trade.order.token}${conversionText}. You can start negotiating with the counterparty, and I'll provide suggestions and help with order completion.`,
       timestamp: Date.now(),
       type: "system",
     };
@@ -69,33 +101,82 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
     setChatMessages([welcomeMessage]);
   }, [trade.order.id]);
 
+  // Monitor order approval status
+  useEffect(() => {
+    const checkOrderStatus = async () => {
+      try {
+        const response = await fetch(`/api/p2p/orders/${trade.order.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          const order = data.order;
+
+          // Check if order was approved
+          if (
+            order.status === "active" &&
+            trade.order.status === "pending_approval"
+          ) {
+            const approvalMsg: ChatMessage = {
+              id: `msg-approval-${Date.now()}`,
+              sender: "ai",
+              text: "🎉 Your order has been approved by the admin! You can now start negotiating with buyers/sellers.",
+              timestamp: Date.now(),
+              type: "system",
+            };
+            setChatMessages((prev) => [...prev, approvalMsg]);
+          }
+          // Check if order was rejected
+          else if (
+            order.status === "rejected" &&
+            trade.order.status === "pending_approval"
+          ) {
+            const rejectionMsg: ChatMessage = {
+              id: `msg-rejection-${Date.now()}`,
+              sender: "ai",
+              text: "❌ Your order has been rejected by the admin. Please contact support for more information.",
+              timestamp: Date.now(),
+              type: "system",
+            };
+            setChatMessages((prev) => [...prev, rejectionMsg]);
+          }
+        }
+      } catch (error) {
+        console.log("Error checking order status:", error);
+      }
+    };
+
+    // Check status every 5 seconds
+    const interval = setInterval(checkOrderStatus, 5000);
+    return () => clearInterval(interval);
+  }, [trade.order.id, trade.order.status]);
+
   const generateAIResponse = async (userMessage: string): Promise<string> => {
     // Simulate AI response generation based on order context
     const orderType = trade.order.type;
     const token = trade.order.token;
     const amount = trade.order.amountTokens || 0;
+    const conversionText = getConversionText(amount);
 
     // AI suggestions based on conversation context
     const keywords = userMessage.toLowerCase();
 
     if (keywords.includes("price") || keywords.includes("rate")) {
-      return `For this ${orderType} order of ${amount} ${token}, I can help you negotiate the price. What rate would you like to propose to the counterparty?`;
+      return `For this ${orderType} order of ${amount} ${token}${conversionText}, I can help you negotiate the price. What rate would you like to propose to the counterparty?`;
     }
 
     if (keywords.includes("complete") || keywords.includes("done")) {
-      return `To complete this order, both parties need to confirm receipt/payment. Would you like me to send a completion request to the counterparty?`;
+      return `To complete this order of ${amount} ${token}${conversionText}, both parties need to confirm receipt/payment. Would you like me to send a completion request to the counterparty?`;
     }
 
     if (keywords.includes("payment") || keywords.includes("transfer")) {
-      return `For payment details, I can help you share your preferred payment method. What method would you like to use for this transaction?`;
+      return `For payment details on your ${amount} ${token} order${conversionText}, I can help you share your preferred payment method. What method would you like to use for this transaction?`;
     }
 
     if (keywords.includes("confirm")) {
-      return `Great! I'll help you confirm this order. Please ensure all transaction details are correct before we proceed with completion.`;
+      return `Great! I'll help you confirm this order of ${amount} ${token}${conversionText}. Please ensure all transaction details are correct before we proceed with completion.`;
     }
 
     // Default AI response
-    return `I understand you want to ${orderType.toLowerCase()} ${amount} ${token}. ${
+    return `I understand you want to ${orderType.toLowerCase()} ${amount} ${token}${conversionText}. ${
       orderType === "BUY"
         ? "I can help you find sellers and negotiate the best rate."
         : "I can help you reach potential buyers for your tokens."
@@ -199,6 +280,17 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
               {userRole} •{" "}
               {trade.order.amountTokens || trade.order.token_amount || "0"}{" "}
               {trade.order.token}
+              {tokenPrice && (
+                <span className="text-green-400 ml-1">
+                  (
+                  {(
+                    (trade.order.amountTokens ||
+                      trade.order.token_amount ||
+                      0) * tokenPrice
+                  ).toFixed(2)}{" "}
+                  PKR)
+                </span>
+              )}
             </p>
           </div>
           <div
@@ -327,9 +419,13 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
           {/* Suggestion Buttons */}
           <div className="grid grid-cols-2 gap-2">
             <Button
-              onClick={() =>
-                setMessageInput("Can we confirm the price and proceed?")
-              }
+              onClick={() => {
+                const amount = trade.order.amountTokens || 0;
+                const conversionText = getConversionText(amount);
+                setMessageInput(
+                  `Can we confirm the price for ${amount} ${trade.order.token}${conversionText} and proceed?`,
+                );
+              }}
               variant="outline"
               size="sm"
               className="text-xs h-8 border-gray-700"
@@ -337,9 +433,13 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
               Confirm Price
             </Button>
             <Button
-              onClick={() =>
-                setMessageInput("I've completed the payment, ready to release?")
-              }
+              onClick={() => {
+                const amount = trade.order.amountTokens || 0;
+                const conversionText = getConversionText(amount);
+                setMessageInput(
+                  `I've completed the payment of ${amount} ${trade.order.token}${conversionText}, ready to release?`,
+                );
+              }}
               variant="outline"
               size="sm"
               className="text-xs h-8 border-gray-700"
@@ -347,7 +447,12 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
               Payment Done
             </Button>
             <Button
-              onClick={() => setMessageInput("I've received the crypto")}
+              onClick={() => {
+                const amount = trade.order.amountTokens || 0;
+                setMessageInput(
+                  `I've received the ${amount} ${trade.order.token}`,
+                );
+              }}
               variant="outline"
               size="sm"
               className="text-xs h-8 border-gray-700"
@@ -355,7 +460,13 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
               Crypto Received
             </Button>
             <Button
-              onClick={() => setMessageInput("Let's complete this order")}
+              onClick={() => {
+                const amount = trade.order.amountTokens || 0;
+                const conversionText = getConversionText(amount);
+                setMessageInput(
+                  `Let's complete this order of ${amount} ${trade.order.token}${conversionText}`,
+                );
+              }}
               variant="outline"
               size="sm"
               className="text-xs h-8 border-gray-700"

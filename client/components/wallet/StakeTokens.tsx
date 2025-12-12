@@ -22,7 +22,7 @@ export const StakeTokens: React.FC<StakeTokensProps> = ({
 
   if (!wallet) {
     return (
-      <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground p-4">
+      <div className="express-p2p-page dark-settings min-h-screen bg-transparent text-foreground p-4">
         <div className="w-full px-4 mx-auto pt-8">
           <div className="bg-transparent shadow-none rounded-lg p-6">
             <div className="p-8 text-center">
@@ -32,7 +32,7 @@ export const StakeTokens: React.FC<StakeTokensProps> = ({
               <div className="mt-4">
                 <Button
                   onClick={onBack}
-                  className="w-full bg-[#2d1b47]/50 text-white"
+                  className="w-full bg-[#22c55e] hover:bg-[#16a34a] text-white"
                 >
                   Back to Dashboard
                 </Button>
@@ -50,7 +50,7 @@ export const StakeTokens: React.FC<StakeTokensProps> = ({
   );
 
   return (
-    <div className="express-p2p-page dark-settings min-h-screen bg-background text-foreground p-4">
+    <div className="express-p2p-page dark-settings min-h-screen bg-transparent text-foreground p-4">
       <div className="w-full md:max-w-lg lg:max-w-lg mx-auto px-0 sm:px-4 md:px-6 lg:px-8 py-2">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
@@ -82,7 +82,7 @@ export const StakeTokens: React.FC<StakeTokensProps> = ({
             filteredTokens.map((token) => (
               <Card
                 key={token.mint}
-                className="w-full bg-transparent rounded-lg border border-gray-700 hover:border-gray-600 cursor-pointer transition-colors"
+                className="w-full bg-transparent rounded-lg border border-gray-700 hover:border-[#22c55e] cursor-pointer transition-colors"
               >
                 <CardContent className="w-full p-0">
                   <button

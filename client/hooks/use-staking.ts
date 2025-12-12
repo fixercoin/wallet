@@ -143,16 +143,10 @@ export function useStaking(): UseStakingReturn {
     ): Promise<Stake> => {
       if (!wallet?.publicKey) throw new Error("No wallet connected");
 
-      const validPeriods = [
-        10 / (24 * 60), // 10 minutes
-        10, // 10 days
-        30, // 30 days
-        60, // 60 days
-        90, // 90 days
-      ];
-      if (!validPeriods.some((p) => Math.abs(p - periodDays) < 0.0001)) {
+      const validPeriods = [30, 60, 90];
+      if (!validPeriods.includes(periodDays)) {
         throw new Error(
-          "Invalid period. Must be 10 minutes, 10 days, 30 days, 60 days, or 90 days",
+          "Invalid period. Must be 30 days, 60 days, or 90 days",
         );
       }
 

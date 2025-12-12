@@ -145,9 +145,7 @@ export function useStaking(): UseStakingReturn {
 
       const validPeriods = [30, 60, 90];
       if (!validPeriods.includes(periodDays)) {
-        throw new Error(
-          "Invalid period. Must be 30 days, 60 days, or 90 days",
-        );
+        throw new Error("Invalid period. Must be 30 days, 60 days, or 90 days");
       }
 
       try {

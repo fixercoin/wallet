@@ -27,7 +27,7 @@ export interface TradingSignal {
 }
 
 export const calculateSupportResistance = (
-  prices: PricePoint[]
+  prices: PricePoint[],
 ): SupportResistance => {
   if (prices.length === 0) {
     return { support: 0, resistance: 0, pivot: 0 };
@@ -50,7 +50,7 @@ export const calculateSupportResistance = (
 
 export const calculateMovingAverage = (
   prices: number[],
-  period: number
+  period: number,
 ): number => {
   if (prices.length < period) {
     return prices.reduce((a, b) => a + b, 0) / prices.length;
@@ -92,7 +92,7 @@ export const calculateRSI = (prices: number[], period: number = 14): number => {
 export const calculateBollingerBands = (
   prices: number[],
   period: number = 20,
-  stdDev: number = 2
+  stdDev: number = 2,
 ) => {
   if (prices.length < period) {
     const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
@@ -118,7 +118,7 @@ export const generateTradingSignal = (
   currentPrice: number,
   priceHistory: number[],
   supportResistance: SupportResistance,
-  priceChange24h: number
+  priceChange24h: number,
 ): TradingSignal => {
   const rsi = calculateRSI(priceHistory);
   const ma20 = calculateMovingAverage(priceHistory, 20);
@@ -206,7 +206,8 @@ export const generateTradingSignal = (
     buyEntry,
     sellEntry,
     confidence,
-    analysis: analysis.trim() || "Market is consolidating, awaiting clear direction.",
+    analysis:
+      analysis.trim() || "Market is consolidating, awaiting clear direction.",
     priceChangePercent: priceChange24h,
   };
 };

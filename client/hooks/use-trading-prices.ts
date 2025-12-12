@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
-import { TradingSignal, generateTradingSignal, calculateSupportResistance } from "@/lib/trading-analysis";
+import {
+  TradingSignal,
+  generateTradingSignal,
+  calculateSupportResistance,
+} from "@/lib/trading-analysis";
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 
 export interface TradeAsset {
@@ -41,10 +45,12 @@ const FALLBACK_PRICES: Record<string, number> = {
 
 const fetchAssetPrice = async (
   symbol: string,
-  mint: string
+  mint: string,
 ): Promise<PriceData | null> => {
   try {
-    const response = await fetch(`/api/token/price?token=${symbol}&mint=${mint}`);
+    const response = await fetch(
+      `/api/token/price?token=${symbol}&mint=${mint}`,
+    );
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
@@ -74,7 +80,10 @@ const fetchAssetPrice = async (
   }
 };
 
-const generatePriceHistory = (basePrice: number, volatility: number = 0.02): number[] => {
+const generatePriceHistory = (
+  basePrice: number,
+  volatility: number = 0.02,
+): number[] => {
   const history: number[] = [];
   let currentPrice = basePrice;
 
@@ -100,10 +109,12 @@ export const useTradingPrices = () => {
       setError(null);
 
       const pricePromises = TRADE_ASSETS.map((asset) =>
-        fetchAssetPrice(asset.symbol, asset.mint)
+        fetchAssetPrice(asset.symbol, asset.mint),
       );
       const fetchedPrices = await Promise.all(pricePromises);
-      const validPrices = fetchedPrices.filter((p): p is PriceData => p !== null);
+      const validPrices = fetchedPrices.filter(
+        (p): p is PriceData => p !== null,
+      );
 
       setPrices(validPrices);
 
@@ -116,7 +127,7 @@ export const useTradingPrices = () => {
             high: price * 1.01,
             low: price * 0.99,
             volume: Math.random() * 1000000,
-          }))
+          })),
         );
 
         return generateTradingSignal(
@@ -124,7 +135,7 @@ export const useTradingPrices = () => {
           priceData.price,
           priceHistory,
           sr,
-          priceData.priceChange24h
+          priceData.priceChange24h,
         );
       });
 

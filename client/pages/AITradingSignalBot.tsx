@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { ArrowLeft, TrendingUp, TrendingDown, AlertCircle, RefreshCw, Activity } from "lucide-react";
+import {
+  ArrowLeft,
+  TrendingUp,
+  TrendingDown,
+  AlertCircle,
+  RefreshCw,
+  Activity,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,7 +64,9 @@ const TradeAssetCard = ({
   const signalBgColor = getSignalBgColor(signal.signal);
 
   return (
-    <Card className={`border ${signalBgColor} bg-card/30 backdrop-blur-sm hover:border-purple-500/50 transition-all`}>
+    <Card
+      className={`border ${signalBgColor} bg-card/30 backdrop-blur-sm hover:border-purple-500/50 transition-all`}
+    >
       <CardContent className="p-5 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -66,19 +75,31 @@ const TradeAssetCard = ({
               alt={asset.symbol}
               className="w-10 h-10 rounded-full bg-gray-700 object-cover"
               onError={(e) => {
-                e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23374151'/%3E%3Ctext x='50' y='60' text-anchor='middle' font-size='40' font-weight='bold' fill='white'%3E" + asset.symbol[0] + "%3C/text%3E%3C/svg%3E";
+                e.currentTarget.src =
+                  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23374151'/%3E%3Ctext x='50' y='60' text-anchor='middle' font-size='40' font-weight='bold' fill='white'%3E" +
+                  asset.symbol[0] +
+                  "%3C/text%3E%3C/svg%3E";
               }}
             />
             <div>
-              <h3 className="font-bold text-white text-sm">{asset.symbol.toUpperCase()}</h3>
-              <p className="text-xs text-gray-500">{asset.name.toUpperCase()}</p>
+              <h3 className="font-bold text-white text-sm">
+                {asset.symbol.toUpperCase()}
+              </h3>
+              <p className="text-xs text-gray-500">
+                {asset.name.toUpperCase()}
+              </p>
             </div>
           </div>
           <div className="text-right">
             <p className="font-bold text-lg text-white">
-              ${asset.symbol === "FIXERCOIN" ? price.toFixed(8) : price.toFixed(2)}
+              $
+              {asset.symbol === "FIXERCOIN"
+                ? price.toFixed(8)
+                : price.toFixed(2)}
             </p>
-            <p className={`text-xs font-semibold ${priceChange >= 0 ? "text-green-400" : "text-red-400"}`}>
+            <p
+              className={`text-xs font-semibold ${priceChange >= 0 ? "text-green-400" : "text-red-400"}`}
+            >
               {priceChange >= 0 ? "↑" : "↓"} {Math.abs(priceChange).toFixed(2)}%
             </p>
           </div>
@@ -87,7 +108,9 @@ const TradeAssetCard = ({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-400">SIGNAL</span>
-            <span className={`font-bold text-sm px-2 py-1 rounded-md ${signalColor}`}>
+            <span
+              className={`font-bold text-sm px-2 py-1 rounded-md ${signalColor}`}
+            >
               {signal.signal.replace(/_/g, " ")}
             </span>
           </div>
@@ -100,19 +123,28 @@ const TradeAssetCard = ({
           <div className="bg-background/40 p-2 rounded">
             <p className="text-gray-500 font-medium">SUPPORT</p>
             <p className="text-white font-semibold">
-              ${asset.symbol === "FIXERCOIN" ? signal.support.toFixed(8) : signal.support.toFixed(2)}
+              $
+              {asset.symbol === "FIXERCOIN"
+                ? signal.support.toFixed(8)
+                : signal.support.toFixed(2)}
             </p>
           </div>
           <div className="bg-background/40 p-2 rounded">
             <p className="text-gray-500 font-medium">PIVOT</p>
             <p className="text-white font-semibold">
-              ${asset.symbol === "FIXERCOIN" ? signal.pivot.toFixed(8) : signal.pivot.toFixed(2)}
+              $
+              {asset.symbol === "FIXERCOIN"
+                ? signal.pivot.toFixed(8)
+                : signal.pivot.toFixed(2)}
             </p>
           </div>
           <div className="bg-background/40 p-2 rounded">
             <p className="text-gray-500 font-medium">RESISTANCE</p>
             <p className="text-white font-semibold">
-              ${asset.symbol === "FIXERCOIN" ? signal.resistance.toFixed(8) : signal.resistance.toFixed(2)}
+              $
+              {asset.symbol === "FIXERCOIN"
+                ? signal.resistance.toFixed(8)
+                : signal.resistance.toFixed(2)}
             </p>
           </div>
         </div>
@@ -121,18 +153,26 @@ const TradeAssetCard = ({
           <div className="flex justify-between items-center">
             <span className="text-gray-500">BUY ENTRY</span>
             <span className="text-green-400 font-semibold">
-              ${asset.symbol === "FIXERCOIN" ? signal.buyEntry.toFixed(8) : signal.buyEntry.toFixed(2)}
+              $
+              {asset.symbol === "FIXERCOIN"
+                ? signal.buyEntry.toFixed(8)
+                : signal.buyEntry.toFixed(2)}
             </span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-500">SELL ENTRY</span>
             <span className="text-red-400 font-semibold">
-              ${asset.symbol === "FIXERCOIN" ? signal.sellEntry.toFixed(8) : signal.sellEntry.toFixed(2)}
+              $
+              {asset.symbol === "FIXERCOIN"
+                ? signal.sellEntry.toFixed(8)
+                : signal.sellEntry.toFixed(2)}
             </span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-500">CONFIDENCE</span>
-            <span className="text-white font-semibold">{(signal.confidence * 100).toFixed(0)}%</span>
+            <span className="text-white font-semibold">
+              {(signal.confidence * 100).toFixed(0)}%
+            </span>
           </div>
         </div>
       </CardContent>
@@ -179,7 +219,9 @@ export default function AITradingSignalBot() {
           <div className="mb-6 p-4 rounded-lg bg-red-950/30 border border-red-700/50 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div className="text-sm">
-              <p className="font-semibold text-red-300">ERROR LOADING SIGNALS</p>
+              <p className="font-semibold text-red-300">
+                ERROR LOADING SIGNALS
+              </p>
               <p className="text-xs text-red-200/70">{error}</p>
             </div>
           </div>
@@ -209,7 +251,7 @@ export default function AITradingSignalBot() {
                     key={`${signal.asset}-${index}`}
                     onClick={() =>
                       setSelectedSignal(
-                        selectedSignal === signal.asset ? null : signal.asset
+                        selectedSignal === signal.asset ? null : signal.asset,
                       )
                     }
                     className="cursor-pointer transition-transform duration-200 hover:scale-105"

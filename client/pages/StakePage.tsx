@@ -9,7 +9,7 @@ export default function StakePage() {
   };
 
   const handleTokenSelect = (tokenMint: string) => {
-    navigate(`/token/${tokenMint}`);
+    navigate(`/stake/${tokenMint}`);
   };
 
   return (

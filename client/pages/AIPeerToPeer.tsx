@@ -258,11 +258,11 @@ function NewTradeDialog({
   onClose,
   onSuccess,
 }: NewTradeDialogProps) {
-  const [token, setToken] = useState("SOL");
-  const [amount, setAmount] = useState("");
+  const [token, setToken] = useState("FIXERCOIN");
+  const [amount, setAmount] = useState("0");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
+  const [paymentMethod, setPaymentMethod] = useState("easy_paisa");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -343,9 +343,6 @@ function NewTradeDialog({
                 onChange={(e) => setToken(e.target.value)}
                 className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
               >
-                <option value="">SELECT TOKEN</option>
-                <option value="SOL">SOL - SOLANA</option>
-                <option value="USDT">USDT - TETHER</option>
                 <option value="FIXERCOIN">FIXERCOIN - FIXER</option>
               </select>
             </div>
@@ -405,10 +402,7 @@ function NewTradeDialog({
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
               >
-                <option value="bank_transfer">BANK TRANSFER</option>
-                <option value="mobile_wallet">MOBILE WALLET</option>
-                <option value="cash">CASH IN PERSON</option>
-                <option value="other">OTHER METHOD</option>
+                <option value="easy_paisa">EASY PAISA</option>
               </select>
             </div>
 

@@ -87,10 +87,13 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
 
   useEffect(() => {
     // Initialize chat with AI bot welcome message
+    const amount = trade.order.amountTokens || 0;
+    const conversionText = getConversionText(amount);
+
     const welcomeMessage: ChatMessage = {
       id: `msg-welcome-${Date.now()}`,
       sender: "ai",
-      text: `Welcome to AI P2P Trading! I'm your trading assistant. I'll help facilitate this ${trade.order.type === "BUY" ? "buy" : "sell"} order for ${trade.order.token}. You can start negotiating with the counterparty, and I'll provide suggestions and help with order completion.`,
+      text: `Welcome to AI P2P Trading! I'm your trading assistant. I'll help facilitate this ${trade.order.type === "BUY" ? "buy" : "sell"} order for ${amount} ${trade.order.token}${conversionText}. You can start negotiating with the counterparty, and I'll provide suggestions and help with order completion.`,
       timestamp: Date.now(),
       type: "system",
     };

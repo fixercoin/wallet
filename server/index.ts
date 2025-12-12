@@ -178,6 +178,19 @@ export async function createServer(): Promise<express.Application> {
   });
 
   // Price routes
+  app.get("/api/birdeye/price", async (req, res) => {
+    try {
+      return await handleBirdeyePrice(req, res);
+    } catch (e: any) {
+      console.error("[Birdeye Price] Unhandled error:", e);
+      return res.status(500).json({
+        success: false,
+        error: "Birdeye price service temporarily unavailable",
+        details: e?.message || String(e),
+      });
+    }
+  });
+
   app.get("/api/sol/price", async (req, res) => {
     try {
       return await handleSolPrice(req, res);

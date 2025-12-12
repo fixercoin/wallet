@@ -1,6 +1,6 @@
 import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 import { jupiterAPI } from "@/lib/services/jupiter";
-import { dexscreenerAPI } from "@/lib/services/dexscreener";
+import { birdeyeAPI } from "@/lib/services/birdeye";
 
 export type SupportedToken = "FIXERCOIN" | "LOCKER";
 
@@ -138,15 +138,37 @@ async function getUsdFromServer(token: SupportedToken): Promise<number | null> {
   }
 }
 
+async function getUsdFromBirdeye(
+  token: SupportedToken,
+  mint?: string,
+): Promise<number | null> {
+  try {
+    const lookupMint = mint || TOKEN_MINTS[token];
+    const data = await birdeyeAPI.getTokenByMint(lookupMint);
+    const p = data?.priceUsd ? parseFloat(String(data.priceUsd)) : NaN;
+    return Number.isFinite(p) && p > 0 ? p : null;
+  } catch {
+    return null;
+  }
+}
+
 async function getUsdFromDexscreener(
   token: SupportedToken,
   mint?: string,
 ): Promise<number | null> {
   try {
     const lookupMint = mint || TOKEN_MINTS[token];
-    const data = await dexscreenerAPI.getTokenByMint(lookupMint);
-    const p = data?.priceUsd ? parseFloat(data.priceUsd) : NaN;
-    return Number.isFinite(p) && p > 0 ? p : null;
+    // For FIXERCOIN and LOCKER, try Birdeye first
+    if (token === "FIXERCOIN" || token === "LOCKER") {
+      const birdeyePrice = await getUsdFromBirdeye(token, mint);
+      if (birdeyePrice) {
+        return birdeyePrice;
+      }
+    }
+
+    // Fallback to Birdeye for any token (as secondary option)
+    const birdeyePrice = await getUsdFromBirdeye(token, mint);
+    return birdeyePrice;
   } catch {
     return null;
   }
@@ -199,21 +221,21 @@ async function getGenericTokensPerSol(
   tokenDecimals: number,
 ): Promise<number | null> {
   try {
-    // Use DexScreener to get token USD price
-    const dexData = await dexscreenerAPI.getTokenByMint(tokenMint);
-    if (dexData?.priceUsd) {
-      const tokenUsd = parseFloat(dexData.priceUsd);
+    // Try Birdeye first for better pricing data
+    const birdeyeData = await birdeyeAPI.getTokenByMint(tokenMint);
+    if (birdeyeData?.priceUsd) {
+      const tokenUsd = parseFloat(String(birdeyeData.priceUsd));
       if (Number.isFinite(tokenUsd) && tokenUsd > 0) {
         const solUsd = await getSolUsd();
         const tokensPerSol = solUsd / tokenUsd;
         console.log(
-          `1 SOL = ${tokensPerSol.toFixed(2)} tokens (mint=${tokenMint}, from DexScreener)`,
+          `1 SOL = ${tokensPerSol.toFixed(2)} tokens (mint=${tokenMint}, from Birdeye)`,
         );
         return tokensPerSol;
       }
     }
 
-    console.warn(`No price data found for token ${tokenMint} on DexScreener`);
+    console.warn(`No price data found for token ${tokenMint} on Birdeye`);
     return null;
   } catch (error) {
     console.warn(`Error getting tokens per SOL for ${tokenMint}:`, error);

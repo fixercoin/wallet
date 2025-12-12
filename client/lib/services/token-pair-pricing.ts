@@ -1,4 +1,4 @@
-import { dexscreenerAPI } from "./dexscreener";
+import { birdeyeAPI } from "./birdeye";
 import { solPriceService } from "./sol-price";
 
 export interface PairPricingData {
@@ -12,6 +12,9 @@ export interface PairPricingData {
   liquidity: number;
   lastUpdated: Date;
 }
+
+// Tokens that should use Birdeye for live pricing
+const BIRDEYE_TOKENS = new Set(["FIXERCOIN", "LOCKER", "FXM"]);
 
 const TOKEN_CONFIGS: Record<
   string,
@@ -58,6 +61,32 @@ class TokenPairPricingService {
     { data: PairPricingData; expiresAt: number }
   >();
   private readonly CACHE_DURATION = 250; // 250ms - ensures live price updates every 250ms for real-time display
+
+  /**
+   * Get price directly from Birdeye for tokens like FIXERCOIN, LOCKER, FXM
+   */
+  private async getBirdeyePrice(tokenMint: string): Promise<number | null> {
+    try {
+      const token = await birdeyeAPI.getTokenByMint(tokenMint);
+      if (
+        token &&
+        token.priceUsd &&
+        isFinite(token.priceUsd) &&
+        token.priceUsd > 0
+      ) {
+        console.log(
+          `[TokenPairPricing] Birdeye price for ${tokenMint}: $${token.priceUsd.toFixed(8)}`,
+        );
+        return token.priceUsd;
+      }
+    } catch (error) {
+      console.warn(
+        "[TokenPairPricing] Error fetching Birdeye price:",
+        error instanceof Error ? error.message : error,
+      );
+    }
+    return null;
+  }
 
   /**
    * Get SOL price in USD from reliable dedicated service
@@ -228,32 +257,23 @@ class TokenPairPricingService {
     try {
       console.log(`Fetching derived price for ${symbol}...`);
 
-      // Get SOL price in USD
-      const solPrice = await this.getSolPrice();
+      // For FIXERCOIN, LOCKER, FXM - use Birdeye API directly
+      if (BIRDEYE_TOKENS.has(symbol)) {
+        console.log(`[TokenPairPricing] Using Birdeye for ${symbol}`);
+        const birdeyePrice = await this.getBirdeyePrice(config.mint);
 
-      // Get the SOL pair price (how many SOL to buy 1 token)
-      let priceInSol = await this.getSolPairPrice(config.mint);
-
-      // If no SOL pair found, try direct USD price from DexScreener
-      if (!priceInSol || priceInSol <= 0) {
-        console.warn(
-          `Could not determine SOL pair for ${symbol}, trying direct USD price...`,
-        );
-        const directUsdPrice = await this.getDirectUsdPrice(config.mint);
-
-        if (directUsdPrice && directUsdPrice > 0 && isFinite(directUsdPrice)) {
-          // Use direct USD price, fetching additional metadata from DexScreener
-          const tokenData = await dexscreenerAPI.getTokenByMint(config.mint);
+        if (birdeyePrice && birdeyePrice > 0 && isFinite(birdeyePrice)) {
+          const solPrice = await this.getSolPrice();
 
           const priceData: PairPricingData = {
             tokenAddress: config.mint,
             tokenSymbol: symbol,
             solPrice,
-            pairRatio: solPrice / directUsdPrice, // How many tokens per 1 SOL
-            derivedPrice: directUsdPrice,
-            priceChange24h: tokenData?.priceChange?.h24 || 0,
-            volume24h: tokenData?.volume?.h24 || 0,
-            liquidity: tokenData?.liquidity?.usd || 0,
+            pairRatio: solPrice / birdeyePrice, // How many tokens per 1 SOL
+            derivedPrice: birdeyePrice,
+            priceChange24h: 0, // Birdeye API provides this, but we handle it in birdeyeAPI service
+            volume24h: 0, // Not available from Birdeye basic price endpoint
+            liquidity: 0, // Not available from Birdeye basic price endpoint
             lastUpdated: new Date(),
           };
 
@@ -264,14 +284,60 @@ class TokenPairPricingService {
           });
 
           console.log(
-            `${symbol} direct USD price: $${priceData.derivedPrice.toFixed(8)}`,
+            `${symbol} price from Birdeye: $${priceData.derivedPrice.toFixed(8)}`,
           );
 
           return priceData;
         }
 
         console.warn(
-          `Could not determine price (SOL pair or USD price) for ${symbol} - API unavailable`,
+          `Could not get Birdeye price for ${symbol}, will return null`,
+        );
+        return null;
+      }
+
+      // For other tokens, use existing SOL pair logic
+      // Get SOL price in USD
+      const solPrice = await this.getSolPrice();
+
+      // Get the SOL pair price (how many SOL to buy 1 token)
+      let priceInSol = await this.getSolPairPrice(config.mint);
+
+      // If no SOL pair found, try direct USD price from Birdeye
+      if (!priceInSol || priceInSol <= 0) {
+        console.warn(
+          `Could not determine SOL pair for ${symbol}, trying Birdeye...`,
+        );
+        const birdeyePrice = await this.getBirdeyePrice(config.mint);
+
+        if (birdeyePrice && birdeyePrice > 0 && isFinite(birdeyePrice)) {
+          const priceData: PairPricingData = {
+            tokenAddress: config.mint,
+            tokenSymbol: symbol,
+            solPrice,
+            pairRatio: solPrice / birdeyePrice, // How many tokens per 1 SOL
+            derivedPrice: birdeyePrice,
+            priceChange24h: 0,
+            volume24h: 0,
+            liquidity: 0,
+            lastUpdated: new Date(),
+          };
+
+          // Cache the result
+          this.cache.set(config.mint, {
+            data: priceData,
+            expiresAt: Date.now() + this.CACHE_DURATION,
+          });
+
+          console.log(
+            `${symbol} price from Birdeye: $${priceData.derivedPrice.toFixed(8)}`,
+          );
+
+          return priceData;
+        }
+
+        console.warn(
+          `Could not determine price (SOL pair or Birdeye) for ${symbol} - API unavailable`,
         );
         return null;
       }
@@ -285,14 +351,14 @@ class TokenPairPricingService {
         return null;
       }
 
-      // Fetch additional metadata from DexScreener (with timeout)
+      // Fetch additional metadata (with timeout)
       let tokenData = null;
       try {
         tokenData = await Promise.race([
-          dexscreenerAPI.getTokenByMint(config.mint),
+          birdeyeAPI.getTokenByMint(config.mint),
           new Promise((_, reject) =>
             setTimeout(
-              () => reject(new Error("DexScreener metadata fetch timeout")),
+              () => reject(new Error("Birdeye metadata fetch timeout")),
               10000,
             ),
           ),

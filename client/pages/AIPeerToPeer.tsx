@@ -6,8 +6,10 @@ import { ArrowLeft, Send, Loader2, Plus, Lock } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { AIBotChat } from "@/components/p2p/AIBotChat";
 import { P2POrderCard } from "@/components/p2p/P2POrderCard";
+import { AdminNotifications } from "@/components/p2p/AdminNotifications";
 import type { P2POrder } from "@/lib/p2p-api";
 import { toast } from "sonner";
+import { Bell } from "lucide-react";
 
 const ADMIN_WALLET = "7jnAb5imcmxFiS6iMvgtd5Rf1HHAyASYdqoZAQesJeSw";
 

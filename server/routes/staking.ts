@@ -89,7 +89,9 @@ class InMemoryStakingStore {
     this.stakes.set(stakeId, updated);
   }
 
-  async getRewardsByWallet(walletAddress: string): Promise<RewardDistribution[]> {
+  async getRewardsByWallet(
+    walletAddress: string,
+  ): Promise<RewardDistribution[]> {
     const rewardIds = this.rewardsByWallet.get(walletAddress) || [];
     const rewards: RewardDistribution[] = [];
     for (const rewardId of rewardIds) {
@@ -121,7 +123,8 @@ class StakingKVStore {
   constructor() {
     // Initialize Cloudflare KV for staking using STAKING_KV_PROD namespace
     const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-    const namespaceId = process.env.STAKING_KV_PROD || process.env.CLOUDFLARE_NAMESPACE_ID;
+    const namespaceId =
+      process.env.STAKING_KV_PROD || process.env.CLOUDFLARE_NAMESPACE_ID;
     const apiToken = process.env.CLOUDFLARE_API_TOKEN;
 
     this.fallbackStore = new InMemoryStakingStore();

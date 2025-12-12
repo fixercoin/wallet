@@ -397,6 +397,14 @@ function NewTradeDialog({
               step="0.01"
             />
 
+            {/* Conversion Rate Display */}
+            {tokenPrice && amount && (
+              <div className="bg-gray-800/40 border border-gray-700/40 rounded-lg px-4 py-3 text-sm text-gray-200">
+                {amount} {token} = <span className="font-bold text-green-400">{convertedAmount.toFixed(2)} PKR</span>
+                <span className="text-gray-400 ml-2 text-xs">(1 {token} = {tokenPrice.toFixed(2)} PKR)</span>
+              </div>
+            )}
+
             {/* Price Range Fields */}
             <div className="grid grid-cols-2 gap-4">
               <input

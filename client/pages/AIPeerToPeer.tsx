@@ -263,12 +263,14 @@ function NewTradeDialog({
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("easy_paisa");
+  const [digitalAccount, setDigitalAccount] = useState("");
+  const [accountName, setAccountName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!amount || !minPrice || !maxPrice || !token) {
+    if (!amount || !minPrice || !maxPrice || !token || !digitalAccount || !accountName) {
       toast.error("PLEASE FILL ALL FIELDS");
       return;
     }
@@ -288,6 +290,8 @@ function NewTradeDialog({
         maxAmountPKR: parseFloat(maxPrice),
         payment_method: paymentMethod,
         walletAddress: wallet.publicKey,
+        accountNumber: digitalAccount,
+        accountName: accountName,
       };
 
       console.log("Submitting order data:", orderData);
@@ -399,6 +403,34 @@ function NewTradeDialog({
                   step="0.01"
                 />
               </div>
+            </div>
+
+            {/* Digital Account Field */}
+            <div className="space-y-2">
+              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
+                DIGITAL ACCOUNT
+              </label>
+              <input
+                type="text"
+                value={digitalAccount}
+                onChange={(e) => setDigitalAccount(e.target.value)}
+                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                placeholder="Enter your account number"
+              />
+            </div>
+
+            {/* Account Name Field */}
+            <div className="space-y-2">
+              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
+                ACCOUNT NAME
+              </label>
+              <input
+                type="text"
+                value={accountName}
+                onChange={(e) => setAccountName(e.target.value)}
+                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                placeholder="Enter account holder name"
+              />
             </div>
 
             {/* Payment Method Field */}

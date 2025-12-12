@@ -273,7 +273,7 @@ function NewTradeDialog({
       return;
     }
 
-    if (!wallet?.address) {
+    if (!wallet?.publicKey) {
       toast.error("WALLET NOT CONNECTED");
       return;
     }

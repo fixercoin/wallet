@@ -52,9 +52,6 @@ async function createTransferInstruction_(params: TransferParams): Promise<{
   // Convert amount to base units
   const amountInBaseUnits = Math.floor(amount * Math.pow(10, decimals));
 
-  // Import createAssociatedTokenAccountInstruction
-  const { createAssociatedTokenAccountInstruction } = await import("@solana/spl-token");
-
   // Check if the destination account exists
   const conn = getConnection();
   let instructions: any[] = [];

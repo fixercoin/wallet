@@ -209,10 +209,10 @@ export default function Info() {
             </div>
 
             {/* Back Button */}
-            <div className="mt-8 flex justify-center">
+            <div className="mt-8 w-full">
               <Button
                 onClick={() => navigate("/")}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase px-8 py-2 rounded-lg transition-colors"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase py-2 rounded-lg transition-colors"
               >
                 Back
               </Button>

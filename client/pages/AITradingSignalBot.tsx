@@ -70,8 +70,8 @@ const TradeAssetCard = ({
               }}
             />
             <div>
-              <h3 className="font-bold text-white text-sm">{asset.symbol}</h3>
-              <p className="text-xs text-gray-500">{asset.name}</p>
+              <h3 className="font-bold text-white text-sm">{asset.symbol.toUpperCase()}</h3>
+              <p className="text-xs text-gray-500">{asset.name.toUpperCase()}</p>
             </div>
           </div>
           <div className="text-right">
@@ -86,7 +86,7 @@ const TradeAssetCard = ({
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-400">Signal</span>
+            <span className="text-xs font-semibold text-gray-400">SIGNAL</span>
             <span className={`font-bold text-sm px-2 py-1 rounded-md ${signalColor}`}>
               {signal.signal.replace(/_/g, " ")}
             </span>
@@ -98,19 +98,19 @@ const TradeAssetCard = ({
 
         <div className="grid grid-cols-3 gap-2 text-xs">
           <div className="bg-background/40 p-2 rounded">
-            <p className="text-gray-500 font-medium">Support</p>
+            <p className="text-gray-500 font-medium">SUPPORT</p>
             <p className="text-white font-semibold">
               ${asset.symbol === "FIXERCOIN" ? signal.support.toFixed(8) : signal.support.toFixed(2)}
             </p>
           </div>
           <div className="bg-background/40 p-2 rounded">
-            <p className="text-gray-500 font-medium">Pivot</p>
+            <p className="text-gray-500 font-medium">PIVOT</p>
             <p className="text-white font-semibold">
               ${asset.symbol === "FIXERCOIN" ? signal.pivot.toFixed(8) : signal.pivot.toFixed(2)}
             </p>
           </div>
           <div className="bg-background/40 p-2 rounded">
-            <p className="text-gray-500 font-medium">Resistance</p>
+            <p className="text-gray-500 font-medium">RESISTANCE</p>
             <p className="text-white font-semibold">
               ${asset.symbol === "FIXERCOIN" ? signal.resistance.toFixed(8) : signal.resistance.toFixed(2)}
             </p>
@@ -119,19 +119,19 @@ const TradeAssetCard = ({
 
         <div className="border-t border-border/50 pt-3 space-y-1.5 text-xs">
           <div className="flex justify-between items-center">
-            <span className="text-gray-500">Buy Entry</span>
+            <span className="text-gray-500">BUY ENTRY</span>
             <span className="text-green-400 font-semibold">
               ${asset.symbol === "FIXERCOIN" ? signal.buyEntry.toFixed(8) : signal.buyEntry.toFixed(2)}
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-500">Sell Entry</span>
+            <span className="text-gray-500">SELL ENTRY</span>
             <span className="text-red-400 font-semibold">
               ${asset.symbol === "FIXERCOIN" ? signal.sellEntry.toFixed(8) : signal.sellEntry.toFixed(2)}
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-500">Confidence</span>
+            <span className="text-gray-500">CONFIDENCE</span>
             <span className="text-white font-semibold">{(signal.confidence * 100).toFixed(0)}%</span>
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function AITradingSignalBot() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1f1f1f] to-[#2a2a2a] text-white">
+    <div className="min-h-screen bg-gradient-to-br from-[#1f1f1f] to-[#2a2a2a] text-white uppercase">
       <div className="w-full max-w-5xl mx-auto px-4 py-6 relative z-20">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
@@ -179,22 +179,22 @@ export default function AITradingSignalBot() {
           <div className="mb-6 p-4 rounded-lg bg-red-950/30 border border-red-700/50 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div className="text-sm">
-              <p className="font-semibold text-red-300">Error loading signals</p>
+              <p className="font-semibold text-red-300">ERROR LOADING SIGNALS</p>
               <p className="text-xs text-red-200/70">{error}</p>
             </div>
           </div>
         )}
 
         <div className="mb-6 flex justify-between items-center text-xs text-gray-500">
-          <span>Updated {formatTime(lastUpdate)}</span>
-          <span className="text-purple-400">Real-time AI Analysis</span>
+          <span>UPDATED {formatTime(lastUpdate)}</span>
+          <span className="text-purple-400">REAL-TIME AI ANALYSIS</span>
         </div>
 
         {loading && signals.length === 0 ? (
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
               <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-blue-600 animate-spin mx-auto mb-4" />
-              <p className="text-gray-400">Loading trading signals...</p>
+              <p className="text-gray-400">LOADING TRADING SIGNALS...</p>
             </div>
           </div>
         ) : (

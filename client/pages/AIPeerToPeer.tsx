@@ -155,9 +155,7 @@ export default function AIPeerToPeer() {
         ) : (
           <Card className="border-gray-700/30 bg-transparent mb-8">
             <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <Lock className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
+              <div>
                   <input
                     type="password"
                     value={password}
@@ -188,7 +186,6 @@ export default function AIPeerToPeer() {
                   >
                     UNLOCK
                   </Button>
-                </div>
               </div>
             </CardContent>
           </Card>

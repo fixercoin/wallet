@@ -45,7 +45,8 @@ class FixercoinPriceService {
 
         try {
           // Fetch FIXERCOIN price from Birdeye
-          const fixercoinToken = await birdeyeAPI.getTokenByMint(FIXERCOIN_MINT);
+          const fixercoinToken =
+            await birdeyeAPI.getTokenByMint(FIXERCOIN_MINT);
 
           if (!fixercoinToken) {
             throw new Error("FIXERCOIN not found on Birdeye");
@@ -56,9 +57,7 @@ class FixercoinPriceService {
           const volume24h = fixercoinToken.volume?.h24 || 0;
 
           if (!price || price <= 0) {
-            throw new Error(
-              `Invalid FIXERCOIN price from Birdeye: ${price}`,
-            );
+            throw new Error(`Invalid FIXERCOIN price from Birdeye: ${price}`);
           }
 
           const priceData: FixercoinPriceData = {

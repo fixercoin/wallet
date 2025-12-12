@@ -55,9 +55,7 @@ class LockerPriceService {
           const volume24h = lockerToken.volume?.h24 || 0;
 
           if (!price || price <= 0) {
-            throw new Error(
-              `Invalid LOCKER price from Birdeye: ${price}`,
-            );
+            throw new Error(`Invalid LOCKER price from Birdeye: ${price}`);
           }
 
           const priceData: LockerPriceData = {

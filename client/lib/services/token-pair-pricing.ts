@@ -68,7 +68,12 @@ class TokenPairPricingService {
   private async getBirdeyePrice(tokenMint: string): Promise<number | null> {
     try {
       const token = await birdeyeAPI.getTokenByMint(tokenMint);
-      if (token && token.priceUsd && isFinite(token.priceUsd) && token.priceUsd > 0) {
+      if (
+        token &&
+        token.priceUsd &&
+        isFinite(token.priceUsd) &&
+        token.priceUsd > 0
+      ) {
         console.log(
           `[TokenPairPricing] Birdeye price for ${tokenMint}: $${token.priceUsd.toFixed(8)}`,
         );

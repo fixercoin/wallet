@@ -137,15 +137,15 @@ export default function Info() {
             </div>
 
             {/* Web3 Wallets */}
-            <div className="bg-transparent border border-purple-500/20 rounded-lg p-4 mb-6">
-              <p className="text-[12px] text-gray-400 mb-3 uppercase font-semibold">
+            <div className="bg-card/50 border border-border rounded-lg p-4 mb-6">
+              <p className="text-[12px] text-muted-foreground mb-3 uppercase font-semibold">
                 AVAILABLE WALLETS
               </p>
               <div className="flex flex-wrap gap-2">
                 {fixerCoinData.webWallets.map((wallet, index) => (
                   <span
                     key={index}
-                    className="px-3 py-1 bg-transparent border border-purple-400/30 rounded-full text-[12px] font-semibold text-purple-300 uppercase"
+                    className="px-3 py-1 bg-card border border-border rounded-full text-[12px] font-semibold text-accent uppercase"
                   >
                     {wallet}
                   </span>

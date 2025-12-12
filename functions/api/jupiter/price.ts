@@ -83,7 +83,7 @@ async function handler(request: Request): Promise<Response> {
               `[Jupiter Price] ${response.status} from ${baseUrl} (attempt ${attempt}/2), retrying...`,
             );
             if (attempt < 2) {
-              await new Promise((r) => setTimeout(r, attempt * 500));
+              await new Promise((r) => setTimeout(r, attempt * 1000)); // Increased delay for server errors
               continue; // Retry same endpoint
             }
             break; // Try next endpoint
@@ -93,23 +93,7 @@ async function handler(request: Request): Promise<Response> {
             console.warn(
               `[Jupiter Price] Error ${response.status} from ${baseUrl}`,
             );
-            if (endpointIndex === JUPITER_PRICE_ENDPOINTS.length - 1) {
-              return new Response(
-                JSON.stringify({
-                  error: "Jupiter price API error",
-                  status: response.status,
-                  data: {},
-                }),
-                {
-                  status: response.status,
-                  headers: {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*",
-                  },
-                },
-              );
-            }
-            break; // Try next endpoint
+            break; // Try next endpoint on non-500 errors
           }
 
           console.log(`[Jupiter Price] ✅ Success from ${baseUrl}`);

@@ -154,65 +154,65 @@ export default function Info() {
             </div>
 
             {/* Future Outlook */}
-            <div className="bg-transparent border border-purple-500/20 rounded-lg p-4">
-              <p className="text-[12px] text-gray-400 mb-4 uppercase font-semibold">
+            <div className="bg-card/50 border border-border rounded-lg p-4">
+              <p className="text-[12px] text-muted-foreground mb-4 uppercase font-semibold">
                 FUTURE OUTLOOK
               </p>
               <div className="space-y-4">
                 <div>
-                  <p className="text-[12px] text-gray-400 mb-1 uppercase font-semibold">
+                  <p className="text-[12px] text-muted-foreground mb-1 uppercase font-semibold">
                     NEXT POSSIBLE RATE
                   </p>
-                  <p className="text-[12px] font-bold text-green-400 uppercase">
+                  <p className="text-[12px] font-bold text-wallet-success-500 uppercase">
                     $0.50 - $2.00 USD
                   </p>
-                  <p className="text-[12px] text-gray-300 mt-1 uppercase">
+                  <p className="text-[12px] text-foreground/80 mt-1 uppercase">
                     EXPECTED WITHIN 12-24 MONTHS BASED ON ECOSYSTEM DEVELOPMENT
                     AND MARKET ADOPTION
                   </p>
                 </div>
 
-                <div className="border-t border-gray-700 pt-3">
-                  <p className="text-[12px] text-gray-400 mb-1 uppercase font-semibold">
+                <div className="border-t border-border pt-3">
+                  <p className="text-[12px] text-muted-foreground mb-1 uppercase font-semibold">
                     TARGET PRICE
                   </p>
-                  <p className="text-[12px] font-bold text-blue-400 uppercase">
+                  <p className="text-[12px] font-bold text-wallet-blue-500 uppercase">
                     $5.00+ USD
                   </p>
-                  <p className="text-[12px] text-gray-300 mt-1 uppercase">
+                  <p className="text-[12px] text-foreground/80 mt-1 uppercase">
                     LONG-TERM TARGET WITH FULL ECOSYSTEM INTEGRATION AND MAJOR
                     PARTNERSHIPS
                   </p>
                 </div>
 
-                <div className="border-t border-gray-700 pt-3">
-                  <p className="text-[12px] text-gray-400 mb-1 uppercase font-semibold">
+                <div className="border-t border-border pt-3">
+                  <p className="text-[12px] text-muted-foreground mb-1 uppercase font-semibold">
                     INVESTMENT OPPORTUNITIES
                   </p>
-                  <p className="text-[12px] text-gray-200 uppercase">
+                  <p className="text-[12px] text-foreground uppercase">
                     EARLY-STAGE ADOPTION • LOW MARKET CAP • HIGH GROWTH
                     POTENTIAL • COMMUNITY REWARDS
                   </p>
                 </div>
 
-                <div className="border-t border-gray-700 pt-3">
-                  <p className="text-[12px] text-gray-400 mb-1 uppercase font-semibold">
+                <div className="border-t border-border pt-3">
+                  <p className="text-[12px] text-muted-foreground mb-1 uppercase font-semibold">
                     FIXORIUM WALLET INTEGRATION
                   </p>
-                  <p className="text-[12px] text-purple-300 font-semibold uppercase">
+                  <p className="text-[12px] text-accent font-semibold uppercase">
                     SEAMLESS STAKING, REWARDS, AND TRADING DIRECTLY IN FIXORIUM
                     WALLET
                   </p>
                 </div>
 
-                <div className="border-t border-gray-700 pt-3">
-                  <p className="text-[12px] text-gray-400 mb-1 uppercase font-semibold">
+                <div className="border-t border-border pt-3">
+                  <p className="text-[12px] text-muted-foreground mb-1 uppercase font-semibold">
                     CEX EXCHANGE LISTING
                   </p>
-                  <p className="text-[12px] font-bold text-yellow-400 uppercase">
+                  <p className="text-[12px] font-bold text-wallet-success-500 uppercase">
                     COMING Q2 2025
                   </p>
-                  <p className="text-[12px] text-gray-300 mt-1 uppercase">
+                  <p className="text-[12px] text-foreground/80 mt-1 uppercase">
                     MAJOR CENTRALIZED EXCHANGES LISTING PLANNED • INCREASED
                     LIQUIDITY AND ACCESSIBILITY
                   </p>

@@ -30,12 +30,6 @@ export interface RewardDistribution {
   processedAt?: number;
 }
 
-// In-memory store for development (fallback, primary uses KV)
-const stakes: Map<string, Stake> = new Map();
-const stakesByWallet: Map<string, string[]> = new Map();
-const rewards: Map<string, RewardDistribution> = new Map();
-const rewardsByWallet: Map<string, string[]> = new Map();
-
 // Constants
 const REWARD_CONFIG = {
   vaultWallet: "5bW3uEyoP1jhXBMswgkB8xZuKUY3hscMaLJcsuzH2LNU",
@@ -59,88 +53,141 @@ function calculateReward(amount: number, periodDays: number): number {
   return dailyRate * periodDays;
 }
 
-// KV Storage wrapper class for server-side use
-class KVStoreServer {
-  private stakes: Map<string, Stake> = new Map();
-  private stakesByWallet: Map<string, string[]> = new Map();
-  private rewards: Map<string, RewardDistribution> = new Map();
-  private rewardsByWallet: Map<string, string[]> = new Map();
+// KV Store wrapper for staking operations
+class StakingKVStore {
+  private kvStorage = getKVStorage();
 
   async getStakesByWallet(walletAddress: string): Promise<Stake[]> {
-    const stakeIds = this.stakesByWallet.get(walletAddress) || [];
-    const stakes: Stake[] = [];
+    try {
+      const indexKey = `staking:wallet:index:${walletAddress}`;
+      const indexData = await this.kvStorage.get(indexKey);
+      const stakeIds: string[] = indexData ? JSON.parse(indexData) : [];
 
-    for (const stakeId of stakeIds) {
-      const stake = this.stakes.get(stakeId);
-      if (stake) {
-        stakes.push(stake);
+      const stakes: Stake[] = [];
+      for (const stakeId of stakeIds) {
+        const stake = await this.getStake(stakeId);
+        if (stake) {
+          stakes.push(stake);
+        }
       }
+      return stakes;
+    } catch (error) {
+      console.error(
+        `Error getting stakes for wallet ${walletAddress}:`,
+        error,
+      );
+      return [];
     }
-
-    return stakes;
   }
 
   async getStake(stakeId: string): Promise<Stake | null> {
-    return this.stakes.get(stakeId) || null;
+    try {
+      const key = `staking:stake:${stakeId}`;
+      const data = await this.kvStorage.get(key);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error(`Error getting stake ${stakeId}:`, error);
+      return null;
+    }
   }
 
   async createStake(stake: Stake): Promise<Stake> {
-    this.stakes.set(stake.id, stake);
+    try {
+      const stakeKey = `staking:stake:${stake.id}`;
+      await this.kvStorage.put(stakeKey, JSON.stringify(stake));
 
-    const stakeIds = this.stakesByWallet.get(stake.walletAddress) || [];
-    stakeIds.push(stake.id);
-    this.stakesByWallet.set(stake.walletAddress, stakeIds);
+      // Update wallet index
+      const indexKey = `staking:wallet:index:${stake.walletAddress}`;
+      const indexData = await this.kvStorage.get(indexKey);
+      const stakeIds: string[] = indexData ? JSON.parse(indexData) : [];
+      stakeIds.push(stake.id);
+      await this.kvStorage.put(indexKey, JSON.stringify(stakeIds));
 
-    return stake;
+      return stake;
+    } catch (error) {
+      console.error(`Error creating stake:`, error);
+      throw error;
+    }
   }
 
   async updateStake(stakeId: string, updates: Partial<Stake>): Promise<void> {
-    const stake = this.stakes.get(stakeId);
-    if (!stake) {
-      throw new Error("Stake not found");
+    try {
+      const stake = await this.getStake(stakeId);
+      if (!stake) {
+        throw new Error("Stake not found");
+      }
+
+      const updated: Stake = {
+        ...stake,
+        ...updates,
+        updatedAt: Date.now(),
+      };
+
+      const key = `staking:stake:${stakeId}`;
+      await this.kvStorage.put(key, JSON.stringify(updated));
+    } catch (error) {
+      console.error(`Error updating stake ${stakeId}:`, error);
+      throw error;
     }
-
-    const updated: Stake = {
-      ...stake,
-      ...updates,
-      updatedAt: Date.now(),
-    };
-
-    this.stakes.set(stakeId, updated);
   }
 
   async getRewardsByWallet(
     walletAddress: string,
   ): Promise<RewardDistribution[]> {
-    const rewardIds = this.rewardsByWallet.get(walletAddress) || [];
-    const rewards: RewardDistribution[] = [];
+    try {
+      const indexKey = `staking:reward:index:${walletAddress}`;
+      const indexData = await this.kvStorage.get(indexKey);
+      const rewardIds: string[] = indexData ? JSON.parse(indexData) : [];
 
-    for (const rewardId of rewardIds) {
-      const reward = this.rewards.get(rewardId);
-      if (reward) {
-        rewards.push(reward);
+      const rewards: RewardDistribution[] = [];
+      for (const rewardId of rewardIds) {
+        const reward = await this.getReward(rewardId);
+        if (reward) {
+          rewards.push(reward);
+        }
       }
+      return rewards;
+    } catch (error) {
+      console.error(
+        `Error getting rewards for wallet ${walletAddress}:`,
+        error,
+      );
+      return [];
     }
-
-    return rewards;
   }
 
   async getReward(rewardId: string): Promise<RewardDistribution | null> {
-    return this.rewards.get(rewardId) || null;
+    try {
+      const key = `staking:reward:${rewardId}`;
+      const data = await this.kvStorage.get(key);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error(`Error getting reward ${rewardId}:`, error);
+      return null;
+    }
   }
 
   async recordReward(reward: RewardDistribution): Promise<RewardDistribution> {
-    this.rewards.set(reward.id, reward);
+    try {
+      const rewardKey = `staking:reward:${reward.id}`;
+      await this.kvStorage.put(rewardKey, JSON.stringify(reward));
 
-    const rewardIds = this.rewardsByWallet.get(reward.walletAddress) || [];
-    rewardIds.push(reward.id);
-    this.rewardsByWallet.set(reward.walletAddress, rewardIds);
+      // Update wallet reward index
+      const indexKey = `staking:reward:index:${reward.walletAddress}`;
+      const indexData = await this.kvStorage.get(indexKey);
+      const rewardIds: string[] = indexData ? JSON.parse(indexData) : [];
+      rewardIds.push(reward.id);
+      await this.kvStorage.put(indexKey, JSON.stringify(rewardIds));
 
-    return reward;
+      return reward;
+    } catch (error) {
+      console.error(`Error recording reward:`, error);
+      throw error;
+    }
   }
 }
 
-const kvStore = new KVStoreServer();
+const kvStore = new StakingKVStore();
 
 function verifySignature(
   message: string,

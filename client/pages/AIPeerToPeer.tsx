@@ -153,7 +153,7 @@ export default function AIPeerToPeer() {
             </Button>
           </div>
         ) : (
-          <Card className="border-gray-700/30 bg-gradient-to-br from-blue-900/20 to-gray-900/50 mb-8">
+          <Card className="border-gray-700/30 bg-transparent mb-8">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
                 <Lock className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />

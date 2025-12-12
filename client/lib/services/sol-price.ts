@@ -1,4 +1,4 @@
-import { retryWithExponentialBackoff } from "./retry-fetch";
+import { retryWithExponentialBackoff, AGGRESSIVE_RETRY_OPTIONS } from "./retry-fetch";
 
 export interface SolPriceData {
   price: number;
@@ -101,11 +101,8 @@ class SolPriceService {
       },
       "SOL",
       {
-        maxRetries: 3,
-        initialDelayMs: 500,
-        maxDelayMs: 2000,
-        backoffMultiplier: 2,
-        timeoutMs: 8000,
+        ...AGGRESSIVE_RETRY_OPTIONS,
+        timeoutMs: 12000,
       },
     );
 

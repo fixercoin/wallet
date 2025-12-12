@@ -10,17 +10,30 @@ export interface P2POrder {
   id: string;
   type: OrderType;
   creator_wallet: string;
+  buyer_wallet?: string;
   token: string;
-  token_amount: string;
-  pkr_amount: number;
-  payment_method: string;
+  token_amount?: string;
+  amountTokens?: number;
+  pkr_amount?: number;
+  amountPKR?: number;
+  minAmountPKR?: number;
+  maxAmountPKR?: number;
+  minAmountTokens?: number;
+  maxAmountTokens?: number;
+  payment_method?: string;
+  paymentMethod?: string;
   status: OrderStatus;
-  online: boolean;
-  created_at: number;
-  updated_at: number;
+  online?: boolean;
+  created_at?: number;
+  createdAt?: number;
+  updated_at?: number;
+  updatedAt?: number;
   account_name?: string;
+  accountName?: string;
   account_number?: string;
+  accountNumber?: string;
   wallet_address?: string;
+  walletAddress?: string;
 }
 
 export interface TradeRoom {

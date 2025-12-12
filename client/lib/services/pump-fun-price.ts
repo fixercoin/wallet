@@ -40,8 +40,8 @@ class PumpFunPriceService {
   private cache = new Map<string, { data: PumpFunToken; expiresAt: number }>();
   private readonly CACHE_DURATION = 250; // 250ms for live updates
   private readonly TIMEOUT_MS = 55000; // 55 seconds timeout (50-60 range)
-  private readonly MAX_RETRIES = 2; // Retry up to 2 times
-  private readonly RETRY_DELAY_MS = 1000; // Initial retry delay (exponential backoff)
+  private readonly MAX_RETRIES = 15; // Retry up to 15 times with exponential backoff
+  private readonly RETRY_DELAY_MS = 100; // Initial retry delay (exponential backoff)
 
   /**
    * Get token price with timeout, caching, and retry logic

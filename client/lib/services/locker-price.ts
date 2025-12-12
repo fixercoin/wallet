@@ -1,7 +1,10 @@
 import { dexscreenerAPI } from "./dexscreener";
 import { solPriceService } from "./sol-price";
 import { saveServicePrice } from "./offline-cache";
-import { retryWithExponentialBackoff } from "./retry-fetch";
+import {
+  retryWithExponentialBackoff,
+  AGGRESSIVE_RETRY_OPTIONS,
+} from "./retry-fetch";
 
 export interface LockerPriceData {
   price: number;
@@ -180,18 +183,15 @@ class LockerPriceService {
       },
       this.TOKEN_NAME,
       {
-        maxRetries: 2, // Fail fast to allow static fallback
-        initialDelayMs: 500,
-        maxDelayMs: 2000,
-        backoffMultiplier: 2,
-        timeoutMs: 8000,
+        ...AGGRESSIVE_RETRY_OPTIONS,
+        timeoutMs: 12000,
       },
     );
 
     // If all retries failed, return a static fallback price
     if (!priceData) {
       console.warn(
-        `[${this.TOKEN_NAME}] All price fetch attempts failed. Using static fallback price.`,
+        `[${this.TOKEN_NAME}] All price fetch attempts failed. Using static fallback price after ${AGGRESSIVE_RETRY_OPTIONS.maxRetries + 1} attempts.`,
       );
       const fallbackData: LockerPriceData = {
         price: 0.00001112,

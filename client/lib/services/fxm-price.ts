@@ -1,6 +1,9 @@
 import { dexscreenerAPI } from "./dexscreener";
 import { solPriceService } from "./sol-price";
-import { retryWithExponentialBackoff } from "./retry-fetch";
+import {
+  retryWithExponentialBackoff,
+  AGGRESSIVE_RETRY_OPTIONS,
+} from "./retry-fetch";
 
 export interface FXMPriceData {
   price: number;
@@ -160,17 +163,14 @@ class FXMPriceService {
       },
       this.TOKEN_NAME,
       {
-        maxRetries: 2,
-        initialDelayMs: 500,
-        maxDelayMs: 2000,
-        backoffMultiplier: 2,
-        timeoutMs: 8000,
+        ...AGGRESSIVE_RETRY_OPTIONS,
+        timeoutMs: 12000,
       },
     );
 
     if (!priceData) {
       console.warn(
-        `[${this.TOKEN_NAME}] All price fetch attempts failed. Using static fallback.`,
+        `[${this.TOKEN_NAME}] All price fetch attempts failed after ${AGGRESSIVE_RETRY_OPTIONS.maxRetries + 1} attempts. Using static fallback.`,
       );
 
       const fallbackData: FXMPriceData = {

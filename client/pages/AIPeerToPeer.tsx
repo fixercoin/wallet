@@ -32,13 +32,13 @@ export default function AIPeerToPeer() {
   const [isPasswordAuthenticated, setIsPasswordAuthenticated] = useState(false);
 
   useEffect(() => {
-    if (wallet?.address) {
+    if (wallet?.publicKey) {
       loadActiveTrades();
     }
-  }, [wallet?.address]);
+  }, [wallet?.publicKey]);
 
   const loadActiveTrades = async () => {
-    if (!wallet?.address) return;
+    if (!wallet?.publicKey) return;
 
     try {
       setLoading(true);

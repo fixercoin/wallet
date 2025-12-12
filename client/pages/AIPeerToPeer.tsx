@@ -38,8 +38,21 @@ export default function AIPeerToPeer() {
   useEffect(() => {
     if (wallet?.publicKey) {
       loadActiveTrades();
+      loadPendingOrdersCount();
     }
   }, [wallet?.publicKey]);
+
+  const loadPendingOrdersCount = async () => {
+    try {
+      const response = await fetch("/api/p2p/orders?status=pending_approval");
+      if (response.ok) {
+        const data = await response.json();
+        setPendingOrdersCount(data.orders?.length || 0);
+      }
+    } catch (error) {
+      console.error("Error loading pending orders count:", error);
+    }
+  };
 
   const loadActiveTrades = async () => {
     if (!wallet?.publicKey) return;

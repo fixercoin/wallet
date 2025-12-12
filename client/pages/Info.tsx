@@ -40,7 +40,7 @@ export default function Info() {
                 onClick={() => navigate("/")}
                 variant="ghost"
                 size="sm"
-                className="text-gray-400 hover:text-purple-400 p-0"
+                className="text-muted-foreground hover:text-primary p-0"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>

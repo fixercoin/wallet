@@ -38,7 +38,7 @@ export interface TransferParams {
  * Create a transfer instruction for SPL tokens
  */
 async function createTransferInstruction_(params: TransferParams): Promise<{
-  instruction: any;
+  instructions: any[];
   fromATA: PublicKey;
   toATA: PublicKey;
 }> {
@@ -51,16 +51,47 @@ async function createTransferInstruction_(params: TransferParams): Promise<{
   // Convert amount to base units
   const amountInBaseUnits = Math.floor(amount * Math.pow(10, decimals));
 
+  // Import createAssociatedTokenAccountInstruction
+  const { createAssociatedTokenAccountInstruction } = await import("@solana/spl-token");
+
+  // Check if the destination account exists
+  const conn = getConnection();
+  let instructions: any[] = [];
+
+  try {
+    const accountInfo = await conn.getAccountInfo(toATA);
+    if (!accountInfo) {
+      // Account doesn't exist, create it
+      const createAtaInstruction = createAssociatedTokenAccountInstruction(
+        fromWallet, // payer
+        toATA, // associated token account
+        toWallet, // owner
+        mint, // mint
+      );
+      instructions.push(createAtaInstruction);
+    }
+  } catch (error) {
+    // If we can't check, assume account doesn't exist and create it
+    const createAtaInstruction = createAssociatedTokenAccountInstruction(
+      fromWallet,
+      toATA,
+      toWallet,
+      mint,
+    );
+    instructions.push(createAtaInstruction);
+  }
+
   // Create transfer instruction
-  const instruction = createTransferInstruction(
+  const transferInstruction = createTransferInstruction(
     fromATA,
     toATA,
     fromWallet,
     amountInBaseUnits,
   );
+  instructions.push(transferInstruction);
 
   return {
-    instruction,
+    instructions,
     fromATA,
     toATA,
   };

@@ -155,6 +155,7 @@ import BuyerOrderConfirmation from "./pages/BuyerOrderConfirmation";
 import { useLocation } from "react-router-dom";
 import { P2POrderFlowProvider } from "@/contexts/P2POrderFlowContext";
 import AIPeerToPeer from "./pages/AIPeerToPeer";
+import AITradingSignalBot from "./pages/AITradingSignalBot";
 import FiatDeposit from "./pages/FiatDeposit";
 import FiatWithdraw from "./pages/FiatWithdraw";
 import FiatExchange from "./pages/FiatExchange";

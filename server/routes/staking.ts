@@ -1,6 +1,7 @@
 import { RequestHandler } from "express";
 import nacl from "tweetnacl";
 import bs58 from "bs58";
+import { getKVStorage } from "../lib/kv-storage";
 
 export interface Stake {
   id: string;

@@ -30,10 +30,5 @@ export default function StakeDetailPage() {
     return null;
   }
 
-  return (
-    <TokenStakingDetail
-      token={token}
-      onBack={() => navigate("/stake")}
-    />
-  );
+  return <TokenStakingDetail token={token} onBack={() => navigate("/stake")} />;
 }

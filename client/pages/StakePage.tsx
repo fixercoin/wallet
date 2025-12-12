@@ -12,10 +12,5 @@ export default function StakePage() {
     navigate(`/stake/${tokenMint}`);
   };
 
-  return (
-    <StakeTokens
-      onBack={handleBack}
-      onTokenSelect={handleTokenSelect}
-    />
-  );
+  return <StakeTokens onBack={handleBack} onTokenSelect={handleTokenSelect} />;
 }

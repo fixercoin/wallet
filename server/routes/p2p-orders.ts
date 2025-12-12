@@ -865,9 +865,7 @@ export const handleCompleteP2POrder: RequestHandler = async (req, res) => {
 
     const order = await getOrderById(orderId);
     if (!order) {
-      console.error(
-        `[P2P Orders] Order not found for completion: ${orderId}`,
-      );
+      console.error(`[P2P Orders] Order not found for completion: ${orderId}`);
       return res.status(404).json({
         error: "Order not found",
         orderId,
@@ -893,9 +891,7 @@ export const handleCompleteP2POrder: RequestHandler = async (req, res) => {
 
     await saveOrder(order);
 
-    console.log(
-      `[P2P Orders] ✅ Successfully completed order ${orderId}`,
-    );
+    console.log(`[P2P Orders] ✅ Successfully completed order ${orderId}`);
 
     res.json({
       orderId: order.id,

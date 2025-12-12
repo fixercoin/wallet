@@ -18,9 +18,9 @@ export function P2POrderCard({
   status,
   onClick,
 }: P2POrderCardProps) {
-  const displayAmount = order.amountTokens || parseFloat(order.token_amount || "0");
-  const displayPrice =
-    order.amountPKR || order.pkr_amount || 0;
+  const displayAmount =
+    order.amountTokens || parseFloat(order.token_amount || "0");
+  const displayPrice = order.amountPKR || order.pkr_amount || 0;
 
   const statusConfig = {
     negotiating: {
@@ -97,20 +97,17 @@ export function P2POrderCard({
 
           {/* Right Side - Status */}
           <div className="flex flex-col items-end gap-3">
-            <Badge
-              className={cn(
-                "border",
-                config.color,
-              )}
-              variant="outline"
-            >
-              <span className={cn("inline-block w-1.5 h-1.5 rounded-full mr-1.5", config.dot)}></span>
+            <Badge className={cn("border", config.color)} variant="outline">
+              <span
+                className={cn(
+                  "inline-block w-1.5 h-1.5 rounded-full mr-1.5",
+                  config.dot,
+                )}
+              ></span>
               {config.label}
             </Badge>
 
-            {onClick && (
-              <ChevronRight className="w-5 h-5 text-gray-500" />
-            )}
+            {onClick && <ChevronRight className="w-5 h-5 text-gray-500" />}
           </div>
         </div>
       </CardContent>

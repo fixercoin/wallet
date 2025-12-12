@@ -121,7 +121,9 @@ export default function AIPeerToPeer() {
           </button>
           <div>
             <h1 className="text-xl font-bold">AI P2P TRADING</h1>
-            <p className="text-xs text-gray-400">CHAT-BASED PEER-TO-PEER EXCHANGE</p>
+            <p className="text-xs text-gray-400">
+              CHAT-BASED PEER-TO-PEER EXCHANGE
+            </p>
           </div>
         </div>
       </div>
@@ -154,9 +156,12 @@ export default function AIPeerToPeer() {
               <div className="flex items-start gap-3">
                 <Lock className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-semibold text-amber-300 mb-1">ADMIN ONLY</p>
+                  <p className="text-sm font-semibold text-amber-300 mb-1">
+                    ADMIN ONLY
+                  </p>
                   <p className="text-xs text-gray-400">
-                    ONLY ADMINISTRATORS CAN CREATE BUY OR SELL ORDERS. YOU CAN VIEW AND PARTICIPATE IN EXISTING TRADES.
+                    ONLY ADMINISTRATORS CAN CREATE BUY OR SELL ORDERS. YOU CAN
+                    VIEW AND PARTICIPATE IN EXISTING TRADES.
                   </p>
                 </div>
               </div>
@@ -280,12 +285,18 @@ function NewTradeDialog({
     }
   };
 
-  const isDarkBg = tradeType === "buy" ? "from-emerald-900/20" : "from-violet-900/20";
-  const isGradient = tradeType === "buy" ? "from-emerald-600 to-green-600" : "from-violet-600 to-purple-600";
+  const isDarkBg =
+    tradeType === "buy" ? "from-emerald-900/20" : "from-violet-900/20";
+  const isGradient =
+    tradeType === "buy"
+      ? "from-emerald-600 to-green-600"
+      : "from-violet-600 to-purple-600";
 
   return (
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-      <Card className={`w-full max-w-md border border-gray-700/50 bg-gradient-to-br ${isDarkBg} to-gray-900 shadow-2xl`}>
+      <Card
+        className={`w-full max-w-md border border-gray-700/50 bg-gradient-to-br ${isDarkBg} to-gray-900 shadow-2xl`}
+      >
         {/* Card Header with Gradient */}
         <div className={`bg-gradient-to-r ${isGradient} px-6 py-5`}>
           <h2 className="text-2xl font-bold text-white uppercase tracking-wider">
@@ -302,7 +313,9 @@ function NewTradeDialog({
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Token Dropdown Field */}
             <div className="space-y-2">
-              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">TOKEN</label>
+              <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">
+                TOKEN
+              </label>
               <select
                 value={token}
                 onChange={(e) => setToken(e.target.value)}

@@ -1,5 +1,11 @@
 import React, { useRef, useEffect, useState } from "react";
-import { Send, Loader2, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Send,
+  Loader2,
+  ArrowLeft,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 import { useOrderChat } from "@/hooks/use-order-chat";
 import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
@@ -63,9 +69,7 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
     setChatMessages([welcomeMessage]);
   }, [trade.order.id]);
 
-  const generateAIResponse = async (
-    userMessage: string,
-  ): Promise<string> => {
+  const generateAIResponse = async (userMessage: string): Promise<string> => {
     // Simulate AI response generation based on order context
     const orderType = trade.order.type;
     const token = trade.order.token;
@@ -367,12 +371,7 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
           <p className="text-green-300 text-sm font-semibold">
             ✓ Order completed successfully!
           </p>
-          <Button
-            onClick={onBack}
-            variant="outline"
-            size="sm"
-            className="mt-3"
-          >
+          <Button onClick={onBack} variant="outline" size="sm" className="mt-3">
             Back to Orders
           </Button>
         </div>

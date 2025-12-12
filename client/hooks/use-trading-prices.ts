@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { TradingSignal, generateTradingSignal, calculateSupportResistance } from "@/lib/trading-analysis";
+import { TOKEN_MINTS } from "@/lib/constants/token-mints";
 
 export interface TradeAsset {
   symbol: string;
@@ -20,29 +21,29 @@ export interface PriceData {
 
 const TRADE_ASSETS: TradeAsset[] = [
   {
-    symbol: "BTC",
-    name: "Bitcoin",
-    mint: "9n4nbM75f5Ui33ZbPYRq59Zq3naLiidCoQRGedbKuQb",
-    logo: "https://raw.githubusercontent.com/solflare-wallet/token-list/main/assets/solana/9n4nbM75f5Ui33ZbPYRq59Zq3naLiidCoQRGedbKuQb/logo.png",
-  },
-  {
     symbol: "SOL",
     name: "Solana",
-    mint: "So11111111111111111111111111111111111111112",
+    mint: TOKEN_MINTS.SOL,
     logo: "https://raw.githubusercontent.com/solflare-wallet/token-list/main/assets/solana/So11111111111111111111111111111111111111112/logo.png",
   },
   {
     symbol: "FIXERCOIN",
     name: "Fixercoin",
-    mint: "8BVqdzHBrGvVNqYJVLZY3TqZGYGteLKrU5VRKvJRVzJn",
-    logo: "https://raw.githubusercontent.com/solflare-wallet/token-list/main/assets/solana/8BVqdzHBrGvVNqYJVLZY3TqZGYGteLKrU5VRKvJRVzJn/logo.png",
+    mint: TOKEN_MINTS.FIXERCOIN,
+    logo: "https://raw.githubusercontent.com/solflare-wallet/token-list/main/assets/solana/H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump/logo.png",
+  },
+  {
+    symbol: "USDC",
+    name: "USD Coin",
+    mint: TOKEN_MINTS.USDC,
+    logo: "https://raw.githubusercontent.com/solflare-wallet/token-list/main/assets/solana/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
   },
 ];
 
 const FALLBACK_PRICES: Record<string, number> = {
-  BTC: 42500,
   SOL: 165,
   FIXERCOIN: 0.15,
+  USDC: 1.0,
 };
 
 const fetchAssetPrice = async (

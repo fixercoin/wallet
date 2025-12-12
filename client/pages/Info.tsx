@@ -42,7 +42,7 @@ export default function Info() {
                 size="sm"
                 className="text-muted-foreground hover:text-primary p-0"
               >
-                <ArrowLeft className="h-5 w-5" />
+                Back
               </Button>
             </div>
 

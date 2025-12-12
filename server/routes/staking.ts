@@ -55,7 +55,26 @@ function calculateReward(amount: number, periodDays: number): number {
 
 // KV Store wrapper for staking operations
 class StakingKVStore {
-  private kvStorage = getKVStorage();
+  private kvStorage: KVStorage;
+
+  constructor() {
+    // Initialize Cloudflare KV for staking using STAKING_KV_PROD namespace
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    const namespaceId = process.env.STAKING_KV_PROD || process.env.CLOUDFLARE_NAMESPACE_ID;
+    const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+
+    if (!accountId || !namespaceId || !apiToken) {
+      throw new Error(
+        "Staking KV configuration missing. Required: CLOUDFLARE_ACCOUNT_ID, STAKING_KV_PROD (or CLOUDFLARE_NAMESPACE_ID), CLOUDFLARE_API_TOKEN",
+      );
+    }
+
+    this.kvStorage = KVStorage.createCloudflareStorage(
+      accountId,
+      namespaceId,
+      apiToken,
+    );
+  }
 
   async getStakesByWallet(walletAddress: string): Promise<Stake[]> {
     try {

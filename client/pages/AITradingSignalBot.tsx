@@ -57,91 +57,80 @@ const TradeAssetCard = ({
   const signalBgColor = getSignalBgColor(signal.signal);
 
   return (
-    <Card className={`border ${signalBgColor} bg-card/50 backdrop-blur-sm`}>
-      <CardContent className="p-4 space-y-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+    <Card className={`border ${signalBgColor} bg-card/30 backdrop-blur-sm hover:border-purple-500/50 transition-all`}>
+      <CardContent className="p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-white font-bold text-xs">
               {asset.symbol[0]}
             </div>
             <div>
-              <h3 className="font-semibold text-white">{asset.symbol}</h3>
-              <p className="text-xs text-gray-400">{asset.name}</p>
+              <h3 className="font-bold text-white text-sm">{asset.symbol}</h3>
+              <p className="text-xs text-gray-500">{asset.name}</p>
             </div>
           </div>
           <div className="text-right">
-            <p className="font-bold text-white">${price.toFixed(4)}</p>
-            <p
-              className={`text-xs font-semibold ${
-                priceChange >= 0 ? "text-green-400" : "text-red-400"
-              }`}
-            >
-              {priceChange >= 0 ? "+" : ""}
-              {priceChange.toFixed(2)}%
+            <p className="font-bold text-lg text-white">${price.toFixed(2)}</p>
+            <p className={`text-xs font-semibold ${priceChange >= 0 ? "text-green-400" : "text-red-400"}`}>
+              {priceChange >= 0 ? "↑" : "↓"} {Math.abs(priceChange).toFixed(2)}%
             </p>
           </div>
         </div>
 
-        <div className={`px-3 py-2 rounded-lg border ${signalBgColor}`}>
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-gray-300">Signal:</span>
-            <span className={`font-bold text-lg ${signalColor}`}>
-              {signal.signal}
+            <span className="text-xs font-semibold text-gray-400">Signal</span>
+            <span className={`font-bold text-sm px-2 py-1 rounded-md ${signalColor}`}>
+              {signal.signal.replace(/_/g, " ")}
             </span>
           </div>
-          <p className="text-xs text-gray-400 mt-2 leading-relaxed">
+          <p className="text-xs text-gray-300 leading-relaxed">
             {signal.analysis}
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="bg-background/50 p-2 rounded">
-            <p className="text-gray-400 font-semibold">Support</p>
-            <p className="text-white font-bold">${signal.support.toFixed(4)}</p>
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <div className="bg-background/40 p-2 rounded">
+            <p className="text-gray-500 font-medium">Support</p>
+            <p className="text-white font-semibold">${signal.support.toFixed(2)}</p>
           </div>
-          <div className="bg-background/50 p-2 rounded">
-            <p className="text-gray-400 font-semibold">Resistance</p>
-            <p className="text-white font-bold">
-              ${signal.resistance.toFixed(4)}
-            </p>
+          <div className="bg-background/40 p-2 rounded">
+            <p className="text-gray-500 font-medium">Pivot</p>
+            <p className="text-white font-semibold">${signal.pivot.toFixed(2)}</p>
           </div>
-          <div className="bg-background/50 p-2 rounded">
-            <p className="text-gray-400 font-semibold">Pivot</p>
-            <p className="text-white font-bold">${signal.pivot.toFixed(4)}</p>
-          </div>
-          <div className="bg-background/50 p-2 rounded">
-            <p className="text-gray-400 font-semibold">Confidence</p>
-            <p className="text-white font-bold">{(signal.confidence * 100).toFixed(0)}%</p>
+          <div className="bg-background/40 p-2 rounded">
+            <p className="text-gray-500 font-medium">Resistance</p>
+            <p className="text-white font-semibold">${signal.resistance.toFixed(2)}</p>
           </div>
         </div>
 
-        <div className="border-t border-border pt-3 space-y-2">
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-gray-400">Buy Entry:</span>
-            <span className="text-green-400 font-semibold">
-              ${signal.buyEntry.toFixed(4)}
-            </span>
+        <div className="border-t border-border/50 pt-3 space-y-1.5 text-xs">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-500">Buy Entry</span>
+            <span className="text-green-400 font-semibold">${signal.buyEntry.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-gray-400">Sell Entry:</span>
-            <span className="text-red-400 font-semibold">
-              ${signal.sellEntry.toFixed(4)}
-            </span>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-500">Sell Entry</span>
+            <span className="text-red-400 font-semibold">${signal.sellEntry.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-500">Confidence</span>
+            <span className="text-white font-semibold">{(signal.confidence * 100).toFixed(0)}%</span>
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 pt-1">
           <Button
             size="sm"
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs"
+            className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white text-xs font-semibold rounded-md"
           >
-            {signal.signal.includes("BUY") ? "Buy Now" : "View"}
+            Buy
           </Button>
           <Button
             size="sm"
-            className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs"
+            className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white text-xs font-semibold rounded-md"
           >
-            {signal.signal.includes("SELL") ? "Sell Now" : "View"}
+            Sell
           </Button>
         </div>
       </CardContent>

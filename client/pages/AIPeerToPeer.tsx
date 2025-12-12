@@ -82,14 +82,14 @@ export default function AIPeerToPeer() {
         <Card className="w-full max-w-lg mx-4">
           <CardContent className="pt-6">
             <p className="text-center text-gray-300 mb-4">
-              Please connect your wallet to use AI P2P trading
+              PLEASE CONNECT YOUR WALLET TO USE AI P2P TRADING
             </p>
             <Button
               onClick={() => navigate("/")}
               className="w-full"
               variant="outline"
             >
-              Back to Home
+              BACK TO HOME
             </Button>
           </CardContent>
         </Card>

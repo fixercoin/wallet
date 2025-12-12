@@ -207,6 +207,16 @@ export default function Info() {
                 </div>
               </div>
             </div>
+
+            {/* Back Button */}
+            <div className="mt-8 flex justify-center">
+              <Button
+                onClick={() => navigate("/")}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase px-8 py-2 rounded-lg transition-colors"
+              >
+                Back
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -94,15 +94,21 @@ const TradeAssetCard = ({
         <div className="grid grid-cols-3 gap-2 text-xs">
           <div className="bg-background/40 p-2 rounded">
             <p className="text-gray-500 font-medium">Support</p>
-            <p className="text-white font-semibold">${signal.support.toFixed(2)}</p>
+            <p className="text-white font-semibold">
+              ${asset.symbol === "FIXERCOIN" ? signal.support.toFixed(8) : signal.support.toFixed(2)}
+            </p>
           </div>
           <div className="bg-background/40 p-2 rounded">
             <p className="text-gray-500 font-medium">Pivot</p>
-            <p className="text-white font-semibold">${signal.pivot.toFixed(2)}</p>
+            <p className="text-white font-semibold">
+              ${asset.symbol === "FIXERCOIN" ? signal.pivot.toFixed(8) : signal.pivot.toFixed(2)}
+            </p>
           </div>
           <div className="bg-background/40 p-2 rounded">
             <p className="text-gray-500 font-medium">Resistance</p>
-            <p className="text-white font-semibold">${signal.resistance.toFixed(2)}</p>
+            <p className="text-white font-semibold">
+              ${asset.symbol === "FIXERCOIN" ? signal.resistance.toFixed(8) : signal.resistance.toFixed(2)}
+            </p>
           </div>
         </div>
 

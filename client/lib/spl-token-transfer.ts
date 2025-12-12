@@ -109,14 +109,19 @@ export async function buildTokenTransferTransaction(
   // Get recent blockhash
   const { blockhash } = await conn.getLatestBlockhash("confirmed");
 
-  // Create transfer instruction
-  const { instruction } = await createTransferInstruction_(params);
+  // Create transfer instruction(s) - may include ATA creation if needed
+  const { instructions } = await createTransferInstruction_(params);
 
-  // Build transaction
+  // Build transaction with all instructions
   const transaction = new Transaction({
     recentBlockhash: blockhash,
     feePayer: fromWallet,
-  }).add(instruction);
+  });
+
+  // Add all instructions (create ATA + transfer)
+  for (const instruction of instructions) {
+    transaction.add(instruction);
+  }
 
   return transaction;
 }

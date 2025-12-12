@@ -281,16 +281,19 @@ function NewTradeDialog({
 
         <CardContent className="pt-7 pb-6 px-6">
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Token Field */}
+            {/* Token Dropdown Field */}
             <div className="space-y-2">
               <label className="block text-sm font-bold uppercase text-gray-200 tracking-wide">TOKEN</label>
-              <input
-                type="text"
+              <select
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                placeholder="E.G., SOL, USDC"
-              />
+                className="w-full bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
+              >
+                <option value="">SELECT TOKEN</option>
+                <option value="SOL">☀️ SOL - SOLANA</option>
+                <option value="USDT">💵 USDT - TETHER</option>
+                <option value="FIXERCOIN">🪙 FIXERCOIN - FIXER</option>
+              </select>
             </div>
 
             {/* Amount Field */}

@@ -22,7 +22,7 @@ interface ActiveTrade {
 export default function AIPeerToPeer() {
   const navigate = useNavigate();
   const { wallet } = useWallet();
-  const isAdmin = wallet?.address === ADMIN_WALLET;
+  const isAdmin = wallet?.publicKey === ADMIN_WALLET;
   const [activeTrades, setActiveTrades] = useState<ActiveTrade[]>([]);
   const [selectedTrade, setSelectedTrade] = useState<ActiveTrade | null>(null);
   const [loading, setLoading] = useState(false);

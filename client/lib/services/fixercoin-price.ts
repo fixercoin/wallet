@@ -1,5 +1,4 @@
-import { dexscreenerAPI } from "./dexscreener";
-import { solPriceService } from "./sol-price";
+import { birdeyeAPI } from "./birdeye";
 import { saveServicePrice } from "./offline-cache";
 import {
   retryWithExponentialBackoff,
@@ -18,7 +17,6 @@ export interface FixercoinPriceData {
 }
 
 const FIXERCOIN_MINT = "H4qKn8FMFha8jJuj8xMryMqRhH3h7GjLuxw7TVixpump";
-const SOL_MINT = "So11111111111111111111111111111111111111112";
 
 class FixercoinPriceService {
   private cachedData: FixercoinPriceData | null = null;

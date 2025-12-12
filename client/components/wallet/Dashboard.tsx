@@ -1088,7 +1088,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               {showBalance ? displayValue : "****"}
                             </div>
                             <Button
-                              onClick={() => navigate("/info")}
+                              onClick={() => navigate("/stake")}
                               className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-4 py-2 rounded-sm whitespace-nowrap h-auto transition-colors uppercase"
                             >
                               STAKE TOKENS
@@ -1155,7 +1155,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             )}
                           </div>
                           <Button
-                            onClick={() => navigate("/info")}
+                            onClick={() => navigate("/stake")}
                             className="bg-[#86efac] hover:bg-[#65e8ac] border border-[#22c55e]/40 text-gray-900 font-bold text-xs px-4 py-2 rounded-sm whitespace-nowrap h-auto transition-colors uppercase"
                           >
                             STAKE TOKENS

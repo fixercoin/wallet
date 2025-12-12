@@ -360,9 +360,11 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
           {/* Suggestion Buttons */}
           <div className="grid grid-cols-2 gap-2">
             <Button
-              onClick={() =>
-                setMessageInput("Can we confirm the price and proceed?")
-              }
+              onClick={() => {
+                const amount = trade.order.amountTokens || 0;
+                const conversionText = getConversionText(amount);
+                setMessageInput(`Can we confirm the price for ${amount} ${trade.order.token}${conversionText} and proceed?`);
+              }}
               variant="outline"
               size="sm"
               className="text-xs h-8 border-gray-700"
@@ -370,9 +372,11 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
               Confirm Price
             </Button>
             <Button
-              onClick={() =>
-                setMessageInput("I've completed the payment, ready to release?")
-              }
+              onClick={() => {
+                const amount = trade.order.amountTokens || 0;
+                const conversionText = getConversionText(amount);
+                setMessageInput(`I've completed the payment of ${amount} ${trade.order.token}${conversionText}, ready to release?`);
+              }}
               variant="outline"
               size="sm"
               className="text-xs h-8 border-gray-700"
@@ -380,7 +384,10 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
               Payment Done
             </Button>
             <Button
-              onClick={() => setMessageInput("I've received the crypto")}
+              onClick={() => {
+                const amount = trade.order.amountTokens || 0;
+                setMessageInput(`I've received the ${amount} ${trade.order.token}`);
+              }}
               variant="outline"
               size="sm"
               className="text-xs h-8 border-gray-700"
@@ -388,7 +395,11 @@ export function AIBotChat({ trade, onBack, onTradeUpdate }: AIBotChatProps) {
               Crypto Received
             </Button>
             <Button
-              onClick={() => setMessageInput("Let's complete this order")}
+              onClick={() => {
+                const amount = trade.order.amountTokens || 0;
+                const conversionText = getConversionText(amount);
+                setMessageInput(`Let's complete this order of ${amount} ${trade.order.token}${conversionText}`);
+              }}
               variant="outline"
               size="sm"
               className="text-xs h-8 border-gray-700"

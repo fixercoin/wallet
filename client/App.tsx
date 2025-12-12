@@ -162,6 +162,7 @@ import FiatExchange from "./pages/FiatExchange";
 import FiatPayment from "./pages/FiatPayment";
 import FiatTransactions from "./pages/FiatTransactions";
 import FiatAdmin from "./pages/FiatAdmin";
+import Info from "./pages/Info";
 import { SellerPaymentMethodDialog } from "@/components/p2p/SellerPaymentMethodDialog";
 import { BuyerWalletAddressDialog } from "@/components/p2p/BuyerWalletAddressDialog";
 import { SellerTransferDetailsDialog } from "@/components/p2p/SellerTransferDetailsDialog";

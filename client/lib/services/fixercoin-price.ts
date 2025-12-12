@@ -1,7 +1,7 @@
 import { dexscreenerAPI } from "./dexscreener";
 import { solPriceService } from "./sol-price";
 import { saveServicePrice } from "./offline-cache";
-import { retryWithExponentialBackoff } from "./retry-fetch";
+import { retryWithExponentialBackoff, AGGRESSIVE_RETRY_OPTIONS } from "./retry-fetch";
 
 export interface FixercoinPriceData {
   price: number;
@@ -196,11 +196,8 @@ class FixercoinPriceService {
       },
       this.TOKEN_NAME,
       {
-        maxRetries: 2, // Fail fast to allow static fallback
-        initialDelayMs: 500,
-        maxDelayMs: 2000,
-        backoffMultiplier: 2,
-        timeoutMs: 8000,
+        ...AGGRESSIVE_RETRY_OPTIONS,
+        timeoutMs: 12000,
       },
     );
 

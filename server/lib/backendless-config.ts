@@ -18,8 +18,6 @@ export const BACKENDLESS_TABLES = {
   ROOMS: "p2p_rooms",
   MESSAGES: "p2p_messages",
   MERCHANT_STATS: "p2p_merchant_stats",
-  STAKING: "staking_records",
-  REWARDS: "staking_rewards",
 };
 
 export function initializeBackendless(): {

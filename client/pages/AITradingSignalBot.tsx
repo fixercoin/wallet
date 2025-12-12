@@ -226,71 +226,39 @@ export default function AITradingSignalBot() {
               })}
             </div>
 
-            <Card className="border-border bg-card/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-purple-500" />
-                  Trading Indicators Guide
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-semibold text-green-400 mb-2">
-                      When to Buy:
+            <Card className="border-border/50 bg-card/20 backdrop-blur-sm mt-8">
+              <CardContent className="p-5 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-green-400 text-sm">
+                      Buy Signals
                     </h4>
-                    <ul className="text-gray-300 space-y-1 text-xs">
-                      <li>
-                        ✓ Price at or near Support level with STRONG_BUY signal
-                      </li>
-                      <li>✓ RSI below 30 (Oversold)</li>
-                      <li>✓ Price breaks above resistance with volume</li>
-                      <li>✓ Entry at or below BUY ENTRY point</li>
+                    <ul className="text-gray-300 space-y-1 text-xs leading-relaxed">
+                      <li>• Price at Support with STRONG_BUY</li>
+                      <li>• RSI below 30 (Oversold)</li>
+                      <li>• Below Buy Entry point</li>
                     </ul>
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-red-400 mb-2">
-                      When to Sell:
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-red-400 text-sm">
+                      Sell Signals
                     </h4>
-                    <ul className="text-gray-300 space-y-1 text-xs">
-                      <li>
-                        ✓ Price at or near Resistance level with STRONG_SELL
-                        signal
-                      </li>
-                      <li>✓ RSI above 70 (Overbought)</li>
-                      <li>✓ Price breaks below support level</li>
-                      <li>✓ Exit at or above SELL ENTRY point</li>
+                    <ul className="text-gray-300 space-y-1 text-xs leading-relaxed">
+                      <li>• Price at Resistance with STRONG_SELL</li>
+                      <li>• RSI above 70 (Overbought)</li>
+                      <li>• Above Sell Entry point</li>
                     </ul>
                   </div>
                 </div>
 
-                <div className="mt-4 p-3 bg-background/50 rounded-lg border border-border">
-                  <h4 className="font-semibold text-yellow-400 mb-2 flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
-                    Risk Management:
-                  </h4>
-                  <ul className="text-gray-300 space-y-1 text-xs">
-                    <li>
-                      • Always set Stop Loss below Support level (BUY orders)
-                    </li>
-                    <li>
-                      • Always set Stop Loss above Resistance level (SELL orders)
-                    </li>
-                    <li>
-                      • Take Profit at Resistance (BUY) or Support (SELL)
-                    </li>
-                    <li>• Risk only 1-2% of your portfolio per trade</li>
-                  </ul>
+                <div className="border-t border-border/30 pt-4 text-xs text-gray-400">
+                  <p className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-yellow-500" />
+                    <span>Always use stop losses and risk management. Risk only 1-2% per trade.</span>
+                  </p>
                 </div>
               </CardContent>
             </Card>
-
-            <div className="mt-6 text-center text-xs text-gray-500">
-              <p>
-                Signals are calculated based on daily support/resistance zones,
-                moving averages, RSI, and Bollinger Bands
-              </p>
-            </div>
           </>
         )}
       </div>

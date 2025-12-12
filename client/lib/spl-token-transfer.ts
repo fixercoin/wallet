@@ -7,6 +7,7 @@ import { PublicKey, Transaction, Connection } from "@solana/web3.js";
 import {
   getAssociatedTokenAddress,
   createTransferInstruction,
+  createAssociatedTokenAccountInstruction,
 } from "@solana/spl-token";
 
 const RPC_ENDPOINTS = [

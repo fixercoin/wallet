@@ -34,18 +34,6 @@ export default function Info() {
       <div className="w-full max-w-2xl mx-auto px-4 py-8 relative z-20">
         <Card className="bg-card border border-border rounded-2xl overflow-hidden">
           <CardContent className="p-8">
-            {/* Back Button */}
-            <div className="flex justify-start mb-6">
-              <Button
-                onClick={() => navigate("/")}
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-primary p-0"
-              >
-                Back
-              </Button>
-            </div>
-
             {/* Logo and Title */}
             <div className="flex flex-row items-center gap-4 mb-8">
               <div className="w-24 h-24 rounded-lg flex items-center justify-center border border-border overflow-hidden flex-shrink-0">

@@ -368,6 +368,7 @@ function NewTradeDialog({
         walletAddress: wallet.publicKey,
         accountNumber: digitalAccount,
         accountName: accountName,
+        status: "pending_approval",
       };
 
       console.log("Submitting order data:", orderData);
